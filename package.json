@@ -1,0 +1,25 @@
+{
+  "name": "handoff-app",
+  "version": "0.0.1",
+  "description": "An open source toolchain for extracting design tokens from the figma API and build design documentation.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Convertiv/handoff-app.git"
+  },
+  "keywords": [
+    "design",
+    "documentation",
+    "figma",
+    "handoff"
+  ],
+  "author": "handoff@convertiv.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Convertiv/handoff-app/issues"
+  },
+  "homepage": "https://github.com/Convertiv/handoff-app#readme"
+}
