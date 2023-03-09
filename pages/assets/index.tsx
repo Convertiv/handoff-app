@@ -70,7 +70,7 @@ const AssetsPage = ({ content, menu, metadata, current }: DocumentationProps) =>
                 <h4>Iconography</h4>
                 <p>Library of approved vector iconography.</p>
                 <p>
-                  <NavLink href="/icons">View Icons</NavLink>
+                  <NavLink href="/assets/icons">View Icons</NavLink>
                 </p>
               </div>
             </div>
