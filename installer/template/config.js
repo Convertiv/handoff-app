@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @type {import('convertiv-motiv/client-config').Config} */
+/** @type {import('handoff-app/client-config').Config} */
 const config = {
   title: 'Demo Design System',  // The Title of your project
   client: 'Demo Software',      // The name of your org

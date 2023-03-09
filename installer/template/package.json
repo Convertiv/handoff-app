@@ -4,11 +4,11 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-      "start": "node ./node_modules/convertiv-motiv/scripts/watch.js",
-      "build": "node node_modules/convertiv-motiv/scripts/build.js",
-      "fetch": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
-      "transform:preview": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js preview && mv ./exported/*.zip ./public/",
-      "transform:styles": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/"
+      "start": "node ./node_modules/handoff-app/scripts/watch.js",
+      "build": "node node_modules/handoff-app/scripts/build.js",
+      "fetch": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
+      "transform:preview": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js preview && mv ./exported/*.zip ./public/",
+      "transform:styles": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/"
     },
     "repository": {
       "type": "git",
@@ -33,7 +33,7 @@
     },
     "homepage": "https://bitbucket.org/convertiv-dev/foundations-documentation#readme",
     "dependencies": {
-      "convertiv-motiv": "0.8.*"
+      "handoff-app": "0.8.*"
     }
   }
   

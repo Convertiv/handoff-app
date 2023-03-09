@@ -12,7 +12,7 @@ const packageRootDir = path.resolve(__dirname, '..');
 // Project root dir is the current directory
 const projectRootDir = process.cwd();
 // Temp Dir is what we create to manage the project
-const tmpDir = path.resolve(projectRootDir, '.convertiv-motiv');
+const tmpDir = path.resolve(projectRootDir, '.handoff-app');
 
 dotenv.config({ path: path.resolve(projectRootDir, '.env') });
 

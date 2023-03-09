@@ -1,7 +1,7 @@
 # Node artifact files
 node_modules/
 dist/
-.convertiv-motiv/
+.handoff-app/
 
 # Compiled Java class files
 *.class
