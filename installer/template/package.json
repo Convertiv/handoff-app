@@ -8,11 +8,14 @@
       "build": "node node_modules/handoff-app/scripts/build.js",
       "fetch": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
       "transform:preview": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js preview && mv ./exported/*.zip ./public/",
-      "transform:styles": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/"
+      "transform:styles": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/",
+      "transform:fonts": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/",
+      "postinstall": "cd node_modules/handoff-app/figma-exporter && npm install --omit=dev"
+
     },
     "repository": {
       "type": "git",
-      "url": "git+ssh://git@bitbucket.org/convertiv-dev/foundations-documentation.git"
+      "url": "git+git@github.com:Convertiv/handoff-app.git"
     },
     "browserslist": {
       "production": [
@@ -29,9 +32,9 @@
     "author": "",
     "license": "ISC",
     "bugs": {
-      "url": "https://bitbucket.org/convertiv-dev/foundations-documentation/issues"
+      "url": "https://github.com/Convertiv/handoff-app/issues"
     },
-    "homepage": "https://bitbucket.org/convertiv-dev/foundations-documentation#readme",
+    "homepage": "https://www.handoff.com/",
     "dependencies": {
       "handoff-app": "^0.1.0"
     }
