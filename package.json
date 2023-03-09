@@ -31,6 +31,8 @@
   "scripts": {
     "start": "npm run dev",
     "dev": "concurrently --timings -k -n svg-sprite,figma-exporter,nextjs \"npm run watch:svg-sprite\" \"cd figma-exporter && npx preconstruct watch\" \"npx next dev\"",
+    "install:lib": "cd figma-exporter && npm install",
+    "install:lib:no-dev": "cd figma-exporter && npm install --omit=dev",
     "build:lib": "cd figma-exporter && npx preconstruct build",
     "watch:svg-sprite": "node ./scripts/watch-svg-sprite.js",
     "build:svg-sprite": "node ./scripts/build-svg-sprite.js",
@@ -38,10 +40,9 @@
     "fetch": "node ./figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
     "lint:sass": "stylelint \"sass/**/*.scss\"",
     "lint": "npm run lint:sass && npx next lint",
-    "prepack": "npm run build:lib && npm run build:svg-sprite",
+    "prepack": "npm run install:lib && npm run build:lib && npm run build:svg-sprite",
     "release": "np --any-branch",
-    "test": "npm run lint",
-    "postinstall": "cd figma-exporter && npm install --omit=dev"
+    "test": "npm run lint"
   },
   "prettier": {
     "printWidth": 140,

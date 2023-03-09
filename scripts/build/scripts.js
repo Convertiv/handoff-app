@@ -199,6 +199,11 @@ const installNpmDependencies = async () => {
     env: process.env,
     stdio: 'inherit',
   });
+  await spawnPromise('npm', ['run', 'install:lib:no-dev'], {
+    cwd: tmpDir,
+    env: process.env,
+    stdio: 'inherit',
+  });
 };
 
 /**

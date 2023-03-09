@@ -11,6 +11,7 @@ and this project adheres to
 ### Bugfixes
 
 - Fixes a build issue with types on NextJS build
+- Adds a npm script to run the installer for the figma exporter without dev deps
 
 ## [0.1.3] - 2023-03-09
 
