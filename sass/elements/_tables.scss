@@ -1,0 +1,42 @@
+/* =============================================================================
+   TABLES (elements/_tables.scss)
+   ========================================================================== */
+
+/**
+ * 1. Ensure tables fill up as much space as possible.
+ */
+
+table {
+	width: 100%; /* [1] */
+}
+
+table tr {
+	border-bottom: 1px solid #e3e3e3;
+}
+
+table td {
+	font-size: rem( 12px );
+	padding: rem( 12px ) rem( 12px );
+	color: #757575;
+
+	code {
+		font-size: rem( 12px );
+	}
+}
+
+table thead {
+	background-color: #fafafa;
+
+	tr {
+		border-bottom: none;
+
+		th {
+			text-align: left;
+			font-weight: normal;
+			font-size: rem( 10px );
+			text-transform: uppercase;
+			padding: rem( 8px ) rem( 12px );
+			color: #757575;
+		}
+	}
+}

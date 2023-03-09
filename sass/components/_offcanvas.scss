@@ -1,0 +1,38 @@
+/* =============================================================================
+   OFFCANVAS (components/_offcanvas.scss)
+   ========================================================================== */
+
+.c-offcanvas {
+	height: 100vh;
+	width: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color: rgba( 0, 0, 0, .1 );
+	z-index: $offcanvas-z-index;
+	padding-top: $offcanvas-offset-top;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY( -1rem );
+	transition: opacity .2s, visibility .2s, transform .3s;
+
+	/* Active state */
+	&.is-active {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY( 0 );
+	}
+}
+
+.c-offcanvas--menu {
+	.c-offcanvas__inner {
+		background-color: $offcanvas-background-color;
+		height: 100%;
+		overflow-y: auto;
+		max-width: 100%;
+
+		@include media-breakpoint-up( sm ) {
+			max-width: rem( 320px );
+		}
+	}
+}

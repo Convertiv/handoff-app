@@ -1,0 +1,57 @@
+/* =============================================================================
+   FORMS (components/_forms.scss)
+   ========================================================================== */
+
+.c-form-element {
+	position: relative;
+
+	input {
+		font-size: rem( 14px );
+		padding: rem( 10px ) rem( 15px ) rem( 10px ) rem( 30px );
+		box-shadow: 0 2px 2px rgb( 0 0 0 / 3% );
+		border: 1px solid #d5d5d5;
+		border-radius: 4px;
+
+		&:first-child {
+			padding-left: rem( 15px );
+		}
+	}
+
+	&--fullwidth {
+		width: 100%;
+
+		input {
+			width: 100%;
+		}
+	}
+
+	&--big {
+		margin-bottom: rem( 40px );
+
+		input {
+			padding: rem( 15px ) rem( 20px ) rem( 15px ) rem( 45px );
+			font-size: rem( 16px );
+
+			&:first-child {
+				padding-left: rem( 20px );
+			}
+		}
+	}
+}
+
+.c-form-element__text {
+	&:first-child {
+		padding-left: rem( 50px );
+	}
+}
+
+.c-form-element__icon {
+	position: absolute;
+	top: 0;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	left: 20px;
+	opacity: .4;
+}
+

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="218px" height="123px" viewBox="0 0 218 123" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>:: img@2x</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="110" height="25" rx="3"></rect>
+        <filter x="-8.6%" y="-34.0%" width="117.3%" height="176.0%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <rect id="path-3" x="0" y="0" width="165" height="88" rx="3"></rect>
+        <filter x="-5.8%" y="-9.7%" width="111.5%" height="121.6%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <rect id="path-5" x="0" y="0" width="165" height="31" rx="3"></rect>
+        <filter x="-5.8%" y="-27.4%" width="111.5%" height="161.3%" filterUnits="objectBoundingBox" id="filter-6">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Artboard" transform="translate(-890.000000, -175.000000)">
+            <g id="::-img" transform="translate(896.000000, 180.000000)">
+                <g id="::-radio" transform="translate(0.000000, 27.000000)">
+                    <g id="background">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                        <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                    </g>
+                    <rect id="text" fill="#D8D8D8" x="29" y="11" width="68" height="3" rx="1.5"></rect>
+                    <circle id="circle" fill="#D8D8D8" cx="14" cy="13" r="5"></circle>
+                </g>
+                <g id="::-list" transform="translate(41.000000, 0.000000)">
+                    <g id="background">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-3"></use>
+                        <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-3"></use>
+                    </g>
+                    <rect id="Rectangle" fill="#E8E8E8" x="14" y="31" width="137" height="1"></rect>
+                    <rect id="text" fill="#E8E8E8" x="14" y="68" width="111" height="5" rx="2"></rect>
+                    <rect id="text" fill="#E8E8E8" x="14" y="56" width="140" height="5" rx="2"></rect>
+                    <rect id="text" fill="#E8E8E8" x="14" y="44" width="140" height="5" rx="2"></rect>
+                </g>
+                <g id="::-dropdown" transform="translate(6.000000, 80.000000)">
+                    <g id="background">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-6)" xlink:href="#path-5"></use>
+                        <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-5"></use>
+                    </g>
+                    <g id="Group" transform="translate(144.000000, 11.000000)" fill="#000000" fill-rule="nonzero">
+                        <g id="Icons/Plus-Circle">
+                            <path d="M5.5,0 C2.462625,0 0,2.462625 0,5.5 C0,8.537375 2.462625,11 5.5,11 C8.537375,11 11,8.537375 11,5.5 C11,2.462625 8.537375,0 5.5,0 Z M8.25,5.95833333 L5.95833333,5.95833333 L5.95833333,8.25 L5.04166667,8.25 L5.04166667,5.95833333 L2.75,5.95833333 L2.75,5.04166667 L5.04166667,5.04166667 L5.04166667,2.75 L5.95833333,2.75 L5.95833333,5.04166667 L8.25,5.04166667 L8.25,5.95833333 Z" id="Shape"></path>
+                        </g>
+                    </g>
+                    <rect id="Rectangle" fill="#D8D8D8" x="14" y="13" width="87" height="5" rx="2"></rect>
+                </g>
+                <g id="::-dropdown" transform="translate(41.000000, 0.000000)">
+                    <g id="Group" transform="translate(144.000000, 11.000000)" fill="#000000" fill-rule="nonzero">
+                        <g id="Icons/Plus-Circle">
+                            <path d="M5.5,0 C2.462625,0 0,2.462625 0,5.5 C0,8.537375 2.462625,11 5.5,11 C8.537375,11 11,8.537375 11,5.5 C11,2.462625 8.537375,0 5.5,0 Z M8.25,5.95833333 L5.95833333,5.95833333 L5.95833333,8.25 L5.04166667,8.25 L5.04166667,5.95833333 L2.75,5.95833333 L2.75,5.04166667 L5.04166667,5.04166667 L5.04166667,2.75 L5.95833333,2.75 L5.95833333,5.04166667 L8.25,5.04166667 L8.25,5.95833333 Z" id="Shape"></path>
+                        </g>
+                    </g>
+                    <rect id="Rectangle" fill="#242424" x="14" y="13" width="87" height="5" rx="2"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

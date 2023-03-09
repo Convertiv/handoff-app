@@ -1,0 +1,39 @@
+{
+    "name": "demo-design-documentation",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "start": "node ./node_modules/convertiv-motiv/scripts/watch.js",
+      "build": "node node_modules/convertiv-motiv/scripts/build.js",
+      "fetch": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
+      "transform:preview": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js preview && mv ./exported/*.zip ./public/",
+      "transform:styles": "node node_modules/convertiv-motiv/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+ssh://git@bitbucket.org/convertiv-dev/foundations-documentation.git"
+    },
+    "browserslist": {
+      "production": [
+        ">0.2%",
+        "not dead",
+        "not op_mini all"
+      ],
+      "development": [
+        "last 1 chrome version",
+        "last 1 firefox version",
+        "last 1 safari version"
+      ]
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://bitbucket.org/convertiv-dev/foundations-documentation/issues"
+    },
+    "homepage": "https://bitbucket.org/convertiv-dev/foundations-documentation#readme",
+    "dependencies": {
+      "convertiv-motiv": "0.8.*"
+    }
+  }
+  

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="217px" height="143px" viewBox="0 0 217 143" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>:: icon@2x</title>
+    <defs>
+        <rect id="path-1" x="0" y="14" width="203" height="35" rx="3"></rect>
+        <filter x="-4.9%" y="-25.7%" width="109.9%" height="157.1%" filterUnits="objectBoundingBox" id="filter-2">
+            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="1" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <rect id="path-3" x="0" y="14" width="203" height="35" rx="3"></rect>
+        <filter x="-4.9%" y="-25.7%" width="109.9%" height="157.1%" filterUnits="objectBoundingBox" id="filter-4">
+            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="1" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-1124.000000, -1849.000000)">
+            <g id="::-tooltip" transform="translate(1074.000000, 1773.000000)">
+                <g id="::-icon" transform="translate(57.000000, 71.000000)">
+                    <g transform="translate(0.000000, 5.000000)">
+                        <g id="::-input" transform="translate(0.000000, 86.000000)">
+                            <g id="background">
+                                <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                                <use stroke="#E2E2E2" stroke-width="1" fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                            </g>
+                            <g id="info" transform="translate(174.000000, 24.000000)" stroke="#E8E8E8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                                <circle id="Oval" cx="8" cy="8" r="8"></circle>
+                                <line x1="7.96875" y1="11.3125" x2="7.96875" y2="8.5" id="Path"></line>
+                                <line x1="7.9640625" y1="5.21875" x2="7.9734375" y2="5.21875" id="Path"></line>
+                            </g>
+                            <rect id="text" fill="#D8D8D8" x="1" y="0" width="76" height="6" rx="2"></rect>
+                        </g>
+                        <g id="::-input" transform="translate(0.000000, 16.000000)">
+                            <g id="background">
+                                <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-3"></use>
+                                <use stroke="#E2E2E2" stroke-width="1" fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-3"></use>
+                            </g>
+                            <g id="info" transform="translate(174.000000, 24.000000)" stroke="#4574C7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                                <circle id="Oval" cx="8" cy="8" r="8"></circle>
+                                <line x1="7.96875" y1="11.3125" x2="7.96875" y2="8.5" id="Path"></line>
+                                <line x1="7.9640625" y1="5.21875" x2="7.9734375" y2="5.21875" id="Path"></line>
+                            </g>
+                            <rect id="text" fill="#D8D8D8" x="1" y="0" width="76" height="6" rx="2"></rect>
+                        </g>
+                        <g id="::-button" transform="translate(104.000000, 0.000000)">
+                            <path d="M4,0 L95,0 C97.209139,-4.05812251e-16 99,1.790861 99,4 L99,27 C99,29.209139 97.209139,31 95,31 L82.5109159,31 C82.2464831,31 81.992815,31.1047368 81.8054103,31.2912957 L78.0798909,35 L78.0798909,35 L74.3522384,31.2911113 C74.1648492,31.1046653 73.9112603,31 73.646918,31 L4,31 C1.790861,31 2.705415e-16,29.209139 0,27 L0,4 C-2.705415e-16,1.790861 1.790861,4.05812251e-16 4,0 Z" id="Rectangle" fill="#1C1C1C"></path>
+                            <rect id="Rectangle" fill="#FFFFFF" x="19" y="14" width="63" height="3" rx="1.5"></rect>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

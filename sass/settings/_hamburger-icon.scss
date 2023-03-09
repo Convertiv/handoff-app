@@ -1,0 +1,19 @@
+/* =============================================================================
+   HAMBURGER-ICON (settings/_hamburger-icon.scss)
+   ========================================================================== */
+
+/**
+ * 1. Regulate icon padding to increase / decrease click area.
+ * 2. Regulate icon layers (lines) width and height values.
+ * 3. Regulate spacing between icon layers (lines).
+ * 4. Set icon layers (lines) background color.
+ * 5. Set icon layers (lines) border radius size.
+ */
+
+$hamburger-icon-padding-x: .25rem !default; /* [1] */
+$hamburger-icon-padding-y: .25rem !default; /* [1] */
+$hamburger-icon-layer-width: 1.75rem !default; /* [2] */
+$hamburger-icon-layer-height: .15rem !default; /* [2] */
+$hamburger-icon-layer-spacing: .29rem !default; /* [3] */
+$hamburger-icon-layer-color: color( extra, black ) !default; /* [4] */
+$hamburger-icon-layer-border-radius: 0 !default; /* [5] */

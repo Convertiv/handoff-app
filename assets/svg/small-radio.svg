@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="36px" height="23px" viewBox="0 0 36 23" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group 8@2x</title>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-298.000000, -414.000000)">
+            <g id="Group-8" transform="translate(299.000000, 415.000000)">
+                <rect id="Rectangle" fill="#000000" x="16" y="3" width="19" height="3" rx="1.5"></rect>
+                <circle id="Oval" stroke="#000000" stroke-width="2" cx="4" cy="4" r="4"></circle>
+                <circle id="Oval" stroke="#000000" fill="#000000" cx="4" cy="4" r="1"></circle>
+                <rect id="Rectangle" fill="#000000" x="16" y="15" width="19" height="3" rx="1.5"></rect>
+                <circle id="Oval" stroke="#000000" stroke-width="2" cx="4" cy="17" r="4"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

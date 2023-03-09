@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="215px" height="170px" viewBox="0 0 215 170" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group 3@2x</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="203" height="108" rx="3"></rect>
+        <filter x="-4.7%" y="-7.9%" width="109.4%" height="117.6%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <rect id="path-3" x="0" y="0" width="203" height="38" rx="3"></rect>
+        <filter x="-4.7%" y="-22.4%" width="109.4%" height="150.0%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-758.000000, -499.000000)">
+            <g id="::-accordion" transform="translate(707.000000, 434.000000)">
+                <g id="Group-3" transform="translate(57.000000, 70.000000)">
+                    <g id="::-list">
+                        <g id="background">
+                            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                            <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                        </g>
+                        <rect id="Rectangle" fill="#E8E8E8" x="18" y="38" width="168" height="1"></rect>
+                        <rect id="text" fill="#E8E8E8" x="18" y="84" width="137" height="6" rx="2"></rect>
+                        <rect id="text" fill="#E8E8E8" x="18" y="69" width="171" height="6" rx="2"></rect>
+                        <rect id="text" fill="#E8E8E8" x="18" y="54" width="171" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-dropdown" transform="translate(0.000000, 120.000000)">
+                        <g id="background">
+                            <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-3"></use>
+                            <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-3"></use>
+                        </g>
+                        <g id="Group" transform="translate(177.000000, 13.000000)" fill="#000000" fill-rule="nonzero">
+                            <g id="Icons/Plus-Circle">
+                                <path d="M7,0 C3.13425,0 0,3.13425 0,7 C0,10.86575 3.13425,14 7,14 C10.86575,14 14,10.86575 14,7 C14,3.13425 10.86575,0 7,0 Z M10.5,7.58333333 L7.58333333,7.58333333 L7.58333333,10.5 L6.41666667,10.5 L6.41666667,7.58333333 L3.5,7.58333333 L3.5,6.41666667 L6.41666667,6.41666667 L6.41666667,3.5 L7.58333333,3.5 L7.58333333,6.41666667 L10.5,6.41666667 L10.5,7.58333333 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                        <rect id="Rectangle" fill="#D8D8D8" x="18" y="17" width="106" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-dropdown">
+                        <g id="Group" transform="translate(177.000000, 13.000000)" fill="#000000" fill-rule="nonzero">
+                            <g id="Icons/Plus-Circle">
+                                <path d="M7,0 C3.13425,0 0,3.13425 0,7 C0,10.86575 3.13425,14 7,14 C10.86575,14 14,10.86575 14,7 C14,3.13425 10.86575,0 7,0 Z M10.5,7.58333333 L7.58333333,7.58333333 L7.58333333,10.5 L6.41666667,10.5 L6.41666667,7.58333333 L3.5,7.58333333 L3.5,6.41666667 L6.41666667,6.41666667 L6.41666667,3.5 L7.58333333,3.5 L7.58333333,6.41666667 L10.5,6.41666667 L10.5,7.58333333 Z" id="Shape"></path>
+                            </g>
+                        </g>
+                        <rect id="Rectangle" fill="#4574C7" x="18" y="17" width="106" height="6" rx="2"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

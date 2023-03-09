@@ -1,0 +1,11 @@
+/* =============================================================================
+   ALL (generic/_all.scss)
+   ========================================================================== */
+
+/**
+ * Import all generic partials to one place for easier projects maintainance.
+ */
+
+@import 'box-sizing';
+@import 'normalize';
+@import 'reset';

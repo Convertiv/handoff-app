@@ -1,0 +1,108 @@
+/* =============================================================================
+   HAMBURGER-ICON (components/_hamburger-icon.scss)
+   ========================================================================== */
+
+/**
+ * 1. Regulate icon padding to increase / decrease click area.
+ */
+
+.c-hamburger-icon {
+	display: inline-block;
+	padding: $hamburger-icon-padding-y $hamburger-icon-padding-x; /* [1] */
+}
+
+
+
+/* Box
+   ========================================================================== */
+
+/**
+ * Box acts as a dummy in order to maintain icon width and height because all
+ * inner elements are positioned absolutly.
+ */
+
+.c-hamburger-icon__box {
+	display: block;
+	position: relative;
+	width: $hamburger-icon-layer-width;
+	height: ( $hamburger-icon-layer-height ) + ( $hamburger-icon-layer-spacing * 2 );
+}
+
+
+
+/* Inner
+   ========================================================================== */
+
+/**
+ * Inner element contains all `layers` we have in hamburger icon.
+ */
+
+.c-hamburger-icon__inner {
+	display: block;
+	top: 50%;
+	margin-top: math.div( $hamburger-icon-layer-height, 2 ) * -1;
+
+	&,
+	&::before,
+	&::after {
+		position: absolute;
+		width: $hamburger-icon-layer-width;
+		height: $hamburger-icon-layer-height;
+		background-color: $hamburger-icon-layer-color;
+		border-radius: $hamburger-icon-layer-border-radius;
+	}
+
+	&::before,
+	&::after {
+		content: '';
+		display: block;
+	}
+}
+
+
+
+/* Variants
+   ========================================================================== */
+
+/**
+ * Slider variant
+ */
+
+.c-hamburger-icon--slider {
+	.c-hamburger-icon__inner {
+		top: math.div( $hamburger-icon-layer-height, 2 );
+
+		&,
+		&::before,
+		&::after {
+			transition-property: transform, opacity;
+			transition-timing-function: ease;
+			transition-duration: .2s;
+		}
+
+		&::before {
+			top: $hamburger-icon-layer-height + $hamburger-icon-layer-spacing;
+		}
+
+		&::after {
+			top: ( $hamburger-icon-layer-height * 2 ) + ( $hamburger-icon-layer-spacing * 2 );
+		}
+	}
+
+	/* Active state */
+	&.is-active {
+		.c-hamburger-icon__inner {
+			$y-offset: $hamburger-icon-layer-spacing + $hamburger-icon-layer-height;
+			transform: translate3d( 0, $y-offset, 0 ) rotate( 45deg );
+
+			&::before {
+				opacity: 0;
+				transform: rotate( -45deg ) translate3d( math.div( $hamburger-icon-layer-width, -7 ), $hamburger-icon-layer-spacing * -1, 0 );
+			}
+
+			&::after {
+				transform: translate3d( 0, $y-offset * -2, 0 ) rotate( -90deg );
+			}
+		}
+	}
+}

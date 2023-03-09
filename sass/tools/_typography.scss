@@ -1,0 +1,19 @@
+/* =============================================================================
+   TYPOGRAPHY (tools/_typography.scss)
+   ========================================================================== */
+
+/*
+ * Output font-size value of $font-sizes map.
+ *
+ * `font-size()`:   Output base font-size (1rem).
+ * `font-size(h1)`: Output h1 font-size.
+ * `font-size(sm)`: Output small font-size.
+ */
+
+@function font-size($size:null) {
+	@if ($size != null) {
+		@return map-get($font-sizes, $size);
+	} @else {
+		@return map-get($font-sizes, base);
+	}
+}

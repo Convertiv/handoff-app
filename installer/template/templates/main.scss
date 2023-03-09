@@ -1,0 +1,11 @@
+// Load custom component map to overwrite
+// Order in which files are loaded doesn't matter (because of !default)
+@import '../sass/project/alerts';
+@import '../sass/project/buttons';
+@import '../sass/project/input';
+@import '../sass/project/tooltips';
+
+// Load Bootstrap variables
+// All bootstrap variables are marked with !default and will be ignored if declared previously
+@import 'bootstrap/scss/bootstrap';
+@import '../sass/project/buttons';

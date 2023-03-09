@@ -1,0 +1,112 @@
+/* =============================================================================
+   CHECKBOX (project/components/_checkbox.scss)
+   ========================================================================== */
+
+
+.form-check {
+	line-height: 1;
+}
+
+.form-check-input {
+	margin-top: calc( ( $form-check-min-height - $form-check-input-height ) / 2 );
+	box-shadow: $form-check-input-box-shadow;
+	transition: $form-check-transition;
+	background-size: $form-check-image-width;
+	cursor: $form-check-label-cursor;
+
+	&:focus {
+		background-color: $form-check-input-focus-bg-color;
+		border-color: $form-check-input-focus-border;
+		box-shadow: $form-check-input-focus-box-shadow;
+	}
+
+	&:hover,
+	.form-check:hover & {
+		background-color: $form-check-input-hover-bg-color;
+		border-color: $form-check-input-hover-border;
+		box-shadow: $form-check-input-hover-box-shadow;
+	}
+
+	&[ disabled ],
+	&:disabled,
+	&[ disabled ]:hover,
+	&:disabled:hover,
+	.form-check:hover &[ disabled ],
+	.form-check:hover &:disabled {
+		background-color: $form-check-input-disabled-bg-color;
+		border-color: $form-check-input-disabled-border;
+		box-shadow: $form-check-input-disabled-box-shadow;
+	}
+
+	&:checked {
+		background-color: $form-check-input-checked-bg-color;
+		border-color: $form-check-input-checked-border-color;
+		box-shadow: $form-check-input-checked-box-shadow;
+
+		&:focus {
+			background-color: $form-check-input-checked-focus-bg-color;
+			border-color: $form-check-input-checked-focus-border-color;
+			box-shadow: $form-check-input-checked-focus-box-shadow;
+		}
+
+		&:hover,
+		.form-check:hover & {
+			background-color: $form-check-input-checked-hover-bg-color;
+			border-color: $form-check-input-checked-hover-border-color;
+			box-shadow: $form-check-input-checked-hover-box-shadow;
+		}
+
+		&[ disabled ],
+		&:disabled,
+		&[ disabled ]:hover,
+		&:disabled:hover,
+		.form-check:hover &[ disabled ],
+		.form-check:hover &:disabled {
+			background-color: $form-check-input-checked-disabled-bg-color;
+			border-color: $form-check-input-checked-disabled-border-color;
+			box-shadow: $form-check-input-checked-disabled-box-shadow;
+		}
+	}
+}
+
+.form-check-label {
+	font-size: $form-check-label-font-size;
+	font-weight: $form-check-label-font-weight;
+	line-height: $form-check-label-line-height;
+	letter-spacing: $form-check-label-letter-spacing;
+	text-decoration: $form-check-label-text-decoration;
+	text-transform: $form-check-label-text-transform;
+	transition: $form-check-transition;
+
+	&:hover,
+	.form-check:hover & {
+		color: $form-check-label-hover-color;
+	}
+
+	[ disabled ] ~ &,
+	:disabled ~ &,
+	[ disabled ]:hover ~ &,
+	:disabled:hover ~ &,
+	.form-check:hover input[ disabled ] ~ &,
+	.form-check:hover input:disabled ~ & {
+		color: $form-check-label-disabled-color;
+	}
+
+	input:checked ~ & {
+		color: $form-check-label-checked-color;
+
+		&:hover,
+		.form-check:hover & {
+			color: $form-check-label-checked-hover-color;
+		}
+	}
+
+	input:checked[ disabled ] ~ &,
+	input:checked:disabled ~ &,
+	input:checked[ disabled ]:hover ~ &,
+	input:checked:disabled:hover ~ &,
+	.form-check:hover input:checked[ disabled ] ~ &,
+	.form-check:hover input:checked:disabled ~ & {
+		color: $form-check-label-checked-disabled-color;
+	}
+}

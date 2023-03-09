@@ -1,0 +1,81 @@
+/* =============================================================================
+   MOBILE NAV (components/_mobile-nav.scss)
+   ========================================================================== */
+
+.c-mobilenav {
+	width: 100%;
+	font-size: rem( 13px );
+	padding: rem( 96px ) rem( 18px );
+
+	@include media-breakpoint-up( lg ) {
+		display: none;
+	}
+
+	ul {
+		list-style: none;
+		padding-left: 0;
+	}
+
+	svg {
+		margin-right: rem( 15px );
+		opacity: .17;
+		width: rem( 16px );
+	}
+
+	.c-badge {
+		margin-left: rem( 15px );
+	}
+}
+
+.c-mobilenav__menu { // ul
+
+	& > li {
+		margin: rem( 3px ) 0 rem( 18px ) 0;
+
+		& > a {
+			color: #2c2c2c;
+			font-size: rem( 14px );
+			letter-spacing: rem( -.2px );
+			padding: rem( 8px ) rem( 5px );
+			font-weight: bold;
+			display: block;
+
+			&.is-selected {
+				text-decoration: underline;
+				text-decoration-thickness: 4px;
+				text-decoration-color: #e8eff0;
+			}
+		}
+	}
+}
+
+.c-mobilenav__submenu {
+	& > li {
+		margin-bottom: rem( 1px );
+		margin-left: rem( 8px );
+
+		a {
+			color: #545454;
+			display: block;
+			width: 100%;
+			border-radius: rem( 4px );
+			padding: rem( 8px ) rem( 8px );
+			border: 1px solid transparent;
+			position: relative;
+			font-size: rem( 12px );
+
+			&.is-selected {
+				background-color: #e8eff0;
+				color: #1f1f1f;
+				font-weight: 500;
+			}
+		}
+
+		small {
+			text-transform: uppercase;
+			padding: rem( 8px );
+			display: block;
+			color: #757575;
+		}
+	}
+}

@@ -1,0 +1,65 @@
+/* =============================================================================
+   TYPOGRAPHY (elements/_typography.scss)
+   ========================================================================== */
+
+h1 {
+	font-weight: normal;
+	line-height: 1.2;
+}
+
+h2 {
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+h3 {
+	font-weight: normal;
+}
+
+h4, h5 {
+	font-weight: normal;
+	margin-bottom: rem( 10px );
+}
+
+h5 {
+	margin-bottom: rem( 10px );
+}
+
+p {
+	font-size: rem( 16px );
+	line-height: 1.68;
+	color: #383b3e;
+	color: #757575;
+}
+
+ul {
+	padding-left: rem( 40px );
+}
+
+code {
+	font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: rem( 15px );
+}
+
+strong {
+	font-weight: 600;
+	color: #171717;
+}
+
+a > svg:last-child {
+	margin-left: rem( 10px );
+}
+
+blockquote {
+	font-size: rem( 26px );
+	font-style: italic;
+	font-weight: 200;
+	color: #757575;
+	line-height: 1.6;
+	letter-spacing: rem( -.4px );
+}
+
+hr {
+	color: #e3e3e3;
+	margin: rem( 50px ) 0;
+}

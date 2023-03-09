@@ -1,0 +1,17 @@
+/* =============================================================================
+   ALL (elements/_all.scss)
+   ========================================================================== */
+
+/**
+ * Import all elements partials to one place for easier projects maintainance.
+ */
+
+@import 'forms';
+@import 'headings';
+@import 'hr';
+@import 'images';
+@import 'links';
+@import 'media';
+@import 'page';
+@import 'tables';
+@import 'typography';

@@ -1,0 +1,22 @@
+/* =============================================================================
+   LIST (components/_list.scss)
+   ========================================================================== */
+
+.c-list {
+	&--boxed {
+		list-style: none;
+		padding: 0;
+
+		li {
+			background-color: #fff;
+			border-radius: rem( 3px );
+			margin-bottom: rem( 8px );
+			padding: rem( 8px ) rem( 16px );
+
+			svg {
+				max-width: rem( 10px );
+				margin-right: rem( 6px );
+			}
+		}
+	}
+}

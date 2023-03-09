@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="215px" height="170px" viewBox="0 0 215 170" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>:: icon@2x</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="203" height="158" rx="6"></rect>
+        <filter x="-4.7%" y="-5.4%" width="109.4%" height="112.0%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-371.000000, -2283.000000)">
+            <g id="::-tooltip" transform="translate(320.000000, 2217.000000)">
+                <g id="::-icon" transform="translate(57.000000, 71.000000)">
+                    <g id="background">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                        <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                    </g>
+                    <g transform="translate(14.000000, 14.000000)">
+                        <path d="M4,41 L51,41 C53.209139,41 55,42.790861 55,45 L55,119 C55,121.209139 53.209139,123 51,123 L4,123 C1.790861,123 2.705415e-16,121.209139 0,119 L0,45 C-2.705415e-16,42.790861 1.790861,41 4,41 Z" id="Rectangle" fill="#E8E8E8"></path>
+                        <path d="M71,41 L171,41 C173.209139,41 175,42.790861 175,45 L175,74 C175,76.209139 173.209139,78 171,78 L71,78 C68.790861,78 67,76.209139 67,74 L67,45 C67,42.790861 68.790861,41 71,41 Z" id="Rectangle" fill="#E8E8E8"></path>
+                        <path d="M71,86 L171,86 C173.209139,86 175,87.790861 175,90 L175,119 C175,121.209139 173.209139,123 171,123 L71,123 C68.790861,123 67,121.209139 67,119 L67,90 C67,87.790861 68.790861,86 71,86 Z" id="Rectangle" fill="#E8E8E8"></path>
+                        <g id="::-button">
+                            <path d="M4,0 L171,0 C173.209139,-4.05812251e-16 175,1.790861 175,4 L175,23 C175,25.209139 173.209139,27 171,27 L4,27 C1.790861,27 2.705415e-16,25.209139 0,23 L0,4 C-2.705415e-16,1.790861 1.790861,4.05812251e-16 4,0 Z" id="Rectangle" fill="#4574C7"></path>
+                            <polygon id="Path" fill="#FFFFFF" fill-rule="nonzero" transform="translate(160.449747, 13.813708) rotate(-45.000000) translate(-160.449747, -13.813708) " points="164.949747 14.5637085 161.199747 14.5637085 161.199747 18.3137085 159.699747 18.3137085 159.699747 14.5637085 155.949747 14.5637085 155.949747 13.0637085 159.699747 13.0637085 159.699747 9.3137085 161.199747 9.3137085 161.199747 13.0637085 164.949747 13.0637085"></polygon>
+                            <rect id="Rectangle" fill="#FFFFFF" x="12" y="12" width="100" height="3" rx="1.5"></rect>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

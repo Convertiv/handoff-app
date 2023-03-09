@@ -1,0 +1,63 @@
+/* =============================================================================
+   MAIN
+   ========================================================================== */
+
+/**
+ * This is main SCSS file. We import every partial into this file. Do not remove
+ * partials if you don't need them, comment them out instead.
+ */
+
+/* Charset
+   ========================================================================== */
+
+@charset "UTF-8";
+
+
+
+/* Charset
+   ========================================================================== */
+
+@use 'sass:math';
+
+
+/* Project Variables
+   ========================================================================== */
+
+$prefix: '';
+$enable-shadows: true;
+
+
+/* Partials
+   ========================================================================== */
+
+@import 'tools/all';
+@import 'settings/all';
+@import 'generic/all';
+@import 'elements/all';
+@import 'objects/all';
+@import 'project/buttons';
+@import 'project/checkbox';
+@import 'project/radio';
+@import 'project/switch';
+@import 'project/input';
+@import 'project/select';
+@import 'project/alerts';
+@import 'project/modal';
+@import 'project/pagination';
+@import 'project/tooltips';
+@import 'project/components/buttons';
+@import 'project/components/checkbox';
+@import 'project/components/radio';
+@import 'project/components/switch';
+@import 'project/components/input';
+@import 'project/components/select';
+@import 'project/components/alerts';
+@import 'project/components/modal';
+@import 'project/components/pagination';
+@import 'project/components/tooltips';
+@import '../exported/variables/buttons.scss';
+@import '../exported/variables/selects.scss';
+@import 'components/all';
+@import 'utilities/all';
+@import 'vendor/prism.scss';
+@import 'custom';

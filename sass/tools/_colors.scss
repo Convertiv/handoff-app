@@ -1,0 +1,46 @@
+/* =============================================================================
+   COLORS (tools/_colors.scss)
+   ========================================================================== */
+
+/*
+ * Output HEX value of $colors map.
+ *
+ * `color( primary )`:         Output default primary color.
+ * `color( primary, red )`:    Output red primary color.
+ * `color( secondary, blue )`: Output blue secondary color.
+ * `color( status, warning )`: Output warning status color.
+ */
+
+@function color( $color-priority, $color-name:null ) {
+	@if ( $color-name != null ) {
+		@return map-get( map-get( $colors, $color-priority ), $color-name );
+	} @else {
+		@return map-get( map-get( $colors, $color-priority ), default );
+	}
+}
+
+/*
+ * Output darken HEX value of $colors map.
+ *
+ * `color-darken( secondary )`:       Output default secondary color darker for
+ *                                    $color-shade-percentage value.
+ * `color-darken( secondary, blue )`: Output blue secondary color darker for
+ *                                    $color-shade-percentage value.
+ */
+
+@function color-darken( $color-priority, $color-name:null ) {
+	@return darken( color( $color-priority, $color-name ), $color-shade-percentage );
+}
+
+/*
+ * Output lighter HEX value of $colors map.
+ *
+ * `color-lighten( secondary )`:       Output default secondary color lighter for
+ *                                     $color-shade-percentage value.
+ * `color-lighten( secondary, blue )`: Output blue secondary color lighter for
+ *                                     $color-shade-percentage value.
+ */
+
+@function color-lighten( $color-priority, $color-name:null ) {
+	@return lighten( color( $color-priority, $color-name ), $color-shade-percentage );
+}

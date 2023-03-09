@@ -1,0 +1,121 @@
+/* =============================================================================
+   TYPOGRAPHY (utilities/_typography.scss)
+   ========================================================================== */
+
+/* stylelint-disable declaration-no-important */
+
+/* Text Color
+   ========================================================================== */
+
+/**
+ * Utilities for controlling the text color of an element.
+ */
+
+@each $color-priority, $color-priority-colors in $colors {
+	@each $color-name, $color-value in $color-priority-colors {
+		$selector-suffix: $color-priority;
+
+		@if ( $color-name != default ) {
+			$selector-suffix: $color-priority + '-' + $color-name;
+		}
+
+		@if ( $color-priority == extra ) {
+			$selector-suffix: $color-name;
+		}
+
+		.u-text-#{'' + $selector-suffix} {
+			color: color( $color-priority, $color-name ) !important;
+		}
+	}
+}
+
+
+
+/* Font Size
+   ========================================================================== */
+
+/**
+ * Utilities for controlling the font size of an element.
+ */
+
+/**
+ * Redefine all of our basic heading styles against utility classes so as to
+ * allow for double stranded heading hierarchy, e.g. we semantically need an H2,
+ * but we want it to be sized like an H1.
+ */
+
+@each $font-size-name, $font-size-value in $font-sizes-headings {
+	.u-#{$font-size-name} {
+		font-size: $font-size-value !important;
+	}
+}
+
+/**
+ * Font size classes generated from `$font-sizes-other` map.
+ */
+
+@each $font-size-name, $font-size-value in $font-sizes-other {
+	.u-text-#{$font-size-name} {
+		font-size: $font-size-value !important;
+	}
+}
+
+
+
+/* Text Alignment
+   ========================================================================== */
+
+/**
+ * Utilities for controlling the alignment of text.
+ */
+
+@each $breakpoint-key, $breakpoint-value in $breakpoints {
+	@if $breakpoint-key == xs {
+		.u-text-center {
+			text-align: center !important;
+		}
+
+		.u-text-left {
+			text-align: left !important;
+		}
+
+		.u-text-right {
+			text-align: right !important;
+		}
+	} @else {
+		@include media-breakpoint-up( #{$breakpoint-key} ) {
+			.u-text-center\@#{$breakpoint-key} {
+				text-align: center !important;
+			}
+
+			.u-text-left\@#{$breakpoint-key} {
+				text-align: left !important;
+			}
+
+			.u-text-right\@#{$breakpoint-key} {
+				text-align: right !important;
+			}
+		}
+	}
+}
+
+
+
+/* Style and Decoration
+   ========================================================================== */
+
+/**
+ * Utilities for controlling the style of text.
+ */
+
+.u-italic {
+	font-style: italic !important;
+}
+
+.u-roman {
+	font-style: normal !important;
+}
+
+.u-uppercase {
+	text-transform: uppercase !important;
+}

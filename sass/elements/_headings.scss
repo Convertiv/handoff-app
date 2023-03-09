@@ -1,0 +1,14 @@
+/* =============================================================================
+   HEADINGS (elements/_headings.scss)
+   ========================================================================== */
+
+/**
+ * Simple default styles for headings 1 through 6. Anything more opinionated
+ * than simple font-size changes should likely be applied via utility classes.
+ */
+
+@each $font-size-name, $font-size-value in $font-sizes-headings {
+	#{$font-size-name} {
+		font-size: $font-size-value;
+	}
+}

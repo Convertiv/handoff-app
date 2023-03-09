@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="37px" height="17px" viewBox="0 0 37 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Rectangle 3@2x</title>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-299.000000, -342.000000)" fill="#000000" fill-rule="nonzero">
+            <path d="M332,342 L303,342 C300.790861,342 299,343.790861 299,346 L299,355 C299,357.209139 300.790861,359 303,359 L332,359 C334.209139,359 336,357.209139 336,355 L336,346 C336,343.790861 334.209139,342 332,342 Z M303,344 L332,344 C333.104569,344 334,344.895431 334,346 L334,355 C334,356.104569 333.104569,357 332,357 L303,357 C301.895431,357 301,356.104569 301,355 L301,346 C301,344.895431 301.895431,344 303,344 Z M310,349.5 L325,349.5 L325,351.5 L310,351.5 L310,349.5 Z" id="Rectangle-3"></path>
+        </g>
+    </g>
+</svg>

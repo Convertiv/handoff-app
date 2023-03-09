@@ -1,0 +1,254 @@
+/**
+ * prism.js default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+
+code[ class*='language-' ],
+pre[ class*='language-' ] {
+	color: #000;
+	background: none;
+	text-shadow: 0 1px #fff;
+	font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: .875rem;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	margin-bottom: 30px;
+	margin-top: 30px;
+	padding-left: 35px;
+}
+
+pre[ class*='language-' ]::-moz-selection,
+pre[ class*='language-' ] ::-moz-selection,
+code[ class*='language-' ]::-moz-selection,
+code[ class*='language-' ] ::-moz-selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+pre[ class*='language-' ]::selection,
+pre[ class*='language-' ] ::selection,
+code[ class*='language-' ]::selection,
+code[ class*='language-' ] ::selection {
+	text-shadow: none;
+	background: #b3d4fc;
+}
+
+@media print {
+	code[ class*='language-' ],
+	pre[ class*='language-' ] {
+		text-shadow: none;
+	}
+}
+
+/* Code blocks */
+pre[ class*='language-' ] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+}
+
+:not( pre ) > code[ class*='language-' ],
+pre[ class*='language-' ] {
+	background: #f5f2f0;
+}
+
+/* Inline code */
+:not( pre ) > code[ class*='language-' ] {
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #708090;
+}
+
+.token.punctuation {
+	color: #999;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #905;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #690;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+	color: #9a6e3a;
+	/* This background color was intended by the author of this theme. */
+	background: hsla( 0, 0%, 100%, .5 );
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+	color: #07a;
+}
+
+.token.function,
+.token.class-name {
+	color: #dd4a68;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+	color: #e90;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+
+/**
+ * Github-like theme for Prism.js
+ */
+code[ class*='language-' ],
+pre[ class*='language-' ] {
+	color: #333;
+	text-align: left;
+	/* stylelint-disable-next-line declaration-no-important */
+	white-space: pre !important;
+	word-spacing: normal;
+	tab-size: 4;
+	hyphens: none;
+	font-family: 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
+	line-height: 1.6;
+	direction: ltr;
+	cursor: text;
+	display: block;
+}
+
+pre[ class*='language-' ] {
+	overflow: auto;
+	margin: 1em 0;
+	padding: 1.2em;
+	border-radius: 3px;
+	font-size: 85%;
+}
+
+p code,
+li code,
+table code {
+	margin: 0;
+	border-radius: 4px;
+	padding: 5px 0 1px 0;
+	color: #333;
+}
+
+p code::before,
+p code::after,
+li code::before,
+li code::after,
+table code::before,
+table code::after {
+	letter-spacing: -.2em;
+	content: '\00a0';
+}
+
+code,
+:not( pre ) > code[ class*='language-' ],
+pre[ class*='language-' ] {
+	/* stylelint-disable-next-line declaration-no-important */
+	background: #fbfbfb !important;
+	padding-top: rem( 16px );
+	padding-bottom: rem( 16px );
+	overflow-x: auto;
+	line-height: 1.4;
+}
+
+:not( pre ) > code[ class*='language-' ] {
+	border-radius: .3em;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #969896;
+}
+
+.token.punctuation,
+.token.string,
+.token.atrule,
+.token.attr-value {
+	color: #183691;
+}
+
+.token.property,
+.token.tag {
+	color: #63a35c;
+}
+
+.token.boolean,
+.token.number {
+	color: #0086b3;
+}
+
+.token.selector,
+.token.attr-name,
+.token.attr-value .punctuation:first-child,
+.token.keyword,
+.token.regex,
+.token.important {
+	color: #795da3;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string {
+	color: #a71d5d;
+}
+
+.token.entity {
+	cursor: help;
+}
+
+.namespace {
+	opacity: .7;
+}

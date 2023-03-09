@@ -1,0 +1,91 @@
+/* =============================================================================
+   BUTTONS (components/_buttons.scss)
+   ========================================================================== */
+
+.c-button {
+	display: inline-block;
+	text-align: center;
+	cursor: pointer;
+	border-radius: rem( 4px );
+	padding: rem( 15px ) rem( 10px );
+	font-size: rem( 12px );
+	font-weight: 600;
+	text-transform: uppercase;
+
+	svg {
+		width: rem( 16px );
+		height: rem( 16px );
+	}
+}
+
+
+/* Variants
+   ========================================================================== */
+
+/**
+ * Variation with primary background color.
+ */
+
+.c-button--primary {
+	background-color: #1462ff;
+	box-shadow: 0 6px 30px -13px #4a74c9;
+	color: #fff;
+	transition: background-color .2s ease-in-out;
+
+	&:hover,
+	&:focus,
+	&:active {
+		background-color: #104fcd;
+	}
+}
+
+/**
+ * Variation with secondary background color.
+ */
+
+.c-button--secondary {
+	background-color: color( secondary );
+	transition: background-color $buttons-transition-speed;
+
+	&:hover,
+	&:focus,
+	&:active {
+		background-color: color-darken( secondary );
+	}
+}
+
+.c-button--transparent {
+	border: 1px solid #333;
+	color: #333;
+
+	&:hover,
+	&:focus,
+	&:active {
+		border-color: #1462ff;
+		color: #1462ff;
+	}
+}
+
+/**
+ * Full width variation.
+ */
+
+.c-button--full {
+	display: block;
+	width: 100%;
+}
+
+.c-button--small {
+	padding: rem( 10px ) rem( 10px );
+	font-size: rem( 12px );
+	margin-bottom: rem( 12px );
+}
+
+/**
+ * Styles that apply on `disabled` buttons.
+ */
+
+.c-button[ disabled ],
+.c-button--disabled {
+	cursor: auto;
+}

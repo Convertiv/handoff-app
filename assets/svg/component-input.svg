@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="205px" height="120px" viewBox="0 0 205 120" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>component-tooltip</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="component-tooltip" transform="translate(1.000000, 0.000000)">
+            <g id="::-input" transform="translate(0.000000, 70.000000)">
+                <g id="background" transform="translate(0.000000, 14.000000)">
+                    <g id="path-1-link" fill="#000000" fill-rule="nonzero">
+                        <rect id="path-1" x="0" y="0" width="203" height="35" rx="3"></rect>
+                    </g>
+                    <g id="path-1-link" fill="#FFFFFF" stroke="#E2E2E2">
+                        <rect id="path-1" x="0" y="0" width="203" height="35" rx="3"></rect>
+                    </g>
+                </g>
+                <rect id="text" fill="#D8D8D8" fill-rule="nonzero" x="1" y="0" width="76" height="6" rx="2"></rect>
+            </g>
+            <g id="::-input">
+                <g id="background" transform="translate(0.000000, 14.000000)">
+                    <g id="path-3-link" fill="#000000" fill-rule="nonzero">
+                        <rect id="path-3" x="0" y="0" width="203" height="35" rx="3"></rect>
+                    </g>
+                    <g id="path-3-link" fill="#FFFFFF" stroke="#AFAFAF">
+                        <rect id="path-3" x="0" y="0" width="203" height="35" rx="3"></rect>
+                    </g>
+                </g>
+                <rect id="text" fill="#4574C7" fill-rule="nonzero" x="1" y="0" width="76" height="6" rx="2"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,105 @@
+/* =============================================================================
+   HERO (components/_hero.scss)
+   ========================================================================== */
+
+.c-hero {
+	animation: rollout .25s ease-in-out;
+	display: flex;
+	align-items: center;
+	margin-bottom: rem( 60px );
+	padding: 0 0 rem( 70px ) 0;
+	margin-top: rem( 20px );
+	justify-content: space-between;
+	border-bottom: 1px solid #e3e3e3;
+	position: relative;
+
+	@include media-breakpoint-down( sm ) {
+		flex-direction: column;
+		align-items: flex-start;
+
+		& > div {
+			order: 2;
+		}
+	}
+
+	@include media-breakpoint-up( md ) {
+		margin-top: rem( 50px );
+	}
+
+	h1 {
+		margin-bottom: rem( 15px );
+		color: #333;
+		letter-spacing: rem( -.05rem );
+
+		&.c-text-monospace {
+			font-size: rem( 24px );
+		}
+	}
+
+	p {
+		margin-bottom: 0;
+		color: #757575;
+	}
+
+	&--boxed {
+		padding: rem( 50px ) rem( 75px );
+		color: #4c4c4c;
+		border-radius: rem( 8px );
+		border-bottom: none;
+	}
+
+	&--bg-blue {
+		background-color: #f0f7f9;
+	}
+
+	&--bg-yellow {
+		background-color: #f8f9e3;
+	}
+
+	&--bg-red {
+		background-color: #fdefef;
+	}
+
+	.c-tabs {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+	}
+
+	.c-tabs__item {
+		font-size: rem( 12px );
+		cursor: pointer;
+		background-color: transparent;
+		padding: rem( 10px ) rem( 12px );
+		color: #757575;
+		margin: 0 rem( 10px ) rem( -3px ) 0;
+
+		&.is-selected {
+			border-bottom: rem( 3px ) solid #2670a9;
+		}
+	}
+}
+
+.c-hero__img {
+	height: 100%;
+	width: 100%;
+	max-width: rem( 220px );
+	max-height: rem( 130px );
+	margin-left: 5%;
+
+	@include media-breakpoint-down( sm ) {
+		order: 1;
+		margin-left: 0;
+		margin-bottom: rem( 20px );
+	}
+
+	&--small {
+		max-width: rem( 130px );
+	}
+}
+
+.c-hero__meta {
+	small {
+		margin-left: rem( 20px );
+	}
+}

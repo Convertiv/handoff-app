@@ -1,0 +1,32 @@
+/* =============================================================================
+   NOTIFICATION (components/_notification.scss)
+   ========================================================================== */
+
+.c-notification {
+	background-color: #e1f5ff;
+	width: 100%;
+	border-radius: rem( 3px );
+	font-size: rem( 15px );
+	padding: rem( 20px ) rem( 30px );
+	color: #206986;
+	margin: rem( 30px ) 0;
+
+	&--success {
+		background-color: #dcf7e6;
+		color: #228e4b;
+	}
+
+	&--danger {
+		background-color: #fcede9;
+		color: #b51c1c;
+	}
+
+	&--warning {
+		background-color: #fff9ea;
+		color: #8a6818;
+	}
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}

@@ -1,0 +1,54 @@
+name: Deploy to production
+
+on:
+  # Trigger on Push
+  # push:
+  #   branches: [main]
+  # # Trigger twice a day on schedule
+  # schedule:
+  #   # * is a special character in YAML so you have to quote this string
+  #   - cron:  '30 */12 * * *'
+  # # Manual Trigger
+  workflow_run:
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_OUTPUT: json
+      FIGMA_PROJECT_ID: ${{ secrets.FIGMA_PROJECT_ID }}
+      DEV_ACCESS_TOKEN: ${{ secrets.DEV_ACCESS_TOKEN }}
+      AWS_CLOUDFRONT_DIST_ID: ${{ secrets.AWS_DISTRIBUTION }}
+      AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Set Git Defaults
+        run: |
+          git config --global user.email "ops@convertiv.com"
+          git config --global user.name "Convertiv Development"
+      - name: Fetch from figma
+        run: |
+          npm install --legacy-peer-deps
+          npm run fetch
+          git commit -a -m "[skip ci] updating changelog with latest figma changes"
+          git push
+      - name: Build static site
+        run: |
+          npm run build
+      - name: Deploy to S3 Bucket
+        run: |
+          aws s3 sync --delete dist/ s3://${{env.AWS_S3_BUCKET}}/
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION }} --paths /\*
+        

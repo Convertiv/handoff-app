@@ -1,0 +1,27 @@
+/* =============================================================================
+   PAGINATION (project/_pagination.scss)
+   ========================================================================== */
+
+
+$pagination-bg: #fff;
+$pagination-padding-y: 6px;
+$pagination-padding-x: 12px;
+$pagination-margin-y: 3px;
+$pagination-font-size: 12px;
+$pagination-border-radius: 4px;
+$pagination-border-color: #dedede;
+$pagination-border-width: 0;
+
+$pagination-hover-color: #fff;
+$pagination-hover-bg: #0073e6;
+$pagination-hover-border-color: #0073e6;
+
+$pagination-active-color: #fff;
+$pagination-active-bg: #0073e6;
+$pagination-active-border-color: #0073e6;
+
+$pagination-disabled-color: #9c9c9c;
+$pagination-disabled-bg: #eee;
+$pagination-disabled-border-color: #dedede;
+
+$pagination-transition: all .15s ease-in-out;

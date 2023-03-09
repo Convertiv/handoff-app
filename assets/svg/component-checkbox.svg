@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="175px" height="139px" viewBox="0 0 175 139" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>:: icon@2x</title>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-769.000000, -1408.000000)">
+            <g id="::-radio" transform="translate(697.000000, 1330.000000)">
+                <g id="::-icon" transform="translate(72.000000, 78.000000)">
+                    <g id="::-check" transform="translate(0.000000, 119.000000)">
+                        <g id="check" stroke="#D8D8D8" stroke-width="2">
+                            <rect id="Rectangle" x="1" y="0" width="18" height="18" rx="6.5"></rect>
+                        </g>
+                        <rect id="text" fill="#D8D8D8" x="40" y="1" width="50" height="6" rx="2"></rect>
+                        <rect id="text" fill="#D8D8D8" x="40" y="12" width="135" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-check" transform="translate(1.000000, 40.000000)">
+                        <g id="check" stroke="#4574C7" stroke-width="2">
+                            <rect id="Rectangle" x="0" y="0" width="18" height="18" rx="6.5"></rect>
+                            <polyline id="Path" stroke-linecap="round" stroke-linejoin="round" points="13 7 8.1875 12 6 9.72727273"></polyline>
+                        </g>
+                        <rect id="text" fill="#4574C7" x="39" y="1" width="59" height="6" rx="2"></rect>
+                        <rect id="text" fill="#4574C7" x="39" y="12" width="104" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-check" transform="translate(0.000000, 79.000000)">
+                        <g id="check" stroke="#D8D8D8" stroke-width="2">
+                            <rect id="Rectangle" x="1" y="0" width="18" height="18" rx="6.5"></rect>
+                        </g>
+                        <rect id="text" fill="#D8D8D8" x="40" y="1" width="50" height="6" rx="2"></rect>
+                        <rect id="text" fill="#D8D8D8" x="40" y="12" width="135" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-check">
+                        <g id="check" stroke="#D8D8D8" stroke-width="2">
+                            <rect id="Rectangle" x="1" y="1" width="18" height="18" rx="6.5"></rect>
+                        </g>
+                        <rect id="text" fill="#D8D8D8" x="40" y="2" width="50" height="6" rx="2"></rect>
+                        <rect id="text" fill="#D8D8D8" x="40" y="13" width="135" height="6" rx="2"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

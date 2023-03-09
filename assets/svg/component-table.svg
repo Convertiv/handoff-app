@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="215px" height="170px" viewBox="0 0 215 170" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group 4@2x</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="203" height="158" rx="3"></rect>
+        <filter x="-4.7%" y="-5.4%" width="109.4%" height="112.0%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.052075366 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.0-UI-Components" transform="translate(-1125.000000, -952.000000)">
+            <g id="::-table" transform="translate(1074.000000, 886.000000)">
+                <g id="Group-4" transform="translate(57.000000, 71.000000)">
+                    <g id="background">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                        <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                    </g>
+                    <g id="::-list" transform="translate(9.000000, 22.000000)" fill="#E8E8E8">
+                        <rect id="Rectangle" x="12" y="22" width="161" height="1"></rect>
+                        <rect id="Rectangle" x="52" y="0" width="1" height="109"></rect>
+                        <rect id="text" x="129" y="101" width="40" height="6" rx="2"></rect>
+                        <rect id="text" x="129" y="80" width="35" height="6" rx="2"></rect>
+                        <rect id="text" x="129" y="59" width="39" height="6" rx="2"></rect>
+                        <rect id="text" x="129" y="38" width="36" height="6" rx="2"></rect>
+                        <rect id="text" x="70" y="101" width="45" height="6" rx="2"></rect>
+                        <rect id="text" x="70" y="80" width="39.375" height="6" rx="2"></rect>
+                        <rect id="text" x="70" y="59" width="43.875" height="6" rx="2"></rect>
+                        <rect id="text" x="70" y="38" width="40.5" height="6" rx="2"></rect>
+                        <rect id="text" x="12" y="101" width="25" height="6" rx="2"></rect>
+                        <rect id="text" x="12" y="80" width="25" height="6" rx="2"></rect>
+                        <rect id="text" x="12" y="59" width="25" height="6" rx="2"></rect>
+                        <rect id="text" x="12" y="38" width="25" height="6" rx="2"></rect>
+                    </g>
+                    <g id="::-dropdown" transform="translate(3.000000, 6.000000)" fill="#4574C7">
+                        <rect id="Rectangle" x="135" y="17" width="40" height="6" rx="2"></rect>
+                        <rect id="Rectangle" x="75" y="17" width="40" height="6" rx="2"></rect>
+                        <rect id="Rectangle" x="18" y="17" width="24" height="6" rx="2"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,55 @@
+/* =============================================================================
+   CODE BLOCK (components/_code-block.scss)
+   ========================================================================== */
+
+.c-code-block {
+	position: relative;
+
+	& &__button {
+		position: absolute;
+		top: rem( 10px );
+		right: rem( 12px );
+		font-size: rem( 12px );
+		color: #d1d1d1;
+		border-radius: rem( 4px );
+		padding: rem( 4px ) rem( 6px );
+
+		&:hover {
+			color: #333;
+			background-color: #eee;
+		}
+
+		svg {
+			margin: 0;
+		}
+
+		&.c-tooltip,
+		[ data-tooltip ] {
+			&::before {
+				bottom: rem( 29px );
+			}
+
+			&::after {
+				bottom: rem( 25px );
+			}
+		}
+	}
+
+	code,
+	:not( pre ) > code[ class*='language-' ],
+	pre[ class*='language-' ] {
+		margin-top: 0 !important;
+		border-radius: 0 0 rem( 6px ) rem( 6px ) !important;
+		border-top: 1px solid #e3e3e3;
+	}
+
+	small {
+		position: absolute;
+		top: rem( 16px );
+		left: rem( 32px );
+		font-size: rem( 10px );
+		color: #adadad;
+	}
+}
+
+

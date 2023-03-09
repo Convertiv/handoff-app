@@ -1,0 +1,11 @@
+/* =============================================================================
+   ALL (objects/_all.scss)
+   ========================================================================== */
+
+/**
+ * Import all objects partials to one place for easier projects maintainance.
+ */
+
+@import 'grid';
+@import 'icon';
+@import 'list';

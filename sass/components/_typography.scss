@@ -1,0 +1,94 @@
+/* =============================================================================
+   TYPOGRAPHY (components/_typography.scss)
+   ========================================================================== */
+
+.c-text-small {
+	font-size: rem( 14px );
+}
+
+.c-text-monospace {
+	font-family: 'Consolas', 'Courier', monospace;
+}
+
+/* Preview of all type characters */
+.c-typography__preview-big {
+	padding: rem( 50px );
+	background-color: #f3f3f3;
+	border-radius: rem( 10px );
+	margin-bottom: rem( 50px );
+
+	h3 {
+		letter-spacing: rem( 1px );
+		color: #b7b7b7;
+		font-size: rem( 12px );
+		word-break: break-all;
+		margin-bottom: rem( 5px );
+	}
+
+	p {
+		color: #757575;
+		font-size: rem( 14px );
+		margin-bottom: rem( 3px );
+	}
+
+	hr {
+		color: #e8e8e8;
+		margin: rem( 20px ) 0;
+	}
+}
+
+/* Preview of all type weights */
+.c-typography__preview-weight {
+	background-color: #fff;
+	border-radius: rem( 7px );
+	box-shadow: rem( 0 ) rem( 4px ) rem( 8px ) rgb( 0, 0, 0, .07 );
+	padding: rem( 15px ) rem( 40px );
+	margin: 0 rem( 25px ) rem( 30px ) 0;
+	text-align: center;
+
+	h2 {
+		margin-bottom: 0;
+	}
+}
+
+/* Preview of all typographic elements */
+.c-typography__preview {
+	padding: rem( 50px ) 0;
+	border-bottom: 1px solid #e3e3e3;
+
+	h6 {
+		/* Anchor link for each heading */
+		a {
+			visibility: hidden;
+			opacity: 0;
+			margin-left: rem( 10px );
+			background-color: #f5f5f5;
+			border-radius: rem( 4px );
+			padding: rem( 5px );
+			color: #333;
+
+			svg {
+				width: rem( 14px );
+			}
+		}
+	}
+
+	p {
+		color: #757575;
+		font-size: rem( 14px );
+		margin-bottom: rem( 3px );
+	}
+
+	&:hover {
+		h6 a {
+			visibility: visible;
+			opacity: 1;
+			transition: all .2s ease-in-out;
+		}
+	}
+
+	&:first-child {
+		border-top: 1px solid #e3e3e3;
+		margin-top: rem( 30px );
+	}
+}

@@ -1,0 +1,75 @@
+/* =============================================================================
+   BACKGROUNDS (utilities/_backgrounds.scss)
+   ========================================================================== */
+
+/* stylelint-disable declaration-no-important */
+
+/* Background Color
+   ========================================================================== */
+
+/**
+ * Utilities for controlling an element's background color.
+ */
+
+@each $color-priority, $color-priority-colors in $colors {
+	@each $color-name, $color-value in $color-priority-colors {
+		$selector-suffix: $color-priority;
+
+		@if ( $color-name != default ) {
+			$selector-suffix: $color-priority + '-' + $color-name;
+		}
+
+		@if ( $color-priority == extra ) {
+			$selector-suffix: $color-name;
+		}
+
+		.u-bg-#{'' + $selector-suffix} {
+			background-color: color( $color-priority, $color-name ) !important;
+		}
+	}
+}
+
+
+
+/* Background Position
+   ========================================================================== */
+
+/**
+ * Utilities for controlling the position of an element's background image.
+ */
+
+.u-bg-top {
+	background-position: top !important;
+}
+
+.u-bg-bottom {
+	background-position: bottom !important;
+}
+
+.u-bg-center {
+	background-position: center !important;
+}
+
+.u-bg-left {
+	background-position: left !important;
+}
+
+.u-bg-left-bottom {
+	background-position: left bottom !important;
+}
+
+.u-bg-left-top {
+	background-position: left top !important;
+}
+
+.u-bg-right {
+	background-position: right !important;
+}
+
+.u-bg-right-bottom {
+	background-position: right bottom !important;
+}
+
+.u-bg-right-top {
+	background-position: right top !important;
+}

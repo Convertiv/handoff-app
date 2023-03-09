@@ -1,0 +1,22 @@
+/* =============================================================================
+   ICON (objects/_icon.scss)
+   ========================================================================== */
+
+/**
+ * 1. Flow with text content.
+ * 2. Vertically align icon with adjacent text.
+ * 3. Use the parent `font-size` for width and height.
+ * 4. Align more nicely with capital letters.
+ * 5. Fix `event.target` issue:
+ *    https://www.smashingmagazine.com/2018/05/svg-interaction-pointer-events-property/
+ */
+
+.o-icon {
+	display: inline-block; /* [1] */
+	vertical-align: middle; /* [2] */
+	height: 1em; /* [3] */
+	width: 1em; /* [3] */
+	position: relative; /* [4] */
+	top: -.0625em; /* [4] */
+	pointer-events: none; /* [5] */
+}
