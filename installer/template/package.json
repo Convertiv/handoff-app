@@ -33,7 +33,7 @@
     },
     "homepage": "https://bitbucket.org/convertiv-dev/foundations-documentation#readme",
     "dependencies": {
-      "handoff-app": "0.8.*"
+      "handoff-app": "^0.1.0"
     }
   }
   
