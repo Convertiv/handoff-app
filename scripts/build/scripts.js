@@ -194,7 +194,7 @@ const moveExportedZipFilesToPublicDir = async () => {
  */
 const installNpmDependencies = async () => {
   // Install npm dependencies in tmpDir
-  await spawnPromise('npm', ['install', '--omit=dev'], {
+  await spawnPromise('npm', ['install'], {
     cwd: tmpDir,
     env: process.env,
     stdio: 'inherit',

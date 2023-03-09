@@ -41,7 +41,7 @@
     "prepack": "npm run build:lib && npm run build:svg-sprite",
     "release": "np --any-branch",
     "test": "npm run lint",
-    "postinstall": "cd figma-exporter && npm install"
+    "postinstall": "cd figma-exporter && npm install --omit=dev"
   },
   "prettier": {
     "printWidth": 140,
