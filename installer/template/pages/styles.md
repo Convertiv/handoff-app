@@ -8,31 +8,11 @@ enabled: true
 menu: 
   - path: false
     title: Standards
-  - path: styles/standards
-    title: Code Standards
-    image: false
   - path: styles/accessability
     title: Accessability Standards
     image: false
 ---
 
-## Handoff Style Guide
-This a sample of how a markdown file can be added and will construct navagiation
-in a site.  This file can include anything allowed in normal markdown.
-
-### Title field
-* List 1
-* List 2
-* List 3
-
-You can also include code blocks. 
-```
-<html>
-  <head>
-    <title>Hello World</title>
-  </head>
-  <body>
-    <h1> Hello World </h1>
-  </body>
-</html>
-```
+Handoff supports fully custom pages.  This is a sample markdown page where you 
+could put a style guide or other content.  You can remove this page by deleting
+this file from your project
