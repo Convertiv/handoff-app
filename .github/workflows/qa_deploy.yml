@@ -34,6 +34,7 @@ jobs:
       - name: Fetch from figma
         run: |
           npm install --legacy-peer-deps
+          npm run install:lib
           npm run build:lib
           npm run build:svg-sprite
           npm run fetch
