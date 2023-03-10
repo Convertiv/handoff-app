@@ -34,12 +34,14 @@ jobs:
       - name: Fetch from figma
         run: |
           npm install --legacy-peer-deps
+          npm run build:lib
+          npm run build:svg-sprite
           npm run fetch
       - name: Build static site
         run: |
-          npm run build
+          npm run build:static
       - name: Deploy to S3 Bucket
         run: |
-          aws s3 sync --delete dist/ s3://${{env.AWS_S3_BUCKET}}/
+          aws s3 sync --delete out/ s3://${{env.AWS_S3_BUCKET}}/
           aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION }} --paths /\*
         
