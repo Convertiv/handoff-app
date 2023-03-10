@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2023-03-10
+
+### Bug
+
+- CONVHAND-196 Installer is missing a package json script
+
+### Changes
+
+- CONVHAND-194 Iconography link on Branded Assets page is incorrect & broken
+- CONVHAND-195 Style Guide - has typo & still has a "TODO" mentioned in copy
+
 ## [0.1.4] - 2023-03-09
 
 ### Bugfixes
