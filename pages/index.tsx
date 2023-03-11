@@ -12,7 +12,7 @@ import components from 'assets/images/components.png';
 import Head from 'next/head';
 import Header from 'components/Header';
 import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
-import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {

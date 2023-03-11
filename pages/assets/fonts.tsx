@@ -10,7 +10,7 @@ import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu 
 import Header from 'components/Header';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
-import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();

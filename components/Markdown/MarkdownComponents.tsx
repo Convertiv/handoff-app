@@ -14,13 +14,7 @@ SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('markdown', markdown);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('html', html);
-/**
- * Build resolver props
- */
-export type HeadingResolverProps = {
-  level: number;
-  children: JSX.Element[];
-};
+
 /**
  * Custom renderer type that we support
  */
@@ -34,6 +28,11 @@ export type CustomRenderers = {
   h6: (props: HeadingProps) => ReactElement;
 };
 
+/**
+ * Build the headers in markdown
+ * @param param0
+ * @returns
+ */
 const Headings = ({ level, children }: HeadingProps) => {
   // Access actual (string) value of heading
   if (children[0]) {

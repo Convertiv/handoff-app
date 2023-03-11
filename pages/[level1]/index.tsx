@@ -1,7 +1,7 @@
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams } from 'components/util';
-import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import { getConfig } from 'config';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
