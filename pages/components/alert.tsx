@@ -1,6 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import startCase from 'lodash/startCase';
 import IframeResizer from 'iframe-resizer-react';
 import { getConfig, getPreview } from 'config';
@@ -8,7 +7,6 @@ import Icon from 'components/Icon';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import type { AlertDesignComponent, AlertLayoutComponent } from 'figma-exporter/src/exporters/components/component_sets/alert';
 import { transformAlertComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/alert';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import Head from 'next/head';
@@ -17,14 +15,8 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
 
 const AlertDisplay: React.FC<{ alert: PreviewObject | undefined }> = ({ alert }) => {
   return (
@@ -39,19 +31,6 @@ const AlertDisplay: React.FC<{ alert: PreviewObject | undefined }> = ({ alert })
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ alert: PreviewObject | undefined }> = ({ alert }) => {
-  if (alert) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(alert) }} />
-        <CopyCode code={alert.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const layout_sort = ['horizontal', 'vertical'];
@@ -87,8 +66,7 @@ const alerts = {
 
       return {
         ...alert,
-        preview,
-        codeHighlight: buildHighlightComponent(preview),
+        preview
       };
     }),
 };
@@ -150,7 +128,7 @@ const AlertPage = ({ content, menu, metadata, current }: util.DocumentationProps
                       <div className="c-component-preview">
                         <AlertDisplay alert={alert.preview} />
                       </div>
-                      <CodeHighlight alert={alert.preview} />
+                      <CodeHighlight data={alert.preview} />
                       <hr />
                     </div>
                   ))}
@@ -161,7 +139,7 @@ const AlertPage = ({ content, menu, metadata, current }: util.DocumentationProps
                       <div className="c-component-preview">
                         <AlertDisplay alert={alert.preview} />
                       </div>
-                      <CodeHighlight alert={alert.preview} />
+                      <CodeHighlight data={alert.preview} />
                       <hr />
                     </div>
                   ))}

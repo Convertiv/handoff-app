@@ -1,6 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
 import { getConfig, getPreview } from 'config';
 import Icon from 'components/Icon';
@@ -8,7 +7,6 @@ import type { PreviewObject } from 'figma-exporter/src/types';
 import { transformSwitchComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/switch';
 import { SwitchDesignComponent } from 'figma-exporter/src/exporters/components/component_sets/switch';
 import { startCase } from 'lodash';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
@@ -17,14 +15,7 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
 const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   return (
@@ -41,18 +32,6 @@ const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ com
   );
 };
 
-const CodeHighlight: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
-  if (component) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(component) }} />
-        <CopyCode code={component.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
-};
 
 const config = getConfig();
 
@@ -153,7 +132,7 @@ const SwitchPage = ({ content, menu, metadata, current }: util.DocumentationProp
                       <div className="c-component-preview">
                         <SwitchDisplay component={component.preview} />
                       </div>
-                      <CodeHighlight component={component.preview} />
+                      <CodeHighlight data={component.preview} />
                       <hr />
                     </div>
                   ))}

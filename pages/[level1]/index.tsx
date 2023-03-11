@@ -1,12 +1,12 @@
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams } from 'components/util';
+import { MarkdownComponents } from 'components/util/MarkdownComponents';
 import { getConfig } from 'config';
-import * as fs from 'fs-extra';
-import md from 'markdown-it';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import path from 'path';
+import rehypeRaw from 'rehype-raw';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 
 /**
  * Render all index pages
@@ -42,7 +42,6 @@ const config = getConfig();
  */
 export default function DocPage({ content, menu, metadata, current }: DocumentationProps) {
   if (content) {
-    const page = md().render(content);
     return (
       <div className="c-page">
         <Head>
@@ -59,7 +58,9 @@ export default function DocPage({ content, menu, metadata, current }: Documentat
                 <p>{metadata.description}</p>
               </div>
             </div>
-            <div dangerouslySetInnerHTML={{ __html: page }} />
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
           </div>
         </section>
       </div>

@@ -1,13 +1,11 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
 import Icon from 'components/Icon';
 import { getConfig, getPreview } from 'config';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import type { SelectComponents, SelectDesignComponent } from 'figma-exporter/src/exporters/components/component_sets/select';
 import { transformSelectComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/select';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
@@ -16,14 +14,8 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
 
 const SelectDisplay: React.FC<{ select: SelectThemePair; theme: 'light' | 'dark' }> = ({ select, theme }) => {
   return (
@@ -39,24 +31,10 @@ const SelectDisplay: React.FC<{ select: SelectThemePair; theme: 'light' | 'dark'
     />
   );
 };
-
-const CodeHighlight: React.FC<{ select: PreviewObject | undefined }> = ({ select }) => {
-  if (select) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(select) }} />
-        <CopyCode code={select.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
-};
 const state_sort = ['default', 'disabled', 'error', 'complete'];
 
 interface SelectComponentTokensHighlight extends SelectDesignComponent {
   preview: PreviewObject | undefined;
-  codeHightlight: string | null;
 }
 
 interface SelectThemePair {
@@ -83,14 +61,12 @@ const getByState = (components: SelectComponents, state: string): SelectThemePai
     light = {
       ...find_light,
       preview: find_light_preview,
-      codeHightlight: buildHighlightComponent(find_light_preview),
     };
   }
   if (find_dark) {
     dark = {
       ...find_dark,
       preview: find_dark_preview,
-      codeHightlight: buildHighlightComponent(find_dark_preview),
     };
   }
   return {
@@ -167,7 +143,7 @@ const SelectPage = ({ content, menu, metadata, current }: util.DocumentationProp
                     <div className="c-component-preview">
                       <SelectDisplay select={states.default} theme="light" />
                     </div>
-                    <CodeHighlight select={states.default.light?.preview} />
+                    <CodeHighlight data={states.default.light?.preview} />
                   </div>
 
                   <div id="validation-and-errors">
@@ -176,7 +152,7 @@ const SelectPage = ({ content, menu, metadata, current }: util.DocumentationProp
                     <div className="c-component-preview">
                       <SelectDisplay select={states.error} theme="light" />
                     </div>
-                    <CodeHighlight select={states.error.light?.preview} />
+                    <CodeHighlight data={states.error.light?.preview} />
                   </div>
 
                   <div id="disabled-fields">
@@ -185,7 +161,7 @@ const SelectPage = ({ content, menu, metadata, current }: util.DocumentationProp
                     <div className="c-component-preview">
                       <SelectDisplay select={states.disabled} theme="light" />
                     </div>
-                    <CodeHighlight select={states.disabled.light?.preview} />
+                    <CodeHighlight data={states.disabled.light?.preview} />
                     <hr />
                   </div>
 

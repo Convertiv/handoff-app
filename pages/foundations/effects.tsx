@@ -12,6 +12,8 @@ import { EffectParametersObject } from 'figma-exporter/src/types';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 
@@ -114,16 +116,19 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
             <div className="o-col-3@xl u-visible@lg">
               <AnchorNav
                 groups={[
-                  Object.assign({}, ...[
-                    ...Object.keys(effectGroups).map((group) => ({ [`${group}-effects`]: `${upperFirst(group)} Effects` })),
-                  ]),
+                  Object.assign(
+                    {},
+                    ...[...Object.keys(effectGroups).map((group) => ({ [`${group}-effects`]: `${upperFirst(group)} Effects` }))]
+                  ),
                 ]}
               />
             </div>
           </div>
         </div>
       </section>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

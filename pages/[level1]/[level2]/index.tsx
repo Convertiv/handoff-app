@@ -1,14 +1,12 @@
-import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, getCurrentSection, IParams } from 'components/util';
-
-import * as fs from 'fs-extra';
-import md from 'markdown-it';
+import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams } from 'components/util';
 import { GetStaticProps } from 'next';
-import path from 'path';
-import { filterOutUndefined } from 'components/util';
 import { getConfig } from 'config';
 import Head from 'next/head';
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 export interface SubPageType {
   params: {
@@ -53,7 +51,6 @@ const config = getConfig();
  */
 export default function DocSubPage({ content, menu, metadata, current }: DocumentationProps) {
   if (content) {
-    const page = md().render(content);
     return (
       <div className="c-page">
         <Head>
@@ -70,7 +67,9 @@ export default function DocSubPage({ content, menu, metadata, current }: Documen
                 <p>{metadata.description}</p>
               </div>
             </div>
-            <div dangerouslySetInnerHTML={{ __html: page }} />
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
           </div>
         </section>
       </div>

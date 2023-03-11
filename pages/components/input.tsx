@@ -1,15 +1,11 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
-
+import type { GetStaticProps } from 'next';
 import Icon from 'components/Icon';
-
 import { getConfig, getPreview } from 'config';
 import { InputComponents, InputDesignComponent } from 'figma-exporter/src/exporters/components/component_sets/input';
 import { transformInputComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/input';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import IframeResizer from 'iframe-resizer-react';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
@@ -18,14 +14,8 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
 
 const InputDisplay: React.FC<{ input: InputThemePair; theme: 'light' | 'dark' }> = ({ input, theme }) => {
   return (
@@ -42,23 +32,10 @@ const InputDisplay: React.FC<{ input: InputThemePair; theme: 'light' | 'dark' }>
   );
 };
 
-const CodeHighlight: React.FC<{ input: PreviewObject | undefined }> = ({ input }) => {
-  if (input) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(input) }} />
-        <CopyCode code={input.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
-};
 const state_sort = ['default', 'disabled', 'error', 'complete'];
 
 interface InputComponentTokensHighlight extends InputDesignComponent {
   preview: PreviewObject | undefined;
-  codeHightlight: string | null;
 }
 
 interface InputThemePair {
@@ -86,14 +63,12 @@ const getByState = (components: InputComponents, state: string): InputThemePair 
     light = {
       ...find_light,
       preview: find_light_preview,
-      codeHightlight: buildHighlightComponent(find_light_preview),
     };
   }
   if (find_dark) {
     dark = {
       ...find_dark,
       preview: find_dark_preview,
-      codeHightlight: buildHighlightComponent(find_dark_preview),
     };
   }
   return {
@@ -171,7 +146,7 @@ const InputPage = ({ content, menu, metadata, current }: util.DocumentationProps
                     <div className="c-component-preview">
                       <InputDisplay input={states.default} theme="light" />
                     </div>
-                    <CodeHighlight input={states.default.light?.preview} />
+                    <CodeHighlight data={states.default.light?.preview} />
                   </div>
 
                   <div id="validation-and-errors">
@@ -180,7 +155,7 @@ const InputPage = ({ content, menu, metadata, current }: util.DocumentationProps
                     <div className="c-component-preview">
                       <InputDisplay input={states.error} theme="light" />
                     </div>
-                    <CodeHighlight input={states.error.light?.preview} />
+                    <CodeHighlight data={states.error.light?.preview} />
                   </div>
 
                   <div id="disabled-active-states">
@@ -189,7 +164,7 @@ const InputPage = ({ content, menu, metadata, current }: util.DocumentationProps
                     <div className="c-component-preview">
                       <InputDisplay input={states.disabled} theme="light" />
                     </div>
-                    <CodeHighlight input={states.disabled.light?.preview} />
+                    <CodeHighlight data={states.disabled.light?.preview} />
                     <hr />
                   </div>
 

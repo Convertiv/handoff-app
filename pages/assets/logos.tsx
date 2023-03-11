@@ -8,6 +8,8 @@ import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu 
 import Header from 'components/Header';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
+import { MarkdownComponents } from 'components/util/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 /**
@@ -27,7 +29,7 @@ const AssetsLogosPage = ({ content, menu, metadata, current }: DocumentationProp
   return (
     <div className="c-page">
       <Head>
-      <title>{metadata.metaTitle}</title>
+        <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} />
@@ -39,7 +41,7 @@ const AssetsLogosPage = ({ content, menu, metadata, current }: DocumentationProp
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && (<Icon name={metadata.image} className="c-hero__img c-hero__image--small" />)}
+            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           <div className="o-row u-justify-between">
             <div className="o-col-5@md">
@@ -56,7 +58,9 @@ const AssetsLogosPage = ({ content, menu, metadata, current }: DocumentationProp
               </div>
             </div>
           </div>
-          <ReactMarkdown>{content}</ReactMarkdown>
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
           <hr />
         </div>
       </section>

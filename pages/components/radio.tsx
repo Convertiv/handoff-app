@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Prism from 'prismjs';
 import startCase from 'lodash/startCase';
 import { getConfig, getPreview } from 'config';
@@ -17,14 +17,7 @@ import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
 const RadioDisplay: React.FC<{ radio: PreviewObject | undefined }> = ({ radio }) => {
   return (
@@ -39,19 +32,6 @@ const RadioDisplay: React.FC<{ radio: PreviewObject | undefined }> = ({ radio })
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ radio: PreviewObject | undefined }> = ({ radio }) => {
-  if (radio) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(radio) }} />
-        <CopyCode code={radio.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const config = getConfig();
@@ -151,7 +131,7 @@ const RadioPage = ({ content, menu, metadata, current }: DocumentationProps) => 
                       <div className="c-component-preview">
                         <RadioDisplay radio={radio.preview} />
                       </div>
-                      <CodeHighlight radio={radio.preview} />
+                      <CodeHighlight data={radio.preview} />
                       <hr />
                     </div>
                   ))}

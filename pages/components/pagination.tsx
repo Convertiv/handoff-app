@@ -1,6 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
 import Icon from 'components/Icon';
 import type { PreviewObject } from 'figma-exporter/src/types';
@@ -8,7 +7,6 @@ import { getConfig, getPreview } from 'config';
 import { PaginationDesignComponent, PaginationLayoutComponent } from 'figma-exporter/src/exporters/components/component_sets/pagination';
 import { startCase } from 'lodash';
 import { transformPaginationComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/pagination';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import Header from 'components/Header';
@@ -16,14 +14,8 @@ import * as util from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
 
 const PaginationDisplay: React.FC<{ pagination: PreviewObject | undefined }> = ({ pagination }) => {
   return (
@@ -40,18 +32,6 @@ const PaginationDisplay: React.FC<{ pagination: PreviewObject | undefined }> = (
   );
 };
 
-const CodeHighlight: React.FC<{ pagination: PreviewObject | undefined }> = ({ pagination }) => {
-  if (pagination) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(pagination) }} />
-        <CopyCode code={pagination.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
-};
 
 const size_sort = ['xl', 'lg', 'md', 'sm', 'xs'];
 
@@ -79,8 +59,7 @@ const pagination = {
 
       return {
         ...pagination,
-        preview,
-        codeHighlight: buildHighlightComponent(preview),
+        preview
       };
     }),
 };
@@ -143,7 +122,7 @@ const PaginationPage = ({ content, menu, metadata, current }: util.Documentation
                       <div className="c-component-preview">
                         <PaginationDisplay pagination={item.preview} />
                       </div>
-                      <CodeHighlight pagination={item.preview} />
+                      <CodeHighlight data={item.preview} />
                       <hr />
                     </div>
                   ))}
@@ -154,7 +133,7 @@ const PaginationPage = ({ content, menu, metadata, current }: util.Documentation
                       <div className="c-component-preview">
                         <PaginationDisplay pagination={item.preview} />
                       </div>
-                      <CodeHighlight pagination={item.preview} />
+                      <CodeHighlight data={item.preview} />
                       <hr />
                     </div>
                   ))}

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import startCase from 'lodash/startCase';
 import { getConfig, getPreview } from 'config';
 import Icon from 'components/Icon';
@@ -8,7 +7,6 @@ import IframeResizer from 'iframe-resizer-react';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import type { CheckboxDesignComponent, CheckboxLayoutComponent } from 'figma-exporter/src/exporters/components/component_sets/checkbox';
 import { transformCheckboxComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/checkbox';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import Head from 'next/head';
@@ -17,14 +15,7 @@ import * as util from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
+import { CodeHighlight } from 'components/util/CodeHighlight';
 
 const CheckboxDisplay: React.FC<{ checkbox: PreviewObject | undefined }> = ({ checkbox }) => {
   return (
@@ -39,19 +30,6 @@ const CheckboxDisplay: React.FC<{ checkbox: PreviewObject | undefined }> = ({ ch
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ checkbox: PreviewObject | undefined }> = ({ checkbox }) => {
-  if (checkbox) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(checkbox) }} />
-        <CopyCode code={checkbox.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const config = getConfig();
@@ -153,7 +131,7 @@ const CheckboxPage = ({ content, menu, metadata, current }: util.DocumentationPr
                       <div className="c-component-preview">
                         <CheckboxDisplay checkbox={checkbox.preview} />
                       </div>
-                      <CodeHighlight checkbox={checkbox.preview} />
+                      <CodeHighlight data={checkbox.preview} />
                       <hr />
                     </div>
                   ))}
