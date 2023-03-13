@@ -16,7 +16,7 @@ import { ModalDesignComponent } from 'figma-exporter/src/exporters/components/co
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-import { CodeHighlight } from 'components/util/CodeHighlight';
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
 const ModalDisplay: React.FC<{ modal: PreviewObject | undefined }> = ({ modal }) => {
   return (

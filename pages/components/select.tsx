@@ -14,7 +14,7 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-import { CodeHighlight } from 'components/util/CodeHighlight';
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
 
 const SelectDisplay: React.FC<{ select: SelectThemePair; theme: 'light' | 'dark' }> = ({ select, theme }) => {

@@ -17,7 +17,7 @@ import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-import { CodeHighlight } from 'components/util/CodeHighlight';
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
 const RadioDisplay: React.FC<{ radio: PreviewObject | undefined }> = ({ radio }) => {
   return (
