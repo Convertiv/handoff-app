@@ -34,6 +34,7 @@ export type CustomRenderers = {
  * @returns
  */
 const Headings = ({ level, children }: HeadingProps) => {
+  console.log(level);
   // Access actual (string) value of heading
   if (children[0]) {
     const heading = children[0];
@@ -90,6 +91,9 @@ export const MarkdownComponents: CustomRenderers = {
   code(props) {
     const { className } = props;
     const match = /language-(\w+)/.exec(className || '');
+    if (props.children[0]) {
+      props.children[0] = props.children[0].toString().trim(`\n`);
+    }
     return match ? (
       <SyntaxHighlighter
         // @ts-ignore

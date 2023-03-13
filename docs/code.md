@@ -7,6 +7,8 @@ metaTitle: 'Style Guide | Handoff Design System'
 metaDescription: 'A sample page in the handoff design system, in markdown'
 enabled: true
 ---
+
+## H2 Test
 Here's some code
 
 ```yml
