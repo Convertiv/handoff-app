@@ -11,6 +11,8 @@ import Header from 'components/Header';
 import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 
@@ -96,7 +98,9 @@ const IconsPage = ({ content, menu, metadata, current }: DocumentationProps) => 
             </div>
             {metadata.image && (<Icon name={metadata.image} className="c-hero__img c-hero__image--small" />)}
           </div>
-          <ReactMarkdown>{content}</ReactMarkdown>
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
           <div className="c-form-element c-form-element--fullwidth c-form-element--big">
             <div className="c-form-element__field">
               <div className="c-form-element__icon">

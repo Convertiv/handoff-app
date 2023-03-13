@@ -9,6 +9,8 @@ import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu 
 import Header from 'components/Header';
 import ReactMarkdown from 'react-markdown';
 import CustomNav from 'components/SideNav/Custom';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 /**
@@ -77,7 +79,9 @@ const DesignPage = ({ content, menu, metadata, current }: DocumentationProps) =>
           </div>
         </div>
       </section>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

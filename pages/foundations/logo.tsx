@@ -11,6 +11,8 @@ import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 const logos = config.assets.logos;
@@ -162,7 +164,9 @@ const LogoPage = ({ content, menu, metadata, current }: DocumentationProps) => {
           <hr />
         </div>
       </section>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

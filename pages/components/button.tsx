@@ -1,6 +1,5 @@
 import * as React from 'react';
 import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
 import startCase from 'lodash/startCase';
 import { getConfig, getPreview } from 'config';
 import Icon from 'components/Icon';
@@ -8,7 +7,6 @@ import IframeResizer from 'iframe-resizer-react';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import type { ButtonDesignComponent, ButtonLayoutComponent } from 'figma-exporter/src/exporters/components/component_sets/button';
 import { transformButtonComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/button';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import Head from 'next/head';
@@ -17,14 +15,8 @@ import * as util from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
 
 const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
   return (
@@ -39,19 +31,6 @@ const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
-  if (button) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(button) }} />
-        <CopyCode code={button.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const state_sort = ['default', 'hover', 'focus', 'active', 'disabled'];
@@ -87,8 +66,7 @@ const buttons = {
       const preview = getPreview().components.buttons.find((item) => item.id === button.id);
       return {
         ...button,
-        preview,
-        codeHighlight: buildHighlightComponent(preview),
+        preview
       };
     }),
 };
@@ -150,7 +128,7 @@ const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationPro
                       <div className="c-component-preview">
                         <ButtonDisplay button={button.preview} />
                       </div>
-                      <CodeHighlight button={button.preview} />
+                      <CodeHighlight data={button.preview} />
                       <hr />
                     </div>
                   ))}
@@ -161,7 +139,7 @@ const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationPro
                       <div className="c-component-preview">
                         <ButtonDisplay button={button.preview} />
                       </div>
-                      <CodeHighlight button={button.preview} />
+                      <CodeHighlight data={button.preview} />
                       <hr />
                     </div>
                   ))}

@@ -12,6 +12,8 @@ import components from 'assets/images/components.png';
 import Head from 'next/head';
 import Header from 'components/Header';
 import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {
@@ -55,7 +57,9 @@ const Home = ({ content, menu, metadata }: DocumentationProps) => {
                 <strong>{config.client} Design System</strong> for building better user experiences.
               </h1>
             </div>
-            <ReactMarkdown>{content}</ReactMarkdown>
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
           </div>
           <div className="o-col-6@lg u-animation-fadein">
             <div className="c-card c-card--blue-gradient u-pt-6@xl u-pl-7@xl u-pr-7@xl u-pb-0">

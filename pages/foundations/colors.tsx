@@ -11,6 +11,8 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 
@@ -103,16 +105,19 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
             <div className="o-col-3@xl u-visible@lg">
               <AnchorNav
                 groups={[
-                  Object.assign({}, ...[
-                    ...Object.keys(colorGroups).map((group) => ({ [`${group}-colors`]: `${upperFirst(group)} Colors` })),
-                  ]),
+                  Object.assign(
+                    {},
+                    ...[...Object.keys(colorGroups).map((group) => ({ [`${group}-colors`]: `${upperFirst(group)} Colors` }))]
+                  ),
                 ]}
               />
             </div>
           </div>
         </div>
       </section>
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

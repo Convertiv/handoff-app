@@ -1,12 +1,10 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
-import Prism from 'prismjs';
+import type { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
 import { getConfig, getPreview } from 'config';
 import Icon from 'components/Icon';
 import type { PreviewObject } from 'figma-exporter/src/types';
 import { transformTooltipComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/components/tooltip';
-import CopyCode from 'components/CopyCode';
 import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
@@ -15,14 +13,7 @@ import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
 const TooltipDisplay: React.FC<{ tooltip: PreviewObject | undefined }> = ({ tooltip }) => {
   return (
@@ -37,19 +28,6 @@ const TooltipDisplay: React.FC<{ tooltip: PreviewObject | undefined }> = ({ tool
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ tooltip: PreviewObject | undefined }> = ({ tooltip }) => {
-  if (tooltip) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(tooltip) }} />
-        <CopyCode code={tooltip.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const config = getConfig();
@@ -115,7 +93,7 @@ const TooltipPage = ({ content, menu, metadata, current }: DocumentationProps) =
                       <div className="c-component-preview u-pt-0 u-pb-0">
                         <TooltipDisplay tooltip={preview.components.tooltips.find((item) => item.id === tooltip.id)} />
                       </div>
-                      <CodeHighlight tooltip={preview.components.tooltips.find((item) => item.id === tooltip.id)} />
+                      <CodeHighlight data={preview.components.tooltips.find((item) => item.id === tooltip.id)} />
                       <hr />
                     </div>
                   ))}

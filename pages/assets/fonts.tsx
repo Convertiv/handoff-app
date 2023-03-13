@@ -10,6 +10,8 @@ import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu 
 import Header from 'components/Header';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
+import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
+import rehypeRaw from 'rehype-raw';
 
 const config = getConfig();
 const fontFamilies: string[] = uniq(config.design.typography.map((type) => type.values.fontFamily));
@@ -91,7 +93,9 @@ const FontsPage = ({ content, menu, metadata, current, customFonts }: FontDocPro
             </React.Fragment>
           ))}
 
-          <ReactMarkdown>{content}</ReactMarkdown>
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
         </div>
       </section>
     </div>
