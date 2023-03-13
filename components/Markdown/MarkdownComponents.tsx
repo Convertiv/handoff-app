@@ -92,7 +92,7 @@ export const MarkdownComponents: CustomRenderers = {
     const { className } = props;
     const match = /language-(\w+)/.exec(className || '');
     if (props.children[0]) {
-      props.children[0] = props.children[0].toString().trim(`\n`);
+      props.children[0] = props.children[0].toString().trim();
     }
     return match ? (
       <SyntaxHighlighter
