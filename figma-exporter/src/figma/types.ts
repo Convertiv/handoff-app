@@ -828,6 +828,7 @@ export interface Effect {
   readonly color?: Color;
   readonly blendMode?: BlendMode;
   readonly offset?: Vector2;
+  readonly spread: number;
 }
 
 /** A solid color, gradient, or image texture that can be applied as fills or strokes */
