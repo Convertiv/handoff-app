@@ -41,7 +41,7 @@ sass/css, html, and javascript/typescript.
 ```
 
 ```sass
-#test{
+#test {
     border-color: blue;
 }
 ```
