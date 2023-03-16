@@ -19,9 +19,9 @@ export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, 
         <div className="o-container-fluid">
           <div className="c-hero">
             <div>
-              <h1>Buttons Not Found</h1>
+              <h1>{`${metadata.title} Not Found`}</h1>
               <p>
-                No button tokens were found. Either they couldn&rsquo;t be extracted from figma, or the component was not found in figma.
+                No <span>{metadata.title.toLowerCase()}</span> tokens were found. Either they couldn&rsquo;t be extracted from figma, or the component was not found in figma.
                 Check to make sure that the component is being imported on fetch. If you see a red message indicating the component cannot
                 be retrieved, check to make sure the component exists in figma.
               <br />
