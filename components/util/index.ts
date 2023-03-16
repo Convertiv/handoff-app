@@ -43,6 +43,12 @@ export interface DocumentationProps {
   current: SectionLink;
 }
 
+export interface ComponentDocumentationProps extends DocumentationProps{
+  componentFound: boolean;
+}
+/**
+ * List the default paths
+ */
 export const knownPaths = [
   'assets',
   'assets/fonts',
@@ -89,6 +95,10 @@ export const pluralizeComponent = (singular: string): string => {
   );
 };
 
+/**
+ * Build level 1 static path parameters
+ * @returns 
+ */
 export const buildL1StaticPaths = () => {
   const files = fs.readdirSync('docs');
   const paths = files
@@ -107,6 +117,10 @@ export const buildL1StaticPaths = () => {
   return paths;
 };
 
+/**
+ * Build static paths for level 2
+ * @returns SubPathType[]
+ */
 export const buildL2StaticPaths = () => {
   const files = fs.readdirSync('docs');
   const paths: SubPageType[] = files
@@ -216,7 +230,7 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | string[] | undefined, id: string) => {
+export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string)=> {
   const menu = staticBuildMenu();
   const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
@@ -226,9 +240,26 @@ export const fetchDocPageMarkdown = (path: string, slug: string | string[] | und
       content,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
+      
     },
   };
 };
+
+/**
+ * 
+ * @param path 
+ * @param slug 
+ * @param id 
+ * @returns 
+ */
+export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
+  return {
+    props: {
+      ...fetchDocPageMarkdown(path, slug, id).props,
+      componentFound: (slug) ? componentExists(pluralizeComponent(slug), undefined) : false
+    },
+  };
+}
 
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');

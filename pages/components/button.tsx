@@ -80,13 +80,13 @@ const buttons = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'button', `/components`);
+  return util.fetchCompDocPageMarkdown('docs/components/', 'button', `/components`);
 };
 
-const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const ButtonsPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
-  if (!util.componentExists('button', config)) {
+  if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
 

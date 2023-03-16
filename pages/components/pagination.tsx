@@ -15,6 +15,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 
 const PaginationDisplay: React.FC<{ pagination: PreviewObject | undefined }> = ({ pagination }) => {
@@ -74,12 +75,16 @@ const pagination = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'pagination', `/components`);
+  return util.fetchCompDocPageMarkdown('docs/components/', 'pagination', `/components`);
 };
 
-const PaginationPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const PaginationPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
+  
   return (
     <div className="c-page">
       <Head>
