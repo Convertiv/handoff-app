@@ -16,14 +16,7 @@ import { ModalDesignComponent } from 'figma-exporter/src/exporters/components/co
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
-
-const buildHighlightComponent = (preview: PreviewObject | undefined) => {
-  if (!preview) {
-    return '';
-  }
-
-  return Prism.highlight(preview.code, Prism.languages.html, 'html');
-};
+import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 
 const ModalDisplay: React.FC<{ modal: PreviewObject | undefined }> = ({ modal }) => {
   return (
@@ -38,19 +31,6 @@ const ModalDisplay: React.FC<{ modal: PreviewObject | undefined }> = ({ modal })
       checkOrigin={false}
     />
   );
-};
-
-const CodeHighlight: React.FC<{ modal: PreviewObject | undefined }> = ({ modal }) => {
-  if (modal) {
-    return (
-      <div className="c-code-block">
-        <code className="language-html" dangerouslySetInnerHTML={{ __html: buildHighlightComponent(modal) }} />
-        <CopyCode code={modal.code} />
-      </div>
-    );
-  } else {
-    return <></>;
-  }
 };
 
 const config = getConfig();
@@ -116,7 +96,7 @@ const ModalPage = ({ content, menu, metadata, current }: util.DocumentationProps
                       <div className="c-component-preview">
                         <ModalDisplay modal={preview.components.modal.find((item) => item.id === modal.id)} />
                       </div>
-                      <CodeHighlight modal={preview.components.modal.find((item) => item.id === modal.id)} />
+                      <CodeHighlight data={preview.components.modal.find((item) => item.id === modal.id)} />
                     </div>
                   ))}
 
