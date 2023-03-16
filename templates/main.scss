@@ -13,7 +13,7 @@
 
 $prefix: '';
 $enable-shadows: true;
-
+@import '../sass/project/default_vars/defaults';
 @import '../sass/project/buttons';
 @import '../sass/project/checkbox';
 @import '../sass/project/radio';

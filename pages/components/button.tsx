@@ -16,7 +16,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
-
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
   return (
@@ -66,7 +66,7 @@ const buttons = {
       const preview = getPreview().components.buttons.find((item) => item.id === button.id);
       return {
         ...button,
-        preview
+        preview,
       };
     }),
 };
@@ -85,6 +85,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+
+  if (!util.componentExists('button', config)) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
 
   return (
     <div className="c-page">

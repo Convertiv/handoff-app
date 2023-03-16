@@ -1,3 +1,4 @@
+import { Config } from 'client-config';
 import { getConfig } from 'config';
 import { filter } from 'domutils';
 import * as fs from 'fs-extra';
@@ -66,6 +67,28 @@ export const knownPaths = [
   'components/checkbox',
 ];
 
+/**
+ * Get the plural name of a component
+ * @param singular
+ * @returns
+ */
+export const pluralizeComponent = (singular: string): string => {
+  return (
+    {
+      button: 'buttons',
+      select: 'selects',
+      checkbox: 'checkboxes',
+      radio: 'radios',
+      input: 'inputs',
+      tooltip: 'tooltips',
+      alert: 'alerts',
+      switch: 'switches',
+      pagination: 'pagination',
+      modal: 'modal',
+    }[singular] ?? singular
+  );
+};
+
 export const buildL1StaticPaths = () => {
   const files = fs.readdirSync('docs');
   const paths = files
@@ -110,6 +133,26 @@ export const buildL2StaticPaths = () => {
 };
 
 /**
+ * Does a component exist in figma? Check the length of the component tokens
+ * @param component 
+ * @param config 
+ * @returns 
+ */
+export const componentExists = (component: string, config?: Config): boolean => {
+  if (!config) {
+    config = getConfig();
+  }
+  const componentKey = pluralizeComponent(component) ?? false;
+  // If this is a component (we define it in the tokens file)
+  // but it has a length of 0, return the menu as undefined even
+  // if its set in the file list
+  if (config.components[componentKey] && config.components[componentKey].length === 0) {
+    return false;
+  }
+  return true;
+};
+
+/**
  * Build the static menu for rendeirng pages
  * @returns SectionLink[]
  */
@@ -117,6 +160,7 @@ export const staticBuildMenu = () => {
   // Contents of docs
   const files = fs.readdirSync('docs');
   const sections: SectionLink[] = [];
+  const config = getConfig();
 
   // Build path tree
   const custom = files
@@ -128,15 +172,23 @@ export const staticBuildMenu = () => {
         if (metadata.enabled === false) {
           return undefined;
         }
+        const path = `/${fileName.replace('.md', '')}`;
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
-          path: `/${fileName.replace('.md', '')}`,
+          path,
           // Build the submenus
           subSections: metadata.menu
             ? Object.keys(metadata.menu)
                 .map((key) => {
                   const sub = metadata.menu[key];
+                  // Component menus are filtered by the presence of tokens
+                  if (path === '/components' && sub.path) {
+                    const componentName = sub.path.replace('components/', '');
+                    if (!componentExists(componentName, config)) {
+                      return undefined;
+                    }
+                  }
                   if (sub.enabled !== false) {
                     return sub;
                   }
@@ -183,7 +235,7 @@ export const fetchDocPageMetadataAndContent = (path: string, slug: string | stri
   const { data: metadata, content } = matter(currentContents);
 
   return { metadata, content };
-}
+};
 
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
