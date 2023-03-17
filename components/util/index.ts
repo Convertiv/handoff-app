@@ -1,3 +1,4 @@
+import { Config } from 'client-config';
 import { getConfig } from 'config';
 import { filter } from 'domutils';
 import * as fs from 'fs-extra';
@@ -42,6 +43,12 @@ export interface DocumentationProps {
   current: SectionLink;
 }
 
+export interface ComponentDocumentationProps extends DocumentationProps{
+  componentFound: boolean;
+}
+/**
+ * List the default paths
+ */
 export const knownPaths = [
   'assets',
   'assets/fonts',
@@ -66,6 +73,32 @@ export const knownPaths = [
   'components/checkbox',
 ];
 
+/**
+ * Get the plural name of a component
+ * @param singular
+ * @returns
+ */
+export const pluralizeComponent = (singular: string): string => {
+  return (
+    {
+      button: 'buttons',
+      select: 'selects',
+      checkbox: 'checkboxes',
+      radio: 'radios',
+      input: 'inputs',
+      tooltip: 'tooltips',
+      alert: 'alerts',
+      switch: 'switches',
+      pagination: 'pagination',
+      modal: 'modal',
+    }[singular] ?? singular
+  );
+};
+
+/**
+ * Build level 1 static path parameters
+ * @returns 
+ */
 export const buildL1StaticPaths = () => {
   const files = fs.readdirSync('docs');
   const paths = files
@@ -84,6 +117,10 @@ export const buildL1StaticPaths = () => {
   return paths;
 };
 
+/**
+ * Build static paths for level 2
+ * @returns SubPathType[]
+ */
 export const buildL2StaticPaths = () => {
   const files = fs.readdirSync('docs');
   const paths: SubPageType[] = files
@@ -110,6 +147,26 @@ export const buildL2StaticPaths = () => {
 };
 
 /**
+ * Does a component exist in figma? Check the length of the component tokens
+ * @param component 
+ * @param config 
+ * @returns 
+ */
+export const componentExists = (component: string, config?: Config): boolean => {
+  if (!config) {
+    config = getConfig();
+  }
+  const componentKey = pluralizeComponent(component) ?? false;
+  // If this is a component (we define it in the tokens file)
+  // but it has a length of 0, return the menu as undefined even
+  // if its set in the file list
+  if (config.components[componentKey] && config.components[componentKey].length === 0) {
+    return false;
+  }
+  return true;
+};
+
+/**
  * Build the static menu for rendeirng pages
  * @returns SectionLink[]
  */
@@ -117,6 +174,7 @@ export const staticBuildMenu = () => {
   // Contents of docs
   const files = fs.readdirSync('docs');
   const sections: SectionLink[] = [];
+  const config = getConfig();
 
   // Build path tree
   const custom = files
@@ -128,15 +186,23 @@ export const staticBuildMenu = () => {
         if (metadata.enabled === false) {
           return undefined;
         }
+        const path = `/${fileName.replace('.md', '')}`;
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
-          path: `/${fileName.replace('.md', '')}`,
+          path,
           // Build the submenus
           subSections: metadata.menu
             ? Object.keys(metadata.menu)
                 .map((key) => {
                   const sub = metadata.menu[key];
+                  // Component menus are filtered by the presence of tokens
+                  if (path === '/components' && sub.path) {
+                    const componentName = sub.path.replace('components/', '');
+                    if (!componentExists(componentName, config)) {
+                      return undefined;
+                    }
+                  }
                   if (sub.enabled !== false) {
                     return sub;
                   }
@@ -164,7 +230,7 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | string[] | undefined, id: string) => {
+export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string)=> {
   const menu = staticBuildMenu();
   const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
@@ -174,16 +240,33 @@ export const fetchDocPageMarkdown = (path: string, slug: string | string[] | und
       content,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
+      
     },
   };
 };
+
+/**
+ * 
+ * @param path 
+ * @param slug 
+ * @param id 
+ * @returns 
+ */
+export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
+  return {
+    props: {
+      ...fetchDocPageMarkdown(path, slug, id).props,
+      componentFound: (slug) ? componentExists(pluralizeComponent(slug), undefined) : false
+    },
+  };
+}
 
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
   const { data: metadata, content } = matter(currentContents);
 
   return { metadata, content };
-}
+};
 
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 

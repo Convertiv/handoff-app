@@ -14,6 +14,8 @@ menu:
     title: Alert
   - path: components/button
     title: Button
+  - path: components/pagination
+    title: Pagination
   - path: components/modal
     title: Modal
   - path: components/tooltip
