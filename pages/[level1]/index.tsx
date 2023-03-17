@@ -1,6 +1,6 @@
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
-import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams } from 'components/util';
+import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from 'components/util';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import { getConfig } from 'config';
 import { GetStaticProps } from 'next';
@@ -30,7 +30,7 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const { level1 } = context.params as IParams;
-  return fetchDocPageMarkdown('docs/', level1, `/${level1}`);
+  return fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`);
 };
 
 const config = getConfig();
