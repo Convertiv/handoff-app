@@ -224,7 +224,8 @@ export const staticBuildMenu = () => {
  */
 export const getCurrentSection = (menu: SectionLink[], path: string): SectionLink | null =>
   menu.filter((section) => section.path === path)[0];
-/**
+
+  /**
  * Build a static object for rending markdown pages
  * @param path
  * @param slug
@@ -246,7 +247,7 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
 };
 
 /**
- * 
+ * Fetch Component Doc Page Markdown
  * @param path 
  * @param slug 
  * @param id 
@@ -261,15 +262,48 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   };
 }
 
+/**
+ * Reduce a slug which can be either an array or string, to just a string by
+ * plucking the first element
+ * @param slug 
+ * @returns 
+ */
+export const reduceSlugToString = (slug: string | string[] | undefined) : string | undefined => {
+  let prop: string | undefined;
+  if (Array.isArray(slug)) {
+    if(slug[0]){
+      prop = slug[0];
+    }
+  }else{
+    prop = slug;
+  }
+  return prop;
+}
+
+/**
+ * Get doc meta and content from markdown
+ * @param path 
+ * @param slug 
+ * @returns 
+ */
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
   const { data: metadata, content } = matter(currentContents);
 
   return { metadata, content };
 };
-
+/**
+ * Filter out undefined elements
+ * @param value 
+ * @returns 
+ */
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
+/**
+ * Create a title string from a prefix
+ * @param prefix 
+ * @returns 
+ */
 export const titleString = (prefix: string | null): string => {
   const config = getConfig();
   const prepend = prefix ? `${prefix} | ` : '';
