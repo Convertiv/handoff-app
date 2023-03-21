@@ -118,6 +118,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
     [getScssVariableName({ component: 'button', part: '', property: 'opacity', theme, type, state })]: {
       value: `${tokens.opacity}`,
       property: 'opacity',
+      group: Part.Button,
     },
   };
 };
