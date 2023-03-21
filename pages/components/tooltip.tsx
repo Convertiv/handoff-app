@@ -9,11 +9,12 @@ import { ComponentTab } from 'types/tabs';
 import Head from 'next/head';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
+import { ComponentDocumentationProps, DocumentationProps, fetchCompDocPageMarkdown, fetchDocPageMarkdown } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const TooltipDisplay: React.FC<{ tooltip: PreviewObject | undefined }> = ({ tooltip }) => {
   return (
@@ -45,11 +46,14 @@ const tooltips = config.components.tooltips.filter((tooltip) => tooltip.horizont
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return fetchDocPageMarkdown('docs/components/', 'tooltip', `/components`);
+  return fetchCompDocPageMarkdown('docs/components/', 'tooltip', `/components`);
 };
 
-const TooltipPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const TooltipPage = ({ content, menu, metadata, current, componentFound }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
 
   return (
     <div className="c-page">
@@ -158,8 +162,8 @@ const TooltipPage = ({ content, menu, metadata, current }: DocumentationProps) =
                     layout={{
                       cols: {
                         left: 4,
-                        right: 8
-                      }
+                        right: 8,
+                      },
                     }}
                   >
                     <TooltipDisplay tooltip={preview.components.tooltips.find((item) => item.id === tooltip.id)} />

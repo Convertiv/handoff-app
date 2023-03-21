@@ -16,6 +16,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   return (
@@ -84,12 +85,15 @@ const switches = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'switch', `/components`);
+  return util.fetchCompDocPageMarkdown('docs/components/', 'switch', `/components`);
 };
 
-const SwitchPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const SwitchPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
-
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
+  
   return (
     <div className="c-page">
       <Head>
