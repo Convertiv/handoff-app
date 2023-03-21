@@ -1,4 +1,5 @@
 import type { DocumentComponentsObject } from './exporters/components';
+import { BlendMode, PaintType } from './figma/types';
 
 export interface ColorGroup {
   group: string;
@@ -14,10 +15,11 @@ export interface EffectObject {
 export interface ColorObject {
   name: string;
   group: string;
-  type: string;
+  type: PaintType;
   hex: string;
-  rgb: RGBObject;
+  rgb: RGBObject | null;
   sass: string;
+  gradient: GradientObject;
 }
 
 export interface TypographyObject {
@@ -40,6 +42,20 @@ export interface RGBObject {
   b: number;
   g: number;
   a: number;
+}
+
+export interface PositionObject {
+  x: number;
+  y: number;
+}
+export interface StopObject {
+  color: RGBObject;
+  position: number;
+}
+export interface GradientObject {
+  blend: BlendMode;
+  handles: PositionObject[];
+  stops: StopObject[];
 }
 
 export interface OffsetObject {

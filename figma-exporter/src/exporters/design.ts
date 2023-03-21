@@ -91,14 +91,15 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
               } as EffectParametersObject))
           });
         } else if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-          const color = document.fills[0].color;
+          const color = document.fills[0];
           colorsArray.push({
             name,
             group,
-            type: 'color',
-            hex: figmaColorToHex(color),
-            rgb: color,
+            type: color.type,
+            hex: color.color ? figmaColorToHex(color.color) : '',
+            rgb: color.color ?? null,
             sass: `$color-${group}-${machine_name}`,
+            gradient: figmaColorToGradiant(color)
           });
         }
       }

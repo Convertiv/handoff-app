@@ -216,5 +216,10 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
   return hex;
 }
 
+export function parseFigmaColor(color: FigmaTypes.Color) : string {
+  return '';
+}
+
+
 type webRGB = [number, number, number];
 type webRGBA = [number, number, number, number];
