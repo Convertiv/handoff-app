@@ -17,6 +17,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { DownloadTokens } from 'components/DownloadTokens';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
   return (
@@ -80,17 +81,15 @@ const buttons = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return {
-    props: {
-      ...util.fetchDocPageMarkdown('docs/components/', 'button', `/components`).props,
-      scss: util.fetchTokensString('buttons', 'scss'),
-      css: util.fetchTokensString('buttons', 'css'),
-    },
-  };
+  return util.fetchCompDocPageMarkdown('docs/components/', 'button', `/components`);
 };
 
-const ButtonsPage = ({ content, menu, metadata, current, scss, css }: util.ComponentDocumentationProps) => {
+const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
 
   return (
     <div className="c-page">

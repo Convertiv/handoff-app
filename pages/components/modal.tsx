@@ -17,6 +17,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const ModalDisplay: React.FC<{ modal: PreviewObject | undefined }> = ({ modal }) => {
   return (
@@ -48,12 +49,16 @@ const designComponents = config.components.modal.filter(
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'modal', `/components`);
+  return util.fetchCompDocPageMarkdown('docs/components/', 'modal', `/components`);
 };
 
-const ModalPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const ModalPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
+  
   return (
     <div className="c-page">
       <Head>

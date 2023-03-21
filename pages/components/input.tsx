@@ -15,6 +15,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { ComponentNotFound } from 'components/ComponentNotFound';
 
 
 const InputDisplay: React.FC<{ input: InputThemePair; theme: 'light' | 'dark' }> = ({ input, theme }) => {
@@ -99,12 +100,16 @@ const states = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'input', `/components`);
+  return util.fetchCompDocPageMarkdown('docs/components/', 'input', `/components`);
 };
 
-const InputPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const InputPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
+  if (!componentFound) {
+    return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
+  }
+  
   return (
     <div className="c-page">
       <Head>
