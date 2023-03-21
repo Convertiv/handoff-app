@@ -16,7 +16,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
-
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
   return (
@@ -66,7 +66,7 @@ const buttons = {
       const preview = getPreview().components.buttons.find((item) => item.id === button.id);
       return {
         ...button,
-        preview
+        preview,
       };
     }),
 };
@@ -80,10 +80,16 @@ const buttons = {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/components/', 'button', `/components`);
+  return {
+    props: {
+      ...util.fetchDocPageMarkdown('docs/components/', 'button', `/components`).props,
+      scss: util.fetchTokensString('buttons', 'scss'),
+      css: util.fetchTokensString('buttons', 'css'),
+    },
+  };
 };
 
-const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const ButtonsPage = ({ content, menu, metadata, current, scss, css }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   return (
@@ -100,8 +106,10 @@ const ButtonsPage = ({ content, menu, metadata, current }: util.DocumentationPro
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="buttons" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
+
             <div className="c-tabs">
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}

@@ -42,6 +42,11 @@ export interface DocumentationProps {
   current: SectionLink;
 }
 
+export interface ComponentDocumentationProps extends DocumentationProps {
+  scss: string;
+  css: string;
+}
+
 export const knownPaths = [
   'assets',
   'assets/fonts',
@@ -183,7 +188,7 @@ export const fetchDocPageMetadataAndContent = (path: string, slug: string | stri
   const { data: metadata, content } = matter(currentContents);
 
   return { metadata, content };
-}
+};
 
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
@@ -191,4 +196,14 @@ export const titleString = (prefix: string | null): string => {
   const config = getConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config.client} Design System`;
+};
+
+export const fetchTokensString = (component: string, type: string): string => {
+  let tokens = '';
+  if (type === 'scss') {
+    tokens = fs.readFileSync(`./exported/variables/${component}_vars.scss`).toString();
+  } else {
+    tokens = fs.readFileSync(`./exported/variables/${component}.scss`).toString();
+  }
+  return tokens;
 };
