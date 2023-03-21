@@ -13,13 +13,13 @@ export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css
     <div className="c-hero__meta">
       <small>
         <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(css)} download={`${componentId}.css`}>
-          <Icon name="download" className="u-mr-1" /> Download SCSS Tokens
+          <Icon name="download" className="u-mr-1" /> CSS Tokens
         </a>
       </small>
       <small>&bull;</small>
       <small>
         <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(scss)} download={`${componentId}.scss`}>
-          <Icon name="download" className="u-mr-1" /> Download SCSS Tokens
+          <Icon name="download" className="u-mr-1" /> SCSS Tokens
         </a>
       </small>
     </div>

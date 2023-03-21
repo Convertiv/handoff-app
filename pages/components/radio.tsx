@@ -19,6 +19,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const RadioDisplay: React.FC<{ radio: PreviewObject | undefined }> = ({ radio }) => {
   return (
@@ -87,7 +88,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return fetchCompDocPageMarkdown('docs/components/', 'radio', `/components`);
 };
 
-const RadioPage = ({ content, menu, metadata, current, componentFound }: ComponentDocumentationProps) => {
+const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -108,6 +109,7 @@ const RadioPage = ({ content, menu, metadata, current, componentFound }: Compone
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="radios" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

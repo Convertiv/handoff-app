@@ -16,6 +16,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 
 const PaginationDisplay: React.FC<{ pagination: PreviewObject | undefined }> = ({ pagination }) => {
@@ -78,7 +79,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'pagination', `/components`);
 };
 
-const PaginationPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const PaginationPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -99,6 +100,7 @@ const PaginationPage = ({ content, menu, metadata, current, componentFound }: ut
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="pagination" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

@@ -17,6 +17,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   return (
@@ -32,7 +33,6 @@ const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ com
     />
   );
 };
-
 
 const config = getConfig();
 
@@ -88,12 +88,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'switch', `/components`);
 };
 
-const SwitchPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -108,6 +108,7 @@ const SwitchPage = ({ content, menu, metadata, current, componentFound }: util.C
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="switches" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

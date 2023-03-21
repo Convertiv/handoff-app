@@ -107,8 +107,10 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, sc
               <p>{metadata.description}</p>
               <DownloadTokens componentId="buttons" scss={scss} css={css} />
             </div>
+
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
 
+              
             <div className="c-tabs">
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}

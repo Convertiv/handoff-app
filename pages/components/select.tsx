@@ -16,7 +16,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
-
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const SelectDisplay: React.FC<{ select: SelectThemePair; theme: 'light' | 'dark' }> = ({ select, theme }) => {
   return (
@@ -100,13 +100,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'select', `/components`);
 };
 
-const SelectPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const SelectPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -121,6 +121,7 @@ const SelectPage = ({ content, menu, metadata, current, componentFound }: util.C
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="checkboxes" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
