@@ -16,6 +16,7 @@ import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
+import { DownloadTokens } from 'components/DownloadTokens';
 import { ComponentNotFound } from 'components/ComponentNotFound';
 
 const ButtonDisplay: React.FC<{ button: PreviewObject | undefined }> = ({ button }) => {
@@ -83,7 +84,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'button', `/components`);
 };
 
-const ButtonsPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -104,8 +105,12 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound }: util.
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="buttons" scss={scss} css={css} />
             </div>
+
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
+
+              
             <div className="c-tabs">
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}

@@ -17,6 +17,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const CheckboxDisplay: React.FC<{ checkbox: PreviewObject | undefined }> = ({ checkbox }) => {
   return (
@@ -87,7 +88,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'checkbox', `/components`);
 };
 
-const CheckboxPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const CheckboxPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -108,6 +109,7 @@ const CheckboxPage = ({ content, menu, metadata, current, componentFound }: util
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="checkboxes" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
