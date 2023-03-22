@@ -207,8 +207,19 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
   return hex;
 }
 
-export function figmaGradientToCss(color: GradientObject): string {
-  return "linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%);";
+export function degFromHandles(handles: PositionObject[]): string {
+  const first = handles[0];
+  const second = handles[1];
+  const slope = (second.x - first.x)/(second.y - first.y);
+  const radians = Math.atan(slope);
+  return `${Math.floor(radians * 180 / Math.PI)}deg`;
+}
+
+export function gradientToCss(color: GradientObject): string {
+  // generate the rgbs
+  const colors = color.stops.map((color) => `rgba(${figmaColorToWebRGB(color.color).join(', ')}) ${color.position * 100}%`);
+
+  return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')});`;
 }
 
 export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | null {
@@ -222,9 +233,9 @@ export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | 
       // Process a linear gradient
       return {
         blend: paint.blendMode,
-        handles: paint.gradientHandlePositions as PositionObject[] ?? [],
-        stops: paint.gradientStops as StopObject[] ?? [],
-      }
+        handles: (paint.gradientHandlePositions as PositionObject[]) ?? [],
+        stops: (paint.gradientStops as StopObject[]) ?? [],
+      };
   }
   return null;
 }
@@ -233,12 +244,14 @@ export function figmaPaintToHex(paint: FigmaTypes.Paint): string | null {
   switch (paint.type) {
     case 'SOLID':
       // Solid paint isn't a gradient
-
-      break;
-      return null;
+      return paint.color ? figmaColorToHex(paint.color) : null;
+    case 'GRADIENT_LINEAR':
+      // Process a linear gradient
+      const gradient = figmaPaintToGradiant(paint);
+      return gradient ? gradientToCss(gradient) : null;
+  }
+  return null;
 }
-
-
 
 type webRGB = [number, number, number];
 type webRGBA = [number, number, number, number];

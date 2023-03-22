@@ -16,7 +16,7 @@ export interface ColorObject {
   name: string;
   group: string;
   type: PaintType;
-  hex: string;
+  hex: string | null;
   rgb: RGBObject | null;
   sass: string;
   gradient: GradientObject | null;

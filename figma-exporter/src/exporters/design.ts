@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectParametersObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex, figmaPaintToGradiant } from '../utils/convertColor';
+import { figmaColorToHex, figmaPaintToGradiant, figmaPaintToHex } from '../utils/convertColor';
 import { isValidEffectType } from './components/utils';
 
 interface GroupNameData {
@@ -96,7 +96,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
             name,
             group,
             type: color.type,
-            hex: color.color ? figmaPaintToHex(color) : '',
+            hex: figmaPaintToHex(color),
             rgb: color.color ?? null,
             sass: `$color-${group}-${machine_name}`,
             gradient: figmaPaintToGradiant(color)
