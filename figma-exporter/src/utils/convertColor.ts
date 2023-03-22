@@ -1,6 +1,7 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
+import { GradientObject, PositionObject, StopObject } from '../types';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -61,7 +62,6 @@ export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string =
     return transformFigmaColorToCssColor({ r, g, b, a: a * (paint.opacity ?? 1) });
   } else if (paint.type === 'GRADIENT_LINEAR') {
     // Get angle
-
   }
   return '';
 };
@@ -149,33 +149,24 @@ export interface AbstractComponent {
   layout?: string;
 }
 export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.type)
-    .filter(filterOutUndefined)));
+  return Array.from(new Set(components.map((component) => component.type).filter(filterOutUndefined)));
 };
 export const getStatesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.state)
-    .filter(filterOutUndefined)));
+  return Array.from(new Set(components.map((component) => component.state).filter(filterOutUndefined)));
 };
 export const getThemesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.theme)
-    .filter(filterOutUndefined)));
+  return Array.from(new Set(components.map((component) => component.theme).filter(filterOutUndefined)));
 };
 export const getSizesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.size)
-    .filter(filterOutUndefined)));
+  return Array.from(new Set(components.map((component) => component.size).filter(filterOutUndefined)));
 };
-
 
 export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
   let comment = `// ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
-  comment += (component.componentType === 'design' && component.theme) && `, theme: ${capitalize(component.theme)}`;
-  comment += (component.componentType === 'design' && component.state) && `, state: ${capitalize(component.state)}`;
+  comment += component.componentType === 'design' && component.theme && `, theme: ${capitalize(component.theme)}`;
+  comment += component.componentType === 'design' && component.state && `, state: ${capitalize(component.state)}`;
   return comment;
-}
+};
 
 /**
  * this function converts figma color to RGB(A) (array)
@@ -216,9 +207,37 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
   return hex;
 }
 
-export function parseFigmaColor(color: FigmaTypes.Color) : string {
-  return '';
+export function figmaGradientToCss(color: GradientObject): string {
+  return "linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%);";
 }
+
+export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | null {
+  // Figure out what kind of paint we have
+  switch (paint.type) {
+    case 'SOLID':
+      // Solid paint isn't a gradient
+
+      break;
+    case 'GRADIENT_LINEAR':
+      // Process a linear gradient
+      return {
+        blend: paint.blendMode,
+        handles: paint.gradientHandlePositions as PositionObject[] ?? [],
+        stops: paint.gradientStops as StopObject[] ?? [],
+      }
+  }
+  return null;
+}
+
+export function figmaPaintToHex(paint: FigmaTypes.Paint): string | null {
+  switch (paint.type) {
+    case 'SOLID':
+      // Solid paint isn't a gradient
+
+      break;
+      return null;
+}
+
 
 
 type webRGB = [number, number, number];

@@ -19,7 +19,7 @@ export interface ColorObject {
   hex: string;
   rgb: RGBObject | null;
   sass: string;
-  gradient: GradientObject;
+  gradient: GradientObject | null;
 }
 
 export interface TypographyObject {

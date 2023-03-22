@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectParametersObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex } from '../utils/convertColor';
+import { figmaColorToHex, figmaPaintToGradiant } from '../utils/convertColor';
 import { isValidEffectType } from './components/utils';
 
 interface GroupNameData {
@@ -90,16 +90,16 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
                 radius: effect.radius,
               } as EffectParametersObject))
           });
-        } else if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
+        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || document.fills[0].type === 'GRADIENT_LINEAR')) {
           const color = document.fills[0];
           colorsArray.push({
             name,
             group,
             type: color.type,
-            hex: color.color ? figmaColorToHex(color.color) : '',
+            hex: color.color ? figmaPaintToHex(color) : '',
             rgb: color.color ?? null,
             sass: `$color-${group}-${machine_name}`,
-            gradient: figmaColorToGradiant(color)
+            gradient: figmaPaintToGradiant(color)
           });
         }
       }
