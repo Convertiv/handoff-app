@@ -207,17 +207,42 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
   return hex;
 }
 
+/**
+ * Parse a degree css string from from the handle position
+ * @param handles
+ * @returns
+ */
 export function degFromHandles(handles: PositionObject[]): string {
-  const first = handles[0];
-  const second = handles[1];
-  const slope = (second.x - first.x)/(second.y - first.y);
+  const first = handles[2];
+  const second = handles[0];
+  const slope = ((second.y - first.y) / (second.x - first.x));
   const radians = Math.atan(slope);
-  return `${Math.floor(radians * 180 / Math.PI)}deg`;
+  let degrees = Math.floor(radians * 180 / Math.PI);
+  if (first.x < second.x) {
+    degrees = degrees + 180;
+  } else if (first.x > second.x) {
+    if (first.y < second.y) {
+      degrees = 360 - Math.abs(degrees);
+    }
+  } else if (first.x == second.x) { // horizontal line
+    if (first.y < second.y) {
+      degrees = 360 - Math.abs(degrees) // on negative y-axis
+    } else {
+      degrees = Math.abs(degrees) // on positive y-axis
+    }
+  }
+  return `${degrees}deg`;
 }
 
+/**
+ * Generate a CSS gradient from a color gradient object
+ * TODO: Support other kinds of gradients, and stacked colors
+ * @param color
+ * @returns
+ */
 export function gradientToCss(color: GradientObject): string {
   // generate the rgbs
-  const colors = color.stops.map((color) => `rgba(${figmaColorToWebRGB(color.color).join(', ')}) ${color.position * 100}%`);
+  const colors = color.stops.map((color) => `rgba(${figmaColorToWebRGB(color.color).join(', ')}) ${Math.floor(color.position * 100)}%`);
 
   return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')});`;
 }
