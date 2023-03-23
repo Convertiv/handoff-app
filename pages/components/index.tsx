@@ -3,12 +3,20 @@ import type { GetStaticProps, NextPage } from 'next';
 import Link from 'next/link';
 import Icon from 'components/Icon';
 import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from 'components/util';
+import {
+  componentExists,
+  DocumentationProps,
+  fetchDocPageMarkdown,
+  fetchDocPageMetadataAndContent,
+  Metadata,
+  pluralizeComponent,
+} from 'components/util';
 import Header from 'components/Header';
 import ReactMarkdown from 'react-markdown';
 import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import { getConfig } from 'config';
 
 enum AvailableComponentPageComponents {
   ALERT = 'alert',
@@ -20,17 +28,18 @@ enum AvailableComponentPageComponents {
   RADIO = 'radio',
   SELECT = 'select',
   SWITCH = 'switch',
-}
-
-enum UnavailableComponentPageComponents {
   PAGINATION = 'pagination',
 }
 
-type ComponentPageComponents = AvailableComponentPageComponents | UnavailableComponentPageComponents;
+type ComponentPageComponents = AvailableComponentPageComponents;
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [component in ComponentPageComponents]: Metadata };
+  available: ComponentPageComponents[];
+  unavailable: ComponentPageComponents[];
 };
+
+const config = getConfig();
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -43,10 +52,14 @@ type ComponentPageDocumentationProps = DocumentationProps & {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const result = fetchDocPageMarkdown('docs/', 'components', `/components`);
-  const componentsToFetch = [
-    ...(Object.values(AvailableComponentPageComponents) as string[]),
-    ...(Object.values(UnavailableComponentPageComponents) as string[]),
-  ];
+  const componentsToFetch = [...(Object.values(AvailableComponentPageComponents) as string[])];
+
+  const available: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter((comp: string) =>
+    componentExists(pluralizeComponent(comp), config)
+  );
+  const unavailable: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter(
+    (comp: string) => !componentExists(pluralizeComponent(comp), config)
+  );
 
   return {
     ...result,
@@ -63,13 +76,19 @@ export const getStaticProps: GetStaticProps = async (context) => {
             }),
             {}
           ),
+          available,
+          unavailable,
         },
       } as ComponentPageDocumentationProps,
     },
   };
 };
 
-const ComponentsPage = ({ content, menu, metadata, current, components }: ComponentPageDocumentationProps) => {
+const ComponentsPage = ({ content, menu, metadata, current, components, available, unavailable }: ComponentPageDocumentationProps) => {
+  available.map((component) => {
+    console.log(component);
+    console.log(components[component]);
+  });
   return (
     <div className="c-page">
       <Head>
@@ -93,30 +112,35 @@ const ComponentsPage = ({ content, menu, metadata, current, components }: Compon
               <div className="o-stack-2@md o-stack-3@lg u-mb-n-4">
                 <>
                   {/* Available components */}
-                  {(Object.keys(AvailableComponentPageComponents) as Array<keyof typeof AvailableComponentPageComponents>).map(
-                    (component) => (
-                      <ComponentsPageCard
-                        key={`component-${component}`}
-                        component={AvailableComponentPageComponents[component]}
-                        title={components[AvailableComponentPageComponents[component]].title}
-                        descripton={components[AvailableComponentPageComponents[component]].description}
-                        icon={components[AvailableComponentPageComponents[component]].image}
-                      />
-                    )
-                  )}
+                  {available.map((component) => (
+                    <ComponentsPageCard
+                      key={`component-${component}`}
+                      component={component}
+                      title={components[component].title}
+                      description={components[component].description}
+                      icon={components[component].image}
+                    />
+                  ))}
+                </>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div className="o-row">
+            <div className="o-col-12@md">
+              <div className="o-stack-2@md o-stack-3@lg u-mb-n-4">
+                <>
                   {/* Unavailable components */}
-                  {(Object.keys(UnavailableComponentPageComponents) as Array<keyof typeof UnavailableComponentPageComponents>).map(
-                    (component) => (
-                      <ComponentsPageCard
-                        key={`component-${component}`}
-                        component={UnavailableComponentPageComponents[component]}
-                        title={components[UnavailableComponentPageComponents[component]].title}
-                        descripton={components[UnavailableComponentPageComponents[component]].description}
-                        icon={components[UnavailableComponentPageComponents[component]].image}
-                        available={false}
-                      />
-                    )
-                  )}
+                  {unavailable.map((component) => (
+                    <ComponentsPageCard
+                      key={`component-${component}`}
+                      component={component}
+                      title={components[component].title}
+                      description={components[component].description}
+                      icon={components[component].image}
+                      available={false}
+                    />
+                  ))}
                 </>
               </div>
             </div>
@@ -133,13 +157,13 @@ const ComponentsPage = ({ content, menu, metadata, current, components }: Compon
 const ComponentsPageCard = ({
   component,
   title,
-  descripton,
+  description: descripton,
   icon,
   available = true,
 }: {
   component: string;
   title: string;
-  descripton: string;
+  description: string;
   icon: string;
   available?: boolean;
 }) => (
