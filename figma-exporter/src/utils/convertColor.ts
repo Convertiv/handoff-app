@@ -1,7 +1,7 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
-import { GradientObject, PositionObject, StopObject } from '../types';
+import { GradientObject, PositionObject, RGBObject, StopObject } from '../types';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -183,6 +183,10 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
   return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
 }
 
+export function figmaColorToWebRGBObject(color: FigmaTypes.Color): RGBObject {
+  return { r: Math.round(color.r * 255), g: Math.round(color.g * 255), b:Math.round(color.b * 255), a: color.a}
+}
+
 /**
  * this function converts figma color to HEX (string)
  */
@@ -215,20 +219,21 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
 export function degFromHandles(handles: PositionObject[]): string {
   const first = handles[2];
   const second = handles[0];
-  const slope = ((second.y - first.y) / (second.x - first.x));
+  const slope = (second.y - first.y) / (second.x - first.x);
   const radians = Math.atan(slope);
-  let degrees = Math.floor(radians * 180 / Math.PI);
+  let degrees = Math.floor((radians * 180) / Math.PI);
   if (first.x < second.x) {
     degrees = degrees + 180;
   } else if (first.x > second.x) {
     if (first.y < second.y) {
       degrees = 360 - Math.abs(degrees);
     }
-  } else if (first.x == second.x) { // horizontal line
+  } else if (first.x == second.x) {
+    // horizontal line
     if (first.y < second.y) {
-      degrees = 360 - Math.abs(degrees) // on negative y-axis
+      degrees = 360 - Math.abs(degrees); // on negative y-axis
     } else {
-      degrees = Math.abs(degrees) // on positive y-axis
+      degrees = Math.abs(degrees); // on positive y-axis
     }
   }
   return `${degrees}deg`;
@@ -245,6 +250,52 @@ export function gradientToCss(color: GradientObject): string {
   const colors = color.stops.map((color) => `rgba(${figmaColorToWebRGB(color.color).join(', ')}) ${Math.floor(color.position * 100)}%`);
 
   return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')});`;
+}
+
+export function figmaPaintToRGB(paints: readonly FigmaTypes.Paint[]): RGBObject | null {
+  // TODO: Solve blendMode
+  let base: RGBObject | null = null;
+  let mix: RGBObject = {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0,
+  };
+  paints.map((added) => {
+    // Get the color
+    const color: RGBObject = figmaColorToWebRGBObject({ r: 0, g: 0, b: 0, a: 0, ...added.color });
+    if (!color) {
+      return null; // No color, just keep on walking
+    }
+    // RGBA might not have an alpha
+    if (color.a === undefined) {
+      color.a = 1;
+    }
+    // If the layer has opacity, set the alpha percent that to the rgba
+    if (added.opacity) {
+      color.a = color.a * added.opacity;
+    }
+    if (!base) {
+      mix = color;
+    } else {
+      if (base.a > 0 && color.a > 0) {
+        mix = blendColors(base, color);
+      }
+    }
+    base = mix;
+    return mix;
+  });
+  return mix;
+}
+
+export function blendColors(base: RGBObject, add: RGBObject): RGBObject {
+  const mixAlpha = 1 - (1 - add.a) * (1 - base.a);
+  return {
+    r: Math.round((add.r * add.a / mixAlpha) + (base.r * base.a * (1 - add.a) / mixAlpha)),
+    g: Math.round((add.g * add.a / mixAlpha) + (base.g * base.a * (1 - add.a) / mixAlpha)),
+    b: Math.round((add.b * add.a / mixAlpha) + (base.b * base.a * (1 - add.a) / mixAlpha)),
+    a: mixAlpha,
+  };
 }
 
 export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | null {

@@ -48,15 +48,19 @@ export interface PositionObject {
   x: number;
   y: number;
 }
+
 export interface StopObject {
   color: RGBObject;
   position: number;
 }
+
 export interface GradientObject {
   blend: BlendMode;
   handles: PositionObject[];
   stops: StopObject[];
 }
+
+
 
 export interface OffsetObject {
   x: number;
