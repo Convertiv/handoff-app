@@ -25,7 +25,7 @@ and this project adheres to
 - Improves handling of missing components in Figma. If its not found: 
   - An alert is shown in the fetch output.
   - The component page is hidden in the menu and the components list.
-  - A 404 page is show if the component is accessed directly.
+  - A 404 page is shown if the missing component is accessed directly.
 - Fixes a grouping issue where opacity was in an undefined group on the buttons 
 page.
 - Fixes a problem with blur radius and spread values on shadow tokens
