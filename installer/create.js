@@ -36,12 +36,26 @@ const maskPrompt = (query) =>
  */
 (async () => {
   try {
+    let requirements = false;
+    const result = process.versions;
+    if (result && result.node) {
+      if (parseInt(result.node) >= 16) {
+        requirements = true;
+      }
+    } else {
+      // couldn't find the right version, but ...
+    }
+    if (!requirements) {
+      console.log(chalk.redBright('Handoff Installation failed'));
+      console.log(chalk.yellow('- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'));
+      process.exit(0);
+    }
     // Get a folder name
-    const welcome = `The Handoff App installer will ask a couple of questions to set up the project.  
-Only the project name is required. The rest can be supplied via a .env file or env vars.\n`;
+    const welcome = `\n==============================\nThe Handoff App installer will ask a couple of questions to set up the project.  
+Only the project name is required. The rest can be supplied via a .env file or env vars.\n==============================\n`;
     console.log(welcome);
     // Ask the user for a project name
-    const project = await prompt('Project name: (lower case, no spaces) ');
+    const project = await prompt(chalk.green('Project name: (lower case, no spaces) '));
     if (project === '') {
       // You've got to give us a project name
       console.log('Sorry, Project name is required.');
@@ -54,9 +68,12 @@ Only the project name is required. The rest can be supplied via a .env file or e
     }
 
     // Fetch figma file id
-    const figmaIdSupplied = await prompt('Figma File Id (optional): ');
+    console.log(`\n==============================\nNext we need the Figma file id. You can find this by looking at the url of your Figma file. \nIf the url is ${chalk.blue(`https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`)}\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n==============================\n`)
+    const figmaIdSupplied = await prompt(chalk.green('Figma File Id (optional): '));
     // Fetch a masked developer key
-    const developerKeySupplied = await maskPrompt('Figma Developer Key (optional): ');
+    console.log(`\n==============================\nFinally we need a developer token so we can access Figma on your behalf. \n Use these instructions to generate them ${chalk.blue(`https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`)} \n==============================\n`)
+    
+    const developerKeySupplied = await maskPrompt(chalk.green('Figma Developer Key (optional): '));
 
     // Get the current directory
     const currentDir = process.cwd();
@@ -94,6 +111,7 @@ Only the project name is required. The rest can be supplied via a .env file or e
     rl.close();
   } catch (e) {
     console.error(chalk.red('Installation Failed'), e);
+    process.exit(0);
   }
 })();
 
