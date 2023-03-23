@@ -85,10 +85,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 
 const ComponentsPage = ({ content, menu, metadata, current, components, available, unavailable }: ComponentPageDocumentationProps) => {
-  available.map((component) => {
-    console.log(component);
-    console.log(components[component]);
-  });
   return (
     <div className="c-page">
       <Head>
