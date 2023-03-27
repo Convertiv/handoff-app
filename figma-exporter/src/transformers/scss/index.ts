@@ -1,5 +1,5 @@
 import capitalize from 'lodash/capitalize';
-import { DocumentationObject } from '../../types';
+import { ColorObject, DocumentationObject, TypographyObject } from '../../types';
 import { transformAlertComponentTokensToScssVariables } from './components/alert';
 import { transformButtonComponentTokensToScssVariables } from './components/button';
 import { transformCheckboxComponentTokensToScssVariables } from './components/checkbox';
@@ -13,6 +13,27 @@ import { transformTooltipComponentTokensToScssVariables } from './components/too
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
+  colors: string;
+  typography: string;
+}
+
+function transformColors(colors: ColorObject[]): string {
+  return `$color-groups: ( ${Array.from(new Set(colors.map(color => `"${color.group}"`))).join(', ')} );\n\n${colors.map(color => 
+    `${color.sass}: ${color.hex};`
+  ).join('\n')}`
+}
+
+function transformTypography(typography: TypographyObject[]): string {
+  return `$type-sizes: ( ${typography.map(type => `"${type.machine_name}"`).join(', ')} );\n\n${typography.map(type =>
+    [
+      `$${type.machine_name}-font-family: '${type.values.fontFamily}';`,
+      `$${type.machine_name}-font-size: ${type.values.fontSize}px;`,
+      `$${type.machine_name}-font-weight: ${type.values.fontWeight};`,
+      `$${type.machine_name}-line-weight: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
+      `$${type.machine_name}-letter-spacing: ${type.values.letterSpacing}px;`,
+      `$${type.machine_name}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
+    ].join('\n')
+  ).join('\n')}`;
 }
 
 export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
@@ -134,5 +155,7 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio))
 
   return {
     components,
+    colors: transformColors(documentationObject.design.color),
+    typography: transformTypography(documentationObject.design.typography),
   };
 }

@@ -22,16 +22,14 @@ const fieldData = (name: string): GroupNameData => {
     data.name = nameArray[1];
     data.machine_name = data.name
       .toLowerCase()
-      .replace(/[^a-z0-9]/gi, ' ')
-      .replaceAll('  ', ' ')
-      .replaceAll(' ', '-');
+      .replace(/[^a-z0-9\s\-]/gi, '')
+      .replace(/\s\-\s|\s+/gi, '-')
   } else {
     data.name = nameArray[0]!;
     data.machine_name = data.name
       .toLowerCase()
-      .replace(/[^a-z0-9]/gi, ' ')
-      .replaceAll('  ', ' ')
-      .replaceAll(' ', '-');
+      .replace(/[^a-z0-9\s\-]/gi, '')
+      .replace(/\s\-\s|\s+/gi, '-')
   }
   return data;
 };

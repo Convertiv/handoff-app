@@ -74,6 +74,11 @@ const buildStyles = async (documentationObject: DocumentationObject) => {
         Promise.all(
           Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/${name}_vars.scss`, content))
         )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(scssFiles).filter(([_, value]) => typeof value === 'string').map(([name, content]) => fs.writeFile(`${variablesFilePath}/${name}.scss`, content))
+        )
       ),
   ]);
 };
