@@ -19,8 +19,10 @@ export interface ColorObject {
   hex: string | null;
   rgb: RGBObject | null;
   sass: string;
-  gradient: GradientObject | null;
+  layers: ColorLayer[];
 }
+
+export type ColorLayer = RGBObject | GradientObject;
 
 export interface TypographyObject {
   name: string;

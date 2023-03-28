@@ -1,7 +1,34 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
-import { GradientObject, PositionObject, RGBObject, StopObject } from '../types';
+import { ColorLayer, GradientObject, PositionObject, RGBObject, StopObject } from '../types';
+
+/**
+ * Parse figma paint object
+ * Given a figma paint object, this function generates the appropriate layers
+ * @param paint
+ * @returns
+ */
+export function parseFigmaPaints(paints: FigmaTypes.Paint[]): ColorLayer[] {
+  const layers: ColorLayer[] = [];
+  paints.map((paint) => {
+    // Figure out what kind of paint we have
+    switch (paint.type) {
+      case 'SOLID':
+        // Solid paint isn't a gradient
+
+        break;
+      case 'GRADIENT_LINEAR':
+        // Process a linear gradient
+        layers.push({
+          blend: paint.blendMode,
+          handles: (paint.gradientHandlePositions as PositionObject[]) ?? [],
+          stops: (paint.gradientStops as StopObject[]) ?? [],
+        });
+    }
+  });
+  return layers;
+}
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -184,7 +211,7 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
 }
 
 export function figmaColorToWebRGBObject(color: FigmaTypes.Color): RGBObject {
-  return { r: Math.round(color.r * 255), g: Math.round(color.g * 255), b:Math.round(color.b * 255), a: color.a}
+  return { r: Math.round(color.r * 255), g: Math.round(color.g * 255), b: Math.round(color.b * 255), a: color.a };
 }
 
 /**
@@ -291,9 +318,9 @@ export function figmaPaintToRGB(paints: readonly FigmaTypes.Paint[]): RGBObject 
 export function blendColors(base: RGBObject, add: RGBObject): RGBObject {
   const mixAlpha = 1 - (1 - add.a) * (1 - base.a);
   return {
-    r: Math.round((add.r * add.a / mixAlpha) + (base.r * base.a * (1 - add.a) / mixAlpha)),
-    g: Math.round((add.g * add.a / mixAlpha) + (base.g * base.a * (1 - add.a) / mixAlpha)),
-    b: Math.round((add.b * add.a / mixAlpha) + (base.b * base.a * (1 - add.a) / mixAlpha)),
+    r: Math.round((add.r * add.a) / mixAlpha + (base.r * base.a * (1 - add.a)) / mixAlpha),
+    g: Math.round((add.g * add.a) / mixAlpha + (base.g * base.a * (1 - add.a)) / mixAlpha),
+    b: Math.round((add.b * add.a) / mixAlpha + (base.b * base.a * (1 - add.a)) / mixAlpha),
     a: mixAlpha,
   };
 }
