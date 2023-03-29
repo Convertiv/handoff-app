@@ -18,6 +18,7 @@ export interface ColorObject {
   hex: string;
   rgb: RGBObject;
   sass: string;
+  machineName: string;
 }
 
 export interface TypographyObject {

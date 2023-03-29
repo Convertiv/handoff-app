@@ -97,6 +97,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
             hex: figmaColorToHex(color),
             rgb: color,
             sass: `$color-${group}-${machine_name}`,
+            machineName: machine_name,
           });
         }
       }

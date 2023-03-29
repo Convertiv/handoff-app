@@ -18,20 +18,25 @@ interface ScssTransformerOutput {
 }
 
 function transformColors(colors: ColorObject[]): string {
-  return `$color-groups: ( ${Array.from(new Set(colors.map(color => `"${color.group}"`))).join(', ')} );\n\n${colors.map(color => 
-    `${color.sass}: ${color.hex};`
-  ).join('\n')}`
+  const data: Array<string> = [];
+
+  data.push(`$color-groups: ( ${Array.from(new Set(colors.map(color => `"${color.group}"`))).join(', ')} );`);
+  data.push(`$color-names: ( ${colors.map(color => `"${color.group}-${color.machineName}"`).join(', ')} );`);
+  data.push(``);
+  data.push(`${colors.map(color => `${color.sass}: ${color.hex};`).join('\n')}`);
+
+  return data.join('\n');
 }
 
 function transformTypography(typography: TypographyObject[]): string {
   return `$type-sizes: ( ${typography.map(type => `"${type.machine_name}"`).join(', ')} );\n\n${typography.map(type =>
     [
-      `$${type.machine_name}-font-family: '${type.values.fontFamily}';`,
-      `$${type.machine_name}-font-size: ${type.values.fontSize}px;`,
-      `$${type.machine_name}-font-weight: ${type.values.fontWeight};`,
-      `$${type.machine_name}-line-weight: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
-      `$${type.machine_name}-letter-spacing: ${type.values.letterSpacing}px;`,
-      `$${type.machine_name}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
+      `$typography-${type.machine_name}-font-family: '${type.values.fontFamily}';`,
+      `$typography-${type.machine_name}-font-size: ${type.values.fontSize}px;`,
+      `$typography-${type.machine_name}-font-weight: ${type.values.fontWeight};`,
+      `$typography-${type.machine_name}-line-weight: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
+      `$typography-${type.machine_name}-letter-spacing: ${type.values.letterSpacing}px;`,
+      `$typography-${type.machine_name}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
     ].join('\n')
   ).join('\n')}`;
 }
