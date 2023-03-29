@@ -13,32 +13,34 @@ import { transformTooltipComponentTokensToScssVariables } from './components/too
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
-  colors: string;
-  typography: string;
+  design: Record<'colors' | 'typography', string>;
 }
 
 function transformColors(colors: ColorObject[]): string {
-  const data: Array<string> = [];
+  const stringBuilder: Array<string> = [];
 
-  data.push(`$color-groups: ( ${Array.from(new Set(colors.map(color => `"${color.group}"`))).join(', ')} );`);
-  data.push(`$color-names: ( ${colors.map(color => `"${color.group}-${color.machineName}"`).join(', ')} );`);
-  data.push(``);
-  data.push(`${colors.map(color => `${color.sass}: ${color.hex};`).join('\n')}`);
+  colors.forEach(color => {
+    stringBuilder.push(`$color-${color.group}-${color.machineName}: ${color.hex};`);
+  });
 
-  return data.join('\n');
+  return stringBuilder.join('\n');
 }
 
 function transformTypography(typography: TypographyObject[]): string {
-  return `$type-sizes: ( ${typography.map(type => `"${type.machine_name}"`).join(', ')} );\n\n${typography.map(type =>
-    [
+  const stringBuilder: Array<string> = [];
+
+  typography.forEach(type => {
+    stringBuilder.push([
       `$typography-${type.machine_name}-font-family: '${type.values.fontFamily}';`,
       `$typography-${type.machine_name}-font-size: ${type.values.fontSize}px;`,
       `$typography-${type.machine_name}-font-weight: ${type.values.fontWeight};`,
-      `$typography-${type.machine_name}-line-weight: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
+      `$typography-${type.machine_name}-line-height: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
       `$typography-${type.machine_name}-letter-spacing: ${type.values.letterSpacing}px;`,
       `$typography-${type.machine_name}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
-    ].join('\n')
-  ).join('\n')}`;
+    ].join('\n'))
+  })
+  
+  return stringBuilder.join('\n');
 }
 
 export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
@@ -157,10 +159,14 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio))
       )
       .join('\n\n'),
   };
+  
+  const design = {
+    colors: transformColors(documentationObject.design.color),
+    typography: transformTypography(documentationObject.design.typography),
+  }
 
   return {
     components,
-    colors: transformColors(documentationObject.design.color),
-    typography: transformTypography(documentationObject.design.typography),
+    design
   };
 }
