@@ -1,4 +1,4 @@
-import { ColorObject, DocumentationObject, TypographyObject } from '../../types';
+import { ColorObject, DocumentationObject, EffectObject, TypographyObject } from '../../types';
 import { transformAlertComponentsToCssVariables } from './components/alert';
 import { transformButtonComponentsToCssVariables } from './components/button';
 import { transformCheckboxComponentsToCssVariables } from './components/checkbox';
@@ -12,7 +12,7 @@ import { transformTooltipComponentsToCssVariables } from './components/tooltip';
 
 interface CssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
-  design: Record<'colors' | 'typography', string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
 function transformColors(colors: ColorObject[]): string {
@@ -32,7 +32,12 @@ function transformColors(colors: ColorObject[]): string {
 function transformTypography(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];
 
-  stringBuilder.push(`$type-sizes: ( ${typography.map(type => `"${type.machine_name}"`).join(', ')} );`);
+  stringBuilder.push(`$type-sizes: ( ${typography.map(type => (
+    type.group
+      ? `"${type.group}-${type.machine_name}"`
+      : `"${type.machine_name}"`
+  )).join(', ')} );`);
+
   stringBuilder.push(``);
 
   typography.forEach(type => {
@@ -46,6 +51,23 @@ function transformTypography(typography: TypographyObject[]): string {
     ].join('\n'));
   })
   
+  return stringBuilder.join('\n');
+}
+
+function transformEffects(effects: EffectObject[]): string {
+  const stringBuilder: Array<string> = [];
+
+  const validEffects = effects?.filter(effect => effect.effects && effect.effects.length > 0);
+
+  if (validEffects) {
+    stringBuilder.push(`$effects: ( ${validEffects.map(effect => `"${effect.group}-${effect.machineName}"`).join(', ')} );`);
+    stringBuilder.push(``);
+
+    validEffects.forEach(effect => {
+      stringBuilder.push(`--effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`)
+    })
+  }
+
   return stringBuilder.join('\n');
 }
 
@@ -67,6 +89,7 @@ export default function cssTransformer(documentationObject: DocumentationObject)
   const design = {
     colors: transformColors(documentationObject.design.color),
     typography: transformTypography(documentationObject.design.typography),
+    effects: transformEffects(documentationObject.design.effect),
   }
 
   return {
