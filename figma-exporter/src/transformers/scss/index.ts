@@ -1,5 +1,5 @@
 import capitalize from 'lodash/capitalize';
-import { ColorObject, DocumentationObject, EffectObject, TypographyObject } from '../../types';
+import { DocumentationObject } from '../../types';
 import { transformAlertComponentTokensToScssVariables } from './components/alert';
 import { transformButtonComponentTokensToScssVariables } from './components/button';
 import { transformCheckboxComponentTokensToScssVariables } from './components/checkbox';
@@ -10,51 +10,13 @@ import { transformRadioComponentTokensToScssVariables } from './components/radio
 import { transformSelectComponentTokensToScssVariables } from './components/select';
 import { transformSwitchComponentTokensToScssVariables } from './components/switch';
 import { transformTooltipComponentTokensToScssVariables } from './components/tooltip';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
   design: Record<'colors' | 'typography' | 'effects', string>;
-}
-
-function transformColors(colors: ColorObject[]): string {
-  const stringBuilder: Array<string> = [];
-
-  colors.forEach(color => {
-    stringBuilder.push(`$color-${color.group}-${color.machineName}: ${color.hex};`);
-  });
-
-  return stringBuilder.join('\n');
-}
-
-function transformTypography(typography: TypographyObject[]): string {
-  const stringBuilder: Array<string> = [];
-
-  typography.forEach(type => {
-    stringBuilder.push([
-      `$typography-${type.machine_name}-font-family: '${type.values.fontFamily}';`,
-      `$typography-${type.machine_name}-font-size: ${type.values.fontSize}px;`,
-      `$typography-${type.machine_name}-font-weight: ${type.values.fontWeight};`,
-      `$typography-${type.machine_name}-line-height: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`,
-      `$typography-${type.machine_name}-letter-spacing: ${type.values.letterSpacing}px;`,
-      `$typography-${type.machine_name}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
-    ].join('\n'))
-  })
-  
-  return stringBuilder.join('\n');
-}
-
-function transformEffects(effects: EffectObject[]): string {
-  const stringBuilder: Array<string> = [];
-
-  const validEffects = effects?.filter(effect => effect.effects && effect.effects.length > 0);
-
-  if (validEffects) {
-    validEffects.forEach(effect => {
-      stringBuilder.push(`$effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`)
-    })
-  }
-
-  return stringBuilder.join('\n');
 }
 
 export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
