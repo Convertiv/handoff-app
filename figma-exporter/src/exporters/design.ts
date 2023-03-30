@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
-import { ColorObject, EffectObject, EffectParametersObject, TypographyObject } from '../types';
+import { ColorObject, EffectObject, TypographyObject } from '../types';
 import { figmaColorToHex, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
 import { isShadowEffectType, isValidEffectType } from './components/utils';
 
