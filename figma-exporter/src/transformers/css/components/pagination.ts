@@ -1,13 +1,13 @@
 import { PaginationComponent, PaginationComponents } from '../../../exporters/components/component_sets/pagination';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Transform Pagination components into CSS vars

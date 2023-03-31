@@ -5,7 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/tooltips';
+@import './exported/variables/variants/tooltips';
+@import './exported/variables/sass/tooltips';
+@import './exported/variables/css/tooltips';
 
 
 /*

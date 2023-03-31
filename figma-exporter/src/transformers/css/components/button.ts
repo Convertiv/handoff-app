@@ -1,7 +1,6 @@
 import { ButtonComponent, ButtonComponents } from '../../../exporters/components/component_sets/button';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
@@ -9,6 +8,7 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Render css variables from button code
@@ -23,36 +23,6 @@ export const transformButtonComponentsToCssVariables = (buttons: ButtonComponent
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
-
-const properties = [
-  {
-    source: 'background',
-    property: 'background',
-    type: 'color',
-    default: 'transparent'
-  },
-  {
-    source: 'paddingRight',
-    property: 'padding-top',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-left',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-right',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-bottom',
-    type: null,
-    default: '0px'
-  }
-]
 
 /**
  * Transform Buton components into Css vars

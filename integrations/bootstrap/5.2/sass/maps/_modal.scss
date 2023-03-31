@@ -5,8 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/modal_vars';
-@import './exported/variables/modal';
+@import './exported/variables/variants/modal';
+@import './exported/variables/sass/modal';
+@import './exported/variables/css/modal';
 
 
 

@@ -42,7 +42,7 @@ export const transformButtonComponentsToScssVariants = (buttons: ButtonComponent
       .map((type) => `"${type == 'default' ? '' : type}"`)
       .join(', ')} );`
   );
-  return lines.join('\n\n') + '\n}';
+  return lines.join('\n\n') + '\n';
 };
 
 

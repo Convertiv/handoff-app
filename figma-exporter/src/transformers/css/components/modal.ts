@@ -1,13 +1,13 @@
 import { ModalComponent, ModalComponents } from '../../../exporters/components/component_sets/modal';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 enum Parts {
   Modal  = 'modal',

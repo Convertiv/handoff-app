@@ -183,6 +183,6 @@ export const cssEditWarning = (): string => {
 export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
   let comment = `/* ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
   comment += (component.componentType === 'design' && component.theme) ? `, theme: ${capitalize(component.theme)}` : '';
-  comment += (component.componentType === 'design' && component.state) ? `, state: ${capitalize(component.state)} */` : '';
-  return comment;
+  comment += (component.componentType === 'design' && component.state) ? `, state: ${capitalize(component.state)}` : '';
+  return comment + '*/';
 }

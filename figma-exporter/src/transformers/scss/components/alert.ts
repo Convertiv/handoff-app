@@ -33,7 +33,7 @@ export const transformAlertComponentsToScssVariants = (alerts: AlertComponents):
       .map((type) => `"${type}"`)
       .join(', ')});`
   );
-  return lines.join('\n\n') + '\n}';
+  return lines.join('\n\n') + '\n';
 };
 
 export const transformAlertComponentTokensToScssVariables = (tokens: AlertComponent): Record<string, ValueProperty> => {

@@ -1,19 +1,14 @@
-import { capitalize } from 'lodash';
 import { AlertComponent, AlertComponents } from '../../../exporters/components/component_sets/alert';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-
-
-
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Map down to a variable object

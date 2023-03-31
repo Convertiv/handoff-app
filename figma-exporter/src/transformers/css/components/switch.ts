@@ -1,7 +1,6 @@
 import { SwitchComponent, SwitchComponents } from '../../../exporters/components/component_sets/switch';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
@@ -9,6 +8,7 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Transform switches into css variables

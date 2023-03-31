@@ -1,7 +1,6 @@
 import { InputComponent, InputComponents } from '../../../exporters/components/component_sets/input';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaColorToCssColor,
   transformFigmaEffectToCssBoxShadow,
@@ -10,6 +9,7 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Generate css variable list from input components

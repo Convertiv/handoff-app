@@ -2,13 +2,13 @@ import { capitalize } from 'lodash';
 import { TooltipComponents, TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaColorToCssColor,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
 /**
  * Build a css variable map for

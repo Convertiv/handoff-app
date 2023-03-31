@@ -169,14 +169,6 @@ export const getSizesFromComponents = (components: AbstractComponent[]): string[
     .filter(filterOutUndefined)));
 };
 
-
-export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
-  let comment = `// ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
-  comment += (component.componentType === 'design' && component.theme) && `, theme: ${capitalize(component.theme)}`;
-  comment += (component.componentType === 'design' && component.state) && `, state: ${capitalize(component.state)}`;
-  return comment;
-}
-
 /**
  * this function converts figma color to RGB(A) (array)
  */
