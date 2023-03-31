@@ -13,7 +13,7 @@ menu:
     image: hero-colors
   - path: foundations/effects
     title: Effects
-    image: hero-colors
+    image: hero-effects
   - path: foundations/logo
     title: Logos
     image: react
