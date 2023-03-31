@@ -10,19 +10,28 @@ import {
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment, getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../utils';
 import {mapComponentSize} from '../../../utils';
-
-/**
- * Transform checkbox tokens into CSS variables
- * @param checkboxes
- * @returns
- */
 export const transformCheckboxComponentsToCssVariables = (checkboxes: CheckboxComponents): string => {
   const lines = [];
+  lines.push(
+    `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-themes: ( ${getThemesFromComponents(checkboxes)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-states: ( ${getStatesFromComponents(checkboxes)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
   lines.push('.checkbox {')
   const cssVars = checkboxes.map((checkbox) => `  ${cssCodeBlockComment('checkbox', checkbox)}\n ${Object.entries(transformCheckboxComponentTokensToCssVariables(checkbox))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 

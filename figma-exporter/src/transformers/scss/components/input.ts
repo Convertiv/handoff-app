@@ -1,4 +1,4 @@
-import { InputComponent } from '../../../exporters/components/component_sets/input';
+import { InputComponent, InputComponents } from '../../../exporters/components/component_sets/input';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -9,13 +9,40 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils';
 
 enum Part {
-  Input           = 'input',
-  Icon            = 'icon',
-  Label           = 'label',
-  AdditionalInfo  = 'additional-info'
+  Input = 'input',
+  Icon = 'icon',
+  Label = 'label',
+  AdditionalInfo = 'additional-info'
 }
+
+/**
+ * Generate variant maps from input components
+ * @param inputs
+ * @returns
+ */
+export const transformInputComponentsToScssVariants = (inputs: InputComponents): string => {
+  const lines = [];
+  lines.push(
+    `$input-sizes: ( ${getSizesFromComponents(inputs)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$input-themes: ( ${getThemesFromComponents(inputs)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$input-states: ( ${getStatesFromComponents(inputs)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
 
 export const transformInputComponentTokensToScssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? undefined : tokens.size;

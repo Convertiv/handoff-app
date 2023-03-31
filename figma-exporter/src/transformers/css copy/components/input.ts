@@ -1,8 +1,13 @@
+import { capitalize } from 'lodash';
 import { InputComponent, InputComponents } from '../../../exporters/components/component_sets/input';
 import { ValueProperty } from '../types';
 import {
   cssCodeBlockComment,
   getCssVariableName,
+  getSizesFromComponents,
+  getStatesFromComponents,
+  getThemesFromComponents,
+  getTypesFromComponents,
   transformFigmaColorToCssColor,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
@@ -10,19 +15,30 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import {mapComponentSize} from '../../../utils';
 
-/**
- * Generate css variable list from input components
- * @param inputs
- * @returns
- */
 export const transformInputComponentsToCssVariables = (inputs: InputComponents): string => {
   const lines = [];
+  lines.push(
+    `$input-sizes: ( ${getSizesFromComponents(inputs)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$input-themes: ( ${getThemesFromComponents(inputs)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$input-states: ( ${getStatesFromComponents(inputs)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
   lines.push('.input {')
-  const cssVars = inputs.map((input) => `${cssCodeBlockComment('input', input)}\n ${Object.entries(transformInputComponentTokensToCssVariables(input))
+  const cssVars = inputs.map((input) => `  ${cssCodeBlockComment('input', input)}\n ${Object.entries(transformInputComponentTokensToCssVariables(input))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 export const transformInputComponentTokensToCssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {

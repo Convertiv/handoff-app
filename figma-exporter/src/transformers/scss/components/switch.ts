@@ -1,4 +1,4 @@
-import { SwitchComponent } from '../../../exporters/components/component_sets/switch';
+import { SwitchComponent, SwitchComponents } from '../../../exporters/components/component_sets/switch';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,12 +8,39 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils';
 
 enum Part {
   Switch  = 'switch',
   Label   = 'label',
   Thumb   = 'thumb',
 }
+
+/**
+ * Transform switches into scss variants
+ * @param switches
+ * @returns
+ */
+export const transformSwitchesComponentsToScssVariants = (switches: SwitchComponents): string => {
+  const lines = [];
+  lines.push(
+    `$switch-sizes: ( ${getSizesFromComponents(switches)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$switch-themes: ( ${getThemesFromComponents(switches)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$switch-states: ( ${getStatesFromComponents(switches)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
 
 export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.state : tokens.size;

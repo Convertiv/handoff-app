@@ -17,18 +17,13 @@ enum Parts {
   Footer = 'footer',
 }
 
-/**
- * Transform Modal components into CSS Variables
- * @param modals
- * @returns
- */
 export const transformModalComponentsToCssVariables = (modals: ModalComponents): string => {
   const lines = [];
   lines.push('.modal {')
   const cssVars = modals.map((modal) => `  ${cssCodeBlockComment('modal', modal)}\n ${Object.entries(transformModalComponentTokensToCssVariables(modal))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 export const transformModalComponentTokensToCssVariables = ({ ...tokens }: ModalComponent): Record<string, ValueProperty> => {

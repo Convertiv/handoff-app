@@ -1,4 +1,4 @@
-import { PaginationComponent } from '../../../exporters/components/component_sets/pagination';
+import { PaginationComponent, PaginationComponents } from '../../../exporters/components/component_sets/pagination';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -7,6 +7,33 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+
+/**
+ * Generate SCSS variants from pagination component
+ * @param pagination
+ * @returns
+ */
+export const transformPaginationComponentsToScssVariants = (pagination: PaginationComponents): string => {
+  const lines = [];
+  lines.push(
+    `$pagination-sizes: ( ${getSizesFromComponents(pagination)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$pagination-themes: ( ${getThemesFromComponents(pagination)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$pagination-states: ( ${getStatesFromComponents(pagination)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
 
 export const transformPaginationComponentTokensToScssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? 'default' : tokens.size;

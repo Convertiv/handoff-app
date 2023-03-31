@@ -7,13 +7,14 @@ import { DocumentationObject } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
-import scssTransformer from './transformers/scss';
+import scssTransformer, { scssVariantsTransformer } from './transformers/scss';
 import previewTransformer from './transformers/preview';
 import { buildClientFiles } from './utils/preview';
 import cssTransformer from './transformers/css';
 import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
+import integrationTransformer from './transformers/integration';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
@@ -23,6 +24,11 @@ const variablesFilePath = path.join(outputFolder, 'variables');
 const iconsZipFilePath = path.join(outputFolder, 'icons.zip');
 const logosZipFilePath = path.join(outputFolder, 'logos.zip');
 
+/**
+ * Read Previous Json File
+ * @param path
+ * @returns
+ */
 const readPrevJSONFile = async (path: string) => {
   try {
     return await fs.readJSON(path);
@@ -32,12 +38,34 @@ const readPrevJSONFile = async (path: string) => {
 };
 
 /**
+ * Read the current configuration
+ * @param path
+ * @returns
+ */
+const readConfigFile = async (path: string) => {
+  try {
+    return await fs.readJSON(path);
+  } catch (e) {
+    return undefined;
+  }
+};
+
+/**
  * Build just the custom fonts
- * @param documentationObject 
- * @returns 
+ * @param documentationObject
+ * @returns
  */
 const buildCustomFonts = async (documentationObject: DocumentationObject) => {
   return await fontTransformer(documentationObject);
+}
+
+/**
+ * Build just the custom fonts
+ * @param documentationObject
+ * @returns
+ */
+const buildIntegration = async (documentationObject: DocumentationObject) => {
+  return await integrationTransformer(documentationObject);
 }
 
 /**
@@ -57,22 +85,31 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
 
 /**
  * Build only the styles pipeline
- * @param documentationObject 
+ * @param documentationObject
  */
 const buildStyles = async (documentationObject: DocumentationObject) => {
+  const variantFiles = scssVariantsTransformer(documentationObject);
   const cssFiles = cssTransformer(documentationObject);
   const scssFiles = scssTransformer(documentationObject);
   await Promise.all([
     fs
       .ensureDir(variablesFilePath)
+      .then(() => fs.ensureDir(`${variablesFilePath}/variants`))
+      .then(() => fs.ensureDir(`${variablesFilePath}/css`))
+      .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/${name}.scss`, content))
+          Object.entries(variantFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/variants/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/${name}_vars.scss`, content))
+          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))
         )
       ),
   ]);
@@ -122,6 +159,7 @@ const entirePipeline = async () => {
   ]);
   await buildCustomFonts(documentationObject);
   await buildStyles(documentationObject);
+  await buildIntegration(documentationObject);
   await buildPreview(documentationObject);
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`))
 };

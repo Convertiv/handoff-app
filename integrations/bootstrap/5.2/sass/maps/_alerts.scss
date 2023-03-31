@@ -5,8 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/alerts_vars';
-@import './exported/variables/alerts';
+@import './exported/variables/variants/alerts';
+@import './exported/variables/sass/alerts';
+@import './exported/variables/css/alerts';
 
 $alert-padding-y:               $alert-horizontal-padding-top;
 $alert-padding-x:               $alert-horizontal-padding-right;

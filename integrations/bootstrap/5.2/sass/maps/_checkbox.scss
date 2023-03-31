@@ -5,7 +5,8 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/checkboxes_vars';
+@import './exported/variables/variants/checkboxes';
+@import './exported/variables/checkboxes';
 @import './exported/variables/checkboxes';
 
 

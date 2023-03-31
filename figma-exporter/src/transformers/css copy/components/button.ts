@@ -1,27 +1,48 @@
+import { capitalize } from 'lodash';
 import { ButtonComponent, ButtonComponents } from '../../../exporters/components/component_sets/button';
 import { ValueProperty } from '../types';
 import {
   cssCodeBlockComment,
   getCssVariableName,
+  getSizesFromComponents,
+  getStatesFromComponents,
+  getThemesFromComponents,
+  getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import {mapComponentSize} from '../../../utils';
 
-/**
- * Render css variables from button code
- * @param buttons
- * @returns
- */
 export const transformButtonComponentsToCssVariables = (buttons: ButtonComponents): string => {
   const lines = [];
+  lines.push(
+    `$button-variants: ( ${getTypesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')});`
+  );
+  lines.push(
+    `$button-sizes: ( ${getSizesFromComponents(buttons)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-themes: ( ${getThemesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-states: ( ${getStatesFromComponents(buttons)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
   lines.push('.btn {')
-  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
+  const cssVars = buttons.map((button) => `  ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 const properties = [
@@ -54,11 +75,6 @@ const properties = [
   }
 ]
 
-/**
- * Transform Buton components into Css vars
- * @param tokens
- * @returns
- */
 export const transformButtonComponentTokensToCssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;

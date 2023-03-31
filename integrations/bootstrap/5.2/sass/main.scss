@@ -1,30 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500&display=swap');
-
-
-
 // Initialize Bootstrap
 // ------------------------------------------------------------------
 
 @import 'node_modules/bootstrap/scss/functions';
-
 
 // Project Variables
 // ------------------------------------------------------------------
 
 $prefix: '';
 $enable-shadows: true;
-@import '../sass/project/default_vars/defaults';
-@import '../sass/project/buttons';
-@import '../sass/project/checkbox';
-@import '../sass/project/radio';
-@import '../sass/project/switch';
-@import '../sass/project/input';
-@import '../sass/project/select';
-@import '../sass/project/alerts';
-@import '../sass/project/modal';
-@import '../sass/project/pagination';
-@import '../sass/project/tooltips';
 
+@import 'maps/buttons';
+@import 'maps/checkbox';
+@import 'maps/radio';
+@import 'maps/switch';
+@import 'maps/input';
+@import 'maps/select';
+@import 'maps/alerts';
+@import 'maps/modal';
+@import 'maps/pagination';
+@import 'maps/tooltips';
 
 // Bootstrap Variables
 // ------------------------------------------------------------------
@@ -81,13 +75,13 @@ $enable-shadows: true;
 // Project Components
 // ------------------------------------------------------------------
 
-@import '../sass/project/components/buttons';
-@import '../sass/project/components/checkbox';
-@import '../sass/project/components/radio';
-@import '../sass/project/components/switch';
-@import '../sass/project/components/input';
-@import '../sass/project/components/select';
-@import '../sass/project/components/alerts';
-@import '../sass/project/components/modal';
-@import '../sass/project/components/pagination';
-@import '../sass/project/components/tooltips';
+@import 'components/buttons';
+@import 'components/checkbox';
+@import 'components/radio';
+@import 'components/switch';
+@import 'components/input';
+@import 'components/select';
+@import 'components/alerts';
+@import 'components/modal';
+@import 'components/pagination';
+@import 'components/tooltips';

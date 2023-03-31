@@ -14,8 +14,6 @@ interface CssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
 }
 
-
-
 export default function cssTransformer(documentationObject: DocumentationObject): CssTransformerOutput {
   const components = {
     // Buttons

@@ -13,7 +13,20 @@ import {
 } from '../../../utils/convertColor';
 
 
-
+/**
+ * Generate a list of alert variants as an scss map
+ * @param alerts
+ * @returns
+ */
+export const transformAlertComponentsToCssVariants = (alerts: AlertComponents): string => {
+  const lines = [];
+  lines.push(
+    `$alert-variants: ( ${getTypesFromComponents(alerts)
+      .map((type) => `"${type}"`)
+      .join(', ')});`
+  );
+  return lines.join('\n\n') + '\n}';
+};
 
 /**
  * Map down to a variable object
@@ -26,7 +39,7 @@ export const transformAlertComponentsToCssVariables = (alerts: AlertComponents):
   const cssVars = alerts.map((alert) => `  ${cssCodeBlockComment('alert', alert)}\n ${Object.entries(transformAlertComponentTokensToCssVariables(alert))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 /**

@@ -1,4 +1,4 @@
-import { ModalComponent } from '../../../exporters/components/component_sets/modal';
+import { ModalComponent, ModalComponents } from '../../../exporters/components/component_sets/modal';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -16,6 +16,17 @@ enum Parts {
   Footer  = 'footer',
 }
 
+export const transformModalComponentsToScssVariants = (modals: ModalComponents): string => {
+  const lines = [];
+  lines.push(`/* At present there are no modal variations*/`);
+  return lines.join('\n\n') + '\n';
+};
+
+/**
+ * Generate Modal SCSS vars from Modal Tokens
+ * @param param0
+ * @returns
+ */
 export const transformModalComponentTokensToScssVariables = ({ ...tokens }: ModalComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
 

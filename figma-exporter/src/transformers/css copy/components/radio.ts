@@ -10,17 +10,31 @@ import {
 } from '../../../utils/convertColor';
 import {
   cssCodeBlockComment,
+  getSizesFromComponents,
+  getStatesFromComponents,
+  getThemesFromComponents,
+  getTypesFromComponents,
   transformFigmaColorToCssColor,
 } from '../utils';
+import { mapComponentSize } from '../../../utils';
 
-
-/**
- * Transform Radio Components into CSS Variables
- * @param radios
- * @returns
- */
 export const transformRadioComponentsToCssVariables = (radios: RadioComponents): string => {
   const lines = [];
+  lines.push(
+    `$radio-sizes: ( ${getSizesFromComponents(radios)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-themes: ( ${getThemesFromComponents(radios)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-states: ( ${getStatesFromComponents(radios)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
   lines.push('.radio {');
   const cssVars = radios.map(
     (radio) =>
@@ -28,7 +42,7 @@ export const transformRadioComponentsToCssVariables = (radios: RadioComponents):
         .map(([variable, value]) => `  ${variable}: ${value.value};`)
         .join('\n')}`
   );
-  return lines.concat(cssVars).join('\n\n') + '\n}\n';
+  return lines.concat(cssVars).join('\n\n') + '\n}';
 };
 
 export const transformRadioComponentTokensToCssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {

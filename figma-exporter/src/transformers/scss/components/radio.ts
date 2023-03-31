@@ -1,4 +1,4 @@
-import { RadioComponent } from '../../../exporters/components/component_sets/radio';
+import { RadioComponent, RadioComponents } from '../../../exporters/components/component_sets/radio';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,7 +8,8 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { transformFigmaColorToCssColor } from '../../css/utils';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../../css/utils';
+import { mapComponentSize } from '../../../utils';
 
 enum Parts {
   Radio  = 'radio',
@@ -16,6 +17,36 @@ enum Parts {
   Thumb  = 'thumb',
 }
 
+/**
+ * Build a list of SCSS variants from radio components
+ * @param radios
+ * @returns
+ */
+export const transformRadioComponentsToScssVariants = (radios: RadioComponents): string => {
+  const lines = [];
+  lines.push(
+    `$radio-sizes: ( ${getSizesFromComponents(radios)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-themes: ( ${getThemesFromComponents(radios)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-states: ( ${getStatesFromComponents(radios)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+/**
+ * Build SCSS tokens from radio
+ * @param tokens
+ * @returns
+ */
 export const transformRadioComponentTokensToScssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
   const theme = 'light';

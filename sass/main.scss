@@ -35,27 +35,12 @@ $enable-shadows: true;
 @import 'generic/all';
 @import 'elements/all';
 @import 'objects/all';
-@import 'project/default_vars/defaults';
-@import 'project/buttons';
-@import 'project/checkbox';
-@import 'project/radio';
-@import 'project/switch';
-@import 'project/input';
-@import 'project/select';
-@import 'project/alerts';
-@import 'project/modal';
-@import 'project/pagination';
-@import 'project/tooltips';
-@import 'project/components/buttons';
-@import 'project/components/checkbox';
-@import 'project/components/radio';
-@import 'project/components/switch';
-@import 'project/components/input';
-@import 'project/components/select';
-@import 'project/components/alerts';
-@import 'project/components/modal';
-@import 'project/components/pagination';
-@import 'project/components/tooltips';
+@import 'default_vars/defaults';
+
+/* The published integration gets included here
+   ========================================================================== */
+@import '../exported/framework_integration/main.scss';
+
 @import '../exported/variables/buttons.scss';
 @import '../exported/variables/selects.scss';
 @import 'components/all';

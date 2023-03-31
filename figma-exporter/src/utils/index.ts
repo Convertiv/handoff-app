@@ -1,3 +1,4 @@
+import path from 'path';
 
 /**
  * Generate slug from string
@@ -14,33 +15,63 @@ export const slugify = (str: string): string =>
 
 
 /**
- * Filters out null values
+ *  Filters out null values
+ * @param value
+ * @returns
  */
 export const filterOutNull = <T>(value: T): value is NonNullable<T> => value !== null;
 
+/**
+ * Filters out undefined vars
+ * @param value
+ * @returns
+ */
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
 export interface ComponentSizeMap {
   figma: string;
   css: string;
 }
+/**
+ * Default list of component sizes
+ * TODO: Make this configurable
+ */
 export const componentSizeMap: ComponentSizeMap[] = [
   {
-    figma:'small',
+    figma: 'small',
     css: 'sm',
   },
   {
-    figma:'medium',
+    figma: 'medium',
     css: 'md',
   },
   {
-    figma:'large',
+    figma: 'large',
     css: 'lg',
   },
 ];
 
+/**
+ * Map a component size to the right name
+ * @param figma
+ * @returns
+ */
 export const mapComponentSize = (figma: string): string => {
   let size = componentSizeMap.find((size) => size.figma === figma);
 
   return size?.css ?? 'sm';
+}
+
+/**
+ * Derive the path to the integration
+ */
+export const getPathToIntegration = () => {
+  const integrationFolder = 'public';
+  const defaultIntegration = 'bootstrap';
+  const defaultVersion = '5.2';
+
+  // TODO: Get desired integration from Config
+  // TODO: Allow custom integrations
+
+  return path.join(integrationFolder, defaultIntegration, defaultVersion);
 }
