@@ -36,7 +36,7 @@
     },
     "homepage": "https://www.handoff.com/",
     "dependencies": {
-      "handoff-app": "^0.2.0"
+      "handoff-app": "^0.3.0"
     }
   }
   
