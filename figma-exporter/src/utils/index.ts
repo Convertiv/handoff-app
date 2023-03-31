@@ -66,7 +66,7 @@ export const mapComponentSize = (figma: string): string => {
  * Derive the path to the integration
  */
 export const getPathToIntegration = () => {
-  const integrationFolder = 'public';
+  const integrationFolder = 'integrations';
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
 
