@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2023-03-31
+
+This release creates base foundation tokens in the /exported directory.  This
+is a major step forward allowing projects to use color, typography and effects as
+named tokens in projects in addition to component tokens.
+### Changes
+
+- Adds foundation token css and scss files so projects can reference colors, 
+typography and effects.
+  - Tokens are exported to the /exported folder
+  - Foundation token files follow the form - {type of foundation}.scss contains 
+  the css vars and {type of foundation}_vars.scss contains the scss variables
+  - Color tokens are either hex for solid colors or rgba for alpha channel colors
+  - Two color map arrays are provided $color-groups and $color-names
+  - Color tokens are in the form $color-{group}-{name}: {hex/rgba};
+  - Typography tokens support 
+    - font-family
+    - font-size
+    - font-weight
+    - line-height
+    - letter-spacing
+    - paragraph-spacing
+  - One Typography map is provided $type-sizes
+  - Typography tokens are in the form $typography-{size}-{property}: {value}
+  - Effects are are currently limited to drop and inner shadows
+  - Effects include a map of effect names $effects
+  - Effects are in the form $effect-{name}: {shadow definition}
+
+### Bugfixes
+- Adds the proper sidebar menu icon for effects
+
 ## [0.2.1] - 2023-03-28
 
 This release fixes a small typo in the installer. The version in the installed
