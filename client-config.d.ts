@@ -22,10 +22,17 @@ export interface ComponentConfig {
   tooltip:  string | null;
 }
 
+export interface Integration {
+  name: string;
+  version: string;
+}
+
 export interface Config {
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;
+  integration?: Integration;
+
   favicon?: string;
   poweredBy?: boolean;
   /**

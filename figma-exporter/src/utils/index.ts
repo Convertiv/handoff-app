@@ -1,5 +1,7 @@
 import path from 'path';
-
+import { getFetchConfig } from '../config';
+import fs from 'fs-extra';
+import chalk from 'chalk';
 /**
  * Generate slug from string
  * @param str
@@ -70,8 +72,19 @@ export const getPathToIntegration = () => {
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
 
-  // TODO: Get desired integration from Config
-  // TODO: Allow custom integrations
+  const defaultPath = path.resolve(path.join(integrationFolder, defaultIntegration, defaultVersion));
 
-  return path.join(integrationFolder, defaultIntegration, defaultVersion);
+  const config = getFetchConfig()
+  if (config.integration) {
+    const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
+    if (!fs.existsSync(searchPath)) {
+      console.log(chalk.red(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`));
+      throw Error('Could not find requested integration');
+    }
+    return searchPath;
+  }
+  // TODO: Allow custom integrations
+  // TODO: Allow customers to supply integration
+
+  return defaultPath;
 }
