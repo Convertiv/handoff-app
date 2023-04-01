@@ -98,21 +98,6 @@ export const transformFigmaTextCaseToCssTextTransform = (textCase: FigmaTypes.Ty
   return 'none';
 };
 
-export const transformFigmaEffectToCssBoxShadow = (effect: FigmaTypes.Effect): string => {
-  const { type, color, offset, radius, visible } = effect;
-
-  if (!visible) {
-    return '';
-  }
-
-  if (type === 'DROP_SHADOW' && color && offset && radius) {
-    const { x, y } = offset;
-
-    return `${x}px ${y}px ${radius}px ${transformFigmaColorToCssColor(color)}`;
-  }
-
-  return '';
-};
 export interface AbstractComponent {
   componentType?: string;
   /**

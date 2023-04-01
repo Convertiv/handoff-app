@@ -1,4 +1,5 @@
 import type { DocumentComponentsObject } from './exporters/components';
+import { Effect } from './figma/types';
 
 export interface ColorGroup {
   group: string;
@@ -7,6 +8,7 @@ export interface ColorGroup {
 
 export interface EffectObject {
   name: string;
+  machineName: string;
   group: string;
   effects: EffectParametersObject[];
 }
@@ -18,6 +20,7 @@ export interface ColorObject {
   hex: string;
   rgb: RGBObject;
   sass: string;
+  machineName: string;
 }
 
 export interface TypographyObject {
@@ -28,11 +31,8 @@ export interface TypographyObject {
 }
 
 export interface EffectParametersObject {
-  type: 'DROP_SHADOW';
-  visible: boolean;
-  color: RGBObject;
-  offset: OffsetObject;
-  radius: number;
+  type: Effect['type'];
+  value: string;
 }
 
 export interface RGBObject {
@@ -62,6 +62,7 @@ export interface DocumentationObject {
   design: {
     color: ColorObject[];
     typography: TypographyObject[];
+    effect: EffectObject[];
   };
   components: DocumentComponentsObject;
   assets: {

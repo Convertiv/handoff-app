@@ -1,6 +1,5 @@
 import capitalize from 'lodash/capitalize';
 import { DocumentationObject } from '../../types';
-import { transformCheckboxComponentsToCssVariables } from '../css/components/checkbox';
 import { transformAlertComponentsToScssVariants, transformAlertComponentTokensToScssVariables } from './components/alert';
 import { transformButtonComponentsToScssVariants, transformButtonComponentTokensToScssVariables } from './components/button';
 import { transformCheckboxComponentsToScssVariants, transformCheckboxComponentTokensToScssVariables } from './components/checkbox';
@@ -11,9 +10,13 @@ import { transformRadioComponentsToScssVariants, transformRadioComponentTokensTo
 import { transformSelectComponentsToScssVariants, transformSelectComponentTokensToScssVariables } from './components/select';
 import { transformSwitchComponentTokensToScssVariables, transformSwitchesComponentsToScssVariants } from './components/switch';
 import { transformTooltipComponentsToScssVariants, transformTooltipComponentTokensToScssVariables } from './components/tooltip';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
 /**
@@ -163,7 +166,14 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio))
       .join('\n\n'),
   };
 
+  const design = {
+    colors: transformColors(documentationObject.design.color),
+    typography: transformTypography(documentationObject.design.typography),
+    effects: transformEffects(documentationObject.design.effect),
+  }
+
   return {
     components,
+    design
   };
 }
