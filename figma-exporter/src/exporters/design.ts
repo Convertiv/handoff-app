@@ -134,7 +134,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
     throw new Error(
       'An error occured fetching Colors and Typography.  This typically happens when the library cannot be read from Handoff'
     );
-    return { color: [], typography: [] };
+    return { color: [], typography: [], effect: [] };
   }
 };
 
