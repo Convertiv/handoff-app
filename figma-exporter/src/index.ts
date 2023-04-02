@@ -14,7 +14,7 @@ import cssTransformer from './transformers/css';
 import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
-import integrationTransformer from './transformers/integration';
+import integrationTransformer from './transformers/font copy';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');

@@ -106,7 +106,7 @@ const SelectPage = ({ content, menu, metadata, current, componentFound }: util.C
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>

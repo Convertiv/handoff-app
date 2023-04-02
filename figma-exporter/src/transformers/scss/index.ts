@@ -14,6 +14,10 @@ import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
+interface ScssVariantsTransformerOutput {
+  components: Record<keyof DocumentationObject['components'], string>;
+}
+
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
   design: Record<'colors' | 'typography' | 'effects', string>;
@@ -24,7 +28,7 @@ interface ScssTransformerOutput {
  * @param documentationObject
  * @returns
  */
-export function scssVariantsTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
+export function scssVariantsTransformer(documentationObject: DocumentationObject): ScssVariantsTransformerOutput {
   const components = {
     // Buttons
     buttons: transformButtonComponentsToScssVariants(documentationObject.components.buttons),
@@ -40,7 +44,7 @@ export function scssVariantsTransformer(documentationObject: DocumentationObject
   };
 
   return {
-    components,
+    components
   };
 }
 

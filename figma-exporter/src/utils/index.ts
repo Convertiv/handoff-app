@@ -1,5 +1,4 @@
 import path from 'path';
-import { getFetchConfig } from '../config';
 import fs from 'fs-extra';
 import chalk from 'chalk';
 /**
@@ -74,7 +73,7 @@ export const getPathToIntegration = () => {
 
   const defaultPath = path.resolve(path.join(integrationFolder, defaultIntegration, defaultVersion));
 
-  const config = getFetchConfig()
+  const config = getConfig();
   if (config.integration) {
     const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
@@ -84,7 +83,7 @@ export const getPathToIntegration = () => {
     return searchPath;
   }
   // TODO: Allow custom integrations
-  // TODO: Allow customers to supply integration
+  // TODO: Allow customers to
 
   return defaultPath;
 }

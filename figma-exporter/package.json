@@ -1,9 +1,9 @@
 {
   "name": "figma-exporter",
   "main": "dist/figma-exporter.cjs.js",
-  "engines" : { 
-    "npm" : ">=8.0.0",
-    "node" : ">=16.0.0"
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "@figma/plugin-typings": "^1.55.1",
@@ -28,7 +28,8 @@
   "preconstruct": {
     "entrypoints": [
       "index.ts",
-      "api.ts"
+      "api.ts",
+      "config.ts"
     ]
   },
   "devDependencies": {
