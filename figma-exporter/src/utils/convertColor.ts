@@ -1,6 +1,7 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
+import { isShadowEffectType } from '../exporters/components/utils';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -114,10 +115,10 @@ export const transformFigmaEffectToCssBoxShadow = (effect: FigmaTypes.Effect): s
     return '';
   }
 
-  if (type === 'DROP_SHADOW' && color && offset) {
+  if (isShadowEffectType(type) && color && offset) {
     const { x, y } = offset;
 
-    return `${x}px ${y}px ${radius ?? 0}px ${spread ? spread + 'px ' : ''}${transformFigmaColorToCssColor(color)}`;
+    return `${x}px ${y}px ${radius ?? 0}px ${spread ? spread + 'px ' : ''}${transformFigmaColorToCssColor(color)}${type === 'INNER_SHADOW' ? ' inset' : '' }`;
   }
 
   return '';
