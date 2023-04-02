@@ -22,11 +22,11 @@ const config = {
     'Input Labels',
     'Link',
   ],
-  design: { color: [], typography: [] },  // Containers for holding design elements. Will be overwritten on fetch
+  design: { color: [], typography: [], effect: [] },  // Containers for holding design elements. Will be overwritten on fetch
   assets: { icons: [], logos: [] },       // Containers for holding assets. Will be overwritten on fetch
   type_copy: 'Almost before we knew it, we had left the ground.', // The sample text to use on the typography page
   color_sort: ['primary', 'secondary', 'extra', 'system'],        // The sort order of the color types
-  component_sort: ['primary', 'secondary', 'transparent'],  
+  component_sort: ['primary', 'secondary', 'transparent'],
 };
 
 module.exports = config;
