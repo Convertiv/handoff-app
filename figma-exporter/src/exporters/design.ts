@@ -39,7 +39,11 @@ const isArray = (input: any): input is any[] | readonly any[] => {
   return Array.isArray(input);
 };
 
-const getFileDesignTokens = async (fileId: string, accessToken: string) => {
+const getFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
+  color: ColorObject[];
+  typography: TypographyObject[];
+  effect: EffectObject[];
+}> => {
   try {
     const apiResponse = await getFileStyles(fileId, accessToken);
     const file = apiResponse.data;
@@ -82,11 +86,11 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
             effects: document.effects
               .filter((effect) => isValidEffectType(effect.type) && effect.visible)
               .map((effect) => ({
-                  type: effect.type,
-                  value: isShadowEffectType(effect.type)
-                    ? transformFigmaEffectToCssBoxShadow(effect)
-                    : '',
-                }
+                type: effect.type,
+                value: isShadowEffectType(effect.type)
+                  ? transformFigmaEffectToCssBoxShadow(effect)
+                  : '',
+              }
               ))
           });
         } else if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
@@ -134,7 +138,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
     throw new Error(
       'An error occured fetching Colors and Typography.  This typically happens when the library cannot be read from Handoff'
     );
-    return { color: [], typography: [] };
+    return { color: [], typography: [], effect: [] };
   }
 };
 
