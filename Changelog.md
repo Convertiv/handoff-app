@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2023-04-03
+This release fixes two small bugs, one that throws an error on builds because
+of a missing type declaration in the config.
+### Bug
+- Builds against 0.3.0 are failing because of a missing type. Effects is missing 
+from the return type of the DocumentObjects. This adds that type to fix.
+- RGBA Colors are listed on the foundations as percent instead of 255 values. 
+This changes the display values, without changing the generated tokens.
+
 ## [0.3.0] - 2023-03-31
 
 This release creates base foundation tokens in the /exported directory.  This
