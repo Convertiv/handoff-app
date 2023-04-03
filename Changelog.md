@@ -11,7 +11,7 @@ and this project adheres to
 This release fixes two small bugs, one that throws an error on builds because
 of a missing type declaration in the config.
 
-### Bug
+### Bugfixes
 
 - Builds against 0.3.0 are failing because of a missing type. Effects is missing
   from the return type of the DocumentObjects. This adds that type to fix.
