@@ -2,6 +2,8 @@ import 'dotenv/config';
 import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
+import config from '../../client-config';
+import type { Config } from '../../client-config';
 
 import { DocumentationObject } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
@@ -14,7 +16,7 @@ import cssTransformer from './transformers/css';
 import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
-import integrationTransformer from './transformers/font copy';
+import integrationTransformer from './transformers/font';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
@@ -195,3 +197,11 @@ const entirePipeline = async () => {
     }
   }
 })();
+
+
+export const getConfig = () => {
+  // Check to see if there is a config in the root of the project
+  const parsed = { ...config } as unknown as Config;
+
+  return parsed;
+};

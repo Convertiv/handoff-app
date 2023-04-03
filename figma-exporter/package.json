@@ -28,8 +28,7 @@
   "preconstruct": {
     "entrypoints": [
       "index.ts",
-      "api.ts",
-      "config.ts"
+      "api.ts"
     ]
   },
   "devDependencies": {

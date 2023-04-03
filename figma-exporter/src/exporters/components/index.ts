@@ -11,8 +11,8 @@ import extractSwitchComponents, { SwitchComponents, SwitchDesignComponent } from
 import extractPaginationComponents, { PaginationComponents } from './component_sets/pagination';
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
-import { getConfig } from '../../config';
 import chalk from 'chalk';
+import { getConfig } from 'figma-exporter/src';
 
 export interface DocumentComponentsObject {
   [key: string]: any;
