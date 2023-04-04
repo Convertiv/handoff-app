@@ -5,7 +5,7 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/variants/selects';
+@import './exported/variables/types/selects';
 @import './exported/variables/sass/selects';
 @import './exported/variables/css/selects';
 

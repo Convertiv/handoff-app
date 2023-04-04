@@ -1,4 +1,11 @@
 import { TypographyObject } from "../../../types";
+export function transformTypographyTypes(typography: TypographyObject[]): string {
+  const stringBuilder: Array<string> = [];
+
+  stringBuilder.push(`$type-sizes: ( ${typography.map(type => `"${getTypeName(type)}"`).join(', ')} );`);
+
+  return stringBuilder.join('\n');
+}
 
 export default function transformTypography(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];

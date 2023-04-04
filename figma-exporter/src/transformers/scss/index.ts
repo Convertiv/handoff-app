@@ -10,12 +10,13 @@ import { transformRadioComponentsToScssTypes, transformRadioComponentTokensToScs
 import { transformSelectComponentsToScssTypes, transformSelectComponentTokensToScssVariables } from './components/select';
 import { transformSwitchComponentTokensToScssVariables, transformSwitchesComponentsToScssTypes } from './components/switch';
 import { transformTooltipComponentsToScssTypes, transformTooltipComponentTokensToScssVariables } from './components/tooltip';
-import transformColors from './design/colors';
-import transformEffects from './design/effects';
-import transformTypography from './design/typography';
+import transformColors, { transformColorTypes } from './design/colors';
+import transformEffects, { transformEffectTypes } from './design/effects';
+import transformTypography, { transformTypographyTypes } from './design/typography';
 
-interface ScssVariantsTransformerOutput {
+interface ScssTypesTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
 interface ScssTransformerOutput {
@@ -24,11 +25,11 @@ interface ScssTransformerOutput {
 }
 
 /**
- * Build a set of Component variants to use as a set of SCSS vars
+ * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
  * @returns
  */
-export function scssTypesTransformer(documentationObject: DocumentationObject): ScssVariantsTransformerOutput {
+export function scssTypesTransformer(documentationObject: DocumentationObject): ScssTypesTransformerOutput {
   const components = {
     // Buttons
     buttons: transformButtonComponentsToScssTypes(documentationObject.components.buttons),
@@ -43,8 +44,16 @@ export function scssTypesTransformer(documentationObject: DocumentationObject): 
     radios: transformRadioComponentsToScssTypes(documentationObject.components.radios),
   };
 
+  const design = {
+    // Buttons
+    colors: transformColorTypes(documentationObject.design.color),
+    effects: transformEffectTypes(documentationObject.design.effect),
+    typography: transformTypographyTypes(documentationObject.design.typography),
+  };
+
   return {
-    components
+    components,
+    design
   };
 }
 
