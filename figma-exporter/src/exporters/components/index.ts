@@ -125,105 +125,105 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
     )
   );
   const config = await getConfig();
-  console.log(config);
+  const figmaSearch = config.figma.components;
   return {
-    buttons: config.components.button
+    buttons: figmaSearch.button
       ? extractButtonComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma?.components.button?.search ?? 'Button'
+            figmaSearch.button.search ?? 'Button'
           )
         )
       : [],
-    selects: config.components.select
+    selects: figmaSearch.select
       ? extractSelectComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma?.components.select?.search ?? 'Select'
+            figmaSearch.select.search ?? 'Select'
           )
         )
       : [],
-    checkboxes: config.components.checkbox
+    checkboxes: figmaSearch.checkbox
       ? extractCheckboxComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.checkbox.search ?? 'Checkbox'
+            figmaSearch.checkbox.search ?? 'Checkbox'
           )
         )
       : [],
-    radios: config.components.radio
+    radios: figmaSearch.radio
       ? extractRadioComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.radio.search ?? 'Radio'
+            figmaSearch.radio.search ?? 'Radio'
           )
         )
       : [],
-    inputs: config.components.input
+    inputs: figmaSearch.input
       ? extractInputComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.input.search ?? 'Input'
+            'Input'
           )
         )
       : [],
-    tooltips: config.components.tooltip
+    tooltips: figmaSearch.tooltip
       ? extractTooltipComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.tooltip.search ?? 'Tooltip'
+            'Tooltip'
           )
         )
       : [],
-    alerts: config.components.alert
+    alerts: figmaSearch.alert
       ? extractAlertComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.alert.search ?? 'Alert'
+            'Alert'
           )
         )
       : [],
-    switches: config.components.switch
+    switches: figmaSearch.switch
       ? extractSwitchComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.switch.search ?? 'Switch'
+            'Switch'
           )
         )
       : [],
-    pagination: config.components.pagination
+    pagination: figmaSearch.pagination
       ? extractPaginationComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.pagination.search ?? 'Pagination'
+            'Pagination'
           )
         )
       : [],
-    modal: config.components.modal
+    modal: figmaSearch.modal
       ? extractModalComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.figma.components.modal.search ?? 'Modal'
+            'Modal'
           )
         )
       : [],
