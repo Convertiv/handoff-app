@@ -2,8 +2,6 @@ import 'dotenv/config';
 import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
-import config from '../../client-config';
-import type { Config } from '../../client-config';
 
 import { DocumentationObject } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
@@ -197,11 +195,3 @@ const entirePipeline = async () => {
     }
   }
 })();
-
-
-export const getConfig = () => {
-  // Check to see if there is a config in the root of the project
-  const parsed = { ...config } as unknown as Config;
-
-  return parsed;
-};

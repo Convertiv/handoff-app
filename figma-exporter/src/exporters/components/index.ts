@@ -12,7 +12,7 @@ import extractPaginationComponents, { PaginationComponents } from './component_s
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
 import chalk from 'chalk';
-import { getConfig } from 'figma-exporter/src';
+import { getConfig } from 'figma-exporter/src/utils';
 
 export interface DocumentComponentsObject {
   [key: string]: any;
