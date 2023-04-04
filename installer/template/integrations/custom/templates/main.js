@@ -1,7 +1,5 @@
-/**
- * Template for boostrap preview js
- */
-import { Tooltip } from 'bootstrap';
+// bootstrap
+import { Tooltip, Modal } from 'bootstrap';
 import 'iframe-resizer/js/iframeResizer.contentWindow';
 // bootstrap css
 import './main.scss';

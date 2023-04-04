@@ -1,0 +1,14 @@
+/* =============================================================================
+   SWITCH (project/components/_switch.scss)
+   ========================================================================== */
+
+
+.form-switch {
+	min-height: $form-switch-min-height;
+
+	.form-check-input {
+		height: $form-switch-height;
+		margin-top: calc( ( $form-switch-min-height - $form-switch-height ) / 2 );
+		background-size: contain;
+	}
+}
