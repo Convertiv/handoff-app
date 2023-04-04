@@ -173,7 +173,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Input'
+            figmaSearch.input.search ?? 'Input'
           )
         )
       : [],
@@ -183,7 +183,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Tooltip'
+            figmaSearch.tooltip.search ?? 'Tooltip'
           )
         )
       : [],
@@ -193,7 +193,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Alert'
+            figmaSearch.alert.search ?? 'Alert'
           )
         )
       : [],
@@ -203,7 +203,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Switch'
+            figmaSearch.switch.search ?? 'Switch'
           )
         )
       : [],
@@ -213,7 +213,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Pagination'
+            figmaSearch.pagination.search ?? 'Pagination'
           )
         )
       : [],
@@ -223,7 +223,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            'Modal'
+            figmaSearch.modal.search ?? 'Modal'
           )
         )
       : [],

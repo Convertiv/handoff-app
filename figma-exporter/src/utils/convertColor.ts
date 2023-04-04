@@ -48,7 +48,7 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
     return figmaColorToHex(color);
   }
 
-  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
+  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${parseFloat(a.toFixed(3))})`;
 };
 
 export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string => {
@@ -207,6 +207,10 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
     }
   }
   return hex;
+}
+
+export const transformFigmaNumberToCss = (value: number) => {
+  return parseFloat(value.toFixed(3));
 }
 
 type webRGB = [number, number, number];

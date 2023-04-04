@@ -41,8 +41,6 @@ $enable-shadows: true;
    ========================================================================== */
 @import '../exported/framework_integration/main.scss';
 
-@import '../exported/variables/buttons.scss';
-@import '../exported/variables/selects.scss';
 @import 'components/all';
 @import 'utilities/all';
 //@import 'vendor/prism.scss';

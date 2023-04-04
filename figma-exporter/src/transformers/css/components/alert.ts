@@ -3,6 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
+  transformFigmaNumberToCss,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
@@ -18,8 +19,8 @@ import { cssCodeBlockComment } from '../utils';
 export const transformAlertComponentsToCssVariables = (alerts: AlertComponents): string => {
   const lines = [];
   lines.push('.alert {')
-  const cssVars = alerts.map((alert) => `  ${cssCodeBlockComment('alert', alert)}\n ${Object.entries(transformAlertComponentTokensToCssVariables(alert))
-    .map(([variable, value]) => `  ${variable}: ${value.value};`)
+  const cssVars = alerts.map((alert) => `\t${cssCodeBlockComment('alert', alert)}\n${Object.entries(transformAlertComponentTokensToCssVariables(alert))
+    .map(([variable, value]) => `\t${variable}: ${value.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
@@ -153,7 +154,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.letterSpacing}px`, property: 'letter-spacing' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.letterSpacing)}px`, property: 'letter-spacing' },
     [getCssVariableName({ component: 'alert', property: 'text-align', part: 'title', theme, type, state })]: {
       value: transformFigmaTextAlignToCss(tokens.parts.title.textAlign),
       property: 'text-align',
@@ -203,7 +204,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.text.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.text.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
