@@ -14,7 +14,7 @@ import cssTransformer from './transformers/css';
 import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
-import integrationTransformer from './transformers/font';
+import integrationTransformer from './transformers/integration';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
@@ -65,7 +65,7 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  * @returns
  */
 const buildIntegration = async (documentationObject: DocumentationObject) => {
-  return await integrationTransformer(documentationObject);
+  return await integrationTransformer();
 }
 
 /**
@@ -174,10 +174,21 @@ const entirePipeline = async () => {
       let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
       if (documentationObject) {
         await buildPreview(documentationObject);
+        await buildIntegration(documentationObject);
       } else {
         console.log(chalk.red('Cannot run preview only because tokens do not exist. Run the fetch first.'));
       }
-    } else if (process.argv[2] === 'styles') {
+    } else if (process.argv[2] === 'integration') {
+      let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+      if (documentationObject) {
+        await buildStyles(documentationObject);
+        await buildPreview(documentationObject);
+        await buildIntegration(documentationObject);
+      } else {
+        console.log(chalk.red('Cannot run preview only because tokens do not exist. Run the fetch first.'));
+      }
+    }
+    else if (process.argv[2] === 'styles') {
       let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
       if (documentationObject) {
         await buildStyles(documentationObject);

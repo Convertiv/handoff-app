@@ -24,13 +24,13 @@ process.env.NODE_ENV = 'development';
   await buildTmpDir();
 
   // What directories should we watch
-  const watcher = chokidar.watch( 
+  const watcher = chokidar.watch(
     [
       path.resolve(projectRootDir, 'config.js'),
       path.resolve(projectRootDir, 'exported'),
       path.resolve(projectRootDir, 'public'),
       path.resolve(projectRootDir, 'pages'),
-      path.resolve(projectRootDir, 'templates'),
+      path.resolve(projectRootDir, 'integrations'),
       path.resolve(projectRootDir, 'sass'),
     ],
     { persistent: true, ignoreInitial: true }
@@ -64,7 +64,7 @@ process.env.NODE_ENV = 'development';
   const resetDirectory = async () => {
     await mergePackageDir('pages', 'docs');
     await mergePackageDir('public', 'public');
-    await mergePackageDir('templates', 'templates');
+    await mergePackageDir('integrations', 'integrations');
     await mergePackageDir('sass', 'sass');
   }
   /**
@@ -75,13 +75,11 @@ process.env.NODE_ENV = 'development';
     const relativePath = path.relative(projectRootDir, file);
     if (relativePath.startsWith('public/')) {
 
-    }else if (relativePath.startsWith('templates/')) {
+    }else if (relativePath.startsWith('integrations/')) {
       await runPreviewExporter();
     } else if (relativePath.startsWith('pages/')) {
-
     } else if (relativePath.startsWith('sass/')) {
-
-    } 
+    }
   };
 
   const knownPaths = [

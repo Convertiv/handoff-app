@@ -90,6 +90,21 @@ const runStyleExporter = async () => {
 };
 
 /**
+ * Run only the integration exporter
+ */
+const runIntegrationExporter = async () => {
+  // Run figma-exporter in the project root
+  console.log('Running integration transformer...');
+  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'integration'], {
+    cwd: projectRootDir,
+    env: process.env,
+    stdio: 'inherit',
+  });
+  console.log('Integration transformer finished.');
+};
+
+
+/**
  * Copy the figma exports
  */
 const copyFigmaExportedFiles = async () => {
@@ -231,7 +246,7 @@ const buildTmpDir = async () => {
   await prepareTmpDir();
   await installNpmDependencies();
   await copyProjectConfig();
-  await mergeProjectDir('templates', 'templates');
+  await mergeProjectDir('integrations', 'integrations');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
@@ -250,4 +265,5 @@ module.exports = {
   mergeProjectFile,
   runPreviewExporter,
   runStyleExporter,
+  runIntegrationExporter,
 };

@@ -75,6 +75,15 @@ export const getPathToIntegration = () => {
 
   const config = getConfig();
   if (config.integration) {
+    if (config.integration === 'custom') {
+      // Look for a custom integration
+      const customPath = path.resolve(path.join(integrationFolder, 'custom'));
+      if (!fs.existsSync(customPath)) {
+        console.log(chalk.red(`The config is set to use a custom integration but no custom integration found at integrations/custom`));
+        throw Error('Could not find requested integration');
+      }
+      return customPath;
+    }
     const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
       console.log(chalk.red(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`));
@@ -82,7 +91,6 @@ export const getPathToIntegration = () => {
     }
     return searchPath;
   }
-  // TODO: Allow custom integrations
   // TODO: Allow customers to
 
   return defaultPath;
