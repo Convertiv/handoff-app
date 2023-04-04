@@ -1,13 +1,20 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectParametersObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex, figmaPaintToGradiant, figmaPaintToHex, figmaPaintToRGB, parseFigmaPaints } from '../utils/convertColor';
-import { isValidEffectType } from './components/utils';
+import { figmaColorToHex, figmaPaintToGradiant, figmaPaintToHex, figmaPaintToRGB, parseFigmaPaints, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
+import { isShadowEffectType, isValidEffectType } from './components/utils';
 
 interface GroupNameData {
   name: string;
   machine_name: string;
   group: string;
+}
+
+const toMachineName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\-]/gi, '')
+    .replace(/\s\-\s|\s+/gi, '-');
 }
 
 const fieldData = (name: string): GroupNameData => {
@@ -18,20 +25,12 @@ const fieldData = (name: string): GroupNameData => {
     group: '',
   };
   if (nameArray[1]) {
-    data.group = nameArray[0]!.toLowerCase();
+    data.group = toMachineName(nameArray[0]!)
     data.name = nameArray[1];
-    data.machine_name = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, ' ')
-      .replaceAll('  ', ' ')
-      .replaceAll(' ', '-');
+    data.machine_name = toMachineName(data.name)
   } else {
     data.name = nameArray[0]!;
-    data.machine_name = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/gi, ' ')
-      .replaceAll('  ', ' ')
-      .replaceAll(' ', '-');
+    data.machine_name = toMachineName(data.name)
   }
   return data;
 };
@@ -40,7 +39,11 @@ const isArray = (input: any): input is any[] | readonly any[] => {
   return Array.isArray(input);
 };
 
-const getFileDesignTokens = async (fileId: string, accessToken: string) => {
+const getFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
+  color: ColorObject[];
+  typography: TypographyObject[];
+  effect: EffectObject[];
+}> => {
   try {
     const apiResponse = await getFileStyles(fileId, accessToken);
     const file = apiResponse.data;
@@ -78,17 +81,17 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
         if (isArray(document.effects) && document.effects.length > 0) {
           effectsArray.push({
             name,
+            machineName: machine_name,
             group,
             effects: document.effects
-              .filter((effect) =>
-                isValidEffectType(effect.type))
+              .filter((effect) => isValidEffectType(effect.type) && effect.visible)
               .map((effect) => ({
                 type: effect.type,
-                visible: effect.visible,
-                color: effect.color,
-                offset: effect.offset,
-                radius: effect.radius,
-              } as EffectParametersObject))
+                value: isShadowEffectType(effect.type)
+                  ? transformFigmaEffectToCssBoxShadow(effect)
+                  : '',
+              }
+              ))
           });
         } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || document.fills[0].type === 'GRADIENT_LINEAR')) {
           const color = document.fills[0];
@@ -100,7 +103,8 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
             hex: figmaPaintToHex(color),
             rgb: rgba,
             sass: `$color-${group}-${machine_name}`,
-            layers: layers
+            layers: layers,
+            machineName: machine_name,
           });
         }
       }
@@ -125,7 +129,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
       }
     });
 
-    console.log(chalk.green('Colors and Typography Exported'));
+    chalk.green('Colors, Effects and Typography Exported')
     const data = {
       color: colorsArray,
       effect: effectsArray,
@@ -136,7 +140,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
     throw new Error(
       'An error occured fetching Colors and Typography.  This typically happens when the library cannot be read from Handoff'
     );
-    return { color: [], typography: [] };
+    return { color: [], typography: [], effect: [] };
   }
 };
 

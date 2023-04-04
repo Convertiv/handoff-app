@@ -10,9 +10,13 @@ import { transformRadioComponentTokensToScssVariables } from './components/radio
 import { transformSelectComponentTokensToScssVariables } from './components/select';
 import { transformSwitchComponentTokensToScssVariables } from './components/switch';
 import { transformTooltipComponentTokensToScssVariables } from './components/tooltip';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
 export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
@@ -131,8 +135,15 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio))
       )
       .join('\n\n'),
   };
+  
+  const design = {
+    colors: transformColors(documentationObject.design.color),
+    typography: transformTypography(documentationObject.design.typography),
+    effects: transformEffects(documentationObject.design.effect),
+  }
 
   return {
     components,
+    design
   };
 }

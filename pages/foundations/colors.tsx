@@ -89,7 +89,7 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
                               <code>HEX: {color.hex}</code>
                               {color.rgb && (
                                 <code>
-                                  RGBa: {Math.floor(color.rgb.r * 100)},{Math.floor(color.rgb.g * 100)},{Math.floor(color.rgb.b * 100)},
+                                  RGBa: {Math.round(color.rgb.r * 255)},{Math.round(color.rgb.g * 255)},{Math.round(color.rgb.b * 255)},
                                   {color.rgb.a}
                                 </code>
                               )}

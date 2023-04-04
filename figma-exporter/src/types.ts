@@ -1,5 +1,6 @@
 import type { DocumentComponentsObject } from './exporters/components';
 import { BlendMode, PaintType } from './figma/types';
+import { Effect } from './figma/types';
 
 export interface ColorGroup {
   group: string;
@@ -8,6 +9,7 @@ export interface ColorGroup {
 
 export interface EffectObject {
   name: string;
+  machineName: string;
   group: string;
   effects: EffectParametersObject[];
 }
@@ -20,6 +22,7 @@ export interface ColorObject {
   rgb: RGBObject | null;
   sass: string;
   layers: ColorLayer[];
+  machineName: string;
 }
 
 export type ColorLayer = RGBObject | GradientObject;
@@ -32,11 +35,8 @@ export interface TypographyObject {
 }
 
 export interface EffectParametersObject {
-  type: 'DROP_SHADOW';
-  visible: boolean;
-  color: RGBObject;
-  offset: OffsetObject;
-  radius: number;
+  type: Effect['type'];
+  value: string;
 }
 
 export interface RGBObject {
@@ -84,6 +84,7 @@ export interface DocumentationObject {
   design: {
     color: ColorObject[];
     typography: TypographyObject[];
+    effect: EffectObject[];
   };
   components: DocumentComponentsObject;
   assets: {

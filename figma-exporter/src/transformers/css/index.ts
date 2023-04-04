@@ -9,9 +9,13 @@ import { transformRadioComponentsToCssVariables } from './components/radio';
 import { transformSelectComponentsToCssVariables } from './components/select';
 import { transformSwitchesComponentsToCssVariables } from './components/switch';
 import { transformTooltipComponentsToCssVariables } from './components/tooltip';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
 
 interface CssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
 export default function cssTransformer(documentationObject: DocumentationObject): CssTransformerOutput {
@@ -29,7 +33,14 @@ export default function cssTransformer(documentationObject: DocumentationObject)
     radios: transformRadioComponentsToCssVariables(documentationObject.components.radios),
   };
 
+  const design = {
+    colors: transformColors(documentationObject.design.color),
+    typography: transformTypography(documentationObject.design.typography),
+    effects: transformEffects(documentationObject.design.effect),
+  }
+
   return {
     components,
+    design,
   };
 }

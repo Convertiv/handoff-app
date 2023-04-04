@@ -9,6 +9,7 @@ import Head from 'next/head';
 import * as util from 'components/util';
 import Header from 'components/Header';
 import { EffectParametersObject } from 'figma-exporter/src/types';
+import { isShadowEffectType } from 'figma-exporter/src/exporters/components/utils';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
@@ -31,17 +32,11 @@ const effectGroups = Object.fromEntries(
 );
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
-  switch (effect.type) {
-    case 'DROP_SHADOW':
-      const value = `${effect.offset.x}px ${effect.offset.y}px ${effect.radius}px rgba(${Math.floor(effect.color.r * 100)},${Math.floor(
-        effect.color.g * 100
-      )},${Math.floor(effect.color.b * 100)},${effect.color.a})`;
-      cssProperties.boxShadow = cssProperties.boxShadow ? `${cssProperties.boxShadow}, ${value}` : value;
-      break;
-    default:
-      break;
+  if (isShadowEffectType(effect.type)) {
+    cssProperties.boxShadow = cssProperties.boxShadow ? `${cssProperties.boxShadow}, ${effect.value}` : effect.value;
   }
 };
+
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
