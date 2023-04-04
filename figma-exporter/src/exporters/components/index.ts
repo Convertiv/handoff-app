@@ -12,7 +12,7 @@ import extractPaginationComponents, { PaginationComponents } from './component_s
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
 import chalk from 'chalk';
-import { getConfig } from 'figma-exporter/src/utils';
+import { getConfig } from '../../utils';
 
 export interface DocumentComponentsObject {
   [key: string]: any;
@@ -125,6 +125,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
     )
   );
   const config = await getConfig();
+  console.log(config);
   return {
     buttons: config.components.button
       ? extractButtonComponents(
@@ -132,7 +133,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.button
+            config.figma?.components.button?.search ?? 'Button'
           )
         )
       : [],
@@ -142,7 +143,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.select
+            config.figma?.components.select?.search ?? 'Select'
           )
         )
       : [],
@@ -152,7 +153,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.checkbox
+            config.figma.components.checkbox.search ?? 'Checkbox'
           )
         )
       : [],
@@ -162,7 +163,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.radio
+            config.figma.components.radio.search ?? 'Radio'
           )
         )
       : [],
@@ -172,7 +173,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.input
+            config.figma.components.input.search ?? 'Input'
           )
         )
       : [],
@@ -182,7 +183,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.tooltip
+            config.figma.components.tooltip.search ?? 'Tooltip'
           )
         )
       : [],
@@ -192,7 +193,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.alert
+            config.figma.components.alert.search ?? 'Alert'
           )
         )
       : [],
@@ -202,7 +203,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.switch
+            config.figma.components.switch.search ?? 'Switch'
           )
         )
       : [],
@@ -212,7 +213,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.pagination
+            config.figma.components.pagination.search ?? 'Pagination'
           )
         )
       : [],
@@ -222,7 +223,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.modal
+            config.figma.components.modal.search ?? 'Modal'
           )
         )
       : [],

@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { getPathToIntegration } from 'figma-exporter/src/utils';
+import { getPathToIntegration } from '../../utils';
 
 /**
  * Find the integration to sync and sync the sass files and template files.

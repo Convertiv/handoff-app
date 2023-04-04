@@ -64,7 +64,9 @@ export const mapComponentSize = (figma: string): string => {
 }
 
 /**
- * Derive the path to the integration
+ * Derive the path to the integration. Use the config to find the integration
+ * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
+ * integration if desired
  */
 export const getPathToIntegration = () => {
   const integrationFolder = 'integrations';
@@ -101,7 +103,7 @@ export const getPathToIntegration = () => {
  * @returns Config
  */
 export const getConfig = () => {
-  const config = require('../../../client-config')
+  const config = require('../../client-config')
   // Check to see if there is a config in the root of the project
   const parsed = { ...config };
 
