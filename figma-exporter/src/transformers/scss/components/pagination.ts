@@ -14,7 +14,7 @@ import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponent
  * @param pagination
  * @returns
  */
-export const transformPaginationComponentsToScssVariants = (pagination: PaginationComponents): string => {
+export const transformPaginationComponentsToScssTypes = (pagination: PaginationComponents): string => {
   const lines = [];
   lines.push(
     `$pagination-sizes: ( ${getSizesFromComponents(pagination)

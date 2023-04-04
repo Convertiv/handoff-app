@@ -20,7 +20,7 @@ enum Part {
  * @param buttons
  * @returns
  */
-export const transformButtonComponentsToScssVariants = (buttons: ButtonComponents): string => {
+export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents): string => {
   const lines = [];
   lines.push(
     `$button-variants: ( ${getTypesFromComponents(buttons)

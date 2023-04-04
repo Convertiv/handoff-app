@@ -24,7 +24,7 @@ enum Parts {
  * @param selects
  * @returns
  */
-export const transformSelectComponentsToScssVariants = (selects: SelectComponents): string => {
+export const transformSelectComponentsToScssTypes = (selects: SelectComponents): string => {
   const lines = [];
   lines.push(
     `$select-sizes: ( ${getSizesFromComponents(selects)

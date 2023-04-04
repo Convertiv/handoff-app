@@ -7,7 +7,7 @@ import { DocumentationObject } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
-import scssTransformer, { scssVariantsTransformer } from './transformers/scss';
+import scssTransformer, { scssTypesTransformer } from './transformers/scss';
 import previewTransformer from './transformers/preview';
 import { buildClientFiles } from './utils/preview';
 import cssTransformer from './transformers/css';
@@ -88,18 +88,18 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
  * @param documentationObject
  */
 const buildStyles = async (documentationObject: DocumentationObject) => {
-  const variantFiles = scssVariantsTransformer(documentationObject);
+  const typeFiles = scssTypesTransformer(documentationObject);
   const cssFiles = cssTransformer(documentationObject);
   const scssFiles = scssTransformer(documentationObject);
   await Promise.all([
     fs
       .ensureDir(variablesFilePath)
-      .then(() => fs.ensureDir(`${variablesFilePath}/variants`))
+      .then(() => fs.ensureDir(`${variablesFilePath}/types`))
       .then(() => fs.ensureDir(`${variablesFilePath}/css`))
       .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
       .then(() =>
         Promise.all(
-          Object.entries(variantFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/variants/${name}.scss`, content))
+          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
         )
       )
       .then(() =>

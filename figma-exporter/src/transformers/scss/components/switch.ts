@@ -22,7 +22,7 @@ enum Part {
  * @param switches
  * @returns
  */
-export const transformSwitchesComponentsToScssVariants = (switches: SwitchComponents): string => {
+export const transformSwitchesComponentsToScssTypes = (switches: SwitchComponents): string => {
   const lines = [];
   lines.push(
     `$switch-sizes: ( ${getSizesFromComponents(switches)

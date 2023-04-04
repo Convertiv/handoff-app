@@ -16,7 +16,7 @@ enum Parts {
   Footer  = 'footer',
 }
 
-export const transformModalComponentsToScssVariants = (modals: ModalComponents): string => {
+export const transformModalComponentsToScssTypes = (modals: ModalComponents): string => {
   const lines = [];
   lines.push(`/* At present there are no modal variations*/`);
   return lines.join('\n\n') + '\n';

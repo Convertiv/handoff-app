@@ -22,7 +22,7 @@ enum Part {
  * @param checkboxes
  * @returns
  */
-export const transformCheckboxComponentsToScssVariants = (checkboxes: CheckboxComponents): string => {
+export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxComponents): string => {
   const lines = [];
   lines.push(
     `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)

@@ -22,7 +22,7 @@ enum Parts {
  * @param radios
  * @returns
  */
-export const transformRadioComponentsToScssVariants = (radios: RadioComponents): string => {
+export const transformRadioComponentsToScssTypes = (radios: RadioComponents): string => {
   const lines = [];
   lines.push(
     `$radio-sizes: ( ${getSizesFromComponents(radios)

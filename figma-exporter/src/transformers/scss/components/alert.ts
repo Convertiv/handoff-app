@@ -26,7 +26,7 @@ enum Part {
  * @param alerts
  * @returns
  */
-export const transformAlertComponentsToScssVariants = (alerts: AlertComponents): string => {
+export const transformAlertComponentsToScssTypes = (alerts: AlertComponents): string => {
   const lines = [];
   lines.push(
     `$alert-variants: ( ${getTypesFromComponents(alerts)

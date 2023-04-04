@@ -24,7 +24,7 @@ enum Part {
  * @param inputs
  * @returns
  */
-export const transformInputComponentsToScssVariants = (inputs: InputComponents): string => {
+export const transformInputComponentsToScssTypes = (inputs: InputComponents): string => {
   const lines = [];
   lines.push(
     `$input-sizes: ( ${getSizesFromComponents(inputs)

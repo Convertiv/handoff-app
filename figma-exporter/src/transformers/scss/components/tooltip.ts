@@ -17,7 +17,7 @@ enum Part {
  * @param tooltips
  * @returns
  */
-export const transformTooltipComponentsToScssVariants = (tooltips: TooltipComponents): string => {
+export const transformTooltipComponentsToScssTypes = (tooltips: TooltipComponents): string => {
   const lines = [];
   lines.push(`/* At present there are no modal variations*/`);
   return lines.join('\n\n') + '\n';
