@@ -75,7 +75,8 @@ export const getPathToIntegration = () => {
 
   const defaultPath = path.resolve(path.join(integrationFolder, defaultIntegration, defaultVersion));
 
-  const config = getConfig();
+  const config = getFetchConfig();
+  console.log(config)
   if (config.integration) {
     if (config.integration === 'custom') {
       // Look for a custom integration
@@ -102,8 +103,8 @@ export const getPathToIntegration = () => {
  * Get Config
  * @returns Config
  */
-export const getConfig = () => {
-  const config = require('../../client-config')
+export const getFetchConfig = () => {
+  const config = require('../../../client-config')
   // Check to see if there is a config in the root of the project
   const parsed = { ...config };
 

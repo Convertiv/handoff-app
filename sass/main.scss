@@ -39,7 +39,7 @@ $enable-shadows: true;
 
 /* The published integration gets included here
    ========================================================================== */
-@import '../exported/framework_integration/main.scss';
+@import '../exported/framework_integration/maps.scss';
 
 @import 'components/all';
 @import 'utilities/all';

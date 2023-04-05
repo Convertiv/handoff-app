@@ -12,7 +12,7 @@ import extractPaginationComponents, { PaginationComponents } from './component_s
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
 import chalk from 'chalk';
-import { getConfig } from '../../utils';
+import { getFetchConfig } from '../../utils';
 
 export interface DocumentComponentsObject {
   [key: string]: any;
@@ -124,7 +124,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
         }) ?? {}
     )
   );
-  const config = await getConfig();
+  const config = await getFetchConfig();
   const figmaSearch = config.figma.components;
   return {
     buttons: figmaSearch.button
