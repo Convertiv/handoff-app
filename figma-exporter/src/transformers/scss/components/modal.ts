@@ -7,7 +7,7 @@ import {
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { mapComponentSize } from 'figma-exporter/src/utils';
+import { mapComponentSize } from '../../../utils';
 
 enum Parts {
   Modal   = 'modal',

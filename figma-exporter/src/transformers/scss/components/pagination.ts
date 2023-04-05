@@ -8,7 +8,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
-import { mapComponentSize } from 'figma-exporter/src/utils';
+import { mapComponentSize } from '../../../utils';
 
 /**
  * Generate SCSS variants from pagination component

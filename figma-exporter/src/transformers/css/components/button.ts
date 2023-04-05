@@ -9,7 +9,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
-import { mapComponentSize } from 'figma-exporter/src/utils';
+import { mapComponentSize } from '../../../utils';
 
 /**
  * Render css variables from button code

@@ -12,7 +12,7 @@ import {
   cssCodeBlockComment,
   transformFigmaColorToCssColor,
 } from '../utils';
-import { mapComponentSize } from 'figma-exporter/src/utils';
+import { mapComponentSize } from '../../../utils';
 
 
 /**
