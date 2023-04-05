@@ -8,6 +8,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 enum Parts {
   Modal  = 'modal',
@@ -32,7 +33,7 @@ export const transformModalComponentsToCssVariables = (modals: ModalComponents):
 };
 
 export const transformModalComponentTokensToCssVariables = ({ ...tokens }: ModalComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
 
   return {
     /**

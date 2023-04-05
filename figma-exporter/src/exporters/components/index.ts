@@ -12,7 +12,8 @@ import extractPaginationComponents, { PaginationComponents } from './component_s
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
 import chalk from 'chalk';
-import { getFetchConfig } from '../../utils';
+import { getFetchConfig } from '../../utils/config';
+
 
 export interface DocumentComponentsObject {
   [key: string]: any;

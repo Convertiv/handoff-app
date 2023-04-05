@@ -19,7 +19,7 @@ enum Part {
  */
 export const transformTooltipComponentsToScssTypes = (tooltips: TooltipComponents): string => {
   const lines = [];
-  lines.push(`/* At present there are no modal variations*/`);
+  lines.push(`/* At present there are no tooltip types*/`);
   return lines.join('\n\n') + '\n';
 };
 

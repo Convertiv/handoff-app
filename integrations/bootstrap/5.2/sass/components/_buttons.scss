@@ -43,20 +43,9 @@
 }
 
 
-//@each $button-size in $button-sizes {
-//	.btn-#{$button-size} {
-//		--#{$prefix}border-width: $btn-border-width-#{$button-size};
-//		--#{$prefix}line-height: $btn-line-height-#{$button-size};
-//	}
-//}
-
-
-.btn-sm {
-	line-height: $btn-line-height-sm;
-	border-width: $btn-border-width-sm;
-}
-
-.btn-lg {
-	line-height: $btn-line-height-lg;
-	border-width: $btn-border-width-lg;
+@each $button-size in $button-sizes {
+	.btn-#{$button-size} {
+		--#{$prefix}border-width: $btn-border-width-#{$button-size};
+		--#{$prefix}line-height: $btn-line-height-#{$button-size};
+	}
 }

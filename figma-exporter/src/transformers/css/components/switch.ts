@@ -9,6 +9,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 /**
  * Transform switches into css variables
@@ -25,7 +26,7 @@ export const transformSwitchesComponentsToCssVariables = (switches: SwitchCompon
 };
 
 export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

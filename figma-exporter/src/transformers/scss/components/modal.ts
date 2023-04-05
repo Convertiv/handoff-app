@@ -7,6 +7,7 @@ import {
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 enum Parts {
   Modal   = 'modal',
@@ -18,7 +19,7 @@ enum Parts {
 
 export const transformModalComponentsToScssTypes = (modals: ModalComponents): string => {
   const lines = [];
-  lines.push(`/* At present there are no modal variations*/`);
+  lines.push(`/* At present there are no modal types*/`);
   return lines.join('\n\n') + '\n';
 };
 
@@ -28,7 +29,7 @@ export const transformModalComponentsToScssTypes = (modals: ModalComponents): st
  * @returns
  */
 export const transformModalComponentTokensToScssVariables = ({ ...tokens }: ModalComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
 
   return {
     /**

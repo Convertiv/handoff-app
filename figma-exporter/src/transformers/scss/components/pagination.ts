@@ -8,6 +8,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 /**
  * Generate SCSS variants from pagination component
@@ -36,7 +37,7 @@ export const transformPaginationComponentsToScssTypes = (pagination: PaginationC
 
 
 export const transformPaginationComponentTokensToScssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

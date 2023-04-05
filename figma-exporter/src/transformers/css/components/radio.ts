@@ -12,6 +12,7 @@ import {
   cssCodeBlockComment,
   transformFigmaColorToCssColor,
 } from '../utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 
 /**
@@ -32,7 +33,7 @@ export const transformRadioComponentsToCssVariables = (radios: RadioComponents):
 };
 
 export const transformRadioComponentTokensToCssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

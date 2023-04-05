@@ -10,6 +10,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 /**
  * Generate css variable list from input components
@@ -26,7 +27,7 @@ export const transformInputComponentsToCssVariables = (inputs: InputComponents):
 };
 
 export const transformInputComponentTokensToCssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? undefined : tokens.size;
+  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

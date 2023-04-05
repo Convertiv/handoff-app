@@ -8,6 +8,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from 'figma-exporter/src/utils';
 
 /**
  * Transform Pagination components into CSS vars
@@ -24,7 +25,7 @@ export const transformPaginationComponentsToCssVariables = (pagination: Paginati
 };
 
 export const transformPaginationComponentTokensToCssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

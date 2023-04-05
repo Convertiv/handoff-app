@@ -45,7 +45,7 @@ export const transformInputComponentsToScssTypes = (inputs: InputComponents): st
 };
 
 export const transformInputComponentTokensToScssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? undefined : tokens.size;
+  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

@@ -52,7 +52,7 @@ export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents):
  * @returns
  */
 export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

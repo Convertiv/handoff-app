@@ -44,7 +44,7 @@ export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxCompo
 
 
 export const transformCheckboxComponentTokensToScssVariables = (tokens: CheckboxComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
