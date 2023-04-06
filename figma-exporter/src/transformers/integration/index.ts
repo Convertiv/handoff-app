@@ -7,7 +7,7 @@ import { getPathToIntegration } from '../../utils/config';
  */
 export default async function integrationTransformer() {
   const integrationPath = getPathToIntegration();
-  const sassFolder = process.env.OUTPUT_DIR || 'exported/framework_integration';
+  const sassFolder = process.env.OUTPUT_DIR || 'exported/token_map';
   const templatesFolder = process.env.OUTPUT_DIR || 'templates';
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
