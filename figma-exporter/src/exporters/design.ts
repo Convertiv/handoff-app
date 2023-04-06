@@ -94,16 +94,18 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
               ))
           });
         } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || document.fills[0].type === 'GRADIENT_LINEAR')) {
-          const color = document.fills[0];
-          const layers = parseFigmaPaints([...document.fills]);
+          const fillsCount = document.fills.length;
+          const hasMultipleFills = fillsCount > 1;
           colorsArray.push({
             name,
             group,
-            type: color.type,
-            hex: figmaPaintToHex(color),
-            rgb: rgba,
+            // type: color.type,
+            value: [...document.fills].reverse().map((fill, i) => figmaPaintToHex(fill, hasMultipleFills && i !== (fillsCount - 1))).join(', '),
+            blend: [...document.fills].reverse().map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).join(', '),
+            // hex: [...document.fills].reverse().map(fill => figmaPaintToHex(fill)).join(', '),
+            // rgb: color.color!,
             sass: `$color-${group}-${machine_name}`,
-            layers: layers,
+            // layers: layers,
             machineName: machine_name,
           });
         }

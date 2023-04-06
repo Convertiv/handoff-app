@@ -17,11 +17,13 @@ export interface EffectObject {
 export interface ColorObject {
   name: string;
   group: string;
-  type: PaintType;
-  hex: string | null;
-  rgb: RGBObject | null;
+  // type: PaintType;
+  value: string | null;
+  blend: string | null;
+  // hex: string | null;
+  // rgb: RGBObject | null;
   sass: string;
-  layers: ColorLayer[];
+  // layers: ColorLayer[];
   machineName: string;
 }
 
@@ -53,7 +55,7 @@ export interface PositionObject {
 
 export interface StopObject {
   color: RGBObject;
-  position: number;
+  position: number | null;
 }
 
 export interface GradientObject {

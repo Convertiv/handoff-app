@@ -221,7 +221,6 @@ export function figmaColorToWebRGBObject(color: FigmaTypes.Color): RGBObject {
 
 // figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
 //=> #001aff
-
 export function figmaColorToHex(color: FigmaTypes.Color): string {
   let hex = '#';
 
@@ -245,25 +244,30 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
  * @returns
  */
 export function degFromHandles(handles: PositionObject[]): string {
-  const first = handles[2];
-  const second = handles[0];
-  const slope = (second.y - first.y) / (second.x - first.x);
+  const x1 = Number(handles[2].x.toFixed(4));
+  const y1 = Number(handles[2].y.toFixed(4));
+  const x2 = Number(handles[0].x.toFixed(4));
+  const y2 = Number(handles[0].y.toFixed(4));
+
+  const slope = (y2 - y1) / (x2 - x1);
   const radians = Math.atan(slope);
-  let degrees = Math.floor((radians * 180) / Math.PI);
-  if (first.x < second.x) {
+  let degrees = Number(((radians * 180) / Math.PI).toFixed(2));
+
+  if (x1 < x2) {
     degrees = degrees + 180;
-  } else if (first.x > second.x) {
-    if (first.y < second.y) {
+  } else if (x1 > x2) {
+    if (y1 < y2) {
       degrees = 360 - Math.abs(degrees);
     }
-  } else if (first.x == second.x) {
+  } else if (x1 == x2) {
     // horizontal line
-    if (first.y < second.y) {
+    if (y1 < y2) {
       degrees = 360 - Math.abs(degrees); // on negative y-axis
     } else {
       degrees = Math.abs(degrees); // on positive y-axis
     }
   }
+  
   return `${degrees}deg`;
 }
 
@@ -274,10 +278,14 @@ export function degFromHandles(handles: PositionObject[]): string {
  * @returns
  */
 export function gradientToCss(color: GradientObject): string {
-  // generate the rgbs
-  const colors = color.stops.map((color) => `rgba(${figmaColorToWebRGB(color.color).join(', ')}) ${Math.floor(color.position * 100)}%`);
+  // generate the rgbs) {}
+  const colors = color.stops.map((stop) => 
+    stop.position !== null
+      ? `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${(Number(Number(stop.position.toFixed(4)) * 100).toFixed(2))}%`
+      : `rgba(${figmaColorToWebRGB(stop.color).join(', ')})`
+  );
 
-  return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')});`;
+  return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')})`;
 }
 
 export function figmaPaintToRGB(paints: readonly FigmaTypes.Paint[]): RGBObject | null {
@@ -330,9 +338,14 @@ export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | 
   // Figure out what kind of paint we have
   switch (paint.type) {
     case 'SOLID':
-      // Solid paint isn't a gradient
-
-      break;
+      // Solid paint isn't a gradient so we fallback to defaults
+      // so we can construct a linear gradient value for a solid
+      const gradientColor = paint.color && paint.opacity ? {...paint.color, a: paint.opacity} : paint.color;
+      return {
+        blend: paint.blendMode,
+        handles: ([{x: 0, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}] as PositionObject[]),
+        stops: [{color: gradientColor, position: null}, {color: gradientColor, position: null}] as StopObject[],
+      };
     case 'GRADIENT_LINEAR':
       // Process a linear gradient
       return {
@@ -344,11 +357,20 @@ export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | 
   return null;
 }
 
-export function figmaPaintToHex(paint: FigmaTypes.Paint): string | null {
-  switch (paint.type) {
+export function figmaPaintToHex(paint: FigmaTypes.Paint, forceLinearGradient: boolean = false): string | null {
+  switch ( paint.type) {
     case 'SOLID':
-      // Solid paint isn't a gradient
-      return paint.color ? figmaColorToHex(paint.color) : null;
+      // Solid paint isn't a gradient but if want's to behave like one, fine :)
+      if (!paint.color) {
+        return null;
+      }
+
+      if (!forceLinearGradient) {
+        return figmaColorToHex(paint.color);
+      }
+
+      const colorGradient = figmaPaintToGradiant(paint);
+      return colorGradient ? gradientToCss(colorGradient) : null;
     case 'GRADIENT_LINEAR':
       // Process a linear gradient
       const gradient = figmaPaintToGradiant(paint);
