@@ -9,7 +9,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../../css/utils';
-import { mapComponentSize } from '../../../utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Part {
   Button  = 'button',

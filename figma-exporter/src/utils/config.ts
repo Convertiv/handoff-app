@@ -1,15 +1,18 @@
 import path from 'path';
-import fs from 'fs-extra';
-import chalk from 'chalk';
+
+export interface ComponentSizeMap {
+  figma: string;
+  css: string;
+}
 
 /**
  * Get Config
  * @returns Config
  */
 export const getFetchConfig = () => {
-    let config;
+  let config;
   try {
-    config = require('../../client-config');
+    config = require('../../../client-config');
   } catch (e) {
     config = {};
   }
@@ -21,40 +24,14 @@ export const getFetchConfig = () => {
 };
 
 /**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
+ * Map a component size to the right name
+ * @param figma
+ * @returns
  */
-export const getPathToIntegration = () => {
-  const integrationFolder = 'integrations';
-  const defaultIntegration = 'bootstrap';
-  const defaultVersion = '5.2';
-
-  const defaultPath = path.resolve(path.join(integrationFolder, defaultIntegration, defaultVersion));
-
+export const mapComponentSize = (figma: string): string => {
   const config = getFetchConfig();
-  if (config.integration) {
-    if (config.integration === 'custom') {
-      // Look for a custom integration
-      const customPath = path.resolve(path.join(integrationFolder, 'custom'));
-      if (!fs.existsSync(customPath)) {
-        console.log(chalk.red(`The config is set to use a custom integration but no custom integration found at integrations/custom`));
-        throw Error('Could not find requested integration');
-      }
-      return customPath;
-    }
-    const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
-    if (!fs.existsSync(searchPath)) {
-      console.log(
-        chalk.red(
-          `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
-        )
-      );
-      throw Error('Could not find requested integration');
-    }
-    return searchPath;
-  }
-  // TODO: Allow customers to
+  const map = config.componentSizeMap as ComponentSizeMap[];
+  let size = map.find((size) => size.figma === figma);
 
-  return defaultPath;
+  return size?.css ?? 'sm';
 };

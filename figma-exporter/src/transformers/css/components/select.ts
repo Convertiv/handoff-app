@@ -9,7 +9,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
-import { mapComponentSize } from '../../../utils';
+import { mapComponentSize } from '../../../utils/config';
 
 /**
  * Transform Select component to css vars

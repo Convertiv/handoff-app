@@ -8,7 +8,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment } from '../utils';
-import { mapComponentSize } from '../../../utils';
+import { mapComponentSize } from '../../../utils/config';
 
 /**
  * Transform Pagination components into CSS vars

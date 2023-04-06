@@ -11,7 +11,6 @@ export const slugify = (str: string): string =>
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-
 /**
  *  Filters out null values
  * @param value
@@ -25,38 +24,3 @@ export const filterOutNull = <T>(value: T): value is NonNullable<T> => value !==
  * @returns
  */
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
-
-export interface ComponentSizeMap {
-  figma: string;
-  css: string;
-}
-/**
- * Default list of component sizes
- * TODO: Make this configurable
- */
-export const componentSizeMap: ComponentSizeMap[] = [
-  {
-    figma: 'small',
-    css: 'sm',
-  },
-  {
-    figma: 'medium',
-    css: 'md',
-  },
-  {
-    figma: 'large',
-    css: 'lg',
-  },
-];
-
-/**
- * Map a component size to the right name
- * @param figma
- * @returns
- */
-export const mapComponentSize = (figma: string): string => {
-  let size = componentSizeMap.find((size) => size.figma === figma);
-
-  return size?.css ?? 'sm';
-}
-

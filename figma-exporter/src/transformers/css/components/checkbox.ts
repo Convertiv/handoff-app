@@ -9,7 +9,7 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment, getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../utils';
-import {mapComponentSize} from '../../../utils';
+import {mapComponentSize} from '../../../utils/config';
 
 /**
  * Transform checkbox tokens into CSS variables

@@ -34,13 +34,17 @@ export interface FigmaComponentList {
 export interface FigmaComponentSearch {
   search: string;
 }
+export interface ComponentSizeMap {
+  figma: string;
+  css: string;
+}
 
 export interface Config {
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;
   integration?: Integration;
-
+  componentSizeMap: ComponentSizeMap[];
   favicon?: string;
   poweredBy?: boolean;
   figma?: FigmaSearch;

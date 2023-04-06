@@ -6,6 +6,20 @@ module.exports = {
     name: 'bootstrap',
     version: '5.2',
   },
+  componentSizeMap: [
+    {
+      figma: 'small',
+      css: 'sm',
+    },
+    {
+      figma: 'medium',
+      css: 'md',
+    },
+    {
+      figma: 'large',
+      css: 'lg',
+    },
+  ],
   favicon: '/favicon.ico',
   logo: '/logo.svg',
   poweredBy: true,

@@ -43,12 +43,12 @@
 }
 
 
-//@each $button-size in $button-sizes {
-//	.btn-#{$button-size} {
-//		--#{$prefix}border-width: $btn-border-width-#{$button-size};
-//		--#{$prefix}line-height: $btn-line-height-#{$button-size};
-//	}
-//}
+@each $button-size in $button-sizes {
+	.btn-#{$button-size} {
+		--#{$prefix}border-width: $btn-border-width-#{$button-size};
+		--#{$prefix}line-height: $btn-line-height-#{$button-size};
+	}
+}
 
 
 .btn-sm {
