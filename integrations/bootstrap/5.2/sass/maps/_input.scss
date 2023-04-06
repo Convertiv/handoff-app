@@ -19,29 +19,29 @@ $prefix: '';
 // Form Control Input
 // -----
 
-$input-border-width-sm:                 $input-small-border-width;
-$input-border-width:                    $input-medium-border-width;
-$input-border-width-lg:                 $input-large-border-width;
+$input-border-width-sm:                 $input-sm-border-width;
+$input-border-width:                    $input-md-border-width;
+$input-border-width-lg:                 $input-lg-border-width;
 
-$input-padding-y-sm:                    $input-small-padding-y - $input-border-width-sm;
-$input-padding-y:                       $input-medium-padding-y - $input-border-width;
-$input-padding-y-lg:                    $input-large-padding-y - $input-border-width-lg;
+$input-padding-y-sm:                    $input-sm-padding-y - $input-border-width-sm;
+$input-padding-y:                       $input-md-padding-y - $input-border-width;
+$input-padding-y-lg:                    $input-lg-padding-y - $input-border-width-lg;
 
-$input-padding-x-sm:                    $input-small-padding-x;
-$input-padding-x:                       $input-medium-padding-x;
-$input-padding-x-lg:                    $input-large-padding-x;
+$input-padding-x-sm:                    $input-sm-padding-x;
+$input-padding-x:                       $input-md-padding-x;
+$input-padding-x-lg:                    $input-lg-padding-x;
 
-$input-border-radius-sm:                $input-small-border-radius;
-$input-border-radius:                   $input-medium-border-radius;
-$input-border-radius-lg:                $input-large-border-radius;
+$input-border-radius-sm:                $input-sm-border-radius;
+$input-border-radius:                   $input-md-border-radius;
+$input-border-radius-lg:                $input-lg-border-radius;
 
-$input-font-size-sm:                    $input-small-font-size;
-$input-font-size:                       $input-medium-font-size;
-$input-font-size-lg:                    $input-large-font-size;
+$input-font-size-sm:                    $input-sm-font-size;
+$input-font-size:                       $input-md-font-size;
+$input-font-size-lg:                    $input-lg-font-size;
 
-$input-line-height-sm:                  $input-small-line-height;
-$input-line-height:                     $input-medium-line-height;
-$input-line-height-lg:                  $input-large-line-height;
+$input-line-height-sm:                  $input-sm-line-height;
+$input-line-height:                     $input-md-line-height;
+$input-line-height-lg:                  $input-lg-line-height;
 
 $input-height-border-sm:                $input-border-width-sm * 2;
 $input-height-border:                   $input-border-width * 2;
@@ -64,15 +64,15 @@ $input-focus-width:                     $input-active-border-width; // no CSS al
 // Form Label
 // -----
 
-$form-label-margin-bottom:              var( --input-medium-label-spacing );
-$form-label-font-size:                  var( --input-medium-label-font-size );
+$form-label-margin-bottom:              var( --input-md-label-spacing );
+$form-label-font-size:                  var( --input-md-label-font-size );
 
 // -----
 // Form Help Text
 // -----
 
-$form-text-margin-top:                  var( --input-medium-additional-info-spacing );
-$form-text-font-size:                   var( --input-medium-additional-info-font-size );
+$form-text-margin-top:                  var( --input-md-additional-info-spacing );
+$form-text-font-size:                   var( --input-md-additional-info-font-size );
 
 // -----
 // Form Feedback text
@@ -97,7 +97,7 @@ $form-color-width:                      3rem;
 // Form Control Input
 // -----
 
-$input-font-family:                     var( --input-medium-font-family );
+$input-font-family:                     var( --input-md-font-family );
 $input-font-weight:                     var( --input-complete-font-weight );
 
 $input-color:                           var( --input-complete-color );

@@ -19,21 +19,21 @@ $prefix: '';
 // Button Layout
 // -----
 
-$btn-border-width-sm:                     $button-small-border-width;
-$btn-border-width:                        $button-medium-border-width;
-$btn-border-width-lg:                     $button-large-border-width;
+$btn-border-width-sm:                     $button-sm-border-width;
+$btn-border-width:                        $button-md-border-width;
+$btn-border-width-lg:                     $button-lg-border-width;
 
-$btn-padding-y-sm:                        $button-small-padding-top - $btn-border-width-sm;
-$btn-padding-y:                           $button-medium-padding-top - $btn-border-width;
-$btn-padding-y-lg:                        $button-large-padding-top - $btn-border-width-lg;
+$btn-padding-y-sm:                        $button-sm-padding-top - $btn-border-width-sm;
+$btn-padding-y:                           $button-md-padding-top - $btn-border-width;
+$btn-padding-y-lg:                        $button-lg-padding-top - $btn-border-width-lg;
 
-$btn-padding-x-sm:                        $button-small-padding-left;
-$btn-padding-x:                           $button-medium-padding-left;
-$btn-padding-x-lg:                        $button-large-padding-left;
+$btn-padding-x-sm:                        $button-sm-padding-left;
+$btn-padding-x:                           $button-md-padding-left;
+$btn-padding-x-lg:                        $button-lg-padding-left;
 
-$btn-border-radius-sm:                    $button-small-border-radius;
-$btn-border-radius:                       $button-medium-border-radius;
-$btn-border-radius-lg:                    $button-large-border-radius;
+$btn-border-radius-sm:                    $button-sm-border-radius;
+$btn-border-radius:                       $button-md-border-radius;
+$btn-border-radius-lg:                    $button-lg-border-radius;
 
 $btn-focus-width:                         .25rem;
 
@@ -41,13 +41,13 @@ $btn-focus-width:                         .25rem;
 // Button Typography
 // -----
 
-$btn-font-size-sm:                        $button-small-font-size;
-$btn-font-size:                           $button-medium-font-size;
-$btn-font-size-lg:                        $button-large-font-size;
+$btn-font-size-sm:                        $button-sm-font-size;
+$btn-font-size:                           $button-md-font-size;
+$btn-font-size-lg:                        $button-lg-font-size;
 
-$btn-line-height-sm:                      $button-small-line-height;
-$btn-line-height:                         $button-medium-line-height;
-$btn-line-height-lg:                      $button-large-line-height;
+$btn-line-height-sm:                      $button-sm-line-height;
+$btn-line-height:                         $button-md-line-height;
+$btn-line-height-lg:                      $button-lg-line-height;
 
 
 
@@ -55,12 +55,12 @@ $btn-line-height-lg:                      $button-large-line-height;
 // ------------------------------------------------------------------
 
 
-$btn-font-family:                         var( --button-medium-font-family );
-$btn-font-weight:                         var( --button-medium-font-weight );
+$btn-font-family:                         var( --button-md-font-family );
+$btn-font-weight:                         var( --button-md-font-weight );
 $btn-white-space:                         null; // Set to `nowrap` to prevent text wrapping
-$btn-text-decoration:                     var( --button-medium-text-decoration );
-$btn-letter-spacing:                      var( --button-medium-letter-spacing );
-$btn-text-transform:                      var( --button-medium-text-transform );
+$btn-text-decoration:                     var( --button-md-text-decoration );
+$btn-letter-spacing:                      var( --button-md-letter-spacing );
+$btn-text-transform:                      var( --button-md-text-transform );
 
 //$btn-link-color:                          var(--#{$prefix}link-color);
 //$btn-link-hover-color:                    var(--#{$prefix}link-hover-color);

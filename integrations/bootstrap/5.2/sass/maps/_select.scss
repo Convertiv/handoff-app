@@ -17,29 +17,29 @@ $prefix: '';
 // Form Select Input
 // -----
 
-$form-select-border-width-sm:                 $select-small-border-width;
-$form-select-border-width:                    $select-medium-border-width;
-$form-select-border-width-lg:                 $select-large-border-width;
+$form-select-border-width-sm:                 $select-sm-border-width;
+$form-select-border-width:                    $select-md-border-width;
+$form-select-border-width-lg:                 $select-lg-border-width;
 
-$form-select-padding-y-sm:                    $select-small-padding-top - $form-select-border-width-sm;
-$form-select-padding-y:                       $select-medium-padding-top - $form-select-border-width;
-$form-select-padding-y-lg:                    $select-large-padding-top - $form-select-border-width-lg;
+$form-select-padding-y-sm:                    $select-sm-padding-top - $form-select-border-width-sm;
+$form-select-padding-y:                       $select-md-padding-top - $form-select-border-width;
+$form-select-padding-y-lg:                    $select-lg-padding-top - $form-select-border-width-lg;
 
-$form-select-padding-x-sm:                    $select-small-padding-left;
-$form-select-padding-x:                       $select-medium-padding-left;
-$form-select-padding-x-lg:                    $select-large-padding-left;
+$form-select-padding-x-sm:                    $select-sm-padding-left;
+$form-select-padding-x:                       $select-md-padding-left;
+$form-select-padding-x-lg:                    $select-lg-padding-left;
 
-$form-select-border-radius-sm:                $select-small-border-radius;
-$form-select-border-radius:                   $select-medium-border-radius;
-$form-select-border-radius-lg:                $select-large-border-radius;
+$form-select-border-radius-sm:                $select-sm-border-radius;
+$form-select-border-radius:                   $select-md-border-radius;
+$form-select-border-radius-lg:                $select-lg-border-radius;
 
-$form-select-font-size-sm:                    var( --select-small-option-font-size );
-$form-select-font-size:                       var( --select-medium-option-font-size );
-$form-select-font-size-lg:                    var( --select-large-option-font-size );
+$form-select-font-size-sm:                    var( --select-sm-option-font-size );
+$form-select-font-size:                       var( --select-md-option-font-size );
+$form-select-font-size-lg:                    var( --select-lg-option-font-size );
 
-$form-select-line-height-sm:                  $select-small-option-line-height;
-$form-select-line-height:                     $select-medium-option-line-height;
-$form-select-line-height-lg:                  $select-large-option-line-height;
+$form-select-line-height-sm:                  $select-sm-option-line-height;
+$form-select-line-height:                     $select-md-option-line-height;
+$form-select-line-height-lg:                  $select-lg-option-line-height;
 
 $form-select-focus-width:                     $select-active-border-width; // no CSS alternative atm
 
@@ -48,7 +48,7 @@ $form-select-focus-width:                     $select-active-border-width; // no
 // Form Select Icon
 // -----
 
-$form-select-bg-size:                         $select-medium-icon-width; // In pixels because image dimensions
+$form-select-bg-size:                         $select-md-icon-width; // In pixels because image dimensions
 $form-select-bg-position:                     right $form-select-padding-x center;
 $form-select-indicator-padding:               $form-select-padding-x * 2 + $form-select-bg-size; // Extra padding for background-image
 
@@ -70,7 +70,7 @@ $form-select-feedback-icon-padding-end:       $form-select-padding-x + $form-sel
 // Form Control Input
 // -----
 
-$form-select-font-family:                     var( --select-medium-option-font-family );
+$form-select-font-family:                     var( --select-md-option-font-family );
 $form-select-font-weight:                     var( --select-option-active-font-weight );
 
 $form-select-color:                           var( --select-option-active-color );
@@ -104,5 +104,5 @@ $form-select-transition:                      all .25s ease-in-out;
 // Form Select Icon
 // -----
 
-$form-select-indicator-color:                 $select-medium-icon-color;
+$form-select-indicator-color:                 $select-md-icon-color;
 $form-select-indicator:                       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='#{$form-select-indicator-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m4 6 4 4 4-4'/></svg>" );
