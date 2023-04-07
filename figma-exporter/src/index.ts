@@ -99,22 +99,22 @@ const buildStyles = async (documentationObject: DocumentationObject) => {
       .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.css`, content))
+          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.css`, content))
+          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.scss`, content))
+          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.scss`, content))
+          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content))
         )
       )
       .then(() =>
