@@ -1,4 +1,4 @@
-import path from 'path';
+import path from "path";
 
 export interface ComponentSizeMap {
   figma: string;
@@ -14,6 +14,11 @@ export const getFetchConfig = () => {
   try {
     config = require('../../client-config');
   } catch (e) {
+    try{
+      config = require('../../../client-config');
+    } catch (e) {
+      config = {};
+    }
     config = {};
   }
 

@@ -17,7 +17,7 @@ export const getPathToIntegration = () => {
 
   const config = getFetchConfig();
   if (config.integration) {
-    if (config.integration === 'custom') {
+    if (config.integration.name === 'custom') {
       // Look for a custom integration
       const customPath = path.resolve(path.join(integrationFolder, 'custom'));
       if (!fs.existsSync(customPath)) {
@@ -39,7 +39,16 @@ export const getPathToIntegration = () => {
   }
   return defaultPath;
 };
-
+export const getIntegrationName = () => {
+  const config = getFetchConfig();
+  const defaultIntegration = 'bootstrap';
+  if (config.integration) {
+    if (config.integration.name) {
+      return config.integration.name;
+    }
+  }
+  return defaultIntegration;
+}
 
 /**
  * Find the integration to sync and sync the sass files and template files.

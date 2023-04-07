@@ -5,9 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/types/radios';
-@import './exported/variables/sass/radios';
-@import './exported/variables/css/radios';
+@import './exported/tokens/types/radios';
+@import './exported/tokens/sass/radios';
+@import './exported/tokens/css/radios';
 
 // SIZES
 // ------------------------------------------------------------------

@@ -5,9 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/variables/types/buttons';
-@import './exported/variables/sass/buttons';
-@import './exported/variables/css/buttons';
+@import './exported/tokens/types/buttons';
+@import './exported/tokens/sass/buttons';
+@import './exported/tokens/css/buttons';
 
 
 
