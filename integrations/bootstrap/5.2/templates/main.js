@@ -3,7 +3,6 @@ import { Tooltip, Modal } from 'bootstrap';
 import 'iframe-resizer/js/iframeResizer.contentWindow';
 // bootstrap css
 import './main.scss';
-import './preview.scss';
 
 // enable tooltips
 document.addEventListener('DOMContentLoaded', function (event) {
