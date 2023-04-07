@@ -79,13 +79,13 @@ $enable-shadows: true;
 // Project Components
 // ------------------------------------------------------------------
 
-@import 'components/buttons';
-@import 'components/checkbox';
-@import 'components/radio';
-@import 'components/switch';
-@import 'components/input';
-@import 'components/select';
-@import 'components/alerts';
-@import 'components/modal';
-@import 'components/pagination';
-@import 'components/tooltips';
+@import 'extended/buttons';
+@import 'extended/checkbox';
+@import 'extended/radio';
+@import 'extended/switch';
+@import 'extended/input';
+@import 'extended/select';
+@import 'extended/alerts';
+@import 'extended/modal';
+@import 'extended/pagination';
+@import 'extended/tooltips';

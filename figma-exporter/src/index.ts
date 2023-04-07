@@ -20,7 +20,7 @@ const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
 const previewFilePath = path.join(outputFolder, 'preview.json');
 const changelogFilePath = path.join(outputFolder, 'changelog.json');
-const variablesFilePath = path.join(outputFolder, 'variables');
+const variablesFilePath = path.join(outputFolder, 'tokens');
 const iconsZipFilePath = path.join(outputFolder, 'icons.zip');
 const logosZipFilePath = path.join(outputFolder, 'logos.zip');
 
@@ -99,12 +99,12 @@ const buildStyles = async (documentationObject: DocumentationObject) => {
       .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
+          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.css`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
+          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.css`, content))
         )
       )
       .then(() =>

@@ -46,7 +46,8 @@ export const getPathToIntegration = () => {
  */
 export default async function integrationTransformer() {
   const integrationPath = getPathToIntegration();
-  const sassFolder = process.env.OUTPUT_DIR || 'exported/token_map';
+  const integrationName = getIntegrationName();
+  const sassFolder = `exported/${integrationName}_tokens`;
   const templatesFolder = process.env.OUTPUT_DIR || 'templates';
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');

@@ -126,6 +126,7 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
     )
   );
   const config = await getFetchConfig();
+  console.log(config)
   const figmaSearch = config.figma.components;
   return {
     buttons: figmaSearch.button

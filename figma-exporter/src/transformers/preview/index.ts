@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
 import { DocumentationObject } from '../../types';

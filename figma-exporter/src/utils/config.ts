@@ -12,7 +12,7 @@ export interface ComponentSizeMap {
 export const getFetchConfig = () => {
   let config;
   try {
-    config = require('../../../client-config');
+    config = require('../../client-config');
   } catch (e) {
     config = {};
   }
