@@ -88,12 +88,6 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
                               <h5>{color.name}</h5>
                               <code>Value: {color.value}</code>
                               <code>Blend: {color.blend}</code>
-                              {/* {color.rgb && (
-                                <code>
-                                  RGBa: {Math.round(color.rgb.r * 255)},{Math.round(color.rgb.g * 255)},{Math.round(color.rgb.b * 255)},
-                                  {color.rgb.a}
-                                </code>
-                              )} */}
                               <code>Sass: {color.sass}</code>
                             </div>
                           </div>

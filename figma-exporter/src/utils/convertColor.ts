@@ -1,35 +1,8 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
-import { ColorLayer, GradientObject, PositionObject, RGBObject, StopObject } from '../types';
+import { GradientObject, PositionObject, StopObject } from '../types';
 import { isShadowEffectType } from '../exporters/components/utils';
-
-/**
- * Parse figma paint object
- * Given a figma paint object, this function generates the appropriate layers
- * @param paint
- * @returns
- */
-export function parseFigmaPaints(paints: FigmaTypes.Paint[]): ColorLayer[] {
-  const layers: ColorLayer[] = [];
-  paints.map((paint) => {
-    // Figure out what kind of paint we have
-    switch (paint.type) {
-      case 'SOLID':
-        // Solid paint isn't a gradient
-
-        break;
-      case 'GRADIENT_LINEAR':
-        // Process a linear gradient
-        layers.push({
-          blend: paint.blendMode,
-          handles: (paint.gradientHandlePositions as PositionObject[]) ?? [],
-          stops: (paint.gradientStops as StopObject[]) ?? [],
-        });
-    }
-  });
-  return layers;
-}
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -93,15 +66,6 @@ export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string =
   }
   return '';
 };
-
-// export const calculateLinearGradientAngle = (position: FigmaTypes.Transform): number => {
-//   const values = [...position[0], ...position[1]];
-//   const a = values[0];
-//   const b = values[1];
-//   const angle = Number(((Math.atan2(b, a) * (180 / Math.PI)) + 90).toFixed(2));
-
-//   return angle <= 0 ? angle + 360 : angle;
-// }
 
 export const transformFigmaTextAlignToCss = (textAlign: FigmaTypes.TypeStyle['textAlignHorizontal']): string => {
   return ['left', 'center', 'right', 'justify'].includes(textAlign.toLowerCase()) ? textAlign.toLowerCase() : 'left';
@@ -197,12 +161,15 @@ export const cssCodeBlockComment = (type: string, component: AbstractComponent):
 };
 
 /**
- * this function converts figma color to RGB(A) (array)
+ * Converts figma color to a RGB(A) in form of a array.
+ * 
+ * @param {FigmaTypes.Color} color 
+ * @returns {string}
+ * 
+ * @example
+ * // returns [226, 18, 17]
+ * figmaRGBToWebRGB({r: 0.887499988079071, g: 0.07058823853731155, b: 0.0665624737739563, a: 1})
  */
-
-// figmaRGBToWebRGB({r: 0.887499988079071, g: 0.07058823853731155, b: 0.0665624737739563, a: 1})
-//=> [226, 18, 17]
-
 export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
   if ('a' in color && color.a !== 1) {
     return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255), Math.round(color.a * 100) / 100];
@@ -211,16 +178,15 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
   return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
 }
 
-export function figmaColorToWebRGBObject(color: FigmaTypes.Color): RGBObject {
-  return { r: Math.round(color.r * 255), g: Math.round(color.g * 255), b: Math.round(color.b * 255), a: color.a };
-}
-
 /**
- * this function converts figma color to HEX (string)
+ * Converts figma color to a hex (string) value.
+ * 
+ * @param {FigmaTypes.Color} color 
+ * @returns {string} 
+ * @example
+ * // returns #001aff
+ * figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
  */
-
-// figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
-//=> #001aff
 export function figmaColorToHex(color: FigmaTypes.Color): string {
   let hex = '#';
 
@@ -239,9 +205,10 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
 }
 
 /**
- * Parse a degree css string from from the handle position
- * @param handles
- * @returns
+ * Returns the angle value (in deg) based on object (handle) positions.
+ * 
+ * @param {PositionObject[]} handles
+ * @returns {string}
  */
 export function degFromHandles(handles: PositionObject[]): string {
   const x1 = Number(handles[2].x.toFixed(4));
@@ -273,7 +240,8 @@ export function degFromHandles(handles: PositionObject[]): string {
 
 /**
  * Generate a CSS gradient from a color gradient object
- * TODO: Support other kinds of gradients, and stacked colors
+ 
+ * @todo Support other kinds of gradients
  * @param color
  * @returns
  */
@@ -288,58 +256,11 @@ export function gradientToCss(color: GradientObject): string {
   return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')})`;
 }
 
-export function figmaPaintToRGB(paints: readonly FigmaTypes.Paint[]): RGBObject | null {
-  // TODO: Solve blendMode
-  let base: RGBObject | null = null;
-  let mix: RGBObject = {
-    r: 0,
-    g: 0,
-    b: 0,
-    a: 0,
-  };
-  paints.map((added) => {
-    // Get the color
-    const color: RGBObject = figmaColorToWebRGBObject({ r: 0, g: 0, b: 0, a: 0, ...added.color });
-    if (!color) {
-      return null; // No color, just keep on walking
-    }
-    // RGBA might not have an alpha
-    if (color.a === undefined) {
-      color.a = 1;
-    }
-    // If the layer has opacity, set the alpha percent that to the rgba
-    if (added.opacity) {
-      color.a = color.a * added.opacity;
-    }
-    if (!base) {
-      mix = color;
-    } else {
-      if (base.a > 0 && color.a > 0) {
-        mix = blendColors(base, color);
-      }
-    }
-    base = mix;
-    return mix;
-  });
-  return mix;
-}
-
-export function blendColors(base: RGBObject, add: RGBObject): RGBObject {
-  const mixAlpha = 1 - (1 - add.a) * (1 - base.a);
-  return {
-    r: Math.round((add.r * add.a) / mixAlpha + (base.r * base.a * (1 - add.a)) / mixAlpha),
-    g: Math.round((add.g * add.a) / mixAlpha + (base.g * base.a * (1 - add.a)) / mixAlpha),
-    b: Math.round((add.b * add.a) / mixAlpha + (base.b * base.a * (1 - add.a)) / mixAlpha),
-    a: mixAlpha,
-  };
-}
-
-export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | null {
+export function figmaPaintToGradient(paint: FigmaTypes.Paint): GradientObject | null {
   // Figure out what kind of paint we have
   switch (paint.type) {
     case 'SOLID':
-      // Solid paint isn't a gradient so we fallback to defaults
-      // so we can construct a linear gradient value for a solid
+      // Converting a SOLID into a GRADIENT
       const gradientColor = paint.color && paint.opacity ? {...paint.color, a: paint.opacity} : paint.color;
       return {
         blend: paint.blendMode,
@@ -357,26 +278,14 @@ export function figmaPaintToGradiant(paint: FigmaTypes.Paint): GradientObject | 
   return null;
 }
 
-export function figmaPaintToHex(paint: FigmaTypes.Paint, forceLinearGradient: boolean = false): string | null {
-  switch ( paint.type) {
-    case 'SOLID':
-      // Solid paint isn't a gradient but if want's to behave like one, fine :)
-      if (!paint.color) {
-        return null;
-      }
-
-      if (!forceLinearGradient) {
-        return figmaColorToHex(paint.color);
-      }
-
-      const colorGradient = figmaPaintToGradiant(paint);
-      return colorGradient ? gradientToCss(colorGradient) : null;
-    case 'GRADIENT_LINEAR':
-      // Process a linear gradient
-      const gradient = figmaPaintToGradiant(paint);
-      return gradient ? gradientToCss(gradient) : null;
+export function figmaPaintToHex(paint: FigmaTypes.Paint, asLinearGradient: boolean = false): string | null {
+  if (paint.type === 'SOLID' && !asLinearGradient) {
+    return paint.color ? figmaColorToHex(paint.color) : null;
   }
-  return null;
+
+  const gradient = figmaPaintToGradient(paint);
+
+  return gradient ? gradientToCss(gradient) : null;
 }
 
 type webRGB = [number, number, number];

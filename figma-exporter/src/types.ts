@@ -1,5 +1,5 @@
 import type { DocumentComponentsObject } from './exporters/components';
-import { BlendMode, PaintType } from './figma/types';
+import { BlendMode } from './figma/types';
 import { Effect } from './figma/types';
 
 export interface ColorGroup {
@@ -16,18 +16,12 @@ export interface EffectObject {
 
 export interface ColorObject {
   name: string;
-  group: string;
-  // type: PaintType;
+  machineName: string;
   value: string | null;
   blend: string | null;
-  // hex: string | null;
-  // rgb: RGBObject | null;
-  sass: string;
-  // layers: ColorLayer[];
-  machineName: string;
+  group: string;
+  sass: string; // do we need this? (currently only essential in the changelog)
 }
-
-export type ColorLayer = RGBObject | GradientObject;
 
 export interface TypographyObject {
   name: string;

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
-import { ColorObject, EffectParametersObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex, figmaPaintToGradiant, figmaPaintToHex, figmaPaintToRGB, parseFigmaPaints, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
+import { ColorObject, EffectObject, TypographyObject } from '../types';
+import { figmaColorToHex, figmaPaintToHex, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
 import { isShadowEffectType, isValidEffectType } from './components/utils';
 
 interface GroupNameData {
@@ -99,13 +99,9 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
           colorsArray.push({
             name,
             group,
-            // type: color.type,
             value: [...document.fills].reverse().map((fill, i) => figmaPaintToHex(fill, hasMultipleFills && i !== (fillsCount - 1))).join(', '),
             blend: [...document.fills].reverse().map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).join(', '),
-            // hex: [...document.fills].reverse().map(fill => figmaPaintToHex(fill)).join(', '),
-            // rgb: color.color!,
             sass: `$color-${group}-${machine_name}`,
-            // layers: layers,
             machineName: machine_name,
           });
         }
