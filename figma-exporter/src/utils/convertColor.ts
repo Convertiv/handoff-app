@@ -2,7 +2,7 @@ import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
 import { GradientObject, PositionObject, StopObject } from '../types';
-import { isShadowEffectType } from '../exporters/components/utils';
+import { isShadowEffectType, isValidGradientType } from '../exporters/components/utils';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -210,7 +210,7 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
  * @param {PositionObject[]} handles
  * @returns {string}
  */
-export function degFromHandles(handles: PositionObject[]): string {
+export function getLinearGradientAngleInDeg(handles: PositionObject[]): string {
   const x1 = Number(handles[2].x.toFixed(4));
   const y1 = Number(handles[2].y.toFixed(4));
   const x2 = Number(handles[0].x.toFixed(4));
@@ -239,13 +239,28 @@ export function degFromHandles(handles: PositionObject[]): string {
 }
 
 /**
+ * Returns the values (shape and position) necessary radial gradient to be constructed.
+ * 
+ * @param {PositionObject[]} handles 
+ * @returns {number[]}
+ */
+export function getRadialGradientSizeAndPosition(handles: PositionObject[]): number[] {
+  return [
+    Number((handles[1].x - handles[0].x).toFixed(4)) * 100,
+    Number((handles[2].y - handles[0].y).toFixed(4)) * 100,
+    Number(handles[0].x.toFixed(4)) * 100,
+    Number(handles[0].y.toFixed(4)) * 100,
+  ]
+}
+
+/**
  * Generate a CSS gradient from a color gradient object
  
  * @todo Support other kinds of gradients
  * @param color
  * @returns
  */
-export function gradientToCss(color: GradientObject): string {
+export function gradientToCss(color: GradientObject, paintType: FigmaTypes.PaintType = 'GRADIENT_LINEAR'): string {
   // generate the rgbs) {}
   const colors = color.stops.map((stop) => 
     stop.position !== null
@@ -253,28 +268,38 @@ export function gradientToCss(color: GradientObject): string {
       : `rgba(${figmaColorToWebRGB(stop.color).join(', ')})`
   );
 
-  return `linear-gradient(${degFromHandles(color.handles)}, ${colors.join(', ')})`;
+  switch (paintType) {
+    case 'SOLID':
+      return `linear-gradient(${getLinearGradientAngleInDeg(color.handles)}, ${colors.join(', ')})`;      
+    case 'GRADIENT_LINEAR':
+      return `linear-gradient(${getLinearGradientAngleInDeg(color.handles)}, ${colors.join(', ')})`;      
+    case 'GRADIENT_RADIAL':
+      const params = getRadialGradientSizeAndPosition(color.handles);
+      return `radial-gradient(${params[0]}% ${params[1]}% at ${params[2]}% ${params[3]}%, ${colors.join(', ')})`;
+    default:
+      return ``;
+  }
 }
 
 export function figmaPaintToGradient(paint: FigmaTypes.Paint): GradientObject | null {
-  // Figure out what kind of paint we have
-  switch (paint.type) {
-    case 'SOLID':
-      // Converting a SOLID into a GRADIENT
-      const gradientColor = paint.color && paint.opacity ? {...paint.color, a: paint.opacity} : paint.color;
-      return {
-        blend: paint.blendMode,
-        handles: ([{x: 0, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}] as PositionObject[]),
-        stops: [{color: gradientColor, position: null}, {color: gradientColor, position: null}] as StopObject[],
-      };
-    case 'GRADIENT_LINEAR':
-      // Process a linear gradient
-      return {
-        blend: paint.blendMode,
-        handles: (paint.gradientHandlePositions as PositionObject[]) ?? [],
-        stops: (paint.gradientStops as StopObject[]) ?? [],
-      };
+  if (paint.type === 'SOLID') {
+     // Process solid as gradient
+     const gradientColor = paint.color && paint.opacity ? {...paint.color, a: paint.opacity} : paint.color;
+     return {
+       blend: paint.blendMode,
+       handles: ([{x: 0, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}] as PositionObject[]),
+       stops: [{color: gradientColor, position: null}, {color: gradientColor, position: null}] as StopObject[],
+     };
   }
+
+  if (isValidGradientType(paint.type)) {
+    return {
+      blend: paint.blendMode,
+      handles: (paint.gradientHandlePositions as PositionObject[]) ?? [],
+      stops: (paint.gradientStops as StopObject[]) ?? [],
+    };
+  }
+
   return null;
 }
 
@@ -285,7 +310,7 @@ export function figmaPaintToHex(paint: FigmaTypes.Paint, asLinearGradient: boole
 
   const gradient = figmaPaintToGradient(paint);
 
-  return gradient ? gradientToCss(gradient) : null;
+  return gradient ? gradientToCss(gradient, paint.type) : null;
 }
 
 type webRGB = [number, number, number];

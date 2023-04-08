@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectObject, TypographyObject } from '../types';
 import { figmaColorToHex, figmaPaintToHex, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType } from './components/utils';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './components/utils';
 
 interface GroupNameData {
   name: string;
@@ -93,14 +93,14 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
               }
               ))
           });
-        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || document.fills[0].type === 'GRADIENT_LINEAR')) {
+        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
           const fillsCount = document.fills.length;
           const hasMultipleFills = fillsCount > 1;
           colorsArray.push({
             name,
             group,
-            value: [...document.fills].reverse().map((fill, i) => figmaPaintToHex(fill, hasMultipleFills && i !== (fillsCount - 1))).join(', '),
-            blend: [...document.fills].reverse().map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).join(', '),
+            value: [...document.fills].reverse().map((fill, i) => figmaPaintToHex(fill, hasMultipleFills && i !== (fillsCount - 1))).filter(Boolean).join(', '),
+            blend: [...document.fills].reverse().map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).filter(Boolean).join(', '),
             sass: `$color-${group}-${machine_name}`,
             machineName: machine_name,
           });
