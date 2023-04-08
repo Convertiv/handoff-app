@@ -182,7 +182,8 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
  * Converts figma color to a hex (string) value.
  * 
  * @param {FigmaTypes.Color} color 
- * @returns {string} 
+ * @returns {string}
+ * 
  * @example
  * // returns #001aff
  * figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
