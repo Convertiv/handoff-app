@@ -21,19 +21,15 @@ export const getPathToIntegration = () => {
       // Look for a custom integration
       const customPath = path.resolve(path.join(integrationFolder, 'custom'));
       if (!fs.existsSync(customPath)) {
-        console.log(chalk.red(`The config is set to use a custom integration but no custom integration found at integrations/custom`));
-        throw Error('Could not find requested integration');
+        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
     const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
-      console.log(
-        chalk.red(
-          `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
-        )
+      throw Error(
+        `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
       );
-      throw Error('Could not find requested integration');
     }
     return searchPath;
   }
@@ -48,7 +44,7 @@ export const getIntegrationName = () => {
     }
   }
   return defaultIntegration;
-}
+};
 
 /**
  * Find the integration to sync and sync the sass files and template files.
@@ -60,6 +56,6 @@ export default async function integrationTransformer() {
   const templatesFolder = process.env.OUTPUT_DIR || 'templates';
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
-  fs.copySync(integrationsSass, sassFolder)
-  fs.copySync(integrationTemplates, templatesFolder)
+  fs.copySync(integrationsSass, sassFolder);
+  fs.copySync(integrationTemplates, templatesFolder);
 }

@@ -14,7 +14,6 @@ import extractModalComponents, { ModalComponents } from './component_sets/modal'
 import chalk from 'chalk';
 import { getFetchConfig } from '../../utils/config';
 
-
 export interface DocumentComponentsObject {
   [key: string]: any;
   buttons: ButtonComponents;
@@ -77,12 +76,9 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
   try {
     fileComponentSetsRes = await getComponentSets(fileId, accessToken);
   } catch (err) {
-    console.log(
-      chalk.red(
-        'Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide'
-      )
+    throw new Error(
+      'Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide'
     );
-    throw new Error('Could not find or access the file.');
   }
   if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
     console.error(
@@ -126,7 +122,6 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
     )
   );
   const config = await getFetchConfig();
-  console.log(config)
   const figmaSearch = config.figma.components;
   return {
     buttons: figmaSearch.button

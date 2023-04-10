@@ -57,7 +57,7 @@ const readConfigFile = async (path: string) => {
  */
 const buildCustomFonts = async (documentationObject: DocumentationObject) => {
   return await fontTransformer(documentationObject);
-}
+};
 
 /**
  * Build just the custom fonts
@@ -66,7 +66,7 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  */
 const buildIntegration = async (documentationObject: DocumentationObject) => {
   return await integrationTransformer();
-}
+};
 
 /**
  * Run just the preview
@@ -113,9 +113,7 @@ const buildStyles = async (documentationObject: DocumentationObject) => {
         )
       )
       .then(() =>
-        Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content))
-        )
+        Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content)))
       )
       .then(() =>
         Promise.all(
@@ -176,48 +174,57 @@ const entirePipeline = async () => {
   await buildStyles(documentationObject);
   await buildIntegration(documentationObject);
   await buildPreview(documentationObject);
-  console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`))
+  console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 
 // Check to see what options have been passed and
 (async function () {
-  if (process.argv.length === 2) {
-    await entirePipeline();
-  }
-  if (process.argv.length === 3) {
-    if (process.argv[2] === 'preview') {
-      let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
-      if (documentationObject) {
-        await buildPreview(documentationObject);
-        await buildIntegration(documentationObject);
-      } else {
-        console.log(chalk.red('Cannot run preview only because tokens do not exist. Run the fetch first.'));
-      }
-    } else if (process.argv[2] === 'integration') {
-      let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
-      if (documentationObject) {
-        await buildStyles(documentationObject);
-        await buildPreview(documentationObject);
-        await buildIntegration(documentationObject);
-      } else {
-        console.log(chalk.red('Cannot run preview only because tokens do not exist. Run the fetch first.'));
+  try {
+    if (process.argv.length === 2 || (process.argv.length === 3 && process.argv.indexOf('--debug') > 0)) {
+      await entirePipeline();
+    }
+    if (process.argv.length === 3) {
+      if (process.argv.indexOf('preview') > 0) {
+        let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+        if (documentationObject) {
+          await buildPreview(documentationObject);
+          await buildIntegration(documentationObject);
+        } else {
+          throw Error('Cannot run preview only because tokens do not exist. Run the fetch first.');
+        }
+      } else if (process.argv.indexOf('integration') > 0) {
+        let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+        if (documentationObject) {
+          await buildStyles(documentationObject);
+          await buildPreview(documentationObject);
+          await buildIntegration(documentationObject);
+        } else {
+          throw Error('Cannot run preview only because tokens do not exist. Run the fetch first.');
+        }
+      } else if (process.argv.indexOf('styles') > 0) {
+        let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+        if (documentationObject) {
+          await buildStyles(documentationObject);
+        } else {
+          throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
+        }
+      } else if (process.argv.indexOf('fonts') > 0) {
+        let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+        if (documentationObject) {
+          await buildCustomFonts(documentationObject);
+        } else {
+          throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
+        }
       }
     }
-    else if (process.argv[2] === 'styles') {
-      let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
-      if (documentationObject) {
-        await buildStyles(documentationObject);
-      } else {
-        console.log(chalk.red('Cannot run styles only because tokens do not exist. Run the fetch first.'));
-      }
-    }
-    else if (process.argv[2] === 'fonts') {
-      let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
-      if (documentationObject) {
-        await buildCustomFonts(documentationObject);
-      } else {
-        console.log(chalk.red('Cannot run styles only because tokens do not exist. Run the fetch first.'));
-      }
+  } catch (error) {
+    let message = 'Unknown Error';
+    if (error instanceof Error) message = error.message;
+    console.error(chalk.red(message));
+    if (process.argv.indexOf('--debug') > 0) {
+      throw error;
+    } else {
+      console.log(chalk.red('The fetch pipeline was halted because of an error. \n - To debug this error, rerun it with `-- --debug`'));
     }
   }
 })();
