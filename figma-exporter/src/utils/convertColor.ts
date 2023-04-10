@@ -3,6 +3,7 @@ import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
 import { GradientObject, PositionObject, StopObject } from '../types';
 import { isShadowEffectType, isValidGradientType } from '../exporters/components/utils';
+import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -206,55 +207,6 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
 }
 
 /**
- * Returns the angle value (in deg) based on object (handle) positions.
- * 
- * @param {PositionObject[]} handles
- * @returns {string}
- */
-export function getLinearGradientAngleInDeg(handles: PositionObject[]): string {
-  const x1 = Number(handles[2].x.toFixed(4));
-  const y1 = Number(handles[2].y.toFixed(4));
-  const x2 = Number(handles[0].x.toFixed(4));
-  const y2 = Number(handles[0].y.toFixed(4));
-
-  const slope = (y2 - y1) / (x2 - x1);
-  const radians = Math.atan(slope);
-  let degrees = Number(((radians * 180) / Math.PI).toFixed(2));
-
-  if (x1 < x2) {
-    degrees = degrees + 180;
-  } else if (x1 > x2) {
-    if (y1 < y2) {
-      degrees = 360 - Math.abs(degrees);
-    }
-  } else if (x1 == x2) {
-    // horizontal line
-    if (y1 < y2) {
-      degrees = 360 - Math.abs(degrees); // on negative y-axis
-    } else {
-      degrees = Math.abs(degrees); // on positive y-axis
-    }
-  }
-  
-  return `${degrees}deg`;
-}
-
-/**
- * Returns the values (shape and position) necessary radial gradient to be constructed.
- * 
- * @param {PositionObject[]} handles 
- * @returns {number[]}
- */
-export function getRadialGradientSizeAndPosition(handles: PositionObject[]): number[] {
-  return [
-    Number((handles[1].x - handles[0].x).toFixed(4)) * 100,
-    Number((handles[2].y - handles[0].y).toFixed(4)) * 100,
-    Number(handles[0].x.toFixed(4)) * 100,
-    Number(handles[0].y.toFixed(4)) * 100,
-  ]
-}
-
-/**
  * Generate a CSS gradient from a color gradient object
  
  * @todo Support other kinds of gradients
@@ -263,23 +215,28 @@ export function getRadialGradientSizeAndPosition(handles: PositionObject[]): num
  */
 export function gradientToCss(color: GradientObject, paintType: FigmaTypes.PaintType = 'GRADIENT_LINEAR'): string {
   // generate the rgbs) {}
-  const colors = color.stops.map((stop) => 
-    stop.position !== null
-      ? `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${(Number(Number(stop.position.toFixed(4)) * 100).toFixed(2))}%`
-      : `rgba(${figmaColorToWebRGB(stop.color).join(', ')})`
-  );
+  let params: number[] = [];
+  let colors: string[] = [];
 
-  switch (paintType) {
-    case 'SOLID':
-      return `linear-gradient(${getLinearGradientAngleInDeg(color.handles)}, ${colors.join(', ')})`;      
-    case 'GRADIENT_LINEAR':
-      return `linear-gradient(${getLinearGradientAngleInDeg(color.handles)}, ${colors.join(', ')})`;      
-    case 'GRADIENT_RADIAL':
-      const params = getRadialGradientSizeAndPosition(color.handles);
-      return `radial-gradient(${params[0]}% ${params[1]}% at ${params[2]}% ${params[3]}%, ${colors.join(', ')})`;
-    default:
-      return ``;
+  if (paintType === 'SOLID') {
+    params = getLinearGradientParamsFromGradientObject(color);
+    colors = color.stops.map((stop) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')})`);
+    return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
   }
+
+  if (paintType === 'GRADIENT_LINEAR') {
+    params = getLinearGradientParamsFromGradientObject(color);
+    colors = color.stops.map((stop, i) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${params[i + 1]}%`);
+    return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
+  }
+
+  if (paintType === 'GRADIENT_RADIAL') {
+    const params = getRadialGradientParamsFromGradientObject(color);
+    colors = color.stops.map((stop) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${(Number(Number((stop.position ?? 0).toFixed(4)) * 100).toFixed(2))}%`);
+    return `radial-gradient(${params[0]}% ${params[1]}% at ${params[2]}% ${params[3]}%, ${colors.join(', ')})`;
+  }
+
+  return ``;
 }
 
 export function figmaPaintToGradient(paint: FigmaTypes.Paint): GradientObject | null {
