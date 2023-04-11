@@ -1,4 +1,4 @@
-import { AlertComponent } from '../../../exporters/components/component_sets/alert';
+import { AlertComponent, AlertComponents } from '../../../exporters/components/component_sets/alert';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,6 +8,7 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getTypesFromComponents } from '../../css/utils';
 
 enum Part {
   Alert    = 'alert',
@@ -19,6 +20,21 @@ enum Part {
   Text     = 'text',
   Actions  = 'actions',
 }
+
+/**
+ * Generate a list of alert variants as an scss map
+ * @param alerts
+ * @returns
+ */
+export const transformAlertComponentsToScssTypes = (alerts: AlertComponents): string => {
+  const lines = [];
+  lines.push(
+    `$alert-variants: ( ${getTypesFromComponents(alerts)
+      .map((type) => `"${type}"`)
+      .join(', ')});`
+  );
+  return lines.join('\n\n') + '\n';
+};
 
 export const transformAlertComponentTokensToScssVariables = (tokens: AlertComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.type : tokens.layout;
@@ -177,7 +193,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
       property: 'font-size',
       group: Part.Text,
     },
-    [getScssVariableName({ component: 'alert', part: 'text', property: 'font-weight', theme, type, state })]: { 
+    [getScssVariableName({ component: 'alert', part: 'text', property: 'font-weight', theme, type, state })]: {
       value: `${tokens.parts.text.fontWeight}`,
       property: 'font-weight',
       group: Part.Text,

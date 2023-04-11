@@ -1,7 +1,6 @@
 // @ts-check
-
-const path = require('path');
 const fs = require('fs-extra');
+const path = require('path');
 const dotenv = require('dotenv');
 const spawnPromise = require('./spawn-promise');
 
@@ -91,6 +90,21 @@ const runStyleExporter = async () => {
 };
 
 /**
+ * Run only the integration exporter
+ */
+const runIntegrationExporter = async () => {
+  // Run figma-exporter in the project root
+  console.log('Running integration transformer...');
+  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'integration'], {
+    cwd: projectRootDir,
+    env: process.env,
+    stdio: 'inherit',
+  });
+  console.log('Integration transformer finished.');
+};
+
+
+/**
  * Copy the figma exports
  */
 const copyFigmaExportedFiles = async () => {
@@ -102,7 +116,7 @@ const copyFigmaExportedFiles = async () => {
 };
 
 /**
- * Merge a single package file 
+ * Merge a single package file
  * @param {string} file Relative path to dir.
  * @param {string} dir The directory to merge on top
  */
@@ -117,15 +131,14 @@ const mergePackageFile = async (file, dir) => {
 };
 
 /**
- * Merge a single package file 
+ * Merge a single package file
  * @param {string} file Relative path to dir.
  * @param {string} target The directory to merge on top
  */
 const mergeProjectFile = async (file, target) => {
-  
   const projectFilePath = path.resolve(projectRootDir, file);
   const filename = path.basename(file);
-  
+
   if (await fs.pathExists(projectFilePath)) {
     return fs.copy(projectFilePath, path.resolve(tmpDir, target, filename), {
       // Things coming from the project should always overwrite if possible
@@ -139,7 +152,7 @@ const mergeProjectFile = async (file, target) => {
  * @param {string} dir The directory to merge on top
  */
 const mergePackageDir = async (dir, target) => {
-  if(!target){
+  if (!target) {
     target = dir;
   }
   // Copy over package's public dir content
@@ -154,12 +167,12 @@ const mergePackageDir = async (dir, target) => {
  * @param {string} dir The directory name in the root of the project
  */
 const mergeProjectDir = async (dir, target) => {
-  if(!target){
+  if (!target) {
     target = dir;
   }
   console.log(`Merging project ${dir} dir into ${target}...`);
   // Remove public dir
-  if (fs.existsSync(path.resolve(tmpDir, target))){
+  if (fs.existsSync(path.resolve(tmpDir, target))) {
     await fs.remove(path.resolve(tmpDir, target));
   }
 
@@ -180,9 +193,9 @@ const mergeProjectDir = async (dir, target) => {
 const moveExportedZipFilesToPublicDir = async () => {
   console.log('Moving exported zip files to public dir...');
   const zipFiles = (await fs.readdir(path.resolve(tmpDir, 'exported'))).filter((filename) => filename.endsWith('.zip'));
-  try{
+  try {
     await Promise.all(zipFiles.map((filename) => fs.rm(path.join(tmpDir, 'public', filename))));
-  }catch(err) {
+  } catch (err) {
     console.log('No files to remove');
   }
   await Promise.all(zipFiles.map((filename) => fs.move(path.join(tmpDir, 'exported', filename), path.join(tmpDir, 'public', filename))));
@@ -233,7 +246,7 @@ const buildTmpDir = async () => {
   await prepareTmpDir();
   await installNpmDependencies();
   await copyProjectConfig();
-  await mergeProjectDir('templates', 'templates');
+  await mergeProjectDir('integrations', 'integrations');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
@@ -252,4 +265,5 @@ module.exports = {
   mergeProjectFile,
   runPreviewExporter,
   runStyleExporter,
+  runIntegrationExporter,
 };

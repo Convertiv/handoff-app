@@ -1,0 +1,108 @@
+/* =============================================================================
+   MODAL (project/_modal.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/modal';
+@import './exported/tokens/sass/modal';
+@import './exported/tokens/css/modal';
+
+
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Modal
+// -----
+
+$modal-content-padding-x:               var( --modal-padding-x );
+$modal-content-padding-y:               var( --modal-padding-y );
+$modal-content-padding-top:             var( --modal-padding-top );
+$modal-content-padding-right:           var( --modal-padding-right );
+$modal-content-padding-bottom:          var( --modal-padding-bottom );
+$modal-content-padding-left:            var( --modal-padding-left );
+$modal-content-border-radius:           $modal-border-radius;
+
+// -----
+// Modal Header
+// -----
+
+$modal-header-padding-x:                var( --modal-header-padding-x );
+$modal-header-padding-y:                var( --modal-header-padding-y );
+$modal-header-padding-top:              var( --modal-header-padding-top );
+$modal-header-padding-right:            var( --modal-header-padding-right );
+$modal-header-padding-bottom:           var( --modal-header-padding-bottom );
+$modal-header-padding-left:             var( --modal-header-padding-left );
+$modal-header-border-radius:            var( --modal-header-body-radius );
+
+// -----
+// Modal Body
+// -----
+
+$modal-body-padding-x:                  var( --modal-body-padding-x );
+$modal-body-padding-y:                  var( --modal-body-padding-y );
+$modal-body-padding-top:                var( --modal-body-padding-top );
+$modal-body-padding-right:              var( --modal-body-padding-right );
+$modal-body-padding-bottom:             var( --modal-body-padding-bottom );
+$modal-body-padding-left:               var( --modal-body-padding-left );
+
+
+// -----
+// Modal Footer
+// -----
+
+$modal-footer-padding-x:                var( --modal-footer-padding-y );
+$modal-footer-padding-y:                var( --modal-footer-padding-x );
+$modal-footer-padding-top:              var( --modal-footer-padding-top );
+$modal-footer-padding-right:            var( --modal-footer-padding-right );
+$modal-footer-padding-bottom:           var( --modal-footer-padding-bottom );
+$modal-footer-padding-left:             var( --modal-footer-padding-left );
+$modal-footer-border-radius:            var( --modal-footer-border-radius );
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+// -----
+// Modal
+// -----
+
+$modal-content-bg:                      $modal-background;
+$modal-content-border-color:            $modal-border-color;
+$modal-content-border-width:            $modal-border-width;
+$modal-content-box-shadow:              $modal-box-shadow;
+
+// -----
+// Modal Header
+// -----
+
+$modal-header-bg:                       var( --modal-header-background );
+$modal-header-border-color:             $modal-header-border-color;
+$modal-header-border-width:             $modal-header-border-width;
+$modal-title-font-family:               var( --modal-title-font-family );
+$modal-title-font-size:                 var( --modal-title-font-size );
+$modal-title-font-weight:               var( --modal-title-font-weight );
+$modal-title-letter-spacing:            var( --modal-title-letter-spacing );
+$modal-title-line-height:               $modal-title-line-height;
+
+// -----
+// Modal Body
+// -----
+
+$modal-body-bg:                         var( --modal-body-background );
+$modal-body-border-color:               var( --modal-body-border-color );
+$modal-body-border-width:               var( --modal-body-border-width );
+
+// -----
+// Modal Footer
+// -----
+
+$modal-footer-bg:                       $modal-footer-background;
+$modal-footer-border-color:             $modal-footer-border-color;
+$modal-footer-border-width:             $modal-footer-border-width;

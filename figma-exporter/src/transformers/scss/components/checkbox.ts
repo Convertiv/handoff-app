@@ -1,4 +1,4 @@
-import { CheckboxComponent } from '../../../exporters/components/component_sets/checkbox';
+import { CheckboxComponent, CheckboxComponents } from '../../../exporters/components/component_sets/checkbox';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,7 +8,8 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { transformFigmaColorToCssColor } from '../../css/utils';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Part {
   Checkbox  = 'checkbox',
@@ -16,8 +17,34 @@ enum Part {
   Label     = 'label',
 }
 
+/**
+ * Generate variant maps fro checkbox components
+ * @param checkboxes
+ * @returns
+ */
+export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxComponents): string => {
+  const lines = [];
+  lines.push(
+    `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-themes: ( ${getThemesFromComponents(checkboxes)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-states: ( ${getStatesFromComponents(checkboxes)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+
 export const transformCheckboxComponentTokensToScssVariables = (tokens: CheckboxComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

@@ -2,21 +2,26 @@ import { capitalize } from 'lodash';
 import { TooltipComponents, TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
   transformFigmaColorToCssColor,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
+/**
+ * Build a css variable map for
+ * @param tooltips
+ * @returns
+ */
 export const transformTooltipComponentsToCssVariables = (tooltips: TooltipComponents): string => {
   const lines = [];
   lines.push('.tooltip {')
-  const cssVars = tooltips.map((component) => `  // Tooltips Horizontal: ${component.horizontal} Vertical: ${component.vertical}\n ${Object.entries(transformTooltipComponentTokensToCssVariables(component))
+  const cssVars = tooltips.map((component) => `/* Tooltips Horizontal: ${component.horizontal} Vertical: ${component.vertical}*/ \n ${Object.entries(transformTooltipComponentTokensToCssVariables(component))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformTooltipComponentTokensToCssVariables = ({ ...tokens }: TooltipComponentTokens): Record<string, ValueProperty> => {

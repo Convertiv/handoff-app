@@ -85,7 +85,7 @@ const PaginationPage = ({ content, menu, metadata, current, componentFound, css,
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>

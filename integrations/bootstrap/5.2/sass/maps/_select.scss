@@ -1,0 +1,108 @@
+/* =============================================================================
+   SELECT (project/_select.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/selects';
+@import './exported/tokens/sass/selects';
+@import './exported/tokens/css/selects';
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Select Input
+// -----
+
+$form-select-border-width-sm:                 $select-sm-border-width;
+$form-select-border-width:                    $select-md-border-width;
+$form-select-border-width-lg:                 $select-lg-border-width;
+
+$form-select-padding-y-sm:                    $select-sm-padding-top - $form-select-border-width-sm;
+$form-select-padding-y:                       $select-md-padding-top - $form-select-border-width;
+$form-select-padding-y-lg:                    $select-lg-padding-top - $form-select-border-width-lg;
+
+$form-select-padding-x-sm:                    $select-sm-padding-left;
+$form-select-padding-x:                       $select-md-padding-left;
+$form-select-padding-x-lg:                    $select-lg-padding-left;
+
+$form-select-border-radius-sm:                $select-sm-border-radius;
+$form-select-border-radius:                   $select-md-border-radius;
+$form-select-border-radius-lg:                $select-lg-border-radius;
+
+$form-select-font-size-sm:                    var( --select-sm-option-font-size );
+$form-select-font-size:                       var( --select-md-option-font-size );
+$form-select-font-size-lg:                    var( --select-lg-option-font-size );
+
+$form-select-line-height-sm:                  $select-sm-option-line-height;
+$form-select-line-height:                     $select-md-option-line-height;
+$form-select-line-height-lg:                  $select-lg-option-line-height;
+
+$form-select-focus-width:                     $select-active-border-width; // no CSS alternative atm
+
+
+// -----
+// Form Select Icon
+// -----
+
+$form-select-bg-size:                         $select-md-icon-width; // In pixels because image dimensions
+$form-select-bg-position:                     right $form-select-padding-x center;
+$form-select-indicator-padding:               $form-select-padding-x * 2 + $form-select-bg-size; // Extra padding for background-image
+
+// -----
+// Form Feedback text
+// -----
+
+$form-select-feedback-icon-size:              $input-height-inner-half $input-height-inner-half;
+$form-select-feedback-icon-position:          center right $form-select-indicator-padding;
+$form-select-feedback-icon-padding-end:       $form-select-padding-x + $form-select-feedback-icon-size + $form-select-indicator-padding;
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Control Input
+// -----
+
+$form-select-font-family:                     var( --select-md-option-font-family );
+$form-select-font-weight:                     var( --select-option-active-font-weight );
+
+$form-select-color:                           var( --select-option-active-color );
+$form-select-hover-color:                     var( --select-option-active-color );
+$form-select-focus-color:                     var( --select-option-active-color );
+$form-select-invalid-color:                   var( --select-option-error-color );
+$form-select-disabled-color:                  var( --select-option-disabled-color );
+
+$form-select-bg:                              $select-background;
+$form-select-hover-bg:                        var( --select-hover-background );
+$form-select-focus-bg:                        var( --select-active-background );
+$form-select-invalid-bg:                      var( --select-error-background );
+$form-select-disabled-bg:                     var( --select-disabled-background );
+
+$form-select-border-color:                    var( --select-border-color );
+$form-select-hover-border-color:              var( --select-hover-border-color );
+$form-select-focus-border-color:              var( --select-active-border-color );
+$form-select-invalid-border-color:            var( --select-error-border-color );
+$form-select-disabled-border-color:           var( --select-disabled-border-color );
+
+$form-select-box-shadow:                      var( --select-box-shadow );
+$form-select-hover-box-shadow:                var( --select-hover-box-shadow );
+$form-select-focus-box-shadow:                var( --select-active-box-shadow );
+$form-select-invalid-box-shadow:              var( --select-error-box-shadow );
+$form-select-disabled-box-shadow:             var( --select-disabled-box-shadow );
+
+$form-select-transition:                      all .25s ease-in-out;
+
+
+// -----
+// Form Select Icon
+// -----
+
+$form-select-indicator-color:                 $select-md-icon-color;
+$form-select-indicator:                       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='#{$form-select-indicator-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m4 6 4 4 4-4'/></svg>" );

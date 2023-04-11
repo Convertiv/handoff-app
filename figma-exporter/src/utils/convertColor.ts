@@ -1,6 +1,7 @@
 import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
+import { isShadowEffectType } from '../exporters/components/utils';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -47,7 +48,7 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
     return figmaColorToHex(color);
   }
 
-  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
+  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${parseFloat(a.toFixed(3))})`;
 };
 
 export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string => {
@@ -108,16 +109,16 @@ export const transformFigmaTextCaseToCssTextTransform = (textCase: FigmaTypes.Ty
 };
 
 export const transformFigmaEffectToCssBoxShadow = (effect: FigmaTypes.Effect): string => {
-  const { type, color, offset, radius, visible } = effect;
+  const { type, color, offset, radius, visible, spread } = effect;
 
   if (!visible) {
     return '';
   }
 
-  if (type === 'DROP_SHADOW' && color && offset && radius) {
+  if (isShadowEffectType(type) && color && offset) {
     const { x, y } = offset;
 
-    return `${x}px ${y}px ${radius}px ${transformFigmaColorToCssColor(color)}`;
+    return `${x}px ${y}px ${radius ?? 0}px ${spread ? spread + 'px ' : ''}${transformFigmaColorToCssColor(color)}${type === 'INNER_SHADOW' ? ' inset' : '' }`;
   }
 
   return '';
@@ -169,14 +170,6 @@ export const getSizesFromComponents = (components: AbstractComponent[]): string[
     .filter(filterOutUndefined)));
 };
 
-
-export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
-  let comment = `// ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
-  comment += (component.componentType === 'design' && component.theme) && `, theme: ${capitalize(component.theme)}`;
-  comment += (component.componentType === 'design' && component.state) && `, state: ${capitalize(component.state)}`;
-  return comment;
-}
-
 /**
  * this function converts figma color to RGB(A) (array)
  */
@@ -214,6 +207,10 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
     }
   }
   return hex;
+}
+
+export const transformFigmaNumberToCss = (value: number) => {
+  return parseFloat(value.toFixed(3));
 }
 
 type webRGB = [number, number, number];

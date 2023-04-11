@@ -1,0 +1,12 @@
+/* =============================================================================
+   CHECKBOX (project/_checkbox.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/checkboxes';
+@import './exported/tokens/sass/checkboxes';
+@import './exported/tokens/css/checkboxes';
+
+/** Define the maps for checkboxes **/

@@ -1,4 +1,4 @@
-import { ButtonComponent } from '../../../exporters/components/component_sets/button';
+import { ButtonComponent, ButtonComponents } from '../../../exporters/components/component_sets/button';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,13 +8,51 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Part {
   Button  = 'button',
 }
 
+/**
+ * Transform a button to an SCSS var
+ * @param buttons
+ * @returns
+ */
+export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents): string => {
+  const lines = [];
+  lines.push(
+    `$button-variants: ( ${getTypesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')});`
+  );
+  lines.push(
+    `$button-sizes: ( ${getSizesFromComponents(buttons)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-themes: ( ${getThemesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-states: ( ${getStatesFromComponents(buttons)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+
+/**
+ * Transform button components into scss vars
+ * @param tokens
+ * @returns
+ */
 export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
@@ -118,6 +156,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
     [getScssVariableName({ component: 'button', part: '', property: 'opacity', theme, type, state })]: {
       value: `${tokens.opacity}`,
       property: 'opacity',
+      group: Part.Button,
     },
   };
 };

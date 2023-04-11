@@ -73,8 +73,12 @@ export const isValidTheme = (theme: string): theme is 'light' | 'dark' => {
   return ['light', 'dark'].includes(theme);
 };
 
-export const isValidEffectType = (effect: string): effect is 'DROP_SHADOW' => {
-  return ['DROP_SHADOW'].includes(effect);
+export const isValidEffectType = (effect: FigmaTypes.Effect['type']): boolean => {
+  return isShadowEffectType(effect);
+}
+
+export const isShadowEffectType = (effect: FigmaTypes.Effect['type']): boolean => {
+  return ['DROP_SHADOW', 'INNER_SHADOW'].includes(effect);
 }
 
 export const normalizeNamePart = (namePart: string) => {

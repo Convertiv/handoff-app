@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "0.1.5",
+  "version": "0.3.1",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
@@ -37,7 +37,7 @@
     "watch:svg-sprite": "node ./scripts/watch-svg-sprite.js",
     "build:svg-sprite": "node ./scripts/build-svg-sprite.js",
     "build:static": "npx next build && npx next export",
-    "fetch": "node ./figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
+    "fetch": "node ./figma-exporter/dist/figma-exporter.cjs.js",
     "lint:sass": "stylelint \"sass/**/*.scss\"",
     "lint": "npm run lint:sass && npx next lint",
     "prepack": "npm run install:lib && npm run build:lib && npm run build:svg-sprite",

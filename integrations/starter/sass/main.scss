@@ -1,0 +1,42 @@
+// Custom Handoff Design Token Map
+// You can use this in a custom project to map figma tokens produced by 
+// the Handoff design system.
+
+// Initialize Your Frontend Project
+// ------------------------------------------------------------------
+
+// @import 'node_modules/framework/css';
+
+// Project Variables
+// ------------------------------------------------------------------
+
+$prefix: '';
+$enable-shadows: true;
+
+@import 'maps/buttons';
+@import 'maps/checkbox';
+@import 'maps/radio';
+@import 'maps/switch';
+@import 'maps/input';
+@import 'maps/select';
+@import 'maps/alerts';
+@import 'maps/modal';
+@import 'maps/pagination';
+@import 'maps/tooltips';
+
+/** Include any other css and styles you need**/
+
+
+// Project Components
+// ------------------------------------------------------------------
+
+@import 'extended/buttons';
+@import 'extended/checkbox';
+@import 'extended/radio';
+@import 'extended/switch';
+@import 'extended/input';
+@import 'extended/select';
+@import 'extended/alerts';
+@import 'extended/modal';
+@import 'extended/pagination';
+@import 'extended/tooltips';
