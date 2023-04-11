@@ -88,7 +88,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return fetchCompDocPageMarkdown('docs/components/', 'radio', `/components`);
 };
 
-const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css }: ComponentDocumentationProps) => {
+const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -109,7 +109,7 @@ const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="radios" scss={scss} css={css} />
+              <DownloadTokens componentId="radios" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

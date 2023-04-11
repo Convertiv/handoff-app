@@ -125,7 +125,7 @@ const InputPage = ({ content, menu, metadata, current, componentFound, css, scss
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="inputs" scss={scss} css={css} />
+              <DownloadTokens componentId="inputs" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

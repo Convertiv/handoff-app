@@ -46,6 +46,7 @@ export interface DocumentationProps {
 export interface ComponentDocumentationProps extends DocumentationProps {
   scss: string;
   css: string;
+  types: string;
   componentFound: boolean;
 }
 /**
@@ -261,6 +262,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
       componentFound: slug ? componentExists(pluralizeComponent(slug), undefined) : false,
       scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
       css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
     },
   };
 };
@@ -316,9 +318,11 @@ export const titleString = (prefix: string | null): string => {
 export const fetchTokensString = (component: string, type: string): string => {
   let tokens = '';
   if (type === 'scss') {
-    tokens = fs.readFileSync(`./exported/variables/${component}_vars.scss`).toString();
+    tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
+  } else if (type === 'types') {
+    tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
   } else {
-    tokens = fs.readFileSync(`./exported/variables/${component}.scss`).toString();
+    tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
   }
   return tokens;
 };
