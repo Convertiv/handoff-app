@@ -49,6 +49,12 @@ export interface ComponentDocumentationProps extends DocumentationProps {
   types: string;
   componentFound: boolean;
 }
+
+export interface FoundationDocumentationProps extends DocumentationProps {
+  scss: string;
+  css: string;
+  types: string;
+}
 /**
  * List the default paths
  */
@@ -260,6 +266,24 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
     props: {
       ...fetchDocPageMarkdown(path, slug, id).props,
       componentFound: slug ? componentExists(pluralizeComponent(slug), undefined) : false,
+      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
+      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
+    },
+  };
+};
+
+/**
+ * Fetch Component Doc Page Markdown
+ * @param path
+ * @param slug
+ * @param id
+ * @returns
+ */
+export const fetchFoundationDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
+  return {
+    props: {
+      ...fetchDocPageMarkdown(path, slug, id).props,
       scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
       css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
       types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
