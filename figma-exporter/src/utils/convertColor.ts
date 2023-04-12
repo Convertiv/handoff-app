@@ -48,7 +48,7 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
     return figmaColorToHex(color);
   }
 
-  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
+  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${parseFloat(a.toFixed(3))})`;
 };
 
 export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string => {
@@ -170,14 +170,6 @@ export const getSizesFromComponents = (components: AbstractComponent[]): string[
     .filter(filterOutUndefined)));
 };
 
-
-export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
-  let comment = `// ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
-  comment += (component.componentType === 'design' && component.theme) && `, theme: ${capitalize(component.theme)}`;
-  comment += (component.componentType === 'design' && component.state) && `, state: ${capitalize(component.state)}`;
-  return comment;
-}
-
 /**
  * this function converts figma color to RGB(A) (array)
  */
@@ -215,6 +207,10 @@ export function figmaColorToHex(color: FigmaTypes.Color): string {
     }
   }
   return hex;
+}
+
+export const transformFigmaNumberToCss = (value: number) => {
+  return parseFloat(value.toFixed(3));
 }
 
 type webRGB = [number, number, number];

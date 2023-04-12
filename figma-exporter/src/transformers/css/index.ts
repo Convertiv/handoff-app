@@ -18,6 +18,8 @@ interface CssTransformerOutput {
   design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
+
+
 export default function cssTransformer(documentationObject: DocumentationObject): CssTransformerOutput {
   const components = {
     // Buttons

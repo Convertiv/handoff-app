@@ -1,0 +1,12 @@
+/* =============================================================================
+   MODAL (project/_modal.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/modal';
+@import './exported/tokens/sass/modal';
+@import './exported/tokens/css/modal';
+
+/** Define the maps for modals **/

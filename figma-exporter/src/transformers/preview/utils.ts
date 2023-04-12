@@ -1,6 +1,12 @@
 import path from 'path';
 import fs from 'fs-extra';
 
+/**
+ * Get the component template
+ * @param component
+ * @param parts
+ * @returns
+ */
 export const getComponentTemplate = async (component: string, ...parts: string[]): Promise<string | null> => {
   const componentFallbackPath = path.resolve(__dirname, `../../templates/${component}/default.html`);
 

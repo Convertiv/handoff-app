@@ -11,8 +11,8 @@ import extractSwitchComponents, { SwitchComponents, SwitchDesignComponent } from
 import extractPaginationComponents, { PaginationComponents } from './component_sets/pagination';
 import extractRadioComponents, { RadioComponents } from './component_sets/radio';
 import extractModalComponents, { ModalComponents } from './component_sets/modal';
-import { getConfig } from '../../config';
 import chalk from 'chalk';
+import { getFetchConfig } from '../../utils/config';
 
 export interface DocumentComponentsObject {
   [key: string]: any;
@@ -76,12 +76,9 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
   try {
     fileComponentSetsRes = await getComponentSets(fileId, accessToken);
   } catch (err) {
-    console.log(
-      chalk.red(
-        'Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide'
-      )
+    throw new Error(
+      'Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide'
     );
-    throw new Error('Could not find or access the file.');
   }
   if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
     console.error(
@@ -124,105 +121,106 @@ const getFileComponentTokens = async (fileId: string, accessToken: string): Prom
         }) ?? {}
     )
   );
-  const config = await getConfig();
+  const config = await getFetchConfig();
+  const figmaSearch = config.figma.components;
   return {
-    buttons: config.components.button
+    buttons: figmaSearch.button
       ? extractButtonComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.button
+            figmaSearch.button.search ?? 'Button'
           )
         )
       : [],
-    selects: config.components.select
+    selects: figmaSearch.select
       ? extractSelectComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.select
+            figmaSearch.select.search ?? 'Select'
           )
         )
       : [],
-    checkboxes: config.components.checkbox
+    checkboxes: figmaSearch.checkbox
       ? extractCheckboxComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.checkbox
+            figmaSearch.checkbox.search ?? 'Checkbox'
           )
         )
       : [],
-    radios: config.components.radio
+    radios: figmaSearch.radio
       ? extractRadioComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.radio
+            figmaSearch.radio.search ?? 'Radio'
           )
         )
       : [],
-    inputs: config.components.input
+    inputs: figmaSearch.input
       ? extractInputComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.input
+            figmaSearch.input.search ?? 'Input'
           )
         )
       : [],
-    tooltips: config.components.tooltip
+    tooltips: figmaSearch.tooltip
       ? extractTooltipComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.tooltip
+            figmaSearch.tooltip.search ?? 'Tooltip'
           )
         )
       : [],
-    alerts: config.components.alert
+    alerts: figmaSearch.alert
       ? extractAlertComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.alert
+            figmaSearch.alert.search ?? 'Alert'
           )
         )
       : [],
-    switches: config.components.switch
+    switches: figmaSearch.switch
       ? extractSwitchComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.switch
+            figmaSearch.switch.search ?? 'Switch'
           )
         )
       : [],
-    pagination: config.components.pagination
+    pagination: figmaSearch.pagination
       ? extractPaginationComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.pagination
+            figmaSearch.pagination.search ?? 'Pagination'
           )
         )
       : [],
-    modal: config.components.modal
+    modal: figmaSearch.modal
       ? extractModalComponents(
           getComponentSetComponents(
             fileComponentSetsRes.data.meta.component_sets,
             componentSets,
             componentMetadata,
-            config.components.modal
+            figmaSearch.modal.search ?? 'Modal'
           )
         )
       : [],

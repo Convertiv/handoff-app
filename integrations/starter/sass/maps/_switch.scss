@@ -1,0 +1,11 @@
+/* =============================================================================
+   SWITCH (project/_switch.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/switches';
+@import './exported/tokens/sass/switches';
+@import './exported/tokens/css/switches';
+/** Define the maps for switches **/

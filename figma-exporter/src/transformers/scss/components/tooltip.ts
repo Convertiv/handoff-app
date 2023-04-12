@@ -1,4 +1,4 @@
-import { TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
+import { TooltipComponents, TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -11,6 +11,17 @@ import {
 enum Part {
   Tooltip  = 'tooltip',
 }
+
+/**
+ * Transform tooltips into scss variants
+ * @param tooltips
+ * @returns
+ */
+export const transformTooltipComponentsToScssTypes = (tooltips: TooltipComponents): string => {
+  const lines = [];
+  lines.push(`/* At present there are no tooltip types*/`);
+  return lines.join('\n\n') + '\n';
+};
 
 export const transformTooltipComponentTokensToScssVariables = ({ ...tokens }: TooltipComponentTokens): Record<string, ValueProperty> => {
   return {

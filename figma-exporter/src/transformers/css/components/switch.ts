@@ -1,44 +1,32 @@
 import { SwitchComponent, SwitchComponents } from '../../../exporters/components/component_sets/switch';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { mapComponentSize } from '../../../utils';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
+
+/**
+ * Transform switches into css variables
+ * @param switches
+ * @returns
+ */
 export const transformSwitchesComponentsToCssVariables = (switches: SwitchComponents): string => {
   const lines = [];
-  lines.push(
-    `$switch-sizes: ( ${getSizesFromComponents(switches)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$switch-themes: ( ${getThemesFromComponents(switches)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$switch-states: ( ${getStatesFromComponents(switches)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.switch {');
   const cssVars = switches.map((component) => `  ${cssCodeBlockComment('switch', component)}\n ${Object.entries(transformSwitchComponentTokensToCssVariables(component))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

@@ -3,9 +3,6 @@ import { TypographyObject } from "../../../types";
 export default function transformTypography(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];
 
-  stringBuilder.push(`$type-sizes: ( ${typography.map(type => `"${getTypeName(type)}"`).join(', ')} );`);
-  stringBuilder.push(``);
-
   typography.forEach(type => {
     stringBuilder.push([
       `--typography-${getTypeName(type)}-font-family: '${type.values.fontFamily}';`,

@@ -1,0 +1,11 @@
+/* =============================================================================
+   TOOLTIPS (project/_tooltips.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/tooltips';
+@import './exported/tokens/sass/tooltips';
+@import './exported/tokens/css/tooltips';
+/** Define the maps for tooltips **/

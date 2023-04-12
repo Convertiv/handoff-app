@@ -1,37 +1,23 @@
-import { capitalize } from 'lodash';
 import { SelectComponent, SelectComponents } from '../../../exporters/components/component_sets/select';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
   transformFigmaEffectToCssBoxShadow,
   transformFigmaPaintToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { mapComponentSize } from '../../../utils';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+/**
+ * Transform Select component to css vars
+ * @param selects
+ * @returns
+ */
 export const transformSelectComponentsToCssVariables = (selects: SelectComponents): string => {
   const lines = [];
-  lines.push(
-    `$select-sizes: ( ${getSizesFromComponents(selects)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$select-themes: ( ${getThemesFromComponents(selects)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$select-states: ( ${getStatesFromComponents(selects)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.select {');
   const cssVars = selects.map(
     (select) =>
@@ -39,11 +25,16 @@ export const transformSelectComponentsToCssVariables = (selects: SelectComponent
         .map(([variable, value]) => `  ${variable}: ${value.value};`)
         .join('\n')}`
   );
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
+/**
+ * Transform Select Components into CSS variables
+ * @param tokens
+ * @returns
+ */
 export const transformSelectComponentTokensToCssVariables = (tokens: SelectComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

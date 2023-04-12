@@ -8,7 +8,8 @@ import * as stream from 'node:stream';
 import { FontFamily } from './types';
 
 /**
- * Transforms the documentation object components into a preview and code
+ * Detect a font present in the public dir.  If it matches a font family from
+ * figma, zip it up and make it avaliable in the config for use
  */
 export default async function fontTransformer(documentationObject: DocumentationObject) {
   const { design } = documentationObject;
@@ -42,6 +43,12 @@ export default async function fontTransformer(documentationObject: Documentation
   return customFonts;
 }
 
+/**
+ * Zip the fonts for download
+ * @param dirPath
+ * @param destination
+ * @returns
+ */
 export const zipFonts = async (dirPath: string, destination: stream.Writable) => {
   const archive = archiver('zip', {
     zlib: { level: 9 }, // Sets the compression level.
