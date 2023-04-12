@@ -28,10 +28,16 @@ export const getFetchConfig = () => {
  * @param figma
  * @returns
  */
-export const mapComponentSize = (figma: string): string => {
+export const mapComponentSize = (figma: string, component?: string): string => {
   const config = getFetchConfig();
-  const map = config.componentSizeMap as ComponentSizeMap[];
-  let size = map.find((size) => size.figma === figma);
-
+  if(component && config.components[component]?.size) {
+    const componentMap = config.components[component]?.size as ComponentSizeMap[];
+    const componentSize = componentMap.find((size) => size.figma === figma);
+    if(componentSize && componentSize?.css) {
+      return componentSize?.css;
+    }
+  }
+  const coreMap = config.components.size as ComponentSizeMap[];
+  const size = coreMap.find((size) => size.figma === figma);
   return size?.css ?? 'sm';
 };
