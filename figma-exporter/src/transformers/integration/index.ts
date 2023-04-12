@@ -1,7 +1,8 @@
-import chalk from 'chalk';
 import { getFetchConfig } from '../../utils/config';
 import fs from 'fs-extra';
 import path from 'path';
+import archiver from 'archiver';
+import * as stream from 'node:stream';
 
 /**
  * Derive the path to the integration. Use the config to find the integration
@@ -50,12 +51,60 @@ export const getIntegrationName = () => {
  * Find the integration to sync and sync the sass files and template files.
  */
 export default async function integrationTransformer() {
+  const outputFolder = path.join('public');
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
-  const sassFolder = `exported/${integrationName}_tokens`;
+  const sassFolder = `exported/${integrationName}-tokens`;
   const templatesFolder = process.env.OUTPUT_DIR || 'templates';
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
   fs.copySync(integrationsSass, sassFolder);
   fs.copySync(integrationTemplates, templatesFolder);
+  const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
+  await zipTokens('exported', stream);
+}
+
+/**
+ * Zip the fonts for download
+ * @param dirPath
+ * @param destination
+ * @returns
+ */
+export const zipTokens = async (dirPath: string, destination: stream.Writable) => {
+  let archive = archiver('zip', {
+    zlib: { level: 9 }, // Sets the compression level.
+  });
+
+  // good practice to catch this error explicitly
+  archive.on('error', function (err) {
+    throw err;
+  });
+
+  archive.pipe(destination);
+  const directory = await fs.readdir(dirPath);
+  archive = await addFileToZip(directory, dirPath, archive);
+  await archive.finalize();
+
+  return destination;
+};
+
+/**
+ * A recusrive function for building a zip of the tokens
+ * @param directory
+ * @param dirPath
+ * @param archive
+ * @returns
+ */
+export const addFileToZip = async (directory: string[], dirPath: string, archive: archiver.Archiver): Promise<archiver.Archiver> => {
+  for (const file of directory) {
+    const pathFile = path.join(dirPath, file);
+    if (fs.lstatSync(pathFile).isDirectory()) {
+      const recurse = await fs.readdir(pathFile);
+      archive = await addFileToZip(recurse, pathFile, archive)
+    } else {
+      const data = fs.readFileSync(pathFile, 'utf-8');
+      archive.append(data, { name: pathFile });
+    }
+  }
+  return archive;
 }

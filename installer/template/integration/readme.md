@@ -17,7 +17,7 @@ See the
 2. Find the integration property
 3. Set the name to the name of your integration in lowercase (ex. `name: 'bootstrap'`)
 4. Set the version to the major and minor version you want to use (ex. `version: '5.2'`)
-5. The next time you run the fetch, a folder will show up in your exported dir called `{name}_tokens`.
+5. The next time you run the fetch, a folder will show up in your exported dir called `{name}-tokens`.
 
 ## Integration structure
 Integrations have two folders `sass` and `templates`.  The `sass` directory 
