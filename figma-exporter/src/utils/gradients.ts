@@ -141,8 +141,8 @@ export function getLinearGradientParamsFromGradientObject(gradient: GradientObje
  */
 export function getRadialGradientParamsFromGradientObject(gradient: GradientObject): number[] {
   return [
-    Number((gradient.handles[1].x - gradient.handles[0].x).toFixed(4)) * 100,
-    Number((gradient.handles[2].y - gradient.handles[0].y).toFixed(4)) * 100,
+    Math.abs(Number((gradient.handles[1].x - gradient.handles[0].x).toFixed(4))) * 100,
+    Math.abs(Number((gradient.handles[2].y - gradient.handles[0].y).toFixed(4))) * 100,
     Number(gradient.handles[0].x.toFixed(4)) * 100,
     Number(gradient.handles[0].y.toFixed(4)) * 100,
   ]
