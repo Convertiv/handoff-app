@@ -6,22 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2023-04-03
+
+This release fixes two small bugs, one that throws an error on builds because
+of a missing type declaration in the config.
+
+### Bugfixes
+
+- Builds against 0.3.0 are failing because of a missing type. Effects is missing
+  from the return type of the DocumentObjects. This adds that type to fix.
+- RGBA Colors are listed on the foundations as percent instead of 255 values.
+  This changes the display values, without changing the generated tokens.
+
 ## [0.3.0] - 2023-03-31
 
-This release creates base foundation tokens in the /exported directory.  This
+This release creates base foundation tokens in the /exported directory. This
 is a major step forward allowing projects to use color, typography and effects as
 named tokens in projects in addition to component tokens.
+
 ### Changes
 
-- Adds foundation token css and scss files so projects can reference colors, 
-typography and effects.
+- Adds foundation token css and scss files so projects can reference colors,
+  typography and effects.
   - Tokens are exported to the /exported folder
-  - Foundation token files follow the form - {type of foundation}.scss contains 
-  the css vars and {type of foundation}_vars.scss contains the scss variables
+  - Foundation token files follow the form - {type of foundation}.scss contains
+    the css vars and {type of foundation}\_vars.scss contains the scss variables
   - Color tokens are either hex for solid colors or rgba for alpha channel colors
   - Two color map arrays are provided $color-groups and $color-names
   - Color tokens are in the form $color-{group}-{name}: {hex/rgba};
-  - Typography tokens support 
+  - Typography tokens support
     - font-family
     - font-size
     - font-weight
@@ -35,6 +48,7 @@ typography and effects.
   - Effects are in the form $effect-{name}: {shadow definition}
 
 ### Bugfixes
+
 - Adds the proper sidebar menu icon for effects
 
 ## [0.2.1] - 2023-03-28
