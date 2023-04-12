@@ -146,7 +146,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
