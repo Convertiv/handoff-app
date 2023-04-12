@@ -50,7 +50,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return fetchCompDocPageMarkdown('docs/components/', 'tooltip', `/components`);
 };
 
-const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, css }: ComponentDocumentationProps) => {
+const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
@@ -70,7 +70,7 @@ const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, c
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="tooltips" scss={scss} css={css} />
+              <DownloadTokens componentId="tooltips" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

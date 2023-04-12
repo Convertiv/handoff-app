@@ -11,11 +11,12 @@ import NavLink from 'components/NavLink';
 import { FontFamily } from 'types/font';
 import Head from 'next/head';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { DocumentationProps, fetchDocPageMarkdown, fetchFoundationDocPageMarkdown, FoundationDocumentationProps, SectionLink, staticBuildMenu } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const config = getConfig();
 
@@ -55,12 +56,12 @@ const type_copy = config.type_copy ? config.type_copy : 'Almost before we knew i
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   // Read current slug
-  return fetchDocPageMarkdown('docs/foundations/', 'typography', `/foundations`);
+  return fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`);
 };
 
-const Typography = ({ content, menu, metadata, current }: DocumentationProps) => {
+const Typography = ({ content, menu, metadata, current, scss, css, types }: FoundationDocumentationProps) => {
   const [copy, setCopy] = React.useState('Copy link to clipboard');
 
   return (
@@ -77,6 +78,7 @@ const Typography = ({ content, menu, metadata, current }: DocumentationProps) =>
             <div>
               <h1 className="c-title--extra-large">{metadata.title}</h1>
               <p>{metadata.description}</p>
+              <DownloadTokens componentId="typography" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
           </div>
