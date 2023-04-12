@@ -18,7 +18,7 @@ export function getIntersection(p1: PositionObject, p2: PositionObject, p3: Posi
   var d2 = (p1.y - p2.y) * (p3.x - p4.x); // (y1 - y2) * (x3 - x4)
   var d  = (d1) - (d2);
   
-  if(d == 0) {
+  if (d === 0) {
     throw new Error('Number of intersection points is zero or infinity.');
   }
   
@@ -35,43 +35,29 @@ export function getIntersection(p1: PositionObject, p2: PositionObject, p3: Posi
   var px = (u1 * u2x - u3x * u4) / d;
   var py = (u1 * u2y - u3y * u4) / d;
   
-  var p = { x: px, y: py };
-  
-  return p;
+  return {
+    x: px,
+    y: py
+  };
 }
 
 /**
- * Returns the angle (in degrees) between 2 position objects.
+ * Returns the handle position object when rotated around the pivot point (position object) by the given angle (in degrees).
  * 
- * @param {PositionObject} first
- * @param {PositionObject} second
- * @returns {number}
+ * @param {PositionObject} pivot 
+ * @param {PositionObject} handle 
+ * @param {number} angle 
+ * @returns 
  */
-export function getAngle(first: PositionObject, second: PositionObject): number {
-  first = {x: Number(first.x.toFixed(4)), y: Number(first.y.toFixed(4))}
-  second = {x: Number(second.x.toFixed(4)), y: Number(second.y.toFixed(4))}
-  
-  const slope = (second.y - first.y) / (second.x - first.x);
-  const radians = Math.atan(slope);
+export function rotate(pivot: PositionObject, handle: PositionObject, angle: number) : PositionObject {
+  const radians = (Math.PI / 180) * angle;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
 
-  let degrees = Number(((radians * 180) / Math.PI).toFixed(2));
-  
-  if (first.x < second.x) {
-    degrees = degrees + 180;
-  } else if (first.x > second.x) {
-    if (first.y < second.y) {
-      degrees = 360 - Math.abs(degrees);
-    }
-  } else if (first.x === second.x) {
-    // horizontal line
-    if (first.y < second.y) {
-      degrees = 360 - Math.abs(degrees); // on negative y-axis
-    } else {
-      degrees = Math.abs(degrees); // on positive y-axis
-    }
-  }
-  
-  return degrees;
+  return {
+    x: (cos * (handle.x - pivot.x)) + (sin * (handle.y - pivot.y)) + pivot.x,
+    y: (cos * (handle.y - pivot.y)) - (sin * (handle.x - pivot.x)) + pivot.y
+  };
 }
 
 /**
@@ -95,7 +81,7 @@ export function rotateElipse(pivot: PositionObject, xRadius: number, yRadius: nu
   const sinAngle = Math.sin((Math.PI / 180) * (angle + 180));
 
   return {
-      x: (-xRadius * cosAngle) + pivot.x,
-      y: (-yRadius * sinAngle) + pivot.y,
+    x: (-xRadius * cosAngle) + pivot.x,
+    y: (-yRadius * sinAngle) + pivot.y,
   }
 }
