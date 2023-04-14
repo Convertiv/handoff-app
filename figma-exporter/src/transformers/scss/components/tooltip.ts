@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaColorToCssColor,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
@@ -19,12 +19,12 @@ export const transformTooltipComponentTokensToScssVariables = ({ ...tokens }: To
      */
     // Background
     [getScssVariableName({ component: 'tooltip', part: '', property: 'background' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Tooltip,
     },
     [getScssVariableName({ component: 'tooltip', part: '', property: 'bg' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'bg',
       group: Part.Tooltip,
     },

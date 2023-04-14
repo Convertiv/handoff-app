@@ -6,7 +6,7 @@ import {
   getCssVariableName,
   getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -34,7 +34,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
   return {
     // Background
     [getCssVariableName({ component: 'alert', property: 'background', part: '', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
 
@@ -66,7 +66,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'alert', property: 'border-color', part: '', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
 
@@ -84,13 +84,13 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
 
     // Close part
     [getCssVariableName({ component: 'alert', property: 'color', part: 'close', theme, type, state })]: {
-      value: tokens.parts.close.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.close.color).color,
       property: 'color',
     },
 
     // Icon part
     [getCssVariableName({ component: 'alert', property: 'color', part: 'icon', theme, type, state })]: {
-      value: tokens.parts.icon.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
     },
 
@@ -164,7 +164,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'title', theme, type, state })]: {
-      value: tokens.parts.title.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.title.color).color,
       property: 'color',
     },
 
@@ -222,7 +222,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'text', theme, type, state })]: {
-      value: tokens.parts.text.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.text.color).color,
       property: 'color',
     },
 
@@ -288,7 +288,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'actions', theme, type, state })]: {
-      value: tokens.parts.actions.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.actions.color).color,
       property: 'color',
     },
   };

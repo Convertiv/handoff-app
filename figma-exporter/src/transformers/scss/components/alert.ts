@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -31,7 +31,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
      */
     // Background
     [getScssVariableName({ component: 'alert', part: '', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Alert,
     },
@@ -68,7 +68,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
       group: Part.Alert,
     },
     [getScssVariableName({ component: 'alert', part: '', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Part.Alert,
     },
@@ -88,7 +88,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
      * Close part
      */
     [getScssVariableName({ component: 'alert', part: 'close', property: 'color', theme, type, state })]: {
-      value: tokens.parts.close.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.close.color).color,
       property: 'color',
       group: Part.Close,
     },
@@ -96,7 +96,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
      * Icon part
      */
     [getScssVariableName({ component: 'alert', part: 'icon', property: 'color', theme, type, state })]: {
-      value: tokens.parts.icon.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
       group: Part.Icon,
     },
@@ -160,7 +160,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
       group: Part.Title,
     },
     [getScssVariableName({ component: 'alert', part: 'title', property: 'color', theme, type, state })]: {
-      value: tokens.parts.title.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.title.color).color,
       property: 'color',
       group: Part.Title,
     },
@@ -208,7 +208,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
       group: Part.Text,
     },
     [getScssVariableName({ component: 'alert', part: 'text', property: 'color', theme, type, state })]: {
-      value: tokens.parts.text.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.text.color).color,
       property: 'color',
       group: Part.Text,
     },
@@ -261,7 +261,7 @@ export const transformAlertComponentTokensToScssVariables = (tokens: AlertCompon
       group: Part.Actions,
     },
     [getScssVariableName({ component: 'alert', part: 'actions', property: 'color', theme, type, state })]: {
-      value: tokens.parts.actions.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.actions.color).color,
       property: 'color',
       group: Part.Actions,
     },

@@ -8,7 +8,7 @@ import {
   getStatesFromComponents,
   getThemesFromComponents,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -50,7 +50,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
   return {
     // Background
     [getCssVariableName({ component: 'select', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
 
@@ -82,7 +82,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'select', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
 
@@ -154,7 +154,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'select', part: 'label', property: 'color', theme, type, state })]: {
-      value: tokens.parts.label.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.label.color).color,
       property: 'color',
     },
 
@@ -212,7 +212,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'select', property: 'color', part: 'option', theme, type, state })]: {
-      value: tokens.parts.option.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.option.color).color,
       property: 'color',
     },
 
@@ -234,7 +234,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
       property: 'height-raw',
     },
     [getCssVariableName({ component: 'select', part: 'icon', property: 'color', theme, type, state })]: {
-      value: tokens.parts.icon.color.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
     },
 
@@ -300,7 +300,7 @@ export const transformSelectComponentTokensToCssVariables = (tokens: SelectCompo
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'select', property: 'color', part: 'additional-info', theme, type, state })]: {
-      value: tokens.parts.additionalInfo.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.additionalInfo.color).color,
       property: 'color',
     },
   };
