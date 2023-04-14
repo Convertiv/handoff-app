@@ -7,7 +7,7 @@ Bootstrap 5.2. Other integrations are in progress and will be added when ready.
 If you want to integrate with a custom frontend or customize your current 
 integration you will do that in this folder.  
 
-See the 
+See the structure 
 
 ## Current integration support
 - Bootstrap (5.2)
@@ -47,8 +47,28 @@ from the default. So if you want to override the Buttons map, you could create
 a file at `sass/maps/button.scss`.  Anything in that folder will override the
 defaults.  
 
-## Creating a custom integration
+You can find the structure of the integration at 
+https://github.com/Convertiv/handoff-app/tree/main/integrations. So if you are
+using boostrap/5.2 and you want to customize the buttons map, copy 
+`/integrations/bootstrap/5.2/sass/maps/button.scss` into 
+`/integration/sass/maps/button.scss` and it will override the default.
 
+## Creating a custom integration
+Copy the integration starter found at 
+https://github.com/Convertiv/handoff-app/tree/main/integrations/starter/ to
+your integration directory. This directory should have `sass` and `templates` 
+directories. 
+
+Start with `/integration/sass/main.scss`. If you are using a framework, you
+can use npm to install it in your project. Include any required css and sass
+in the main.scss.
+
+Then start customizing the mapping files at `sass/maps`.  You can map each 
+component to your frameworks variables.
+
+Finally, use the `sass/extended` folder to map to specific classes and css
+structures. This allows you to use tokens in places where your framework doesn't
+have variables already established.
 
 ## SASS Files
 The SASS file contains the styles to map foundations and components to your 
@@ -91,5 +111,3 @@ Create a folder named after a component. Then use the tokens
 to create {template}.html files. For buttons, you can template
 each type and size as well as the disabled state. For others,
 you can template each state or orientation.
-
-TODO: Document supported templates
