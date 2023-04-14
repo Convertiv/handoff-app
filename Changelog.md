@@ -10,21 +10,32 @@ and this project adheres to
 
 This release fixes two small bugs, one that throws an error on builds because
 of a missing type declaration in the config.
-### Major Feature
+
+### Updates
+
+#### New Color Support
+
 - **Gradient Color Support** Linear and Radial gradients are now imported from
   figma. The tokens JSON structure has changed to make it better support complex
   color objects.
   - `hex`, `type`, and `rgb` properties were dropped from the ColorObject
-  - `value` contains the CSS color value 
+  - `value` contains the CSS set of color values, either as hex, rgb, rgba, or
+    gradients
+  - `blend` contains a set of blend modes as CSS values that map against the
+    colors
+- **Blend Modes and Color Layers** Tokens are now exported for blend modes and
+  color layers. Handoff can pull multiple layers out of the color styles, and
+  will build the proper blend mode CSS for use in the project.
 
-
+#### 
 
 #### Upgrade Notes
+
 ### Security Update
+
 - Webpack was updated to 5.79.0 to address a security issue
 - node-sass was removed from the figma-exporter library since it is no longer
   needed by the system.
-
 
 ## [0.3.1] - 2023-04-03
 
