@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2023-04-16
+
+This release fixes two small bugs, one that throws an error on builds because
+of a missing type declaration in the config.
+### Major Feature
+- **Gradient Color Support** Linear and Radial gradients are now imported from
+  figma. The tokens JSON structure has changed to make it better support complex
+  color objects.
+  - `hex`, `type`, and `rgb` properties were dropped from the ColorObject
+  - `value` contains the CSS color value 
+
+
+
+#### Upgrade Notes
+### Security Update
+- Webpack was updated to 5.79.0 to address a security issue
+- node-sass was removed from the figma-exporter library since it is no longer
+  needed by the system.
+
+
 ## [0.3.1] - 2023-04-03
 
 This release fixes two small bugs, one that throws an error on builds because
