@@ -11,6 +11,8 @@
 
 @each $variant in $button-variants {
 	.btn-#{$variant} {
+		background: var( --button-#{$variant}-background );
+
 		@each $state in $button-states {
 			@if $state != '' { $state: '-' + $state;}
 			--#{$prefix}btn#{$state}-color: var( --button-#{$variant}#{$state}-color );
@@ -30,6 +32,8 @@
 	}
 
 	[data-theme="dark"] .btn-#{$variant} {
+		background: var( --button-#{$variant}-dark-background );
+
 		@each $state in $button-states {
 			@if $state != '' { $state: '-' + $state;}
 			--#{$prefix}btn#{$state}-color: var( --button-#{$variant}-dark#{$state}-color );
