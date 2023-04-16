@@ -50,14 +50,13 @@ allows handoff to include default markup for common frontend frameworks.
 - `figma` is an object that allows customization of how components are fetched.
   - `figma.components` contains a list of the components
   - Each component can be defined. For example `figma.components.button` will
-  define how buttons are fetched from figma.
-  - The `search` property determines the library component and name of the frame 
-  to look in for the component. Setting `figma.components.button.search` to 
-  `Unicorn` will try to find a button structure in a library object called 
-  `Unicorn`.
-  - The `size` property of each component will define a size map
-
-
+    define how buttons are fetched from figma.
+  - The `search` property determines the library component and name of the frame
+    to look in for the component. Setting `figma.components.button.search` to
+    `Unicorn` will try to find a button structure in a library object called
+    `Unicorn`.
+  - The `size` property of each component will define a size map allowing projects
+    to map figma sizes to token names.
 
 ### New Color Support
 
