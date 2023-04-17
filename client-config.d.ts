@@ -16,20 +16,20 @@ export interface Integration {
 
 export interface FigmaSearch {
   size: ComponentSizeMap[];
-  components: FigmaComponentSearch;
+  components: FigmaComponentList;
 }
 
 export interface FigmaComponentList {
-  alert?: FigmaComponentStructure | null;
-  button?: FigmaComponentStructure | null;
-  checkbox?: FigmaComponentStructure | null;
-  input?: FigmaComponentStructure | null;
-  modal?: FigmaComponentStructure | null;
-  pagination?: FigmaComponentStructure | null;
-  radio?: FigmaComponentStructure | null;
-  select?: FigmaComponentStructure | null;
-  switch?: FigmaComponentStructure | null;
-  tooltip?: FigmaComponentStructure | null;
+  alert?: FigmaComponentSearch | null;
+  button?: FigmaComponentSearch | null;
+  checkbox?: FigmaComponentSearch | null;
+  input?: FigmaComponentSearch | null;
+  modal?: FigmaComponentSearch | null;
+  pagination?: FigmaComponentSearch | null;
+  radio?: FigmaComponentSearch | null;
+  select?: FigmaComponentSearch | null;
+  switch?: FigmaComponentSearch | null;
+  tooltip?: FigmaComponentSearch | null;
 }
 
 export interface FigmaComponentSearch {
