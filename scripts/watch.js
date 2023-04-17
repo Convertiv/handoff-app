@@ -30,7 +30,7 @@ process.env.NODE_ENV = 'development';
       path.resolve(projectRootDir, 'exported'),
       path.resolve(projectRootDir, 'public'),
       path.resolve(projectRootDir, 'pages'),
-      path.resolve(projectRootDir, 'integrations'),
+      path.resolve(projectRootDir, 'integration'),
       path.resolve(projectRootDir, 'sass'),
     ],
     { persistent: true, ignoreInitial: true }
@@ -64,7 +64,7 @@ process.env.NODE_ENV = 'development';
   const resetDirectory = async () => {
     await mergePackageDir('pages', 'docs');
     await mergePackageDir('public', 'public');
-    await mergePackageDir('integrations', 'integrations');
+    await mergePackageDir('integration', 'integrations');
     await mergePackageDir('sass', 'sass');
   }
   /**
@@ -75,7 +75,7 @@ process.env.NODE_ENV = 'development';
     const relativePath = path.relative(projectRootDir, file);
     if (relativePath.startsWith('public/')) {
 
-    }else if (relativePath.startsWith('integrations/')) {
+    }else if (relativePath.startsWith('integration/')) {
       await runPreviewExporter();
     } else if (relativePath.startsWith('pages/')) {
     } else if (relativePath.startsWith('sass/')) {
