@@ -15,6 +15,7 @@ export interface Integration {
 }
 
 export interface FigmaSearch {
+  size: ComponentSizeMap[];
   components: FigmaComponentSearch;
 }
 
@@ -32,6 +33,7 @@ export interface FigmaComponentList {
 }
 
 export interface FigmaComponentSearch {
+  size?: ComponentSizeMap[];
   search: string;
 }
 export interface ComponentSizeMap {
@@ -44,7 +46,6 @@ export interface Config {
   client: string;
   google_tag_manager: string | null | undefined;
   integration?: Integration;
-  componentSizeMap: ComponentSizeMap[];
   favicon?: string;
   poweredBy?: boolean;
   figma?: FigmaSearch;
