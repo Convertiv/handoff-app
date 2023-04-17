@@ -43,7 +43,13 @@ const prepareTmpDir = async () => {
 const copyProjectConfig = async () => {
   // Copy project's config.js to tmp dir's client-config.js
   console.log('Copying project config...');
-  await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), await fs.readFile(clientConfigPath, 'utf8'));
+  const baseConfig = require(path.resolve(tmpDir, 'default-config.js'));
+  const clientConfig = require(path.resolve(clientConfigPath));
+  const config = {
+    ...baseConfig,
+    ...clientConfig
+  }
+  await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), `module.exports = ${JSON.stringify(config)}`);
   console.log('Project config copied.');
 };
 
@@ -246,7 +252,8 @@ const buildTmpDir = async () => {
   await prepareTmpDir();
   await installNpmDependencies();
   await copyProjectConfig();
-  await mergeProjectDir('integration', 'integrations');
+  await mergeProjectDir('integration/sass', 'integrations');
+  await mergeProjectDir('integration/templates', 'templates');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
