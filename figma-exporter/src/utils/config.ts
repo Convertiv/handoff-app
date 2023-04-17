@@ -28,10 +28,9 @@ export const getFetchConfig = () => {
  * @param figma
  * @returns
  */
-export const mapComponentSize = (figma: string, component?: string, config?: any): string => {
-  if (!config) {
-    config = getFetchConfig();
-  }
+export const mapComponentSize = (figma: string, component?: string): string => {
+
+  const config = getFetchConfig();
   if (component) {
     if (config.figma.components[component]?.size) {
       const componentMap = config.components[component]?.size as ComponentSizeMap[];
