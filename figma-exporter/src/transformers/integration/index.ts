@@ -14,7 +14,7 @@ export const getPathToIntegration = () => {
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
 
-  const defaultPath = path.resolve(path.join(integrationFolder, defaultIntegration, defaultVersion));
+  const defaultPath = path.resolve(path.join(__dirname, integrationFolder, defaultIntegration, defaultVersion));
 
   const config = getFetchConfig();
   if (config.integration) {
