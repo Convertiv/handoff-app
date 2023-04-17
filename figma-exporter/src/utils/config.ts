@@ -30,11 +30,13 @@ export const getFetchConfig = () => {
  */
 export const mapComponentSize = (figma: string, component?: string): string => {
   const config = getFetchConfig();
-  if(component && config.components[component]?.size) {
-    const componentMap = config.components[component]?.size as ComponentSizeMap[];
-    const componentSize = componentMap.find((size) => size.figma === figma);
-    if(componentSize && componentSize?.css) {
-      return componentSize?.css;
+  if (component) {
+    if (config.figma.components[component]?.size) {
+      const componentMap = config.components[component]?.size as ComponentSizeMap[];
+      const componentSize = componentMap.find((size) => size.figma === figma);
+      if (componentSize && componentSize?.css) {
+        return componentSize?.css;
+      }
     }
   }
   const coreMap = config.figma.size as ComponentSizeMap[];
