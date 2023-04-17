@@ -4,7 +4,7 @@ import {
   getCssVariableName,
   transformFigmaColorToCssColor,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -34,12 +34,12 @@ export const transformInputComponentTokensToCssVariables = (tokens: InputCompone
   return {
     // Background
     [getCssVariableName({ component: 'input', property: 'background', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background color',
     },
 
     [getCssVariableName({ component: 'input', property: 'bg', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background color',
     },
     // Padding
@@ -78,7 +78,7 @@ export const transformInputComponentTokensToCssVariables = (tokens: InputCompone
       property: 'border radius',
     },
     [getCssVariableName({ component: 'input', property: 'border-color', type, theme, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border color',
     },
 

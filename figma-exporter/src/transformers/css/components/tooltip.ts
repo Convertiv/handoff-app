@@ -4,7 +4,7 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaColorToCssColor,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
@@ -28,11 +28,11 @@ export const transformTooltipComponentTokensToCssVariables = ({ ...tokens }: Too
   return {
     // Background
     [getCssVariableName({ component: 'tooltip', property: 'background', part: '' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
     [getCssVariableName({ component: 'tooltip', property: 'bg', part: '' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'bg',
     },
 

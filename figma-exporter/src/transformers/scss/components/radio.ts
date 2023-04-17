@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -58,7 +58,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
      */
     // Button background
     [getScssVariableName({ component: 'radio', part: '', property: 'background', type, theme, state })]: {
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
       group: Parts.Radio,
     },
@@ -131,7 +131,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
       group: Parts.Radio,
     },
     [getScssVariableName({ component: 'radio', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border-color',
       group: Parts.Radio,
     },
@@ -231,7 +231,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
     },
     // Background
     [getScssVariableName({ component: 'radio', part: 'thumb', property: 'background', type, theme, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
       group: Parts.Thumb,
     },
@@ -242,7 +242,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
       group: Parts.Thumb,
     },
     [getScssVariableName({ component: 'radio', part: 'thumb', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
       group: Parts.Thumb,
     },

@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -54,7 +54,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
      */
     // Button background
     [getScssVariableName({ component: 'checkbox', part: '', property: 'background', type, theme, state })]: {
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
       group: Part.Checkbox,
     },
@@ -81,7 +81,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
     },
     // Icon Color
     [getScssVariableName({ component: 'checkbox', property: 'icon-color', type, theme, state })]: {
-      value: tokens.parts.check.color.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.color).color,
       property: 'icon-color',
       group: Part.Checkbox,
     },
@@ -139,7 +139,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
       group: Part.Checkbox,
     },
     [getScssVariableName({ component: 'checkbox', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border-color',
       group: Part.Checkbox,
     },

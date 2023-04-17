@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -38,7 +38,7 @@ export const transformButtonComponentTokensToCssVariables = (tokens: ButtonCompo
   return {
     // Background
     [getCssVariableName({ component: 'button', property: 'background', part: '', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
     // Padding
@@ -68,7 +68,7 @@ export const transformButtonComponentTokensToCssVariables = (tokens: ButtonCompo
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'button', property: 'border-color', part: '', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
     // Font
@@ -105,7 +105,7 @@ export const transformButtonComponentTokensToCssVariables = (tokens: ButtonCompo
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'button', property: 'color', part: '', theme, type, state })]: {
-      value: tokens.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.color).color,
       property: 'color',
     },
     // Box shadow
