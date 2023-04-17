@@ -14,7 +14,7 @@ export const getPathToIntegration = () => {
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
 
-  const defaultPath = path.resolve(path.join(__dirname, integrationFolder, defaultIntegration, defaultVersion));
+  const defaultPath = path.resolve(path.join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
 
   const config = getFetchConfig();
   if (config.integration) {
@@ -100,11 +100,11 @@ export const addFileToZip = async (directory: string[], dirPath: string, archive
     const pathFile = path.join(dirPath, file);
     if (fs.lstatSync(pathFile).isDirectory()) {
       const recurse = await fs.readdir(pathFile);
-      archive = await addFileToZip(recurse, pathFile, archive)
+      archive = await addFileToZip(recurse, pathFile, archive);
     } else {
       const data = fs.readFileSync(pathFile, 'utf-8');
       archive.append(data, { name: pathFile });
     }
   }
   return archive;
-}
+};
