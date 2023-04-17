@@ -23,7 +23,7 @@ module.exports = {
     'Link',
   ],
   figma: {
-    size:[
+    size: [
       {
         figma: 'small',
         css: 'sm',
