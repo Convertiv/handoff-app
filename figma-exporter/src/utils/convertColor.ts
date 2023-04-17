@@ -137,13 +137,15 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
 
 export function transformFigmaPaintToCssColor(paint: FigmaTypes.Paint, asLinearGradient: boolean = false): string | null {
   if (paint.type === 'SOLID' && !asLinearGradient) {
-    return paint.color
-      ? transformFigmaColorToCssColor(paint.color)
-      : null;
+    if (!paint.color) {
+      return null;
+    }
+
+    const { r, g, b, a } = paint.color || { r: 0, g: 0, b: 0, a: 0 };
+    return transformFigmaColorToCssColor({ r, g, b, a: a * (paint.opacity ?? 1) });
   }
 
   const gradient = transformFigmaPaintToGradient(paint);
-
   return gradient ? transformGradientToCss(gradient, paint.type) : null;
 }
 

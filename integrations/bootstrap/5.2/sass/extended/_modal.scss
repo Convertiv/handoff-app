@@ -9,6 +9,7 @@
 
 .modal-header {
 	background-color: $modal-header-bg;
+	background: $modal-header-bg;
 	border-radius: $modal-header-border-radius;
 	padding-top: $modal-header-padding-top;
 	padding-right: $modal-header-padding-right;
@@ -18,6 +19,7 @@
 
 .modal-body {
 	background-color: $modal-body-bg;
+	background: $modal-body-bg;
 	border-color: $modal-body-border-color;
 	border-radius: $modal-body-border-radius;
 	border-width: $modal-body-border-width;

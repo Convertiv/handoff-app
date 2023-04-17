@@ -11,6 +11,7 @@
 
 @each $variant in $button-variants {
 	.btn-#{$variant} {
+		background: var( --button-#{$variant}-background );
 		@each $state in $button-states {
 			@if $state != '' { $state: '-' + $state;}
 			--#{$prefix}btn#{$state}-color: var( --button-#{$variant}#{$state}-color );
@@ -21,6 +22,10 @@
 			--#{$prefix}btn#{$state}-box-shadow: var( --button-#{$variant}#{$state}-box-shadow );
 		}
 
+		&:hover {
+			background: var( --button-#{$variant}-hover-background );
+		}
+
 		&:hover,
 		&:focus-visible {
 			font-weight: var( --#{$prefix}btn-hover-font-weight );
@@ -29,7 +34,17 @@
 		}
 	}
 
+	@each $state in $button-states {
+		@if $state != '' { $state: '-' + $state;}
+		@if $state == '' { $state: 'default';}
+		.btn-#{$variant}:#{$state} {
+			background: var( --button-#{$variant}#{$state}-background );
+		}
+	}
+
 	[data-theme="dark"] .btn-#{$variant} {
+		background: var( --button-#{$variant}-dark-background );
+
 		@each $state in $button-states {
 			@if $state != '' { $state: '-' + $state;}
 			--#{$prefix}btn#{$state}-color: var( --button-#{$variant}-dark#{$state}-color );

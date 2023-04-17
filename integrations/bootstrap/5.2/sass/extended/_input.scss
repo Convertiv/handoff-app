@@ -11,6 +11,7 @@
 	&:hover {
 		color: $input-hover-color;
 		background-color: $input-hover-bg;
+		background: $input-hover-bg;
 		border-color: $input-hover-border-color;
 		box-shadow: $input-hover-box-shadow;
 	}
@@ -18,6 +19,7 @@
 	&:focus {
 		color: $input-focus-color;
 		background-color: $input-focus-bg;
+		background: $input-focus-bg;
 		border-color: $input-focus-border-color;
 		box-shadow: $input-focus-box-shadow;
 	}
@@ -25,6 +27,7 @@
 	&:disabled {
 		color: $input-disabled-color;
 		background-color: $input-disabled-bg;
+		background: $input-disabled-bg;
 		border-color: $input-disabled-border-color;
 		box-shadow: $input-disabled-box-shadow;
 	}
@@ -34,6 +37,7 @@
 	&.is-invalid:focus {
 		color: $input-invalid-color;
 		background-color: $input-invalid-bg;
+		background: $input-invalid-bg;
 		border-color: $input-invalid-border-color;
 		box-shadow: $input-invalid-box-shadow;
 	}
