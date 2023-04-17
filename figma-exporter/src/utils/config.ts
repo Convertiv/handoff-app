@@ -41,5 +41,5 @@ export const mapComponentSize = (figma: string, component?: string): string => {
   }
   const coreMap = config.figma.size as ComponentSizeMap[];
   const size = coreMap.find((size) => size.figma === figma);
-  return size?.css ?? 'sm';
+  return size?.css ?? figma;
 };

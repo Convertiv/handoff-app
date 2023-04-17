@@ -101,6 +101,11 @@ const Home = ({ content, menu, metadata }: DocumentationProps) => {
                     </a>
                   </Link>
                 </li>
+                <li>
+                  <a href="/tokens.zip">
+                    Download All Tokens <Icon name="arrow-right" />
+                  </a>
+                </li>
               </ul>
             </div>
             <div className="u-pt-6@xl u-pr-9@xl u-pl-9@xl u-pb-6@xl c-card c-card--grey">
