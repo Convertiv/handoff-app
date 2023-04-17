@@ -19,7 +19,7 @@ import { mapComponentSize } from '../../../utils/config';
 export const transformButtonComponentsToCssVariables = (buttons: ButtonComponents): string => {
   const lines = [];
   lines.push('.btn {')
-  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button, config))
+  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
