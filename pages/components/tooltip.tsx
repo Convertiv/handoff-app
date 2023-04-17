@@ -70,7 +70,6 @@ const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, c
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="tooltips" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -154,6 +153,9 @@ const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, c
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="tooltips" scss={scss} css={css} types={types} />
+                </div>
                 {tooltips.map((tooltip) => (
                   <ComponentDesignTokens
                     key={tooltip.id}

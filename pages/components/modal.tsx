@@ -74,7 +74,6 @@ const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="modals" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -123,6 +122,9 @@ const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="modals" scss={scss} css={css} types={types} />
+                </div>
                 {designComponents.slice(0, 1).map((modal) => (
                   <ComponentDesignTokens
                     key={modal.id}

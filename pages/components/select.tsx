@@ -120,8 +120,7 @@ const SelectPage = ({ content, menu, metadata, current, componentFound, scss, cs
           <div className="c-hero">
             <div>
               <h1>{metadata.title}</h1>
-              <p>{metadata.description}</p>
-              <DownloadTokens componentId="checkboxes" scss={scss} css={css} types={types} />
+              <p>{metadata.description}</p>              
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -191,6 +190,9 @@ const SelectPage = ({ content, menu, metadata, current, componentFound, scss, cs
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="checkboxes" scss={scss} css={css} types={types} />
+                </div>
                 {states.default.light && (
                   <ComponentDesignTokens
                     key={states.default.light.id}

@@ -109,7 +109,6 @@ const CheckboxPage = ({ content, menu, metadata, current, componentFound, scss, 
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="checkboxes" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -183,6 +182,9 @@ const CheckboxPage = ({ content, menu, metadata, current, componentFound, scss, 
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="checkboxes" scss={scss} css={css} types={types} />
+                </div>
                 {checkboxes.tokens.map((checkbox) => (
                   <ComponentDesignTokens
                     key={checkbox.id}
