@@ -20,7 +20,7 @@ enum Part {
  * @param buttons
  * @returns
  */
-export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents): string => {
+export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents, config?: any): string => {
   const lines = [];
   lines.push(
     `$button-variants: ( ${getTypesFromComponents(buttons)
@@ -29,7 +29,7 @@ export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents):
   );
   lines.push(
     `$button-sizes: ( ${getSizesFromComponents(buttons)
-      .map((type) => `"${mapComponentSize(type)}"`)
+      .map((type) => `"${mapComponentSize(type, 'button')}"`)
       .join(', ')} );`
   );
   lines.push(
@@ -52,7 +52,7 @@ export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents):
  * @returns
  */
 export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'button');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

@@ -1,4 +1,4 @@
-import path from "path";
+import path from 'path';
 
 export interface ComponentSizeMap {
   figma: string;
@@ -29,6 +29,7 @@ export const getFetchConfig = () => {
  * @returns
  */
 export const mapComponentSize = (figma: string, component?: string): string => {
+
   const config = getFetchConfig();
   if (component) {
     if (config.figma.components[component]?.size) {

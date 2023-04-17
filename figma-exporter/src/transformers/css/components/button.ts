@@ -31,7 +31,7 @@ export const transformButtonComponentsToCssVariables = (buttons: ButtonComponent
  * @returns
  */
 export const transformButtonComponentTokensToCssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'button');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

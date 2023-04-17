@@ -34,7 +34,7 @@ export const transformSelectComponentsToCssVariables = (selects: SelectComponent
  * @returns
  */
 export const transformSelectComponentTokensToCssVariables = (tokens: SelectComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size, 'select');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

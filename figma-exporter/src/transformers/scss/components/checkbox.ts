@@ -26,7 +26,7 @@ export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxCompo
   const lines = [];
   lines.push(
     `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)
-      .map((type) => `"${mapComponentSize(type)}"`)
+      .map((type) => `"${mapComponentSize(type, 'checkbox')}"`)
       .join(', ')} );`
   );
   lines.push(
@@ -44,7 +44,7 @@ export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxCompo
 
 
 export const transformCheckboxComponentTokensToScssVariables = (tokens: CheckboxComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'checkbox');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
