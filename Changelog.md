@@ -41,6 +41,8 @@ allows handoff to include default markup for common frontend frameworks.
   maps and extended sass integration files.
 - The installer now creates a `/integration` folder that will be merged with
   the configured integration sass and templates.
+- A zip file called tokens.zip is exported to the public directory containing
+  all of the exported artifacts - json, integration, sass, and css tokens
 
 ### Configuration changes
 
@@ -80,6 +82,12 @@ allows handoff to include default markup for common frontend frameworks.
   directory.
 - Any sass customizations to the existing project structure should be be moved
   to `/integration/sass` and modified to match the new structure.
+
+### Other Features
+
+- Each component and foundation now has buttons for downloading the tokens for
+  that component.
+- The dashboard now has a button for downloading all tokens as a zip file.
 
 ### Security Update
 
