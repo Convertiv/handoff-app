@@ -67,7 +67,6 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
 const buildIntegration = async (documentationObject: DocumentationObject) => {
   return await integrationTransformer();
 };
-
 /**
  * Run just the preview
  * @param documentationObject
