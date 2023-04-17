@@ -84,13 +84,10 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
                         {colorGroups[group].map((color) => (
                           <div className="c-color-preview" key={`color-${color.group}-${color.name}`}>
                             <div className="c-color-preview__wrapper">
-                              <span className="c-color-preview__sample" style={{ backgroundColor: color.hex }}></span>
+                              <span className="c-color-preview__sample" style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}></span>
                               <h5>{color.name}</h5>
-                              <code>HEX: {color.hex}</code>
-                              <code>
-                                RGBa: {Math.round(color.rgb.r * 255)},{Math.round(color.rgb.g * 255)},{Math.round(color.rgb.b * 255)},
-                                {color.rgb.a}
-                              </code>
+                              <code>Value: {color.value}</code>
+                              <code>Blend: {color.blend}</code>
                               <code>Sass: {color.sass}</code>
                             </div>
                           </div>

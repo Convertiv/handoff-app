@@ -4,7 +4,7 @@ import {
   getScssVariableName,
   transformFigmaColorToCssColor,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -28,12 +28,12 @@ export const transformInputComponentTokensToScssVariables = (tokens: InputCompon
      */
     // Background
     [getScssVariableName({ component: 'input', property: 'background', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background-color',
       group: Part.Input,
     },
     [getScssVariableName({ component: 'input', property: 'bg', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background-color',
       group: Part.Input,
     },
@@ -80,7 +80,7 @@ export const transformInputComponentTokensToScssVariables = (tokens: InputCompon
       group: Part.Input,
     },
     [getScssVariableName({ component: 'input', property: 'border-color', type, theme, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Part.Input,
     },

@@ -10,6 +10,7 @@
 		--#{$prefix}alert-border-color: var( --alert-#{$variant}-border-color );
 		--#{$prefix}alert-padding-x: var( --alert-#{$variant}-padding-top );
 		--#{$prefix}alert-border: var( --alert-#{$variant}-border-width ) solid var( --alert-#{$variant}-border-color );
+		background: var( --alert-#{$variant}-background );
 		border-radius: var( --alert-#{$variant}-border-radius );
 		font-family: var( --alert-#{$variant}-text-font-family );
 		font-size: var( --alert-#{$variant}-text-font-size );

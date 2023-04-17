@@ -8,7 +8,7 @@ export default function transformColors(colors: ColorObject[]): string {
   stringBuilder.push(``);
 
   colors.forEach(color => {
-    stringBuilder.push(`--color-${color.group}-${color.machineName}: ${color.hex};`);
+    stringBuilder.push(`--color-${color.group}-${color.machineName}: ${color.value};`);
   });
 
   return stringBuilder.join('\n');
