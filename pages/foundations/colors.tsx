@@ -63,7 +63,7 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, types }: util
           <div className="c-hero">
             <div>
               <h1 className="c-title--extra-large">{metadata.title}</h1>
-              <p>{metadata.description}</p>
+              <p className="u-mb-2">{metadata.description}</p>
               <DownloadTokens componentId="colors" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}

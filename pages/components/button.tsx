@@ -105,7 +105,6 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, sc
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="buttons" scss={scss} css={css} types={types} />
             </div>
 
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
@@ -203,6 +202,9 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, sc
 
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="buttons" scss={scss} css={css} types={types} />
+                </div>
                 {buttons.design.map((button) => (
                   <ComponentDesignTokens
                     key={button.id}

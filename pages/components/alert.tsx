@@ -106,7 +106,6 @@ const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="alerts" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -204,6 +203,9 @@ const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="alerts" scss={scss} css={css} types={types} />
+                </div>
                 {alerts.design.map((alert) => (
                   <ComponentDesignTokens
                     key={alert.id}
