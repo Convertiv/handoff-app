@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType } from './components/utils';
+import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './components/utils';
 
 interface GroupNameData {
   name: string;
@@ -93,14 +93,13 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
               }
               ))
           });
-        } else if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-          const color = document.fills[0].color;
+        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
+          const color = transformFigmaFillsToCssColor(document.fills);
           colorsArray.push({
             name,
             group,
-            type: 'color',
-            hex: figmaColorToHex(color),
-            rgb: color,
+            value: color.color,
+            blend: color.blend,
             sass: `$color-${group}-${machine_name}`,
             machineName: machine_name,
           });
@@ -111,7 +110,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
         let color: string | undefined;
 
         if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-          color = figmaColorToHex(document.fills[0].color);
+          color = transformFigmaColorToHex(document.fills[0].color);
         }
 
         typographyArray.push({

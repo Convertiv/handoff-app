@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -41,7 +41,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
     // Button background
     [getCssVariableName({ component: 'radio', property: 'background', part: '', type, theme, state })]: {
       property: 'background',
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
     },
     // Size
     [getCssVariableName({ component: 'radio', property: 'width', part: '', type, theme, state })]: {
@@ -99,7 +99,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
       property: 'border radius',
     },
     [getCssVariableName({ component: 'radio', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border color',
     },
     // Opacity
@@ -181,7 +181,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
     },
     // Background
     [getCssVariableName({ component: 'radio', part: 'thumb', property: 'background', type, theme, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
     },
     // Border
@@ -190,7 +190,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
       property: 'border-width',
     },
     [getCssVariableName({ component: 'radio', part: 'thumb', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
     },
   };

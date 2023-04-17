@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
@@ -41,7 +41,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
      */
     // Background
     [getCssVariableName({ component: 'modal', part: '', property: 'background', type })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
     // Padding
@@ -87,7 +87,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
       property: 'border-radius-lg',
     },
     [getCssVariableName({ component: 'modal', part: '', property: 'border-color', type })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
     // Box shadow
@@ -100,7 +100,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
      */
     // Background
     [getCssVariableName({ component: 'modal', part: 'header', property: 'background', type })]: {
-      value: tokens.parts.header.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.header.background).color,
       property: 'background',
     },
     // Padding
@@ -146,7 +146,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
       property: 'border-radius-lg',
     },
     [getCssVariableName({ component: 'modal', part: 'header', property: 'border-color', type })]: {
-      value: tokens.parts.header.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.header.borderColor).color,
       property: 'border-color',
     },
     // Box shadow
@@ -191,7 +191,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
      */
     // Background
     [getCssVariableName({ component: 'modal', part: 'body', property: 'background', type })]: {
-      value: tokens.parts.body.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.body.background).color,
       property: 'background',
     },
     // Padding
@@ -237,7 +237,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
       property: 'border-radius-lg',
     },
     [getCssVariableName({ component: 'modal', part: 'body', property: 'border-color', type })]: {
-      value: tokens.parts.body.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.body.borderColor).color,
       property: 'border-color',
     },
     // Box shadow
@@ -279,7 +279,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
      */
     // Background
     [getCssVariableName({ component: 'modal', part: 'footer', property: 'background', type })]: {
-      value: tokens.parts.footer.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.footer.background).color,
       property: 'background',
     },
     // Padding
@@ -325,7 +325,7 @@ export const transformModalComponentTokensToCssVariables = ({ ...tokens }: Modal
       property: 'border-radius-lg',
     },
     [getCssVariableName({ component: 'modal', part: 'footer', property: 'border-color', type })]: {
-      value: tokens.parts.footer.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.footer.borderColor).color,
       property: 'border-color',
     },
     // Box shadow

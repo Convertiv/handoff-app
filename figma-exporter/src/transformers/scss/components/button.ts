@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -59,7 +59,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
   return {
     // Background
     [getScssVariableName({ component: 'button', part: '', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Button,
     },
@@ -96,7 +96,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
       group: Part.Button,
     },
     [getScssVariableName({ component: 'button', part: '', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Part.Button,
     },
@@ -142,7 +142,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
       group: Part.Button,
     },
     [getScssVariableName({ component: 'button', part: '', property: 'color', theme, type, state })]: {
-      value: tokens.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.color).color,
       property: 'color',
       group: Part.Button,
     },

@@ -3,7 +3,7 @@ import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
@@ -80,7 +80,7 @@ export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComp
     },
     // Background
     [getScssVariableName({ component: 'switch', part: '', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Switch,
     },
@@ -96,7 +96,7 @@ export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComp
       group: Part.Switch,
     },
     [getScssVariableName({ component: 'switch', part: '', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Part.Switch,
     },
@@ -156,7 +156,7 @@ export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComp
       group: Part.Label,
     },
     [getScssVariableName({ component: 'switch', part: 'label', property: 'color', theme, type, state })]: {
-      value: tokens.parts.label.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.label.color).color,
       property: 'color',
       group: Part.Label,
     },
@@ -192,7 +192,7 @@ export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComp
     },
     // Background
     [getScssVariableName({ component: 'switch', part: 'thumb', property: 'background', theme, type, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
       group: Part.Thumb,
     },
@@ -203,7 +203,7 @@ export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComp
       group: Part.Thumb,
     },
     [getScssVariableName({ component: 'switch', part: 'thumb', property: 'border-color', theme, type, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
       group: Part.Thumb,
     },

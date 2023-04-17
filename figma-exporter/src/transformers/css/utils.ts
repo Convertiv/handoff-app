@@ -1,7 +1,7 @@
 import { capitalize } from 'lodash';
 import * as FigmaTypes from '../../figma/types';
 import { filterOutUndefined } from '../../utils';
-import { figmaColorToHex } from '../../utils/convertColor';
+import { transformFigmaColorToHex } from '../../utils/convertColor';
 
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
@@ -45,13 +45,13 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
   const { r, g, b, a } = color;
   if (a === 1) {
     // transform to hex
-    return figmaColorToHex(color);
+    return transformFigmaColorToHex(color);
   }
 
   return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
 };
 
-export const transformFigmaPaintToCssColor = (paint: FigmaTypes.Paint): string => {
+export const transformFigmaFillsToCssColor = (paint: FigmaTypes.Paint): string => {
   if (paint.visible === false || paint.opacity === 0) {
     return '';
   }
