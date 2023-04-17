@@ -17,6 +17,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 
 const AlertDisplay: React.FC<{ alert: PreviewObject | undefined }> = ({ alert }) => {
@@ -84,7 +85,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'alert', `/components`);
 };
 
-const AlertPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -202,6 +203,9 @@ const AlertPage = ({ content, menu, metadata, current, componentFound }: util.Co
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="alerts" scss={scss} css={css} types={types} />
+                </div>
                 {alerts.design.map((alert) => (
                   <ComponentDesignTokens
                     key={alert.id}

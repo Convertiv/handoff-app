@@ -16,6 +16,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 
 const InputDisplay: React.FC<{ input: InputThemePair; theme: 'light' | 'dark' }> = ({ input, theme }) => {
@@ -103,13 +104,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'input', `/components`);
 };
 
-const InputPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const InputPage = ({ content, menu, metadata, current, componentFound, css, scss, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -193,6 +194,9 @@ const InputPage = ({ content, menu, metadata, current, componentFound }: util.Co
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="inputs" scss={scss} css={css} types={types} />
+                </div>
                 {states.default.light && (
                   <ComponentDesignTokens
                     key={states.default.light.id}

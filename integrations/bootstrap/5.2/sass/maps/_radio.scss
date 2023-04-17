@@ -1,0 +1,60 @@
+/* =============================================================================
+   RADIO (project/_radio.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/radios';
+@import './exported/tokens/sass/radios';
+@import './exported/tokens/css/radios';
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Input
+// -----
+
+$form-check-radio-width:                  $radio-off-width;
+$form-check-radio-height:                 $radio-off-height;
+$form-check-radio-width-raw:              $radio-off-width-raw;
+$form-check-radio-height-raw:             $radio-off-height-raw;
+$form-check-radio-border-radius:          50%;
+
+// -----
+// Form Check Thumb
+// -----
+
+$form-check-radio-thumb-radius-raw:       $radio-thumb-off-width-raw * .5;
+$form-check-radio-thumb-position:         $form-check-radio-height-raw * .5;
+
+// -----
+// Form Check Label
+// -----
+
+$form-check-radio-label-font-size:        $radio-label-off-font-size;
+$form-check-radio-label-line-height:      $radio-label-off-line-height;
+
+// -----
+// Form Check Wrapper
+// -----
+
+$form-check-radio-min-height:             calc( $form-check-radio-label-font-size * $form-check-radio-label-line-height );
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Icons
+// -----
+
+// form check icon color
+$form-check-radio-checked-color:          $radio-thumb-off-background;
+
+// form check icons
+$form-check-radio-checked-bg-image:       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-#{$form-check-radio-thumb-position} -#{$form-check-radio-thumb-position} #{$form-check-radio-width-raw} #{$form-check-radio-height-raw}'><circle r='#{$form-check-radio-thumb-radius-raw}' fill='#{$form-check-radio-checked-color}'/></svg>" );

@@ -43,8 +43,17 @@ export interface DocumentationProps {
   current: SectionLink;
 }
 
-export interface ComponentDocumentationProps extends DocumentationProps{
+export interface ComponentDocumentationProps extends DocumentationProps {
+  scss: string;
+  css: string;
+  types: string;
   componentFound: boolean;
+}
+
+export interface FoundationDocumentationProps extends DocumentationProps {
+  scss: string;
+  css: string;
+  types: string;
 }
 /**
  * List the default paths
@@ -97,7 +106,7 @@ export const pluralizeComponent = (singular: string): string => {
 
 /**
  * Build level 1 static path parameters
- * @returns 
+ * @returns
  */
 export const buildL1StaticPaths = () => {
   const files = fs.readdirSync('docs');
@@ -148,9 +157,9 @@ export const buildL2StaticPaths = () => {
 
 /**
  * Does a component exist in figma? Check the length of the component tokens
- * @param component 
- * @param config 
- * @returns 
+ * @param component
+ * @param config
+ * @returns
  */
 export const componentExists = (component: string, config?: Config): boolean => {
   if (!config) {
@@ -225,13 +234,13 @@ export const staticBuildMenu = () => {
 export const getCurrentSection = (menu: SectionLink[], path: string): SectionLink | null =>
   menu.filter((section) => section.path === path)[0];
 
-  /**
+/**
  * Build a static object for rending markdown pages
  * @param path
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string)=> {
+export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
   const menu = staticBuildMenu();
   const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
@@ -241,50 +250,70 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       content,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
-      
     },
   };
 };
 
 /**
  * Fetch Component Doc Page Markdown
- * @param path 
- * @param slug 
- * @param id 
- * @returns 
+ * @param path
+ * @param slug
+ * @param id
+ * @returns
  */
 export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
   return {
     props: {
       ...fetchDocPageMarkdown(path, slug, id).props,
-      componentFound: (slug) ? componentExists(pluralizeComponent(slug), undefined) : false
+      componentFound: slug ? componentExists(pluralizeComponent(slug), undefined) : false,
+      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
+      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
     },
   };
-}
+};
+
+/**
+ * Fetch Component Doc Page Markdown
+ * @param path
+ * @param slug
+ * @param id
+ * @returns
+ */
+export const fetchFoundationDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
+  return {
+    props: {
+      ...fetchDocPageMarkdown(path, slug, id).props,
+      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
+      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
+    },
+  };
+};
 
 /**
  * Reduce a slug which can be either an array or string, to just a string by
  * plucking the first element
- * @param slug 
- * @returns 
+ * @param slug
+ * @returns
  */
-export const reduceSlugToString = (slug: string | string[] | undefined) : string | undefined => {
+export const reduceSlugToString = (slug: string | string[] | undefined): string | undefined => {
   let prop: string | undefined;
   if (Array.isArray(slug)) {
-    if(slug[0]){
+    if (slug[0]) {
       prop = slug[0];
     }
-  }else{
+  } else {
     prop = slug;
   }
   return prop;
-}
+};
 
 /**
  * Get doc meta and content from markdown
- * @param path 
- * @param slug 
- * @returns 
+ * @param path
+ * @param slug
+ * @returns
  */
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
@@ -294,18 +323,30 @@ export const fetchDocPageMetadataAndContent = (path: string, slug: string | stri
 };
 /**
  * Filter out undefined elements
- * @param value 
- * @returns 
+ * @param value
+ * @returns
  */
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
 /**
  * Create a title string from a prefix
- * @param prefix 
- * @returns 
+ * @param prefix
+ * @returns
  */
 export const titleString = (prefix: string | null): string => {
   const config = getConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config.client} Design System`;
+};
+
+export const fetchTokensString = (component: string, type: string): string => {
+  let tokens = '';
+  if (type === 'scss') {
+    tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
+  } else if (type === 'types') {
+    tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
+  } else {
+    tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
+  }
+  return tokens;
 };

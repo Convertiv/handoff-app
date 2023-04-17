@@ -1,45 +1,31 @@
-import { capitalize } from 'lodash';
 import { PaginationComponent, PaginationComponents } from '../../../exporters/components/component_sets/pagination';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
-  getTypesFromComponents,
   transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+/**
+ * Transform Pagination components into CSS vars
+ * @param pagination
+ * @returns
+ */
 export const transformPaginationComponentsToCssVariables = (pagination: PaginationComponents): string => {
   const lines = [];
-  lines.push(
-    `$pagination-sizes: ( ${getSizesFromComponents(pagination)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$pagination-themes: ( ${getThemesFromComponents(pagination)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$pagination-states: ( ${getStatesFromComponents(pagination)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.pagination {')
-  const cssVars = pagination.map((page) => `  ${cssCodeBlockComment('pagination', page)}\n ${Object.entries(transformPaginationComponentTokensToCssVariables(page))
+  const cssVars = pagination.map((page) => `${cssCodeBlockComment('pagination', page)}\n ${Object.entries(transformPaginationComponentTokensToCssVariables(page))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformPaginationComponentTokensToCssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

@@ -1,4 +1,4 @@
-import { SelectComponent } from '../../../exporters/components/component_sets/select';
+import { SelectComponent, SelectComponents } from '../../../exporters/components/component_sets/select';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
@@ -8,6 +8,8 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Parts {
   Select          = 'select',
@@ -17,8 +19,38 @@ enum Parts {
   AdditionalInfo  = 'additional-info',
 }
 
+/**
+ * Transfor selects into scss variants
+ * @param selects
+ * @returns
+ */
+export const transformSelectComponentsToScssTypes = (selects: SelectComponents): string => {
+  const lines = [];
+  lines.push(
+    `$select-sizes: ( ${getSizesFromComponents(selects)
+      .map((type) => `"${mapComponentSize(type)}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$select-themes: ( ${getThemesFromComponents(selects)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$select-states: ( ${getStatesFromComponents(selects)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+/**
+ * Transform select comonent into scss variables
+ * @param tokens
+ * @returns
+ */
 export const transformSelectComponentTokensToScssVariables = (tokens: SelectComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size);
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

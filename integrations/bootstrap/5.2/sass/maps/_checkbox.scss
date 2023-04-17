@@ -1,0 +1,137 @@
+/* =============================================================================
+   CHECKBOX (project/_checkbox.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/checkboxes';
+@import './exported/tokens/sass/checkboxes';
+@import './exported/tokens/css/checkboxes';
+
+
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Input
+// -----
+
+$form-check-input-width:                  $checkbox-off-width;
+$form-check-input-height:                 $checkbox-off-height;
+$form-check-input-border-radius:          var( --checkbox-off-border-radius );
+$form-check-input-border-width:           var( --checkbox-off-border-width );
+$form-check-image-width:                  var( --checkbox-icon-on-width );
+
+// -----
+// Form Check Label
+// -----
+
+$form-check-label-font-size:              var( --checkbox-label-off-font-size );
+$form-check-label-font-weight:            var( --checkbox-label-off-font-weight );
+$form-check-label-line-height:            var( --checkbox-label-off-line-height );
+$form-check-label-letter-spacing:         var( --checkbox-label-off-letter-spacing );
+$form-check-label-text-decoration:        var( --checkbox-label-off-text-decoration );
+$form-check-label-text-transform:         var( --checkbox-label-off-text-transform );
+$form-check-label-cursor:                 pointer;
+
+// -----
+// Form Check Wrapper
+// -----
+
+$form-check-min-height:                   calc( $form-check-label-font-size * $form-check-label-line-height );
+$form-check-padding-start:                $form-check-input-width + $checkbox-off-padding-start;
+$form-check-margin-bottom:                null;
+$form-check-transition:                   all .25s ease-in-out;
+$form-check-inline-margin-end:            1rem; /* Gutter between a group of checkboxes or radios on the same horizontal row */
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Input
+// -----
+
+// form check backgrounds
+$form-check-input-bg:                             var( --checkbox-off-background );
+$form-check-input-focus-bg-color:                 var( --checkbox-off-background );
+$form-check-input-hover-bg-color:                 var( --checkbox-hover-off-background );
+$form-check-input-disabled-bg-color:              var( --checkbox-disabled-off-background );
+
+$form-check-input-checked-bg-color:               var( --checkbox-on-background );
+$form-check-input-checked-focus-bg-color:         var( --checkbox-on-background );
+$form-check-input-checked-hover-bg-color:         var( --checkbox-hover-on-background );
+$form-check-input-checked-disabled-bg-color:      var( --checkbox-disabled-on-background );
+
+// form check borders
+$form-check-input-border:                         $form-check-input-border-width solid var( --checkbox-off-border-color );
+$form-check-input-focus-border:                   var( --checkbox-off-border-color );
+$form-check-input-hover-border:                   var( --checkbox-hover-off-border-color );
+$form-check-input-disabled-border:                var( --checkbox-disabled-off-border-color );
+
+$form-check-input-checked-border-color:           var( --checkbox-on-border-color );
+$form-check-input-checked-focus-border-color:     var( --checkbox-on-border-color );
+$form-check-input-checked-hover-border-color:     var( --checkbox-hover-on-border-color );
+$form-check-input-checked-disabled-border-color:  var( --checkbox-disabled-on-border-color );
+
+// form check shadows
+$form-check-input-box-shadow:                     var( --checkbox-off-box-shadow );
+$form-check-input-focus-box-shadow:               var( --checkbox-off-box-shadow );
+$form-check-input-hover-box-shadow:               var( --checkbox-hover-off-box-shadow );
+$form-check-input-disabled-box-shadow:            var( --checkbox-disabled-off-box-shadow );
+
+$form-check-input-checked-box-shadow:             var( --checkbox-on-box-shadow );
+$form-check-input-checked-focus-box-shadow:       var( --checkbox-on-box-shadow );
+$form-check-input-checked-hover-box-shadow:       var( --checkbox-hover-on-box-shadow );
+$form-check-input-checked-disabled-box-shadow:    var( --checkbox-disabled-on-box-shadow );
+
+// form check other
+$form-check-input-disabled-opacity:               var( --checkbox-disabled-off-opacity );
+
+// -----
+// Form Check Indeterminate
+// -----
+
+$form-check-input-indeterminate-bg-color:         $form-check-input-checked-bg-color;
+$form-check-input-indeterminate-border-color:     $form-check-input-checked-border-color;
+
+// -----
+// Form Check Button
+// -----
+
+//$form-check-btn-check-disabled-opacity:           $btn-disabled-opacity;
+
+// -----
+// Form Check Label
+// -----
+
+// form check label color
+$form-check-label-color:                          var( --checkbox-label-off-color );
+$form-check-label-hover-color:                    var( --checkbox-hover-label-off-color );
+$form-check-label-disabled-color:                 var( --checkbox-disabled-label-off-color );
+
+$form-check-label-checked-color:                  var( --checkbox-label-on-color );
+$form-check-label-checked-hover-color:            var( --checkbox-hover-label-on-color );
+$form-check-label-checked-disabled-color:         var( --checkbox-disabled-label-on-color );
+
+// form check label other
+$form-check-label-disabled-opacity:               var( --checkbox-disabled-label-off-opacity );
+
+// -----
+// Form Check Icons
+// -----
+
+// form check icon color
+$form-check-input-checked-color:                  $checkbox-on-icon-color;
+$form-check-input-indeterminate-color:            $form-check-input-checked-color;
+
+// form check icons
+$form-check-input-checked-bg-image:               url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-checked-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1.5 6 3 3 6-6'/></svg>" );
+$form-check-input-indeterminate-bg-image:         url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-indeterminate-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 6h8'/></svg>" );
+
+//$form-check-input-active-filter:                  brightness(90%);

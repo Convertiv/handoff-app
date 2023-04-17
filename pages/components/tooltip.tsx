@@ -15,6 +15,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const TooltipDisplay: React.FC<{ tooltip: PreviewObject | undefined }> = ({ tooltip }) => {
   return (
@@ -49,7 +50,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return fetchCompDocPageMarkdown('docs/components/', 'tooltip', `/components`);
 };
 
-const TooltipPage = ({ content, menu, metadata, current, componentFound }: ComponentDocumentationProps) => {
+const TooltipPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
@@ -152,6 +153,9 @@ const TooltipPage = ({ content, menu, metadata, current, componentFound }: Compo
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="tooltips" scss={scss} css={css} types={types} />
+                </div>
                 {tooltips.map((tooltip) => (
                   <ComponentDesignTokens
                     key={tooltip.id}

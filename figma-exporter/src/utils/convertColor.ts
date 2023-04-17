@@ -132,7 +132,7 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
     return transformFigmaColorToHex(color);
   }
 
-  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
+  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${parseFloat(a.toFixed(3))})`;
 };
 
 export function transformFigmaPaintToCssColor(paint: FigmaTypes.Paint, asLinearGradient: boolean = false): string | null {
@@ -278,6 +278,34 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
   }
 
   return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
+}
+
+/**
+ * this function converts figma color to HEX (string)
+ */
+
+// figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
+//=> #001aff
+
+export function figmaColorToHex(color: FigmaTypes.Color): string {
+  let hex = '#';
+
+  const rgb = figmaColorToWebRGB(color) as webRGB | webRGBA;
+  hex += ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+
+  if (rgb[3] !== undefined) {
+    const a = Math.round(rgb[3] * 255).toString(16);
+    if (a.length == 1) {
+      hex += '0' + a;
+    } else {
+      if (a !== 'ff') hex += a;
+    }
+  }
+  return hex;
+}
+
+export const transformFigmaNumberToCss = (value: number) => {
+  return parseFloat(value.toFixed(3));
 }
 
 type webRGB = [number, number, number];

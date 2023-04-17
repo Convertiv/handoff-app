@@ -18,6 +18,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const ModalDisplay: React.FC<{ modal: PreviewObject | undefined }> = ({ modal }) => {
   return (
@@ -52,13 +53,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'modal', `/components`);
 };
 
-const ModalPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -121,6 +122,9 @@ const ModalPage = ({ content, menu, metadata, current, componentFound }: util.Co
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="modals" scss={scss} css={css} types={types} />
+                </div>
                 {designComponents.slice(0, 1).map((modal) => (
                   <ComponentDesignTokens
                     key={modal.id}

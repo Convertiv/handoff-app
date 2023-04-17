@@ -11,7 +11,7 @@ export const createDocumentationObject = async (figmaFileKey: string, figmaAcces
   if (Object.keys(components).filter((component: string) => components[component].length > 0).length > 0) {
     Object.keys(components).map((component: string) => {
       if (components[component].length === 0) {
-        console.error(chalk.red(`${startCase(component)} could not be located in the figma file`));
+        console.error(chalk.grey(`${startCase(component)} could not be located in the figma file`));
       } else {
         console.log(chalk.green(`${startCase(component)} exported:`), components[component].length);
       }

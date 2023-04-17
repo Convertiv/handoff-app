@@ -17,6 +17,7 @@ import AnchorNav from 'components/AnchorNav';
 import ComponentGuidelines from 'components/ComponentGuidelines';
 import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ComponentNotFound } from 'components/ComponentNotFound';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   return (
@@ -32,7 +33,6 @@ const SwitchDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ com
     />
   );
 };
-
 
 const config = getConfig();
 
@@ -88,12 +88,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'switch', `/components`);
 };
 
-const SwitchPage = ({ content, menu, metadata, current, componentFound }: util.ComponentDocumentationProps) => {
+const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -181,6 +181,9 @@ const SwitchPage = ({ content, menu, metadata, current, componentFound }: util.C
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="switches" scss={scss} css={css} types={types} />
+                </div>
                 {switches.tokens.map((component) => (
                   <ComponentDesignTokens
                     key={component.id}

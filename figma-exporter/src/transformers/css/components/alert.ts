@@ -1,31 +1,35 @@
-import { capitalize } from 'lodash';
 import { AlertComponent, AlertComponents } from '../../../exporters/components/component_sets/alert';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
+  transformFigmaNumberToCss,
   transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
+/**
+ * Map down to a variable object
+ * @param alerts
+ * @returns
+ */
 export const transformAlertComponentsToCssVariables = (alerts: AlertComponents): string => {
   const lines = [];
-  lines.push(
-    `$alert-variants: ( ${getTypesFromComponents(alerts)
-      .map((type) => `"${type}"`)
-      .join(', ')});`
-  );
   lines.push('.alert {')
-  const cssVars = alerts.map((alert) => `  ${cssCodeBlockComment('alert', alert)}\n ${Object.entries(transformAlertComponentTokensToCssVariables(alert))
-    .map(([variable, value]) => `  ${variable}: ${value.value};`)
+  const cssVars = alerts.map((alert) => `\t${cssCodeBlockComment('alert', alert)}\n${Object.entries(transformAlertComponentTokensToCssVariables(alert))
+    .map(([variable, value]) => `\t${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
+/**
+ * Generate a list of css variables
+ * @param tokens
+ * @returns
+ */
 export const transformAlertComponentTokensToCssVariables = (tokens: AlertComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.type : tokens.layout;
   const theme = 'light';
@@ -142,7 +146,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
@@ -150,7 +154,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.letterSpacing}px`, property: 'letter-spacing' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.letterSpacing)}px`, property: 'letter-spacing' },
     [getCssVariableName({ component: 'alert', property: 'text-align', part: 'title', theme, type, state })]: {
       value: transformFigmaTextAlignToCss(tokens.parts.title.textAlign),
       property: 'text-align',
@@ -200,7 +204,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.text.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.text.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
