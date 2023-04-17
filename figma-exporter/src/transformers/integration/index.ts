@@ -20,13 +20,13 @@ export const getPathToIntegration = () => {
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(integrationFolder, 'custom'));
+      const customPath = path.resolve(path.join(__dirname, '../..', integrationFolder));
       if (!fs.existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
-    const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
+    const searchPath = path.resolve(path.join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
       throw Error(
         `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
