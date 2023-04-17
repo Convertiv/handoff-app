@@ -6,6 +6,95 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2023-04-16
+
+This release introduces two major new features - framework integrations
+and much better color support. The color support is straightforward - Handoff
+now supports much broader color options from Figma including gradients (linear
+and radial), as well as layered colors, alpha channels and blend modes.
+
+Framework integrations is Handoff's new plugin architecture for integrating
+tokens with popular web and application frameworks. Previous versions of Handoff
+were tightly coupled with Boostrap 5.2 as a proof of concept.
+
+To integrate tokens into applications, the tokens need to be mapped to the
+the files you'll need. In web applications, this means mapping css and sass
+variables to existing variables, or extending classes with the tokens.
+
+When fetch is run, any files added to the `integration` folder will be merged
+with the selected integration. The sass files will be published to
+`/exported/{integration}-tokens`
+
+Integrations also move the templates into integrations so each framework
+integration can define the markup for each component, type, and state. This
+allows handoff to include default markup for common frontend frameworks.
+
+### Frontend Integration Support
+
+- Creates integrations plugin architecture
+- Extracts Bootstrap 5.2 from the sass and templates into an integration template
+- Sets Bootstrap 5.2 as the default integration
+- Adds an integration configuration to allow projects to define which integration
+  it will use
+- The `exported/variables` file was renamed to `exported/tokens`
+- A new directory is exported to `exported/{integration}-tokens` containing the
+  maps and extended sass integration files.
+- The installer now creates a `/integration` folder that will be merged with
+  the configured integration sass and templates.
+- A zip file called tokens.zip is exported to the public directory containing
+  all of the exported artifacts - json, integration, sass, and css tokens
+
+### Configuration changes
+
+- `integration` is an object that contains two properties `name` and
+  `version`. If you set `integration.name` to `custom` and `version` to `null`
+  the project will expect a fully defined integration in the `/integration` dir.
+- `figma` is an object that allows customization of how components are fetched.
+  - `figma.components` contains a list of the components
+  - Each component can be defined. For example `figma.components.button` will
+    define how buttons are fetched from figma.
+  - The `search` property determines the library component and name of the frame
+    to look in for the component. Setting `figma.components.button.search` to
+    `Unicorn` will try to find a button structure in a library object called
+    `Unicorn`.
+  - The `size` property of each component will define a size map allowing projects
+    to map figma sizes to token names.
+
+### New Color Support
+
+- **Gradient Color Support** Linear and Radial gradients are now imported from
+  figma. The tokens JSON structure has changed to make it better support complex
+  color objects.
+  - `hex`, `type`, and `rgb` properties were dropped from the ColorObject
+  - `value` contains the CSS set of color values, either as hex, rgb, rgba, or
+    gradients
+  - `blend` contains a set of blend modes as CSS values that map against the
+    colors
+- **Blend Modes and Color Layers** Tokens are now exported for blend modes and
+  color layers. Handoff can pull multiple layers out of the color styles, and
+  will build the proper blend mode CSS for use in the project.
+
+### Upgrade Notes
+
+- Create a folder `/integration` in the root of the project to hold integration
+  configuration.
+- Any template customizations should be moved into the `/integration/templates`
+  directory.
+- Any sass customizations to the existing project structure should be be moved
+  to `/integration/sass` and modified to match the new structure.
+
+### Other Features
+
+- Each component and foundation now has buttons for downloading the tokens for
+  that component.
+- The dashboard now has a button for downloading all tokens as a zip file.
+
+### Security Update
+
+- Webpack was updated to 5.79.0 to address a security issue
+- node-sass was removed from the figma-exporter library since it is no longer
+  needed by the system.
+
 ## [0.3.1] - 2023-04-03
 
 This release fixes two small bugs, one that throws an error on builds because
