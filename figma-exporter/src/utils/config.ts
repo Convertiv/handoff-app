@@ -1,4 +1,4 @@
-import path from "path";
+import path from 'path';
 
 export interface ComponentSizeMap {
   figma: string;
@@ -10,9 +10,9 @@ export interface ComponentSizeMap {
  * @returns Config
  */
 export const getFetchConfig = () => {
-  let config;
+  let config
   try {
-    config = require(path.resolve(__dirname, '../../client-config'));
+    config = require(path.resolve(__dirname, '../../../client-config'));
   } catch (e) {
     config = {};
   }
@@ -28,8 +28,10 @@ export const getFetchConfig = () => {
  * @param figma
  * @returns
  */
-export const mapComponentSize = (figma: string, component?: string): string => {
-  const config = getFetchConfig();
+export const mapComponentSize = (figma: string, component?: string, config?: any): string => {
+  if (!config) {
+    config = getFetchConfig();
+  }
   if (component) {
     if (config.figma.components[component]?.size) {
       const componentMap = config.components[component]?.size as ComponentSizeMap[];

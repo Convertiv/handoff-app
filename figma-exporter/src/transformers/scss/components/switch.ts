@@ -26,7 +26,7 @@ export const transformSwitchesComponentsToScssTypes = (switches: SwitchComponent
   const lines = [];
   lines.push(
     `$switch-sizes: ( ${getSizesFromComponents(switches)
-      .map((type) => `"${mapComponentSize(type)}"`)
+      .map((type) => `"${mapComponentSize(type, 'switch')}"`)
       .join(', ')} );`
   );
   lines.push(
@@ -43,7 +43,7 @@ export const transformSwitchesComponentsToScssTypes = (switches: SwitchComponent
 };
 
 export const transformSwitchComponentTokensToScssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'switch');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

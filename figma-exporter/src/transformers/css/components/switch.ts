@@ -26,7 +26,7 @@ export const transformSwitchesComponentsToCssVariables = (switches: SwitchCompon
 };
 
 export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'switch');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

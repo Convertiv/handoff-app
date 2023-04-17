@@ -26,7 +26,7 @@ export const transformRadioComponentsToScssTypes = (radios: RadioComponents): st
   const lines = [];
   lines.push(
     `$radio-sizes: ( ${getSizesFromComponents(radios)
-      .map((type) => `"${mapComponentSize(type)}"`)
+      .map((type) => `"${mapComponentSize(type, 'radio')}"`)
       .join(', ')} );`
   );
   lines.push(
@@ -48,7 +48,7 @@ export const transformRadioComponentsToScssTypes = (radios: RadioComponents): st
  * @returns
  */
 export const transformRadioComponentTokensToScssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'radio');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 

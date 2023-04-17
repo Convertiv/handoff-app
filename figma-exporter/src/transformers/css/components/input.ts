@@ -27,7 +27,7 @@ export const transformInputComponentsToCssVariables = (inputs: InputComponents):
 };
 
 export const transformInputComponentTokensToCssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size, 'input');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

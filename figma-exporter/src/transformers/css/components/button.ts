@@ -19,7 +19,7 @@ import { mapComponentSize } from '../../../utils/config';
 export const transformButtonComponentsToCssVariables = (buttons: ButtonComponents): string => {
   const lines = [];
   lines.push('.btn {')
-  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
+  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button, config))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
@@ -31,7 +31,7 @@ export const transformButtonComponentsToCssVariables = (buttons: ButtonComponent
  * @returns
  */
 export const transformButtonComponentTokensToCssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'button');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 

@@ -33,7 +33,7 @@ export const transformModalComponentsToCssVariables = (modals: ModalComponents):
 };
 
 export const transformModalComponentTokensToCssVariables = ({ ...tokens }: ModalComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'modal');
 
   return {
     /**

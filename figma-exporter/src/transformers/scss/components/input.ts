@@ -28,7 +28,7 @@ export const transformInputComponentsToScssTypes = (inputs: InputComponents): st
   const lines = [];
   lines.push(
     `$input-sizes: ( ${getSizesFromComponents(inputs)
-      .map((type) => `"${mapComponentSize(type)}"`)
+      .map((type) => `"${mapComponentSize(type, 'input')}"`)
       .join(', ')} );`
   );
   lines.push(
@@ -45,7 +45,7 @@ export const transformInputComponentsToScssTypes = (inputs: InputComponents): st
 };
 
 export const transformInputComponentTokensToScssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size);
+  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size, 'input');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
