@@ -70,6 +70,12 @@
 	box-shadow: 0 2px 2px rgba( 0, 0, 0, .04 );
 	color: #585858;
 	border: 1px solid #e0e0e0;
+	transition: all .2s ease-in-out;
+
+	&:hover {
+		border: 1px solid #ccc;
+		transition: all .2s ease-in-out;
+	}
 }
 
 /**
