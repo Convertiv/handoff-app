@@ -14,19 +14,19 @@ export const getPathToIntegration = () => {
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
 
-  const defaultPath = path.resolve(path.join(__dirname, integrationFolder, defaultIntegration, defaultVersion));
+  const defaultPath = path.resolve(path.join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
 
   const config = getFetchConfig();
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(integrationFolder, 'custom'));
+      const customPath = path.resolve(path.join(__dirname, '../..', integrationFolder));
       if (!fs.existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
-    const searchPath = path.resolve(path.join(integrationFolder, config.integration.name, config.integration.version));
+    const searchPath = path.resolve(path.join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
       throw Error(
         `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
@@ -36,7 +36,12 @@ export const getPathToIntegration = () => {
   }
   return defaultPath;
 };
-export const getIntegrationName = () => {
+
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
+export const getIntegrationName = (): string => {
   const config = getFetchConfig();
   const defaultIntegration = 'bootstrap';
   if (config.integration) {
@@ -55,7 +60,7 @@ export default async function integrationTransformer() {
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
   const sassFolder = `exported/${integrationName}-tokens`;
-  const templatesFolder = process.env.OUTPUT_DIR || 'templates';
+  const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
   fs.copySync(integrationsSass, sassFolder);
@@ -100,11 +105,11 @@ export const addFileToZip = async (directory: string[], dirPath: string, archive
     const pathFile = path.join(dirPath, file);
     if (fs.lstatSync(pathFile).isDirectory()) {
       const recurse = await fs.readdir(pathFile);
-      archive = await addFileToZip(recurse, pathFile, archive)
+      archive = await addFileToZip(recurse, pathFile, archive);
     } else {
       const data = fs.readFileSync(pathFile, 'utf-8');
       archive.append(data, { name: pathFile });
     }
   }
   return archive;
-}
+};

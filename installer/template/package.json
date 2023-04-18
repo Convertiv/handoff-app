@@ -6,10 +6,10 @@
     "scripts": {
       "start": "node ./node_modules/handoff-app/scripts/watch.js",
       "build": "node node_modules/handoff-app/scripts/build.js",
-      "fetch": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js && mv ./exported/*.zip ./public/",
-      "transform:preview": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js preview && mv ./exported/*.zip ./public/",
-      "transform:styles": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/",
-      "transform:fonts": "node node_modules/handoff-app/figma-exporter/dist/figma-exporter.cjs.js styles && mv ./exported/*.zip ./public/",
+      "fetch": "node node_modules/handoff-app/scripts/fetch.js",
+      "transform:preview": "node node_modules/handoff-app/scripts/fetch.js preview",
+      "transform:styles": "node node_modules/handoff-app/scripts/fetch.js styles",
+      "transform:fonts": "node node_modules/handoff-app/scripts/fetch.js styles",
       "postinstall": "cd node_modules/handoff-app/figma-exporter && npm install --omit=dev"
 
     },

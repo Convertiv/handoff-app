@@ -43,17 +43,31 @@ const prepareTmpDir = async () => {
 const copyProjectConfig = async () => {
   // Copy project's config.js to tmp dir's client-config.js
   console.log('Copying project config...');
-  await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), await fs.readFile(clientConfigPath, 'utf8'));
+  const baseConfig = require(path.resolve(tmpDir, 'default-config.js'));
+  const clientConfig = require(path.resolve(clientConfigPath));
+  const config = {
+    ...baseConfig,
+    ...clientConfig,
+  };
+  await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), `module.exports = ${JSON.stringify(config)}`);
   console.log('Project config copied.');
+  return config;
 };
 
 /**
  * Run the exporter from figma with the configured settings.
  */
-const runFigmaExporter = async () => {
+const runFigmaExporter = async (type) => {
   // Run figma-exporter in the project root
   console.log('Running figma exporter...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')], {
+  const args = [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')];
+  if (type) {
+    args.push(type);
+  }
+  if (process.argv.indexOf('--debug') > 0) {
+    args.push('--debug');
+  }
+  await spawnPromise('node', args, {
     cwd: projectRootDir,
     env: process.env,
     stdio: 'inherit',
@@ -67,11 +81,7 @@ const runFigmaExporter = async () => {
 const runPreviewExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running preview transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'preview'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('preview');
   console.log('Preview transformer finished.');
 };
 
@@ -81,11 +91,7 @@ const runPreviewExporter = async () => {
 const runStyleExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running style transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'styles'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('styles');
   console.log('Style transformer finished.');
 };
 
@@ -95,14 +101,9 @@ const runStyleExporter = async () => {
 const runIntegrationExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running integration transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'integration'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('integration');
   console.log('Integration transformer finished.');
 };
-
 
 /**
  * Copy the figma exports
@@ -171,20 +172,25 @@ const mergeProjectDir = async (dir, target) => {
     target = dir;
   }
   console.log(`Merging project ${dir} dir into ${target}...`);
-  // Remove public dir
-  if (fs.existsSync(path.resolve(tmpDir, target))) {
-    await fs.remove(path.resolve(tmpDir, target));
-  }
-
-  // Copy project's public dir
-  if (await fs.pathExists(path.resolve(projectRootDir, dir))) {
-    await fs.copy(path.resolve(projectRootDir, dir), path.resolve(tmpDir, target));
+  if (!fs.existsSync(dir)) {
+    // Do nothing
+    console.log(`Project ${dir} doesn't exist. Using default.`);
   } else {
-    await fs.ensureDir(path.resolve(tmpDir, target));
-  }
+    // Remove public dir
+    if (fs.existsSync(path.resolve(tmpDir, target))) {
+      await fs.remove(path.resolve(tmpDir, target));
+    }
 
-  await mergePackageDir(dir, target);
-  console.log(`Project ${dir} dir merged.`);
+    // Copy project's public dir
+    if (await fs.pathExists(path.resolve(projectRootDir, dir))) {
+      await fs.copy(path.resolve(projectRootDir, dir), path.resolve(tmpDir, target));
+    } else {
+      await fs.ensureDir(path.resolve(tmpDir, target));
+    }
+
+    await mergePackageDir(dir, target);
+    console.log(`Project ${dir} dir merged.`);
+  }
 };
 
 /**
@@ -239,14 +245,44 @@ const buildStaticSite = async () => {
 };
 
 /**
+ * Logic to detect the integraiton path
+ * @returns
+ */
+const getPathToIntegration = (config) => {
+  const integrationFolder = 'integrations';
+  const defaultIntegration = 'bootstrap';
+  const defaultVersion = '5.2';
+  const defaultPath = path.join(integrationFolder, defaultIntegration, defaultVersion);
+  if (config.integration) {
+    if (config.integration.name === 'custom') {
+      // Look for a custom integration
+      const customPath = path.resolve(path.join(integrationFolder));
+      if (!fs.existsSync(path.resolve(__dirname, '../..', customPath))) {
+        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
+      }
+      return customPath;
+    }
+    const searchPath = path.join(integrationFolder, config.integration.name, config.integration.version);
+    if (!fs.existsSync(path.resolve(__dirname, '../..', searchPath))) {
+      throw Error(
+        `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
+      );
+    }
+    return searchPath;
+  }
+  return defaultPath;
+};
+
+/**
  * Build the resources in the tmp dir
  */
 const buildTmpDir = async () => {
   await validateProject();
   await prepareTmpDir();
   await installNpmDependencies();
-  await copyProjectConfig();
-  await mergeProjectDir('integration', 'integrations');
+  const config = await copyProjectConfig();
+  await mergeProjectDir('integration/sass', getPathToIntegration(config) + '/sass');
+  await mergeProjectDir('integration/templates', 'templates');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
@@ -258,6 +294,8 @@ const buildTmpDir = async () => {
 };
 
 module.exports = {
+  copyProjectConfig,
+  getPathToIntegration,
   mergePackageFile,
   mergePackageDir,
   buildTmpDir,

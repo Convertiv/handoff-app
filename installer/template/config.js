@@ -44,9 +44,7 @@ const config = {
       modal: {
         search: 'Modal',
       },
-      pagination: {
-        search: null,
-      },
+      pagination: null,
       radio: {
         search: 'Radio',
       },

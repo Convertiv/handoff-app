@@ -8,8 +8,8 @@ enabled: true
 menu:
   - path: false
     title: Standards
-  - path: styles/accessability
-    title: Accessability Standards
+  - path: styles/accessibility
+    title: Accessibility Standards
     image: false
 ---
 
