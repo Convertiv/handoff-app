@@ -282,7 +282,7 @@ const buildTmpDir = async () => {
   await prepareTmpDir();
   await installNpmDependencies();
   const config = await copyProjectConfig();
-  await mergeProjectDir('integration/sass', getPathToIntegration());
+  await mergeProjectDir('integration/sass', getPathToIntegration(config));
   await mergeProjectDir('integration/templates', 'templates');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
