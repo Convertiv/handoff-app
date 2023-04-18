@@ -1,1 +1,1 @@
-export declare const buildClientFiles: () => void;
+export declare const buildClientFiles: () => Promise<string>;

@@ -75,8 +75,10 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].length > 0).length > 0) {
     await Promise.all([
       previewTransformer(documentationObject).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 })),
-      buildClientFiles(),
     ]);
+    await buildClientFiles()
+      .then((value) => chalk.green(console.log(value)))
+      .catch((error) => { throw new Error(error) });
   } else {
     console.log(chalk.red('Skipping preview generation'));
   }
@@ -160,13 +162,13 @@ const entirePipeline = async () => {
     fs.writeJSON(changelogFilePath, changelog, { spaces: 2 }),
     ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath)).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath)).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-        ]
+        zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath)).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+        zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath)).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+      ]
       : []),
   ]);
   await buildCustomFonts(documentationObject);
