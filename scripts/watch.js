@@ -19,10 +19,12 @@ dotenv.config({ path: path.resolve(projectRootDir, '.env') });
 // override NODE_ENV because next dev goes crazy if it is set to something different than development
 process.env.NODE_ENV = 'development';
 
+
 (async function () {
   // Build the temp directory first
+  
   await buildTmpDir();
-
+  const config = await copyProjectConfig();
   // What directories should we watch
   const watcher = chokidar.watch(
     [
@@ -50,6 +52,10 @@ process.env.NODE_ENV = 'development';
       return path.resolve(tmpDir, relativePath.replace('pages/', 'docs/'));
     }
 
+    if(relativePath.startsWith('integration/sass')){
+      return path.resolve(tmpDir, relativePath.replace('integration/sass', getPathToIntegration(config) + '/sass'));
+    }
+
     return path.resolve(tmpDir, relativePath);
   };
 
@@ -64,8 +70,7 @@ process.env.NODE_ENV = 'development';
   const resetDirectory = async () => {
     await mergePackageDir('pages', 'docs');
     await mergePackageDir('public', 'public');
-    const config = await copyProjectConfig();
-    await mergePackageDir('integration/sass', getPathToIntegration(config));
+    await mergePackageDir('integration/sass', getPathToIntegration(config) + '/sass');
     await mergePackageDir('integration/templates', 'templates');
     await mergePackageDir('sass', 'sass');
   }

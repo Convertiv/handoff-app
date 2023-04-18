@@ -6,9 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2023-04-16
+
+When 0.4.0 was released, we missed a structural problem with the way
+integrations were published into projects. 0.4.1 resolved a couple of issues,
+but a couple of significant new pieces of code were required to fully resolve
+the issue.
+
+### Bugfixes
+
+- Build and Start scripts were restructured to handle sparsely merging sass and
+  templates into the source directory.
+- The integration transformer was restructured to support correct path
+- The webpack config has been altered to support paths in projects
+- The bootstrap templates were updated to use this updated path structure
+
+### Improvements
+
+- The figma exporter built library built code is now published to the repo to
+  make it easier to test pre release code
+- A default config is now part of the project so that projects that can inherit
+  a config rather than having to keep their config up to date.
+- The installer now has the proper script paths in the package
+
 ## [0.4.1] - 2023-04-16
 
 ### Bugfixes
+
 - Fixes a typing error in the project config
 - Fixes an issue where the path of the integrations are relative to the project
 - Fixes an issue where local integrations aren't properly merged on watch
