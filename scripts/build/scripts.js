@@ -249,7 +249,7 @@ const buildStaticSite = async () => {
  * Logic to detect the integraiton path
  * @returns 
  */
-export const getPathToIntegration = (config) => {
+const getPathToIntegration = (config) => {
   const integrationFolder = 'integrations';
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
