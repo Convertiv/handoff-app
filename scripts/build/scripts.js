@@ -72,11 +72,6 @@ const runFigmaExporter = async (type) => {
     env: process.env,
     stdio: 'inherit',
   });
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
   console.log('Figma exporter finished.');
 };
 
