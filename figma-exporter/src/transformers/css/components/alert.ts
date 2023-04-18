@@ -1,31 +1,35 @@
-import { capitalize } from 'lodash';
 import { AlertComponent, AlertComponents } from '../../../exporters/components/component_sets/alert';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaNumberToCss,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
 
+/**
+ * Map down to a variable object
+ * @param alerts
+ * @returns
+ */
 export const transformAlertComponentsToCssVariables = (alerts: AlertComponents): string => {
   const lines = [];
-  lines.push(
-    `$alert-variants: ( ${getTypesFromComponents(alerts)
-      .map((type) => `"${type}"`)
-      .join(', ')});`
-  );
   lines.push('.alert {')
-  const cssVars = alerts.map((alert) => `  ${cssCodeBlockComment('alert', alert)}\n ${Object.entries(transformAlertComponentTokensToCssVariables(alert))
-    .map(([variable, value]) => `  ${variable}: ${value.value};`)
+  const cssVars = alerts.map((alert) => `\t${cssCodeBlockComment('alert', alert)}\n${Object.entries(transformAlertComponentTokensToCssVariables(alert))
+    .map(([variable, value]) => `\t${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
+/**
+ * Generate a list of css variables
+ * @param tokens
+ * @returns
+ */
 export const transformAlertComponentTokensToCssVariables = (tokens: AlertComponent): Record<string, ValueProperty> => {
   const type = tokens.componentType === 'design' ? tokens.type : tokens.layout;
   const theme = 'light';
@@ -34,7 +38,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
   return {
     // Background
     [getCssVariableName({ component: 'alert', property: 'background', part: '', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
 
@@ -66,7 +70,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'alert', property: 'border-color', part: '', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
 
@@ -84,13 +88,13 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
 
     // Close part
     [getCssVariableName({ component: 'alert', property: 'color', part: 'close', theme, type, state })]: {
-      value: tokens.parts.close.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.close.color).color,
       property: 'color',
     },
 
     // Icon part
     [getCssVariableName({ component: 'alert', property: 'color', part: 'icon', theme, type, state })]: {
-      value: tokens.parts.icon.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
     },
 
@@ -142,7 +146,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
@@ -150,7 +154,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.title.letterSpacing}px`, property: 'letter-spacing' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.title.letterSpacing)}px`, property: 'letter-spacing' },
     [getCssVariableName({ component: 'alert', property: 'text-align', part: 'title', theme, type, state })]: {
       value: transformFigmaTextAlignToCss(tokens.parts.title.textAlign),
       property: 'text-align',
@@ -164,7 +168,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'title', theme, type, state })]: {
-      value: tokens.parts.title.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.title.color).color,
       property: 'color',
     },
 
@@ -200,7 +204,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       theme,
       type,
       state,
-    })]: { value: `${tokens.parts.text.lineHeight}`, property: 'line-height' },
+    })]: { value: `${transformFigmaNumberToCss(tokens.parts.text.lineHeight)}`, property: 'line-height' },
     [getCssVariableName({
       component: 'alert',
       property: 'letter-spacing',
@@ -222,7 +226,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'text', theme, type, state })]: {
-      value: tokens.parts.text.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.text.color).color,
       property: 'color',
     },
 
@@ -288,7 +292,7 @@ export const transformAlertComponentTokensToCssVariables = (tokens: AlertCompone
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'alert', property: 'color', part: 'actions', theme, type, state })]: {
-      value: tokens.parts.actions.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.actions.color).color,
       property: 'color',
     },
   };

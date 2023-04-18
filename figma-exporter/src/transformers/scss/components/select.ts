@@ -1,13 +1,15 @@
-import { SelectComponent } from '../../../exporters/components/component_sets/select';
+import { SelectComponent, SelectComponents } from '../../../exporters/components/component_sets/select';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Parts {
   Select          = 'select',
@@ -17,8 +19,38 @@ enum Parts {
   AdditionalInfo  = 'additional-info',
 }
 
+/**
+ * Transfor selects into scss variants
+ * @param selects
+ * @returns
+ */
+export const transformSelectComponentsToScssTypes = (selects: SelectComponents): string => {
+  const lines = [];
+  lines.push(
+    `$select-sizes: ( ${getSizesFromComponents(selects)
+      .map((type) => `"${mapComponentSize(type, 'select')}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$select-themes: ( ${getThemesFromComponents(selects)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$select-states: ( ${getStatesFromComponents(selects)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+/**
+ * Transform select comonent into scss variables
+ * @param tokens
+ * @returns
+ */
 export const transformSelectComponentTokensToScssVariables = (tokens: SelectComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size, 'select');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
@@ -28,7 +60,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
      */
     // Background
     [getScssVariableName({ component: 'select', part: '', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Parts.Select,
     },
@@ -65,7 +97,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
       group: Parts.Select,
     },
     [getScssVariableName({ component: 'select', part: '', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Parts.Select,
     },
@@ -124,7 +156,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
       group: Parts.Label,
     },
     [getScssVariableName({ component: 'select', part: 'label', property: 'color', theme, type, state })]: {
-      value: tokens.parts.label.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.label.color).color,
       property: 'color',
       group: Parts.Label,
     },
@@ -172,7 +204,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
       group: Parts.Option,
     },
     [getScssVariableName({ component: 'select', part: 'option', property: 'color', theme, type, state })]: {
-      value: tokens.parts.option.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.option.color).color,
       property: 'color',
       group: Parts.Option,
     },
@@ -200,7 +232,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
       group: Parts.Icon,
     },
     [getScssVariableName({ component: 'select', part: 'icon', property: 'color', theme, type, state })]: {
-      value: tokens.parts.icon.color.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
       group: Parts.Icon,
     },
@@ -253,7 +285,7 @@ export const transformSelectComponentTokensToScssVariables = (tokens: SelectComp
       group: Parts.AdditionalInfo,
     },
     [getScssVariableName({ component: 'select', part: 'additional-info', property: 'color', theme, type, state })]: {
-      value: tokens.parts.additionalInfo.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.additionalInfo.color).color,
       property: 'color',
       group: Parts.AdditionalInfo,
     },

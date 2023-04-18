@@ -28,6 +28,10 @@
 				margin-top: $spacer-value !important;
 			}
 
+			.u-mt-#{$spacer-key}- {
+				margin-top: -$spacer-value !important;
+			}
+
 			.u-mr-#{$spacer-key} {
 				margin-right: $spacer-value !important;
 			}

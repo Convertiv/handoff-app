@@ -1,24 +1,67 @@
 import capitalize from 'lodash/capitalize';
 import { DocumentationObject } from '../../types';
-import { transformAlertComponentTokensToScssVariables } from './components/alert';
-import { transformButtonComponentTokensToScssVariables } from './components/button';
-import { transformCheckboxComponentTokensToScssVariables } from './components/checkbox';
-import { transformInputComponentTokensToScssVariables } from './components/input';
-import { transformModalComponentTokensToScssVariables } from './components/modal';
-import { transformPaginationComponentTokensToScssVariables } from './components/pagination';
-import { transformRadioComponentTokensToScssVariables } from './components/radio';
-import { transformSelectComponentTokensToScssVariables } from './components/select';
-import { transformSwitchComponentTokensToScssVariables } from './components/switch';
-import { transformTooltipComponentTokensToScssVariables } from './components/tooltip';
-import transformColors from './design/colors';
-import transformEffects from './design/effects';
-import transformTypography from './design/typography';
+import { transformAlertComponentsToScssTypes, transformAlertComponentTokensToScssVariables } from './components/alert';
+import { transformButtonComponentsToScssTypes, transformButtonComponentTokensToScssVariables } from './components/button';
+import { transformCheckboxComponentsToScssTypes, transformCheckboxComponentTokensToScssVariables } from './components/checkbox';
+import { transformInputComponentsToScssTypes, transformInputComponentTokensToScssVariables } from './components/input';
+import { transformModalComponentsToScssTypes, transformModalComponentTokensToScssVariables } from './components/modal';
+import { transformPaginationComponentsToScssTypes, transformPaginationComponentTokensToScssVariables } from './components/pagination';
+import { transformRadioComponentsToScssTypes, transformRadioComponentTokensToScssVariables } from './components/radio';
+import { transformSelectComponentsToScssTypes, transformSelectComponentTokensToScssVariables } from './components/select';
+import { transformSwitchComponentTokensToScssVariables, transformSwitchesComponentsToScssTypes } from './components/switch';
+import { transformTooltipComponentsToScssTypes, transformTooltipComponentTokensToScssVariables } from './components/tooltip';
+import transformColors, { transformColorTypes } from './design/colors';
+import transformEffects, { transformEffectTypes } from './design/effects';
+import transformTypography, { transformTypographyTypes } from './design/typography';
+
+interface ScssTypesTransformerOutput {
+  components: Record<keyof DocumentationObject['components'], string>;
+  design: Record<'colors' | 'typography' | 'effects', string>;
+}
 
 interface ScssTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
   design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
+/**
+ * Build a set of Component types to use as a set of SCSS vars
+ * @param documentationObject
+ * @returns
+ */
+export function scssTypesTransformer(documentationObject: DocumentationObject): ScssTypesTransformerOutput {
+  const components = {
+    // Buttons
+    buttons: transformButtonComponentsToScssTypes(documentationObject.components.buttons),
+    checkboxes: transformCheckboxComponentsToScssTypes(documentationObject.components.checkboxes),
+    switches: transformSwitchesComponentsToScssTypes(documentationObject.components.switches),
+    selects: transformSelectComponentsToScssTypes(documentationObject.components.selects),
+    inputs: transformInputComponentsToScssTypes(documentationObject.components.inputs),
+    modal: transformModalComponentsToScssTypes(documentationObject.components.modal),
+    pagination: transformPaginationComponentsToScssTypes(documentationObject.components.pagination),
+    alerts: transformAlertComponentsToScssTypes(documentationObject.components.alerts),
+    tooltips: transformTooltipComponentsToScssTypes(documentationObject.components.tooltips),
+    radios: transformRadioComponentsToScssTypes(documentationObject.components.radios),
+  };
+
+  const design = {
+    // Buttons
+    colors: transformColorTypes(documentationObject.design.color),
+    effects: transformEffectTypes(documentationObject.design.effect),
+    typography: transformTypographyTypes(documentationObject.design.typography),
+  };
+
+  return {
+    components,
+    design
+  };
+}
+
+/**
+ * Transform all the components to scss
+ * @param documentationObject
+ * @returns
+ */
 export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
   const components = {
     // Buttons
@@ -135,7 +178,7 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio))
       )
       .join('\n\n'),
   };
-  
+
   const design = {
     colors: transformColors(documentationObject.design.color),
     typography: transformTypography(documentationObject.design.typography),

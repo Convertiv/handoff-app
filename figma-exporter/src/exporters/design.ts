@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectObject, TypographyObject } from '../types';
-import { figmaColorToHex, transformFigmaEffectToCssBoxShadow } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType } from './components/utils';
+import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './components/utils';
 
 interface GroupNameData {
   name: string;
@@ -39,7 +39,11 @@ const isArray = (input: any): input is any[] | readonly any[] => {
   return Array.isArray(input);
 };
 
-const getFileDesignTokens = async (fileId: string, accessToken: string) => {
+const getFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
+  color: ColorObject[];
+  typography: TypographyObject[];
+  effect: EffectObject[];
+}> => {
   try {
     const apiResponse = await getFileStyles(fileId, accessToken);
     const file = apiResponse.data;
@@ -82,21 +86,20 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
             effects: document.effects
               .filter((effect) => isValidEffectType(effect.type) && effect.visible)
               .map((effect) => ({
-                  type: effect.type,
-                  value: isShadowEffectType(effect.type)
-                    ? transformFigmaEffectToCssBoxShadow(effect)
-                    : '',
-                }
+                type: effect.type,
+                value: isShadowEffectType(effect.type)
+                  ? transformFigmaEffectToCssBoxShadow(effect)
+                  : '',
+              }
               ))
           });
-        } else if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-          const color = document.fills[0].color;
+        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
+          const color = transformFigmaFillsToCssColor(document.fills);
           colorsArray.push({
             name,
             group,
-            type: 'color',
-            hex: figmaColorToHex(color),
-            rgb: color,
+            value: color.color,
+            blend: color.blend,
             sass: `$color-${group}-${machine_name}`,
             machineName: machine_name,
           });
@@ -107,7 +110,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
         let color: string | undefined;
 
         if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-          color = figmaColorToHex(document.fills[0].color);
+          color = transformFigmaColorToHex(document.fills[0].color);
         }
 
         typographyArray.push({
@@ -134,7 +137,7 @@ const getFileDesignTokens = async (fileId: string, accessToken: string) => {
     throw new Error(
       'An error occured fetching Colors and Typography.  This typically happens when the library cannot be read from Handoff'
     );
-    return { color: [], typography: [] };
+    return { color: [], typography: [], effect: [] };
   }
 };
 

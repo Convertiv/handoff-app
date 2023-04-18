@@ -1,27 +1,65 @@
-import { ButtonComponent } from '../../../exporters/components/component_sets/button';
+import { ButtonComponent, ButtonComponents } from '../../../exporters/components/component_sets/button';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Part {
   Button  = 'button',
 }
 
+/**
+ * Transform a button to an SCSS var
+ * @param buttons
+ * @returns
+ */
+export const transformButtonComponentsToScssTypes = (buttons: ButtonComponents, config?: any): string => {
+  const lines = [];
+  lines.push(
+    `$button-variants: ( ${getTypesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')});`
+  );
+  lines.push(
+    `$button-sizes: ( ${getSizesFromComponents(buttons)
+      .map((type) => `"${mapComponentSize(type, 'button')}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-themes: ( ${getThemesFromComponents(buttons)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$button-states: ( ${getStatesFromComponents(buttons)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+
+/**
+ * Transform button components into scss vars
+ * @param tokens
+ * @returns
+ */
 export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'button');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
   return {
     // Background
     [getScssVariableName({ component: 'button', part: '', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Button,
     },
@@ -58,7 +96,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
       group: Part.Button,
     },
     [getScssVariableName({ component: 'button', part: '', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
       group: Part.Button,
     },
@@ -104,7 +142,7 @@ export const transformButtonComponentTokensToScssVariables = (tokens: ButtonComp
       group: Part.Button,
     },
     [getScssVariableName({ component: 'button', part: '', property: 'color', theme, type, state })]: {
-      value: tokens.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.color).color,
       property: 'color',
       group: Part.Button,
     },

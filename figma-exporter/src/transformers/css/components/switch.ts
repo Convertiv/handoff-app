@@ -1,44 +1,32 @@
 import { SwitchComponent, SwitchComponents } from '../../../exporters/components/component_sets/switch';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { mapComponentSize } from '../../../utils';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
+
+/**
+ * Transform switches into css variables
+ * @param switches
+ * @returns
+ */
 export const transformSwitchesComponentsToCssVariables = (switches: SwitchComponents): string => {
   const lines = [];
-  lines.push(
-    `$switch-sizes: ( ${getSizesFromComponents(switches)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$switch-themes: ( ${getThemesFromComponents(switches)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$switch-states: ( ${getStatesFromComponents(switches)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.switch {');
   const cssVars = switches.map((component) => `  ${cssCodeBlockComment('switch', component)}\n ${Object.entries(transformSwitchComponentTokensToCssVariables(component))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'switch');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
@@ -70,7 +58,7 @@ export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchCompo
     },
     // Background
     [getCssVariableName({ component: 'switch', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
     // Border
@@ -83,7 +71,7 @@ export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchCompo
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'switch', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
     // Opacity
@@ -132,7 +120,7 @@ export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchCompo
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'switch', part: 'label', property: 'color', theme, type, state })]: {
-      value: tokens.parts.label.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.label.color).color,
       property: 'color',
     },
     // Opacity
@@ -162,7 +150,7 @@ export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchCompo
     },
     // Background
     [getCssVariableName({ component: 'switch', part: 'thumb', property: 'background', theme, type, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
     },
     // Border
@@ -171,7 +159,7 @@ export const transformSwitchComponentTokensToCssVariables = (tokens: SwitchCompo
       property: 'border-width'
     },
     [getCssVariableName({ component: 'switch', part: 'thumb', property: 'border-color', theme, type, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
     },
   };

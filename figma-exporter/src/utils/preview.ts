@@ -10,6 +10,7 @@ export const buildClientFiles = () => {
       resolve: {
         modules: [
           path.resolve(__dirname, '../..'),
+          path.resolve(__dirname, '../../..'),
           path.resolve(__dirname, '../../node_modules'),
           path.resolve(__dirname, '../../../../node_modules'),
         ],
@@ -38,8 +39,7 @@ export const buildClientFiles = () => {
       if (err || stats?.hasErrors()) {
         // ...
         console.log(chalk.red('Client styles failed'));
-        console.log(err);
-        console.log(stats?.toString());
+        throw err;
       }
       console.log(chalk.green('Client Styles Built'));
       // Done processing

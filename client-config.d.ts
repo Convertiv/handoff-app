@@ -9,25 +9,46 @@ export interface ImageStyle {
   description: string;
 }
 
-export interface ComponentConfig {
-  alert: string | null;
-  button: string | null;
-  checkbox: string | null;
-  input: string | null;
-  modal: string | null;
-  pagination: string | null;
-  radio: string | null;
-  select: string | null;
-  switch: string | null;
-  tooltip:  string | null;
+export interface Integration {
+  name: string;
+  version: string;
+}
+
+export interface FigmaSearch {
+  size: ComponentSizeMap[];
+  components: FigmaComponentList;
+}
+
+export interface FigmaComponentList {
+  alert?: FigmaComponentSearch | null;
+  button?: FigmaComponentSearch | null;
+  checkbox?: FigmaComponentSearch | null;
+  input?: FigmaComponentSearch | null;
+  modal?: FigmaComponentSearch | null;
+  pagination?: FigmaComponentSearch | null;
+  radio?: FigmaComponentSearch | null;
+  select?: FigmaComponentSearch | null;
+  switch?: FigmaComponentSearch | null;
+  tooltip?: FigmaComponentSearch | null;
+}
+
+export interface FigmaComponentSearch {
+  size?: ComponentSizeMap[];
+  search: string;
+}
+export interface ComponentSizeMap {
+  figma: string;
+  css: string;
 }
 
 export interface Config {
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;
+  integration?: Integration;
   favicon?: string;
   poweredBy?: boolean;
+  figma?: FigmaSearch;
   /**
    * @default "/logo.svg"
    */

@@ -1,7 +1,7 @@
 ---
-title: Accessability Standards
-description: A sample page documenting how you can build accessability standards
-metaTitle: 'Accessability Guide | Handoff Design System'
+title: Accessibility Standards
+description: A sample page documenting how you can build accessibility standards
+metaTitle: 'Accessibility Guide | Handoff Design System'
 metaDescription: 'A sample page in the handoff design system, in markdown'
 ---
 

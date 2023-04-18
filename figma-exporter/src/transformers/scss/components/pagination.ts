@@ -1,22 +1,50 @@
-import { PaginationComponent } from '../../../exporters/components/component_sets/pagination';
+import { PaginationComponent, PaginationComponents } from '../../../exporters/components/component_sets/pagination';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
+
+/**
+ * Generate SCSS variants from pagination component
+ * @param pagination
+ * @returns
+ */
+export const transformPaginationComponentsToScssTypes = (pagination: PaginationComponents): string => {
+  const lines = [];
+  lines.push(
+    `$pagination-sizes: ( ${getSizesFromComponents(pagination)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$pagination-themes: ( ${getThemesFromComponents(pagination)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$pagination-states: ( ${getStatesFromComponents(pagination)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
 
 export const transformPaginationComponentTokensToScssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size, 'pagination');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
   return {
     // Background
     [getScssVariableName({ component: 'pagination', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
 
@@ -30,7 +58,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       property: 'border-radius',
     },
     [getScssVariableName({ component: 'pagination', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
 
@@ -49,7 +77,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.previous.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.background).color,
       property: 'background',
     },
     [getScssVariableName({
@@ -76,7 +104,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.previous.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.borderColor).color,
       property: 'border-color',
     },
     [getScssVariableName({
@@ -164,7 +192,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       property: 'text-decoration',
     },
     [getScssVariableName({ component: 'pagination', part: 'previous', property: 'color', theme, type, state })]: {
-      value: tokens.parts.previous.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.color).color,
       property: 'color',
     },
 
@@ -177,7 +205,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.next.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.background).color,
       property: 'background',
     },
     [getScssVariableName({
@@ -204,7 +232,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.next.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.borderColor).color,
       property: 'border-color',
     },
     [getScssVariableName({
@@ -292,7 +320,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       property: 'text-decoration',
     },
     [getScssVariableName({ component: 'pagination', part: 'next', property: 'color', theme, type, state })]: {
-      value: tokens.parts.next.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.color).color,
       property: 'color',
     },
 
@@ -305,7 +333,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.item.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.background).color,
       property: 'background',
     },
     [getScssVariableName({
@@ -332,7 +360,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       type,
       state,
     })]: {
-      value: tokens.parts.item.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.borderColor).color,
       property: 'border-color',
     },
     [getScssVariableName({
@@ -420,7 +448,7 @@ export const transformPaginationComponentTokensToScssVariables = (tokens: Pagina
       property: 'text-decoration',
     },
     [getScssVariableName({ component: 'pagination', part: 'item', property: 'color', theme, type, state })]: {
-      value: tokens.parts.item.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.color).color,
       property: 'color',
     },
   };

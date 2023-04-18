@@ -3,38 +3,25 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import {
   cssCodeBlockComment,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
-  getTypesFromComponents,
   transformFigmaColorToCssColor,
 } from '../utils';
-import { mapComponentSize } from '../../../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+
+/**
+ * Transform Radio Components into CSS Variables
+ * @param radios
+ * @returns
+ */
 export const transformRadioComponentsToCssVariables = (radios: RadioComponents): string => {
   const lines = [];
-  lines.push(
-    `$radio-sizes: ( ${getSizesFromComponents(radios)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$radio-themes: ( ${getThemesFromComponents(radios)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$radio-states: ( ${getStatesFromComponents(radios)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.radio {');
   const cssVars = radios.map(
     (radio) =>
@@ -42,11 +29,11 @@ export const transformRadioComponentsToCssVariables = (radios: RadioComponents):
         .map(([variable, value]) => `  ${variable}: ${value.value};`)
         .join('\n')}`
   );
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformRadioComponentTokensToCssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'radio');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
@@ -54,7 +41,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
     // Button background
     [getCssVariableName({ component: 'radio', property: 'background', part: '', type, theme, state })]: {
       property: 'background',
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
     },
     // Size
     [getCssVariableName({ component: 'radio', property: 'width', part: '', type, theme, state })]: {
@@ -112,7 +99,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
       property: 'border radius',
     },
     [getCssVariableName({ component: 'radio', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border color',
     },
     // Opacity
@@ -194,7 +181,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
     },
     // Background
     [getCssVariableName({ component: 'radio', part: 'thumb', property: 'background', type, theme, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
     },
     // Border
@@ -203,7 +190,7 @@ export const transformRadioComponentTokensToCssVariables = (tokens: RadioCompone
       property: 'border-width',
     },
     [getCssVariableName({ component: 'radio', part: 'thumb', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
     },
   };

@@ -15,6 +15,7 @@ import AnchorNav from 'components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import { DownloadTokens } from 'components/DownloadTokens';
 
 const config = getConfig();
 
@@ -45,12 +46,12 @@ export const applyEffectToCssProperties = (effect: EffectParametersObject, cssPr
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   // Read current slug
-  return util.fetchDocPageMarkdown('docs/foundations/', 'effects', `/foundations`);
+  return util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`);
 };
 
-const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProps) => {
+const ColorsPage = ({ content, menu, metadata, current, css, scss, types }: util.FoundationDocumentationProps) => {
   return (
     <div className="c-page">
       <Head>
@@ -64,7 +65,8 @@ const ColorsPage = ({ content, menu, metadata, current }: util.DocumentationProp
           <div className="c-hero">
             <div>
               <h1 className="c-title--extra-large">{metadata.title}</h1>
-              <p>{metadata.description}</p>
+              <p className="u-mb-2">{metadata.description}</p>
+              <DownloadTokens componentId="effects" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
           </div>

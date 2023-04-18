@@ -104,13 +104,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'input', `/components`);
 };
 
-const InputPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
+const InputPage = ({ content, menu, metadata, current, componentFound, css, scss, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -125,7 +125,6 @@ const InputPage = ({ content, menu, metadata, current, componentFound, css, scss
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="inputs" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -195,6 +194,9 @@ const InputPage = ({ content, menu, metadata, current, componentFound, css, scss
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="inputs" scss={scss} css={css} types={types} />
+                </div>
                 {states.default.light && (
                   <ComponentDesignTokens
                     key={states.default.light.id}

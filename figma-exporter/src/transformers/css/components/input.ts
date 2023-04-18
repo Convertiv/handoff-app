@@ -1,60 +1,45 @@
-import { capitalize } from 'lodash';
 import { InputComponent, InputComponents } from '../../../exporters/components/component_sets/input';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
-  getTypesFromComponents,
   transformFigmaColorToCssColor,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import {mapComponentSize} from '../../../utils';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+/**
+ * Generate css variable list from input components
+ * @param inputs
+ * @returns
+ */
 export const transformInputComponentsToCssVariables = (inputs: InputComponents): string => {
   const lines = [];
-  lines.push(
-    `$input-sizes: ( ${getSizesFromComponents(inputs)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$input-themes: ( ${getThemesFromComponents(inputs)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$input-states: ( ${getStatesFromComponents(inputs)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.input {')
-  const cssVars = inputs.map((input) => `  ${cssCodeBlockComment('input', input)}\n ${Object.entries(transformInputComponentTokensToCssVariables(input))
+  const cssVars = inputs.map((input) => `${cssCodeBlockComment('input', input)}\n ${Object.entries(transformInputComponentTokensToCssVariables(input))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformInputComponentTokensToCssVariables = (tokens: InputComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? undefined : tokens.size;
+  const type = tokens.componentType === 'design' ? undefined : mapComponentSize(tokens.size, 'input');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
   return {
     // Background
     [getCssVariableName({ component: 'input', property: 'background', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background color',
     },
 
     [getCssVariableName({ component: 'input', property: 'bg', type, theme, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background color',
     },
     // Padding
@@ -93,7 +78,7 @@ export const transformInputComponentTokensToCssVariables = (tokens: InputCompone
       property: 'border radius',
     },
     [getCssVariableName({ component: 'input', property: 'border-color', type, theme, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border color',
     },
 

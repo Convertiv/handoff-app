@@ -1,9 +1,9 @@
-import { TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
+import { TooltipComponents, TooltipComponentTokens } from '../../../exporters/components/component_sets/tooltip';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaColorToCssColor,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
@@ -12,6 +12,17 @@ enum Part {
   Tooltip  = 'tooltip',
 }
 
+/**
+ * Transform tooltips into scss variants
+ * @param tooltips
+ * @returns
+ */
+export const transformTooltipComponentsToScssTypes = (tooltips: TooltipComponents): string => {
+  const lines = [];
+  lines.push(`/* At present there are no tooltip types*/`);
+  return lines.join('\n\n') + '\n';
+};
+
 export const transformTooltipComponentTokensToScssVariables = ({ ...tokens }: TooltipComponentTokens): Record<string, ValueProperty> => {
   return {
     /**
@@ -19,12 +30,12 @@ export const transformTooltipComponentTokensToScssVariables = ({ ...tokens }: To
      */
     // Background
     [getScssVariableName({ component: 'tooltip', part: '', property: 'background' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
       group: Part.Tooltip,
     },
     [getScssVariableName({ component: 'tooltip', part: '', property: 'bg' })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'bg',
       group: Part.Tooltip,
     },

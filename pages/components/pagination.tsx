@@ -79,13 +79,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'pagination', `/components`);
 };
 
-const PaginationPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
+const PaginationPage = ({ content, menu, metadata, current, componentFound, css, scss, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -100,7 +100,7 @@ const PaginationPage = ({ content, menu, metadata, current, componentFound, css,
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="pagination" scss={scss} css={css} />
+              <DownloadTokens componentId="pagination" scss={scss} css={css} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">

@@ -79,12 +79,12 @@ const buttons = {
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   // Read current slug
   return util.fetchCompDocPageMarkdown('docs/components/', 'button', `/components`);
 };
 
-const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, scss }: util.ComponentDocumentationProps) => {
+const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, scss, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -105,12 +105,11 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, sc
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="buttons" scss={scss} css={css} />
             </div>
 
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
 
-              
+
             <div className="c-tabs">
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
@@ -203,6 +202,9 @@ const ButtonsPage = ({ content, menu, metadata, current, componentFound, css, sc
 
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="buttons" scss={scss} css={css} types={types} />
+                </div>
                 {buttons.design.map((button) => (
                   <ComponentDesignTokens
                     key={button.id}

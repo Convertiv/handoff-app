@@ -1,52 +1,38 @@
-import { capitalize } from 'lodash';
 import { PaginationComponent, PaginationComponents } from '../../../exporters/components/component_sets/pagination';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
-  getTypesFromComponents,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+/**
+ * Transform Pagination components into CSS vars
+ * @param pagination
+ * @returns
+ */
 export const transformPaginationComponentsToCssVariables = (pagination: PaginationComponents): string => {
   const lines = [];
-  lines.push(
-    `$pagination-sizes: ( ${getSizesFromComponents(pagination)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$pagination-themes: ( ${getThemesFromComponents(pagination)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$pagination-states: ( ${getStatesFromComponents(pagination)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.pagination {')
-  const cssVars = pagination.map((page) => `  ${cssCodeBlockComment('pagination', page)}\n ${Object.entries(transformPaginationComponentTokensToCssVariables(page))
+  const cssVars = pagination.map((page) => `${cssCodeBlockComment('pagination', page)}\n ${Object.entries(transformPaginationComponentTokensToCssVariables(page))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 export const transformPaginationComponentTokensToCssVariables = (tokens: PaginationComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? 'default' : tokens.size;
+  const type = tokens.componentType === 'design' ? 'default' : mapComponentSize(tokens.size, 'pagination');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
   return {
     // Background
     [getCssVariableName({ component: 'pagination', property: 'background', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
 
@@ -60,7 +46,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'pagination', property: 'border-color', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
 
@@ -79,7 +65,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.previous.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.background).color,
       property: 'background',
     },
     [getCssVariableName({
@@ -106,7 +92,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.previous.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.borderColor).color,
       property: 'border-color',
     },
     [getCssVariableName({
@@ -194,7 +180,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'pagination', part: 'previous', property: 'color', theme, type, state })]: {
-      value: tokens.parts.previous.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.previous.color).color,
       property: 'color',
     },
 
@@ -207,7 +193,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.next.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.background).color,
       property: 'background',
     },
     [getCssVariableName({
@@ -234,7 +220,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.next.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.borderColor).color,
       property: 'border-color',
     },
     [getCssVariableName({
@@ -322,7 +308,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'pagination', part: 'next', property: 'color', theme, type, state })]: {
-      value: tokens.parts.next.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.next.color).color,
       property: 'color',
     },
 
@@ -335,7 +321,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.item.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.background).color,
       property: 'background',
     },
     [getCssVariableName({
@@ -362,7 +348,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       type,
       state,
     })]: {
-      value: tokens.parts.item.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.borderColor).color,
       property: 'border-color',
     },
     [getCssVariableName({
@@ -450,7 +436,7 @@ export const transformPaginationComponentTokensToCssVariables = (tokens: Paginat
       property: 'text-decoration',
     },
     [getCssVariableName({ component: 'pagination', part: 'item', property: 'color', theme, type, state })]: {
-      value: tokens.parts.item.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.item.color).color,
       property: 'color',
     },
   };

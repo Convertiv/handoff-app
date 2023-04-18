@@ -3,40 +3,31 @@ import { ValueProperty } from '../types';
 import {
   getCssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
 import { cssCodeBlockComment, getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../utils';
-import {mapComponentSize} from '../../../utils';
+import {mapComponentSize} from '../../../utils/config';
+
+/**
+ * Transform checkbox tokens into CSS variables
+ * @param checkboxes
+ * @returns
+ */
 export const transformCheckboxComponentsToCssVariables = (checkboxes: CheckboxComponents): string => {
   const lines = [];
-  lines.push(
-    `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$checkbox-themes: ( ${getThemesFromComponents(checkboxes)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$checkbox-states: ( ${getStatesFromComponents(checkboxes)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.checkbox {')
   const cssVars = checkboxes.map((checkbox) => `  ${cssCodeBlockComment('checkbox', checkbox)}\n ${Object.entries(transformCheckboxComponentTokensToCssVariables(checkbox))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
 
 export const transformCheckboxComponentTokensToCssVariables = (tokens: CheckboxComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'checkbox');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
@@ -46,7 +37,7 @@ export const transformCheckboxComponentTokensToCssVariables = (tokens: CheckboxC
      */
     // Button background
     [getCssVariableName({ component: 'checkbox', property: 'background', part: '', type, theme, state })]: {
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
     },
     // Size
@@ -68,7 +59,7 @@ export const transformCheckboxComponentTokensToCssVariables = (tokens: CheckboxC
     },
     // Icon color
     [getCssVariableName({ component: 'checkbox', property: 'icon-color', type, theme, state })]: {
-      value: tokens.parts.check.color.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.color).color,
       property: 'icon-color',
     },
     // Opacity
@@ -115,7 +106,7 @@ export const transformCheckboxComponentTokensToCssVariables = (tokens: CheckboxC
       property: 'border radius',
     },
     [getCssVariableName({ component: 'checkbox', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border color',
     },
     // Box shadow

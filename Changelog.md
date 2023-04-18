@@ -6,22 +6,159 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2023-04-16
+
+When 0.4.0 was released, we found a structural problem with the way
+integrations were published into projects. 0.4.1 resolved a couple of issues,
+but a couple of significant new pieces of code were required to fully resolve
+the issue.
+
+The resolution is fixing paths so that they work properly when running the 
+handoff source as well as running handoff in a project.
+
+### Bugfixes
+
+- Build and Start scripts were restructured to handle sparsely merging sass and
+  templates into the source directory.
+- The integration transformer was restructured to support correct path
+- The webpack config has been altered to support paths in projects
+- The bootstrap templates were updated to use this updated path structure
+
+### Improvements
+
+- The figma exporter built library built code is now published to the repo to
+  make it easier to test pre release code
+- A default config is now part of the project so that projects that can inherit
+  a config rather than having to keep their config up to date.
+- The installer now has the proper script paths in the package
+
+## [0.4.1] - 2023-04-16
+
+### Bugfixes
+
+- Fixes a typing error in the project config
+- Fixes an issue where the path of the integrations are relative to the project
+- Fixes an issue where local integrations aren't properly merged on watch
+- Updates the installed template to match the latest desired state
+
+## [0.4.0] - 2023-04-16
+
+This release introduces two major new features - framework integrations
+and much better color support. The color support is straightforward - Handoff
+now supports much broader color options from Figma including gradients (linear
+and radial), as well as layered colors, alpha channels and blend modes.
+
+Framework integrations is Handoff's new plugin architecture for integrating
+tokens with popular web and application frameworks. Previous versions of Handoff
+were tightly coupled with Boostrap 5.2 as a proof of concept.
+
+To integrate tokens into applications, the tokens need to be mapped to the
+the files you'll need. In web applications, this means mapping css and sass
+variables to existing variables, or extending classes with the tokens.
+
+When fetch is run, any files added to the `integration` folder will be merged
+with the selected integration. The sass files will be published to
+`/exported/{integration}-tokens`
+
+Integrations also move the templates into integrations so each framework
+integration can define the markup for each component, type, and state. This
+allows handoff to include default markup for common frontend frameworks.
+
+### Frontend Integration Support
+
+- Creates integrations plugin architecture
+- Extracts Bootstrap 5.2 from the sass and templates into an integration template
+- Sets Bootstrap 5.2 as the default integration
+- Adds an integration configuration to allow projects to define which integration
+  it will use
+- The `exported/variables` file was renamed to `exported/tokens`
+- A new directory is exported to `exported/{integration}-tokens` containing the
+  maps and extended sass integration files.
+- The installer now creates a `/integration` folder that will be merged with
+  the configured integration sass and templates.
+- A zip file called tokens.zip is exported to the public directory containing
+  all of the exported artifacts - json, integration, sass, and css tokens
+
+### Configuration changes
+
+- `integration` is an object that contains two properties `name` and
+  `version`. If you set `integration.name` to `custom` and `version` to `null`
+  the project will expect a fully defined integration in the `/integration` dir.
+- `figma` is an object that allows customization of how components are fetched.
+  - `figma.components` contains a list of the components
+  - Each component can be defined. For example `figma.components.button` will
+    define how buttons are fetched from figma.
+  - The `search` property determines the library component and name of the frame
+    to look in for the component. Setting `figma.components.button.search` to
+    `Unicorn` will try to find a button structure in a library object called
+    `Unicorn`.
+  - The `size` property of each component will define a size map allowing projects
+    to map figma sizes to token names.
+
+### New Color Support
+
+- **Gradient Color Support** Linear and Radial gradients are now imported from
+  figma. The tokens JSON structure has changed to make it better support complex
+  color objects.
+  - `hex`, `type`, and `rgb` properties were dropped from the ColorObject
+  - `value` contains the CSS set of color values, either as hex, rgb, rgba, or
+    gradients
+  - `blend` contains a set of blend modes as CSS values that map against the
+    colors
+- **Blend Modes and Color Layers** Tokens are now exported for blend modes and
+  color layers. Handoff can pull multiple layers out of the color styles, and
+  will build the proper blend mode CSS for use in the project.
+
+### Upgrade Notes
+
+- Create a folder `/integration` in the root of the project to hold integration
+  configuration.
+- Any template customizations should be moved into the `/integration/templates`
+  directory.
+- Any sass customizations to the existing project structure should be be moved
+  to `/integration/sass` and modified to match the new structure.
+
+### Other Features
+
+- Each component and foundation now has buttons for downloading the tokens for
+  that component.
+- The dashboard now has a button for downloading all tokens as a zip file.
+
+### Security Update
+
+- Webpack was updated to 5.79.0 to address a security issue
+- node-sass was removed from the figma-exporter library since it is no longer
+  needed by the system.
+
+## [0.3.1] - 2023-04-03
+
+This release fixes two small bugs, one that throws an error on builds because
+of a missing type declaration in the config.
+
+### Bugfixes
+
+- Builds against 0.3.0 are failing because of a missing type. Effects is missing
+  from the return type of the DocumentObjects. This adds that type to fix.
+- RGBA Colors are listed on the foundations as percent instead of 255 values.
+  This changes the display values, without changing the generated tokens.
+
 ## [0.3.0] - 2023-03-31
 
-This release creates base foundation tokens in the /exported directory.  This
+This release creates base foundation tokens in the /exported directory. This
 is a major step forward allowing projects to use color, typography and effects as
 named tokens in projects in addition to component tokens.
+
 ### Changes
 
-- Adds foundation token css and scss files so projects can reference colors, 
-typography and effects.
+- Adds foundation token css and scss files so projects can reference colors,
+  typography and effects.
   - Tokens are exported to the /exported folder
-  - Foundation token files follow the form - {type of foundation}.scss contains 
-  the css vars and {type of foundation}_vars.scss contains the scss variables
+  - Foundation token files follow the form - {type of foundation}.scss contains
+    the css vars and {type of foundation}\_vars.scss contains the scss variables
   - Color tokens are either hex for solid colors or rgba for alpha channel colors
   - Two color map arrays are provided $color-groups and $color-names
   - Color tokens are in the form $color-{group}-{name}: {hex/rgba};
-  - Typography tokens support 
+  - Typography tokens support
     - font-family
     - font-size
     - font-weight
@@ -35,6 +172,7 @@ typography and effects.
   - Effects are in the form $effect-{name}: {shadow definition}
 
 ### Bugfixes
+
 - Adds the proper sidebar menu icon for effects
 
 ## [0.2.1] - 2023-03-28

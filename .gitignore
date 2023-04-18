@@ -39,8 +39,6 @@ yarn-error.log*
 /public/assets
 
 # figma exporter
-/figma-exporter/dist
-/figma-exporter/api/dist
 /figma-exporter/node_modules
 
 # figma exported
@@ -48,5 +46,6 @@ yarn-error.log*
 /public/icons.zip
 /public/icons
 /public/logos.zip
+/public/tokens.zip
 /public/logos
 /public/components

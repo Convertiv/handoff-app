@@ -1,0 +1,12 @@
+/* =============================================================================
+   INPUT (project/_input.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/inputs';
+@import './exported/tokens/sass/inputs';
+@import './exported/tokens/css/inputs';
+
+/** Define the maps for inputs **/

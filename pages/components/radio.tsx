@@ -88,13 +88,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return fetchCompDocPageMarkdown('docs/components/', 'radio', `/components`);
 };
 
-const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css }: ComponentDocumentationProps) => {
+const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -108,8 +108,7 @@ const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css
           <div className="c-hero">
             <div>
               <h1>{metadata.title}</h1>
-              <p>{metadata.description}</p>
-              <DownloadTokens componentId="radios" scss={scss} css={css} />
+              <p>{metadata.description}</p>              
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -184,6 +183,9 @@ const RadioPage = ({ content, menu, metadata, current, componentFound, scss, css
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="radios" scss={scss} css={css} types={types} />
+                </div>
                 {radios.tokens.map((radio) => (
                   <ComponentDesignTokens
                     key={radio.id}

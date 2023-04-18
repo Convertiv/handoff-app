@@ -53,13 +53,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'modal', `/components`);
 };
 
-const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
+const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -74,7 +74,6 @@ const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="modals" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -123,6 +122,9 @@ const ModalPage = ({ content, menu, metadata, current, componentFound, scss, css
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="modals" scss={scss} css={css} types={types} />
+                </div>
                 {designComponents.slice(0, 1).map((modal) => (
                   <ComponentDesignTokens
                     key={modal.id}

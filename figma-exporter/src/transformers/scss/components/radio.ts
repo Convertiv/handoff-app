@@ -1,14 +1,15 @@
-import { RadioComponent } from '../../../exporters/components/component_sets/radio';
+import { RadioComponent, RadioComponents } from '../../../exporters/components/component_sets/radio';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { transformFigmaColorToCssColor } from '../../css/utils';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Parts {
   Radio  = 'radio',
@@ -16,8 +17,38 @@ enum Parts {
   Thumb  = 'thumb',
 }
 
+/**
+ * Build a list of SCSS variants from radio components
+ * @param radios
+ * @returns
+ */
+export const transformRadioComponentsToScssTypes = (radios: RadioComponents): string => {
+  const lines = [];
+  lines.push(
+    `$radio-sizes: ( ${getSizesFromComponents(radios)
+      .map((type) => `"${mapComponentSize(type, 'radio')}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-themes: ( ${getThemesFromComponents(radios)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$radio-states: ( ${getStatesFromComponents(radios)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+/**
+ * Build SCSS tokens from radio
+ * @param tokens
+ * @returns
+ */
 export const transformRadioComponentTokensToScssVariables = (tokens: RadioComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'radio');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
@@ -27,7 +58,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
      */
     // Button background
     [getScssVariableName({ component: 'radio', part: '', property: 'background', type, theme, state })]: {
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
       group: Parts.Radio,
     },
@@ -100,7 +131,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
       group: Parts.Radio,
     },
     [getScssVariableName({ component: 'radio', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border-color',
       group: Parts.Radio,
     },
@@ -200,7 +231,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
     },
     // Background
     [getScssVariableName({ component: 'radio', part: 'thumb', property: 'background', type, theme, state })]: {
-      value: tokens.parts.thumb.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
       group: Parts.Thumb,
     },
@@ -211,7 +242,7 @@ export const transformRadioComponentTokensToScssVariables = (tokens: RadioCompon
       group: Parts.Thumb,
     },
     [getScssVariableName({ component: 'radio', part: 'thumb', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.thumb.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
       group: Parts.Thumb,
     },

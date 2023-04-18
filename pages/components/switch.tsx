@@ -88,7 +88,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'switch', `/components`);
 };
 
-const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
+const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, css, types  }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   if (!componentFound) {
     return <ComponentNotFound menu={menu} metadata={metadata} current={current} content={content}></ComponentNotFound>;
@@ -108,7 +108,6 @@ const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, cs
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="switches" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -182,6 +181,9 @@ const SwitchPage = ({ content, menu, metadata, current, componentFound, scss, cs
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="switches" scss={scss} css={css} types={types} />
+                </div>
                 {switches.tokens.map((component) => (
                   <ComponentDesignTokens
                     key={component.id}

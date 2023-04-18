@@ -81,6 +81,10 @@ export const isShadowEffectType = (effect: FigmaTypes.Effect['type']): boolean =
   return ['DROP_SHADOW', 'INNER_SHADOW'].includes(effect);
 }
 
+export const isValidGradientType = (gradientType: FigmaTypes.PaintType): boolean => {
+  return ['GRADIENT_LINEAR', 'GRADIENT_RADIAL'].includes(gradientType);
+}
+
 export const normalizeNamePart = (namePart: string) => {
   return namePart
     .replace(/[^a-z0-9]+/gi, '-')

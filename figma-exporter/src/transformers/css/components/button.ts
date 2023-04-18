@@ -1,89 +1,44 @@
-import { capitalize } from 'lodash';
 import { ButtonComponent, ButtonComponents } from '../../../exporters/components/component_sets/button';
 import { ValueProperty } from '../types';
 import {
-  cssCodeBlockComment,
   getCssVariableName,
-  getSizesFromComponents,
-  getStatesFromComponents,
-  getThemesFromComponents,
-  getTypesFromComponents,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import {mapComponentSize} from '../../../utils';
+import { cssCodeBlockComment } from '../utils';
+import { mapComponentSize } from '../../../utils/config';
 
+/**
+ * Render css variables from button code
+ * @param buttons
+ * @returns
+ */
 export const transformButtonComponentsToCssVariables = (buttons: ButtonComponents): string => {
   const lines = [];
-  lines.push(
-    `$button-variants: ( ${getTypesFromComponents(buttons)
-      .map((type) => `"${type}"`)
-      .join(', ')});`
-  );
-  lines.push(
-    `$button-sizes: ( ${getSizesFromComponents(buttons)
-      .map((type) => `"${mapComponentSize(type)}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$button-themes: ( ${getThemesFromComponents(buttons)
-      .map((type) => `"${type}"`)
-      .join(', ')} );`
-  );
-  lines.push(
-    `$button-states: ( ${getStatesFromComponents(buttons)
-      .map((type) => `"${type == 'default' ? '' : type}"`)
-      .join(', ')} );`
-  );
   lines.push('.btn {')
-  const cssVars = buttons.map((button) => `  ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
+  const cssVars = buttons.map((button) => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button))
     .map(([variable, value]) => `  ${variable}: ${value.value};`)
     .join('\n')}`);
-  return lines.concat(cssVars).join('\n\n') + '\n}';
+  return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
-const properties = [
-  {
-    source: 'background',
-    property: 'background',
-    type: 'color',
-    default: 'transparent'
-  },
-  {
-    source: 'paddingRight',
-    property: 'padding-top',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-left',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-right',
-    type: null,
-    default: '0px'
-  },
-  {
-    property: 'padding-bottom',
-    type: null,
-    default: '0px'
-  }
-]
-
+/**
+ * Transform Buton components into Css vars
+ * @param tokens
+ * @returns
+ */
 export const transformButtonComponentTokensToCssVariables = (tokens: ButtonComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.type : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.type : mapComponentSize(tokens.size, 'button');
   const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
   const state = tokens.componentType === 'design' ? tokens.state : undefined;
 
   return {
     // Background
     [getCssVariableName({ component: 'button', property: 'background', part: '', theme, type, state })]: {
-      value: tokens.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
     },
     // Padding
@@ -113,7 +68,7 @@ export const transformButtonComponentTokensToCssVariables = (tokens: ButtonCompo
       property: 'border-radius',
     },
     [getCssVariableName({ component: 'button', property: 'border-color', part: '', theme, type, state })]: {
-      value: tokens.borderColor.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
     },
     // Font
@@ -150,7 +105,7 @@ export const transformButtonComponentTokensToCssVariables = (tokens: ButtonCompo
       property: 'text-transform',
     },
     [getCssVariableName({ component: 'button', property: 'color', part: '', theme, type, state })]: {
-      value: tokens.color.map(transformFigmaPaintToCssColor).find(Boolean) || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.color).color,
       property: 'color',
     },
     // Box shadow

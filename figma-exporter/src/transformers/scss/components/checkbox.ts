@@ -1,14 +1,15 @@
-import { CheckboxComponent } from '../../../exporters/components/component_sets/checkbox';
+import { CheckboxComponent, CheckboxComponents } from '../../../exporters/components/component_sets/checkbox';
 import { ValueProperty } from '../types';
 import {
   getScssVariableName,
   transformFigmaEffectToCssBoxShadow,
-  transformFigmaPaintToCssColor,
+  transformFigmaFillsToCssColor,
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../../../utils/convertColor';
-import { transformFigmaColorToCssColor } from '../../css/utils';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, transformFigmaColorToCssColor } from '../../css/utils';
+import { mapComponentSize } from '../../../utils/config';
 
 enum Part {
   Checkbox  = 'checkbox',
@@ -16,8 +17,34 @@ enum Part {
   Label     = 'label',
 }
 
+/**
+ * Generate variant maps fro checkbox components
+ * @param checkboxes
+ * @returns
+ */
+export const transformCheckboxComponentsToScssTypes = (checkboxes: CheckboxComponents): string => {
+  const lines = [];
+  lines.push(
+    `$checkbox-sizes: ( ${getSizesFromComponents(checkboxes)
+      .map((type) => `"${mapComponentSize(type, 'checkbox')}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-themes: ( ${getThemesFromComponents(checkboxes)
+      .map((type) => `"${type}"`)
+      .join(', ')} );`
+  );
+  lines.push(
+    `$checkbox-states: ( ${getStatesFromComponents(checkboxes)
+      .map((type) => `"${type == 'default' ? '' : type}"`)
+      .join(', ')} );`
+  );
+  return lines.join('\n\n') + '\n';
+};
+
+
 export const transformCheckboxComponentTokensToScssVariables = (tokens: CheckboxComponent): Record<string, ValueProperty> => {
-  const type = tokens.componentType === 'design' ? tokens.state : tokens.size;
+  const type = tokens.componentType === 'design' ? tokens.state : mapComponentSize(tokens.size, 'checkbox');
   const theme = 'light';
   const state = tokens.componentType === 'design' ? tokens.activity : 'off';
 
@@ -27,7 +54,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
      */
     // Button background
     [getScssVariableName({ component: 'checkbox', part: '', property: 'background', type, theme, state })]: {
-      value: tokens.parts.check.background.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
       group: Part.Checkbox,
     },
@@ -54,7 +81,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
     },
     // Icon Color
     [getScssVariableName({ component: 'checkbox', property: 'icon-color', type, theme, state })]: {
-      value: tokens.parts.check.color.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.color).color,
       property: 'icon-color',
       group: Part.Checkbox,
     },
@@ -112,7 +139,7 @@ export const transformCheckboxComponentTokensToScssVariables = (tokens: Checkbox
       group: Part.Checkbox,
     },
     [getScssVariableName({ component: 'checkbox', property: 'border-color', type, theme, state })]: {
-      value: tokens.parts.check.borderColor.map(transformFigmaPaintToCssColor).filter(Boolean).join(', ') || 'transparent',
+      value: transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border-color',
       group: Part.Checkbox,
     },

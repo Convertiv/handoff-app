@@ -85,7 +85,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return util.fetchCompDocPageMarkdown('docs/components/', 'alert', `/components`);
 };
 
-const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css }: util.ComponentDocumentationProps) => {
+const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css, types }: util.ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
   if (!componentFound) {
@@ -106,7 +106,6 @@ const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css
             <div>
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
-              <DownloadTokens componentId="alerts" scss={scss} css={css} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
@@ -204,6 +203,9 @@ const AlertPage = ({ content, menu, metadata, current, componentFound, scss, css
             )}
             {activeTab == ComponentTab.DesignTokens && (
               <>
+                <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
+                  <DownloadTokens componentId="alerts" scss={scss} css={css} types={types} />
+                </div>
                 {alerts.design.map((alert) => (
                   <ComponentDesignTokens
                     key={alert.id}
