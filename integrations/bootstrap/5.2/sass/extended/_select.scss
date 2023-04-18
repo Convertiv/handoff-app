@@ -23,7 +23,11 @@
 	&:disabled {
 		color: $form-select-disabled-color;
 		background-color: $form-select-disabled-bg;
+		/*
+		Gradients currently don't work on disabled state because they clobber
+		the background image that makes the carrot work
 		background: $form-select-disabled-bg;
+		*/
 		border-color: $form-select-disabled-border-color;
 		box-shadow: $form-select-disabled-box-shadow;
 	}
@@ -34,6 +38,7 @@
 		color: $form-select-invalid-color;
 		background-color: $form-select-invalid-bg;
 		background: $form-select-invalid-bg;
+		background-repeat: no-repeat;
 		border-color: $form-select-invalid-border-color;
 		box-shadow: $form-select-invalid-box-shadow;
 	}
