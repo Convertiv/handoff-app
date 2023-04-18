@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-6b3083b8.cjs.prod.js');
+var documentationObject = require('./documentation-object-95d8f680.cjs.prod.js');
 var capitalize = require('lodash/capitalize');
 var lodash = require('lodash');
 var Mustache = require('mustache');
@@ -5732,7 +5732,7 @@ const transformAlertComponentTokensToCssVariables = tokens => {
 const transformButtonComponentsToCssVariables = buttons => {
   const lines = [];
   lines.push('.btn {');
-  const cssVars = buttons.map(button => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button, config)).map(([variable, value]) => `  ${variable}: ${value.value};`).join('\n')}`);
+  const cssVars = buttons.map(button => ` ${cssCodeBlockComment('button', button)}\n ${Object.entries(transformButtonComponentTokensToCssVariables(button)).map(([variable, value]) => `  ${variable}: ${value.value};`).join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
@@ -9744,18 +9744,18 @@ const getPathToIntegration = () => {
   const integrationFolder = 'integrations';
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
-  const defaultPath = path__default["default"].resolve(path__default["default"].join(integrationFolder, defaultIntegration, defaultVersion));
+  const defaultPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
   const config = documentationObject.getFetchConfig();
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path__default["default"].resolve(path__default["default"].join(integrationFolder, 'custom'));
+      const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
       if (!fs__namespace["default"].existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
-    const searchPath = path__default["default"].resolve(path__default["default"].join(integrationFolder, config.integration.name, config.integration.version));
+    const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
     if (!fs__namespace["default"].existsSync(searchPath)) {
       throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
     }
@@ -9876,7 +9876,6 @@ const buildCustomFonts = async documentationObject => {
 const buildIntegration = async documentationObject => {
   return await integrationTransformer();
 };
-
 /**
  * Run just the preview
  * @param documentationObject

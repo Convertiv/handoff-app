@@ -56,9 +56,21 @@ const copyProjectConfig = async () => {
 /**
  * Run the exporter from figma with the configured settings.
  */
-const runFigmaExporter = async () => {
+const runFigmaExporter = async (type) => {
   // Run figma-exporter in the project root
   console.log('Running figma exporter...');
+  const args = [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')];
+  if(type){
+    args.push(type);
+  }
+  if(process.argv.indexOf('--debug') > 0) {
+    args.push('--debug');
+  }
+  await spawnPromise('node', args, {
+    cwd: projectRootDir,
+    env: process.env,
+    stdio: 'inherit',
+  });
   await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')], {
     cwd: projectRootDir,
     env: process.env,
@@ -73,11 +85,7 @@ const runFigmaExporter = async () => {
 const runPreviewExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running preview transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'preview'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('preview');
   console.log('Preview transformer finished.');
 };
 
@@ -87,11 +95,7 @@ const runPreviewExporter = async () => {
 const runStyleExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running style transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'styles'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('styles');
   console.log('Style transformer finished.');
 };
 
@@ -101,11 +105,7 @@ const runStyleExporter = async () => {
 const runIntegrationExporter = async () => {
   // Run figma-exporter in the project root
   console.log('Running integration transformer...');
-  await spawnPromise('node', [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js'), 'integration'], {
-    cwd: projectRootDir,
-    env: process.env,
-    stdio: 'inherit',
-  });
+  runFigmaExporter('integration');
   console.log('Integration transformer finished.');
 };
 

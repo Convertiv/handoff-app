@@ -12,4 +12,4 @@ export declare const getFetchConfig: () => any;
  * @param figma
  * @returns
  */
-export declare const mapComponentSize: (figma: string, component?: string, config?: any) => string;
+export declare const mapComponentSize: (figma: string, component?: string) => string;

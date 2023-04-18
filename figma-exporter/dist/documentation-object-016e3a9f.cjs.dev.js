@@ -1686,9 +1686,7 @@ function extractModalComponents(modalComponents) {
 const getFetchConfig = () => {
   let config;
   try {
-    console.log(path__default["default"].resolve(__dirname, '../../client-config'));
     config = require(path__default["default"].resolve(__dirname, '../../client-config'));
-    console.log(config);
   } catch (e) {
     config = {};
   }
@@ -1705,10 +1703,8 @@ const getFetchConfig = () => {
  * @param figma
  * @returns
  */
-const mapComponentSize = (figma, component, config) => {
-  if (!config) {
-    config = getFetchConfig();
-  }
+const mapComponentSize = (figma, component) => {
+  const config = getFetchConfig();
   if (component) {
     if (config.figma.components[component]?.size) {
       const componentMap = config.components[component]?.size;
