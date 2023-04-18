@@ -252,18 +252,18 @@ const getPathToIntegration = (config) => {
   const integrationFolder = 'integrations';
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
-  const defaultPath = path.resolve(path.join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
+  const defaultPath = path.join(integrationFolder, defaultIntegration, defaultVersion);
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(__dirname, '../..', integrationFolder));
-      if (!fs.existsSync(customPath)) {
+      const customPath = path.resolve(path.join(integrationFolder));
+      if (!fs.existsSync(path.resolve(__dirname, '../..', customPath))) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
-    const searchPath = path.resolve(path.join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
-    if (!fs.existsSync(searchPath)) {
+    const searchPath = path.join(integrationFolder, config.integration.name, config.integration.version);
+    if (!fs.existsSync(path.resolve(__dirname, '../..', searchPath))) {
       throw Error(
         `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
       );
