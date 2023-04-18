@@ -51,6 +51,7 @@ const copyProjectConfig = async () => {
   }
   await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), `module.exports = ${JSON.stringify(config)}`);
   console.log('Project config copied.');
+  return config;
 };
 
 /**
@@ -245,14 +246,43 @@ const buildStaticSite = async () => {
 };
 
 /**
+ * Logic to detect the integraiton path
+ * @returns 
+ */
+export const getPathToIntegration = (config) => {
+  const integrationFolder = 'integrations';
+  const defaultIntegration = 'bootstrap';
+  const defaultVersion = '5.2';
+  const defaultPath = path.resolve(path.join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
+  if (config.integration) {
+    if (config.integration.name === 'custom') {
+      // Look for a custom integration
+      const customPath = path.resolve(path.join(__dirname, '../..', integrationFolder));
+      if (!fs.existsSync(customPath)) {
+        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
+      }
+      return customPath;
+    }
+    const searchPath = path.resolve(path.join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
+    if (!fs.existsSync(searchPath)) {
+      throw Error(
+        `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
+      );
+    }
+    return searchPath;
+  }
+  return defaultPath;
+};
+
+/**
  * Build the resources in the tmp dir
  */
 const buildTmpDir = async () => {
   await validateProject();
   await prepareTmpDir();
   await installNpmDependencies();
-  await copyProjectConfig();
-  await mergeProjectDir('integration/sass', 'integrations');
+  const config = await copyProjectConfig();
+  await mergeProjectDir('integration/sass', getPathToIntegration());
   await mergeProjectDir('integration/templates', 'templates');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');

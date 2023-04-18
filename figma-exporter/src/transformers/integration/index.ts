@@ -36,7 +36,12 @@ export const getPathToIntegration = () => {
   }
   return defaultPath;
 };
-export const getIntegrationName = () => {
+
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
+export const getIntegrationName = (): string => {
   const config = getFetchConfig();
   const defaultIntegration = 'bootstrap';
   if (config.integration) {
@@ -55,7 +60,7 @@ export default async function integrationTransformer() {
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
   const sassFolder = `exported/${integrationName}-tokens`;
-  const templatesFolder = process.env.OUTPUT_DIR || 'templates';
+  const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
   fs.copySync(integrationsSass, sassFolder);

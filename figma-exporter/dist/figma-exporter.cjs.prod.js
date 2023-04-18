@@ -5196,7 +5196,7 @@ const buildClientFiles = () => {
     mode: 'production',
     entry: path__default["default"].resolve(__dirname, '../../templates/main.js'),
     resolve: {
-      modules: [path__default["default"].resolve(__dirname, '../..'), path__default["default"].resolve(__dirname, '../../node_modules'), path__default["default"].resolve(__dirname, '../../../../node_modules')]
+      modules: [path__default["default"].resolve(__dirname, '../..'), path__default["default"].resolve(__dirname, '../../..'), path__default["default"].resolve(__dirname, '../../node_modules'), path__default["default"].resolve(__dirname, '../../../../node_modules')]
     },
     output: {
       path: path__default["default"].resolve(__dirname, '../../public/components'),
@@ -9763,6 +9763,11 @@ const getPathToIntegration = () => {
   }
   return defaultPath;
 };
+
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
 const getIntegrationName = () => {
   const config = documentationObject.getFetchConfig();
   const defaultIntegration = 'bootstrap';
@@ -9782,7 +9787,7 @@ async function integrationTransformer() {
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
   const sassFolder = `exported/${integrationName}-tokens`;
-  const templatesFolder = process.env.OUTPUT_DIR || 'templates';
+  const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
   const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
   const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
   fs__namespace["default"].copySync(integrationsSass, sassFolder);

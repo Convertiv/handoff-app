@@ -7,7 +7,11 @@ import * as stream from 'node:stream';
  * integration if desired
  */
 export declare const getPathToIntegration: () => string;
-export declare const getIntegrationName: () => any;
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
+export declare const getIntegrationName: () => string;
 /**
  * Find the integration to sync and sync the sass files and template files.
  */
