@@ -295,6 +295,8 @@ const buildTmpDir = async () => {
 };
 
 module.exports = {
+  copyProjectConfig,
+  getPathToIntegration,
   mergePackageFile,
   mergePackageDir,
   buildTmpDir,

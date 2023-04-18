@@ -3,7 +3,7 @@ const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs-extra');
 const dotenv = require('dotenv');
-const { buildTmpDir, mergePackageFile, mergePackageDir, mergeProjectFile, runPreviewExporter } = require('./build/scripts');
+const { buildTmpDir, mergePackageFile, mergePackageDir, mergeProjectFile, runPreviewExporter, copyProjectConfig, getPathToIntegration } = require('./build/scripts');
 const spawnPromise = require('./build/spawn-promise');
 const chalk = require('chalk');
 
@@ -64,7 +64,9 @@ process.env.NODE_ENV = 'development';
   const resetDirectory = async () => {
     await mergePackageDir('pages', 'docs');
     await mergePackageDir('public', 'public');
-    await mergePackageDir('integration', 'integrations');
+    const config = await copyProjectConfig();
+    await mergePackageDir('integration/sass', getPathToIntegration(config));
+    await mergePackageDir('integration/templates', 'templates');
     await mergePackageDir('sass', 'sass');
   }
   /**
