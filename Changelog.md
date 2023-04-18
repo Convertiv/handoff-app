@@ -8,10 +8,13 @@ and this project adheres to
 
 ## [0.4.2] - 2023-04-16
 
-When 0.4.0 was released, we missed a structural problem with the way
+When 0.4.0 was released, we found a structural problem with the way
 integrations were published into projects. 0.4.1 resolved a couple of issues,
 but a couple of significant new pieces of code were required to fully resolve
 the issue.
+
+The resolution is fixing paths so that they work properly when running the 
+handoff source as well as running handoff in a project.
 
 ### Bugfixes
 
