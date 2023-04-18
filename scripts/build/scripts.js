@@ -47,8 +47,8 @@ const copyProjectConfig = async () => {
   const clientConfig = require(path.resolve(clientConfigPath));
   const config = {
     ...baseConfig,
-    ...clientConfig
-  }
+    ...clientConfig,
+  };
   await fs.writeFile(path.resolve(tmpDir, 'client-config.js'), `module.exports = ${JSON.stringify(config)}`);
   console.log('Project config copied.');
   return config;
@@ -61,10 +61,10 @@ const runFigmaExporter = async (type) => {
   // Run figma-exporter in the project root
   console.log('Running figma exporter...');
   const args = [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')];
-  if(type){
+  if (type) {
     args.push(type);
   }
-  if(process.argv.indexOf('--debug') > 0) {
+  if (process.argv.indexOf('--debug') > 0) {
     args.push('--debug');
   }
   await spawnPromise('node', args, {
@@ -109,7 +109,6 @@ const runIntegrationExporter = async () => {
   runFigmaExporter('integration');
   console.log('Integration transformer finished.');
 };
-
 
 /**
  * Copy the figma exports
@@ -178,20 +177,25 @@ const mergeProjectDir = async (dir, target) => {
     target = dir;
   }
   console.log(`Merging project ${dir} dir into ${target}...`);
-  // Remove public dir
-  if (fs.existsSync(path.resolve(tmpDir, target))) {
-    await fs.remove(path.resolve(tmpDir, target));
-  }
-
-  // Copy project's public dir
-  if (await fs.pathExists(path.resolve(projectRootDir, dir))) {
-    await fs.copy(path.resolve(projectRootDir, dir), path.resolve(tmpDir, target));
+  if (!fs.existsSync(dir)) {
+    // Do nothing
+    console.log(`Project ${dir} doesn't exist. Using default.`);
   } else {
-    await fs.ensureDir(path.resolve(tmpDir, target));
-  }
+    // Remove public dir
+    if (fs.existsSync(path.resolve(tmpDir, target))) {
+      await fs.remove(path.resolve(tmpDir, target));
+    }
 
-  await mergePackageDir(dir, target);
-  console.log(`Project ${dir} dir merged.`);
+    // Copy project's public dir
+    if (await fs.pathExists(path.resolve(projectRootDir, dir))) {
+      await fs.copy(path.resolve(projectRootDir, dir), path.resolve(tmpDir, target));
+    } else {
+      await fs.ensureDir(path.resolve(tmpDir, target));
+    }
+
+    await mergePackageDir(dir, target);
+    console.log(`Project ${dir} dir merged.`);
+  }
 };
 
 /**
@@ -247,7 +251,7 @@ const buildStaticSite = async () => {
 
 /**
  * Logic to detect the integraiton path
- * @returns 
+ * @returns
  */
 const getPathToIntegration = (config) => {
   const integrationFolder = 'integrations';
