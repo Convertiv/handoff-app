@@ -39,8 +39,6 @@ yarn-error.log*
 /public/assets
 
 # figma exporter
-/figma-exporter/dist
-/figma-exporter/api/dist
 /figma-exporter/node_modules
 
 # figma exported
