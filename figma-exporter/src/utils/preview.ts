@@ -61,8 +61,8 @@ export const buildClientFiles = async (): Promise<string> => {
           let error = "Warnings encountered when building preview styles.\n";
           if (process.argv.indexOf('--debug') > 0) {
             error += buildWarnings;
+            console.error(chalk.yellow(error));
           }
-          console.error(chalk.yellow(error));
         }
       }
       return resolve("Preview template styles built");
