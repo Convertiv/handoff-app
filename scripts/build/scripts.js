@@ -297,7 +297,7 @@ const getPathToIntegration = (config) => {
  */
 const buildTmpDir = async () => {
   await validateProject();
-  if (process.argv.indexOf('--fast') && await tempDirExists()) {
+  if (process.argv.indexOf('--fast') > 0 && await tempDirExists()) {
     console.log(chalk.green("Skipping temp directory build"));
   }else{
     await prepareTmpDir();
