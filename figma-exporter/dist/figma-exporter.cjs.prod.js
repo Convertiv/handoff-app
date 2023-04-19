@@ -5191,37 +5191,61 @@ async function previewTransformer(documentationObject$1) {
   };
 }
 
-const buildClientFiles = () => {
-  webpack__default["default"]({
-    mode: 'production',
-    entry: path__default["default"].resolve(__dirname, '../../templates/main.js'),
-    resolve: {
-      modules: [path__default["default"].resolve(__dirname, '../..'), path__default["default"].resolve(__dirname, '../../..'), path__default["default"].resolve(__dirname, '../../node_modules'), path__default["default"].resolve(__dirname, '../../../../node_modules')]
-    },
-    output: {
-      path: path__default["default"].resolve(__dirname, '../../public/components'),
-      filename: 'bundle.js'
-    },
-    module: {
-      rules: [{
-        test: /\.s[ac]ss$/i,
-        use: [
-        // Creates `style` nodes from JS strings
-        'style-loader',
-        // Translates CSS into CommonJS
-        'css-loader',
-        // Compiles Sass to CSS
-        'sass-loader']
-      }]
-    }
-  }, (err, stats) => {
-    if (err || stats?.hasErrors()) {
-      // ...
-      console.log(chalk__default["default"].red('Client styles failed'));
-      throw err;
-    }
-    console.log(chalk__default["default"].green('Client Styles Built'));
-    // Done processing
+const buildClientFiles = async () => {
+  return new Promise((resolve, reject) => {
+    const compile = webpack__default["default"]({
+      mode: 'production',
+      entry: path__default["default"].resolve(__dirname, '../../templates/main.js'),
+      resolve: {
+        modules: [path__default["default"].resolve(__dirname, '../..'), path__default["default"].resolve(__dirname, '../../..'), path__default["default"].resolve(__dirname, '../../node_modules'), path__default["default"].resolve(__dirname, '../../../../node_modules')]
+      },
+      output: {
+        path: path__default["default"].resolve(__dirname, '../../public/components'),
+        filename: 'bundle.js'
+      },
+      module: {
+        rules: [{
+          test: /\.s[ac]ss$/i,
+          use: [
+          // Creates `style` nodes from JS strings
+          'style-loader',
+          // Translates CSS into CommonJS
+          'css-loader',
+          // Compiles Sass to CSS
+          'sass-loader']
+        }]
+      }
+    });
+    compile.run((err, stats) => {
+      if (err) {
+        let error = "Errors encountered trying to build preview styles.\n";
+        if (process.argv.indexOf('--debug') > 0) {
+          error += err.stack || err;
+        }
+        return reject(error);
+      }
+      if (stats) {
+        if (stats.hasErrors()) {
+          let buildErrors = stats.compilation.errors?.map(err => err.message);
+          let error = "Errors encountered trying to build preview styles.\n";
+          if (process.argv.indexOf('--debug') > 0) {
+            error += buildErrors;
+          }
+          return reject(error);
+        }
+        if (stats.hasWarnings()) {
+          let buildWarnings = stats.compilation.warnings?.map(err => err.message);
+          
+          if (process.argv.indexOf('--debug') > 0) {
+            let error = "Warnings encountered when building preview styles.\n";
+            error += buildWarnings;
+            console.error(chalk__default["default"].yellow(error));
+          }
+          
+        }
+      }
+      return resolve("Preview template styles built");
+    });
   });
 };
 
@@ -9889,7 +9913,10 @@ const buildPreview = async documentationObject => {
   if (Object.keys(documentationObject.components).filter(name => documentationObject.components[name].length > 0).length > 0) {
     await Promise.all([previewTransformer(documentationObject).then(out => fs__namespace.writeJSON(previewFilePath, out, {
       spaces: 2
-    })), buildClientFiles()]);
+    }))]);
+    await buildClientFiles().then(value => chalk__default["default"].green(console.log(value))).catch(error => {
+      throw new Error(error);
+    });
   } else {
     console.log(chalk__default["default"].red('Skipping preview generation'));
   }
