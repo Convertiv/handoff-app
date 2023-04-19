@@ -1,19 +1,19 @@
 ---
 title: Buttons
-description: Buttons allow users to take actions and make choices, with a single click. 
+description: Buttons allow users to take actions and make choices, with a single click.
 image: component-button
 metaTitle: 'Buttons | Handoff Design System'
 metaDescription: 'Buttons allow users to take actions and make choices, with a single click.'
 ---
+
 ### Accessibility
 
 Make it clear what this button does for the user.
 
 <div className="c-do-dont">
   <div className="c-do-dont__do">
-    <p>
-      <Icon name="check" className="" /> DO
-    </p>
+
+<Icon name="check" className="" /> DO
 
 - Make it clear what this button does for the user.
 - Use at most two buttons in one group.
@@ -21,9 +21,8 @@ Make it clear what this button does for the user.
 
   </div>
   <div className="c-do-dont__dont">
-    <p>
-    <Icon name="x" className="" /> DON&apos;T
-    </p>
+
+<Icon name="x" className="" /> DON&apos;T
 
 - Use more than two words for call to action.
 - First letter of each sentence defaults to a capital letter.
