@@ -3,6 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const dotenv = require('dotenv');
 const spawnPromise = require('./spawn-promise');
+const chalk = require('chalk');
 
 // Package directory is the code as it lives in the npm dir
 const packageRootDir = path.resolve(__dirname, '..', '..');
@@ -35,6 +36,14 @@ const prepareTmpDir = async () => {
   await fs.emptyDir(tmpDir);
   await fs.copy(packageRootDir, tmpDir);
   console.log('Tmp dir prepared.');
+};
+
+/**
+ * Copy the code from the package dir
+ * into our new tmp dir to work on it.
+ */
+const tempDirExists = async () => {
+  return await fs.existsSync(tmpDir);
 };
 /**
  * At the core of each project is a config.  Read that config and write it to
@@ -103,6 +112,16 @@ const runIntegrationExporter = async () => {
   console.log('Running integration transformer...');
   runFigmaExporter('integration');
   console.log('Integration transformer finished.');
+};
+
+/**
+ * Run only the integration exporter
+ */
+const runFontExporter = async () => {
+  // Run figma-exporter in the project root
+  console.log('Running font transformer...');
+  runFigmaExporter('font');
+  console.log('Font transformer finished.');
 };
 
 /**
@@ -245,7 +264,7 @@ const buildStaticSite = async () => {
 };
 
 /**
- * Logic to detect the integraiton path
+ * Logic to detect the integration path
  * @returns
  */
 const getPathToIntegration = (config) => {
@@ -278,8 +297,12 @@ const getPathToIntegration = (config) => {
  */
 const buildTmpDir = async () => {
   await validateProject();
-  await prepareTmpDir();
-  await installNpmDependencies();
+  if (process.argv.indexOf('--fast') && await tempDirExists()) {
+    console.log(chalk.green("Skipping temp directory build"));
+  }else{
+    await prepareTmpDir();
+    await installNpmDependencies();
+  }
   const config = await copyProjectConfig();
   await mergeProjectDir('integration/sass', getPathToIntegration(config) + '/sass');
   await mergeProjectDir('integration/templates', 'templates');
@@ -287,7 +310,17 @@ const buildTmpDir = async () => {
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
   if (process.env.SKIP_FIGMA_EXPORTER !== 'yes') {
-    await runFigmaExporter();
+    if (process.argv.indexOf('integration') > 0) {
+      await runIntegrationExporter();
+    } else if (process.argv.indexOf('font') > 0) {
+      await runFontExporter();
+    } else if (process.argv.indexOf('style') > 0) {
+      await runStyleExporter();
+    } else if (process.argv.indexOf('preview') > 0) {
+      await runPreviewExporter();
+    } else {
+      await runFigmaExporter();
+    }
   }
   await copyFigmaExportedFiles();
   await moveExportedZipFilesToPublicDir();
@@ -304,4 +337,5 @@ module.exports = {
   runPreviewExporter,
   runStyleExporter,
   runIntegrationExporter,
+  runFontExporter,
 };
