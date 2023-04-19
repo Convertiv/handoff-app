@@ -5235,11 +5235,13 @@ const buildClientFiles = async () => {
         }
         if (stats.hasWarnings()) {
           let buildWarnings = stats.compilation.warnings?.map(err => err.message);
-          let error = "Warnings encountered when building preview styles.\n";
+          
           if (process.argv.indexOf('--debug') > 0) {
+            let error = "Warnings encountered when building preview styles.\n";
             error += buildWarnings;
+            console.error(chalk__default["default"].yellow(error));
           }
-          console.error(chalk__default["default"].yellow(error));
+          
         }
       }
       return resolve("Preview template styles built");
