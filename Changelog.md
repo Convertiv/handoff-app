@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2023-04-19
+
+Continuing incremental improvement over the 0.4.0 release. This release fixes
+a couple of small build inconsistencies, improves debug mode when running the
+build and fetch, and
+
+### Improvements
+
+- Errors in the webpack execution will now cause the fetch script to halt and
+  bubble up into the error handling.
+- Running build/fetch with `-- --debug` will now send the error trace from the
+  webpack when building a preview. This is especially useful when there is an error
+  either in the template or scss maps.
+- Running build/fetch with `-- --fast` will execute the script but if there is
+  already a built temp directory, it will use the built dir rather than recreating
+  it. This speeds up runtime significantly. If this option is supplied but the
+  temp dir does not yet exist, it will be created.
+
+### Bugfixes
+
+- The transformer stand alone pipelines weren't working. This release fixes that
+  so executing `npm run transform:preview` or
+  `node node_modules/handoff-app/scripts/fetch.js preview` will properly execute
+  just a single portion of the pipeline rather than the whole pipeline.
+- The default component guidelines were not rendering the `<ul>` wrapper for the
+  subsequent lists.
+- The bootstrap 5.2 scss mapping had an error that caused the carrot and icon
+  on error and disabled state select boxes to display incorrectly.
+
 ## [0.4.2] - 2023-04-16
 
 When 0.4.0 was released, we found a structural problem with the way
@@ -13,7 +42,7 @@ integrations were published into projects. 0.4.1 resolved a couple of issues,
 but a couple of significant new pieces of code were required to fully resolve
 the issue.
 
-The resolution is fixing paths so that they work properly when running the 
+The resolution is fixing paths so that they work properly when running the
 handoff source as well as running handoff in a project.
 
 ### Bugfixes
