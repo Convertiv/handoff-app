@@ -3,6 +3,11 @@ import * as FigmaTypes from '../../figma/types';
 import { filterOutUndefined } from '../../utils';
 import { transformFigmaColorToHex } from '../../utils/convertColor';
 
+/**
+ * Get the name of a SCSS variable from a token object
+ * @param tokens 
+ * @returns string
+ */
 export const getScssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
 >(
@@ -21,7 +26,11 @@ export const getScssVariableName = <
 
   return `$${parts.join('-')}`;
 };
-
+/**
+ * Get the name of a CSS variable from a token object
+ * @param tokens 
+ * @returns 
+ */
 export const getCssVariableName = <
   Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
 >(
@@ -40,7 +49,11 @@ export const getCssVariableName = <
 
   return `--${parts.join('-')}`;
 };
-
+/**
+ * Transform a Figma color to a CSS color
+ * @param color 
+ * @returns string
+ */
 export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string => {
   const { r, g, b, a } = color;
   if (a === 1) {
@@ -50,7 +63,11 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
 
   return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`;
 };
-
+/**
+ * Transform a Figma fill color to a CSS color
+ * @param paint 
+ * @returns 
+ */
 export const transformFigmaFillsToCssColor = (paint: FigmaTypes.Paint): string => {
   if (paint.visible === false || paint.opacity === 0) {
     return '';
@@ -65,7 +82,11 @@ export const transformFigmaFillsToCssColor = (paint: FigmaTypes.Paint): string =
   // TODO: Liner Gradient
   return '';
 };
-
+/**
+ * 
+ * @param textAlign 
+ * @returns 
+ */
 export const transformFigmaTextAlignToCss = (textAlign: FigmaTypes.TypeStyle['textAlignHorizontal']): string => {
   return ['left', 'center', 'right', 'justify'].includes(textAlign.toLowerCase()) ? textAlign.toLowerCase() : 'left';
 };
