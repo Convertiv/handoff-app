@@ -15,6 +15,7 @@ import { getPathToIntegration } from '../integration';
  * be. Each function will be called at a different point in the pipeline.
  */
 export interface PluginTransformer {
+  test: string;
   init: () => void;
   postExtract: (documentationObject: DocumentationObject) => void;
   postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
@@ -30,15 +31,17 @@ export interface PluginTransformer {
  */
 export const genericPluginGenerator = (): PluginTransformer => {
   return {
-    init: (): void => {},
-    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => {},
-    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => {},
-    postExtract: (documentationObject: DocumentationObject): void => {},
-    postIntegration: (documentationObject: DocumentationObject): void => {},
-    postPreview: (documentationObject: DocumentationObject): void => {},
-    postBuild: (documentationObject: DocumentationObject): void => {},
+    test: 'yarg',
+    init: (): void => { console.log('init generic') },
+    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => { },
+    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => { },
+    postExtract: (documentationObject: DocumentationObject): void => { },
+    postIntegration: (documentationObject: DocumentationObject): void => { },
+    postPreview: (documentationObject: DocumentationObject): void => { },
+    postBuild: (documentationObject: DocumentationObject): void => { },
   };
 };
+
 /**
  * Creates a plugin transformer merging the generic plugin with the custom
  * plugin and then allowing it to execute in all contexts
@@ -50,7 +53,7 @@ export const pluginTransformer = async (): Promise<PluginTransformer> => {
   const pluginPath = getPathToIntegration() + '/plugin.js';
   let plugin = generic;
   if (fs.existsSync(pluginPath)) {
-    const custom = await evaluatePlugin('example.js')
+    const custom = await evaluatePlugin(pluginPath)
       .then((globalVariables) => globalVariables)
       .catch((err) => generic);
     plugin = { ...generic, ...custom };
@@ -70,15 +73,13 @@ async function evaluatePlugin(file: string): Promise<PluginTransformer> {
         reject(err);
         return;
       }
-      const context: { [key: string]: any } = {};
+
+      const context: { [key: string]: any } = { console: console };
       const script = new vm.Script(data);
       const sandbox = vm.createContext(context);
       try {
         script.runInContext(sandbox);
-        const globalVariables = Object.entries(sandbox).map(([key, value]) => {
-          return { [key]: value };
-        });
-        resolve(globalVariables as unknown as PluginTransformer);
+        resolve(sandbox as unknown as PluginTransformer);
       } catch (e) {
         reject(e);
       }

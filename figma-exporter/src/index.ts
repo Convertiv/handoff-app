@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
+import { pluginTransformer } from './transformers/plugin';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
@@ -77,7 +78,7 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
       previewTransformer(documentationObject).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 })),
     ]);
     await buildClientFiles()
-      .then((value) => chalk.green(console.log(value)))
+      .then((value) => console.log(chalk.green(value)))
       .catch((error) => { throw new Error(error) });
   } else {
     console.log(chalk.red('Skipping preview generation'));
@@ -144,7 +145,7 @@ const entirePipeline = async () => {
   if (!FIGMA_PROJECT_ID) {
     throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
   }
-
+  (await pluginTransformer()).init();
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath)) || [];
 

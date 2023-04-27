@@ -13,6 +13,8 @@ var webpack = require('webpack');
 var chalk = require('chalk');
 var archiver = require('archiver');
 var sortedUniq = require('lodash/sortedUniq');
+var fs$1 = require('fs');
+var vm = require('vm');
 require('lodash/isEqual');
 require('axios');
 require('lodash/uniq');
@@ -38,7 +40,7 @@ function _interopNamespace(e) {
 }
 
 var path__default = /*#__PURE__*/_interopDefault(path);
-var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
+var fs__namespace$1 = /*#__PURE__*/_interopNamespace(fs);
 var stream__namespace = /*#__PURE__*/_interopNamespace(stream);
 var capitalize__default = /*#__PURE__*/_interopDefault(capitalize);
 var Mustache__default = /*#__PURE__*/_interopDefault(Mustache);
@@ -46,7 +48,14 @@ var webpack__default = /*#__PURE__*/_interopDefault(webpack);
 var chalk__default = /*#__PURE__*/_interopDefault(chalk);
 var archiver__default = /*#__PURE__*/_interopDefault(archiver);
 var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
+var fs__namespace = /*#__PURE__*/_interopNamespace(fs$1);
+var vm__namespace = /*#__PURE__*/_interopNamespace(vm);
 
+/**
+ * Transform a Figma color to a CSS color
+ * @param color 
+ * @returns string
+ */
 const transformFigmaColorToCssColor = color => {
   const {
     r,
@@ -86,7 +95,13 @@ const cssCodeBlockComment = (type, component) => {
   return comment + '*/';
 };
 
-var Part$5 = /*#__PURE__*/function (Part) {
+var Part$5;
+/**
+ * Generate a list of alert variants as an scss map
+ * @param alerts
+ * @returns
+ */
+(function (Part) {
   Part["Alert"] = "alert";
   Part["Close"] = "close";
   Part["Icon"] = "icon";
@@ -95,13 +110,7 @@ var Part$5 = /*#__PURE__*/function (Part) {
   Part["Title"] = "title";
   Part["Text"] = "text";
   Part["Actions"] = "actions";
-  return Part;
-}(Part$5 || {});
-/**
- * Generate a list of alert variants as an scss map
- * @param alerts
- * @returns
- */
+})(Part$5 || (Part$5 = {}));
 const transformAlertComponentsToScssTypes = alerts => {
   const lines = [];
   lines.push(`$alert-variants: ( ${getTypesFromComponents(alerts).map(type => `"${type}"`).join(', ')});`);
@@ -648,15 +657,15 @@ const transformAlertComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Part$4 = /*#__PURE__*/function (Part) {
-  Part["Button"] = "button";
-  return Part;
-}(Part$4 || {});
+var Part$4;
 /**
  * Transform a button to an SCSS var
  * @param buttons
  * @returns
  */
+(function (Part) {
+  Part["Button"] = "button";
+})(Part$4 || (Part$4 = {}));
 const transformButtonComponentsToScssTypes = (buttons, config) => {
   const lines = [];
   lines.push(`$button-variants: ( ${getTypesFromComponents(buttons).map(type => `"${type}"`).join(', ')});`);
@@ -913,17 +922,17 @@ const transformButtonComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Part$3 = /*#__PURE__*/function (Part) {
-  Part["Checkbox"] = "checkbox";
-  Part["Icon"] = "icon";
-  Part["Label"] = "label";
-  return Part;
-}(Part$3 || {});
+var Part$3;
 /**
  * Generate variant maps fro checkbox components
  * @param checkboxes
  * @returns
  */
+(function (Part) {
+  Part["Checkbox"] = "checkbox";
+  Part["Icon"] = "icon";
+  Part["Label"] = "label";
+})(Part$3 || (Part$3 = {}));
 const transformCheckboxComponentsToScssTypes = checkboxes => {
   const lines = [];
   lines.push(`$checkbox-sizes: ( ${getSizesFromComponents(checkboxes).map(type => `"${documentationObject.mapComponentSize(type, 'checkbox')}"`).join(', ')} );`);
@@ -1340,18 +1349,18 @@ const transformCheckboxComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Part$2 = /*#__PURE__*/function (Part) {
-  Part["Input"] = "input";
-  Part["Icon"] = "icon";
-  Part["Label"] = "label";
-  Part["AdditionalInfo"] = "additional-info";
-  return Part;
-}(Part$2 || {});
+var Part$2;
 /**
  * Generate variant maps from input components
  * @param inputs
  * @returns
  */
+(function (Part) {
+  Part["Input"] = "input";
+  Part["Icon"] = "icon";
+  Part["Label"] = "label";
+  Part["AdditionalInfo"] = "additional-info";
+})(Part$2 || (Part$2 = {}));
 const transformInputComponentsToScssTypes = inputs => {
   const lines = [];
   lines.push(`$input-sizes: ( ${getSizesFromComponents(inputs).map(type => `"${documentationObject.mapComponentSize(type, 'input')}"`).join(', ')} );`);
@@ -1879,14 +1888,14 @@ const transformInputComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Parts$2 = /*#__PURE__*/function (Parts) {
+var Parts$3;
+(function (Parts) {
   Parts["Modal"] = "modal";
   Parts["Header"] = "header";
   Parts["Title"] = "title";
   Parts["Body"] = "body";
   Parts["Footer"] = "footer";
-  return Parts;
-}(Parts$2 || {});
+})(Parts$3 || (Parts$3 = {}));
 const transformModalComponentsToScssTypes = modals => {
   const lines = [];
   lines.push(`/* At present there are no modal types*/`);
@@ -1915,7 +1924,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -1926,7 +1935,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-y',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1936,7 +1945,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-x',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1946,7 +1955,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-top',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1956,7 +1965,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingRight}px`,
       property: 'padding-right',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1966,7 +1975,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1976,7 +1985,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -1987,7 +1996,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.borderWeight}px`,
       property: 'border-width',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -1997,7 +2006,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.borderRadius}px`,
       property: 'border-radius',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2007,7 +2016,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.borderRadius}px`,
       property: 'border-radius-sm',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2017,7 +2026,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.borderRadius}px`,
       property: 'border-radius-lg',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2027,7 +2036,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -2038,7 +2047,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: tokens.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts$2.Modal
+      group: Parts$3.Modal
     },
     /**
      * Header part
@@ -2052,7 +2061,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.header.background).color,
       property: 'background',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -2063,7 +2072,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingTop}px`,
       property: 'padding-y',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2073,7 +2082,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingTop}px`,
       property: 'padding-x',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2083,7 +2092,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingTop}px`,
       property: 'padding-top',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2093,7 +2102,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingRight}px`,
       property: 'padding-right',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2103,7 +2112,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2113,7 +2122,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -2124,7 +2133,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.borderWeight}px`,
       property: 'border-width',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2134,7 +2143,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.borderRadius}px`,
       property: 'border-radius',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2144,7 +2153,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.borderRadius}px`,
       property: 'border-radius-sm',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2154,7 +2163,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.borderRadius}px`,
       property: 'border-radius-lg',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2164,7 +2173,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.header.borderColor).color,
       property: 'border-color',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -2175,7 +2184,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: tokens.parts.header.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts$2.Header
+      group: Parts$3.Header
     },
     /**
      * Title part
@@ -2189,7 +2198,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `'${tokens.parts.header.title.fontFamily}'`,
       property: 'font-family',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2199,7 +2208,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.title.fontSize}px`,
       property: 'font-size',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2209,7 +2218,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.title.fontWeight}`,
       property: 'font-weight',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2219,7 +2228,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.title.lineHeight}`,
       property: 'line-height',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2229,7 +2238,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.header.title.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2239,7 +2248,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.header.title.textAlign),
       property: 'text-align',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2249,7 +2258,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.header.title.textDecoration),
       property: 'text-decoration',
-      group: Parts$2.Title
+      group: Parts$3.Title
     },
     /**
      * Body part
@@ -2263,7 +2272,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.body.background).color,
       property: 'background',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -2274,7 +2283,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingTop}px`,
       property: 'padding-y',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2284,7 +2293,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingTop}px`,
       property: 'padding-x',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2294,7 +2303,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingTop}px`,
       property: 'padding-top',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2304,7 +2313,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingRight}px`,
       property: 'padding-right',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2314,7 +2323,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2324,7 +2333,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -2335,7 +2344,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.borderWeight}px`,
       property: 'border-width',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2345,7 +2354,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.borderRadius}px`,
       property: 'border-radius',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2355,7 +2364,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.borderRadius}px`,
       property: 'border-radius-sm',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2365,7 +2374,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.borderRadius}px`,
       property: 'border-radius-lg',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2375,7 +2384,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.body.borderColor).color,
       property: 'border-color',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -2386,7 +2395,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: tokens.parts.body.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     // Font
     [documentationObject.getScssVariableName({
@@ -2397,7 +2406,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `'${tokens.parts.body.content.fontFamily}'`,
       property: 'font-family',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2407,7 +2416,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.content.fontSize}px`,
       property: 'font-size',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2417,7 +2426,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.content.fontWeight}`,
       property: 'font-weight',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2427,7 +2436,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.content.lineHeight}`,
       property: 'line-height',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2437,7 +2446,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.body.content.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2447,7 +2456,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.body.content.textAlign),
       property: 'text-align',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2457,7 +2466,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.body.content.textDecoration),
       property: 'text-decoration',
-      group: Parts$2.Body
+      group: Parts$3.Body
     },
     /**
      * Footer part
@@ -2471,7 +2480,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.footer.background).color,
       property: 'background',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -2482,7 +2491,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingTop}px`,
       property: 'padding-y',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2492,7 +2501,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingTop}px`,
       property: 'padding-x',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2502,7 +2511,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingTop}px`,
       property: 'padding-top',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2512,7 +2521,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingRight}px`,
       property: 'padding-right',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2522,7 +2531,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2532,7 +2541,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -2543,7 +2552,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.borderWeight}px`,
       property: 'border-width',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2553,7 +2562,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.borderRadius}px`,
       property: 'border-radius',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2563,7 +2572,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.borderRadius}px`,
       property: 'border-radius-sm',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2573,7 +2582,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.borderRadius}px`,
       property: 'border-radius-lg',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2583,7 +2592,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.footer.borderColor).color,
       property: 'border-color',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -2594,7 +2603,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: tokens.parts.footer.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     // Font
     [documentationObject.getScssVariableName({
@@ -2605,7 +2614,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `'${tokens.parts.footer.copy.fontFamily}'`,
       property: 'font-family',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2615,7 +2624,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.copy.fontSize}px`,
       property: 'font-size',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2625,7 +2634,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.copy.fontWeight}`,
       property: 'font-weight',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2635,7 +2644,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.copy.lineHeight}`,
       property: 'line-height',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2645,7 +2654,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: `${tokens.parts.footer.copy.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2655,7 +2664,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.footer.copy.textAlign),
       property: 'text-align',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     },
     [documentationObject.getScssVariableName({
       component: 'modal',
@@ -2665,7 +2674,7 @@ const transformModalComponentTokensToScssVariables = ({
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.footer.copy.textDecoration),
       property: 'text-decoration',
-      group: Parts$2.Footer
+      group: Parts$3.Footer
     }
   };
 };
@@ -3307,17 +3316,17 @@ const transformPaginationComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Parts$1 = /*#__PURE__*/function (Parts) {
-  Parts["Radio"] = "radio";
-  Parts["Label"] = "label";
-  Parts["Thumb"] = "thumb";
-  return Parts;
-}(Parts$1 || {});
+var Parts$2;
 /**
  * Build a list of SCSS variants from radio components
  * @param radios
  * @returns
  */
+(function (Parts) {
+  Parts["Radio"] = "radio";
+  Parts["Label"] = "label";
+  Parts["Thumb"] = "thumb";
+})(Parts$2 || (Parts$2 = {}));
 const transformRadioComponentsToScssTypes = radios => {
   const lines = [];
   lines.push(`$radio-sizes: ( ${getSizesFromComponents(radios).map(type => `"${documentationObject.mapComponentSize(type, 'radio')}"`).join(', ')} );`);
@@ -3350,7 +3359,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.check.background).color,
       property: 'background',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     // Size
     [documentationObject.getScssVariableName({
@@ -3363,7 +3372,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.width ?? '0'}px`,
       property: 'width',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3375,7 +3384,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.width ?? '0'}`,
       property: 'width-raw',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3387,7 +3396,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.height ?? '0'}px`,
       property: 'height',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3399,7 +3408,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.height ?? '0'}`,
       property: 'height-raw',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -3412,7 +3421,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-y',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3424,7 +3433,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingLeft}px`,
       property: 'padding-x',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3436,7 +3445,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-top',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3448,7 +3457,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingRight}px`,
       property: 'padding-right',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3460,7 +3469,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3472,7 +3481,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3484,7 +3493,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.paddingLeft}px`,
       property: 'padding-start',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -3497,7 +3506,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.borderWeight}px`,
       property: 'border-width',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3508,7 +3517,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.check.borderRadius}px`,
       property: 'border-radius',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3519,7 +3528,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.check.borderColor).color,
       property: 'border-color',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     // Opacity
     [documentationObject.getScssVariableName({
@@ -3532,7 +3541,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.opacity}`,
       property: 'opacity',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -3545,7 +3554,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: tokens.parts.check.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts$1.Radio
+      group: Parts$2.Radio
     },
     /**
      * Label part
@@ -3560,7 +3569,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.letterSpacing}px`,
       property: 'spacing',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3572,7 +3581,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `'${tokens.parts.label.fontFamily}'`,
       property: 'font-family',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3584,7 +3593,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.fontSize}px`,
       property: 'font-size',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3596,7 +3605,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.fontWeight}`,
       property: 'font-weight',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3608,7 +3617,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.lineHeight}`,
       property: 'line-height',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3620,7 +3629,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3632,7 +3641,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.label.textAlign),
       property: 'text-align',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3644,7 +3653,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.label.textDecoration),
       property: 'text-decoration',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3656,7 +3665,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokens.parts.label.textCase),
       property: 'text-transformation',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3668,7 +3677,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: transformFigmaColorToCssColor(tokens.parts.label.color),
       property: 'color',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3680,7 +3689,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.opacity}`,
       property: 'opacity',
-      group: Parts$1.Label
+      group: Parts$2.Label
     },
     /**
      * Thumb part
@@ -3696,7 +3705,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.thumb.width ?? '0'}px`,
       property: 'width',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3708,7 +3717,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.thumb.width ?? '0'}`,
       property: 'width-raw',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3720,7 +3729,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.thumb.height ?? '0'}px`,
       property: 'height',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3732,7 +3741,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.thumb.height ?? '0'}`,
       property: 'height-raw',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     // Background
     [documentationObject.getScssVariableName({
@@ -3745,7 +3754,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.thumb.background).color,
       property: 'background',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -3758,7 +3767,7 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.thumb.borderWeight}px`,
       property: 'border-width',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     },
     [documentationObject.getScssVariableName({
       component: 'radio',
@@ -3770,24 +3779,24 @@ const transformRadioComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.thumb.borderColor).color,
       property: 'border-color',
-      group: Parts$1.Thumb
+      group: Parts$2.Thumb
     }
   };
 };
 
-var Parts = /*#__PURE__*/function (Parts) {
-  Parts["Select"] = "select";
-  Parts["Label"] = "label";
-  Parts["Option"] = "option";
-  Parts["Icon"] = "icon";
-  Parts["AdditionalInfo"] = "additional-info";
-  return Parts;
-}(Parts || {});
+var Parts$1;
 /**
  * Transfor selects into scss variants
  * @param selects
  * @returns
  */
+(function (Parts) {
+  Parts["Select"] = "select";
+  Parts["Label"] = "label";
+  Parts["Option"] = "option";
+  Parts["Icon"] = "icon";
+  Parts["AdditionalInfo"] = "additional-info";
+})(Parts$1 || (Parts$1 = {}));
 const transformSelectComponentsToScssTypes = selects => {
   const lines = [];
   lines.push(`$select-sizes: ( ${getSizesFromComponents(selects).map(type => `"${documentationObject.mapComponentSize(type, 'select')}"`).join(', ')} );`);
@@ -3820,7 +3829,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.background).color,
       property: 'background',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     // Padding
     [documentationObject.getScssVariableName({
@@ -3833,7 +3842,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingTop}px`,
       property: 'padding-top',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3845,7 +3854,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingRight}px`,
       property: 'padding-right',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3857,7 +3866,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingBottom}px`,
       property: 'padding-bottom',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3869,7 +3878,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.paddingLeft}px`,
       property: 'padding-left',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     // Border
     [documentationObject.getScssVariableName({
@@ -3882,7 +3891,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.borderWeight}px`,
       property: 'border-width',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3894,7 +3903,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.borderRadius}px`,
       property: 'border-radius',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3906,7 +3915,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.borderColor).color,
       property: 'border-color',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     // Box shadow
     [documentationObject.getScssVariableName({
@@ -3919,7 +3928,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: tokens.effects.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'box-shadow',
-      group: Parts.Select
+      group: Parts$1.Select
     },
     /**
      * Label part
@@ -3934,7 +3943,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.spacing}px`,
       property: 'margin-bottom',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3946,7 +3955,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `'${tokens.parts.label.fontFamily}'`,
       property: 'font-family',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3958,7 +3967,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.fontSize}px`,
       property: 'font-size',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3970,7 +3979,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.fontWeight}`,
       property: 'font-weight',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3982,7 +3991,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.lineHeight}`,
       property: 'line-height',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -3994,7 +4003,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.label.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4006,7 +4015,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.label.textAlign),
       property: 'text-align',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4018,7 +4027,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokens.parts.label.textCase),
       property: 'text-transform',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4030,7 +4039,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.label.textDecoration),
       property: 'text-decoration',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4042,7 +4051,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.label.color).color,
       property: 'color',
-      group: Parts.Label
+      group: Parts$1.Label
     },
     /**
      * Option part
@@ -4057,7 +4066,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `'${tokens.parts.option.fontFamily}'`,
       property: 'font-family',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4069,7 +4078,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.option.fontSize}px`,
       property: 'font-size',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4081,7 +4090,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.option.fontWeight}`,
       property: 'font-weight',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4093,7 +4102,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.option.lineHeight}`,
       property: 'line-height',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4105,7 +4114,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.option.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4117,7 +4126,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.option.textAlign),
       property: 'text-align',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4129,7 +4138,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokens.parts.option.textCase),
       property: 'text-transform',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4141,7 +4150,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.option.textDecoration),
       property: 'text-decoration',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4153,7 +4162,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.option.color).color,
       property: 'color',
-      group: Parts.Option
+      group: Parts$1.Option
     },
     /**
      * Icon part
@@ -4168,7 +4177,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.icon.width ?? '0'}px`,
       property: 'width',
-      group: Parts.Icon
+      group: Parts$1.Icon
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4180,7 +4189,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.icon.width ?? '0'}`,
       property: 'width-raw',
-      group: Parts.Icon
+      group: Parts$1.Icon
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4192,7 +4201,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.icon.height ?? '0'}px`,
       property: 'height',
-      group: Parts.Icon
+      group: Parts$1.Icon
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4204,7 +4213,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.icon.height ?? '0'}`,
       property: 'height-raw',
-      group: Parts.Icon
+      group: Parts$1.Icon
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4216,7 +4225,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.icon.color).color,
       property: 'color',
-      group: Parts.Icon
+      group: Parts$1.Icon
     },
     /**
      * Additional info part
@@ -4231,7 +4240,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.additionalInfo.spacing}px`,
       property: 'spacing',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4243,7 +4252,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `'${tokens.parts.additionalInfo.fontFamily}'`,
       property: 'font-family',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4255,7 +4264,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.additionalInfo.fontSize}px`,
       property: 'font-size',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4267,7 +4276,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.additionalInfo.fontWeight}`,
       property: 'font-weight',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4279,7 +4288,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.additionalInfo.lineHeight}`,
       property: 'line-height',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4291,7 +4300,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: `${tokens.parts.additionalInfo.letterSpacing}px`,
       property: 'letter-spacing',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4303,7 +4312,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextAlignToCss(tokens.parts.additionalInfo.textAlign),
       property: 'text-align',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4315,7 +4324,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokens.parts.additionalInfo.textCase),
       property: 'text-transform',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4327,7 +4336,7 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaTextDecorationToCss(tokens.parts.additionalInfo.textDecoration),
       property: 'text-decoration',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     },
     [documentationObject.getScssVariableName({
       component: 'select',
@@ -4339,22 +4348,22 @@ const transformSelectComponentTokensToScssVariables = tokens => {
     })]: {
       value: documentationObject.transformFigmaFillsToCssColor(tokens.parts.additionalInfo.color).color,
       property: 'color',
-      group: Parts.AdditionalInfo
+      group: Parts$1.AdditionalInfo
     }
   };
 };
 
-var Part$1 = /*#__PURE__*/function (Part) {
-  Part["Switch"] = "switch";
-  Part["Label"] = "label";
-  Part["Thumb"] = "thumb";
-  return Part;
-}(Part$1 || {});
+var Part$1;
 /**
  * Transform switches into scss variants
  * @param switches
  * @returns
  */
+(function (Part) {
+  Part["Switch"] = "switch";
+  Part["Label"] = "label";
+  Part["Thumb"] = "thumb";
+})(Part$1 || (Part$1 = {}));
 const transformSwitchesComponentsToScssTypes = switches => {
   const lines = [];
   lines.push(`$switch-sizes: ( ${getSizesFromComponents(switches).map(type => `"${documentationObject.mapComponentSize(type, 'switch')}"`).join(', ')} );`);
@@ -4725,15 +4734,15 @@ const transformSwitchComponentTokensToScssVariables = tokens => {
   };
 };
 
-var Part = /*#__PURE__*/function (Part) {
-  Part["Tooltip"] = "tooltip";
-  return Part;
-}(Part || {});
+var Part;
 /**
  * Transform tooltips into scss variants
  * @param tooltips
  * @returns
  */
+(function (Part) {
+  Part["Tooltip"] = "tooltip";
+})(Part || (Part = {}));
 const transformTooltipComponentsToScssTypes = tooltips => {
   const lines = [];
   lines.push(`/* At present there are no tooltip types*/`);
@@ -5071,14 +5080,14 @@ ${Object.entries(transformRadioComponentTokensToScssVariables(radio)).map(([vari
 const getComponentTemplate = async (component, ...parts) => {
   const componentFallbackPath = path__default["default"].resolve(__dirname, `../../templates/${component}/default.html`);
   if (!parts.length) {
-    if (await fs__namespace["default"].pathExists(componentFallbackPath)) {
-      return await fs__namespace["default"].readFile(componentFallbackPath, 'utf8');
+    if (await fs__namespace$1["default"].pathExists(componentFallbackPath)) {
+      return await fs__namespace$1["default"].readFile(componentFallbackPath, 'utf8');
     }
     return null;
   }
   const partsTemplatePath = path__default["default"].resolve(__dirname, `../../templates/${component}/${parts.join('/')}.html`);
-  if (await fs__namespace["default"].pathExists(partsTemplatePath)) {
-    return await fs__namespace["default"].readFile(partsTemplatePath, 'utf8');
+  if (await fs__namespace$1["default"].pathExists(partsTemplatePath)) {
+    return await fs__namespace$1["default"].readFile(partsTemplatePath, 'utf8');
   }
   return await getComponentTemplate(component, ...parts.slice(0, -1));
 };
@@ -6858,11 +6867,19 @@ const transformInputComponentTokensToCssVariables = tokens => {
   };
 };
 
+var Parts;
 /**
  * Transform Modal components into CSS Variables
  * @param modals
  * @returns
  */
+(function (Parts) {
+  Parts["Modal"] = "modal";
+  Parts["Header"] = "header";
+  Parts["Title"] = "title";
+  Parts["Body"] = "body";
+  Parts["Footer"] = "footer";
+})(Parts || (Parts = {}));
 const transformModalComponentsToCssVariables = modals => {
   const lines = [];
   lines.push('.modal {');
@@ -9660,7 +9677,17 @@ function getTypeName(type) {
   return type.group ? `${type.group}-${type.machine_name}` : `${type.machine_name}`;
 }
 
+/**
+ * The output of the CSS transformer
+ */
+
+/**
+ * Creates a CSS transformer output from a documentation object
+ * @param documentationObject
+ * @returns The CSS transformer output
+ */
 function cssTransformer(documentationObject) {
+  // The array of transformer css variables
   const components = {
     // Buttons
     buttons: transformButtonComponentsToCssVariables(documentationObject.components.buttons),
@@ -9674,6 +9701,7 @@ function cssTransformer(documentationObject) {
     tooltips: transformTooltipComponentsToCssVariables(documentationObject.components.tooltips),
     radios: transformRadioComponentsToCssVariables(documentationObject.components.radios)
   };
+  // The array of transformed css design variables
   const design = {
     colors: transformColors(documentationObject.design.color),
     typography: transformTypography(documentationObject.design.typography),
@@ -9708,11 +9736,11 @@ async function fontTransformer(documentationObject) {
     //
     const name = key.replace(/\s/g, '');
     const fontDirName = path__default["default"].join(fontLocation, name);
-    if (fs__namespace["default"].existsSync(fontDirName)) {
+    if (fs__namespace$1["default"].existsSync(fontDirName)) {
       console.log(chalk__default["default"].green(`Found a custom font ${name}`));
       // Ok, we've found a custom font at this location
       // Zip the font up and put the zip in the font location
-      const stream = fs__namespace["default"].createWriteStream(path__default["default"].join(fontLocation, `${name}.zip`));
+      const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
       customFonts.push(`${name}.zip`);
     }
@@ -9738,9 +9766,9 @@ const zipFonts = async (dirPath, destination) => {
     throw err;
   });
   archive.pipe(destination);
-  const fontDir = await fs__namespace["default"].readdir(dirPath);
+  const fontDir = await fs__namespace$1["default"].readdir(dirPath);
   for (const file of fontDir) {
-    const data = fs__namespace["default"].readFileSync(path__default["default"].join(dirPath, file), 'utf-8');
+    const data = fs__namespace$1["default"].readFileSync(path__default["default"].join(dirPath, file), 'utf-8');
     archive.append(data, {
       name: path__default["default"].basename(file)
     });
@@ -9748,6 +9776,82 @@ const zipFonts = async (dirPath, destination) => {
   await archive.finalize();
   return destination;
 };
+
+/**
+ * This is the plugin transformer.  It will attempt to read the plugin folder
+ * in the selected integration and then expose a set of hooks that will be
+ * fired by the figma-exporter pipeline.
+ */
+
+/**
+ * The plugin transformer interface describing what a plugin function set should
+ * be. Each function will be called at a different point in the pipeline.
+ */
+/**
+ * Generate a generic plugin transformer that does nothing
+ * @returns
+ */
+const genericPluginGenerator = () => {
+  return {
+    test: 'yarg',
+    init: () => {
+      console.log('init generic');
+    },
+    postCssTransformer: (documentationObject, css) => {},
+    postScssTransformer: (documentationObject, scss) => {},
+    postExtract: documentationObject => {},
+    postIntegration: documentationObject => {},
+    postPreview: documentationObject => {},
+    postBuild: documentationObject => {}
+  };
+};
+
+/**
+ * Creates a plugin transformer merging the generic plugin with the custom
+ * plugin and then allowing it to execute in all contexts
+ * @param documentationObject
+ * @returns
+ */
+const pluginTransformer = async () => {
+  let generic = genericPluginGenerator();
+  const pluginPath = getPathToIntegration() + '/plugin.js';
+  let plugin = generic;
+  if (fs__namespace.existsSync(pluginPath)) {
+    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => generic);
+    plugin = {
+      ...generic,
+      ...custom
+    };
+  }
+  return plugin;
+};
+
+/**
+ * Attempts to read a plugin file and then evaluate it in a sandboxed context
+ * @param file
+ * @returns
+ */
+async function evaluatePlugin(file) {
+  return new Promise((resolve, reject) => {
+    fs__namespace.readFile(file, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const context = {
+        console: console
+      };
+      const script = new vm__namespace.Script(data);
+      const sandbox = vm__namespace.createContext(context);
+      try {
+        script.runInContext(sandbox);
+        resolve(sandbox);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
 
 /**
  * Derive the path to the integration. Use the config to find the integration
@@ -9764,13 +9868,13 @@ const getPathToIntegration = () => {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
       const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
-      if (!fs__namespace["default"].existsSync(customPath)) {
+      if (!fs__namespace$1["default"].existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
     const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
-    if (!fs__namespace["default"].existsSync(searchPath)) {
+    if (!fs__namespace$1["default"].existsSync(searchPath)) {
       throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
     }
     return searchPath;
@@ -9795,8 +9899,9 @@ const getIntegrationName = () => {
 
 /**
  * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject 
  */
-async function integrationTransformer() {
+async function integrationTransformer(documentationObject) {
   const outputFolder = path__default["default"].join('public');
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
@@ -9804,10 +9909,11 @@ async function integrationTransformer() {
   const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
   const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
   const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
-  fs__namespace["default"].copySync(integrationsSass, sassFolder);
-  fs__namespace["default"].copySync(integrationTemplates, templatesFolder);
-  const stream = fs__namespace["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
+  fs__namespace$1["default"].copySync(integrationsSass, sassFolder);
+  fs__namespace$1["default"].copySync(integrationTemplates, templatesFolder);
+  const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
+  (await pluginTransformer()).postIntegration(documentationObject);
 }
 
 /**
@@ -9828,7 +9934,7 @@ const zipTokens = async (dirPath, destination) => {
     throw err;
   });
   archive.pipe(destination);
-  const directory = await fs__namespace["default"].readdir(dirPath);
+  const directory = await fs__namespace$1["default"].readdir(dirPath);
   archive = await addFileToZip(directory, dirPath, archive);
   await archive.finalize();
   return destination;
@@ -9844,11 +9950,11 @@ const zipTokens = async (dirPath, destination) => {
 const addFileToZip = async (directory, dirPath, archive) => {
   for (const file of directory) {
     const pathFile = path__default["default"].join(dirPath, file);
-    if (fs__namespace["default"].lstatSync(pathFile).isDirectory()) {
-      const recurse = await fs__namespace["default"].readdir(pathFile);
+    if (fs__namespace$1["default"].lstatSync(pathFile).isDirectory()) {
+      const recurse = await fs__namespace$1["default"].readdir(pathFile);
       archive = await addFileToZip(recurse, pathFile, archive);
     } else {
-      const data = fs__namespace["default"].readFileSync(pathFile, 'utf-8');
+      const data = fs__namespace$1["default"].readFileSync(pathFile, 'utf-8');
       archive.append(data, {
         name: pathFile
       });
@@ -9872,7 +9978,7 @@ const logosZipFilePath = path__default["default"].join(outputFolder, 'logos.zip'
  */
 const readPrevJSONFile = async path => {
   try {
-    return await fs__namespace.readJSON(path);
+    return await fs__namespace$1.readJSON(path);
   } catch (e) {
     return undefined;
   }
@@ -9893,7 +9999,7 @@ const buildCustomFonts = async documentationObject => {
  * @returns
  */
 const buildIntegration = async documentationObject => {
-  return await integrationTransformer();
+  return await integrationTransformer(documentationObject);
 };
 /**
  * Run just the preview
@@ -9901,10 +10007,10 @@ const buildIntegration = async documentationObject => {
  */
 const buildPreview = async documentationObject => {
   if (Object.keys(documentationObject.components).filter(name => documentationObject.components[name].length > 0).length > 0) {
-    await Promise.all([previewTransformer(documentationObject).then(out => fs__namespace.writeJSON(previewFilePath, out, {
+    await Promise.all([previewTransformer(documentationObject).then(out => fs__namespace$1.writeJSON(previewFilePath, out, {
       spaces: 2
     }))]);
-    await buildClientFiles().then(value => chalk__default["default"].green(console.log(value))).catch(error => {
+    await buildClientFiles().then(value => console.log(chalk__default["default"].green(value))).catch(error => {
       throw new Error(error);
     });
   } else {
@@ -9920,7 +10026,7 @@ const buildStyles = async documentationObject => {
   const typeFiles = scssTypesTransformer(documentationObject);
   const cssFiles = cssTransformer(documentationObject);
   const scssFiles = scssTransformer(documentationObject);
-  await Promise.all([fs__namespace.ensureDir(variablesFilePath).then(() => fs__namespace.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
+  await Promise.all([fs__namespace$1.ensureDir(variablesFilePath).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
 };
 /**
  * Run the entire pipeline
@@ -9938,22 +10044,23 @@ const entirePipeline = async () => {
   if (!FIGMA_PROJECT_ID) {
     throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
   }
+  (await pluginTransformer()).init();
   let prevDocumentationObject = await readPrevJSONFile(tokensFilePath);
   let changelog = (await readPrevJSONFile(changelogFilePath)) || [];
-  await fs__namespace.emptyDir(outputFolder);
+  await fs__namespace$1.emptyDir(outputFolder);
   const documentationObject$1 = await documentationObject.createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN);
   const changelogRecord = documentationObject.generateChangelogRecord(prevDocumentationObject, documentationObject$1);
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
   }
-  await Promise.all([fs__namespace.writeJSON(tokensFilePath, documentationObject$1, {
+  await Promise.all([fs__namespace$1.writeJSON(tokensFilePath, documentationObject$1, {
     spaces: 2
-  }), fs__namespace.writeJSON(changelogFilePath, changelog, {
+  }), fs__namespace$1.writeJSON(changelogFilePath, changelog, {
     spaces: 2
-  }), ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false' ? [documentationObject.zipAssets(documentationObject$1.assets.icons, fs__namespace.createWriteStream(iconsZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream)), documentationObject.zipAssets(documentationObject$1.assets.logos, fs__namespace.createWriteStream(logosZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream))] : [])]);
+  }), ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false' ? [documentationObject.zipAssets(documentationObject$1.assets.icons, fs__namespace$1.createWriteStream(iconsZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream)), documentationObject.zipAssets(documentationObject$1.assets.logos, fs__namespace$1.createWriteStream(logosZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream))] : [])]);
   await buildCustomFonts(documentationObject$1);
   await buildStyles(documentationObject$1);
-  await buildIntegration();
+  await buildIntegration(documentationObject$1);
   await buildPreview(documentationObject$1);
   console.log(chalk__default["default"].green(`Figma pipeline complete:`, `${documentationObject.getRequestCount()} requests`));
 };

@@ -3,8 +3,8 @@ module.exports = {
   client: 'Convertiv',
   google_tag_manager: null,
   integration: {
-    name: 'bootstrap',
-    version: '5.2',
+    name: 'tailwind',
+    version: '1.9',
   },
   favicon: '/favicon.ico',
   logo: '/logo.svg',
