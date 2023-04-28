@@ -67,7 +67,7 @@ const copyPluginFile = async (config) => {
   // Copy project's config.js to tmp dir's client-config.js
   const plugin = path.resolve(projectRootDir, 'integration/plugin.js');
   if(fs.existsSync(plugin)){
-    await fs.copy(plugin, path.resolve(tmpDir, getPathToIntegration(config) + 'plugin.js'));
+    await fs.copy(plugin, path.resolve(tmpDir, getPathToIntegration(config) + '/plugin.js'));
   }
 };
 
