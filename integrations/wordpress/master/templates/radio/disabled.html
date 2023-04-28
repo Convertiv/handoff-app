@@ -1,0 +1,16 @@
+<script src="/components/bundle.js"></script>
+
+<body class="theme-{{ theme }} checkbox flex-column align-items-center preview-body">
+<div class="form-check form-check-{{ state }} form-radio m-1">
+    <input class="form-check-input" type="radio" name="flexRadioDisabled" id="flexRadioDisabled1" disabled>
+    <label class="form-check-label" for="flexRadioDisabled1">
+        {{ parts.label.characters }}
+    </label>
+</div>
+<div class="form-check form-check-{{ state }} form-radio m-1">
+    <input class="form-check-input" type="radio" name="flexRadioDisabled" id="flexRadioDisabled2" checked disabled>
+    <label class="form-check-label" for="flexRadioDisabled2">
+        {{ parts.label.characters }}
+    </label>
+</div>
+</body>
