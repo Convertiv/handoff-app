@@ -15,7 +15,6 @@ import { getPathToIntegration } from '../integration';
  * be. Each function will be called at a different point in the pipeline.
  */
 export interface PluginTransformer {
-  test: string;
   init: () => void;
   postExtract: (documentationObject: DocumentationObject) => void;
   postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
@@ -31,7 +30,6 @@ export interface PluginTransformer {
  */
 export const genericPluginGenerator = (): PluginTransformer => {
   return {
-    test: 'yarg',
     init: (): void => { console.log('init generic') },
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => { },
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => { },
@@ -73,7 +71,6 @@ async function evaluatePlugin(file: string): Promise<PluginTransformer> {
         reject(err);
         return;
       }
-
       const context: { [key: string]: any } = { console: console };
       const script = new vm.Script(data);
       const sandbox = vm.createContext(context);

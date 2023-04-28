@@ -10,7 +10,6 @@ import { CssTransformerOutput } from '../css';
  * be. Each function will be called at a different point in the pipeline.
  */
 export interface PluginTransformer {
-    test: string;
     init: () => void;
     postExtract: (documentationObject: DocumentationObject) => void;
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;

@@ -9793,7 +9793,6 @@ const zipFonts = async (dirPath, destination) => {
  */
 const genericPluginGenerator = () => {
   return {
-    test: 'yarg',
     init: () => {
       console.log('init generic');
     },
