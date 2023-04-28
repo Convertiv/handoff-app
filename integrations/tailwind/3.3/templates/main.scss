@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500&display=swap');
+
+body {
+	background-color: #f7f7f7;
+	display: flex;
+	justify-content: center;
+}
+
+p {
+	color: rgba( 0, 0, 0, .8 );
+	font-family: 'Inter', sans-serif;
+	font-size: 16px;
+	font-weight: 300;
+	letter-spacing: -.3px;
+	line-height: 1.6;
+}
+
+.modal-footer small {
+	color: #777;
+	font-family: 'Inter', sans-serif;
+	font-size: 12px;
+	font-weight: 300;
+	letter-spacing: -.3px;
+	line-height: 1.6;
+}
+
+.preview-body {
+	padding: 30px 40px;
+}
+
