@@ -9913,7 +9913,6 @@ async function integrationTransformer(documentationObject) {
   const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
   const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
-  console.log(hookReturn);
   if (hookReturn) {
     fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, hookReturn.filename), hookReturn.data);
   }
