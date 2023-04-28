@@ -19,9 +19,14 @@ export interface PluginTransformer {
   postExtract: (documentationObject: DocumentationObject) => void;
   postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
   postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
-  postIntegration: (documentationObject: DocumentationObject) => void;
+  postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
   postPreview: (documentationObject: DocumentationObject) => void;
   postBuild: (documentationObject: DocumentationObject) => void;
+}
+
+export interface HookReturn {
+  filename: string;
+  data: string;
 }
 
 /**
@@ -30,13 +35,15 @@ export interface PluginTransformer {
  */
 export const genericPluginGenerator = (): PluginTransformer => {
   return {
-    init: (): void => { console.log('init generic') },
-    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => { },
-    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => { },
-    postExtract: (documentationObject: DocumentationObject): void => { },
-    postIntegration: (documentationObject: DocumentationObject): void => { },
-    postPreview: (documentationObject: DocumentationObject): void => { },
-    postBuild: (documentationObject: DocumentationObject): void => { },
+    init: (): void => {
+      console.log('init generic');
+    },
+    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => {},
+    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => {},
+    postExtract: (documentationObject: DocumentationObject): void => {},
+    postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
+    postPreview: (documentationObject: DocumentationObject): void => {},
+    postBuild: (documentationObject: DocumentationObject): void => {},
   };
 };
 

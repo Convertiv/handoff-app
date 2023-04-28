@@ -33,7 +33,9 @@ var postIntegration = (documentationObject) => {
     extend.fontWeight[type.machine_name] = type.values.fontWeight;
     extend.letterSpacing[type.machine_name] = `${type.values.letterSpacing}px`;
   });
-
-  console.log(JSON.stringify(extend));
-  return data;
+  const data = `module.exports = ${JSON.stringify(extend, null, 2)};`;
+  return {
+    filename: 'tailwind.config.js',
+    data
+  };
 };

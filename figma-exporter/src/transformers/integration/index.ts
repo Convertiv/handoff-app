@@ -70,7 +70,10 @@ export default async function integrationTransformer(documentationObject: Docume
   fs.copySync(integrationTemplates, templatesFolder);
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
-  (await pluginTransformer()).postIntegration(documentationObject);
+  const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
+  if(hookReturn) {
+    fs.writeFileSync(path.join(sassFolder, hookReturn.filename), hookReturn.data);
+  }
 }
 
 /**

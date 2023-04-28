@@ -14,9 +14,13 @@ export interface PluginTransformer {
     postExtract: (documentationObject: DocumentationObject) => void;
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
-    postIntegration: (documentationObject: DocumentationObject) => void;
+    postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
     postPreview: (documentationObject: DocumentationObject) => void;
     postBuild: (documentationObject: DocumentationObject) => void;
+}
+export interface HookReturn {
+    filename: string;
+    data: string;
 }
 /**
  * Generate a generic plugin transformer that does nothing
