@@ -314,7 +314,7 @@ const buildTmpDir = async () => {
   const config = await copyProjectConfig();
   copyPluginFile(config);
   await mergeProjectDir('integration/sass', getPathToIntegration(config) + '/sass');
-  await mergeProjectDir('integration/templates', 'templates');
+  await mergeProjectDir('integration/templates', getPathToIntegration(config) + '/templates');
   await mergeProjectDir('public', 'public');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
