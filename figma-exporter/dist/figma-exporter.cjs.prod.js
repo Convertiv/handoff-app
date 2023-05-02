@@ -11,10 +11,10 @@ var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
 var webpack = require('webpack');
 var chalk = require('chalk');
-var archiver = require('archiver');
-var sortedUniq = require('lodash/sortedUniq');
 var fs$1 = require('fs');
 var vm = require('vm');
+var archiver = require('archiver');
+var sortedUniq = require('lodash/sortedUniq');
 require('lodash/isEqual');
 require('axios');
 require('lodash/uniq');
@@ -46,10 +46,10 @@ var capitalize__default = /*#__PURE__*/_interopDefault(capitalize);
 var Mustache__default = /*#__PURE__*/_interopDefault(Mustache);
 var webpack__default = /*#__PURE__*/_interopDefault(webpack);
 var chalk__default = /*#__PURE__*/_interopDefault(chalk);
-var archiver__default = /*#__PURE__*/_interopDefault(archiver);
-var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs$1);
 var vm__namespace = /*#__PURE__*/_interopNamespace(vm);
+var archiver__default = /*#__PURE__*/_interopDefault(archiver);
+var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
 
 /**
  * Transform a Figma color to a CSS color
@@ -5200,9 +5200,200 @@ async function previewTransformer(documentationObject$1) {
   };
 }
 
-const buildClientFiles = async () => {
+/**
+ * Derive the path to the integration. Use the config to find the integration
+ * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
+ * integration if desired
+ */
+const getPathToIntegration = () => {
+  const integrationFolder = 'integrations';
+  const defaultIntegration = 'bootstrap';
+  const defaultVersion = '5.2';
+  const defaultPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
+  const config = documentationObject.getFetchConfig();
+  if (config.integration) {
+    if (config.integration.name === 'custom') {
+      // Look for a custom integration
+      const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
+      if (!fs__namespace$1["default"].existsSync(customPath)) {
+        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
+      }
+      return customPath;
+    }
+    const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
+    if (!fs__namespace$1["default"].existsSync(searchPath)) {
+      throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
+    }
+    return searchPath;
+  }
+  return defaultPath;
+};
+
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
+const getIntegrationName = () => {
+  const config = documentationObject.getFetchConfig();
+  const defaultIntegration = 'bootstrap';
+  if (config.integration) {
+    if (config.integration.name) {
+      return config.integration.name;
+    }
+  }
+  return defaultIntegration;
+};
+
+/**
+ * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject 
+ */
+async function integrationTransformer(documentationObject) {
+  const outputFolder = path__default["default"].join('public');
+  const integrationPath = getPathToIntegration();
+  const integrationName = getIntegrationName();
+  const sassFolder = `exported/${integrationName}-tokens`;
+  const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
+  const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
+  const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
+  fs__namespace$1["default"].copySync(integrationsSass, sassFolder);
+  fs__namespace$1["default"].copySync(integrationTemplates, templatesFolder);
+  const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
+  await zipTokens('exported', stream);
+  const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
+  if (hookReturn) {
+    fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, hookReturn.filename), hookReturn.data);
+  }
+}
+
+/**
+ * Zip the fonts for download
+ * @param dirPath
+ * @param destination
+ * @returns
+ */
+const zipTokens = async (dirPath, destination) => {
+  let archive = archiver__default["default"]('zip', {
+    zlib: {
+      level: 9
+    } // Sets the compression level.
+  });
+
+  // good practice to catch this error explicitly
+  archive.on('error', function (err) {
+    throw err;
+  });
+  archive.pipe(destination);
+  const directory = await fs__namespace$1["default"].readdir(dirPath);
+  archive = await addFileToZip(directory, dirPath, archive);
+  await archive.finalize();
+  return destination;
+};
+
+/**
+ * A recusrive function for building a zip of the tokens
+ * @param directory
+ * @param dirPath
+ * @param archive
+ * @returns
+ */
+const addFileToZip = async (directory, dirPath, archive) => {
+  for (const file of directory) {
+    const pathFile = path__default["default"].join(dirPath, file);
+    if (fs__namespace$1["default"].lstatSync(pathFile).isDirectory()) {
+      const recurse = await fs__namespace$1["default"].readdir(pathFile);
+      archive = await addFileToZip(recurse, pathFile, archive);
+    } else {
+      const data = fs__namespace$1["default"].readFileSync(pathFile, 'utf-8');
+      archive.append(data, {
+        name: pathFile
+      });
+    }
+  }
+  return archive;
+};
+
+/**
+ * This is the plugin transformer.  It will attempt to read the plugin folder
+ * in the selected integration and then expose a set of hooks that will be
+ * fired by the figma-exporter pipeline.
+ */
+/**
+ * The plugin transformer interface describing what a plugin function set should
+ * be. Each function will be called at a different point in the pipeline.
+ */
+/**
+ * Generate a generic plugin transformer that does nothing
+ * @returns
+ */
+const genericPluginGenerator = () => {
+  return {
+    init: () => {
+      console.log('init generic');
+    },
+    postCssTransformer: (documentationObject, css) => {},
+    postScssTransformer: (documentationObject, scss) => {},
+    postExtract: documentationObject => {},
+    postIntegration: documentationObject => {},
+    postPreview: documentationObject => {},
+    modifyWebpackConfig(webpackConfig) {
+      return webpackConfig;
+    },
+    postBuild: documentationObject => {}
+  };
+};
+
+/**
+ * Creates a plugin transformer merging the generic plugin with the custom
+ * plugin and then allowing it to execute in all contexts
+ * @param documentationObject
+ * @returns
+ */
+const pluginTransformer = async () => {
+  let generic = genericPluginGenerator();
+  const pluginPath = getPathToIntegration() + '/plugin.js';
+  let plugin = generic;
+  if (fs__namespace.existsSync(pluginPath)) {
+    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => generic);
+    plugin = {
+      ...generic,
+      ...custom
+    };
+  }
+  return plugin;
+};
+
+/**
+ * Attempts to read a plugin file and then evaluate it in a sandboxed context
+ * @param file
+ * @returns
+ */
+async function evaluatePlugin(file) {
   return new Promise((resolve, reject) => {
-    const compile = webpack__default["default"]({
+    fs__namespace.readFile(file, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const context = {
+        console: console
+      };
+      const script = new vm__namespace.Script(data);
+      const sandbox = vm__namespace.createContext(context);
+      try {
+        script.runInContext(sandbox);
+        resolve(sandbox);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+const buildClientFiles = async () => {
+  const plugin = await pluginTransformer();
+  return new Promise((resolve, reject) => {
+    let config = {
       mode: 'production',
       entry: path__default["default"].resolve(__dirname, '../../templates/main.js'),
       resolve: {
@@ -5224,7 +5415,9 @@ const buildClientFiles = async () => {
           'sass-loader']
         }]
       }
-    });
+    };
+    config = plugin.modifyWebpackConfig(config);
+    const compile = webpack__default["default"](config);
     compile.run((err, stats) => {
       if (err) {
         let error = "Errors encountered trying to build preview styles.\n";
@@ -9775,194 +9968,6 @@ const zipFonts = async (dirPath, destination) => {
   }
   await archive.finalize();
   return destination;
-};
-
-/**
- * This is the plugin transformer.  It will attempt to read the plugin folder
- * in the selected integration and then expose a set of hooks that will be
- * fired by the figma-exporter pipeline.
- */
-
-/**
- * The plugin transformer interface describing what a plugin function set should
- * be. Each function will be called at a different point in the pipeline.
- */
-/**
- * Generate a generic plugin transformer that does nothing
- * @returns
- */
-const genericPluginGenerator = () => {
-  return {
-    init: () => {
-      console.log('init generic');
-    },
-    postCssTransformer: (documentationObject, css) => {},
-    postScssTransformer: (documentationObject, scss) => {},
-    postExtract: documentationObject => {},
-    postIntegration: documentationObject => {},
-    postPreview: documentationObject => {},
-    postBuild: documentationObject => {}
-  };
-};
-
-/**
- * Creates a plugin transformer merging the generic plugin with the custom
- * plugin and then allowing it to execute in all contexts
- * @param documentationObject
- * @returns
- */
-const pluginTransformer = async () => {
-  let generic = genericPluginGenerator();
-  const pluginPath = getPathToIntegration() + '/plugin.js';
-  let plugin = generic;
-  if (fs__namespace.existsSync(pluginPath)) {
-    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => generic);
-    plugin = {
-      ...generic,
-      ...custom
-    };
-  }
-  return plugin;
-};
-
-/**
- * Attempts to read a plugin file and then evaluate it in a sandboxed context
- * @param file
- * @returns
- */
-async function evaluatePlugin(file) {
-  return new Promise((resolve, reject) => {
-    fs__namespace.readFile(file, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      const context = {
-        console: console
-      };
-      const script = new vm__namespace.Script(data);
-      const sandbox = vm__namespace.createContext(context);
-      try {
-        script.runInContext(sandbox);
-        resolve(sandbox);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  });
-}
-
-/**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
- */
-const getPathToIntegration = () => {
-  const integrationFolder = 'integrations';
-  const defaultIntegration = 'bootstrap';
-  const defaultVersion = '5.2';
-  const defaultPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
-  const config = documentationObject.getFetchConfig();
-  if (config.integration) {
-    if (config.integration.name === 'custom') {
-      // Look for a custom integration
-      const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
-      if (!fs__namespace$1["default"].existsSync(customPath)) {
-        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
-      }
-      return customPath;
-    }
-    const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
-    if (!fs__namespace$1["default"].existsSync(searchPath)) {
-      throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
-    }
-    return searchPath;
-  }
-  return defaultPath;
-};
-
-/**
- * Get the name of the current integration
- * @returns string
- */
-const getIntegrationName = () => {
-  const config = documentationObject.getFetchConfig();
-  const defaultIntegration = 'bootstrap';
-  if (config.integration) {
-    if (config.integration.name) {
-      return config.integration.name;
-    }
-  }
-  return defaultIntegration;
-};
-
-/**
- * Find the integration to sync and sync the sass files and template files.
- * @param documentationObject 
- */
-async function integrationTransformer(documentationObject) {
-  const outputFolder = path__default["default"].join('public');
-  const integrationPath = getPathToIntegration();
-  const integrationName = getIntegrationName();
-  const sassFolder = `exported/${integrationName}-tokens`;
-  const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
-  const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
-  const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
-  fs__namespace$1["default"].copySync(integrationsSass, sassFolder);
-  fs__namespace$1["default"].copySync(integrationTemplates, templatesFolder);
-  const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
-  await zipTokens('exported', stream);
-  const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
-  if (hookReturn) {
-    fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, hookReturn.filename), hookReturn.data);
-  }
-}
-
-/**
- * Zip the fonts for download
- * @param dirPath
- * @param destination
- * @returns
- */
-const zipTokens = async (dirPath, destination) => {
-  let archive = archiver__default["default"]('zip', {
-    zlib: {
-      level: 9
-    } // Sets the compression level.
-  });
-
-  // good practice to catch this error explicitly
-  archive.on('error', function (err) {
-    throw err;
-  });
-  archive.pipe(destination);
-  const directory = await fs__namespace$1["default"].readdir(dirPath);
-  archive = await addFileToZip(directory, dirPath, archive);
-  await archive.finalize();
-  return destination;
-};
-
-/**
- * A recusrive function for building a zip of the tokens
- * @param directory
- * @param dirPath
- * @param archive
- * @returns
- */
-const addFileToZip = async (directory, dirPath, archive) => {
-  for (const file of directory) {
-    const pathFile = path__default["default"].join(dirPath, file);
-    if (fs__namespace$1["default"].lstatSync(pathFile).isDirectory()) {
-      const recurse = await fs__namespace$1["default"].readdir(pathFile);
-      archive = await addFileToZip(recurse, pathFile, archive);
-    } else {
-      const data = fs__namespace$1["default"].readFileSync(pathFile, 'utf-8');
-      archive.append(data, {
-        name: pathFile
-      });
-    }
-  }
-  return archive;
 };
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';

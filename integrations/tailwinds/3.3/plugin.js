@@ -6,7 +6,9 @@ var postScssTransformer = (documentationObject, scss) => {};
 var postExtract = (documentationObject) => {};
 var postPreview = (documentationObject) => {};
 var postBuild = (documentationObject) => {};
-
+var modifyWebpackConfig = (webpackConfig) => {
+  return webpackConfig;
+};
 const extend = {
   colors: {},
   fontSize: {},

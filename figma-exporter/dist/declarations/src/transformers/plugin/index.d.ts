@@ -1,5 +1,6 @@
 import { DocumentationObject } from '../../types';
 import { CssTransformerOutput } from '../css';
+import webpack from 'webpack';
 /**
  * This is the plugin transformer.  It will attempt to read the plugin folder
  * in the selected integration and then expose a set of hooks that will be
@@ -15,6 +16,7 @@ export interface PluginTransformer {
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
     postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
+    modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     postPreview: (documentationObject: DocumentationObject) => void;
     postBuild: (documentationObject: DocumentationObject) => void;
 }
