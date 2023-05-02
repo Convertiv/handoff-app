@@ -3,6 +3,7 @@ import * as vm from 'vm';
 import { DocumentationObject } from '../../types';
 import { CssTransformerOutput } from '../css';
 import { getPathToIntegration } from '../integration';
+import webpack from 'webpack';
 
 /**
  * This is the plugin transformer.  It will attempt to read the plugin folder
@@ -20,6 +21,7 @@ export interface PluginTransformer {
   postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
   postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
   postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
+  modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
   postPreview: (documentationObject: DocumentationObject) => void;
   postBuild: (documentationObject: DocumentationObject) => void;
 }
@@ -43,6 +45,9 @@ export const genericPluginGenerator = (): PluginTransformer => {
     postExtract: (documentationObject: DocumentationObject): void => {},
     postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
     postPreview: (documentationObject: DocumentationObject): void => {},
+    modifyWebpackConfig(webpackConfig) {
+      return webpackConfig;
+    },
     postBuild: (documentationObject: DocumentationObject): void => {},
   };
 };
