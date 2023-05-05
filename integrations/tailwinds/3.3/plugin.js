@@ -7,6 +7,13 @@ var postExtract = (documentationObject) => {};
 var postPreview = (documentationObject) => {};
 var postBuild = (documentationObject) => {};
 var modifyWebpackConfig = (webpackConfig) => {
+  webpackConfig.module.rules = [
+    {
+      test: /\.css$/i,
+      include: '/Users/bradleymering/Documents/Clients/convertiv/handoff/handoff-app/templates',
+      use: ['style-loader', 'css-loader'],
+    },
+  ];
   return webpackConfig;
 };
 const extend = {
@@ -38,6 +45,6 @@ var postIntegration = (documentationObject) => {
   const data = `module.exports = ${JSON.stringify(extend, null, 2)};`;
   return {
     filename: 'tailwind.config.js',
-    data
+    data,
   };
 };

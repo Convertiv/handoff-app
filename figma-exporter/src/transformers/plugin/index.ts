@@ -46,6 +46,7 @@ export const genericPluginGenerator = (): PluginTransformer => {
     postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
     postPreview: (documentationObject: DocumentationObject): void => {},
     modifyWebpackConfig(webpackConfig) {
+      console.log('generic modifyWebpackConfig');
       return webpackConfig;
     },
     postBuild: (documentationObject: DocumentationObject): void => {},
@@ -62,10 +63,16 @@ export const pluginTransformer = async (): Promise<PluginTransformer> => {
   let generic = genericPluginGenerator();
   const pluginPath = getPathToIntegration() + '/plugin.js';
   let plugin = generic;
+
   if (fs.existsSync(pluginPath)) {
+    console.log(pluginPath);
     const custom = await evaluatePlugin(pluginPath)
       .then((globalVariables) => globalVariables)
-      .catch((err) => generic);
+      .catch((err) => {
+        console.error(err);
+        return generic;
+      });
+    custom.init();
     plugin = { ...generic, ...custom };
   }
   return plugin;

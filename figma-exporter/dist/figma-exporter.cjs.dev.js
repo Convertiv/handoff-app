@@ -5337,6 +5337,7 @@ const genericPluginGenerator = () => {
     postIntegration: documentationObject => {},
     postPreview: documentationObject => {},
     modifyWebpackConfig(webpackConfig) {
+      console.log('generic modifyWebpackConfig');
       return webpackConfig;
     },
     postBuild: documentationObject => {}
@@ -5354,7 +5355,12 @@ const pluginTransformer = async () => {
   const pluginPath = getPathToIntegration() + '/plugin.js';
   let plugin = generic;
   if (fs__namespace.existsSync(pluginPath)) {
-    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => generic);
+    console.log(pluginPath);
+    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => {
+      console.error(err);
+      return generic;
+    });
+    custom.init();
     plugin = {
       ...generic,
       ...custom
