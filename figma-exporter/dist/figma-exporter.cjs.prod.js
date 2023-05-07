@@ -12,7 +12,7 @@ var nodeHtmlParser = require('node-html-parser');
 var webpack = require('webpack');
 var chalk = require('chalk');
 var fs$1 = require('fs');
-var vm = require('vm');
+var vm2 = require('vm2');
 var archiver = require('archiver');
 var sortedUniq = require('lodash/sortedUniq');
 require('lodash/isEqual');
@@ -47,7 +47,6 @@ var Mustache__default = /*#__PURE__*/_interopDefault(Mustache);
 var webpack__default = /*#__PURE__*/_interopDefault(webpack);
 var chalk__default = /*#__PURE__*/_interopDefault(chalk);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs$1);
-var vm__namespace = /*#__PURE__*/_interopNamespace(vm);
 var archiver__default = /*#__PURE__*/_interopDefault(archiver);
 var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
 
@@ -5360,7 +5359,6 @@ const pluginTransformer = async () => {
       console.error(err);
       return generic;
     });
-    custom.init();
     plugin = {
       ...generic,
       ...custom
@@ -5381,14 +5379,21 @@ async function evaluatePlugin(file) {
         reject(err);
         return;
       }
-      const context = {
-        console: console
-      };
-      const script = new vm__namespace.Script(data);
-      const sandbox = vm__namespace.createContext(context);
+      const sandbox = {};
+      const vm = new vm2.NodeVM({
+        console: 'inherit',
+        sandbox: {
+          sandbox
+        },
+        require: {
+          external: true,
+          builtin: ['fs', 'path'],
+          root: './'
+        }
+      });
       try {
-        script.runInContext(sandbox);
-        resolve(sandbox);
+        vm.run(data, file);
+        resolve(sandbox.exports);
       } catch (e) {
         reject(e);
       }

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as vm from 'vm';
+import { NodeVM } from 'vm2';
 import { DocumentationObject } from '../../types';
 import { CssTransformerOutput } from '../css';
 import { getPathToIntegration } from '../integration';
@@ -72,7 +72,6 @@ export const pluginTransformer = async (): Promise<PluginTransformer> => {
         console.error(err);
         return generic;
       });
-    custom.init();
     plugin = { ...generic, ...custom };
   }
   return plugin;
@@ -90,12 +89,19 @@ async function evaluatePlugin(file: string): Promise<PluginTransformer> {
         reject(err);
         return;
       }
-      const context: { [key: string]: any } = { console: console };
-      const script = new vm.Script(data);
-      const sandbox = vm.createContext(context);
+      const sandbox: {exports?: PluginTransformer} = {};
+      const vm = new NodeVM({
+        console: 'inherit',
+        sandbox: { sandbox },
+        require: {
+          external: true,
+          builtin: ['fs', 'path'],
+          root: './',
+        },
+      });
       try {
-        script.runInContext(sandbox);
-        resolve(sandbox as unknown as PluginTransformer);
+        vm.run(data, file);
+        resolve(sandbox.exports as unknown as PluginTransformer);
       } catch (e) {
         reject(e);
       }
