@@ -1,4 +1,6 @@
 var path = require('path');
+const tailwindcss = require('tailwindcss');
+
 sandbox.exports = {
   init: () => {
     console.log('initialize hook in tailwind plugin');
@@ -11,9 +13,30 @@ sandbox.exports = {
   modifyWebpackConfig: (webpackConfig) => {
     webpackConfig.module.rules = [
       {
-        test: /\.css$/i,
+        test: /\.js$/i,
         include: path.resolve(__dirname, 'templates'),
-        use: ['style-loader', 'css-loader'],
+        use: { 
+          loader: 'babel-loader', 
+          options: { 
+            presets: ['@babel/preset-env'] } },
+      },
+      {
+        test: /\.(sa|sc|c)ss$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  tailwindcss(path.resolve(__dirname, '../../../exported/tailwinds-tokens/tailwind.config.js')),
+                  require('autoprefixer'),
+                ],
+              },
+            },
+          },
+        ],
       },
     ];
     return webpackConfig;
@@ -44,7 +67,14 @@ sandbox.exports = {
       extend.fontWeight[type.machine_name] = type.values.fontWeight;
       extend.letterSpacing[type.machine_name] = `${type.values.letterSpacing}px`;
     });
-    const data = `module.exports = ${JSON.stringify(extend, null, 2)};`;
+    console.log(path.resolve(__dirname, './**/*.{html,js}'));
+    const defaults = {
+      content: [
+        path.resolve(__dirname, './**/*.{html,js}'),
+      ],
+      extend,
+    }
+    const data = `/** @type {import('tailwindcss').Config} */ \n module.exports = ${JSON.stringify(defaults, null, 2)};`;
     return {
       filename: 'tailwind.config.js',
       data,

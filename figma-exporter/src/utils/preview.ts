@@ -3,6 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 import { pluginTransformer } from '../transformers/plugin';
 
+
 export const buildClientFiles = async (): Promise<string> => {
   const plugin = await pluginTransformer();
   return new Promise((resolve, reject) => {
@@ -37,11 +38,11 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
     };
-    config = plugin.modifyWebpackConfig(config);
-    const compile = webpack(config);
+    const newConfig = plugin.modifyWebpackConfig(config);
+    const compile = webpack(newConfig);
     compile.run((err, stats) => {
       if (err) {
-        let error = "Errors encountered trying to build preview styles.\n";
+        let error = 'Errors encountered trying to build preview styles.\n';
         if (process.argv.indexOf('--debug') > 0) {
           error += err.stack || err;
         }
@@ -51,7 +52,7 @@ export const buildClientFiles = async (): Promise<string> => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map((err) => err.message);
-          let error = "Errors encountered trying to build preview styles.\n";
+          let error = 'Errors encountered trying to build preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildErrors;
           }
@@ -60,14 +61,14 @@ export const buildClientFiles = async (): Promise<string> => {
 
         if (stats.hasWarnings()) {
           let buildWarnings = stats.compilation.warnings?.map((err) => err.message);
-          let error = "Warnings encountered when building preview styles.\n";
+          let error = 'Warnings encountered when building preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildWarnings;
             console.error(chalk.yellow(error));
           }
         }
       }
-      return resolve("Preview template styles built");
+      return resolve('Preview template styles built');
     });
   });
 };

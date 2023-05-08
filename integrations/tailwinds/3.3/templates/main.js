@@ -1,2 +1,2 @@
 // bootstrap css
-import './main.css';
+import css from './main.css';

@@ -5335,8 +5335,7 @@ const genericPluginGenerator = () => {
     postExtract: documentationObject => {},
     postIntegration: documentationObject => {},
     postPreview: documentationObject => {},
-    modifyWebpackConfig(webpackConfig) {
-      console.log('generic modifyWebpackConfig');
+    modifyWebpackConfig: webpackConfig => {
       return webpackConfig;
     },
     postBuild: documentationObject => {}
@@ -5427,11 +5426,11 @@ const buildClientFiles = async () => {
         }]
       }
     };
-    config = plugin.modifyWebpackConfig(config);
-    const compile = webpack__default["default"](config);
+    const newConfig = plugin.modifyWebpackConfig(config);
+    const compile = webpack__default["default"](newConfig);
     compile.run((err, stats) => {
       if (err) {
-        let error = "Errors encountered trying to build preview styles.\n";
+        let error = 'Errors encountered trying to build preview styles.\n';
         if (process.argv.indexOf('--debug') > 0) {
           error += err.stack || err;
         }
@@ -5440,7 +5439,7 @@ const buildClientFiles = async () => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map(err => err.message);
-          let error = "Errors encountered trying to build preview styles.\n";
+          let error = 'Errors encountered trying to build preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildErrors;
           }
@@ -5448,14 +5447,14 @@ const buildClientFiles = async () => {
         }
         if (stats.hasWarnings()) {
           let buildWarnings = stats.compilation.warnings?.map(err => err.message);
-          let error = "Warnings encountered when building preview styles.\n";
+          let error = 'Warnings encountered when building preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildWarnings;
             console.error(chalk__default["default"].yellow(error));
           }
         }
       }
-      return resolve("Preview template styles built");
+      return resolve('Preview template styles built');
     });
   });
 };

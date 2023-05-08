@@ -45,8 +45,7 @@ export const genericPluginGenerator = (): PluginTransformer => {
     postExtract: (documentationObject: DocumentationObject): void => {},
     postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
     postPreview: (documentationObject: DocumentationObject): void => {},
-    modifyWebpackConfig(webpackConfig) {
-      console.log('generic modifyWebpackConfig');
+    modifyWebpackConfig: (webpackConfig): webpack.Configuration => {
       return webpackConfig;
     },
     postBuild: (documentationObject: DocumentationObject): void => {},
