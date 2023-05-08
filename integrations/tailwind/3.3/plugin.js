@@ -30,7 +30,7 @@ sandbox.exports = {
             options: {
               postcssOptions: {
                 plugins: [
-                  tailwindcss(path.resolve(__dirname, '../../../exported/tailwinds-tokens/tailwind.config.js')),
+                  tailwindcss(path.resolve(__dirname, '../../../exported/tailwind-tokens/tailwind.config.js')),
                   require('autoprefixer'),
                 ],
               },

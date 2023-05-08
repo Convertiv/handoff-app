@@ -3,7 +3,7 @@ module.exports = {
   client: 'Convertiv',
   google_tag_manager: null,
   integration: {
-    name: 'tailwinds',
+    name: 'tailwind',
     version: '3.3',
   },
   favicon: '/favicon.ico',
