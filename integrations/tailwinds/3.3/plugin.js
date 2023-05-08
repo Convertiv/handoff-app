@@ -67,7 +67,6 @@ sandbox.exports = {
       extend.fontWeight[type.machine_name] = type.values.fontWeight;
       extend.letterSpacing[type.machine_name] = `${type.values.letterSpacing}px`;
     });
-    console.log(path.resolve(__dirname, './**/*.{html,js}'));
     const defaults = {
       content: [
         path.resolve(__dirname, './**/*.{html,js}'),
