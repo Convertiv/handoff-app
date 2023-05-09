@@ -7,6 +7,7 @@ var chalk = require('chalk');
 var uniq = require('lodash/uniq');
 var lodash = require('lodash');
 var path = require('path');
+var fs = require('fs-extra');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { 'default': e }; }
 
@@ -16,6 +17,7 @@ var archiver__default = /*#__PURE__*/_interopDefault(archiver);
 var chalk__default = /*#__PURE__*/_interopDefault(chalk);
 var uniq__default = /*#__PURE__*/_interopDefault(uniq);
 var path__default = /*#__PURE__*/_interopDefault(path);
+var fs__default = /*#__PURE__*/_interopDefault(fs);
 
 const figmaRestApi = axios__default["default"].create({
   baseURL: process.env.FIGMA_BASE_URL || 'https://api.figma.com/v1/'
@@ -1686,16 +1688,25 @@ function extractModalComponents(modalComponents) {
 const getFetchConfig = () => {
   let config;
   try {
-    config = require(path__default["default"].resolve(__dirname, '../../client-config'));
+    config = evaluateConfig(path__default["default"].resolve(__dirname, '../../client-config.js'));
   } catch (e) {
     config = {};
   }
-
   // Check to see if there is a config in the root of the project
   const parsed = {
     ...config
   };
   return parsed;
+};
+
+/**
+ * Parse the config file
+ * @param configPath 
+ * @returns 
+ */
+const evaluateConfig = configPath => {
+  const configRaw = fs__default["default"].readFileSync(configPath, 'utf8');
+  return eval(configRaw);
 };
 
 /**

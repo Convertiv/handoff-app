@@ -1,5 +1,5 @@
 import path from 'path';
-
+import fs from 'fs-extra';
 export interface ComponentSizeMap {
   figma: string;
   css: string;
@@ -12,15 +12,24 @@ export interface ComponentSizeMap {
 export const getFetchConfig = () => {
   let config;
   try {
-    config = require(path.resolve(__dirname, '../../client-config'));
+    config = evaluateConfig(path.resolve(__dirname, '../../client-config.js'));
   } catch (e) {
     config = {};
   }
-
   // Check to see if there is a config in the root of the project
   const parsed = { ...config };
 
   return parsed;
+};
+
+/**
+ * Parse the config file
+ * @param configPath 
+ * @returns 
+ */
+export const evaluateConfig = (configPath: string) => {
+  const configRaw = fs.readFileSync(configPath, 'utf8');
+  return eval(configRaw);
 };
 
 /**
@@ -29,7 +38,6 @@ export const getFetchConfig = () => {
  * @returns
  */
 export const mapComponentSize = (figma: string, component?: string): string => {
-
   const config = getFetchConfig();
   if (component) {
     if (config.figma.components[component]?.size) {
