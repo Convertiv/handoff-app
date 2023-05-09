@@ -23,6 +23,7 @@ export interface PluginTransformer {
   postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
   modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
   postPreview: (documentationObject: DocumentationObject) => void;
+  postFont: (documentationObject: DocumentationObject, customFonts: string[]) => void;
   postBuild: (documentationObject: DocumentationObject) => void;
 }
 
@@ -44,7 +45,8 @@ export const genericPluginGenerator = (): PluginTransformer => {
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => {},
     postExtract: (documentationObject: DocumentationObject): void => {},
     postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
-    postPreview: (documentationObject: DocumentationObject): void => {},
+    postPreview: (documentationObject: DocumentationObject): void => { },
+    postFont: (documentationObject: DocumentationObject, customFonts: string[]): void => { },
     modifyWebpackConfig: (webpackConfig): webpack.Configuration => {
       return webpackConfig;
     },

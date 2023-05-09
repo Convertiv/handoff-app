@@ -18,6 +18,7 @@ export interface PluginTransformer {
     postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
     modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     postPreview: (documentationObject: DocumentationObject) => void;
+    postFont: (documentationObject: DocumentationObject, customFonts: string[]) => void;
     postBuild: (documentationObject: DocumentationObject) => void;
 }
 export interface HookReturn {

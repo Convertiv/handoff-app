@@ -91,6 +91,7 @@
     "rehype-raw": "^6.1.1",
     "sass": "^1.56.2",
     "sass-loader": "^13.2.0",
+    "style-loader": "^3.3.2",
     "stylelint": "^14.12.1",
     "stylelint-scss": "^4.3.0",
     "svg-sprite": "^2.0.2",
