@@ -10,11 +10,6 @@ import webpack from 'webpack';
  * in the selected integration and then expose a set of hooks that will be
  * fired by the figma-exporter pipeline.
  */
-
-/**
- * The plugin transformer interface describing what a plugin function set should
- * be. Each function will be called at a different point in the pipeline.
- */
 export interface PluginTransformer {
   init: () => void;
   postExtract: (documentationObject: DocumentationObject) => void;
@@ -38,18 +33,27 @@ export interface HookReturn {
  */
 export const genericPluginGenerator = (): PluginTransformer => {
   return {
+    // Initializes the plugin
     init: (): void => {
       console.log('init generic');
     },
+    // Transforms postcss
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => {},
+    // Transforms scss
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => {},
+    // Extracts data
     postExtract: (documentationObject: DocumentationObject): void => {},
+    // Integrates data
     postIntegration: (documentationObject: DocumentationObject): HookReturn | void => {},
+    // Builds the preview
     postPreview: (documentationObject: DocumentationObject): void => { },
+    // Adds custom fonts
     postFont: (documentationObject: DocumentationObject, customFonts: string[]): void => { },
+    // Modifies webpack config
     modifyWebpackConfig: (webpackConfig): webpack.Configuration => {
       return webpackConfig;
     },
+    // Builds the documentation
     postBuild: (documentationObject: DocumentationObject): void => {},
   };
 };
@@ -61,25 +65,37 @@ export const genericPluginGenerator = (): PluginTransformer => {
  * @returns
  */
 export const pluginTransformer = async (): Promise<PluginTransformer> => {
+  // Generic plugin that can be used as fallback
   let generic = genericPluginGenerator();
+
+  // Path where the custom plugin is located
   const pluginPath = getPathToIntegration() + '/plugin.js';
+
+  // Default plugin
   let plugin = generic;
 
+  // Check if the custom plugin exists
   if (fs.existsSync(pluginPath)) {
-    console.log(pluginPath);
+
+    // Evaluate and load the plugin
     const custom = await evaluatePlugin(pluginPath)
       .then((globalVariables) => globalVariables)
       .catch((err) => {
         console.error(err);
         return generic;
       });
+
+    // Merge the generic plugin and the custom plugin
     plugin = { ...generic, ...custom };
   }
+
+  // Return the plugin
   return plugin;
 };
 
 /**
- * Attempts to read a plugin file and then evaluate it in a sandboxed context
+ * Attempts to read a plugin file and then evaluate it in a sandboxed context.
+ * This is not a secure sandbox, and should not be used to run untrusted code.
  * @param file
  * @returns
  */
@@ -90,6 +106,7 @@ async function evaluatePlugin(file: string): Promise<PluginTransformer> {
         reject(err);
         return;
       }
+      // The sandbox is a place to run the plugin's code.
       const sandbox: {exports?: PluginTransformer} = {};
       const vm = new NodeVM({
         console: 'inherit',
@@ -101,7 +118,9 @@ async function evaluatePlugin(file: string): Promise<PluginTransformer> {
         },
       });
       try {
+        // Run the plugin's code in the sandbox.
         vm.run(data, file);
+        // The plugin must export a function called "transform".
         resolve(sandbox.exports as unknown as PluginTransformer);
       } catch (e) {
         reject(e);

@@ -5327,18 +5327,27 @@ const addFileToZip = async (directory, dirPath, archive) => {
  */
 const genericPluginGenerator = () => {
   return {
+    // Initializes the plugin
     init: () => {
       console.log('init generic');
     },
+    // Transforms postcss
     postCssTransformer: (documentationObject, css) => {},
+    // Transforms scss
     postScssTransformer: (documentationObject, scss) => {},
+    // Extracts data
     postExtract: documentationObject => {},
+    // Integrates data
     postIntegration: documentationObject => {},
+    // Builds the preview
     postPreview: documentationObject => {},
+    // Adds custom fonts
     postFont: (documentationObject, customFonts) => {},
+    // Modifies webpack config
     modifyWebpackConfig: webpackConfig => {
       return webpackConfig;
     },
+    // Builds the documentation
     postBuild: documentationObject => {}
   };
 };
@@ -5350,25 +5359,37 @@ const genericPluginGenerator = () => {
  * @returns
  */
 const pluginTransformer = async () => {
+  // Generic plugin that can be used as fallback
   let generic = genericPluginGenerator();
+
+  // Path where the custom plugin is located
   const pluginPath = getPathToIntegration() + '/plugin.js';
+
+  // Default plugin
   let plugin = generic;
+
+  // Check if the custom plugin exists
   if (fs__namespace.existsSync(pluginPath)) {
-    console.log(pluginPath);
+    // Evaluate and load the plugin
     const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => {
       console.error(err);
       return generic;
     });
+
+    // Merge the generic plugin and the custom plugin
     plugin = {
       ...generic,
       ...custom
     };
   }
+
+  // Return the plugin
   return plugin;
 };
 
 /**
- * Attempts to read a plugin file and then evaluate it in a sandboxed context
+ * Attempts to read a plugin file and then evaluate it in a sandboxed context.
+ * This is not a secure sandbox, and should not be used to run untrusted code.
  * @param file
  * @returns
  */
@@ -5379,6 +5400,7 @@ async function evaluatePlugin(file) {
         reject(err);
         return;
       }
+      // The sandbox is a place to run the plugin's code.
       const sandbox = {};
       const vm = new vm2.NodeVM({
         console: 'inherit',
@@ -5392,7 +5414,9 @@ async function evaluatePlugin(file) {
         }
       });
       try {
+        // Run the plugin's code in the sandbox.
         vm.run(data, file);
+        // The plugin must export a function called "transform".
         resolve(sandbox.exports);
       } catch (e) {
         reject(e);
