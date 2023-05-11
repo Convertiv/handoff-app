@@ -12,24 +12,15 @@ export interface ComponentSizeMap {
 export const getFetchConfig = () => {
   let config;
   try {
-    config = evaluateConfig(path.resolve(__dirname, '../../client-config.js'));
+    config = require(path.resolve(__dirname, '../../client-config'));
   } catch (e) {
     config = {};
   }
+
   // Check to see if there is a config in the root of the project
   const parsed = { ...config };
 
   return parsed;
-};
-
-/**
- * Parse the config file
- * @param configPath 
- * @returns 
- */
-export const evaluateConfig = (configPath: string) => {
-  const configRaw = fs.readFileSync(configPath, 'utf8');
-  return eval(configRaw);
 };
 
 /**

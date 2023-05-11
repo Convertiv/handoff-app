@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-4fa8d631.cjs.dev.js');
+var documentationObject = require('./documentation-object-016e3a9f.cjs.dev.js');
 var capitalize = require('lodash/capitalize');
 var lodash = require('lodash');
 var Mustache = require('mustache');
