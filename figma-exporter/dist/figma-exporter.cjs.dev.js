@@ -5261,7 +5261,9 @@ async function integrationTransformer(documentationObject) {
   await zipTokens('exported', stream);
   const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
   if (hookReturn) {
-    fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, hookReturn.filename), hookReturn.data);
+    hookReturn.map(file => {
+      fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, file.filename), file.data);
+    });
   }
 }
 

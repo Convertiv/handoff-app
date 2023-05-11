@@ -15,7 +15,7 @@ export interface PluginTransformer {
     postExtract: (documentationObject: DocumentationObject) => void;
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
-    postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
+    postIntegration: (documentationObject: DocumentationObject) => HookReturn[] | void;
     modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     postPreview: (documentationObject: DocumentationObject) => void;
     postFont: (documentationObject: DocumentationObject, customFonts: string[]) => void;
