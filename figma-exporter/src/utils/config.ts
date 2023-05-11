@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs-extra';
 export interface ComponentSizeMap {
   figma: string;
   css: string;
