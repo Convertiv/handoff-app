@@ -57,10 +57,3 @@ export declare const getSizesFromComponents: (components: AbstractComponent[]) =
  * @returns
  */
 export declare const cssEditWarning: () => string;
-/**
- * Generate a CSS comment block at the top of each record
- * @param type
- * @param component
- * @returns
- */
-export declare const cssCodeBlockComment: (type: string, component: AbstractComponent) => string;

@@ -84,3 +84,39 @@ export declare type PreviewJson = {
         [key in keyof DocumentComponentsObject]: PreviewObject[];
     };
 };
+export declare type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE";
+export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT";
+export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
+export interface ExportableDefinition {
+    id: string;
+    options: ExportableOptions;
+    parts: ExportableParts;
+}
+interface ExportableOptions {
+    exporter: ExportableExporterOptions;
+    demo: ExportableDemoOptions;
+}
+interface ExportableExporterOptions {
+    search: string;
+    rootCssClass: string;
+    supportedVariantProps: VariantProperty[];
+}
+interface ExportableDemoOptions {
+    tabs: {
+        [tab: string]: {
+            [componentType: string]: ExportableDefinitionPageFilter;
+        };
+    };
+}
+export interface ExportablePart {
+    id: string;
+    tokens: {
+        from: string;
+        export: Exportable[];
+    }[];
+}
+export declare type ExportableParts = ExportablePart[];
+interface ExportableDefinitionPageFilter {
+    [property: string]: string | string[];
+}
+export {};

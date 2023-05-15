@@ -1,8 +1,11 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
 import { filter } from 'domutils';
+import { Component } from 'figma-exporter/src/exporters/components/extractor';
+import { ExportableDefinition } from 'figma-exporter/src/types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
+import { startCase } from 'lodash';
 import { SubPageType } from 'pages/[level1]/[level2]';
 import path, { dirname } from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -48,6 +51,9 @@ export interface ComponentDocumentationProps extends DocumentationProps {
   css: string;
   types: string;
   componentFound: boolean;
+
+  component: string;
+  exportable: ExportableDefinition;
 }
 
 export interface FoundationDocumentationProps extends DocumentationProps {
@@ -265,13 +271,36 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   return {
     props: {
       ...fetchDocPageMarkdown(path, slug, id).props,
-      componentFound: slug ? componentExists(pluralizeComponent(slug), undefined) : false,
-      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
-      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
-      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
+      // componentFound: slug ? componentExists(slug, undefined) : false,
+      scss: slug ? fetchTokensString(slug, 'scss') : '',
+      css: slug ? fetchTokensString(slug, 'css') : '',
+      types: slug ? fetchTokensString(slug, 'types') : '',
     },
   };
 };
+
+/**
+ * Fetch exportables id's from the JSON files in the exportables directory
+ * @returns {string[]}
+ */
+export const fetchExportablesIds = () => {
+  const exportables = (fs.readdirSync('exportables/')).filter(file => path.extname(file) === '.json');
+
+  if (exportables) {
+    return exportables.map(exportable => {
+      const dataStr = (fs.readFileSync(path.join('exportables/', exportable))).toString();
+      const dataObj = JSON.parse(dataStr) as ExportableDefinition;
+      return dataObj.id;
+    })
+  }
+
+  return [];
+}
+
+export const fetchExportable = (name: string) => {
+  const data = fs.readFileSync(`exportables/${name}.json`, 'utf-8');
+  return JSON.parse(data.toString()) as ExportableDefinition;
+}
 
 /**
  * Fetch Component Doc Page Markdown

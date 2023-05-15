@@ -2,7 +2,7 @@ import * as FigmaTypes from '../figma/types';
 import { capitalize } from 'lodash';
 import { filterOutUndefined } from '../utils';
 import { GradientObject, PositionObject, StopObject } from '../types';
-import { isShadowEffectType, isValidGradientType } from '../exporters/components/utils';
+import { isShadowEffectType, isValidGradientType } from '../exporters/utils';
 import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
 
 export const getScssVariableName = <

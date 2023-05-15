@@ -1,0 +1,33 @@
+{
+  "id": "button",
+  "options": {
+    "exporter": {
+      "search": "Button", 
+      "rootCssClass": "btn",
+      "supportedVariantProps": ["THEME", "TYPE", "STATE(:hover:disabled)", "SIZE"]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": { "state": "default" },
+          "layout": {}
+        },
+        "designTokens" : {
+          "design": { "state": "default" }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [{
+        "from": "$",
+        "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
+      }, {
+        "from": "TEXT",
+        "export": ["TYPOGRAPHY", "FILL"]
+      }]
+    }
+  ]
+}

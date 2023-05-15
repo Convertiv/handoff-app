@@ -3,7 +3,7 @@ import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
 
-import { DocumentationObject } from './types';
+import { DocumentationObject, ExportableDefinition } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
@@ -17,6 +17,7 @@ import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
+const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
 const previewFilePath = path.join(outputFolder, 'preview.json');
 const changelogFilePath = path.join(outputFolder, 'changelog.json');
@@ -49,6 +50,25 @@ const readConfigFile = async (path: string) => {
     return undefined;
   }
 };
+
+const getExportables = async () => {
+  try {
+    const exportables = (await fs.readdir(exportablesFolder)).filter(file => path.extname(file) === '.json');
+
+    if (!exportables || exportables.length === 0) {
+      return [];
+    }
+
+    const result = exportables.map(exportable => {
+      const data = fs.readFileSync(path.join(exportablesFolder, exportable));
+      return JSON.parse(data.toString()) as ExportableDefinition;
+    });
+    
+    return result;
+  } catch (e) {
+    return [];
+  }
+}
 
 /**
  * Build just the custom fonts
@@ -150,7 +170,8 @@ const entirePipeline = async () => {
 
   await fs.emptyDir(outputFolder);
 
-  const documentationObject = await createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN);
+  const exportables = await getExportables();
+  const documentationObject = await createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN, exportables);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
 
   if (changelogRecord) {
