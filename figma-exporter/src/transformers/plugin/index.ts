@@ -10,11 +10,6 @@ import webpack from 'webpack';
  * in the selected integration and then expose a set of hooks that will be
  * fired by the figma-exporter pipeline.
  */
-
-/**
- * The plugin transformer interface describing what a plugin function set should
- * be. Each function will be called at a different point in the pipeline.
- */
 export interface PluginTransformer {
   init: () => void;
   postExtract: (documentationObject: DocumentationObject) => void;

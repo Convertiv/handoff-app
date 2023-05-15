@@ -1,2 +1,2 @@
-// bootstrap css
-import css from './main.css';
+// tailwind css
+import './main.css';
