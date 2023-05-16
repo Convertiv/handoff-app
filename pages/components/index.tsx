@@ -87,7 +87,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components }: Compon
                     const component = components[componentId];
                     return (
                       <ComponentsPageCard
-                        key={`component-${component}`}
+                        key={`component-${componentId}`}
                         component={componentId}
                         title={components[componentId].title ?? componentId}
                         description={components[componentId].description}
