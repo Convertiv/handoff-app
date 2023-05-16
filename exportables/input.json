@@ -1,5 +1,6 @@
 {
   "id": "input",
+  "group": "Forms",
   "options": {
     "exporter": {
       "search": "Input", 

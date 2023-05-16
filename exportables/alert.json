@@ -1,5 +1,6 @@
 {
   "id": "alert",
+  "group": "Components",
   "options": {
     "exporter": {
       "search": "Alert", 

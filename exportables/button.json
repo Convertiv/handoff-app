@@ -1,5 +1,6 @@
 {
   "id": "button",
+  "group": "Components",
   "options": {
     "exporter": {
       "search": "Button", 

@@ -1,5 +1,6 @@
 {
   "id": "modal",
+  "group": "Components",
   "options": {
     "exporter": {
       "search": "Modal", 
