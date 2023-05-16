@@ -233,7 +233,6 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({
     <>
       {components.map(previewableComponent => {
         const component = previewableComponent.component;
-        console.log(component);
         return (
           <div key={`${component.id}`} id={component.id}>
             <h4>{getComponentPreviewTitle(component)}</h4>
