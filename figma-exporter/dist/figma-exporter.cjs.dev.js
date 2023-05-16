@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-7d6355b0.cjs.dev.js');
+var documentationObject = require('./documentation-object-5b375f3c.cjs.dev.js');
 var _ = require('lodash');
 var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
@@ -1269,6 +1269,87 @@ const addFileToZip = async (directory, dirPath, archive) => {
   return archive;
 };
 
+const template = {
+  id: '',
+  options: {
+    exporter: {
+      search: '',
+      rootCssClass: '',
+      supportedVariantProps: []
+    },
+    demo: {
+      tabs: {
+        overview: {
+          design: {},
+          layout: {}
+        },
+        designTokens: {
+          design: {}
+        }
+      }
+    }
+  },
+  parts: []
+};
+const scanComponentSets = async (figmaFileKey, figmaAccessToken) => {
+  let fileComponentSetsRes;
+  try {
+    fileComponentSetsRes = await documentationObject.getComponentSets(figmaFileKey, figmaAccessToken);
+  } catch (err) {
+    throw new Error('Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide');
+  }
+  const componentSets = fileComponentSetsRes.data.meta.component_sets.map(componentSet => componentSet.name);
+  console.log(componentSets);
+  if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
+    console.error(chalk__default["default"].red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
+    console.log(chalk__default["default"].blue('Continuing fetch with only colors and typography design foundations'));
+    return false;
+  }
+  const componentSetsNodesRes = await documentationObject.getComponentSetNodes(figmaFileKey, fileComponentSetsRes.data.meta.component_sets.map(item => item.node_id), figmaAccessToken);
+  // Find something
+  const search = 'Button';
+  const find = Object.values(componentSetsNodesRes.data.nodes).filter(node => node?.document.name === search).map(node => node?.document).filter(documentationObject.filterByNodeType('COMPONENT_SET'));
+  console.log(chalk__default["default"].blue(`Found ${find.length} set(s) of ${search}`));
+  // Get all the instances of the component
+  const structure = {
+    ...template
+  };
+  find.forEach(node => {
+    const instances = node.children.map(child => child);
+    const names = instances.map(child => child.name);
+    console.log(chalk__default["default"].blue(`Found ${instances.length} instances of ${node.name}`));
+    console.log(chalk__default["default"].blue(`Attempting to derive structure from instances`));
+    // Start by defining the structure from the instance names
+    const variantProps = parseComponentSupportVarientProperties(names);
+    console.log(chalk__default["default"].blue(`Found ${variantProps.length} variant properties`), variantProps);
+    structure.options.exporter.supportedVariantProps = variantProps;
+  });
+  return true;
+};
+
+/**
+ * This is the inverse of the `getComponentSupportedVariantProperties` since it
+ * takes a string value and generates the possible variants and param
+ * @param definition
+ * @returns
+ */
+function parseComponentSupportVarientProperties(names) {
+  const variants = [];
+  (names ?? []).map(name => {
+    const regex = new RegExp('([^=|^,|^\\W]+)=([^,|^\\W]+)', 'gm');
+    let m;
+    while ((m = regex.exec(name)) !== null) {
+      if (m.index === regex.lastIndex) {
+        regex.lastIndex++;
+      }
+      const variant = m[1].toUpperCase();
+      m[2];
+      variants.push(variant);
+    }
+  });
+  return [...new Set(variants)];
+}
+
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
 const tokensFilePath = path__default["default"].join(outputFolder, 'tokens.json');
@@ -1350,6 +1431,21 @@ const buildStyles = async documentationObject => {
   const scssFiles = scssTransformer(documentationObject);
   await Promise.all([fs__namespace.ensureDir(variablesFilePath).then(() => fs__namespace.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
 };
+const lintFigmaFile = async () => {
+  const DEV_ACCESS_TOKEN = process.env.DEV_ACCESS_TOKEN;
+  const FIGMA_PROJECT_ID = process.env.FIGMA_PROJECT_ID;
+  // TODO: rename to something more meaningful
+  if (!DEV_ACCESS_TOKEN) {
+    throw new Error('Missing "DEV_ACCESS_TOKEN" env variable.');
+  }
+
+  // TODO: rename to something more meaningful
+  if (!FIGMA_PROJECT_ID) {
+    throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
+  }
+  await scanComponentSets(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN);
+};
+
 /**
  * Run the entire pipeline
  */
@@ -1425,6 +1521,8 @@ const entirePipeline = async () => {
         } else {
           throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
         }
+      } else if (process.argv.indexOf('lint') > 0) {
+        lintFigmaFile();
       }
     }
   } catch (error) {

@@ -1191,9 +1191,12 @@ const createDocumentationObject = async (figmaFileKey, figmaAccessToken, exporta
 };
 
 exports.createDocumentationObject = createDocumentationObject;
+exports.filterByNodeType = filterByNodeType;
 exports.filterOutNull = filterOutNull;
 exports.filterOutUndefined = filterOutUndefined;
 exports.generateChangelogRecord = generateChangelogRecord;
+exports.getComponentSetNodes = getComponentSetNodes;
+exports.getComponentSets = getComponentSets;
 exports.getCssVariableName = getCssVariableName;
 exports.getRequestCount = getRequestCount;
 exports.getScssVariableName = getScssVariableName;

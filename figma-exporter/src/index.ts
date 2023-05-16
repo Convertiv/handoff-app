@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
+import { scanComponentSets } from './exporters/components/generator';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -148,6 +149,22 @@ const buildStyles = async (documentationObject: DocumentationObject) => {
       ),
   ]);
 };
+
+const lintFigmaFile = async () => {
+  const DEV_ACCESS_TOKEN = process.env.DEV_ACCESS_TOKEN;
+  const FIGMA_PROJECT_ID = process.env.FIGMA_PROJECT_ID;
+  // TODO: rename to something more meaningful
+  if (!DEV_ACCESS_TOKEN) {
+    throw new Error('Missing "DEV_ACCESS_TOKEN" env variable.');
+  }
+
+  // TODO: rename to something more meaningful
+  if (!FIGMA_PROJECT_ID) {
+    throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
+  }
+  const components = await scanComponentSets(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN);
+};
+
 /**
  * Run the entire pipeline
  */
@@ -237,6 +254,8 @@ const entirePipeline = async () => {
         } else {
           throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
         }
+      } else if (process.argv.indexOf('lint') > 0) {
+        lintFigmaFile();
       }
     }
   } catch (error) {
