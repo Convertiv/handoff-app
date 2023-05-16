@@ -4,7 +4,7 @@
     "exporter": {
       "search": "Button", 
       "rootCssClass": "btn",
-      "supportedVariantProps": ["THEME", "TYPE", "STATE(:hover:disabled)", "SIZE"]
+      "supportedVariantProps": ["THEME", "TYPE", "STATE(:disabled)", "SIZE"]
     },
     "demo": {
       "tabs": {
