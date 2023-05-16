@@ -1,13 +1,10 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
-import { filter } from 'domutils';
-import { Component } from 'figma-exporter/src/exporters/components/extractor';
 import { ExportableDefinition } from 'figma-exporter/src/types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { startCase } from 'lodash';
 import { SubPageType } from 'pages/[level1]/[level2]';
-import path, { dirname } from 'path';
+import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 
 // Get the parsed url string type
@@ -283,14 +280,14 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * Fetch exportables id's from the JSON files in the exportables directory
  * @returns {string[]}
  */
-export const fetchExportablesIds = () => {
+export const fetchExportables = () => {
   const exportables = (fs.readdirSync('exportables/')).filter(file => path.extname(file) === '.json');
 
   if (exportables) {
     return exportables.map(exportable => {
       const dataStr = (fs.readFileSync(path.join('exportables/', exportable))).toString();
       const dataObj = JSON.parse(dataStr) as ExportableDefinition;
-      return dataObj.id;
+      return dataObj;
     })
   }
 
@@ -345,6 +342,9 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @returns
  */
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
+  if (!fs.existsSync(`${path}${slug}.md`)) {
+    return { metadata: {}, content: '' };
+  }
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
   const { data: metadata, content } = matter(currentContents);
 
@@ -370,11 +370,11 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: string): string => {
   let tokens = '';
-  if (type === 'scss') {
+  if (type === 'scss' && fs.existsSync(`./exported/tokens/sass/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
-  } else if (type === 'types') {
+  } else if (type === 'types' && fs.existsSync(`./exported/tokens/types/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
-  } else {
+  } else if (fs.existsSync(`./exported/tokens/css/${component}.css`)) {
     tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
   }
   return tokens;

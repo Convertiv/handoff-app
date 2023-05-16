@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportablesIds } from 'components/util';
+import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables } from 'components/util';
 import { getConfig, getPreview } from 'config';
 import { IParams, reduceSlugToString } from 'components/util';
 import { ExportableDefinition, PreviewObject } from 'figma-exporter/src/types';
@@ -27,7 +27,7 @@ import { Config } from 'client-config';
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchExportablesIds().map(id => ({ params: { component: id } })),
+    paths: fetchExportables().map(exportable => ({ params: { component: exportable.id } })),
     fallback: false, // can also be true or 'blocking'
   }
 }
@@ -79,7 +79,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
         <div className="o-container-fluid">
           <div className="c-hero">
             <div>
-              <h1>{metadata.title}</h1>
+              <h1>{metadata.title ?? component}</h1>
               <p>{metadata.description}</p>
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
