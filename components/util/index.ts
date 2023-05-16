@@ -3,6 +3,7 @@ import { getConfig } from 'config';
 import { ExportableDefinition } from 'figma-exporter/src/types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
+import { groupBy } from 'lodash';
 import { SubPageType } from 'pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -195,32 +196,44 @@ export const staticBuildMenu = () => {
       if (!fs.lstatSync(search).isDirectory() && search !== path.resolve('docs/index.md') && fileName.endsWith('md')) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
+
         if (metadata.enabled === false) {
           return undefined;
         }
+
         const path = `/${fileName.replace('.md', '')}`;
+        let subSections = [];
+        
+        if (path === '/components') {
+          const exportables = fetchExportables();
+          // Build the submenu of exportables (components)
+          const groupedExportables = groupBy(exportables, e => e.group ?? '');
+          Object.keys(groupedExportables).forEach(group => {
+            subSections.push({ path: '', title: group });
+            groupedExportables[group].forEach(exportable => {
+              const exportableDocs = fetchDocPageMetadataAndContent('docs/components/', exportable.id);
+              subSections.push({ path: `components/${exportable.id}`, title: exportableDocs.metadata.title ?? exportable.id });
+            })
+          })
+        }
+
+        if (metadata.menu) {
+          // Build the submenu
+          subSections = Object.keys(metadata.menu)
+          .map((key) => {
+            const sub = metadata.menu[key];
+            if (sub.enabled !== false) {
+              return sub;
+            }
+          })
+          .filter(filterOutUndefined)
+        }
+
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
           path,
-          // Build the submenus
-          subSections: metadata.menu
-            ? Object.keys(metadata.menu)
-                .map((key) => {
-                  const sub = metadata.menu[key];
-                  // Component menus are filtered by the presence of tokens
-                  if (path === '/components' && sub.path) {
-                    const componentName = sub.path.replace('components/', '');
-                    if (!componentExists(componentName, config)) {
-                      return undefined;
-                    }
-                  }
-                  if (sub.enabled !== false) {
-                    return sub;
-                  }
-                })
-                .filter(filterOutUndefined)
-            : [],
+          subSections,
         };
       }
     })
@@ -295,8 +308,11 @@ export const fetchExportables = () => {
 }
 
 export const fetchExportable = (name: string) => {
-  const data = fs.readFileSync(`exportables/${name}.json`, 'utf-8');
-  return JSON.parse(data.toString()) as ExportableDefinition;
+  if (fs.existsSync(`exportables/${name}.json`)) {
+    const data = fs.readFileSync(`exportables/${name}.json`, 'utf-8');
+    return JSON.parse(data.toString()) as ExportableDefinition;
+  }
+  return null;
 }
 
 /**
