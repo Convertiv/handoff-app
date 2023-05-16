@@ -109,6 +109,7 @@ export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
 
 export interface ExportableDefinition {
   id: string,
+  group?: string,
   options: ExportableOptions,
   parts: ExportableParts,
 }
