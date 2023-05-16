@@ -1298,8 +1298,7 @@ const scanComponentSets = async (figmaFileKey, figmaAccessToken) => {
   } catch (err) {
     throw new Error('Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide');
   }
-  const componentSets = fileComponentSetsRes.data.meta.component_sets.map(componentSet => componentSet.name);
-  console.log(componentSets);
+  fileComponentSetsRes.data.meta.component_sets.map(componentSet => componentSet.name);
   if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
     console.error(chalk__default["default"].red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
     console.log(chalk__default["default"].blue('Continuing fetch with only colors and typography design foundations'));
@@ -1315,15 +1314,29 @@ const scanComponentSets = async (figmaFileKey, figmaAccessToken) => {
     ...template
   };
   find.forEach(node => {
-    const instances = node.children.map(child => child);
-    const names = instances.map(child => child.name);
-    console.log(chalk__default["default"].blue(`Found ${instances.length} instances of ${node.name}`));
-    console.log(chalk__default["default"].blue(`Attempting to derive structure from instances`));
+    const components = node.children.map(child => child);
+    const names = components.map(child => child.name);
+    console.log(chalk__default["default"].blue(`Found ${components.length} components of ${node.name}`));
+    console.log(chalk__default["default"].blue(`Attempting to derive structure from components`));
     // Start by defining the structure from the instance names
     const variantProps = parseComponentSupportVarientProperties(names);
     console.log(chalk__default["default"].blue(`Found ${variantProps.length} variant properties`), variantProps);
     structure.options.exporter.supportedVariantProps = variantProps;
+    // Now we need to find the parts
+    components.filter(component => component.type === 'COMPONENT').forEach(component => {
+      // We're only looking at components, and the first level should be an instance
+      component.children.filter(component => component.type === 'INSTANCE').forEach(instance => {
+        if (!('children' in instance) || !node.children.length) {
+          return false;
+        }
+        instance.children.forEach(child => {
+          switch (child.type) {
+                      }
+        });
+      });
+    });
   });
+  console.log(structure);
   return true;
 };
 

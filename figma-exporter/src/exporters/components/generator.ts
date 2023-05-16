@@ -34,7 +34,6 @@ export const scanComponentSets = async (figmaFileKey: string, figmaAccessToken: 
     );
   }
   const componentSets = fileComponentSetsRes.data.meta.component_sets.map((componentSet: FullComponentMetadata) => componentSet.name);
-  console.log(componentSets);
 
   if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
     console.error(
@@ -71,15 +70,30 @@ export const scanComponentSets = async (figmaFileKey: string, figmaAccessToken: 
     console.log(chalk.blue(`Found ${components.length} components of ${node.name}`));
     console.log(chalk.blue(`Attempting to derive structure from components`));
     // Start by defining the structure from the instance names
-    const variantProps = parseComponentSupportVarientProperties(names);
+    const variantProps = parseComponentSupportVariantProperties(names);
     console.log(chalk.blue(`Found ${variantProps.length} variant properties`), variantProps);
     structure.options.exporter.supportedVariantProps = variantProps;
     // Now we need to find the parts
-    components.filter((component) => component.name === 'COMPONENT').forEach((component) => {
+    components
+      .filter((component) => component.type === 'COMPONENT')
+      .forEach((component) => {
         // We're only looking at components, and the first level should be an instance
-        
-    });
+        component.children
+          .filter((component) => component.type === 'INSTANCE')
+          .forEach((instance) => {
+            if (!('children' in instance) || !node.children.length) {
+              return false;
+            }
+            instance.children.forEach((child) => {
+              switch (child.type) {
+                case 'RECTANGLE':
+                  break;
+              }
+            });
+          });
+      });
   });
+  console.log(structure);
   return true;
 };
 
@@ -89,7 +103,7 @@ export const scanComponentSets = async (figmaFileKey: string, figmaAccessToken: 
  * @param definition
  * @returns
  */
-function parseComponentSupportVarientProperties(names: string[]): VariantProperty[] {
+function parseComponentSupportVariantProperties(names: string[]): VariantProperty[] {
   const variants: VariantProperty[] = [];
   (names ?? []).map((name) => {
     const regex = new RegExp('([^=|^,|^\\W]+)=([^,|^\\W]+)', 'gm');

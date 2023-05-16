@@ -37,36 +37,7 @@ module.exports = {
         css: 'lg',
       },
     ],
-    components: {
-      alert: {
-        search: 'Alert',
-      },
-      button: {
-        search: 'Button',
-      },
-      checkbox: {
-        search: 'Checkbox',
-      },
-      input: {
-        search: 'Input',
-      },
-      modal: {
-        search: 'Modal',
-      },
-      pagination: null,
-      radio: {
-        search: 'Radio',
-      },
-      select: {
-        search: 'Select',
-      },
-      switch: {
-        search: 'Switch',
-      },
-      tooltip: {
-        search: 'Tooltip',
-      },
-    },
+
   },
   type_copy: 'Almost before we knew it, we had left the ground.',
   color_sort: ['primary', 'secondary', 'extra', 'system'],
