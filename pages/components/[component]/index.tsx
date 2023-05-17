@@ -20,6 +20,7 @@ import { DownloadTokens } from 'components/DownloadTokens';
 import { transformComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/component';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import { Config } from 'client-config';
+import { filterOutNull } from 'figma-exporter/src/utils';
 
 /**
  * Render all index pages
@@ -130,15 +131,10 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
                     transformer={transformComponentTokensToScssVariables}
-                    componentName={startCase(previewableComponent.component.name)}
+                    title={getComponentPreviewTitle(previewableComponent.component)}
                     designComponents={designComponents}
                     previewObject={previewableComponent.component}
-                    layout={{
-                      cols: {
-                        left: 5,
-                        right: 7
-                      }
-                    }}
+                    overrides={previewableComponent.overrides}
                   >
                     <ComponentDisplay component={previewableComponent.preview} />
                   </ComponentDesignTokens>
@@ -157,6 +153,7 @@ export default GenericComponentPage;
 type ComponentPreview = {
   component: Component,
   preview: PreviewObject | undefined,
+  overrides?: { states?: string[] | undefined }
 };
 
 type ComponentPreviews = ComponentPreview[];
@@ -173,57 +170,81 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
 
       return true;
     })
-    .filter((component) => {
+    .map((component) => {
       if (!(component.componentType in tabFilters)) {
-        return false;
+        return null;
       }
 
       const reducedComponentModel = getReducedComponentModel(component);
 
       if (tabFilters[component.componentType] === null) {
-        return false;
+        return null;
       }
 
-      const filterProps = Object.keys(tabFilters[component.componentType]);
+      let overrides: { states?: string[] } | undefined = undefined;
 
+      const filterProps = Object.keys(tabFilters[component.componentType]);
       for (const filterProp of filterProps) {
         if (filterProp in reducedComponentModel ) {
           const filterValue = tabFilters[component.componentType][filterProp];
-          if (Array.isArray(filterValue) && !filterValue.includes(reducedComponentModel[filterProp])) {
-            return false;
-          }
-          if (typeof(filterValue) === 'string' && reducedComponentModel[filterProp] !== filterValue) {
-            return false;
+          if (typeof filterValue === 'object' && filterValue !== null) {
+            if (Array.isArray(filterValue)) {
+              // Filter value is a array so we check if the value of the respective component property
+              // is contained in the filter value array
+              if (!filterValue.includes(reducedComponentModel[filterProp])) {
+                // Filter value array does not contain the value of the respective component property
+                // Since component should not be displayed we return null value
+                return null;
+              }
+            } else {
+              // Filter value is a object so we check if the value of the respective component property
+              // is contained within the array of object keys
+              if (!Object.keys(filterValue).includes(reducedComponentModel[filterProp])) {
+                // Filter value object keys do not contain the value of the respective component property
+                // Since component should not be displayed we return null value
+                return null;
+              } else {
+                // Filter value object keys do contain the value of the respective component property
+                // We will store the property value of the filter value object for later use
+                overrides = filterValue[reducedComponentModel[filterProp]];
+              }
+            }
+          } else if (typeof filterValue === 'string' && reducedComponentModel[filterProp] !== filterValue) {
+            return null;
           }
         }
       }
 
-      return true;
+      return {
+        component: component,
+        preview: getPreview().components[component.name].find((item) => item.id === component.id),
+        overrides
+      };
     })
+    .filter(filterOutNull)
     .sort(function (a, b) {
-      const sort = getSortArr(a, config);
+      const firstComponent = a.component;
+      const secondComponent = b.component;
+
+      const sort = getSortArr(firstComponent, config);
 
       if (!sort || sort.length === 0) {
         return 0
       };
 
-      let lStr = a.componentType === 'design'
-        ? a.type ?? a.state ?? a.activity ?? ''
-        : a.layout ?? a.size ?? '';
+      let lStr = firstComponent.componentType === 'design'
+        ? firstComponent.type ?? firstComponent.state ?? firstComponent.activity ?? ''
+        : firstComponent.layout ?? firstComponent.size ?? '';
 
-      let rStr = b.componentType === 'design'
-        ? b.type ?? b.state ?? b.activity ?? ''
-        : b.layout ?? b.size ?? '';
+      let rStr = secondComponent.componentType === 'design'
+        ? secondComponent.type ?? secondComponent.state ?? secondComponent.activity ?? ''
+        : secondComponent.layout ?? secondComponent.size ?? '';
 
       let l = sort.indexOf(lStr) >>> 0;
       let r = sort.indexOf(rStr) >>> 0;
       
       return l !== r ? l - r : lStr.localeCompare(rStr);
-    })
-    .map((component) => ({
-        component: component,
-        preview: getPreview().components[component.name].find((item) => item.id === component.id)
-    }));
+    });
 
     return tabComponents;
 }

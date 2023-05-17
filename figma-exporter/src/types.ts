@@ -136,4 +136,6 @@ export interface ExportablePart {
 
 export type ExportableParts = ExportablePart[];
 
-interface ExportableDefinitionPageFilter { [property: string]: string | string[] }
+interface ExportableDefinitionPageFilter { [property: string]: ExportableDefinitionPageFilterValue }
+
+type ExportableDefinitionPageFilterValue = string  | string[] | {[value: string]: {[prop: string]: string}}

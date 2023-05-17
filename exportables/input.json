@@ -13,7 +13,14 @@
           "design": { "state": [ "default", "error", "disabled" ] }
         },
         "designTokens" : {
-          "design": {  }
+          "design": {
+            "state": {
+              "default": { "states": [ "default", "hover", "active" ]} ,
+              "error": { "states": [ "error", "hover", "active" ] },
+              "complete": { "states": [ "complete", "hover", "active" ] },
+              "disabled": { "states": [ "disabled", "hover" ] }
+            }
+          }
         }
       }
     }

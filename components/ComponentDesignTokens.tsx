@@ -52,15 +52,14 @@ interface ComponentDesignTokensOverrides {
 
 export interface ComponentDesignTokensProps {
   transformer: (params: any) => Record<string, ValueProperty>,
-  componentName: string,
+  title: string,
   designComponents: DesignComponentDefinition[],
   previewObject: PreviewObjectDefinition,
   overrides?: ComponentDesignTokensOverrides,
   children?: JSX.Element,
-  layout?: { cols?: { left: number; right: number; } }
 }
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformer, componentName, designComponents, previewObject, overrides, layout, children }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformer, title, designComponents, previewObject, overrides, children }) => {
   const componentsOfType = designComponents.filter(
     (component) => component.type === previewObject.type && (component.theme === 'light' || !component.theme)
   );
@@ -107,14 +106,17 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
 
   const hasSingleDesignTokensGroup = Object.entries(designTokenGroups).length === 1;
 
+  const layoutLeftColWidth = statesOfType.length >= 7 ? 11 : 4 + statesOfType.length;
+  const layoutRightColWidth = 12 - layoutLeftColWidth;
+
   return (
     <div key={`${previewObject.type}`} className="o-col-12@md c-tokens-preview u-mb-5">
       <div key={`${previewObject.id}__title`} id={previewObject.id}>
-        <h4>{startCase(previewObject.type)}{ componentName ? ` ${componentName}` : '' }</h4>
+        <h4>{title}</h4>
       </div>
       <hr />
       <div className="o-row">
-        <div className={`o-col-${layout?.cols?.left ?? 7}@md`}>
+        <div className={`o-col-${layoutLeftColWidth}@md`}>
           <div className="c-tokens-preview__row">
             <p><strong>Property</strong></p>
             {statesOfType.map((state) => (
@@ -149,7 +151,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
           ))}
           
         </div>
-        <div className={`o-col-${layout?.cols?.right ?? 5}@md`}>
+        <div className={`o-col-${layoutRightColWidth}@md`}>
           <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
             <div className="c-component-preview">
               {children}

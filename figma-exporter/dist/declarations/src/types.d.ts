@@ -89,6 +89,7 @@ export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAP
 export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
 export interface ExportableDefinition {
     id: string;
+    group?: string;
     options: ExportableOptions;
     parts: ExportableParts;
 }
@@ -117,6 +118,11 @@ export interface ExportablePart {
 }
 export declare type ExportableParts = ExportablePart[];
 interface ExportableDefinitionPageFilter {
-    [property: string]: string | string[];
+    [property: string]: ExportableDefinitionPageFilterValue;
 }
+declare type ExportableDefinitionPageFilterValue = string | string[] | {
+    [value: string]: {
+        [prop: string]: string;
+    };
+};
 export {};
