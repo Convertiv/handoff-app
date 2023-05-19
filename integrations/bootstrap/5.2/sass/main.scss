@@ -14,7 +14,7 @@ $prefix: '';
 $enable-shadows: true;
 
 @import 'maps/button';
-// @import 'maps/checkbox';
+@import 'maps/checkbox';
 // @import 'maps/radio';
 // @import 'maps/switch';
 @import 'maps/input';
@@ -80,7 +80,7 @@ $enable-shadows: true;
 // ------------------------------------------------------------------
 
 @import 'extended/button';
-// @import 'extended/checkbox';
+@import 'extended/checkbox';
 // @import 'extended/radio';
 // @import 'extended/switch';
 @import 'extended/input';

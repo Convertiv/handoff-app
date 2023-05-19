@@ -4,6 +4,7 @@
     "components/button",
     "components/input",
     "components/modal",
-    "components/tooltip"
+    "components/tooltip",
+    "components/checkbox"
   ]
 }
