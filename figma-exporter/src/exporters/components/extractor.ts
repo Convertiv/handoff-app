@@ -6,6 +6,10 @@ import { Exportable, ExportableDefinition, ExportablePart, VariantProperty } fro
 import { GetComponentSetComponentsResult } from '.';
 import { filterOutNull } from '../../utils';
 
+interface NodePathTokens {
+  activity: ComponentDesign['activity']
+}
+
 interface ComponentBase {
   id: string;
   name: string;
@@ -100,7 +104,7 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
         }
 
         const parts = partsToExport.reduce((previous, current) => {
-          const tokenSets = extractComponentPartTokenSets(instanceNode, current);
+          const tokenSets = extractComponentPartTokenSets(instanceNode, current, { activity });
           return { ...previous, ...{ [current.id]: tokenSets } }
         }, {});
 
@@ -166,7 +170,7 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
     return components;
 }
 
-function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePart) : ExportTypes.TokenSets {
+function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePart, tokens: NodePathTokens) : ExportTypes.TokenSets {
   if (!part.tokens || part.tokens.length === 0) {
     return [];
   }
@@ -178,7 +182,7 @@ function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePa
       continue;
     }
 
-    const node = resolveNodeFromPath(root, def.from);
+    const node = resolveNodeFromPath(root, def.from, tokens);
 
     if (!node) {
       continue;
@@ -208,7 +212,7 @@ function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePa
   return tokenSets;
 }
 
-function resolveNodeFromPath(root: FigmaTypes.Node, path: string) {
+function resolveNodeFromPath(root: FigmaTypes.Node, path: string, tokens: NodePathTokens) {
   const pathArr = path.split('>').filter(part => part !== "$").map(part => part.trim());
   let currentNode: FigmaTypes.Node | null = root;
 
@@ -218,6 +222,10 @@ function resolveNodeFromPath(root: FigmaTypes.Node, path: string) {
     if (!nodeDef.type) {
       continue;
     }
+
+    nodeDef.name = nodeDef.name
+      ? nodeDef.name.replaceAll('$activity', tokens?.activity ?? '')
+      : nodeDef.name;
 
     currentNode = nodeDef.name
       ? findChildNodeWithTypeAndName(currentNode, nodeDef.type, nodeDef.name)
