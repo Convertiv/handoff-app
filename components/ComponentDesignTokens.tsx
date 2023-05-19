@@ -3,8 +3,8 @@ import { round, startCase } from 'lodash';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
 
-type DesignComponentDefinition = {type?: string, theme?: string, state?: string, horizontal?: string, vertical?: string};
-type PreviewObjectDefinition = {id: string, type?: string};
+type DesignComponentDefinition = {type?: string, theme?: string, state?: string, activity?: string, horizontal?: string, vertical?: string};
+type PreviewObjectDefinition = {id: string, type?: string, activity?: string};
 type StateValueMap = { [k: string]: { variable: string, value: string } }
 type PropertyStatesMap = { [k: string]: StateValueMap } 
 type PropertyStateMapGroups = { [k: string]: PropertyStatesMap }
@@ -61,7 +61,10 @@ export interface ComponentDesignTokensProps {
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformer, title, designComponents, previewObject, overrides, children }) => {
   const componentsOfType = designComponents.filter(
-    (component) => component.type === previewObject.type && (component.theme === 'light' || !component.theme)
+    (component) => 
+      component.type === previewObject.type &&
+      component.activity === previewObject.activity &&
+      (component.theme === 'light' || !component.theme)
   );
 
   if (!componentsOfType || componentsOfType.length === 0) {

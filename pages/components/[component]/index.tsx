@@ -333,7 +333,8 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
 
 export const getReducedComponentModel = (component: Component): { [key: string]: string } => {
   return {
-    state: component.componentType === 'design' ? component.state ?? '' : ''
+    state: component.componentType === 'design' ? component.state ?? '' : '',
+    activity: component.componentType === 'design' ? component.activity ?? '' : '',
   };
 }
 
