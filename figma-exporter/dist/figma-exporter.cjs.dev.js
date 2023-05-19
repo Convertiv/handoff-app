@@ -1292,15 +1292,21 @@ const readPrevJSONFile = async path => {
 };
 const getExportables = async () => {
   try {
-    const exportables = (await fs__namespace.readdir(exportablesFolder)).filter(file => path__default["default"].extname(file) === '.json');
-    if (!exportables || exportables.length === 0) {
+    const indexBuffer = await fs__namespace.readFile(path__default["default"].join(exportablesFolder, 'index.json'));
+    const index = JSON.parse(indexBuffer.toString());
+    const definitions = index.definitions;
+    if (!definitions || definitions.length === 0) {
       return [];
     }
-    const result = exportables.map(exportable => {
-      const data = fs__namespace.readFileSync(path__default["default"].join(exportablesFolder, exportable));
-      return JSON.parse(data.toString());
-    });
-    return result;
+    const exportables = definitions.map(def => {
+      const defPath = path__default["default"].join(exportablesFolder, `${def}.json`);
+      if (!fs__namespace.existsSync(defPath)) {
+        return null;
+      }
+      const defBuffer = fs__namespace.readFileSync(defPath);
+      return JSON.parse(defBuffer.toString());
+    }).filter(documentationObject.filterOutNull);
+    return exportables ? exportables : [];
   } catch (e) {
     return [];
   }

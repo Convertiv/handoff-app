@@ -1,6 +1,7 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
 import { ExportableDefinition } from 'figma-exporter/src/types';
+import { filterOutNull } from 'figma-exporter/src/utils';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy } from 'lodash';
@@ -294,25 +295,54 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * @returns {string[]}
  */
 export const fetchExportables = () => {
-  const exportables = (fs.readdirSync('exportables/')).filter(file => path.extname(file) === '.json');
+  try {
+    const indexBuffer = fs.readFileSync(path.join('exportables', 'index.json'));
+    const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+    const definitions = index.definitions;
 
-  if (exportables) {
-    return exportables.map(exportable => {
-      const dataStr = (fs.readFileSync(path.join('exportables/', exportable))).toString();
-      const dataObj = JSON.parse(dataStr) as ExportableDefinition;
-      return dataObj;
-    })
+    if (!definitions || definitions.length === 0) {
+      return [];
+    }
+
+    const exportables = definitions
+      .map((def) => {
+        const defPath = path.join('exportables', `${def}.json`);
+
+        if (!fs.existsSync(defPath)) {
+          return null;
+        }
+
+        const defBuffer = fs.readFileSync(defPath);
+        return JSON.parse(defBuffer.toString()) as ExportableDefinition;
+      })
+      .filter(filterOutNull)
+
+    return exportables ? exportables : [];
+  } catch (e) {
+    return [];
   }
-
-  return [];
 }
 
 export const fetchExportable = (name: string) => {
-  if (fs.existsSync(`exportables/${name}.json`)) {
-    const data = fs.readFileSync(`exportables/${name}.json`, 'utf-8');
-    return JSON.parse(data.toString()) as ExportableDefinition;
+  const indexBuffer = fs.readFileSync(path.join('exportables', 'index.json'));
+  const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+
+  const def = index.definitions.filter((def) => {
+    return def.split('/').pop() === name;
+  });
+
+  if (!def || def.length === 0) {
+    return null;
   }
-  return null;
+
+  const defPath = path.join('exportables', `${def}.json`);
+
+  if (!fs.existsSync(defPath)) {
+    return null;
+  }
+  
+  const data = fs.readFileSync(defPath, 'utf-8');
+  return JSON.parse(data.toString()) as ExportableDefinition;
 }
 
 /**

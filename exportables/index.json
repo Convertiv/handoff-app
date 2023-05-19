@@ -1,0 +1,9 @@
+{
+  "definitions": [
+    "components/alert",
+    "components/button",
+    "components/input",
+    "components/modal",
+    "components/tooltip"
+  ]
+}

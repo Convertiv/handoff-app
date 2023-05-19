@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
+import { filterOutNull } from './utils';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -53,18 +54,28 @@ const readConfigFile = async (path: string) => {
 
 const getExportables = async () => {
   try {
-    const exportables = (await fs.readdir(exportablesFolder)).filter(file => path.extname(file) === '.json');
+    const indexBuffer = await fs.readFile(path.join(exportablesFolder, 'index.json'));
+    const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+    const definitions = index.definitions;
 
-    if (!exportables || exportables.length === 0) {
+    if (!definitions || definitions.length === 0) {
       return [];
     }
 
-    const result = exportables.map(exportable => {
-      const data = fs.readFileSync(path.join(exportablesFolder, exportable));
-      return JSON.parse(data.toString()) as ExportableDefinition;
-    });
-    
-    return result;
+    const exportables = definitions
+      .map((def) => {
+        const defPath = path.join(exportablesFolder, `${def}.json`);
+
+        if (!fs.existsSync(defPath)) {
+          return null;
+        }
+
+        const defBuffer = fs.readFileSync(defPath);
+        return JSON.parse(defBuffer.toString()) as ExportableDefinition;
+      })
+      .filter(filterOutNull)
+
+    return exportables ? exportables : [];
   } catch (e) {
     return [];
   }
