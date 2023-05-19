@@ -103,7 +103,7 @@ export type PreviewJson = {
 
 export type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE" ;
 
-export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT";
+export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
 
 export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
 

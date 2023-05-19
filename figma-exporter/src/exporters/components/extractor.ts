@@ -364,6 +364,21 @@ function extractNodeBackground(node: FigmaTypes.Node) : ExportTypes.BackgroundTo
   };
 }
 
+function extractNodeOpacity(node: FigmaTypes.Node) : ExportTypes.OpacityTokenSet | null {
+  return {
+    name: 'OPACITY',
+    opacity: 'opacity' in node ? node.opacity ?? 1 : 1,
+  }
+}
+
+function extractNodeSize(node: FigmaTypes.Node) : ExportTypes.SizeTokenSet | null {
+  return {
+    name: 'SIZE',
+    width: 'absoluteBoundingBox' in node ? node.absoluteBoundingBox.width ?? 0 : 0,
+    height: 'absoluteBoundingBox' in node ? node.absoluteBoundingBox.height ?? 0 : 0,
+  }
+}
+
 function extractNodeExportable(node: FigmaTypes.Node, exportable: Exportable) : ExportTypes.TokenSet | null {
   switch (exportable) {
     case "BACKGROUND":
@@ -378,6 +393,10 @@ function extractNodeExportable(node: FigmaTypes.Node, exportable: Exportable) : 
       return extractNodeTypography(node);
     case "FILL":
       return extractNodeFill(node);
+    case "OPACITY":
+      return extractNodeOpacity(node);
+    case "SIZE":
+      return extractNodeSize(node);
     default:
       return null;
   }

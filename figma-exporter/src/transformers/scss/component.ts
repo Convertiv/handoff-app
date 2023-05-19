@@ -92,6 +92,10 @@ const getTokenSetTransformer = (tokenSet: TokenSet) => {
       return transformFillTokenSet;
     case 'EFFECT':
       return transformEffectTokenSet;
+    case 'OPACITY':
+      return transformOpacityTokenSet;
+    case 'SIZE':
+      return transformSizeTokenSet;
     default:
       return undefined;
   }
@@ -140,6 +144,16 @@ const transformSpacingTokenSet = (component: string, part: string, tokenSet: Tok
       [getScssVariableName({ component, part, property: 'padding-left', theme: params.theme, type: params.type, state: params.state })]: {
         value: `${tokenSet.padding.LEFT}px`,
         property: 'padding-left',
+        group: part,
+      },
+      [getScssVariableName({ component, part, property: 'padding-start', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.padding.LEFT}px`,
+        property: 'padding-start',
+        group: part,
+      },
+      [getScssVariableName({ component, part, property: 'padding-end', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.padding.RIGHT}px`,
+        property: 'padding-end',
         group: part,
       },
       [getScssVariableName({ component, part, property: 'spacing', theme: params.theme, type: params.type, state: params.state })]: {
@@ -233,7 +247,35 @@ const transformEffectTokenSet = (component: string, part: string, tokenSet: Toke
     ? {
       [getScssVariableName({ component, part, property: 'box-shadow', theme: params.theme, type: params.type, state: params.state })]: {
         value: tokenSet.effect.map(transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
-        property: 'color'
+        property: 'color',
+        group: part,
+      },
+    } : {}
+}
+
+const transformOpacityTokenSet = (component: string, part: string, tokenSet: TokenSet, params: TransformerParams): Record<string, ValueProperty> => {
+  return tokenSet.name === 'OPACITY'
+    ? {
+      [getScssVariableName({ component, part, property: 'opacity', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.opacity}`,
+        property: 'opacity',
+        group: part,
+      },
+    } : {}
+}
+
+const transformSizeTokenSet = (component: string, part: string, tokenSet: TokenSet, params: TransformerParams): Record<string, ValueProperty> => {
+  return tokenSet.name === 'SIZE'
+    ? {
+      [getScssVariableName({ component, part, property: 'width', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.width ?? '0'}px`,
+        property: 'width',
+        group: part,
+      },
+      [getScssVariableName({ component, part, property: 'height', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.height ?? '0'}px`,
+        property: 'height',
+        group: part,
       },
     } : {}
 }

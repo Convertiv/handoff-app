@@ -75,7 +75,7 @@ export const isValidVariantProperty = (variantProperty: string): variantProperty
 }
 
 export const isExportable = (exportable: string): exportable is Exportable => {
-  return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT'].includes(exportable);
+  return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
 }
 
 export const isValidNodeType = (type: string): type is FigmaTypes.Node['type'] => {

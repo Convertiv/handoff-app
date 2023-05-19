@@ -46,5 +46,16 @@ export interface TypographyTokenSet extends BaseTokenSet {
   characters: string;
 }
 
-export type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet;
+export interface OpacityTokenSet extends BaseTokenSet {
+  name: 'OPACITY';
+  opacity: number;
+}
+
+export interface SizeTokenSet extends BaseTokenSet {
+  name: 'SIZE';
+  width: number;
+  height: number;
+}
+
+export type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
 export type TokenSets = TokenSet[];
