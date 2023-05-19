@@ -43,7 +43,7 @@
       "id": "check",
       "tokens": [{
         "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
-        "export": ["FILL", "BORDER", "SIZE", "EFFECTS"]
+        "export": ["BORDER", "SIZE", "EFFECTS"]
       }, {
         "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='color']",
         "export": ["FILL"]
