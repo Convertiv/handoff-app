@@ -40,5 +40,14 @@ export interface TypographyTokenSet extends BaseTokenSet {
     textCase: FigmaTypes.TypeStyle['textCase'];
     characters: string;
 }
-export declare type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet;
+export interface OpacityTokenSet extends BaseTokenSet {
+    name: 'OPACITY';
+    opacity: number;
+}
+export interface SizeTokenSet extends BaseTokenSet {
+    name: 'SIZE';
+    width: number;
+    height: number;
+}
+export declare type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
 export declare type TokenSets = TokenSet[];

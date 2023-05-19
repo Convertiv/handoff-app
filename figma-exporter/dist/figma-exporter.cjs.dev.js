@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-7d6355b0.cjs.dev.js');
+var documentationObject = require('./documentation-object-933ccf49.cjs.dev.js');
 var _ = require('lodash');
 var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
@@ -241,6 +241,10 @@ const getTokenSetTransformer$1 = tokenSet => {
       return transformFillTokenSet$1;
     case 'EFFECT':
       return transformEffectTokenSet$1;
+    case 'OPACITY':
+      return transformOpacityTokenSet$1;
+    case 'SIZE':
+      return transformSizeTokenSet$1;
     default:
       return undefined;
   }
@@ -334,6 +338,30 @@ const transformSpacingTokenSet$1 = (component, part, tokenSet, params) => {
     })]: {
       value: `${tokenSet.padding.LEFT}px`,
       property: 'padding-left',
+      group: part
+    },
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'padding-start',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.padding.LEFT}px`,
+      property: 'padding-start',
+      group: part
+    },
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'padding-end',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.padding.RIGHT}px`,
+      property: 'padding-end',
       group: part
     },
     [documentationObject.getScssVariableName({
@@ -517,7 +545,52 @@ const transformEffectTokenSet$1 = (component, part, tokenSet, params) => {
       state: params.state
     })]: {
       value: tokenSet.effect.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
-      property: 'color'
+      property: 'color',
+      group: part
+    }
+  } : {};
+};
+const transformOpacityTokenSet$1 = (component, part, tokenSet, params) => {
+  return tokenSet.name === 'OPACITY' ? {
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'opacity',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.opacity}`,
+      property: 'opacity',
+      group: part
+    }
+  } : {};
+};
+const transformSizeTokenSet$1 = (component, part, tokenSet, params) => {
+  return tokenSet.name === 'SIZE' ? {
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'width',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.width ?? '0'}px`,
+      property: 'width',
+      group: part
+    },
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'height',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.height ?? '0'}px`,
+      property: 'height',
+      group: part
     }
   } : {};
 };
@@ -785,6 +858,10 @@ const getTokenSetTransformer = tokenSet => {
       return transformFillTokenSet;
     case 'EFFECT':
       return transformEffectTokenSet;
+    case 'OPACITY':
+      return transformOpacityTokenSet;
+    case 'SIZE':
+      return transformSizeTokenSet;
     default:
       return undefined;
   }
@@ -872,6 +949,28 @@ const transformSpacingTokenSet = (component, part, tokenSet, params) => {
     })]: {
       value: `${tokenSet.padding.LEFT}px`,
       property: 'padding-left'
+    },
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'padding-start',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.padding.LEFT}px`,
+      property: 'padding-start'
+    },
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'padding-end',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.padding.RIGHT}px`,
+      property: 'padding-end'
     },
     [documentationObject.getCssVariableName({
       component,
@@ -1042,6 +1141,47 @@ const transformEffectTokenSet = (component, part, tokenSet, params) => {
     })]: {
       value: tokenSet.effect.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
       property: 'color'
+    }
+  } : {};
+};
+const transformOpacityTokenSet = (component, part, tokenSet, params) => {
+  return tokenSet.name === 'OPACITY' ? {
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'opacity',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.opacity}`,
+      property: 'opacity'
+    }
+  } : {};
+};
+const transformSizeTokenSet = (component, part, tokenSet, params) => {
+  return tokenSet.name === 'SIZE' ? {
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'width',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.width ?? '0'}px`,
+      property: 'width'
+    },
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'height',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.height ?? '0'}px`,
+      property: 'height'
     }
   } : {};
 };

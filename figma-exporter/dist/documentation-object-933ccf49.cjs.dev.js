@@ -266,7 +266,7 @@ const isValidVariantProperty = variantProperty => {
   return ['THEME', 'TYPE', 'STATE', 'ACTIVITY', 'LAYOUT', 'SIZE'].includes(variantProperty);
 };
 const isExportable = exportable => {
-  return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT'].includes(exportable);
+  return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
 };
 const isValidNodeType = type => {
   return ['DOCUMENT', 'CANVAS', 'FRAME', 'GROUP', 'VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'LINE', 'ELLIPSE', 'REGULAR_POLYGON', 'RECTANGLE', 'TEXT', 'SLICE', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(type);
@@ -308,7 +308,9 @@ function extractComponents(componentSetComponentsResult, definition) {
       return null;
     }
     const parts = partsToExport.reduce((previous, current) => {
-      const tokenSets = extractComponentPartTokenSets(instanceNode, current);
+      const tokenSets = extractComponentPartTokenSets(instanceNode, current, {
+        activity
+      });
       return {
         ...previous,
         ...{
@@ -368,7 +370,7 @@ function extractComponents(componentSetComponentsResult, definition) {
   }
   return components;
 }
-function extractComponentPartTokenSets(root, part) {
+function extractComponentPartTokenSets(root, part, tokens) {
   if (!part.tokens || part.tokens.length === 0) {
     return [];
   }
@@ -377,7 +379,7 @@ function extractComponentPartTokenSets(root, part) {
     if (!def.from || !def.export || def.export.length === 0) {
       continue;
     }
-    const node = resolveNodeFromPath(root, def.from);
+    const node = resolveNodeFromPath(root, def.from, tokens);
     if (!node) {
       continue;
     }
@@ -399,7 +401,7 @@ function extractComponentPartTokenSets(root, part) {
   }
   return tokenSets;
 }
-function resolveNodeFromPath(root, path) {
+function resolveNodeFromPath(root, path, tokens) {
   const pathArr = path.split('>').filter(part => part !== "$").map(part => part.trim());
   let currentNode = root;
   for (const path of pathArr) {
@@ -407,6 +409,7 @@ function resolveNodeFromPath(root, path) {
     if (!nodeDef.type) {
       continue;
     }
+    nodeDef.name = nodeDef.name ? nodeDef.name.replaceAll('$activity', tokens?.activity ?? '') : nodeDef.name;
     currentNode = nodeDef.name ? findChildNodeWithTypeAndName(currentNode, nodeDef.type, nodeDef.name) : findChildNodeWithType(currentNode, nodeDef.type);
     if (!currentNode) {
       return null;
@@ -523,6 +526,19 @@ function extractNodeBackground(node) {
     background: 'background' in node ? node.background.slice() : []
   };
 }
+function extractNodeOpacity(node) {
+  return {
+    name: 'OPACITY',
+    opacity: 'opacity' in node ? node.opacity ?? 1 : 1
+  };
+}
+function extractNodeSize(node) {
+  return {
+    name: 'SIZE',
+    width: 'absoluteBoundingBox' in node ? node.absoluteBoundingBox.width ?? 0 : 0,
+    height: 'absoluteBoundingBox' in node ? node.absoluteBoundingBox.height ?? 0 : 0
+  };
+}
 function extractNodeExportable(node, exportable) {
   switch (exportable) {
     case "BACKGROUND":
@@ -537,6 +553,10 @@ function extractNodeExportable(node, exportable) {
       return extractNodeTypography(node);
     case "FILL":
       return extractNodeFill(node);
+    case "OPACITY":
+      return extractNodeOpacity(node);
+    case "SIZE":
+      return extractNodeSize(node);
     default:
       return null;
   }

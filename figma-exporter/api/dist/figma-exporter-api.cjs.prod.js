@@ -2,7 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var documentationObject = require('../../dist/documentation-object-09e57746.cjs.prod.js');
+var documentationObject = require('../../dist/documentation-object-de961ef3.cjs.prod.js');
 require('lodash/isEqual');
 require('axios');
 require('archiver');
