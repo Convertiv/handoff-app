@@ -1,0 +1,48 @@
+{
+  "id": "radio",
+  "group": "Forms",
+  "options": {
+    "exporter": {
+      "search": "Radio", 
+      "rootCssClass": "radio",
+      "supportedVariantProps": ["THEME", "STATE", "SIZE", "ACTIVITY"]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": { "state": ["default", "disabled"], "activity": ["off"] }
+        },
+        "designTokens" : {
+          "design": { "state": ["default"] }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": []
+    },
+    {
+      "id": "check",
+      "tokens": [{
+        "from": "GROUP[name':: radio'] > RECTANGLE[name='body']",
+        "export": ["SIZE", "SPACING"]
+      }]
+    },
+    {
+      "id": "thumb",
+      "tokens": [{
+        "from": "GROUP[name=':: radio'] > ELLIPSE[name='on']",
+        "export": ["SIZE", "FILL", "BORDER"]
+      }]
+    },
+    {
+      "id": "label",
+      "tokens": [{
+        "from": "TEXT[name='Radio Label']",
+        "export": ["TYPOGRAPHY", "COLOR", "OPACITY"]
+      }]
+    }
+  ]
+}

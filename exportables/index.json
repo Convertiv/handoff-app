@@ -6,6 +6,7 @@
     "components/modal",
     "components/tooltip",
     "components/checkbox",
-    "components/select"
+    "components/select",
+    "components/radio"
   ]
 }
