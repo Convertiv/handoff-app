@@ -583,6 +583,18 @@ const transformSizeTokenSet$1 = (component, part, tokenSet, params) => {
     [documentationObject.getScssVariableName({
       component,
       part,
+      property: 'width-raw',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.width ?? '0'}`,
+      property: 'width-raw',
+      group: part
+    },
+    [documentationObject.getScssVariableName({
+      component,
+      part,
       property: 'height',
       theme: params.theme,
       type: params.type,
@@ -590,6 +602,18 @@ const transformSizeTokenSet$1 = (component, part, tokenSet, params) => {
     })]: {
       value: `${tokenSet.height ?? '0'}px`,
       property: 'height',
+      group: part
+    },
+    [documentationObject.getScssVariableName({
+      component,
+      part,
+      property: 'height-raw',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.height ?? '0'}`,
+      property: 'height-raw',
       group: part
     }
   } : {};
@@ -1175,6 +1199,17 @@ const transformSizeTokenSet = (component, part, tokenSet, params) => {
     [documentationObject.getCssVariableName({
       component,
       part,
+      property: 'width-raw',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.width ?? '0'}`,
+      property: 'width-raw'
+    },
+    [documentationObject.getCssVariableName({
+      component,
+      part,
       property: 'height',
       theme: params.theme,
       type: params.type,
@@ -1182,6 +1217,17 @@ const transformSizeTokenSet = (component, part, tokenSet, params) => {
     })]: {
       value: `${tokenSet.height ?? '0'}px`,
       property: 'height'
+    },
+    [documentationObject.getCssVariableName({
+      component,
+      part,
+      property: 'height-raw',
+      theme: params.theme,
+      type: params.type,
+      state: params.state
+    })]: {
+      value: `${tokenSet.height ?? '0'}`,
+      property: 'height-raw'
     }
   } : {};
 };

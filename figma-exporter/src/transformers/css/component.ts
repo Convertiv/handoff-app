@@ -240,9 +240,17 @@ const transformSizeTokenSet = (component: string, part: string, tokenSet: TokenS
         value: `${tokenSet.width ?? '0'}px`,
         property: 'width',
       },
+      [getCssVariableName({ component, part, property: 'width-raw', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.width ?? '0'}`,
+        property: 'width-raw',
+      },
       [getCssVariableName({ component, part, property: 'height', theme: params.theme, type: params.type, state: params.state })]: {
         value: `${tokenSet.height ?? '0'}px`,
         property: 'height',
+      },
+      [getCssVariableName({ component, part, property: 'height-raw', theme: params.theme, type: params.type, state: params.state })]: {
+        value: `${tokenSet.height ?? '0'}`,
+        property: 'height-raw',
       },
     } : {}
 }
