@@ -1,5 +1,5 @@
 import { ValueProperty } from 'figma-exporter/src/transformers/scss/types';
-import { round, startCase } from 'lodash';
+import { round, sortBy, startCase } from 'lodash';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
 
@@ -99,12 +99,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
 
   const designTokenGroups: PropertyStateMapGroups = Array.from(new Set(propertiesOfType.map((p) => (p.split('\\')[0]))).values())
     .reduce((prev, next) => {
-      const bar = propertiesOfType
-        .filter((prop) => prop.startsWith(`${next}\\`))
-        .reduce((prev, next) => {
-          return {...prev, [next.split(`\\`)[1]]: propertiesWithStatesOfType[next]}
-        }, {});
-      return {...prev, [next]: bar}
+      return {
+        ...prev, [next]: propertiesOfType
+          .filter((prop) => prop.startsWith(`${next}\\`))
+          .reduce((prev, next) => {
+            return {...prev, [next.split(`\\`)[1]]: propertiesWithStatesOfType[next]}
+          }, {})
+      }
     }, {});
 
   const hasSingleDesignTokensGroup = Object.entries(designTokenGroups).length === 1;
@@ -129,29 +130,35 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
             ))}
           </div>
 
-          {Object.entries(designTokenGroups).map(([group, propsWithStateMaps]) => (
-            <React.Fragment key={`${previewObject.type}-${group}`}>
-              {!hasSingleDesignTokensGroup && (
-                <>
-                  <br />
-                  <p><strong>{startCase(group.replaceAll('-', ' '))}</strong></p>
-                </>
-              )}
-              {Object.entries(propsWithStateMaps).map(([property, stateMap]) => (
-                <div key={`${previewObject.type}-${group}-${property}-row`} className="c-tokens-preview__row">
-                  <p>{property}</p>
-                  {Object.entries(stateMap).map(([state, {variable, value}]) => (
-                    <PropertyStateValue
-                      key={`${previewObject.type}-${variable}-${state}`}
-                      property={property}
-                      variable={variable}
-                      value={value}
-                    />
-                  ))}
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
+          {Object.entries(designTokenGroups).map(([group, propsWithStateMaps]) => {
+            const props = sortBy(Object.keys(propsWithStateMaps));
+            return (
+              <React.Fragment key={`${previewObject.type}-${group}`}>
+                {!hasSingleDesignTokensGroup && (
+                  <>
+                    <br />
+                    <p><strong>{startCase(group.replaceAll('-', ' '))}</strong></p>
+                  </>
+                )}
+                {props.map((prop) => {
+                  const stateMap = propsWithStateMaps[prop];
+                  return (
+                    <div key={`${previewObject.type}-${group}-${prop}-row`} className="c-tokens-preview__row">
+                      <p>{prop}</p>
+                      {Object.entries(stateMap).map(([state, {variable, value}]) => (
+                        <PropertyStateValue
+                          key={`${previewObject.type}-${variable}-${state}`}
+                          property={prop}
+                          variable={variable}
+                          value={value}
+                        />
+                      ))}
+                    </div>
+                  )
+                })}
+              </React.Fragment>
+            )
+          })}
           
         </div>
         <div className={`o-col-${layoutRightColWidth}@md`}>
