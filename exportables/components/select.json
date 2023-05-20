@@ -1,0 +1,71 @@
+{
+  "id": "select",
+  "group": "Forms",
+  "options": {
+    "exporter": {
+      "search": "Select", 
+      "rootCssClass": "select",
+      "supportedVariantProps": ["THEME", "STATE", "SIZE"]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": { "state": ["default", "error", "disabled"] }
+        },
+        "designTokens" : {
+          "design": { "state": {
+            "default": { "states": [ "default", "hover" ]} ,
+            "error": { "states": [ "error", "hover" ] },
+            "disabled": { "states": [ "disabled", "hover" ] }
+          } }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [{
+        "from": "FRAME[name=':: select']",
+        "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
+      }]
+    },
+    {
+      "id": "label",
+      "tokens": [{
+        "from": "$",
+        "export": ["SPACING"]
+      }, {
+        "from": "TEXT[name='Select Label']",
+        "export": ["TYPOGRAPHY", "FILL"]
+      }]
+    },
+    {
+      "id": "option",
+      "tokens": [{
+        "from": "TEXT[name='Select Option']",
+        "export": ["TYPOGRAPHY", "FILL"]
+      }]
+    },
+    {
+      "id": "icon",
+      "tokens": [{
+        "from": "INSTANCE[name='Caret']",
+        "export": ["SIZE"]
+      }, {
+        "from": "FRAME[name=':: select'] > RECTANGLE[name='color']",
+        "export": ["FILL"]
+      }]
+    },
+    {
+      "id": "additionalInfo",
+      "tokens": [{
+        "from": "$",
+        "export": ["SPACING"]
+      }, {
+        "from": "TEXT[name='Additional Info']",
+        "export": ["TYPOGRAPHY", "FILL"]
+      }]
+    }
+  ]
+}
