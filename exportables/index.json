@@ -2,11 +2,11 @@
   "definitions": [
     "components/alert",
     "components/button",
-    "components/input",
     "components/modal",
     "components/tooltip",
     "components/checkbox",
-    "components/select",
-    "components/radio"
+    "components/input",
+    "components/radio",
+    "components/select"
   ]
 }
