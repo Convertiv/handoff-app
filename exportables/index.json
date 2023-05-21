@@ -7,6 +7,7 @@
     "components/checkbox",
     "components/input",
     "components/radio",
-    "components/select"
+    "components/select",
+    "components/switch"
   ]
 }

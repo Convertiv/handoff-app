@@ -1,0 +1,50 @@
+{
+  "id": "switch",
+  "group": "Forms",
+  "options": {
+    "exporter": {
+      "search": "Switch", 
+      "rootCssClass": "switch",
+      "supportedVariantProps": ["THEME", "STATE", "SIZE", "ACTIVITY"]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": { "state": ["default", "disabled"], "activity": ["off"] }
+        },
+        "designTokens" : {
+          "design": { "state": ["default"] }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [{
+        "from": "$",
+        "export": ["SPACING"]
+      }, {
+        "from": "GROUP[name=':: switch']",
+        "export": ["OPACITY"]
+      }, {
+        "from": "GROUP[name=':: switch'] > RECTANGLE[name='body']",
+        "export": ["BACKGROUND", "SIZE", "BORDER", "EFFECT"]
+      }]
+    },
+    {
+      "id": "thumb",
+      "tokens": [{
+        "from": "GROUP[name=':: switch'] > ELLIPSE[name='$activity']",
+        "export": ["FILL", "BORDER", "SIZE"]
+      }]
+    },
+    {
+      "id": "label",
+      "tokens": [{
+        "from": "TEXT[name='Switch Label']",
+        "export": ["TYPOGRAPHY", "COLOR", "OPACITY"]
+      }]
+    }
+  ]
+}
