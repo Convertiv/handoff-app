@@ -1,9 +1,10 @@
-import { ValueProperty } from 'figma-exporter/src/transformers/scss/types';
 import { round, sortBy, startCase } from 'lodash';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
+import { ExportableTransformerOptions } from 'figma-exporter/src/types';
+import { transformComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/component';
+import { ComponentDesign } from 'figma-exporter/src/exporters/components/extractor';
 
-type DesignComponentDefinition = {type?: string, theme?: string, state?: string, activity?: string, horizontal?: string, vertical?: string};
 type PreviewObjectDefinition = {id: string, type?: string, activity?: string};
 type StateValueMap = { [k: string]: { variable: string, value: string } }
 type PropertyStatesMap = { [k: string]: StateValueMap } 
@@ -51,15 +52,15 @@ interface ComponentDesignTokensOverrides {
 }
 
 export interface ComponentDesignTokensProps {
-  transformer: (params: any) => Record<string, ValueProperty>,
   title: string,
-  designComponents: DesignComponentDefinition[],
   previewObject: PreviewObjectDefinition,
+  transformerOptions: ExportableTransformerOptions,
+  designComponents: ComponentDesign[],
   overrides?: ComponentDesignTokensOverrides,
   children?: JSX.Element,
 }
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformer, title, designComponents, previewObject, overrides, children }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
   const componentsOfType = designComponents.filter(
     (component) => 
       component.type === previewObject.type &&
@@ -81,7 +82,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
     })
   ;
 
-  const propertiesOfType = Object.entries(transformer(componentsOfType[0])).map(([_, r]) => `${r.group}\\${r.property}`);
+  const propertiesOfType = Object.entries(transformComponentTokensToScssVariables(componentsOfType[0], transformerOptions)).map(([_, r]) => `${r.group}\\${r.property}`);
 
   const propertiesWithStatesOfType: PropertyStatesMap = propertiesOfType.reduce((prev, next) => (
     {...prev, [next]: statesOfType.reduce((prev, next) => (
@@ -91,7 +92,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
   
   statesOfType.forEach((state) => {
     const componentOfState = componentsOfType.find((component) => component.state === state || (state === FallbackState && !component.state));
-    Object.entries(transformer(componentOfState!)).forEach(([l, r]) => {
+    Object.entries(transformComponentTokensToScssVariables(componentOfState!, transformerOptions)).forEach(([l, r]) => {
       propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].variable = l;
       propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].value = r.value
     });

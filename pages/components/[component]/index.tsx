@@ -130,10 +130,10 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 {designTokensTabComponents.map(previewableComponent => (
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
-                    transformer={transformComponentTokensToScssVariables}
                     title={getComponentPreviewTitle(previewableComponent.component)}
-                    designComponents={designComponents}
                     previewObject={previewableComponent.component}
+                    transformerOptions={exportable.options.transformer}
+                    designComponents={designComponents}
                     overrides={previewableComponent.overrides}
                   >
                     <ComponentDisplay component={previewableComponent.preview} />

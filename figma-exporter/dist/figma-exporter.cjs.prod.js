@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-de961ef3.cjs.prod.js');
+var documentationObject = require('./documentation-object-c24b8edf.cjs.prod.js');
 var _ = require('lodash');
 var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
@@ -95,30 +95,6 @@ function getTypeName$1(type) {
   return type.group ? `${type.group}-${type.machine_name}` : `${type.machine_name}`;
 }
 
-const transformFigmaTextAlignToCss = textAlign => {
-  return ['left', 'center', 'right', 'justify'].includes(textAlign.toLowerCase()) ? textAlign.toLowerCase() : 'left';
-};
-const transformFigmaTextDecorationToCss = textDecoration => {
-  if (textDecoration === 'UNDERLINE') {
-    return 'underline';
-  }
-  if (textDecoration === 'STRIKETHROUGH') {
-    return 'line-through';
-  }
-  return 'none';
-};
-const transformFigmaTextCaseToCssTextTransform = textCase => {
-  if (textCase === 'UPPER') {
-    return 'uppercase';
-  }
-  if (textCase === 'LOWER') {
-    return 'lowercase';
-  }
-  if (textCase === 'TITLE') {
-    return 'capitalize';
-  }
-  return 'none';
-};
 const getTypesFromComponents = components => {
   return Array.from(new Set(components.map(component => component.type).filter(documentationObject.filterOutUndefined)));
 };
@@ -172,7 +148,263 @@ const mapComponentSize = (figma, component) => {
   return size?.css ?? figma;
 };
 
-const transformComponentsToScssTypes = (name, components) => {
+/**
+ * Generate a comment block at the top of each record
+ * @param type
+ * @param component
+ * @returns
+ */
+const formatComponentCodeBlockComment = (type, component, format) => {
+  let str = type;
+  if (component.componentType === 'design') {
+    str = component.type !== undefined ? `${_.capitalize(component.type)} ${str}` : `${_.capitalize(str)}`;
+    str += component.theme !== undefined ? `, theme: ${component.theme}` : ``;
+    str += component.state !== undefined ? `, state: ${component.state}` : ``;
+    str += component.activity !== undefined ? `, activity: ${component.activity}` : ``;
+  }
+  if (component.componentType === 'layout') {
+    str = `${_.capitalize(str)}`;
+    str += component.layout !== undefined ? `, layout: ${component.layout}` : ``;
+    str += component.size !== undefined ? `, size: ${component.size}` : ``;
+  }
+  return format === "/**/" ? `/* ${str} */` : `// ${str}`;
+};
+const formatVariableName = (variableType, component, part, property, options) => {
+  const {
+    theme = 'light',
+    type = 'default',
+    state = 'default'
+  } = getReducedVariableNameTokens(component);
+  const variableNameTemplate = variableType === 'css' ? options?.cssVariableTemplate : options?.scssVariableTemplate;
+  const variableName = variableNameTemplate ? parseVariableNameTemplate(variableNameTemplate, component, part, property, options) : [component.name, normalizeVariableToken('type', type, options), normalizeVariablePart(part), normalizeVariableToken('theme', theme, options), normalizeVariableToken('state', state, options), property].filter(Boolean).join('-');
+  return variableType === 'css' ? `--${variableName}` : `$${variableName}`;
+};
+const getReducedVariableNameTokens = component => {
+  const theme = component.componentType === 'design' ? component.theme : undefined;
+  const state = component.componentType === 'design' ? component.activity ?? component.state : undefined;
+  const type = component.componentType === 'design' ? state && state === component.activity ? component.state : component.type : component.layout ?? mapComponentSize(component.size ?? '', component.name);
+  return {
+    theme,
+    type,
+    state
+  };
+};
+const parseVariableNameTemplate = (template, component, part, property, options) => {
+  return template.replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', component.theme ?? '', options) : '').replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', component.type ?? '', options) : '').replaceAll('{$state}', component.componentType === 'design' ? normalizeVariableToken('state', component.state ?? '', options) : '').replaceAll('{$activity}', component.componentType === 'design' ? normalizeVariableToken('activity', component.activity ?? '', options) : '').replaceAll('{$layout}', component.componentType === 'layout' ? normalizeVariableToken('layout', component.layout ?? '', options) : '').replaceAll('{$size}', component.componentType === 'layout' ? normalizeVariableToken('size', component.size ?? '', options) : '').replaceAll('{$part}', normalizeVariablePart(part)).replaceAll('{$property}', property).replace(/-+/g, '-');
+};
+const normalizeVariableToken = (token, val, options) => {
+  if (token in (options?.replace ?? {}) && val in (options?.replace[token] ?? {})) {
+    return options?.replace[token][val] ?? '';
+  }
+  if (token === 'theme' && val === 'light') {
+    return '';
+  }
+  if (['type', 'state', 'activity'].includes(token) && val === 'default') {
+    return '';
+  }
+  return val;
+};
+const normalizeVariablePart = part => {
+  return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+};
+
+const getTokenSetTransformer = tokenSet => {
+  switch (tokenSet.name) {
+    case 'BACKGROUND':
+      return transformBackgroundTokenSet;
+    case 'SPACING':
+      return transformSpacingTokenSet;
+    case 'BORDER':
+      return transformBorderTokenSet;
+    case 'TYPOGRAPHY':
+      return transformTypographyTokenSet;
+    case 'FILL':
+      return transformFillTokenSet;
+    case 'EFFECT':
+      return transformEffectTokenSet;
+    case 'OPACITY':
+      return transformOpacityTokenSet;
+    case 'SIZE':
+      return transformSizeTokenSet;
+    default:
+      return undefined;
+  }
+};
+const transformBackgroundTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'BACKGROUND' ? {
+    [formatVariableName(variableType, component, part, 'background', options)]: {
+      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.background).color,
+      property: 'background',
+      group: part
+    }
+  } : {};
+};
+const transformSpacingTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'SPACING' ? {
+    // Padding
+    [formatVariableName(variableType, component, part, 'padding-y', options)]: {
+      value: `${tokenSet.padding.TOP}px`,
+      property: 'padding-y',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-x', options)]: {
+      value: `${tokenSet.padding.LEFT}px`,
+      property: 'padding-x',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-top', options)]: {
+      value: `${tokenSet.padding.TOP}px`,
+      property: 'padding-top',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-right', options)]: {
+      value: `${tokenSet.padding.RIGHT}px`,
+      property: 'padding-right',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-bottom', options)]: {
+      value: `${tokenSet.padding.BOTTOM}px`,
+      property: 'padding-bottom',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-left', options)]: {
+      value: `${tokenSet.padding.LEFT}px`,
+      property: 'padding-left',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-start', options)]: {
+      value: `${tokenSet.padding.LEFT}px`,
+      property: 'padding-start',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'padding-end', options)]: {
+      value: `${tokenSet.padding.RIGHT}px`,
+      property: 'padding-end',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'spacing', options)]: {
+      value: `${tokenSet.spacing}px`,
+      property: 'spacing',
+      group: part
+    }
+  } : {};
+};
+const transformBorderTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'BORDER' ? {
+    [formatVariableName(variableType, component, part, 'border-width', options)]: {
+      value: `${tokenSet.weight}px`,
+      property: 'border-width',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'border-radius', options)]: {
+      value: `${tokenSet.radius}px`,
+      property: 'border-radius',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'border-color', options)]: {
+      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.strokes).color,
+      property: 'border-color',
+      group: part
+    }
+  } : {};
+};
+const transformTypographyTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'TYPOGRAPHY' ? {
+    [formatVariableName(variableType, component, part, 'font-family', options)]: {
+      value: `'${tokenSet.fontFamily}'`,
+      property: 'font-family',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'font-size', options)]: {
+      value: `${tokenSet.fontSize}px`,
+      property: 'font-size',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'font-weight', options)]: {
+      value: `${tokenSet.fontWeight}`,
+      property: 'font-weight',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'line-height', options)]: {
+      value: `${tokenSet.lineHeight}`,
+      property: 'line-height',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'letter-spacing', options)]: {
+      value: `${tokenSet.letterSpacing}px`,
+      property: 'letter-spacing',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'text-align', options)]: {
+      value: documentationObject.transformFigmaTextAlignToCss(tokenSet.textAlignHorizontal),
+      property: 'text-align',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'text-decoration', options)]: {
+      value: documentationObject.transformFigmaTextDecorationToCss(tokenSet.textDecoration),
+      property: 'text-decoration',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'text-transform', options)]: {
+      value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokenSet.textCase),
+      property: 'text-transform',
+      group: part
+    }
+  } : {};
+};
+const transformFillTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'FILL' ? {
+    [formatVariableName(variableType, component, part, 'color', options)]: {
+      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.color).color,
+      property: 'color',
+      group: part
+    }
+  } : {};
+};
+const transformEffectTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'EFFECT' ? {
+    [formatVariableName(variableType, component, part, 'box-shadow', options)]: {
+      value: tokenSet.effect.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
+      property: 'color',
+      group: part
+    }
+  } : {};
+};
+const transformOpacityTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'OPACITY' ? {
+    [formatVariableName(variableType, component, part, 'opacity', options)]: {
+      value: `${tokenSet.opacity}`,
+      property: 'opacity',
+      group: part
+    }
+  } : {};
+};
+const transformSizeTokenSet = (variableType, component, part, tokenSet, options) => {
+  return tokenSet.name === 'SIZE' ? {
+    [formatVariableName(variableType, component, part, 'width', options)]: {
+      value: `${tokenSet.width ?? '0'}px`,
+      property: 'width',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'width-raw', options)]: {
+      value: `${tokenSet.width ?? '0'}`,
+      property: 'width-raw',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'height', options)]: {
+      value: `${tokenSet.height ?? '0'}px`,
+      property: 'height',
+      group: part
+    },
+    [formatVariableName(variableType, component, part, 'height-raw', options)]: {
+      value: `${tokenSet.height ?? '0'}`,
+      property: 'height-raw',
+      group: part
+    }
+  } : {};
+};
+
+const transformComponentsToScssTypes = (name, components, options) => {
   const lines = [];
   const themes = getThemesFromComponents(components);
   const types = getTypesFromComponents(components);
@@ -200,445 +432,25 @@ const transformComponentsToScssTypes = (name, components) => {
   }
   return lines.join('\n\n') + '\n';
 };
-const transformComponentTokensToScssVariables = tokens => {
+const transformComponentTokensToScssVariables = (component, options) => {
   let result = {};
-  const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
-  const state = tokens.componentType === 'design' ? tokens.activity ?? tokens.state : undefined;
-  const type = tokens.componentType === 'design' ? state && state === tokens.activity ? tokens.state : tokens.type : tokens.layout ?? mapComponentSize(tokens.size ?? '', tokens.name);
-  for (const partId in tokens.parts) {
-    const tokenSets = tokens.parts[partId];
+  for (const part in component.parts) {
+    const tokenSets = component.parts[part];
     if (!tokenSets || tokenSets.length === 0) {
       continue;
     }
     for (const tokenSet of tokenSets) {
-      const transformer = getTokenSetTransformer$1(tokenSet);
+      const transformer = getTokenSetTransformer(tokenSet);
       if (!transformer) {
         continue;
       }
       result = {
         ...result,
-        ...transformer(tokens.name, partId === '$' ? '' : partId.replace(/[A-Z]/g, m => "-" + m.toLowerCase()), tokenSet, {
-          theme,
-          type,
-          state
-        })
+        ...transformer('scss', component, part, tokenSet, options)
       };
     }
   }
   return result;
-};
-const getTokenSetTransformer$1 = tokenSet => {
-  switch (tokenSet.name) {
-    case 'BACKGROUND':
-      return transformBackgroundTokenSet$1;
-    case 'SPACING':
-      return transformSpacingTokenSet$1;
-    case 'BORDER':
-      return transformBorderTokenSet$1;
-    case 'TYPOGRAPHY':
-      return transformTypographyTokenSet$1;
-    case 'FILL':
-      return transformFillTokenSet$1;
-    case 'EFFECT':
-      return transformEffectTokenSet$1;
-    case 'OPACITY':
-      return transformOpacityTokenSet$1;
-    case 'SIZE':
-      return transformSizeTokenSet$1;
-    default:
-      return undefined;
-  }
-};
-const transformBackgroundTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'BACKGROUND' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'background',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.background).color,
-      property: 'background',
-      group: part
-    }
-  } : {};
-};
-const transformSpacingTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'SPACING' ? {
-    // Padding
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-y',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.TOP}px`,
-      property: 'padding-y',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-x',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'padding-x',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-top',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.TOP}px`,
-      property: 'padding-top',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-right',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.RIGHT}px`,
-      property: 'padding-right',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-bottom',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.BOTTOM}px`,
-      property: 'padding-bottom',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-left',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'padding-left',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-start',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'padding-start',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'padding-end',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.RIGHT}px`,
-      property: 'padding-end',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'spacing',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.spacing}px`,
-      property: 'spacing',
-      group: part
-    }
-  } : {};
-};
-const transformBorderTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'BORDER' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'border-width',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.weight}px`,
-      property: 'border-width',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'border-radius',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.radius}px`,
-      property: 'border-radius',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'border-color',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.strokes).color,
-      property: 'border-color',
-      group: part
-    }
-  } : {};
-};
-const transformTypographyTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'TYPOGRAPHY' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'font-family',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `'${tokenSet.fontFamily}'`,
-      property: 'font-family',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'font-size',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.fontSize}px`,
-      property: 'font-size',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'font-weight',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.fontWeight}`,
-      property: 'font-weight',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'line-height',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.lineHeight}`,
-      property: 'line-height',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'letter-spacing',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.letterSpacing}px`,
-      property: 'letter-spacing',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'text-align',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: transformFigmaTextAlignToCss(tokenSet.textAlignHorizontal),
-      property: 'text-align',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'text-decoration',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: transformFigmaTextDecorationToCss(tokenSet.textDecoration),
-      property: 'text-decoration',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'text-transform',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: transformFigmaTextCaseToCssTextTransform(tokenSet.textCase),
-      property: 'text-transform',
-      group: part
-    }
-  } : {};
-};
-const transformFillTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'FILL' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'color',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.color).color,
-      property: 'color',
-      group: part
-    }
-  } : {};
-};
-const transformEffectTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'EFFECT' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'box-shadow',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: tokenSet.effect.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
-      property: 'color',
-      group: part
-    }
-  } : {};
-};
-const transformOpacityTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'OPACITY' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'opacity',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.opacity}`,
-      property: 'opacity',
-      group: part
-    }
-  } : {};
-};
-const transformSizeTokenSet$1 = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'SIZE' ? {
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'width',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.width ?? '0'}px`,
-      property: 'width',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'width-raw',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.width ?? '0'}`,
-      property: 'width-raw',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'height',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.height ?? '0'}px`,
-      property: 'height',
-      group: part
-    },
-    [documentationObject.getScssVariableName({
-      component,
-      part,
-      property: 'height-raw',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.height ?? '0'}`,
-      property: 'height-raw',
-      group: part
-    }
-  } : {};
-};
-
-/**
- * Generate a comment block at the top of each record
- * @param type
- * @param component
- * @returns
- */
-const componentCodeBlockComment = (type, component, format) => {
-  let str = type;
-  if (component.componentType === 'design') {
-    str = component.type !== undefined ? `${_.capitalize(component.type)} ${str}` : `${_.capitalize(str)}`;
-    str += component.theme !== undefined ? `, theme: ${component.theme}` : ``;
-    str += component.state !== undefined ? `, state: ${component.state}` : ``;
-    str += component.activity !== undefined ? `, activity: ${component.activity}` : ``;
-  }
-  if (component.componentType === 'layout') {
-    str = `${_.capitalize(str)}`;
-    str += component.layout !== undefined ? `, layout: ${component.layout}` : ``;
-    str += component.size !== undefined ? `, size: ${component.size}` : ``;
-  }
-  return format === "/**/" ? `/* ${str} */` : `// ${str}`;
 };
 
 /**
@@ -646,10 +458,10 @@ const componentCodeBlockComment = (type, component, format) => {
  * @param documentationObject
  * @returns
  */
-function scssTypesTransformer(documentationObject) {
+function scssTypesTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName]);
+    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName], options.get(componentName));
   }
   const design = {
     colors: transformColorTypes(documentationObject.design.color),
@@ -667,10 +479,10 @@ function scssTypesTransformer(documentationObject) {
  * @param documentationObject
  * @returns
  */
-function scssTransformer(documentationObject) {
+function scssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = documentationObject.components[componentName].map(component => [componentCodeBlockComment(componentName, component, '//'), Object.entries(transformComponentTokensToScssVariables(component)).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')].join('\n')).join('\n\n');
+    components[componentName] = documentationObject.components[componentName].map(component => [formatComponentCodeBlockComment(componentName, component, '//'), Object.entries(transformComponentTokensToScssVariables(component, options.get(componentName))).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')].join('\n')).join('\n\n');
   }
   const design = {
     colors: transformColors$1(documentationObject.design.color),
@@ -827,12 +639,12 @@ const buildClientFiles = async () => {
  * @param alerts
  * @returns
  */
-const transformComponentsToCssVariables = components => {
+const transformComponentsToCssVariables = (components, options) => {
   const lines = [];
   const componentName = components[0].name;
-  const componentCssClass = components[0].rootCssClass ?? componentName;
+  const componentCssClass = options?.rootCssClass ?? componentName;
   lines.push(`.${componentCssClass} {`);
-  const cssVars = components.map(tokens => `\t${componentCodeBlockComment(componentName, tokens, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(componentName, tokens)).map(([variable, value]) => `\t${variable}: ${value.value};`).join('\n')}`);
+  const cssVars = components.map(component => `\t${formatComponentCodeBlockComment(componentName, component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options)).map(([variable, value]) => `\t${variable}: ${value.value};`).join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
@@ -841,13 +653,10 @@ const transformComponentsToCssVariables = components => {
  * @param tokens
  * @returns
  */
-const transformComponentTokensToCssVariables = (componentName, tokens) => {
+const transformComponentTokensToCssVariables = (component, options) => {
   let result = {};
-  const theme = tokens.componentType === 'design' ? tokens.theme : undefined;
-  const state = tokens.componentType === 'design' ? tokens.activity ?? tokens.state : undefined;
-  const type = tokens.componentType === 'design' ? state && state === tokens.activity ? tokens.state : tokens.type : tokens.layout ?? mapComponentSize(tokens.size ?? '', tokens.name);
-  for (const partId in tokens.parts) {
-    const tokenSets = tokens.parts[partId];
+  for (const part in component.parts) {
+    const tokenSets = component.parts[part];
     if (!tokenSets || tokenSets.length === 0) {
       continue;
     }
@@ -858,378 +667,11 @@ const transformComponentTokensToCssVariables = (componentName, tokens) => {
       }
       result = {
         ...result,
-        ...transformer(componentName, partId === '$' ? '' : partId.replace(/[A-Z]/g, m => "-" + m.toLowerCase()), tokenSet, {
-          theme,
-          type,
-          state
-        })
+        ...transformer('css', component, part, tokenSet, options)
       };
     }
   }
   return result;
-};
-const getTokenSetTransformer = tokenSet => {
-  switch (tokenSet.name) {
-    case 'BACKGROUND':
-      return transformBackgroundTokenSet;
-    case 'SPACING':
-      return transformSpacingTokenSet;
-    case 'BORDER':
-      return transformBorderTokenSet;
-    case 'TYPOGRAPHY':
-      return transformTypographyTokenSet;
-    case 'FILL':
-      return transformFillTokenSet;
-    case 'EFFECT':
-      return transformEffectTokenSet;
-    case 'OPACITY':
-      return transformOpacityTokenSet;
-    case 'SIZE':
-      return transformSizeTokenSet;
-    default:
-      return undefined;
-  }
-};
-const transformBackgroundTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'BACKGROUND' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'background',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.background).color,
-      property: 'background'
-    }
-  } : {};
-};
-const transformSpacingTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'SPACING' ? {
-    // Padding
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-y',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.TOP}px`,
-      property: 'vertical padding'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-x',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'horizontal padding'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-top',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.TOP}px`,
-      property: 'padding-top'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-right',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.RIGHT}px`,
-      property: 'padding-right'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-bottom',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.BOTTOM}px`,
-      property: 'padding-bottom'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-left',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'padding-left'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-start',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.LEFT}px`,
-      property: 'padding-start'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'padding-end',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.padding.RIGHT}px`,
-      property: 'padding-end'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'spacing',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.spacing}px`,
-      property: 'spacing'
-    }
-  } : {};
-};
-const transformBorderTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'BORDER' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'border-width',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.weight}px`,
-      property: 'border-width'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'border-radius',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.radius}px`,
-      property: 'border-radius'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'border-color',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.strokes).color,
-      property: 'border-color'
-    }
-  } : {};
-};
-const transformTypographyTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'TYPOGRAPHY' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'font-family',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `'${tokenSet.fontFamily}'`,
-      property: 'font-family'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'font-size',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.fontSize}px`,
-      property: 'font-size'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'font-weight',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.fontWeight}`,
-      property: 'font-weight'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'line-height',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.lineHeight}`,
-      property: 'line-height'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'letter-spacing',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.letterSpacing}px`,
-      property: 'letter-spacing'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'text-align',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaTextAlignToCss(tokenSet.textAlignHorizontal),
-      property: 'text-align'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'text-decoration',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaTextDecorationToCss(tokenSet.textDecoration),
-      property: 'text-decoration'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'text-transform',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaTextCaseToCssTextTransform(tokenSet.textCase),
-      property: 'text-transform'
-    }
-  } : {};
-};
-const transformFillTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'FILL' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'color',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: documentationObject.transformFigmaFillsToCssColor(tokenSet.color).color,
-      property: 'color'
-    }
-  } : {};
-};
-const transformEffectTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'EFFECT' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'box-shadow',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: tokenSet.effect.map(documentationObject.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
-      property: 'color'
-    }
-  } : {};
-};
-const transformOpacityTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'OPACITY' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'opacity',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.opacity}`,
-      property: 'opacity'
-    }
-  } : {};
-};
-const transformSizeTokenSet = (component, part, tokenSet, params) => {
-  return tokenSet.name === 'SIZE' ? {
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'width',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.width ?? '0'}px`,
-      property: 'width'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'width-raw',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.width ?? '0'}`,
-      property: 'width-raw'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'height',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.height ?? '0'}px`,
-      property: 'height'
-    },
-    [documentationObject.getCssVariableName({
-      component,
-      part,
-      property: 'height-raw',
-      theme: params.theme,
-      type: params.type,
-      state: params.state
-    })]: {
-      value: `${tokenSet.height ?? '0'}`,
-      property: 'height-raw'
-    }
-  } : {};
 };
 
 function transformColors(colors) {
@@ -1267,10 +709,10 @@ function getTypeName(type) {
   return type.group ? `${type.group}-${type.machine_name}` : `${type.machine_name}`;
 }
 
-function cssTransformer(documentationObject) {
+function cssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName]);
+    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options.get(componentName));
   }
   const design = {
     colors: transformColors(documentationObject.design.color),
@@ -1497,6 +939,16 @@ const getExportables = async () => {
     return [];
   }
 };
+const formatComponentsTransformerOptions = exportables => {
+  return new Map(Object.entries(exportables.reduce((res, exportable) => {
+    return {
+      ...res,
+      ...{
+        [exportable.id]: exportable.options.transformer
+      }
+    };
+  }, {})));
+};
 
 /**
  * Build just the custom fonts
@@ -1536,10 +988,10 @@ const buildPreview = async documentationObject => {
  * Build only the styles pipeline
  * @param documentationObject
  */
-const buildStyles = async documentationObject => {
-  const typeFiles = scssTypesTransformer(documentationObject);
-  const cssFiles = cssTransformer(documentationObject);
-  const scssFiles = scssTransformer(documentationObject);
+const buildStyles = async (documentationObject, options) => {
+  const typeFiles = scssTypesTransformer(documentationObject, options);
+  const cssFiles = cssTransformer(documentationObject, options);
+  const scssFiles = scssTransformer(documentationObject, options);
   await Promise.all([fs__namespace.ensureDir(variablesFilePath).then(() => fs__namespace.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
 };
 /**
@@ -1562,6 +1014,7 @@ const entirePipeline = async () => {
   let changelog = (await readPrevJSONFile(changelogFilePath)) || [];
   await fs__namespace.emptyDir(outputFolder);
   const exportables = await getExportables();
+  const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
   const documentationObject$1 = await documentationObject.createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN, exportables);
   const changelogRecord = documentationObject.generateChangelogRecord(prevDocumentationObject, documentationObject$1);
   if (changelogRecord) {
@@ -1573,7 +1026,7 @@ const entirePipeline = async () => {
     spaces: 2
   }), ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false' ? [documentationObject.zipAssets(documentationObject$1.assets.icons, fs__namespace.createWriteStream(iconsZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream)), documentationObject.zipAssets(documentationObject$1.assets.logos, fs__namespace.createWriteStream(logosZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream))] : [])]);
   await buildCustomFonts(documentationObject$1);
-  await buildStyles(documentationObject$1);
+  await buildStyles(documentationObject$1, componentTransformerOptions);
   await buildIntegration();
   await buildPreview(documentationObject$1);
   console.log(chalk__default["default"].green(`Figma pipeline complete:`, `${documentationObject.getRequestCount()} requests`));
@@ -1597,7 +1050,9 @@ const entirePipeline = async () => {
       } else if (process.argv.indexOf('integration') > 0) {
         let documentationObject = await readPrevJSONFile(tokensFilePath);
         if (documentationObject) {
-          await buildStyles(documentationObject);
+          const exportables = await getExportables();
+          const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+          await buildStyles(documentationObject, componentTransformerOptions);
           await buildPreview(documentationObject);
           await buildIntegration(documentationObject);
         } else {
@@ -1606,7 +1061,9 @@ const entirePipeline = async () => {
       } else if (process.argv.indexOf('styles') > 0) {
         let documentationObject = await readPrevJSONFile(tokensFilePath);
         if (documentationObject) {
-          await buildStyles(documentationObject);
+          const exportables = await getExportables();
+          const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+          await buildStyles(documentationObject, componentTransformerOptions);
         } else {
           throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
         }

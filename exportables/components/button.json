@@ -3,18 +3,38 @@
   "group": "Components",
   "options": {
     "exporter": {
-      "search": "Button", 
+      "search": "Button",
+      "supportedVariantProps": [
+        "THEME",
+        "TYPE",
+        "STATE(:disabled)",
+        "SIZE"
+      ]
+    },
+    "transformer": {
       "rootCssClass": "btn",
-      "supportedVariantProps": ["THEME", "TYPE", "STATE(:disabled)", "SIZE"]
+      "cssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
+      "scssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
     },
     "demo": {
       "tabs": {
         "overview": {
-          "design": { "state": "default" },
+          "design": {
+            "state": "default"
+          },
           "layout": {}
         },
-        "designTokens" : {
-          "design": { "state": "default" }
+        "designTokens": {
+          "design": {
+            "state": "default"
+          }
         }
       }
     }
@@ -22,13 +42,24 @@
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "$",
-        "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
-      }, {
-        "from": "TEXT",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        },
+        {
+          "from": "TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }

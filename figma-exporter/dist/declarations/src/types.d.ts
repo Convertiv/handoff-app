@@ -95,14 +95,24 @@ export interface ExportableDefinition {
 }
 interface ExportableOptions {
     exporter: ExportableExporterOptions;
+    transformer: ExportableTransformerOptions;
     demo: ExportableDemoOptions;
 }
-interface ExportableExporterOptions {
+export interface ExportableExporterOptions {
     search: string;
-    rootCssClass: string;
     supportedVariantProps: VariantProperty[];
 }
-interface ExportableDemoOptions {
+export interface ExportableTransformerOptions {
+    rootCssClass?: string;
+    cssVariableTemplate?: string;
+    scssVariableTemplate?: string;
+    replace: {
+        [token: string]: {
+            [search: string]: string;
+        };
+    };
+}
+export interface ExportableDemoOptions {
     tabs: {
         [tab: string]: {
             [componentType: string]: ExportableDefinitionPageFilter;

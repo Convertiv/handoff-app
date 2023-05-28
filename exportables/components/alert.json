@@ -3,55 +3,98 @@
   "group": "Components",
   "options": {
     "exporter": {
-      "search": "Alert", 
+      "search": "Alert",
+      "supportedVariantProps": [
+        "TYPE",
+        "LAYOUT"
+      ]
+    },
+    "transformer": {
       "rootCssClass": "alert",
-      "supportedVariantProps": ["TYPE", "LAYOUT"]
+      "cssVariableTemplate": "alert-{$type}{$layout}-{$part}-{$property}",
+      "scssVariableTemplate": "alert-{$type}{$layout}-{$part}-{$property}"
     },
     "demo": {
       "tabs": {
-        "overview": { "design": {}, "layout": {} },
-        "designTokens" : { "design": {} }
+        "overview": {
+          "design": {},
+          "layout": {}
+        },
+        "designTokens": {
+          "design": {}
+        }
       }
     }
   },
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "$",
-        "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
-      }]
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        }
+      ]
     },
     {
       "id": "body",
-      "tokens": [{
-        "from": "FRAME[name='Body']",
-        "export": ["SPACING"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body']",
+          "export": [
+            "SPACING"
+          ]
+        }
+      ]
     },
     {
       "id": "title",
-      "tokens": [{
-        "from": "FRAME[name='Body'] > TEXT[name='Title']",
-        "export": ["SPACING", "TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body'] > TEXT[name='Title']",
+          "export": [
+            "SPACING",
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "text",
-      "tokens": [{
-        "from": "FRAME[name='Body'] > TEXT[name='Text']",
-        "export": ["SPACING", "TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body'] > TEXT[name='Text']",
+          "export": [
+            "SPACING",
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "actions",
-      "tokens": [{
-        "from": "FRAME[name='Body'] > FRAME[name='Actions']",
-        "export": ["SPACING"]
-      }, {
-        "from": "FRAME[name='Body'] > FRAME[name='Actions'] > TEXT[name='Link']",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body'] > FRAME[name='Actions']",
+          "export": [
+            "SPACING"
+          ]
+        },
+        {
+          "from": "FRAME[name='Body'] > FRAME[name='Actions'] > TEXT[name='Link']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }

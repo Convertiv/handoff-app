@@ -3,17 +3,32 @@
   "group": "Components",
   "options": {
     "exporter": {
-      "search": "Modal", 
-      "rootCssClass": "modal",
-      "supportedVariantProps": ["TYPE", "SIZE"]
+      "search": "Modal",
+      "supportedVariantProps": [
+        "TYPE",
+        "SIZE"
+      ]
+    },
+    "transformer": {
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
     },
     "demo": {
       "tabs": {
         "overview": {
-          "design": { "type": "default" }
+          "design": {
+            "type": "default"
+          }
         },
-        "designTokens" : {
-          "design": { "type": "default" }
+        "designTokens": {
+          "design": {
+            "type": "default"
+          }
         }
       }
     }
@@ -21,44 +36,85 @@
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "$",
-        "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
-      }]
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        }
+      ]
     },
     {
       "id": "header",
-      "tokens": [{
-        "from": "FRAME[name='header']",
-        "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='header']",
+          "export": [
+            "BACKGROUND",
+            "SPACING",
+            "BORDER",
+            "EFFECT"
+          ]
+        }
+      ]
     },
     {
       "id": "title",
-      "tokens": [{
-        "from": "FRAME[name='header'] > TEXT",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='header'] > TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "body",
-      "tokens": [{
-        "from": "FRAME[name='body']",
-        "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
-      }, {
-        "path": "FRAME[name='body'] > TEXT",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='body']",
+          "export": [
+            "BACKGROUND",
+            "SPACING",
+            "BORDER",
+            "EFFECT"
+          ]
+        },
+        {
+          "path": "FRAME[name='body'] > TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "footer",
-      "tokens": [{
-        "from": "FRAME[name='footer']",
-        "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
-      }, {
-        "path": "FRAME[name='footer'] > TEXT",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='footer']",
+          "export": [
+            "BACKGROUND",
+            "SPACING",
+            "BORDER",
+            "EFFECT"
+          ]
+        },
+        {
+          "path": "FRAME[name='footer'] > TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }

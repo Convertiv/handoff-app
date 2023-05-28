@@ -13,7 +13,6 @@ interface NodePathTokens {
 interface ComponentBase {
   id: string;
   name: string;
-  rootCssClass: string;
   description?: string,
   parts?: {[key: string]: ExportTypes.TokenSets},
 };
@@ -110,14 +109,12 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
 
         const name = definition.id ?? '';
         const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
-        const rootCssClass = definition.options.exporter.rootCssClass ?? name;
 
         if (layout || size) {
           return {
             id: generateLayoutId(layout, size),
             name,
             description,
-            rootCssClass,
             componentType: 'layout',
             size,
             layout,
@@ -129,7 +126,6 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
           id: generateDesignId(theme, type, state, activity),
           name,
           description,
-          rootCssClass,
           theme,
           type,
           state,

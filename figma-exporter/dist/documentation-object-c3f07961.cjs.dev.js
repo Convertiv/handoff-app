@@ -320,13 +320,11 @@ function extractComponents(componentSetComponentsResult, definition) {
     }, {});
     const name = definition.id ?? '';
     const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
-    const rootCssClass = definition.options.exporter.rootCssClass ?? name;
     if (layout || size) {
       return {
         id: generateLayoutId(layout, size),
         name,
         description,
-        rootCssClass,
         componentType: 'layout',
         size,
         layout,
@@ -337,7 +335,6 @@ function extractComponents(componentSetComponentsResult, definition) {
       id: generateDesignId(theme, type, state, activity),
       name,
       description,
-      rootCssClass,
       theme,
       type,
       state,
@@ -844,31 +841,6 @@ function getRadialGradientParamsFromGradientObject(gradient) {
   return [Math.abs(Number((gradient.handles[1].x - gradient.handles[0].x).toFixed(4))) * 100, Math.abs(Number((gradient.handles[2].y - gradient.handles[0].y).toFixed(4))) * 100, Number(gradient.handles[0].x.toFixed(4)) * 100, Number(gradient.handles[0].y.toFixed(4)) * 100];
 }
 
-const getScssVariableName = tokens => {
-  const {
-    component,
-    property,
-    part,
-    theme = 'light',
-    type = 'default',
-    state = 'default'
-  } = tokens;
-  const parts = [component, type === 'default' ? '' : type, part, theme === 'light' ? '' : theme, state === 'default' ? '' : state, property].filter(Boolean);
-  return `$${parts.join('-')}`;
-};
-const getCssVariableName = tokens => {
-  const {
-    component,
-    property,
-    part,
-    theme = 'light',
-    type = 'default',
-    state = 'default'
-  } = tokens;
-  const parts = [component, type === 'default' ? '' : type, part, theme === 'light' ? '' : theme, state === 'default' ? '' : state, property].filter(Boolean);
-  return `--${parts.join('-')}`;
-};
-
 /**
  * Generate a CSS gradient from a color gradient object
  
@@ -1214,9 +1186,7 @@ exports.createDocumentationObject = createDocumentationObject;
 exports.filterOutNull = filterOutNull;
 exports.filterOutUndefined = filterOutUndefined;
 exports.generateChangelogRecord = generateChangelogRecord;
-exports.getCssVariableName = getCssVariableName;
 exports.getRequestCount = getRequestCount;
-exports.getScssVariableName = getScssVariableName;
 exports.transformFigmaEffectToCssBoxShadow = transformFigmaEffectToCssBoxShadow;
 exports.transformFigmaFillsToCssColor = transformFigmaFillsToCssColor;
 exports.transformFigmaTextAlignToCss = transformFigmaTextAlignToCss;

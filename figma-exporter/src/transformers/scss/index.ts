@@ -3,7 +3,8 @@ import transformColors, { transformColorTypes } from './design/colors';
 import transformEffects, { transformEffectTypes } from './design/effects';
 import transformTypography, { transformTypographyTypes } from './design/typography';
 import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component';
-import { componentCodeBlockComment } from '../utils';
+import { formatComponentCodeBlockComment } from '../utils';
+import { ExportableTransformerOptionsMap } from '../types';
 
 interface ScssTypesTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;
@@ -20,11 +21,11 @@ interface ScssTransformerOutput {
  * @param documentationObject
  * @returns
  */
-export function scssTypesTransformer(documentationObject: DocumentationObject): ScssTypesTransformerOutput {
+export function scssTypesTransformer(documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap): ScssTypesTransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName])
+    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName], options.get(componentName));
   }
 
   const design = {
@@ -41,14 +42,14 @@ export function scssTypesTransformer(documentationObject: DocumentationObject): 
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject): ScssTransformerOutput {
+export default function scssTransformer(documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap): ScssTransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentName in documentationObject.components) {
     components[componentName] = documentationObject.components[componentName]
       .map((component) => ([
-        componentCodeBlockComment(componentName, component, '//'),
-        Object.entries(transformComponentTokensToScssVariables(component)).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')
+        formatComponentCodeBlockComment(componentName, component, '//'),
+        Object.entries(transformComponentTokensToScssVariables(component, options.get(componentName))).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')
       ].join('\n'))).join('\n\n');
   }
 

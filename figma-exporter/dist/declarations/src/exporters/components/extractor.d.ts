@@ -4,7 +4,6 @@ import { GetComponentSetComponentsResult } from '.';
 interface ComponentBase {
     id: string;
     name: string;
-    rootCssClass: string;
     description?: string;
     parts?: {
         [key: string]: ExportTypes.TokenSets;

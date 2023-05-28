@@ -3,22 +3,63 @@
   "group": "Forms",
   "options": {
     "exporter": {
-      "search": "Input", 
-      "rootCssClass": "input",
-      "supportedVariantProps": ["THEME", "STATE", "SIZE"]
+      "search": "Input",
+      "supportedVariantProps": [
+        "THEME",
+        "STATE",
+        "SIZE"
+      ]
+    },
+    "transformer": {
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
     },
     "demo": {
       "tabs": {
         "overview": {
-          "design": { "state": [ "default", "error", "disabled" ] }
+          "design": {
+            "state": [
+              "default",
+              "error",
+              "disabled"
+            ]
+          }
         },
-        "designTokens" : {
+        "designTokens": {
           "design": {
             "state": {
-              "default": { "states": [ "default", "hover", "active" ]} ,
-              "error": { "states": [ "error", "hover", "active" ] },
-              "complete": { "states": [ "complete", "hover", "active" ] },
-              "disabled": { "states": [ "disabled", "hover" ] }
+              "default": {
+                "states": [
+                  "default",
+                  "hover",
+                  "active"
+                ]
+              },
+              "error": {
+                "states": [
+                  "error",
+                  "hover",
+                  "active"
+                ]
+              },
+              "complete": {
+                "states": [
+                  "complete",
+                  "hover",
+                  "active"
+                ]
+              },
+              "disabled": {
+                "states": [
+                  "disabled",
+                  "hover"
+                ]
+              }
             }
           }
         }
@@ -28,41 +69,73 @@
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "FRAME[name=':: input']",
-        "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
-      }, {
-        "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name=':: input']",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        },
+        {
+          "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "label",
-      "tokens": [{
-        "from": "TEXT[name='Input Label']",
-        "export": ["SPACING", "TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "TEXT[name='Input Label']",
+          "export": [
+            "SPACING",
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "text",
-      "tokens": [{
-        "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "icon",
-      "tokens": [{
-        "from": "FRAME[name=':: input'] > VECTOR",
-        "export": ["BORDER"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name=':: input'] > VECTOR",
+          "export": [
+            "BORDER"
+          ]
+        }
+      ]
     },
     {
       "id": "additionalInfo",
-      "tokens": [{
-        "from": "TEXT[name='Help Text']",
-        "export": ["SPACING", "TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "TEXT[name='Help Text']",
+          "export": [
+            "SPACING",
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }
