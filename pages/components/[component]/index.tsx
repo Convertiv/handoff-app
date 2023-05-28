@@ -17,7 +17,6 @@ import { CodeHighlight } from 'components/Markdown/CodeHighlight';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
-import { transformComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/component';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
 import { Config } from 'client-config';
 import { filterOutNull } from 'figma-exporter/src/utils';
