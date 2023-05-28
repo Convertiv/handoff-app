@@ -109,46 +109,6 @@ const getSizesFromComponents = components => {
 };
 
 /**
- * Get Config
- * @returns Config
- */
-const getFetchConfig = () => {
-  let config;
-  try {
-    config = require(path__default["default"].resolve(__dirname, '../../client-config'));
-  } catch (e) {
-    config = {};
-  }
-
-  // Check to see if there is a config in the root of the project
-  const parsed = {
-    ...config
-  };
-  return parsed;
-};
-
-/**
- * Map a component size to the right name
- * @param figma
- * @returns
- */
-const mapComponentSize = (figma, component) => {
-  const config = getFetchConfig();
-  if (component) {
-    if (config.figma.components[component]?.size) {
-      const componentMap = config.components[component]?.size;
-      const componentSize = componentMap.find(size => size.figma === figma);
-      if (componentSize && componentSize?.css) {
-        return componentSize?.css;
-      }
-    }
-  }
-  const coreMap = config.figma.size;
-  const size = coreMap.find(size => size.figma === figma);
-  return size?.css ?? figma;
-};
-
-/**
  * Generate a comment block at the top of each record
  * @param type
  * @param component
@@ -171,29 +131,16 @@ const formatComponentCodeBlockComment = (type, component, format) => {
 };
 const formatVariableName = (variableType, component, part, property, options) => {
   const {
-    theme = 'light',
-    type = 'default',
-    state = 'default'
-  } = getReducedVariableNameTokens(component);
-  const variableNameTemplate = variableType === 'css' ? options?.cssVariableTemplate : options?.scssVariableTemplate;
-  const variableName = variableNameTemplate ? parseVariableNameTemplate(variableNameTemplate, component, part, property, options) : [component.name, normalizeVariableToken('type', type, options), normalizeVariablePart(part), normalizeVariableToken('theme', theme, options), normalizeVariableToken('state', state, options), property].filter(Boolean).join('-');
-  return variableType === 'css' ? `--${variableName}` : `$${variableName}`;
-};
-const getReducedVariableNameTokens = component => {
-  const theme = component.componentType === 'design' ? component.theme : undefined;
-  const state = component.componentType === 'design' ? component.activity ?? component.state : undefined;
-  const type = component.componentType === 'design' ? state && state === component.activity ? component.state : component.type : component.layout ?? mapComponentSize(component.size ?? '', component.name);
-  return {
     theme,
     type,
     state
-  };
-};
-const parseVariableNameTemplate = (template, component, part, property, options) => {
-  return template.replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', component.theme ?? '', options) : '').replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', component.type ?? '', options) : '').replaceAll('{$state}', component.componentType === 'design' ? normalizeVariableToken('state', component.state ?? '', options) : '').replaceAll('{$activity}', component.componentType === 'design' ? normalizeVariableToken('activity', component.activity ?? '', options) : '').replaceAll('{$layout}', component.componentType === 'layout' ? normalizeVariableToken('layout', component.layout ?? '', options) : '').replaceAll('{$size}', component.componentType === 'layout' ? normalizeVariableToken('size', component.size ?? '', options) : '').replaceAll('{$part}', normalizeVariablePart(part)).replaceAll('{$property}', property).replace(/-+/g, '-');
+  } = getReducedVariableNameTokens(component, options);
+  const variableNameTemplate = variableType === 'css' ? options?.cssVariableTemplate : options?.scssVariableTemplate;
+  const variableName = variableNameTemplate ? parseVariableNameTemplate(variableNameTemplate, component, part, property, options) : [component.name, type, normalizeVariablePart(part), theme, state, property].filter(Boolean).join('-');
+  return variableType === 'css' ? `--${variableName}` : `$${variableName}`;
 };
 const normalizeVariableToken = (token, val, options) => {
-  if (token in (options?.replace ?? {}) && val in (options?.replace[token] ?? {})) {
+  if (token in (options?.replace ?? {}) && val && val in (options?.replace[token] ?? {})) {
     return options?.replace[token][val] ?? '';
   }
   if (token === 'theme' && val === 'light') {
@@ -206,6 +153,19 @@ const normalizeVariableToken = (token, val, options) => {
 };
 const normalizeVariablePart = part => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+};
+const getReducedVariableNameTokens = (component, options) => {
+  const theme = component.componentType === 'design' ? normalizeVariableToken('theme', component.theme ?? '', options) : undefined;
+  const state = component.componentType === 'design' ? normalizeVariableToken('activity', component.activity ?? undefined, options) ?? normalizeVariableToken('state', component.state ?? undefined, options) : undefined;
+  const type = component.componentType === 'design' ? state && state === normalizeVariableToken('activity', component.activity ?? '', options) ? normalizeVariableToken('state', component.state ?? '', options) : normalizeVariableToken('type', component.type ?? '', options) : normalizeVariableToken('layout', component.layout ?? undefined, options) ?? normalizeVariableToken('size', component.size ?? undefined, options);
+  return {
+    theme,
+    type,
+    state
+  };
+};
+const parseVariableNameTemplate = (template, component, part, property, options) => {
+  return template.replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', component.theme ?? '', options) ?? '' : '').replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', component.type ?? '', options) ?? '' : '').replaceAll('{$state}', component.componentType === 'design' ? normalizeVariableToken('state', component.state ?? '', options) ?? '' : '').replaceAll('{$activity}', component.componentType === 'design' ? normalizeVariableToken('activity', component.activity ?? '', options) ?? '' : '').replaceAll('{$layout}', component.componentType === 'layout' ? normalizeVariableToken('layout', component.layout ?? '', options) ?? '' : '').replaceAll('{$size}', component.componentType === 'layout' ? normalizeVariableToken('size', component.size ?? '', options) ?? '' : '').replaceAll('{$part}', normalizeVariablePart(part)).replaceAll('{$property}', property).replace(/-+/g, '-');
 };
 
 const getTokenSetTransformer = tokenSet => {
@@ -418,7 +378,7 @@ const transformComponentsToScssTypes = (name, components, options) => {
 
   // Sizes
   if (sizes && sizes.length > 0) {
-    lines.push(`$${name}-sizes: ( ${sizes.map(type => `"${mapComponentSize(type, name)}"`).join(', ')} );`);
+    lines.push(`$${name}-sizes: ( ${sizes.map(type => `"${normalizeVariableToken('size', type, options)}"`).join(', ')} );`);
   }
 
   // Themes
@@ -787,6 +747,25 @@ const zipFonts = async (dirPath, destination) => {
   }
   await archive.finalize();
   return destination;
+};
+
+/**
+ * Get Config
+ * @returns Config
+ */
+const getFetchConfig = () => {
+  let config;
+  try {
+    config = require(path__default["default"].resolve(__dirname, '../../client-config'));
+  } catch (e) {
+    config = {};
+  }
+
+  // Check to see if there is a config in the root of the project
+  const parsed = {
+    ...config
+  };
+  return parsed;
 };
 
 /**

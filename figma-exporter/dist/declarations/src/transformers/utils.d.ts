@@ -8,3 +8,5 @@ import { ExportableTransformerOptions } from "../types";
  */
 export declare const formatComponentCodeBlockComment: (type: string, component: Component, format: "/**/" | "//") => string;
 export declare const formatVariableName: (variableType: 'css' | 'scss', component: Component, part: string, property: string, options?: ExportableTransformerOptions) => string;
+export declare const normalizeVariableToken: (token: string, val?: string, options?: ExportableTransformerOptions) => string | undefined;
+export declare const normalizeVariablePart: (part: string) => string;

@@ -1,7 +1,6 @@
 import { capitalize } from "lodash";
 import { Component } from "../exporters/components/extractor";
 import { ExportableTransformerOptions } from "../types";
-import { mapComponentSize } from "../utils/config";
 
 /**
  * Generate a comment block at the top of each record
@@ -29,52 +28,25 @@ export const formatComponentCodeBlockComment = (type: string, component: Compone
 }
 
 export const formatVariableName = (variableType: 'css' | 'scss', component: Component, part: string, property: string, options?: ExportableTransformerOptions): string => {
-  const { theme = 'light', type = 'default', state = 'default' } = getReducedVariableNameTokens(component);
+  const { theme, type, state } = getReducedVariableNameTokens(component, options);
   
   const variableNameTemplate = variableType === 'css' ? options?.cssVariableTemplate : options?.scssVariableTemplate;
   const variableName = variableNameTemplate
     ? parseVariableNameTemplate(variableNameTemplate, component, part, property, options)
     : [
       component.name,
-      normalizeVariableToken('type', type, options),
+      type,
       normalizeVariablePart(part),
-      normalizeVariableToken('theme', theme, options),
-      normalizeVariableToken('state', state, options),
+      theme,
+      state,
       property,
     ].filter(Boolean).join('-');
 
     return variableType === 'css' ? `--${variableName}` : `$${variableName}`
 };
 
-const getReducedVariableNameTokens = (component: Component) => {
-  const theme = component.componentType === 'design' ? component.theme : undefined;
-
-  const state = component.componentType === 'design'
-    ? component.activity ?? component.state
-    : undefined;
-
-  const type = component.componentType === 'design'
-    ? (state && state === component.activity ? component.state : component.type)
-    : component.layout ?? mapComponentSize(component.size ?? '', component.name);
-
-  return { theme, type, state }
-}
-
-const parseVariableNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions) => {
-  return template
-    .replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', (component.theme ?? ''), options) : '')
-    .replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', (component.type ?? ''), options) : '')
-    .replaceAll('{$state}', component.componentType === 'design' ? normalizeVariableToken('state', (component.state ?? ''), options) : '')
-    .replaceAll('{$activity}', component.componentType === 'design' ? normalizeVariableToken('activity', (component.activity ?? ''), options) : '')
-    .replaceAll('{$layout}', component.componentType === 'layout' ? normalizeVariableToken('layout', (component.layout ?? ''), options) : '')
-    .replaceAll('{$size}', component.componentType === 'layout' ? normalizeVariableToken('size', (component.size ?? ''), options) : '')
-    .replaceAll('{$part}', normalizeVariablePart(part))
-    .replaceAll('{$property}', property)
-    .replace(/-+/g, '-')
-}
-
-const normalizeVariableToken = (token: string, val: string, options?: ExportableTransformerOptions) => {
-  if (token in (options?.replace ?? {}) && val in (options?.replace[token] ?? {})) {
+export const normalizeVariableToken = (token: string, val?: string, options?: ExportableTransformerOptions) => {
+  if (token in (options?.replace ?? {}) && val && val in (options?.replace[token] ?? {})) {
     return options?.replace[token][val] ?? '';
   }
 
@@ -89,6 +61,33 @@ const normalizeVariableToken = (token: string, val: string, options?: Exportable
   return val;
 }
 
-const normalizeVariablePart = (part: string) => {
+export const normalizeVariablePart = (part: string) => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+}
+
+const getReducedVariableNameTokens = (component: Component, options?: ExportableTransformerOptions) => {
+  const theme = component.componentType === 'design' ? normalizeVariableToken('theme', (component.theme ?? ''), options) : undefined;
+
+  const state = component.componentType === 'design'
+    ? normalizeVariableToken('activity', (component.activity ?? undefined), options) ?? normalizeVariableToken('state', (component.state ?? undefined), options)
+    : undefined;
+
+  const type = component.componentType === 'design'
+    ? (state && state === normalizeVariableToken('activity', (component.activity ?? ''), options) ? normalizeVariableToken('state', (component.state ?? ''), options) : normalizeVariableToken('type', (component.type ?? ''), options))
+    : normalizeVariableToken('layout', (component.layout ?? undefined), options) ?? normalizeVariableToken('size', (component.size ?? undefined), options);
+
+  return { theme, type, state }
+}
+
+const parseVariableNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions) => {
+  return template
+    .replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', (component.theme ?? ''), options) ?? '' : '')
+    .replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', (component.type ?? ''), options) ?? '' : '')
+    .replaceAll('{$state}', component.componentType === 'design' ? normalizeVariableToken('state', (component.state ?? ''), options) ?? '' : '')
+    .replaceAll('{$activity}', component.componentType === 'design' ? normalizeVariableToken('activity', (component.activity ?? ''), options) ?? '' : '')
+    .replaceAll('{$layout}', component.componentType === 'layout' ? normalizeVariableToken('layout', (component.layout ?? ''), options) ?? '' : '')
+    .replaceAll('{$size}', component.componentType === 'layout' ? normalizeVariableToken('size', (component.size ?? ''), options) ?? '' : '')
+    .replaceAll('{$part}', normalizeVariablePart(part))
+    .replaceAll('{$property}', property)
+    .replace(/-+/g, '-')
 }
