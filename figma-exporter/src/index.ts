@@ -3,7 +3,7 @@ import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
 
-import { DocumentationObject, ExportableDefinition, ExportableTransformerOptions } from './types';
+import { DocumentationObject, ExportableDefinition, ExportableSharedOptions, ExportableTransformerOptions } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
@@ -83,8 +83,8 @@ const getExportables = async () => {
 }
 
 const formatComponentsTransformerOptions = (exportables: ExportableDefinition[]): ExportableTransformerOptionsMap => {
-  return new Map<string, ExportableTransformerOptions>(Object.entries(exportables.reduce((res, exportable) => {
-    return { ...res, ...{ [exportable.id]: exportable.options.transformer } }
+  return new Map<string, ExportableTransformerOptions & ExportableSharedOptions>(Object.entries(exportables.reduce((res, exportable) => {
+    return { ...res, ...{ [exportable.id]: {...exportable.options.transformer, ...exportable.options.shared} } }
   }, {})));
 }
 

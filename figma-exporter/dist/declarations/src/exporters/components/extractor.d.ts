@@ -13,8 +13,6 @@ export interface ComponentDesign extends ComponentBase {
     componentType: 'design';
     /**
      * Component theme (light, dark)
-     *
-     * @default 'light'
      */
     theme?: string;
     /**

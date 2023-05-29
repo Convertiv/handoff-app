@@ -2,6 +2,13 @@
   "id": "select",
   "group": "Forms",
   "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "size": ""
+      }
+    },
     "exporter": {
       "search": "Select",
       "supportedVariantProps": [

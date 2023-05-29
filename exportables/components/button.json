@@ -2,6 +2,14 @@
   "id": "button",
   "group": "Components",
   "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "type": "default",
+        "size": ""
+      }
+    },
     "exporter": {
       "search": "Button",
       "supportedVariantProps": [

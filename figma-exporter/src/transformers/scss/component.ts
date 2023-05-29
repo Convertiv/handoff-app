@@ -1,11 +1,11 @@
 import { ValueProperty } from '../types';
 import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../css/utils';
 import { Component } from '../../exporters/components/extractor';
-import { ExportableTransformerOptions } from '../../types';
+import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 import { getTokenSetTransformer } from '../tokenSetTransformers';
 import { normalizeVariableToken } from '../utils';
 
-export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions): string => {
+export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
 
   const themes = getThemesFromComponents(components);
@@ -44,7 +44,7 @@ export const transformComponentsToScssTypes = (name: string, components: Compone
   return lines.join('\n\n') + '\n';
 }
 
-export const transformComponentTokensToScssVariables = (component: Component, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+export const transformComponentTokensToScssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   let result = {};
 
   for (const part in component.parts) {

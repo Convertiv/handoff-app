@@ -2,6 +2,14 @@
   "id": "radio",
   "group": "Forms",
   "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "activity": "",
+        "size": ""
+      }
+    },
     "exporter": {
       "search": "Radio",
       "supportedVariantProps": [

@@ -82,10 +82,6 @@ export const isValidNodeType = (type: string): type is FigmaTypes.Node['type'] =
   return ['DOCUMENT', 'CANVAS', 'FRAME', 'GROUP', 'VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'LINE', 'ELLIPSE', 'REGULAR_POLYGON', 'RECTANGLE', 'TEXT', 'SLICE', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(type);
 }
 
-export const isValidTheme = (theme: string): theme is 'light' | 'dark' => {
-  return ['light', 'dark'].includes(theme);
-};
-
 export const isValidEffectType = (effect: FigmaTypes.Effect['type']): boolean => {
   return isShadowEffectType(effect);
 }

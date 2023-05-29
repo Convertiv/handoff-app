@@ -13,11 +13,11 @@ interface ScssTransformerOutput {
  * @param documentationObject
  * @returns
  */
-export declare function scssTypesTransformer(documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap): ScssTypesTransformerOutput;
+export declare function scssTypesTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): ScssTypesTransformerOutput;
 /**
  * Transform all the components to scss
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap): ScssTransformerOutput;
+export default function scssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): ScssTransformerOutput;
 export {};

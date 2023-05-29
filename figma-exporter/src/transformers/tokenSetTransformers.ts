@@ -1,6 +1,6 @@
 import { Component } from "../exporters/components/extractor";
 import { TokenSet } from "../exporters/components/types";
-import { ExportableTransformerOptions } from "../types";
+import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
 import { transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor, transformFigmaTextAlignToCss, transformFigmaTextCaseToCssTextTransform, transformFigmaTextDecorationToCss } from "../utils/convertColor";
 import { ValueProperty } from "./types";
 import { formatVariableName } from "./utils";
@@ -28,7 +28,7 @@ export const getTokenSetTransformer = (tokenSet: TokenSet) => {
   }
 }
 
-const transformBackgroundTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformBackgroundTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'BACKGROUND'
     ? {
       [formatVariableName(variableType, component, part, 'background', options)]: {
@@ -39,7 +39,7 @@ const transformBackgroundTokenSet = (variableType: 'css'|'scss', component: Comp
     } : {}
 }
 
-const transformSpacingTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformSpacingTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'SPACING'
     ? {
       // Padding
@@ -91,7 +91,7 @@ const transformSpacingTokenSet = (variableType: 'css'|'scss', component: Compone
     } : {}
 }
 
-const transformBorderTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformBorderTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'BORDER'
     ? {
       [formatVariableName(variableType, component, part, 'border-width', options)]: {
@@ -112,7 +112,7 @@ const transformBorderTokenSet = (variableType: 'css'|'scss', component: Componen
     } : {}
 }
 
-const transformTypographyTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformTypographyTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'TYPOGRAPHY'
     ? {
       [formatVariableName(variableType, component, part, 'font-family', options)]: {
@@ -158,7 +158,7 @@ const transformTypographyTokenSet = (variableType: 'css'|'scss', component: Comp
     } : {}
 }
 
-const transformFillTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformFillTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'FILL'
     ? {
       [formatVariableName(variableType, component, part, 'color', options)]: {
@@ -169,7 +169,7 @@ const transformFillTokenSet = (variableType: 'css'|'scss', component: Component,
     } : {}
 }
 
-const transformEffectTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformEffectTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'EFFECT'
     ? {
       [formatVariableName(variableType, component, part, 'box-shadow', options)]: {
@@ -180,7 +180,7 @@ const transformEffectTokenSet = (variableType: 'css'|'scss', component: Componen
     } : {}
 }
 
-const transformOpacityTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformOpacityTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'OPACITY'
     ? {
       [formatVariableName(variableType, component, part, 'opacity', options)]: {
@@ -191,7 +191,7 @@ const transformOpacityTokenSet = (variableType: 'css'|'scss', component: Compone
     } : {}
 }
 
-const transformSizeTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+const transformSizeTokenSet = (variableType: 'css'|'scss', component: Component, part: string, tokenSet: TokenSet, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   return tokenSet.name === 'SIZE'
     ? {
       [formatVariableName(variableType, component, part, 'width', options)]: {
@@ -216,5 +216,3 @@ const transformSizeTokenSet = (variableType: 'css'|'scss', component: Component,
       },
     } : {}
 }
-
-interface TransformerParams { theme: string | undefined, type: string | undefined, state: string | undefined };

@@ -2,6 +2,9 @@
   "id": "tooltip",
   "group": "Components",
   "options": {
+    "shared": {
+      "defaults": {}
+    },
     "exporter": {
       "search": "Tooltip",
       "supportedVariantProps": []

@@ -1,4 +1,4 @@
-import { ExportableTransformerOptions } from "../types";
+import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
 
 export interface ValueProperty {
   value: string;
@@ -6,4 +6,4 @@ export interface ValueProperty {
   group?: string;
 }
 
-export type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions>;
+export type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;

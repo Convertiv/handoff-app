@@ -4,7 +4,7 @@ require('dotenv/config');
 var path = require('path');
 var fs = require('fs-extra');
 var stream = require('node:stream');
-var documentationObject = require('./documentation-object-c24b8edf.cjs.prod.js');
+var documentationObject = require('./documentation-object-f305921e.cjs.prod.js');
 var _ = require('lodash');
 var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
@@ -143,10 +143,22 @@ const normalizeVariableToken = (token, val, options) => {
   if (token in (options?.replace ?? {}) && val && val in (options?.replace[token] ?? {})) {
     return options?.replace[token][val] ?? '';
   }
-  if (token === 'theme' && val === 'light') {
+  if (token === 'theme' && val === (options?.defaults?.theme ?? '')) {
     return '';
   }
-  if (['type', 'state', 'activity'].includes(token) && val === 'default') {
+  if (token === 'type' && val === (options?.defaults?.type ?? '')) {
+    return '';
+  }
+  if (token === 'state' && val === (options?.defaults?.state ?? '')) {
+    return '';
+  }
+  if (token === 'activity' && val === (options?.defaults?.activity ?? '')) {
+    return '';
+  }
+  if (token === 'layout' && val === (options?.defaults?.layout ?? '')) {
+    return '';
+  }
+  if (token === 'size' && val === (options?.defaults?.size ?? '')) {
     return '';
   }
   return val;
@@ -421,7 +433,7 @@ const transformComponentTokensToScssVariables = (component, options) => {
 function scssTypesTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName], options.get(componentName));
+    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName], options?.get(componentName));
   }
   const design = {
     colors: transformColorTypes(documentationObject.design.color),
@@ -442,7 +454,7 @@ function scssTypesTransformer(documentationObject, options) {
 function scssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = documentationObject.components[componentName].map(component => [formatComponentCodeBlockComment(componentName, component, '//'), Object.entries(transformComponentTokensToScssVariables(component, options.get(componentName))).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')].join('\n')).join('\n\n');
+    components[componentName] = documentationObject.components[componentName].map(component => [formatComponentCodeBlockComment(componentName, component, '//'), Object.entries(transformComponentTokensToScssVariables(component, options?.get(componentName))).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')].join('\n')).join('\n\n');
   }
   const design = {
     colors: transformColors$1(documentationObject.design.color),
@@ -672,7 +684,7 @@ function getTypeName(type) {
 function cssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options.get(componentName));
+    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options?.get(componentName));
   }
   const design = {
     colors: transformColors(documentationObject.design.color),
@@ -923,7 +935,10 @@ const formatComponentsTransformerOptions = exportables => {
     return {
       ...res,
       ...{
-        [exportable.id]: exportable.options.transformer
+        [exportable.id]: {
+          ...exportable.options.transformer,
+          ...exportable.options.shared
+        }
       }
     };
   }, {})));

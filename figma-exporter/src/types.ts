@@ -115,9 +115,21 @@ export interface ExportableDefinition {
 }
 
 interface ExportableOptions {
+  shared: ExportableSharedOptions,
   exporter: ExportableExporterOptions,
   transformer: ExportableTransformerOptions,
   demo: ExportableDemoOptions,
+}
+
+export interface ExportableSharedOptions {
+  defaults?: {
+    theme?: string,
+    state?: string,
+    type?: string,
+    activity?: string,
+    layout?: string,
+    size?: string,
+  }
 }
 
 export interface ExportableExporterOptions {

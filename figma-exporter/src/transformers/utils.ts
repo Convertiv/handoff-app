@@ -1,6 +1,6 @@
 import { capitalize } from "lodash";
 import { Component } from "../exporters/components/extractor";
-import { ExportableTransformerOptions } from "../types";
+import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
 
 /**
  * Generate a comment block at the top of each record
@@ -27,7 +27,7 @@ export const formatComponentCodeBlockComment = (type: string, component: Compone
   return format === "/**/" ? `/* ${str} */` : `// ${str}`
 }
 
-export const formatVariableName = (variableType: 'css' | 'scss', component: Component, part: string, property: string, options?: ExportableTransformerOptions): string => {
+export const formatVariableName = (variableType: 'css' | 'scss', component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const { theme, type, state } = getReducedVariableNameTokens(component, options);
   
   const variableNameTemplate = variableType === 'css' ? options?.cssVariableTemplate : options?.scssVariableTemplate;
@@ -45,16 +45,32 @@ export const formatVariableName = (variableType: 'css' | 'scss', component: Comp
     return variableType === 'css' ? `--${variableName}` : `$${variableName}`
 };
 
-export const normalizeVariableToken = (token: string, val?: string, options?: ExportableTransformerOptions) => {
+export const normalizeVariableToken = (token: string, val?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   if (token in (options?.replace ?? {}) && val && val in (options?.replace[token] ?? {})) {
     return options?.replace[token][val] ?? '';
   }
 
-  if (token === 'theme' && val === 'light') {
+  if (token === 'theme' && val === (options?.defaults?.theme ?? '')) {
     return '';
   }
-  
-  if (['type', 'state', 'activity'].includes(token) && val === 'default') {
+
+  if (token === 'type' && val === (options?.defaults?.type ?? '')) {
+    return '';
+  }
+
+  if (token === 'state' && val === (options?.defaults?.state ?? '')) {
+    return '';
+  }
+
+  if (token === 'activity' && val === (options?.defaults?.activity ?? '')) {
+    return '';
+  }
+
+  if (token === 'layout' && val === (options?.defaults?.layout ?? '')) {
+    return '';
+  }
+
+  if (token === 'size' && val === (options?.defaults?.size ?? '')) {
     return '';
   }
 
@@ -65,7 +81,7 @@ export const normalizeVariablePart = (part: string) => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
 }
 
-const getReducedVariableNameTokens = (component: Component, options?: ExportableTransformerOptions) => {
+const getReducedVariableNameTokens = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   const theme = component.componentType === 'design' ? normalizeVariableToken('theme', (component.theme ?? ''), options) : undefined;
 
   const state = component.componentType === 'design'
@@ -79,7 +95,7 @@ const getReducedVariableNameTokens = (component: Component, options?: Exportable
   return { theme, type, state }
 }
 
-const parseVariableNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions) => {
+const parseVariableNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return template
     .replaceAll('{$theme}', component.componentType === 'design' ? normalizeVariableToken('theme', (component.theme ?? ''), options) ?? '' : '')
     .replaceAll('{$type}', component.componentType === 'design' ? normalizeVariableToken('type', (component.type ?? ''), options) ?? '' : '')

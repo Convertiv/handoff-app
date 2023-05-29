@@ -1,7 +1,7 @@
 import { ValueProperty } from '../types';
 import { Component } from '../../exporters/components/extractor';
 import { formatComponentCodeBlockComment } from '../utils';
-import { ExportableTransformerOptions } from '../../types';
+import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 import { getTokenSetTransformer } from '../tokenSetTransformers';
 
 /**
@@ -9,7 +9,7 @@ import { getTokenSetTransformer } from '../tokenSetTransformers';
  * @param alerts
  * @returns
  */
-export const transformComponentsToCssVariables = (components: Component[], options?: ExportableTransformerOptions): string => {
+export const transformComponentsToCssVariables = (components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
 
   const componentName = components[0].name;
@@ -27,7 +27,7 @@ export const transformComponentsToCssVariables = (components: Component[], optio
  * @param tokens
  * @returns
  */
-export const transformComponentTokensToCssVariables = (component: Component, options?: ExportableTransformerOptions): Record<string, ValueProperty> => {
+export const transformComponentTokensToCssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
   let result = {};
 
   for (const part in component.parts) {
