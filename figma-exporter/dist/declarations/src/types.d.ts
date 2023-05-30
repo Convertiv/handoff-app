@@ -87,13 +87,17 @@ export declare type PreviewJson = {
 export declare type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE";
 export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
 export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
+export interface ExportableIndex {
+    options: ExportableOptions;
+    definitions: string[];
+}
 export interface ExportableDefinition {
     id: string;
     group?: string;
     options: ExportableOptions;
     parts: ExportableParts;
 }
-interface ExportableOptions {
+export interface ExportableOptions {
     shared: ExportableSharedOptions;
     exporter: ExportableExporterOptions;
     transformer: ExportableTransformerOptions;

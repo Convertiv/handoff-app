@@ -2,14 +2,6 @@
   "id": "button",
   "group": "Components",
   "options": {
-    "shared": {
-      "defaults": {
-        "theme": "light",
-        "state": "default",
-        "type": "default",
-        "size": ""
-      }
-    },
     "exporter": {
       "search": "Button",
       "supportedVariantProps": [
@@ -22,14 +14,7 @@
     "transformer": {
       "rootCssClass": "btn",
       "cssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
-      "scssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
-      "replace": {
-        "size": {
-          "small": "sm",
-          "medium": "md",
-          "large": "lg"
-        }
-      }
+      "scssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}"
     },
     "demo": {
       "tabs": {

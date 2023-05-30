@@ -107,6 +107,11 @@ export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "F
 
 export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
 
+export interface ExportableIndex {
+  options: ExportableOptions,
+  definitions: string[],
+}
+
 export interface ExportableDefinition {
   id: string,
   group?: string,
@@ -114,7 +119,7 @@ export interface ExportableDefinition {
   parts: ExportableParts,
 }
 
-interface ExportableOptions {
+export interface ExportableOptions {
   shared: ExportableSharedOptions,
   exporter: ExportableExporterOptions,
   transformer: ExportableTransformerOptions,

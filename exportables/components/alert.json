@@ -2,12 +2,6 @@
   "id": "alert",
   "group": "Components",
   "options": {
-    "shared": {
-      "defaults": {
-        "type": "default",
-        "layout": ""
-      }
-    },
     "exporter": {
       "search": "Alert",
       "supportedVariantProps": [
