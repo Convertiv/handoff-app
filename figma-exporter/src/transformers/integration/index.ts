@@ -3,6 +3,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import archiver from 'archiver';
 import * as stream from 'node:stream';
+import { pluginTransformer } from '../plugin';
+import { DocumentationObject } from '../../types';
 
 /**
  * Derive the path to the integration. Use the config to find the integration
@@ -54,8 +56,9 @@ export const getIntegrationName = (): string => {
 
 /**
  * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject 
  */
-export default async function integrationTransformer() {
+export default async function integrationTransformer(documentationObject: DocumentationObject) {
   const outputFolder = path.join('public');
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
@@ -67,6 +70,12 @@ export default async function integrationTransformer() {
   fs.copySync(integrationTemplates, templatesFolder);
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
+  const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
+  if(hookReturn) {
+    hookReturn.map((file) => {
+      fs.writeFileSync(path.join(sassFolder, file.filename), file.data);
+    });
+  }
 }
 
 /**

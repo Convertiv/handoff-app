@@ -10,6 +10,8 @@ var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
 var webpack = require('webpack');
 var chalk = require('chalk');
+var fs$1 = require('fs');
+var vm2 = require('vm2');
 var archiver = require('archiver');
 var sortedUniq = require('lodash/sortedUniq');
 require('lodash/isEqual');
@@ -36,11 +38,12 @@ function _interopNamespace(e) {
 }
 
 var path__default = /*#__PURE__*/_interopDefault(path);
-var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
+var fs__namespace$1 = /*#__PURE__*/_interopNamespace(fs);
 var stream__namespace = /*#__PURE__*/_interopNamespace(stream);
 var Mustache__default = /*#__PURE__*/_interopDefault(Mustache);
 var webpack__default = /*#__PURE__*/_interopDefault(webpack);
 var chalk__default = /*#__PURE__*/_interopDefault(chalk);
+var fs__namespace = /*#__PURE__*/_interopNamespace(fs$1);
 var archiver__default = /*#__PURE__*/_interopDefault(archiver);
 var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
 
@@ -476,14 +479,14 @@ function scssTransformer(documentationObject, options) {
 const getComponentTemplate = async (component, ...parts) => {
   const componentFallbackPath = path__default["default"].resolve(__dirname, `../../templates/${component}/default.html`);
   if (!parts.length) {
-    if (await fs__namespace["default"].pathExists(componentFallbackPath)) {
-      return await fs__namespace["default"].readFile(componentFallbackPath, 'utf8');
+    if (await fs__namespace$1["default"].pathExists(componentFallbackPath)) {
+      return await fs__namespace$1["default"].readFile(componentFallbackPath, 'utf8');
     }
     return null;
   }
   const partsTemplatePath = path__default["default"].resolve(__dirname, `../../templates/${component}/${parts.join('/')}.html`);
-  if (await fs__namespace["default"].pathExists(partsTemplatePath)) {
-    return await fs__namespace["default"].readFile(partsTemplatePath, 'utf8');
+  if (await fs__namespace$1["default"].pathExists(partsTemplatePath)) {
+    return await fs__namespace$1["default"].readFile(partsTemplatePath, 'utf8');
   }
   return await getComponentTemplate(component, ...parts.slice(0, -1));
 };
@@ -550,9 +553,232 @@ async function previewTransformer(documentationObject$1) {
   };
 }
 
-const buildClientFiles = async () => {
+/**
+ * Get Config
+ * @returns Config
+ */
+const getFetchConfig = () => {
+  let config;
+  try {
+    config = require(path__default["default"].resolve(__dirname, '../../client-config'));
+  } catch (e) {
+    config = {};
+  }
+
+  // Check to see if there is a config in the root of the project
+  const parsed = {
+    ...config
+  };
+  return parsed;
+};
+
+/**
+ * Derive the path to the integration. Use the config to find the integration
+ * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
+ * integration if desired
+ */
+const getPathToIntegration = () => {
+  const integrationFolder = 'integrations';
+  const defaultIntegration = 'bootstrap';
+  const defaultVersion = '5.2';
+  const defaultPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
+  const config = getFetchConfig();
+  if (config.integration) {
+    if (config.integration.name === 'custom') {
+      // Look for a custom integration
+      const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
+      if (!fs__namespace$1["default"].existsSync(customPath)) {
+        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
+      }
+      return customPath;
+    }
+    const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
+    if (!fs__namespace$1["default"].existsSync(searchPath)) {
+      throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
+    }
+    return searchPath;
+  }
+  return defaultPath;
+};
+
+/**
+ * Get the name of the current integration
+ * @returns string
+ */
+const getIntegrationName = () => {
+  const config = getFetchConfig();
+  const defaultIntegration = 'bootstrap';
+  if (config.integration) {
+    if (config.integration.name) {
+      return config.integration.name;
+    }
+  }
+  return defaultIntegration;
+};
+
+/**
+ * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject 
+ */
+async function integrationTransformer(documentationObject) {
+  const outputFolder = path__default["default"].join('public');
+  const integrationPath = getPathToIntegration();
+  const integrationName = getIntegrationName();
+  const sassFolder = `exported/${integrationName}-tokens`;
+  const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
+  const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
+  const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
+  fs__namespace$1["default"].copySync(integrationsSass, sassFolder);
+  fs__namespace$1["default"].copySync(integrationTemplates, templatesFolder);
+  const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
+  await zipTokens('exported', stream);
+  const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
+  if (hookReturn) {
+    hookReturn.map(file => {
+      fs__namespace$1["default"].writeFileSync(path__default["default"].join(sassFolder, file.filename), file.data);
+    });
+  }
+}
+
+/**
+ * Zip the fonts for download
+ * @param dirPath
+ * @param destination
+ * @returns
+ */
+const zipTokens = async (dirPath, destination) => {
+  let archive = archiver__default["default"]('zip', {
+    zlib: {
+      level: 9
+    } // Sets the compression level.
+  });
+
+  // good practice to catch this error explicitly
+  archive.on('error', function (err) {
+    throw err;
+  });
+  archive.pipe(destination);
+  const directory = await fs__namespace$1["default"].readdir(dirPath);
+  archive = await addFileToZip(directory, dirPath, archive);
+  await archive.finalize();
+  return destination;
+};
+
+/**
+ * A recusrive function for building a zip of the tokens
+ * @param directory
+ * @param dirPath
+ * @param archive
+ * @returns
+ */
+const addFileToZip = async (directory, dirPath, archive) => {
+  for (const file of directory) {
+    const pathFile = path__default["default"].join(dirPath, file);
+    if (fs__namespace$1["default"].lstatSync(pathFile).isDirectory()) {
+      const recurse = await fs__namespace$1["default"].readdir(pathFile);
+      archive = await addFileToZip(recurse, pathFile, archive);
+    } else {
+      const data = fs__namespace$1["default"].readFileSync(pathFile, 'utf-8');
+      archive.append(data, {
+        name: pathFile
+      });
+    }
+  }
+  return archive;
+};
+
+/**
+ * This is the plugin transformer.  It will attempt to read the plugin folder
+ * in the selected integration and then expose a set of hooks that will be
+ * fired by the figma-exporter pipeline.
+ */
+
+/**
+ * Generate a generic plugin transformer that does nothing
+ * @returns
+ */
+const genericPluginGenerator = () => {
+  return {
+    init: () => {
+      console.log('init generic');
+    },
+    postCssTransformer: (documentationObject, css) => {},
+    postScssTransformer: (documentationObject, scss) => {},
+    postExtract: documentationObject => {},
+    // Integrates data
+    postIntegration: documentationObject => {},
+    // Builds the preview
+    postPreview: documentationObject => {},
+    postFont: (documentationObject, customFonts) => {},
+    modifyWebpackConfig: webpackConfig => {
+      return webpackConfig;
+    },
+    postBuild: documentationObject => {}
+  };
+};
+
+/**
+ * Creates a plugin transformer merging the generic plugin with the custom
+ * plugin and then allowing it to execute in all contexts
+ * @param documentationObject
+ * @returns
+ */
+const pluginTransformer = async () => {
+  let generic = genericPluginGenerator();
+  const pluginPath = getPathToIntegration() + '/plugin.js';
+  let plugin = generic;
+  if (fs__namespace.existsSync(pluginPath)) {
+    console.log(pluginPath);
+    const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => {
+      console.error(err);
+      return generic;
+    });
+    plugin = {
+      ...generic,
+      ...custom
+    };
+  }
+  return plugin;
+};
+
+/**
+ * Attempts to read a plugin file and then evaluate it in a sandboxed context
+ * @param file
+ * @returns
+ */
+async function evaluatePlugin(file) {
   return new Promise((resolve, reject) => {
-    const compile = webpack__default["default"]({
+    fs__namespace.readFile(file, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const sandbox = {};
+      const vm = new vm2.NodeVM({
+        console: 'inherit',
+        sandbox: {
+          sandbox
+        },
+        require: {
+          external: true,
+          builtin: ['fs', 'path'],
+          root: './'
+        }
+      });
+      try {
+        vm.run(data, file);
+        resolve(sandbox.exports);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+const buildClientFiles = async () => {
+  const plugin = await pluginTransformer();
+  return new Promise((resolve, reject) => {
+    let config = {
       mode: 'production',
       entry: path__default["default"].resolve(__dirname, '../../templates/main.js'),
       resolve: {
@@ -574,10 +800,12 @@ const buildClientFiles = async () => {
           'sass-loader']
         }]
       }
-    });
+    };
+    const newConfig = plugin.modifyWebpackConfig(config);
+    const compile = webpack__default["default"](newConfig);
     compile.run((err, stats) => {
       if (err) {
-        let error = "Errors encountered trying to build preview styles.\n";
+        let error = 'Errors encountered trying to build preview styles.\n';
         if (process.argv.indexOf('--debug') > 0) {
           error += err.stack || err;
         }
@@ -586,7 +814,7 @@ const buildClientFiles = async () => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map(err => err.message);
-          let error = "Errors encountered trying to build preview styles.\n";
+          let error = 'Errors encountered trying to build preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildErrors;
           }
@@ -594,14 +822,14 @@ const buildClientFiles = async () => {
         }
         if (stats.hasWarnings()) {
           let buildWarnings = stats.compilation.warnings?.map(err => err.message);
-          let error = "Warnings encountered when building preview styles.\n";
+          let error = 'Warnings encountered when building preview styles.\n';
           if (process.argv.indexOf('--debug') > 0) {
             error += buildWarnings;
             console.error(chalk__default["default"].yellow(error));
           }
         }
       }
-      return resolve("Preview template styles built");
+      return resolve('Preview template styles built');
     });
   });
 };
@@ -681,6 +909,10 @@ function getTypeName(type) {
   return type.group ? `${type.group}-${type.machine_name}` : `${type.machine_name}`;
 }
 
+/**
+ * The output of the CSS transformer
+ */
+
 function cssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
@@ -720,16 +952,20 @@ async function fontTransformer(documentationObject) {
     //
     const name = key.replace(/\s/g, '');
     const fontDirName = path__default["default"].join(fontLocation, name);
-    if (fs__namespace["default"].existsSync(fontDirName)) {
+    if (fs__namespace$1["default"].existsSync(fontDirName)) {
       console.log(chalk__default["default"].green(`Found a custom font ${name}`));
       // Ok, we've found a custom font at this location
       // Zip the font up and put the zip in the font location
-      const stream = fs__namespace["default"].createWriteStream(path__default["default"].join(fontLocation, `${name}.zip`));
+      const stream = fs__namespace$1["default"].createWriteStream(path__default["default"].join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
+      const integrationName = getIntegrationName();
+      const fontsFolder = `exported/${integrationName}-tokens/fonts`;
+      await fs__namespace$1["default"].copySync(fontDirName, fontsFolder);
       customFonts.push(`${name}.zip`);
     }
   });
-  return customFonts;
+  const hookReturn = (await pluginTransformer()).postFont(documentationObject, customFonts);
+  return hookReturn;
 }
 
 /**
@@ -750,142 +986,15 @@ const zipFonts = async (dirPath, destination) => {
     throw err;
   });
   archive.pipe(destination);
-  const fontDir = await fs__namespace["default"].readdir(dirPath);
+  const fontDir = await fs__namespace$1["default"].readdir(dirPath);
   for (const file of fontDir) {
-    const data = fs__namespace["default"].readFileSync(path__default["default"].join(dirPath, file), 'utf-8');
+    const data = fs__namespace$1["default"].readFileSync(path__default["default"].join(dirPath, file), 'utf-8');
     archive.append(data, {
       name: path__default["default"].basename(file)
     });
   }
   await archive.finalize();
   return destination;
-};
-
-/**
- * Get Config
- * @returns Config
- */
-const getFetchConfig = () => {
-  let config;
-  try {
-    config = require(path__default["default"].resolve(__dirname, '../../client-config'));
-  } catch (e) {
-    config = {};
-  }
-
-  // Check to see if there is a config in the root of the project
-  const parsed = {
-    ...config
-  };
-  return parsed;
-};
-
-/**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
- */
-const getPathToIntegration = () => {
-  const integrationFolder = 'integrations';
-  const defaultIntegration = 'bootstrap';
-  const defaultVersion = '5.2';
-  const defaultPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, defaultIntegration, defaultVersion));
-  const config = getFetchConfig();
-  if (config.integration) {
-    if (config.integration.name === 'custom') {
-      // Look for a custom integration
-      const customPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder));
-      if (!fs__namespace["default"].existsSync(customPath)) {
-        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
-      }
-      return customPath;
-    }
-    const searchPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', integrationFolder, config.integration.name, config.integration.version));
-    if (!fs__namespace["default"].existsSync(searchPath)) {
-      throw Error(`The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`);
-    }
-    return searchPath;
-  }
-  return defaultPath;
-};
-
-/**
- * Get the name of the current integration
- * @returns string
- */
-const getIntegrationName = () => {
-  const config = getFetchConfig();
-  const defaultIntegration = 'bootstrap';
-  if (config.integration) {
-    if (config.integration.name) {
-      return config.integration.name;
-    }
-  }
-  return defaultIntegration;
-};
-
-/**
- * Find the integration to sync and sync the sass files and template files.
- */
-async function integrationTransformer() {
-  const outputFolder = path__default["default"].join('public');
-  const integrationPath = getPathToIntegration();
-  const integrationName = getIntegrationName();
-  const sassFolder = `exported/${integrationName}-tokens`;
-  const templatesFolder = path__default["default"].resolve(__dirname, '../../templates');
-  const integrationsSass = path__default["default"].resolve(integrationPath, 'sass');
-  const integrationTemplates = path__default["default"].resolve(integrationPath, 'templates');
-  fs__namespace["default"].copySync(integrationsSass, sassFolder);
-  fs__namespace["default"].copySync(integrationTemplates, templatesFolder);
-  const stream = fs__namespace["default"].createWriteStream(path__default["default"].join(outputFolder, `tokens.zip`));
-  await zipTokens('exported', stream);
-}
-
-/**
- * Zip the fonts for download
- * @param dirPath
- * @param destination
- * @returns
- */
-const zipTokens = async (dirPath, destination) => {
-  let archive = archiver__default["default"]('zip', {
-    zlib: {
-      level: 9
-    } // Sets the compression level.
-  });
-
-  // good practice to catch this error explicitly
-  archive.on('error', function (err) {
-    throw err;
-  });
-  archive.pipe(destination);
-  const directory = await fs__namespace["default"].readdir(dirPath);
-  archive = await addFileToZip(directory, dirPath, archive);
-  await archive.finalize();
-  return destination;
-};
-
-/**
- * A recusrive function for building a zip of the tokens
- * @param directory
- * @param dirPath
- * @param archive
- * @returns
- */
-const addFileToZip = async (directory, dirPath, archive) => {
-  for (const file of directory) {
-    const pathFile = path__default["default"].join(dirPath, file);
-    if (fs__namespace["default"].lstatSync(pathFile).isDirectory()) {
-      const recurse = await fs__namespace["default"].readdir(pathFile);
-      archive = await addFileToZip(recurse, pathFile, archive);
-    } else {
-      const data = fs__namespace["default"].readFileSync(pathFile, 'utf-8');
-      archive.append(data, {
-        name: pathFile
-      });
-    }
-  }
-  return archive;
 };
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
@@ -904,14 +1013,14 @@ const logosZipFilePath = path__default["default"].join(outputFolder, 'logos.zip'
  */
 const readPrevJSONFile = async path => {
   try {
-    return await fs__namespace.readJSON(path);
+    return await fs__namespace$1.readJSON(path);
   } catch (e) {
     return undefined;
   }
 };
 const getExportables = async () => {
   try {
-    const indexBuffer = await fs__namespace.readFile(path__default["default"].join(exportablesFolder, 'index.json'));
+    const indexBuffer = await fs__namespace$1.readFile(path__default["default"].join(exportablesFolder, 'index.json'));
     const index = JSON.parse(indexBuffer.toString());
     const definitions = index.definitions;
     if (!definitions || definitions.length === 0) {
@@ -919,10 +1028,10 @@ const getExportables = async () => {
     }
     const exportables = definitions.map(def => {
       const defPath = path__default["default"].join(exportablesFolder, `${def}.json`);
-      if (!fs__namespace.existsSync(defPath)) {
+      if (!fs__namespace$1.existsSync(defPath)) {
         return null;
       }
-      const defBuffer = fs__namespace.readFileSync(defPath);
+      const defBuffer = fs__namespace$1.readFileSync(defPath);
       const exportable = JSON.parse(defBuffer.toString());
       const exportableOptions = {};
       _.merge(exportableOptions, index.options, exportable.options);
@@ -963,7 +1072,7 @@ const buildCustomFonts = async documentationObject => {
  * @returns
  */
 const buildIntegration = async documentationObject => {
-  return await integrationTransformer();
+  return await integrationTransformer(documentationObject);
 };
 /**
  * Run just the preview
@@ -971,10 +1080,10 @@ const buildIntegration = async documentationObject => {
  */
 const buildPreview = async documentationObject => {
   if (Object.keys(documentationObject.components).filter(name => documentationObject.components[name].length > 0).length > 0) {
-    await Promise.all([previewTransformer(documentationObject).then(out => fs__namespace.writeJSON(previewFilePath, out, {
+    await Promise.all([previewTransformer(documentationObject).then(out => fs__namespace$1.writeJSON(previewFilePath, out, {
       spaces: 2
     }))]);
-    await buildClientFiles().then(value => chalk__default["default"].green(console.log(value))).catch(error => {
+    await buildClientFiles().then(value => console.log(chalk__default["default"].green(value))).catch(error => {
       throw new Error(error);
     });
   } else {
@@ -990,7 +1099,7 @@ const buildStyles = async (documentationObject, options) => {
   const typeFiles = scssTypesTransformer(documentationObject, options);
   const cssFiles = cssTransformer(documentationObject, options);
   const scssFiles = scssTransformer(documentationObject, options);
-  await Promise.all([fs__namespace.ensureDir(variablesFilePath).then(() => fs__namespace.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
+  await Promise.all([fs__namespace$1.ensureDir(variablesFilePath).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
 };
 /**
  * Run the entire pipeline
@@ -1008,9 +1117,10 @@ const entirePipeline = async () => {
   if (!FIGMA_PROJECT_ID) {
     throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
   }
+  (await pluginTransformer()).init();
   let prevDocumentationObject = await readPrevJSONFile(tokensFilePath);
   let changelog = (await readPrevJSONFile(changelogFilePath)) || [];
-  await fs__namespace.emptyDir(outputFolder);
+  await fs__namespace$1.emptyDir(outputFolder);
   const exportables = await getExportables();
   const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
   const documentationObject$1 = await documentationObject.createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN, exportables);
@@ -1018,14 +1128,14 @@ const entirePipeline = async () => {
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
   }
-  await Promise.all([fs__namespace.writeJSON(tokensFilePath, documentationObject$1, {
+  await Promise.all([fs__namespace$1.writeJSON(tokensFilePath, documentationObject$1, {
     spaces: 2
-  }), fs__namespace.writeJSON(changelogFilePath, changelog, {
+  }), fs__namespace$1.writeJSON(changelogFilePath, changelog, {
     spaces: 2
-  }), ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false' ? [documentationObject.zipAssets(documentationObject$1.assets.icons, fs__namespace.createWriteStream(iconsZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream)), documentationObject.zipAssets(documentationObject$1.assets.logos, fs__namespace.createWriteStream(logosZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream))] : [])]);
+  }), ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false' ? [documentationObject.zipAssets(documentationObject$1.assets.icons, fs__namespace$1.createWriteStream(iconsZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream)), documentationObject.zipAssets(documentationObject$1.assets.logos, fs__namespace$1.createWriteStream(logosZipFilePath)).then(writeStream => stream__namespace.promises.finished(writeStream))] : [])]);
   await buildCustomFonts(documentationObject$1);
   await buildStyles(documentationObject$1, componentTransformerOptions);
-  await buildIntegration();
+  await buildIntegration(documentationObject$1);
   await buildPreview(documentationObject$1);
   console.log(chalk__default["default"].green(`Figma pipeline complete:`, `${documentationObject.getRequestCount()} requests`));
 };

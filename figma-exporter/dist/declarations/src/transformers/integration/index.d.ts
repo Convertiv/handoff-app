@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
+import { DocumentationObject } from '../../types';
 /**
  * Derive the path to the integration. Use the config to find the integration
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
@@ -14,8 +15,9 @@ export declare const getPathToIntegration: () => string;
 export declare const getIntegrationName: () => string;
 /**
  * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject
  */
-export default function integrationTransformer(): Promise<void>;
+export default function integrationTransformer(documentationObject: DocumentationObject): Promise<void>;
 /**
  * Zip the fonts for download
  * @param dirPath

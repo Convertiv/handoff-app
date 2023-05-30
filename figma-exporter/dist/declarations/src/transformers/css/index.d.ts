@@ -1,8 +1,14 @@
 import { DocumentationObject } from '../../types';
-import { ExportableTransformerOptionsMap } from '../types';
-interface CssTransformerOutput {
+/**
+ * The output of the CSS transformer
+ */
+export interface CssTransformerOutput {
     components: Record<keyof DocumentationObject['components'], string>;
     design: Record<'colors' | 'typography' | 'effects', string>;
 }
-export default function cssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): CssTransformerOutput;
-export {};
+/**
+ * Creates a CSS transformer output from a documentation object
+ * @param documentationObject
+ * @returns The CSS transformer output
+ */
+export default function cssTransformer(documentationObject: DocumentationObject): CssTransformerOutput;

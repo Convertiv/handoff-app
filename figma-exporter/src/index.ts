@@ -18,6 +18,7 @@ import integrationTransformer from './transformers/integration';
 import { filterOutNull } from './utils';
 import { ExportableTransformerOptionsMap } from './transformers/types';
 import { merge } from 'lodash';
+import { pluginTransformer } from './transformers/plugin';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -110,7 +111,7 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  * @returns
  */
 const buildIntegration = async (documentationObject: DocumentationObject) => {
-  return await integrationTransformer();
+  return await integrationTransformer(documentationObject);
 };
 /**
  * Run just the preview
@@ -122,7 +123,7 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
       previewTransformer(documentationObject).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 })),
     ]);
     await buildClientFiles()
-      .then((value) => chalk.green(console.log(value)))
+      .then((value) => console.log(chalk.green(value)))
       .catch((error) => { throw new Error(error) });
   } else {
     console.log(chalk.red('Skipping preview generation'));
@@ -189,7 +190,7 @@ const entirePipeline = async () => {
   if (!FIGMA_PROJECT_ID) {
     throw new Error('Missing "FIGMA_PROJECT_ID" env variable.');
   }
-
+  (await pluginTransformer()).init();
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath)) || [];
 
