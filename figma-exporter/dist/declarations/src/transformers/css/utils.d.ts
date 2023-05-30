@@ -1,4 +1,3 @@
-import * as FigmaTypes from '../../figma/types';
 /**
  * Get the name of a SCSS variable from a token object
  * @param tokens
@@ -42,9 +41,9 @@ export declare const transformFigmaFillsToCssColor: (paint: FigmaTypes.Paint) =>
  * @param textAlign
  * @returns
  */
-export declare const transformFigmaTextAlignToCss: (textAlign: FigmaTypes.TypeStyle['textAlignHorizontal']) => string;
-export declare const transformFigmaTextDecorationToCss: (textDecoration: FigmaTypes.TypeStyle['textDecoration']) => string;
-export declare const transformFigmaTextCaseToCssTextTransform: (textCase: FigmaTypes.TypeStyle['textCase']) => string;
+export declare const transformFigmaTextAlignToCss: (textAlign: FigmaTypes.TypeStyle) => string;
+export declare const transformFigmaTextDecorationToCss: (textDecoration: FigmaTypes.TypeStyle) => string;
+export declare const transformFigmaTextCaseToCssTextTransform: (textCase: FigmaTypes.TypeStyle) => string;
 export interface AbstractComponent {
     componentType?: string;
     /**
