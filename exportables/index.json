@@ -1,4 +1,25 @@
 {
+  "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "type": "default",
+        "activity": "",
+        "layout": "",
+        "size": ""
+      }
+    },
+    "transformer": {
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
+    }
+  },
   "definitions": [
     "components/alert",
     "components/button",

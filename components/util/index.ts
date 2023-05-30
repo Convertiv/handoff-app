@@ -1,10 +1,10 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
-import { ExportableDefinition } from 'figma-exporter/src/types';
+import { ExportableDefinition, ExportableIndex, ExportableOptions } from 'figma-exporter/src/types';
 import { filterOutNull } from 'figma-exporter/src/utils';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy } from 'lodash';
+import { groupBy, merge } from 'lodash';
 import { SubPageType } from 'pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -50,7 +50,6 @@ export interface ComponentDocumentationProps extends DocumentationProps {
   css: string;
   types: string;
   componentFound: boolean;
-
   component: string;
   exportable: ExportableDefinition;
 }
@@ -297,7 +296,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
 export const fetchExportables = () => {
   try {
     const indexBuffer = fs.readFileSync(path.join('exportables', 'index.json'));
-    const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+    const index = JSON.parse(indexBuffer.toString()) as ExportableIndex;
     const definitions = index.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -313,7 +312,13 @@ export const fetchExportables = () => {
         }
 
         const defBuffer = fs.readFileSync(defPath);
-        return JSON.parse(defBuffer.toString()) as ExportableDefinition;
+        const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
+
+        const exportableOptions = {};
+        merge(exportableOptions, index.options, exportable.options);
+        exportable.options = exportableOptions as ExportableOptions;
+
+        return exportable;
       })
       .filter(filterOutNull)
 

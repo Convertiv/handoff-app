@@ -2,13 +2,6 @@
   "id": "input",
   "group": "Forms",
   "options": {
-    "shared": {
-      "defaults": {
-        "theme": "light",
-        "state": "default",
-        "size": ""
-      }
-    },
     "exporter": {
       "search": "Input",
       "supportedVariantProps": [
@@ -16,15 +9,6 @@
         "STATE",
         "SIZE"
       ]
-    },
-    "transformer": {
-      "replace": {
-        "size": {
-          "small": "sm",
-          "medium": "md",
-          "large": "lg"
-        }
-      }
     },
     "demo": {
       "tabs": {

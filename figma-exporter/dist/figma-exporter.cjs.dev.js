@@ -923,7 +923,11 @@ const getExportables = async () => {
         return null;
       }
       const defBuffer = fs__namespace.readFileSync(defPath);
-      return JSON.parse(defBuffer.toString());
+      const exportable = JSON.parse(defBuffer.toString());
+      const exportableOptions = {};
+      _.merge(exportableOptions, index.options, exportable.options);
+      exportable.options = exportableOptions;
+      return exportable;
     }).filter(documentationObject.filterOutNull);
     return exportables ? exportables : [];
   } catch (e) {

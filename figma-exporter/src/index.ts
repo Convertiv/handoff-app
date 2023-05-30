@@ -3,7 +3,7 @@ import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
 
-import { DocumentationObject, ExportableDefinition, ExportableSharedOptions, ExportableTransformerOptions } from './types';
+import { DocumentationObject, ExportableDefinition, ExportableIndex, ExportableOptions, ExportableSharedOptions, ExportableTransformerOptions } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
@@ -17,6 +17,7 @@ import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
 import { filterOutNull } from './utils';
 import { ExportableTransformerOptionsMap } from './transformers/types';
+import { merge } from 'lodash';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -56,7 +57,7 @@ const readConfigFile = async (path: string) => {
 const getExportables = async () => {
   try {
     const indexBuffer = await fs.readFile(path.join(exportablesFolder, 'index.json'));
-    const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+    const index = JSON.parse(indexBuffer.toString()) as ExportableIndex;
     const definitions = index.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -72,7 +73,13 @@ const getExportables = async () => {
         }
 
         const defBuffer = fs.readFileSync(defPath);
-        return JSON.parse(defBuffer.toString()) as ExportableDefinition;
+        const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
+
+        const exportableOptions = {};
+        merge(exportableOptions, index.options, exportable.options);
+        exportable.options = exportableOptions as ExportableOptions;
+
+        return exportable;
       })
       .filter(filterOutNull)
 

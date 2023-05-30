@@ -2,27 +2,12 @@
   "id": "modal",
   "group": "Components",
   "options": {
-    "shared": {
-      "defaults": {
-        "type": "default",
-        "size": ""
-      }
-    },
     "exporter": {
       "search": "Modal",
       "supportedVariantProps": [
         "TYPE",
         "SIZE"
       ]
-    },
-    "transformer": {
-      "replace": {
-        "size": {
-          "small": "sm",
-          "medium": "md",
-          "large": "lg"
-        }
-      }
     },
     "demo": {
       "tabs": {
