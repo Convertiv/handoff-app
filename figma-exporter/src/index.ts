@@ -68,7 +68,7 @@ const getExportables = async () => {
 
     const exportables = definitions
       .map((def) => {
-        const defPath = path.join(exportablesFolder, `${def}.json`);
+        const defPath = path.resolve(path.join(__dirname, '../..', exportablesFolder, `${def}.json`));
 
         if (!fs.existsSync(defPath)) {
           return null;
