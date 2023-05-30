@@ -22,6 +22,40 @@ module.exports = {
     'Input Labels',
     'Link',
   ],
+  figma: {
+    options: {
+      shared: {
+        defaults: {
+          theme: 'light',
+          state: 'default',
+          type: 'default',
+          activity: '',
+          layout: '',
+          size: '',
+        },
+      },
+      transformer: {
+        replace: {
+          size: {
+            small: 'sm',
+            medium: 'md',
+            large: 'lg',
+          },
+        },
+      },
+    },
+    definitions: [
+      'components/alert',
+      'components/button',
+      'components/modal',
+      'components/tooltip',
+      'components/checkbox',
+      'components/input',
+      'components/radio',
+      'components/select',
+      'components/switch',
+    ],
+  },
   type_copy: 'Almost before we knew it, we had left the ground.',
   color_sort: ['primary', 'secondary', 'extra', 'system'],
   component_sort: ['primary', 'secondary', 'transparent'],

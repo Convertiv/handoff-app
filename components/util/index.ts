@@ -295,9 +295,8 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  */
 export const fetchExportables = () => {
   try {
-    const indexBuffer = fs.readFileSync(path.join('exportables', 'index.json'));
-    const index = JSON.parse(indexBuffer.toString()) as ExportableIndex;
-    const definitions = index.definitions;
+    const config = getConfig();
+    const definitions = config.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
       return [];
@@ -315,7 +314,7 @@ export const fetchExportables = () => {
         const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
 
         const exportableOptions = {};
-        merge(exportableOptions, index.options, exportable.options);
+        merge(exportableOptions, config.figma?.options, exportable.options);
         exportable.options = exportableOptions as ExportableOptions;
 
         return exportable;
@@ -329,10 +328,9 @@ export const fetchExportables = () => {
 }
 
 export const fetchExportable = (name: string) => {
-  const indexBuffer = fs.readFileSync(path.join('exportables', 'index.json'));
-  const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
+  const config = getConfig();
 
-  const def = index.definitions.filter((def) => {
+  const def = config?.figma?.definitions.filter((def) => {
     return def.split('/').pop() === name;
   });
 
@@ -349,6 +347,7 @@ export const fetchExportable = (name: string) => {
   const data = fs.readFileSync(defPath, 'utf-8');
   return JSON.parse(data.toString()) as ExportableDefinition;
 }
+
 
 /**
  * Fetch Component Doc Page Markdown

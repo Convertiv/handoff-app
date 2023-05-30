@@ -16,9 +16,11 @@ import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
 import { filterOutNull } from './utils';
+import { getFetchConfig } from './utils/config';
 import { ExportableTransformerOptionsMap } from './transformers/types';
 import { merge } from 'lodash';
 import { pluginTransformer } from './transformers/plugin';
+import { Config } from './config';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -57,9 +59,8 @@ const readConfigFile = async (path: string) => {
 
 const getExportables = async () => {
   try {
-    const indexBuffer = await fs.readFile(path.join(exportablesFolder, 'index.json'));
-    const index = JSON.parse(indexBuffer.toString()) as ExportableIndex;
-    const definitions = index.definitions;
+    const config: Config = getFetchConfig();
+    const definitions = config?.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
       return [];
@@ -77,7 +78,7 @@ const getExportables = async () => {
         const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
 
         const exportableOptions = {};
-        merge(exportableOptions, index.options, exportable.options);
+        merge(exportableOptions, config?.figma?.options, exportable.options);
         exportable.options = exportableOptions as ExportableOptions;
 
         return exportable;

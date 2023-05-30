@@ -699,9 +699,7 @@ const addFileToZip = async (directory, dirPath, archive) => {
  */
 const genericPluginGenerator = () => {
   return {
-    init: () => {
-      console.log('init generic');
-    },
+    init: () => {},
     postCssTransformer: (documentationObject, css) => {},
     postScssTransformer: (documentationObject, scss) => {},
     postExtract: documentationObject => {},
@@ -1020,9 +1018,8 @@ const readPrevJSONFile = async path => {
 };
 const getExportables = async () => {
   try {
-    const indexBuffer = await fs__namespace$1.readFile(path__default["default"].join(exportablesFolder, 'index.json'));
-    const index = JSON.parse(indexBuffer.toString());
-    const definitions = index.definitions;
+    const config = getFetchConfig();
+    const definitions = config?.figma?.definitions;
     if (!definitions || definitions.length === 0) {
       return [];
     }
@@ -1034,7 +1031,7 @@ const getExportables = async () => {
       const defBuffer = fs__namespace$1.readFileSync(defPath);
       const exportable = JSON.parse(defBuffer.toString());
       const exportableOptions = {};
-      _.merge(exportableOptions, index.options, exportable.options);
+      _.merge(exportableOptions, config?.figma?.options, exportable.options);
       exportable.options = exportableOptions;
       return exportable;
     }).filter(documentationObject.filterOutNull);

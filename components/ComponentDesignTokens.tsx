@@ -14,15 +14,15 @@ const UndefinedAsString = String(undefined);
 const FallbackState = UndefinedAsString;
 
 const PropertyIconPathMap = {
-  'border-width'  : 'token-border-width',
-  'border-radius'  : 'token-border-radius',
-  'font-family'    : 'token-type-small',
-  'padding-top'    : 'token-spacing-vertical',
-  'padding-bottom' : 'token-spacing-vertical',
-  'padding-left'   : 'token-spacing-horizontal',
-  'padding-right'  : 'token-spacing-horizontal',
-  'text-align'     : 'token-alignment'
-} as {[k: string]: string}
+  'border-width': 'token-border-width',
+  'border-radius': 'token-border-radius',
+  'font-family': 'token-type-small',
+  'padding-top': 'token-spacing-vertical',
+  'padding-bottom': 'token-spacing-vertical',
+  'padding-left': 'token-spacing-horizontal',
+  'padding-right': 'token-spacing-horizontal',
+  'text-align': 'token-alignment',
+} as { [k: string]: string };
 
 const IsHexValue = (value: string) => value.match(/^#[0-9A-F]{6}$/i);
 
@@ -34,21 +34,19 @@ const NormalizeValue = (value: string): string => {
     }
   }
 
-  const rgbaValue = value.match(
-    /(.*?)rgba\(([0-9]+), ([0-9]+), ([0-9]+), [+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\)/
-  );
-  
+  const rgbaValue = value.match(/(.*?)rgba\(([0-9]+), ([0-9]+), ([0-9]+), [+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\)/);
+
   if (rgbaValue && rgbaValue.length === 7) {
     return `${rgbaValue[1]}rgba(${rgbaValue[2]}, ${rgbaValue[3]}, ${rgbaValue[4]}, ${round(Number(rgbaValue[5]), 2).toFixed(2)})`;
   }
 
   return value;
-}
+};
 
 const state_sort = ['default', 'hover', 'focus', 'active', 'disabled'];
 
 interface ComponentDesignTokensOverrides {
-  states?: string[]
+  states?: string[];
 }
 
 export interface ComponentDesignTokensProps {
@@ -62,7 +60,7 @@ export interface ComponentDesignTokensProps {
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
   const componentsOfType = designComponents.filter(
-    (component) => 
+    (component) =>
       component.type === previewObject.type &&
       component.activity === previewObject.activity &&
       (component.theme === 'light' || !component.theme)
@@ -84,30 +82,32 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
 
   const propertiesOfType = Object.entries(transformComponentTokensToScssVariables(componentsOfType[0], transformerOptions)).map(([_, r]) => `${r.group}\\${r.property}`);
 
-  const propertiesWithStatesOfType: PropertyStatesMap = propertiesOfType.reduce((prev, next) => (
-    {...prev, [next]: statesOfType.reduce((prev, next) => (
-      {...prev, [next]: {}}
-    ), {})
-  }), {});
-  
+  const propertiesWithStatesOfType: PropertyStatesMap = propertiesOfType.reduce(
+    (prev, next) => ({ ...prev, [next]: statesOfType.reduce((prev, next) => ({ ...prev, [next]: {} }), {}) }),
+    {}
+  );
+
   statesOfType.forEach((state) => {
     const componentOfState = componentsOfType.find((component) => component.state === state || (state === FallbackState && !component.state));
     Object.entries(transformComponentTokensToScssVariables(componentOfState!, transformerOptions)).forEach(([l, r]) => {
       propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].variable = l;
-      propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].value = r.value
+      propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].value = r.value;
     });
   });
 
-  const designTokenGroups: PropertyStateMapGroups = Array.from(new Set(propertiesOfType.map((p) => (p.split('\\')[0]))).values())
-    .reduce((prev, next) => {
+  const designTokenGroups: PropertyStateMapGroups = Array.from(new Set(propertiesOfType.map((p) => p.split('\\')[0])).values()).reduce(
+    (prev, next) => {
       return {
-        ...prev, [next]: propertiesOfType
+        ...prev,
+        [next]: propertiesOfType
           .filter((prop) => prop.startsWith(`${next}\\`))
           .reduce((prev, next) => {
-            return {...prev, [next.split(`\\`)[1]]: propertiesWithStatesOfType[next]}
-          }, {})
-      }
-    }, {});
+            return { ...prev, [next.split(`\\`)[1]]: propertiesWithStatesOfType[next] };
+          }, {}),
+      };
+    },
+    {}
+  );
 
   const hasSingleDesignTokensGroup = Object.entries(designTokenGroups).length === 1;
 
@@ -123,7 +123,9 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
       <div className="o-row">
         <div className={`o-col-${layoutLeftColWidth}@md`}>
           <div className="c-tokens-preview__row">
-            <p><strong>Property</strong></p>
+            <p>
+              <strong>Property</strong>
+            </p>
             {statesOfType.map((state) => (
               <p key={`${previewObject.type}-*-*-${state}__title`}>
                 <strong>{state !== FallbackState ? startCase(state) : 'Value'}</strong>
@@ -138,7 +140,9 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
                 {!hasSingleDesignTokensGroup && (
                   <>
                     <br />
-                    <p><strong>{startCase(group.replaceAll('-', ' '))}</strong></p>
+                    <p>
+                      <strong>{startCase(group.replaceAll('-', ' '))}</strong>
+                    </p>
                   </>
                 )}
                 {props.map((prop) => {
@@ -146,7 +150,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
                   return (
                     <div key={`${previewObject.type}-${group}-${prop}-row`} className="c-tokens-preview__row">
                       <p>{prop}</p>
-                      {Object.entries(stateMap).map(([state, {variable, value}]) => (
+                      {Object.entries(stateMap).map(([state, { variable, value }]) => (
                         <PropertyStateValue
                           key={`${previewObject.type}-${variable}-${state}`}
                           property={prop}
@@ -155,18 +159,15 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
                         />
                       ))}
                     </div>
-                  )
+                  );
                 })}
               </React.Fragment>
-            )
+            );
           })}
-          
         </div>
         <div className={`o-col-${layoutRightColWidth}@md`}>
           <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
-            <div className="c-component-preview">
-              {children}
-            </div>
+            <div className="c-component-preview">{children}</div>
           </div>
         </div>
       </div>
@@ -174,7 +175,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
   );
 };
 
-const PropertyStateValue: React.FC<{property: string, variable: string, value: string}> = ({property, variable, value}) => {
+const PropertyStateValue: React.FC<{ property: string; variable: string; value: string }> = ({ property, variable, value }) => {
   const [tooltip, setTooltip] = React.useState(variable);
 
   useEffect(() => {
@@ -182,26 +183,30 @@ const PropertyStateValue: React.FC<{property: string, variable: string, value: s
       const tooltipResetTimer = setTimeout(() => setTooltip(variable), 2000);
       return () => clearTimeout(tooltipResetTimer);
     }
-  }, [tooltip, variable])
+  }, [tooltip, variable]);
 
   return (
-    <div className="c-token-preview c-tooltip" data-tooltip={tooltip} onClick={(e) => {
-      e.preventDefault();
-      if (window) {
-        navigator.clipboard.writeText(variable);
-        setTooltip('Copied to clipboard!');
-      }
-    }}>
+    <div
+      className="c-token-preview c-tooltip"
+      data-tooltip={tooltip}
+      onClick={(e) => {
+        e.preventDefault();
+        if (window) {
+          navigator.clipboard.writeText(variable);
+          setTooltip('Copied to clipboard!');
+        }
+      }}
+    >
       {IsHexValue(value) && (
         <div className="c-token-preview__color">
-          <span style={{backgroundColor: value}}></span>
+          <span style={{ backgroundColor: value }}></span>
         </div>
       )}
       <PropertyIcon name={property} />
       <p>{NormalizeValue(value)}</p>
     </div>
   );
-}
+};
 
 const PropertyIcon: React.FC<{ name: string }> = ({ name }) => {
   const icon = PropertyIconPathMap[name];
