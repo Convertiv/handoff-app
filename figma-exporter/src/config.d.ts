@@ -13,12 +13,10 @@ export interface Integration {
   name: string;
   version: string;
 }
-
 export interface FigmaSearch {
   size: ComponentSizeMap[];
   definitions: string[];
 }
-
 export interface ComponentSizeMap {
   figma: string;
   css: string;
@@ -31,7 +29,7 @@ export interface Config {
   integration?: Integration;
   favicon?: string;
   poweredBy?: boolean;
-  figma?: FigmaSearch;
+  figma: FigmaSearch;
   /**
    * @default "/logo.svg"
    */

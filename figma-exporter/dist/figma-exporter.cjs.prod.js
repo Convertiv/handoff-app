@@ -158,15 +158,15 @@ const getFetchConfig = () => {
  */
 const mapComponentSize = (figma, component) => {
   const config = getFetchConfig();
-  if (component) {
-    if (config.figma.components[component]?.size) {
-      const componentMap = config.components[component]?.size;
-      const componentSize = componentMap.find(size => size.figma === figma);
-      if (componentSize && componentSize?.css) {
-        return componentSize?.css;
-      }
-    }
-  }
+  // if (component) {
+  //   if (config.figma.components[component]?.size) {
+  //     const componentMap = config.components[component]?.size as ComponentSizeMap[];
+  //     const componentSize = componentMap.find((size) => size.figma === figma);
+  //     if (componentSize && componentSize?.css) {
+  //       return componentSize?.css;
+  //     }
+  //   }
+  // }
   const coreMap = config.figma.size;
   const size = coreMap.find(size => size.figma === figma);
   return size?.css ?? figma;
@@ -186,7 +186,7 @@ const transformComponentsToScssTypes = (name, components) => {
 
   // Sizes
   if (sizes && sizes.length > 0) {
-    lines.push(`$${name}-sizes: ( ${sizes.map(type => `"${mapComponentSize(type, name)}"`).join(', ')} );`);
+    lines.push(`$${name}-sizes: ( ${sizes.map(type => `"${mapComponentSize(type)}"`).join(', ')} );`);
   }
 
   // Themes
@@ -1478,9 +1478,8 @@ const readPrevJSONFile = async path => {
 };
 const getExportables = async () => {
   try {
-    const indexBuffer = await fs__namespace.readFile(path__default["default"].join(exportablesFolder, 'index.json'));
-    const index = JSON.parse(indexBuffer.toString());
-    const definitions = index.definitions;
+    const config = getFetchConfig();
+    const definitions = config?.figma?.definitions;
     if (!definitions || definitions.length === 0) {
       return [];
     }

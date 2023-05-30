@@ -16,6 +16,7 @@ import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
 import { filterOutNull } from './utils';
+import { getFetchConfig } from './utils/config';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
 const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
@@ -54,9 +55,8 @@ const readConfigFile = async (path: string) => {
 
 const getExportables = async () => {
   try {
-    const indexBuffer = await fs.readFile(path.join(exportablesFolder, 'index.json'));
-    const index = JSON.parse(indexBuffer.toString()) as { definitions: string[] };
-    const definitions = index.definitions;
+    const config = getFetchConfig();
+    const definitions = config?.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
       return [];
