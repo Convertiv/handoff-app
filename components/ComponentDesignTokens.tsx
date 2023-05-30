@@ -1,20 +1,14 @@
-import { ValueProperty } from 'figma-exporter/src/transformers/scss/types';
 import { round, sortBy, startCase } from 'lodash';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
+import { ExportableTransformerOptions } from 'figma-exporter/src/types';
+import { transformComponentTokensToScssVariables } from 'figma-exporter/src/transformers/scss/component';
+import { ComponentDesign } from 'figma-exporter/src/exporters/components/extractor';
 
-type DesignComponentDefinition = {
-  type?: string;
-  theme?: string;
-  state?: string;
-  activity?: string;
-  horizontal?: string;
-  vertical?: string;
-};
-type PreviewObjectDefinition = { id: string; type?: string; activity?: string };
-type StateValueMap = { [k: string]: { variable: string; value: string } };
-type PropertyStatesMap = { [k: string]: StateValueMap };
-type PropertyStateMapGroups = { [k: string]: PropertyStatesMap };
+type PreviewObjectDefinition = {id: string, type?: string, activity?: string};
+type StateValueMap = { [k: string]: { variable: string, value: string } }
+type PropertyStatesMap = { [k: string]: StateValueMap } 
+type PropertyStateMapGroups = { [k: string]: PropertyStatesMap }
 
 const UndefinedAsString = String(undefined);
 const FallbackState = UndefinedAsString;
@@ -56,22 +50,15 @@ interface ComponentDesignTokensOverrides {
 }
 
 export interface ComponentDesignTokensProps {
-  transformer: (params: any) => Record<string, ValueProperty>;
-  title: string;
-  designComponents: DesignComponentDefinition[];
-  previewObject: PreviewObjectDefinition;
-  overrides?: ComponentDesignTokensOverrides;
-  children?: JSX.Element;
+  title: string,
+  previewObject: PreviewObjectDefinition,
+  transformerOptions: ExportableTransformerOptions,
+  designComponents: ComponentDesign[],
+  overrides?: ComponentDesignTokensOverrides,
+  children?: JSX.Element,
 }
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
-  transformer,
-  title,
-  designComponents,
-  previewObject,
-  overrides,
-  children,
-}) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
   const componentsOfType = designComponents.filter(
     (component) =>
       component.type === previewObject.type &&
@@ -89,9 +76,11 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
     .sort((prev, next) => {
       let l = (overrides?.states ?? state_sort).indexOf(prev) >>> 0;
       let r = (overrides?.states ?? state_sort).indexOf(next) >>> 0;
-      return l !== r ? l - r : prev.localeCompare(next);
-    });
-  const propertiesOfType = Object.entries(transformer(componentsOfType[0])).map(([_, r]) => `${r.group}\\${r.property}`);
+      return (l !== r) ? l - r : prev.localeCompare(next);
+    })
+  ;
+
+  const propertiesOfType = Object.entries(transformComponentTokensToScssVariables(componentsOfType[0], transformerOptions)).map(([_, r]) => `${r.group}\\${r.property}`);
 
   const propertiesWithStatesOfType: PropertyStatesMap = propertiesOfType.reduce(
     (prev, next) => ({ ...prev, [next]: statesOfType.reduce((prev, next) => ({ ...prev, [next]: {} }), {}) }),
@@ -99,10 +88,8 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
   );
 
   statesOfType.forEach((state) => {
-    const componentOfState = componentsOfType.find(
-      (component) => component.state === state || (state === FallbackState && !component.state)
-    );
-    Object.entries(transformer(componentOfState!)).forEach(([l, r]) => {
+    const componentOfState = componentsOfType.find((component) => component.state === state || (state === FallbackState && !component.state));
+    Object.entries(transformComponentTokensToScssVariables(componentOfState!, transformerOptions)).forEach(([l, r]) => {
       propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].variable = l;
       propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].value = r.value;
     });

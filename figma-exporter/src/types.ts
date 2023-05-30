@@ -115,17 +115,36 @@ export interface ExportableDefinition {
 }
 
 interface ExportableOptions {
+  shared: ExportableSharedOptions,
   exporter: ExportableExporterOptions,
+  transformer: ExportableTransformerOptions,
   demo: ExportableDemoOptions,
 }
 
-interface ExportableExporterOptions {
+export interface ExportableSharedOptions {
+  defaults?: {
+    theme?: string,
+    state?: string,
+    type?: string,
+    activity?: string,
+    layout?: string,
+    size?: string,
+  }
+}
+
+export interface ExportableExporterOptions {
   search: string,
-  rootCssClass: string,
   supportedVariantProps: VariantProperty[],
 }
 
-interface ExportableDemoOptions {
+export interface ExportableTransformerOptions {
+  rootCssClass?: string,
+  cssVariableTemplate?: string,
+  scssVariableTemplate?: string,
+  replace: {[token: string]: {[search: string]: string}}
+}
+
+export interface ExportableDemoOptions {
   tabs: { [tab: string]: { [componentType: string]: ExportableDefinitionPageFilter } }
 }
 

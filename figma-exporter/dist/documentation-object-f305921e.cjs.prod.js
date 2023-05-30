@@ -292,13 +292,13 @@ function extractComponents(componentSetComponentsResult, definition) {
   const sharedStateComponents = {};
   const components = ___default["default"].uniqBy(componentSetComponentsResult.components.map(component => {
     // Design
-    const theme = supportedVariantProperties.includes("THEME") ? normalizeNamePart(getComponentNamePart(component.name, 'Theme') ?? 'light') : undefined;
-    const type = supportedVariantProperties.includes("TYPE") ? normalizeNamePart(getComponentNamePart(component.name, 'Type') ?? 'default') : undefined;
-    const state = supportedVariantProperties.includes("STATE") ? normalizeNamePart(getComponentNamePart(component.name, 'State') ?? 'default') : undefined;
-    const activity = supportedVariantProperties.includes("ACTIVITY") ? normalizeNamePart(getComponentNamePart(component.name, 'Activity') ?? '') : undefined;
+    const theme = supportedVariantProperties.includes("THEME") ? normalizeNamePart(getComponentNamePart(component.name, 'Theme') ?? definition.options?.shared?.defaults?.theme ?? '') : undefined;
+    const type = supportedVariantProperties.includes("TYPE") ? normalizeNamePart(getComponentNamePart(component.name, 'Type') ?? definition.options?.shared?.defaults?.type ?? '') : undefined;
+    const state = supportedVariantProperties.includes("STATE") ? normalizeNamePart(getComponentNamePart(component.name, 'State') ?? definition.options?.shared?.defaults?.state ?? '') : undefined;
+    const activity = supportedVariantProperties.includes("ACTIVITY") ? normalizeNamePart(getComponentNamePart(component.name, 'Activity') ?? definition.options?.shared?.defaults?.activity ?? '') : undefined;
     // Layout
-    const layout = supportedVariantProperties.includes("LAYOUT") ? normalizeNamePart(getComponentNamePart(component.name, 'Layout') ?? '') : undefined;
-    const size = supportedVariantProperties.includes("SIZE") ? normalizeNamePart(getComponentNamePart(component.name, 'Size') ?? '') : undefined;
+    const layout = supportedVariantProperties.includes("LAYOUT") ? normalizeNamePart(getComponentNamePart(component.name, 'Layout') ?? definition.options?.shared?.defaults?.layout ?? '') : undefined;
+    const size = supportedVariantProperties.includes("SIZE") ? normalizeNamePart(getComponentNamePart(component.name, 'Size') ?? definition.options?.shared?.defaults?.size ?? '') : undefined;
     const instanceNode = layout || size ? component : findChildNodeWithType(component, 'INSTANCE');
     if (!instanceNode) {
       throw new Error(`No instance node found for component ${component.name}`);
@@ -320,13 +320,11 @@ function extractComponents(componentSetComponentsResult, definition) {
     }, {});
     const name = definition.id ?? '';
     const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
-    const rootCssClass = definition.options.exporter.rootCssClass ?? name;
     if (layout || size) {
       return {
         id: generateLayoutId(layout, size),
         name,
         description,
-        rootCssClass,
         componentType: 'layout',
         size,
         layout,
@@ -337,7 +335,6 @@ function extractComponents(componentSetComponentsResult, definition) {
       id: generateDesignId(theme, type, state, activity),
       name,
       description,
-      rootCssClass,
       theme,
       type,
       state,
@@ -347,17 +344,17 @@ function extractComponents(componentSetComponentsResult, definition) {
     };
     if (state && (componentSharedStates ?? []).includes(state)) {
       sharedStateComponents[state] ??= {};
-      sharedStateComponents[state][theme ?? 'light'] = designComponent;
+      sharedStateComponents[state][theme ?? definition.options?.shared?.defaults?.theme ?? ''] = designComponent;
       return null;
     }
     return designComponent;
   }).filter(filterOutNull), 'id');
   if (componentSharedStates && Object.keys(sharedStateComponents).length > 0) {
     components.filter(component => {
-      return component.componentType === 'design' && component.state === 'default';
+      return component.componentType === 'design' && component.state === (definition.options?.shared?.defaults?.state ?? '');
     }).forEach(component => {
       Object.keys(sharedStateComponents).forEach(stateToApply => {
-        const sharedStateComponent = sharedStateComponents[stateToApply][component.theme ?? 'light'];
+        const sharedStateComponent = sharedStateComponents[stateToApply][component.theme ?? definition.options?.shared?.defaults?.theme ?? ''];
         components.push({
           ...sharedStateComponent,
           id: generateDesignId(component.theme, component.type, sharedStateComponent.state, component.activity),
@@ -844,31 +841,6 @@ function getRadialGradientParamsFromGradientObject(gradient) {
   return [Math.abs(Number((gradient.handles[1].x - gradient.handles[0].x).toFixed(4))) * 100, Math.abs(Number((gradient.handles[2].y - gradient.handles[0].y).toFixed(4))) * 100, Number(gradient.handles[0].x.toFixed(4)) * 100, Number(gradient.handles[0].y.toFixed(4)) * 100];
 }
 
-const getScssVariableName = tokens => {
-  const {
-    component,
-    property,
-    part,
-    theme = 'light',
-    type = 'default',
-    state = 'default'
-  } = tokens;
-  const parts = [component, type === 'default' ? '' : type, part, theme === 'light' ? '' : theme, state === 'default' ? '' : state, property].filter(Boolean);
-  return `$${parts.join('-')}`;
-};
-const getCssVariableName = tokens => {
-  const {
-    component,
-    property,
-    part,
-    theme = 'light',
-    type = 'default',
-    state = 'default'
-  } = tokens;
-  const parts = [component, type === 'default' ? '' : type, part, theme === 'light' ? '' : theme, state === 'default' ? '' : state, property].filter(Boolean);
-  return `--${parts.join('-')}`;
-};
-
 /**
  * Generate a CSS gradient from a color gradient object
  
@@ -1214,9 +1186,7 @@ exports.createDocumentationObject = createDocumentationObject;
 exports.filterOutNull = filterOutNull;
 exports.filterOutUndefined = filterOutUndefined;
 exports.generateChangelogRecord = generateChangelogRecord;
-exports.getCssVariableName = getCssVariableName;
 exports.getRequestCount = getRequestCount;
-exports.getScssVariableName = getScssVariableName;
 exports.transformFigmaEffectToCssBoxShadow = transformFigmaEffectToCssBoxShadow;
 exports.transformFigmaFillsToCssColor = transformFigmaFillsToCssColor;
 exports.transformFigmaTextAlignToCss = transformFigmaTextAlignToCss;

@@ -2,18 +2,51 @@
   "id": "checkbox",
   "group": "Forms",
   "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "activity": "",
+        "size": ""
+      }
+    },
     "exporter": {
-      "search": "Checkbox", 
-      "rootCssClass": "checkbox",
-      "supportedVariantProps": ["THEME", "STATE", "SIZE", "ACTIVITY"]
+      "search": "Checkbox",
+      "supportedVariantProps": [
+        "THEME",
+        "STATE",
+        "SIZE",
+        "ACTIVITY"
+      ]
+    },
+    "transformer": {
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
     },
     "demo": {
       "tabs": {
         "overview": {
-          "design": { "state": ["default", "disabled"], "activity": ["off"] }
+          "design": {
+            "state": [
+              "default",
+              "disabled"
+            ],
+            "activity": [
+              "off"
+            ]
+          }
         },
-        "designTokens" : {
-          "design": { "state": ["default"] }
+        "designTokens": {
+          "design": {
+            "state": [
+              "default"
+            ]
+          }
         }
       }
     }
@@ -21,40 +54,72 @@
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "$",
-        "export": ["SPACING"]
-      }, {
-        "from": "GROUP[name=':: checkbox']",
-        "export": ["OPACITY"]
-      }, {
-        "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
-        "export": ["FILL", "BORDER", "SIZE"]
-      }]
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "SPACING"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox']",
+          "export": [
+            "OPACITY"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
+          "export": [
+            "FILL",
+            "BORDER",
+            "SIZE"
+          ]
+        }
+      ]
     },
     {
       "id": "label",
-      "tokens": [{
-        "from": "TEXT[name='Checkbox Label']",
-        "export": ["TYPOGRAPHY", "FILL", "OPACITY"]
-      }]
+      "tokens": [
+        {
+          "from": "TEXT[name='Checkbox Label']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL",
+            "OPACITY"
+          ]
+        }
+      ]
     },
     {
       "id": "check",
-      "tokens": [{
-        "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
-        "export": ["BORDER", "SIZE", "EFFECTS"]
-      }, {
-        "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='color']",
-        "export": ["FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
+          "export": [
+            "BORDER",
+            "SIZE",
+            "EFFECTS"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='color']",
+          "export": [
+            "FILL"
+          ]
+        }
+      ]
     },
     {
       "id": "icon",
-      "tokens": [{
-        "from": "GROUP[name=':: checkbox'] > INSTANCE[name='$activity']",
-        "export": ["SIZE", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "GROUP[name=':: checkbox'] > INSTANCE[name='$activity']",
+          "export": [
+            "SIZE",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -4,7 +4,6 @@ import { GetComponentSetComponentsResult } from '.';
 interface ComponentBase {
     id: string;
     name: string;
-    rootCssClass: string;
     description?: string;
     parts?: {
         [key: string]: ExportTypes.TokenSets;
@@ -14,8 +13,6 @@ export interface ComponentDesign extends ComponentBase {
     componentType: 'design';
     /**
      * Component theme (light, dark)
-     *
-     * @default 'light'
      */
     theme?: string;
     /**

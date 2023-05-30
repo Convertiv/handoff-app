@@ -2,32 +2,51 @@
   "id": "tooltip",
   "group": "Components",
   "options": {
+    "shared": {
+      "defaults": {}
+    },
     "exporter": {
-      "search": "Tooltip", 
-      "rootCssClass": "tooltip",
+      "search": "Tooltip",
       "supportedVariantProps": []
     },
+    "transformer": {},
     "demo": {
       "tabs": {
-        "overview": { "design": {}, "layout": {} },
-        "designTokens" : { "design": {} }
+        "overview": {
+          "design": {},
+          "layout": {}
+        },
+        "designTokens": {
+          "design": {}
+        }
       }
     }
   },
   "parts": [
     {
       "id": "$",
-      "tokens": [{
-        "from": "FRAME[name='Body']",
-        "export": ["BACKGROUND", "BORDER", "SPACING"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body']",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING"
+          ]
+        }
+      ]
     },
     {
       "id": "label",
-      "tokens": [{
-        "from": "FRAME[name='Body'] > TEXT",
-        "export": ["TYPOGRAPHY", "FILL"]
-      }]
+      "tokens": [
+        {
+          "from": "FRAME[name='Body'] > TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
     }
   ]
 }

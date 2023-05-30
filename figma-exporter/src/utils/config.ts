@@ -1,9 +1,5 @@
 import path from 'path';
-
-export interface ComponentSizeMap {
-  figma: string;
-  css: string;
-}
+import { ComponentSizeMap } from '../config';
 
 /**
  * Get Config

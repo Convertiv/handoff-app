@@ -1,4 +1,5 @@
 import { DocumentationObject } from '../../types';
+import { ExportableTransformerOptionsMap } from '../types';
 import { transformComponentsToCssVariables } from './component';
 import transformColors from './design/colors';
 import transformEffects from './design/effects';
@@ -9,11 +10,11 @@ interface CssTransformerOutput {
   design: Record<'colors' | 'typography' | 'effects', string>;
 }
 
-export default function cssTransformer(documentationObject: DocumentationObject): CssTransformerOutput {
+export default function cssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): CssTransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName]);
+    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options?.get(componentName));
   }
 
   const design = {

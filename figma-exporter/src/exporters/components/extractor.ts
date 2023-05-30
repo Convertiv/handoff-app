@@ -13,7 +13,6 @@ interface NodePathTokens {
 interface ComponentBase {
   id: string;
   name: string;
-  rootCssClass: string;
   description?: string,
   parts?: {[key: string]: ExportTypes.TokenSets},
 };
@@ -22,10 +21,8 @@ export interface ComponentDesign extends ComponentBase {
   componentType: 'design';
   /**
    * Component theme (light, dark)
-   *
-   * @default 'light'
    */
-  theme?: string; // 'light' | 'dark'?
+  theme?: string;
 
   /**
    * Component type (primary, secondary, tertiary, etc.)
@@ -40,7 +37,7 @@ export interface ComponentDesign extends ComponentBase {
   /**
    * Component activity (on, off)
    */
-  activity?: string; // activity -> value? 'on' | 'off'?
+  activity?: string;
 }
 
 export interface ComponentLayout extends ComponentBase {
@@ -48,7 +45,7 @@ export interface ComponentLayout extends ComponentBase {
   /**
    * Component layout
    */
-  layout?: string; // 'horizontal' | 'vertical' ?
+  layout?: string;
 
   /**
     * Component size (lg, md, sm, xs, ...)
@@ -72,23 +69,23 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
       .map((component): Component | null => {
         // Design
         const theme = supportedVariantProperties.includes("THEME")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'Theme') ?? 'light')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'Theme') ?? (definition.options?.shared?.defaults?.theme ?? ''))
           : undefined;
         const type = supportedVariantProperties.includes("TYPE")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'Type') ?? 'default')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'Type') ?? (definition.options?.shared?.defaults?.type ?? ''))
           : undefined;
         const state = supportedVariantProperties.includes("STATE")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'State') ?? 'default')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'State') ?? (definition.options?.shared?.defaults?.state ?? ''))
           : undefined;
         const activity = supportedVariantProperties.includes("ACTIVITY")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'Activity') ?? '')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'Activity') ?? (definition.options?.shared?.defaults?.activity ?? ''))
           : undefined;
         // Layout
         const layout = supportedVariantProperties.includes("LAYOUT")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'Layout') ?? '')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'Layout') ?? (definition.options?.shared?.defaults?.layout ?? ''))
           : undefined;
         const size = supportedVariantProperties.includes("SIZE")
-          ? normalizeNamePart(getComponentNamePart(component.name, 'Size') ?? '')
+          ? normalizeNamePart(getComponentNamePart(component.name, 'Size') ?? (definition.options?.shared?.defaults?.size ?? ''))
           : undefined;
 
         const instanceNode = layout || size ? component : findChildNodeWithType(component, 'INSTANCE');
@@ -110,14 +107,12 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
 
         const name = definition.id ?? '';
         const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
-        const rootCssClass = definition.options.exporter.rootCssClass ?? name;
 
         if (layout || size) {
           return {
             id: generateLayoutId(layout, size),
             name,
             description,
-            rootCssClass,
             componentType: 'layout',
             size,
             layout,
@@ -129,7 +124,6 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
           id: generateDesignId(theme, type, state, activity),
           name,
           description,
-          rootCssClass,
           theme,
           type,
           state,
@@ -140,7 +134,7 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
 
         if (state && (componentSharedStates ?? []).includes(state)) {
           sharedStateComponents[state] ??= {}
-          sharedStateComponents[state][theme ?? 'light'] = designComponent;
+          sharedStateComponents[state][theme ?? definition.options?.shared?.defaults?.theme ?? ''] = designComponent;
           return null;
         }
 
@@ -151,11 +145,11 @@ export default function extractComponents(componentSetComponentsResult: GetCompo
     if (componentSharedStates && Object.keys(sharedStateComponents).length > 0) {
       components
         .filter((component): component is ComponentDesign =>  {
-          return component.componentType === 'design' && component.state === 'default'
+          return component.componentType === 'design' && component.state === (definition.options?.shared?.defaults?.state ?? '')
         })
         .forEach(component => {
           Object.keys(sharedStateComponents).forEach(stateToApply => {
-            const sharedStateComponent = sharedStateComponents[stateToApply][component.theme ?? 'light'];
+            const sharedStateComponent = sharedStateComponents[stateToApply][component.theme ?? definition.options?.shared?.defaults?.theme ?? ''];
             components.push({
               ...sharedStateComponent,
               id: generateDesignId(component.theme, component.type, sharedStateComponent.state, component.activity),

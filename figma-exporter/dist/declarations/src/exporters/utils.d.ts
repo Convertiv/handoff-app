@@ -46,7 +46,6 @@ export declare function getComponentNamePart(componentName: string, partKey: str
 export declare const isValidVariantProperty: (variantProperty: string) => variantProperty is VariantProperty;
 export declare const isExportable: (exportable: string) => exportable is Exportable;
 export declare const isValidNodeType: (type: string) => type is "COMPONENT" | "COMPONENT_SET" | "DOCUMENT" | "CANVAS" | "FRAME" | "GROUP" | "VECTOR" | "BOOLEAN_OPERATION" | "STAR" | "LINE" | "ELLIPSE" | "REGULAR_POLYGON" | "RECTANGLE" | "TEXT" | "SLICE" | "INSTANCE";
-export declare const isValidTheme: (theme: string) => theme is "light" | "dark";
 export declare const isValidEffectType: (effect: FigmaTypes.Effect['type']) => boolean;
 export declare const isShadowEffectType: (effect: FigmaTypes.Effect['type']) => boolean;
 export declare const isValidGradientType: (gradientType: FigmaTypes.PaintType) => boolean;
