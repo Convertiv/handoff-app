@@ -70,6 +70,7 @@ process.env.NODE_ENV = 'development';
   const resetDirectory = async () => {
     await mergePackageDir('pages', 'docs');
     await mergePackageDir('public', 'public');
+    await mergePackageDir('exportables', 'exportables');
     await mergePackageDir('integration/sass', getPathToIntegration(config) + '/sass');
     await mergePackageDir('integration/templates', 'templates');
     await mergePackageDir('sass', 'sass');
@@ -83,6 +84,8 @@ process.env.NODE_ENV = 'development';
     if (relativePath.startsWith('public/')) {
 
     }else if (relativePath.startsWith('integration/')) {
+      await runPreviewExporter();
+    }else if (relativePath.startsWith('exportables/')) {
       await runPreviewExporter();
     } else if (relativePath.startsWith('pages/')) {
     } else if (relativePath.startsWith('sass/')) {

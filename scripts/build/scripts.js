@@ -307,6 +307,7 @@ const buildTmpDir = async () => {
   await mergeProjectDir('integration/sass', getPathToIntegration(config) + '/sass');
   await mergeProjectDir('integration/templates', 'templates');
   await mergeProjectDir('public', 'public');
+  await mergeProjectDir('exportables', 'exportables');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
   if (process.env.SKIP_FIGMA_EXPORTER !== 'yes') {
