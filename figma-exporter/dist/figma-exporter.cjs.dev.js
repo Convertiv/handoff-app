@@ -1024,7 +1024,7 @@ const getExportables = async () => {
       return [];
     }
     const exportables = definitions.map(def => {
-      const defPath = path__default["default"].join(exportablesFolder, `${def}.json`);
+      const defPath = path__default["default"].resolve(path__default["default"].join(__dirname, '../..', exportablesFolder, `${def}.json`));
       if (!fs__namespace$1.existsSync(defPath)) {
         return null;
       }
