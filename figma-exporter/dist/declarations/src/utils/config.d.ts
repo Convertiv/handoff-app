@@ -1,7 +1,3 @@
-export interface ComponentSizeMap {
-    figma: string;
-    css: string;
-}
 /**
  * Get Config
  * @returns Config
