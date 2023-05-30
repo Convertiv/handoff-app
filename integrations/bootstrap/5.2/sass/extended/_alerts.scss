@@ -1,7 +1,6 @@
 /* =============================================================================
-   ALERTS (project/components/_alerts.scss)
+   ALERTS (extended/_alerts.scss)
    ========================================================================== */
-
 
 @each $variant in $alert-variants {
 	.alert-#{$variant} {
