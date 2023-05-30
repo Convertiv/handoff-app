@@ -33,9 +33,7 @@ export interface HookReturn {
  */
 export const genericPluginGenerator = (): PluginTransformer => {
   return {
-    init: (): void => {
-      console.log('init generic');
-    },
+    init: (): void => {},
     postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput): void => {},
     postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput): void => {},
     postExtract: (documentationObject: DocumentationObject): void => {},
