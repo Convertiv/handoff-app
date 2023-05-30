@@ -1,3 +1,4 @@
+export default config;
 import { DocumentComponentsObject } from 'figma-exporter/src/exporters/components';
 import type { ColorObject, TypographyObject, AssetObject, EffectObject } from './figma-exporter/src/types';
 
@@ -13,10 +14,34 @@ export interface Integration {
   name: string;
   version: string;
 }
+
 export interface FigmaSearch {
   size: ComponentSizeMap[];
+  options: {
+    shared: {
+      defaults: {
+        theme: string;
+        state: string;
+        type: string;
+        activity: string;
+        layout: string;
+        size: string;
+      }
+    }
+  };
+  transformer: {
+    replace: {
+      size: {
+        [key: string]: string;
+        small: string;
+        medium: string;
+        large: string;
+      }
+    }
+  };
   definitions: string[];
 }
+
 export interface ComponentSizeMap {
   figma: string;
   css: string;
@@ -29,7 +54,7 @@ export interface Config {
   integration?: Integration;
   favicon?: string;
   poweredBy?: boolean;
-  figma: FigmaSearch;
+  figma?: FigmaSearch;
   /**
    * @default "/logo.svg"
    */

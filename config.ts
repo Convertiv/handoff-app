@@ -1,5 +1,5 @@
 import config from './client-config';
-import type { Config } from './client-config';
+import type { Config } from './figma-exporter/src/config';
 import type { ChangelogRecord } from './figma-exporter/src/changelog';
 import type { PreviewJson } from 'figma-exporter/src/types';
 import elements from './exported/tokens.json';
