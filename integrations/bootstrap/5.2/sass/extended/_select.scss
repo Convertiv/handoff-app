@@ -1,55 +1,50 @@
 /* =============================================================================
-   SELECT (project/components/_select.scss)
+   SELECT (extended/_select.scss)
    ========================================================================== */
-
 
 .form-select {
 	&:hover {
-		color: $form-select-hover-color;
-		background-color: $form-select-hover-bg;
-		background: $form-select-hover-bg;
-		border-color: $form-select-hover-border-color;
-		box-shadow: $form-select-hover-box-shadow;
+		color: $select-option-active-color;
+		background-color: $select-hover-background;
+		background: $select-hover-background;
+		border-color: $select-hover-border-color;
+		box-shadow: $select-hover-box-shadow;
 	}
 
 	&:focus {
-		color: $form-select-focus-color;
-		background-color: $form-select-focus-bg;
-		background: $form-select-focus-bg;
-		border-color: $form-select-focus-border-color;
-		box-shadow: $form-select-focus-box-shadow;
+		color: $select-option-active-color;
+		background-color: $select-active-background;
+		background: $select-active-background;
+		border-color: $select-active-border-color;
+		box-shadow: $select-active-box-shadow;
 	}
 
 	&:disabled {
-		color: $form-select-disabled-color;
-		background-color: $form-select-disabled-bg;
-		/*
-		Gradients currently don't work on disabled state because they clobber
-		the background image that makes the carrot work
-		background: $form-select-disabled-bg;
-		*/
-		border-color: $form-select-disabled-border-color;
-		box-shadow: $form-select-disabled-box-shadow;
+		color: $select-option-disabled-color;
+		background-color: $select-disabled-background;
+		background: $select-disabled-background;
+		border-color: $select-disabled-border-color;
+		box-shadow: $select-disabled-box-shadow;
 	}
 
 	&.is-invalid,
 	&.is-invalid:hover,
 	&.is-invalid:focus {
-		color: $form-select-invalid-color;
-		background-color: $form-select-invalid-bg;
-		background: $form-select-invalid-bg;
+		color: $select-option-error-color;
+		background-color: $select-error-background;
+		background: $select-error-background;
 		background-repeat: no-repeat;
-		border-color: $form-select-invalid-border-color;
-		box-shadow: $form-select-invalid-box-shadow;
+		border-color: $select-error-border-color;
+		box-shadow: $select-error-box-shadow;
 	}
 }
 
 .form-select-sm {
-	line-height: $form-select-line-height-sm;
-	border-width: $form-select-border-width-sm;
+	line-height: $select-sm-option-line-height;
+	border-width: $select-sm-border-width;
 }
 
 .form-select-lg {
-	line-height: $form-select-line-height-lg;
-	border-width: $form-select-border-width-lg;
+	line-height: $select-lg-option-line-height;
+	border-width: $select-lg-border-width;
 }

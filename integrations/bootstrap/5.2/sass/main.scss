@@ -1,48 +1,101 @@
-// Bootstrap 5.2 Handoff Design Token Map
-// You can use this in a bootstrap 5.2 project to map figma tokens produced by 
-// the Handoff design system.
+// ------------------------------------------------------------------
+// Bootstrap 5.2 - Handoff Design Tokens Map
+// Include this file in a Bootstrap 5.2 project to map Figma tokens
+// produced by the Handoff design system.
+// ------------------------------------------------------------------
+// Order is following:
+//
+// 1. Initialize Bootstrap
+// 2. Load empty default variables and raw design tokens from Handoff export
+// 3. Map Handoff to basic set of Bootstrap variables
+// 4. Load all default Bootstrap variables that weren't mapped from Handoff
+// 5. Load Bootstrap base and components layers
+// 6. Extend Bootstrap components by mapping additional Handoff variables
 
-// Initialize Bootstrap
+
+// 1. Initialize Bootstrap
 // ------------------------------------------------------------------
 
 @import 'node_modules/bootstrap/scss/functions';
 
-// Project Variables
+// 2. Handoff Tokens
+//    Load empty default variables that prevent the build from
+//    breaking if some components are not being used.
+//    Then load raw design tokens from Handoff export.
+// ------------------------------------------------------------------
+
+@import 'variables-default';
+
+@import './exported/tokens/types/alerts';
+@import './exported/tokens/sass/alerts';
+@import './exported/tokens/css/alerts';
+
+@import './exported/tokens/types/buttons';
+@import './exported/tokens/sass/buttons';
+@import './exported/tokens/css/buttons';
+
+@import './exported/tokens/types/checkboxes';
+@import './exported/tokens/sass/checkboxes';
+@import './exported/tokens/css/checkboxes';
+
+@import './exported/tokens/types/colors';
+@import './exported/tokens/sass/colors';
+//@import './exported/tokens/css/colors';
+
+@import './exported/tokens/types/effects';
+@import './exported/tokens/sass/effects';
+//@import './exported/tokens/css/effects';
+
+@import './exported/tokens/types/inputs';
+@import './exported/tokens/sass/inputs';
+@import './exported/tokens/css/inputs';
+
+//@import './exported/tokens/types/modal';
+//@import './exported/tokens/sass/modal';
+//@import './exported/tokens/css/modal';
+
+@import './exported/tokens/types/radios';
+@import './exported/tokens/sass/radios';
+@import './exported/tokens/css/radios';
+
+//@import './exported/tokens/types/selects';
+//@import './exported/tokens/sass/selects';
+//@import './exported/tokens/css/selects';
+
+@import './exported/tokens/types/switches';
+@import './exported/tokens/sass/switches';
+@import './exported/tokens/css/switches';
+
+@import './exported/tokens/types/tooltips';
+@import './exported/tokens/sass/tooltips';
+@import './exported/tokens/css/tooltips';
+
+@import './exported/tokens/types/typography';
+@import './exported/tokens/sass/typography';
+//@import './exported/tokens/css/typography';
+
+// 3. Project Variables
 // ------------------------------------------------------------------
 
 $prefix: '';
-$enable-shadows: true;
+@import 'variables';
 
-@import 'maps/button';
-@import 'maps/checkbox';
-@import 'maps/radio';
-@import 'maps/switch';
-@import 'maps/input';
-@import 'maps/select';
-@import 'maps/alert';
-@import 'maps/modal';
-// @import 'maps/pagination';
-@import 'maps/tooltip';
-
-// Bootstrap Variables
+// 4. Bootstrap Variables
+//    Load Bootstrap variables
 // ------------------------------------------------------------------
 
 @import 'node_modules/bootstrap/scss/variables';
 @import 'node_modules/bootstrap/scss/maps';
-
-
-// Bootstrap Base
-// ------------------------------------------------------------------
-
 @import 'node_modules/bootstrap/scss/mixins';
-@import 'node_modules/bootstrap/scss/root';
 @import 'node_modules/bootstrap/scss/utilities';
-@import 'node_modules/bootstrap/scss/reboot';
 
 
-// Bootstrap Components
+// 5. Bootstrap Base and Components
+//    Load Bootstrap configuration, layout, components, helpers, utilities
 // ------------------------------------------------------------------
 
+@import 'node_modules/bootstrap/scss/root';
+@import 'node_modules/bootstrap/scss/reboot';
 @import 'node_modules/bootstrap/scss/type';
 @import 'node_modules/bootstrap/scss/images';
 @import 'node_modules/bootstrap/scss/containers';
@@ -76,16 +129,17 @@ $enable-shadows: true;
 @import 'node_modules/bootstrap/scss/utilities/api';
 
 
-// Project Components
+// 6. Project Components
+//    Extend default Bootstrap components by mapping all the tokens
 // ------------------------------------------------------------------
 
-@import 'extended/button';
+@import 'extended/alerts';
+@import 'extended/buttons';
 @import 'extended/checkbox';
+//@import 'extended/input';
+//@import 'extended/modal';
+//@import 'extended/pagination';
 @import 'extended/radio';
-@import 'extended/switch';
-@import 'extended/input';
 @import 'extended/select';
-@import 'extended/alert';
-@import 'extended/modal';
-// @import 'extended/pagination';
-@import 'extended/tooltip';
+@import 'extended/switch';
+@import 'extended/tooltips';

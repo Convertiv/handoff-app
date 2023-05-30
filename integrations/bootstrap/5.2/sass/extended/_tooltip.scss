@@ -1,20 +1,19 @@
 /* =============================================================================
-   TOOLTIPS (project/components/_tooltips.scss)
+   TOOLTIPS (extended/_tooltips.scss)
    ========================================================================== */
 
-
+// Tooltip background
 .tooltip {
-	--#{$prefix}tooltip-padding-x: var( --tooltip-padding-right );
-	--#{$prefix}tooltip-padding-y: var( --tooltip-padding-top );
-	--#{$prefix}tooltip-bg: var( --tooltip-background );
-	// --#{$prefix}tooltip-border-radius: var( --tooltip-border-radius );
-	--#{$prefix}tooltip-opacity: 1;
+	border-width: var( --tooltip-border-width );
+	border-color: var( --tooltip-border-color );
 }
 
-// Wrapper for the tooltip content
+// Tooltip content
 .tooltip-inner {
+	font-family: var( --tooltip-font-family );
 	font-weight: var( --tooltip-font-weight );
 	line-height: var( --tooltip-line-height );
+	letter-spacing: var( --tooltip-letter-spacing );
 	text-align: var( --tooltip-text-align );
-	background: var( --tooltip-background );
+	text-decoration: var( --tooltip-text-decoration );
 }
