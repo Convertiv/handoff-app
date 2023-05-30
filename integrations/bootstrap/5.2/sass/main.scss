@@ -13,16 +13,16 @@
 $prefix: '';
 $enable-shadows: true;
 
-@import 'maps/buttons';
+@import 'maps/button';
 @import 'maps/checkbox';
 @import 'maps/radio';
 @import 'maps/switch';
 @import 'maps/input';
 @import 'maps/select';
-@import 'maps/alerts';
+@import 'maps/alert';
 @import 'maps/modal';
-@import 'maps/pagination';
-@import 'maps/tooltips';
+// @import 'maps/pagination';
+@import 'maps/tooltip';
 
 // Bootstrap Variables
 // ------------------------------------------------------------------
@@ -79,13 +79,13 @@ $enable-shadows: true;
 // Project Components
 // ------------------------------------------------------------------
 
-@import 'extended/buttons';
+@import 'extended/button';
 @import 'extended/checkbox';
 @import 'extended/radio';
 @import 'extended/switch';
 @import 'extended/input';
 @import 'extended/select';
-@import 'extended/alerts';
+@import 'extended/alert';
 @import 'extended/modal';
-@import 'extended/pagination';
-@import 'extended/tooltips';
+// @import 'extended/pagination';
+@import 'extended/tooltip';

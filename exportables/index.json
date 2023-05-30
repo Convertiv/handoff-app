@@ -1,0 +1,34 @@
+{
+  "options": {
+    "shared": {
+      "defaults": {
+        "theme": "light",
+        "state": "default",
+        "type": "default",
+        "activity": "",
+        "layout": "",
+        "size": ""
+      }
+    },
+    "transformer": {
+      "replace": {
+        "size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
+    }
+  },
+  "definitions": [
+    "components/alert",
+    "components/button",
+    "components/modal",
+    "components/tooltip",
+    "components/checkbox",
+    "components/input",
+    "components/radio",
+    "components/select",
+    "components/switch"
+  ]
+}

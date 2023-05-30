@@ -84,3 +84,70 @@ export declare type PreviewJson = {
         [key in keyof DocumentComponentsObject]: PreviewObject[];
     };
 };
+export declare type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE";
+export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
+export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
+export interface ExportableIndex {
+    options: ExportableOptions;
+    definitions: string[];
+}
+export interface ExportableDefinition {
+    id: string;
+    group?: string;
+    options: ExportableOptions;
+    parts: ExportableParts;
+}
+export interface ExportableOptions {
+    shared: ExportableSharedOptions;
+    exporter: ExportableExporterOptions;
+    transformer: ExportableTransformerOptions;
+    demo: ExportableDemoOptions;
+}
+export interface ExportableSharedOptions {
+    defaults?: {
+        theme?: string;
+        state?: string;
+        type?: string;
+        activity?: string;
+        layout?: string;
+        size?: string;
+    };
+}
+export interface ExportableExporterOptions {
+    search: string;
+    supportedVariantProps: VariantProperty[];
+}
+export interface ExportableTransformerOptions {
+    rootCssClass?: string;
+    cssVariableTemplate?: string;
+    scssVariableTemplate?: string;
+    replace: {
+        [token: string]: {
+            [search: string]: string;
+        };
+    };
+}
+export interface ExportableDemoOptions {
+    tabs: {
+        [tab: string]: {
+            [componentType: string]: ExportableDefinitionPageFilter;
+        };
+    };
+}
+export interface ExportablePart {
+    id: string;
+    tokens: {
+        from: string;
+        export: Exportable[];
+    }[];
+}
+export declare type ExportableParts = ExportablePart[];
+interface ExportableDefinitionPageFilter {
+    [property: string]: ExportableDefinitionPageFilterValue;
+}
+declare type ExportableDefinitionPageFilterValue = string | string[] | {
+    [value: string]: {
+        [prop: string]: string;
+    };
+};
+export {};

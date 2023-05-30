@@ -1,47 +1,7 @@
 import * as FigmaTypes from '../figma/types';
-import { capitalize } from 'lodash';
-import { filterOutUndefined } from '../utils';
 import { GradientObject, PositionObject, StopObject } from '../types';
-import { isShadowEffectType, isValidGradientType } from '../exporters/components/utils';
+import { isShadowEffectType, isValidGradientType } from '../exporters/utils';
 import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
-
-export const getScssVariableName = <
-  Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
->(
-  tokens: Tokens
-): string => {
-  const { component, property, part, theme = 'light', type = 'default', state = 'default' } = tokens;
-
-  const parts = [
-    component,
-    type === 'default' ? '' : type,
-    part,
-    theme === 'light' ? '' : theme,
-    state === 'default' ? '' : state,
-    property,
-  ].filter(Boolean);
-
-  return `$${parts.join('-')}`;
-};
-
-export const getCssVariableName = <
-  Tokens extends { component: string; property: string; part?: string; theme?: string; type?: string; state?: string }
->(
-  tokens: Tokens
-): string => {
-  const { component, property, part, theme = 'light', type = 'default', state = 'default' } = tokens;
-
-  const parts = [
-    component,
-    type === 'default' ? '' : type,
-    part,
-    theme === 'light' ? '' : theme,
-    state === 'default' ? '' : state,
-    property,
-  ].filter(Boolean);
-
-  return `--${parts.join('-')}`;
-};
 
 /**
  * Generate a CSS gradient from a color gradient object
@@ -216,51 +176,6 @@ export const transformFigmaEffectToCssBoxShadow = (effect: FigmaTypes.Effect): s
 
   return '';
 };
-export interface AbstractComponent {
-  componentType?: string;
-  /**
-   * Component theme (light, dark)
-   *
-   * @default 'light'
-   */
-  theme?: string;
-  /**
-   * Component type (primary, secondary, tertiary, etc.)
-   *
-   * @default 'primary'
-   */
-  type?: string;
-  /**
-   * Component state (default, hover, disabled)
-   *
-   * @default 'default'
-   */
-  state?: string;
-  /**
-   * Component size (lg, md, sm, xs, ...)
-   */
-  size?: string;
-  layout?: string;
-}
-export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components.map((component) => component.type).filter(filterOutUndefined)));
-};
-export const getStatesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components.map((component) => component.state).filter(filterOutUndefined)));
-};
-export const getThemesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components.map((component) => component.theme).filter(filterOutUndefined)));
-};
-export const getSizesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components.map((component) => component.size).filter(filterOutUndefined)));
-};
-
-export const cssCodeBlockComment = (type: string, component: AbstractComponent): string => {
-  let comment = `// ${type} ${capitalize(component.componentType === 'design' ? component.type : component.size)} `;
-  comment += component.componentType === 'design' && component.theme && `, theme: ${capitalize(component.theme)}`;
-  comment += component.componentType === 'design' && component.state && `, state: ${capitalize(component.state)}`;
-  return comment;
-};
 
 /**
  * Converts figma color to a RGB(A) in form of a array.
@@ -278,34 +193,6 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
   }
 
   return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
-}
-
-/**
- * this function converts figma color to HEX (string)
- */
-
-// figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
-//=> #001aff
-
-export function figmaColorToHex(color: FigmaTypes.Color): string {
-  let hex = '#';
-
-  const rgb = figmaColorToWebRGB(color) as webRGB | webRGBA;
-  hex += ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
-
-  if (rgb[3] !== undefined) {
-    const a = Math.round(rgb[3] * 255).toString(16);
-    if (a.length == 1) {
-      hex += '0' + a;
-    } else {
-      if (a !== 'ff') hex += a;
-    }
-  }
-  return hex;
-}
-
-export const transformFigmaNumberToCss = (value: number) => {
-  return parseFloat(value.toFixed(3));
 }
 
 type webRGB = [number, number, number];
