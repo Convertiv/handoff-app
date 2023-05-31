@@ -90,7 +90,7 @@ const ColorsPage = ({ content, menu, metadata, current, css, scss, types }: util
                           // apply background color
                           cssProperties.backgroundColor = '#FFF';
                           // apply effects
-                          effect.effects.forEach((effect) => {
+                          effect.effects.forEach((effect: EffectParametersObject) => {
                             applyEffectToCssProperties(effect, cssProperties);
                           });
 

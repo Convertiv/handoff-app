@@ -13,7 +13,7 @@ import Head from 'next/head';
 import Header from 'components/Header';
 import { DocumentationProps, fetchDocPageMarkdown, fetchFoundationDocPageMarkdown, FoundationDocumentationProps, SectionLink, staticBuildMenu } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
@@ -47,7 +47,23 @@ const families: FontFamily = typography.reduce((result, current) => {
 }, {} as FontFamily);
 
 const type_copy = config.type_copy ? config.type_copy : 'Almost before we knew it, we had left the ground.';
+interface typographyTypes {
+  [key: string]: ReactElement;
+}
 
+const renderTypes: (type: TypographyObject) => typographyTypes = (type: TypographyObject) => ({
+  Subheading: <h1 style={pluckStyle(type)}></h1>,
+  'Heading 1': <h1 style={pluckStyle(type)}>{type_copy}</h1>,
+  'Heading 2': <h2 style={pluckStyle(type)}>{type_copy}</h2>,
+  'Heading 3': <h3 style={pluckStyle(type)}>{type_copy}</h3>,
+  'Heading 4': <h4 style={pluckStyle(type)}>{type_copy}</h4>,
+  'Heading 5': <h5 style={pluckStyle(type)}>{type_copy}</h5>,
+  'Heading 6': <h6 style={pluckStyle(type)}>{type_copy}</h6>,
+  'Input Labels': <label style={pluckStyle(type)}>{type_copy}</label>,
+  Blockquote: <blockquote style={pluckStyle(type)}>{type_copy}</blockquote>,
+  Link: <a style={pluckStyle(type)}>{type_copy}</a>,
+  Paragraph: <p style={pluckStyle(type)}>{type_copy}</p>,
+})
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -165,19 +181,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, types }: Foun
                     </p>
                   </div>
                   <div className="o-col-9@md">
-                    {{
-                      Subheading: <h1 style={pluckStyle(type)}></h1>,
-                      'Heading 1': <h1 style={pluckStyle(type)}>{type_copy}</h1>,
-                      'Heading 2': <h2 style={pluckStyle(type)}>{type_copy}</h2>,
-                      'Heading 3': <h3 style={pluckStyle(type)}>{type_copy}</h3>,
-                      'Heading 4': <h4 style={pluckStyle(type)}>{type_copy}</h4>,
-                      'Heading 5': <h5 style={pluckStyle(type)}>{type_copy}</h5>,
-                      'Heading 6': <h6 style={pluckStyle(type)}>{type_copy}</h6>,
-                      'Input Labels': <label style={pluckStyle(type)}>{type_copy}</label>,
-                      Blockquote: <blockquote style={pluckStyle(type)}>{type_copy}</blockquote>,
-                      Link: <a style={pluckStyle(type)}>{type_copy}</a>,
-                      Paragraph: <p style={pluckStyle(type)}>{type_copy}</p>,
-                    }[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}
+                    {renderTypes(type)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}
                   </div>
                 </div>
               </div>

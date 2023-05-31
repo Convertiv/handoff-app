@@ -1,6 +1,6 @@
 import { filterOutUndefined } from '../../utils';
 import { transformFigmaColorToHex } from '../../utils/convertColor';
-
+import * as FigmaTypes from '../../figma/types';
 /**
  * Get the name of a SCSS variable from a token object
  * @param tokens 
