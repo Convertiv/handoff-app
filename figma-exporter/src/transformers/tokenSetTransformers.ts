@@ -44,12 +44,12 @@ const transformSpacingTokenSet = (variableType: 'css'|'scss', component: Compone
     ? {
       // Padding
       [formatVariableName(variableType, component, part, 'padding-y', options)]: {
-        value: `${tokenSet.padding.TOP}px`,
+        value: `${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`,
         property: 'padding-y',
         group: part,
       },
       [formatVariableName(variableType, component, part, 'padding-x', options)]: {
-        value: `${tokenSet.padding.LEFT}px`,
+        value: `${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`,
         property: 'padding-x',
         group: part,
       },
