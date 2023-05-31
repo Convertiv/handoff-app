@@ -9,10 +9,9 @@ import { getTokenSetTransformer } from '../tokenSetTransformers';
  * @param alerts
  * @returns
  */
-export const transformComponentsToCssVariables = (components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
+export const transformComponentsToCssVariables = (componentName: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
 
-  const componentName = components[0].name;
   const componentCssClass = options?.rootCssClass ?? componentName;
   
   lines.push(`.${componentCssClass} {`)

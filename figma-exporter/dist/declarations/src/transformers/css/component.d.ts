@@ -6,7 +6,7 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../typ
  * @param alerts
  * @returns
  */
-export declare const transformComponentsToCssVariables: (components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const transformComponentsToCssVariables: (componentName: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
 /**
  * Generate a list of css variables
  * @param tokens
