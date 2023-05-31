@@ -11,9 +11,9 @@ export default function transformEffects(effects: EffectObject[]): string {
 
   if (validEffects) {
     validEffects.forEach(effect => {
-      stringBuilder.push(`--effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`)
+      stringBuilder.push(`  --effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`)
     })
   }
 
-  return stringBuilder.join('\n');
+  return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }

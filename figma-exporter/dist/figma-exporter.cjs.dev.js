@@ -218,12 +218,12 @@ const transformSpacingTokenSet = (variableType, component, part, tokenSet, optio
   return tokenSet.name === 'SPACING' ? {
     // Padding
     [formatVariableName(variableType, component, part, 'padding-y', options)]: {
-      value: `${tokenSet.padding.TOP}px`,
+      value: `${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`,
       property: 'padding-y',
       group: part
     },
     [formatVariableName(variableType, component, part, 'padding-x', options)]: {
-      value: `${tokenSet.padding.LEFT}px`,
+      value: `${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`,
       property: 'padding-x',
       group: part
     },
@@ -875,9 +875,9 @@ const transformComponentTokensToCssVariables = (component, options) => {
 function transformColors(colors) {
   const stringBuilder = [];
   colors.forEach(color => {
-    stringBuilder.push(`--color-${color.group}-${color.machineName}: ${color.value};`);
+    stringBuilder.push(`  --color-${color.group}-${color.machineName}: ${color.value};`);
   });
-  return stringBuilder.join('\n');
+  return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }
 
 /**
@@ -890,18 +890,18 @@ function transformEffects(effects) {
   const validEffects = effects?.filter(effect => effect.effects && effect.effects.length > 0);
   if (validEffects) {
     validEffects.forEach(effect => {
-      stringBuilder.push(`--effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`);
+      stringBuilder.push(`  --effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`);
     });
   }
-  return stringBuilder.join('\n');
+  return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }
 
 function transformTypography(typography) {
   const stringBuilder = [];
   typography.forEach(type => {
-    stringBuilder.push([`--typography-${getTypeName(type)}-font-family: '${type.values.fontFamily}';`, `--typography-${getTypeName(type)}-font-size: ${type.values.fontSize}px;`, `--typography-${getTypeName(type)}-font-weight: ${type.values.fontWeight};`, `--typography-${getTypeName(type)}-line-height: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`, `--typography-${getTypeName(type)}-letter-spacing: ${type.values.letterSpacing}px;`, `--typography-${getTypeName(type)}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`].join('\n'));
+    stringBuilder.push([`  --typography-${getTypeName(type)}-font-family: '${type.values.fontFamily}';`, `  --typography-${getTypeName(type)}-font-size: ${type.values.fontSize}px;`, `  --typography-${getTypeName(type)}-font-weight: ${type.values.fontWeight};`, `  --typography-${getTypeName(type)}-line-height: ${(type.values.lineHeightPx / type.values.fontSize).toFixed(1)};`, `  --typography-${getTypeName(type)}-letter-spacing: ${type.values.letterSpacing}px;`, `  --typography-${getTypeName(type)}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`].join('\n'));
   });
-  return stringBuilder.join('\n');
+  return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }
 function getTypeName(type) {
   return type.group ? `${type.group}-${type.machine_name}` : `${type.machine_name}`;
