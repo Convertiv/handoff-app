@@ -40,7 +40,7 @@
 
 @import './exported/tokens/types/colors';
 @import './exported/tokens/sass/colors';
-//@import './exported/tokens/css/colors';
+@import './exported/tokens/css/colors';
 
 @import './exported/tokens/types/effects';
 @import './exported/tokens/sass/effects';
@@ -72,7 +72,7 @@
 
 @import './exported/tokens/types/typography';
 @import './exported/tokens/sass/typography';
-//@import './exported/tokens/css/typography';
+@import './exported/tokens/css/typography';
 
 // 3. Project Variables
 // ------------------------------------------------------------------

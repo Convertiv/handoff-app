@@ -14,14 +14,14 @@
 	background-size: $checkbox-icon-on-width;
 
 	&:focus {
-		background-color: $checkbox-off-background;
+		background-color: $checkbox-off-color;
 		border-color: $checkbox-off-border-color;
 		box-shadow: $checkbox-off-box-shadow;
 	}
 
 	&:hover,
 	.form-check:hover & {
-		background-color: $checkbox-hover-off-background;
+		background-color: $checkbox-hover-off-color;
 		border-color: $checkbox-hover-off-border-color;
 		box-shadow: $checkbox-hover-off-box-shadow;
 	}
@@ -32,25 +32,25 @@
 	&:disabled:hover,
 	.form-check:hover &[ disabled ],
 	.form-check:hover &:disabled {
-		background-color: $checkbox-disabled-off-background;
+		background-color: $checkbox-disabled-off-color;
 		border-color: $checkbox-disabled-off-border-color;
 		box-shadow: $checkbox-disabled-off-box-shadow;
 	}
 
 	&:checked {
-		background-color: $checkbox-on-background;
+		background-color: $checkbox-on-color;
 		border-color: $checkbox-on-border-color;
 		box-shadow: $checkbox-on-box-shadow;
 
 		&:focus {
-			background-color: $checkbox-on-background;
+			background-color: $checkbox-on-color;
 			border-color: $checkbox-on-border-color;
 			box-shadow: $checkbox-on-box-shadow;
 		}
 
 		&:hover,
 		.form-check:hover & {
-			background-color: $checkbox-hover-on-background;
+			background-color: $checkbox-hover-on-color;
 			border-color: $checkbox-hover-on-border-color;
 			box-shadow: $checkbox-hover-on-box-shadow;
 		}
@@ -61,7 +61,7 @@
 		&:disabled:hover,
 		.form-check:hover &[ disabled ],
 		.form-check:hover &:disabled {
-			background-color: $checkbox-disabled-on-background;
+			background-color: $checkbox-disabled-on-color;
 			border-color: $checkbox-disabled-on-border-color;
 			box-shadow: $checkbox-disabled-on-box-shadow;
 		}
@@ -70,6 +70,7 @@
 
 .form-check-label {
 	font-size: $checkbox-label-off-font-size;
+	font-family: $checkbox-label-off-font-family;
 	font-weight: $checkbox-label-off-font-weight;
 	line-height: $checkbox-label-off-line-height;
 	letter-spacing: $checkbox-label-off-letter-spacing;
