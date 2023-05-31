@@ -66,7 +66,7 @@ const copyProjectConfig = async () => {
 const copyPluginFile = async (config) => {
   // Copy project's config.js to tmp dir's client-config.js
   const plugin = path.resolve(projectRootDir, 'integration/plugin.js');
-  if(fs.existsSync(plugin)){
+  if (fs.existsSync(plugin)) {
     await fs.copy(plugin, path.resolve(tmpDir, getPathToIntegration(config) + '/plugin.js'));
   }
 };
@@ -74,7 +74,7 @@ const copyPluginFile = async (config) => {
 /**
  * Run the exporter from figma with the configured settings.
  */
-export const runFigmaExporter = async (type) => {
+const runFigmaExporter = async (type) => {
   // Run figma-exporter in the project root
   console.log('Running figma exporter...');
   const args = [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')];
@@ -297,9 +297,9 @@ const getPathToIntegration = (config) => {
  */
 const buildTmpDir = async () => {
   await validateProject();
-  if (process.argv.indexOf('--fast') > 0 && await tempDirExists()) {
-    console.log(chalk.green("Skipping temp directory build"));
-  }else{
+  if (process.argv.indexOf('--fast') > 0 && (await tempDirExists())) {
+    console.log(chalk.green('Skipping temp directory build'));
+  } else {
     await prepareTmpDir();
     await installNpmDependencies();
   }
@@ -340,4 +340,5 @@ module.exports = {
   runStyleExporter,
   runIntegrationExporter,
   runFontExporter,
+  runFigmaExporter,
 };
