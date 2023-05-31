@@ -29,12 +29,7 @@
             "BORDER",
             "SPACING"
           ]
-        }
-      ]
-    },
-    {
-      "id": "label",
-      "tokens": [
+        },
         {
           "from": "FRAME[name='Body'] > TEXT",
           "export": [
