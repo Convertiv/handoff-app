@@ -136,9 +136,12 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
  * @param documentationObject
  */
 const buildStyles = async (documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap) => {
-  const typeFiles = scssTypesTransformer(documentationObject, options);
-  const cssFiles = cssTransformer(documentationObject, options);
-  const scssFiles = scssTransformer(documentationObject, options);
+  let typeFiles = scssTypesTransformer(documentationObject, options);
+  typeFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, typeFiles);
+  let cssFiles = cssTransformer(documentationObject, options);
+  cssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, cssFiles);
+  let scssFiles = scssTransformer(documentationObject, options);
+  scssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, scssFiles);
   await Promise.all([
     fs
       .ensureDir(variablesFilePath)
@@ -225,6 +228,7 @@ const entirePipeline = async () => {
   await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
   await buildPreview(documentationObject);
+  (await pluginTransformer()).postBuild(documentationObject);
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 

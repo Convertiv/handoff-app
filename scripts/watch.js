@@ -96,7 +96,7 @@ process.env.NODE_ENV = 'development';
       await runFigmaExporter();
     } else if (relativePath.startsWith('pages/')) {
     } else if (relativePath.startsWith('sass/')) {
-    }else if (relativePath.startsWith('config.js')) {
+    } else if (relativePath.startsWith('config.js')) {
       await copyProjectConfig();
     } else if (relativePath.endsWith('plugin.js')) {
       await copyPluginFile();

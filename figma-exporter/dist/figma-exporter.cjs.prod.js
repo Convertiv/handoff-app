@@ -8,11 +8,11 @@ var documentationObject = require('./documentation-object-f305921e.cjs.prod.js')
 var _ = require('lodash');
 var Mustache = require('mustache');
 var nodeHtmlParser = require('node-html-parser');
-var webpack = require('webpack');
-var chalk = require('chalk');
 var fs$1 = require('fs');
 var vm2 = require('vm2');
 var archiver = require('archiver');
+var webpack = require('webpack');
+var chalk = require('chalk');
 var sortedUniq = require('lodash/sortedUniq');
 require('lodash/isEqual');
 require('axios');
@@ -41,10 +41,10 @@ var path__default = /*#__PURE__*/_interopDefault(path);
 var fs__namespace$1 = /*#__PURE__*/_interopNamespace(fs);
 var stream__namespace = /*#__PURE__*/_interopNamespace(stream);
 var Mustache__default = /*#__PURE__*/_interopDefault(Mustache);
-var webpack__default = /*#__PURE__*/_interopDefault(webpack);
-var chalk__default = /*#__PURE__*/_interopDefault(chalk);
 var fs__namespace = /*#__PURE__*/_interopNamespace(fs$1);
 var archiver__default = /*#__PURE__*/_interopDefault(archiver);
+var webpack__default = /*#__PURE__*/_interopDefault(webpack);
+var chalk__default = /*#__PURE__*/_interopDefault(chalk);
 var sortedUniq__default = /*#__PURE__*/_interopDefault(sortedUniq);
 
 function transformColorTypes(colors) {
@@ -491,68 +491,6 @@ const getComponentTemplate = async (component, ...parts) => {
   return await getComponentTemplate(component, ...parts.slice(0, -1));
 };
 
-function mergeTokenSets(list) {
-  const obj = {};
-  list.forEach(item => {
-    Object.entries(item).forEach(([key, value]) => {
-      if (key !== 'name') {
-        obj[key] = value;
-      }
-    });
-  });
-  return obj;
-}
-const getComponentTemplateByKey = async (componentKey, component) => {
-  const parts = component.componentType === 'design' ? [...(component.type ? [component.type] : []), ...(component.state ? [component.state] : []), ...(component.activity ? [component.activity] : [])] : [...(component.size ? [component.size] : []), ...(component.layout ? [component.layout] : [])];
-  return await getComponentTemplate(componentKey, ...parts);
-};
-
-/**
- * Transforms the component tokens into a preview and code
- */
-const transformComponentTokens = async (componentKey, component) => {
-  const template = await getComponentTemplateByKey(componentKey, component);
-  if (!template) {
-    return null;
-  }
-  const parts = {};
-  if (component.parts) {
-    Object.keys(component.parts).forEach(part => {
-      parts[part] = mergeTokenSets(component.parts[part]);
-    });
-  }
-  const renderableComponent = {
-    ...component,
-    parts
-  };
-  const preview = Mustache__default["default"].render(template, renderableComponent);
-  const bodyEl = nodeHtmlParser.parse(preview).querySelector('body');
-  return {
-    id: component.id,
-    preview,
-    code: bodyEl ? bodyEl.innerHTML.trim() : preview
-  };
-};
-
-/**
- * Transforms the documentation object components into a preview and code
- */
-async function previewTransformer(documentationObject$1) {
-  const {
-    components
-  } = documentationObject$1;
-  const componentKeys = Object.keys(components);
-  const result = await Promise.all(componentKeys.map(async componentKey => {
-    return [componentKey, await Promise.all(documentationObject$1.components[componentKey].map(component => transformComponentTokens(componentKey, component))).then(res => res.filter(documentationObject.filterOutNull))];
-  }));
-  return {
-    components: result.reduce((obj, el) => {
-      obj[el[0]] = el[1];
-      return obj;
-    }, {})
-  };
-}
-
 /**
  * Get Config
  * @returns Config
@@ -700,14 +638,15 @@ const addFileToZip = async (directory, dirPath, archive) => {
 const genericPluginGenerator = () => {
   return {
     init: () => {},
-    postCssTransformer: (documentationObject, css) => {},
-    postScssTransformer: (documentationObject, scss) => {},
+    postTypeTransformer: (documentationObject, types) => types,
+    postCssTransformer: (documentationObject, css) => css,
+    postScssTransformer: (documentationObject, scss) => scss,
     postExtract: documentationObject => {},
     // Integrates data
     postIntegration: documentationObject => {},
     // Builds the preview
-    postPreview: documentationObject => {},
-    postFont: (documentationObject, customFonts) => {},
+    postPreview: (documentationObject, previews) => previews,
+    postFont: (documentationObject, customFonts) => customFonts,
     modifyWebpackConfig: webpackConfig => {
       return webpackConfig;
     },
@@ -771,6 +710,69 @@ async function evaluatePlugin(file) {
       }
     });
   });
+}
+
+function mergeTokenSets(list) {
+  const obj = {};
+  list.forEach(item => {
+    Object.entries(item).forEach(([key, value]) => {
+      if (key !== 'name') {
+        obj[key] = value;
+      }
+    });
+  });
+  return obj;
+}
+const getComponentTemplateByKey = async (componentKey, component) => {
+  const parts = component.componentType === 'design' ? [...(component.type ? [component.type] : []), ...(component.state ? [component.state] : []), ...(component.activity ? [component.activity] : [])] : [...(component.size ? [component.size] : []), ...(component.layout ? [component.layout] : [])];
+  return await getComponentTemplate(componentKey, ...parts);
+};
+
+/**
+ * Transforms the component tokens into a preview and code
+ */
+const transformComponentTokens = async (componentKey, component) => {
+  const template = await getComponentTemplateByKey(componentKey, component);
+  if (!template) {
+    return null;
+  }
+  const parts = {};
+  if (component.parts) {
+    Object.keys(component.parts).forEach(part => {
+      parts[part] = mergeTokenSets(component.parts[part]);
+    });
+  }
+  const renderableComponent = {
+    ...component,
+    parts
+  };
+  const preview = Mustache__default["default"].render(template, renderableComponent);
+  const bodyEl = nodeHtmlParser.parse(preview).querySelector('body');
+  return {
+    id: component.id,
+    preview,
+    code: bodyEl ? bodyEl.innerHTML.trim() : preview
+  };
+};
+/**
+ * Transforms the documentation object components into a preview and code
+ */
+async function previewTransformer(documentationObject$1) {
+  const {
+    components
+  } = documentationObject$1;
+  const componentKeys = Object.keys(components);
+  const result = await Promise.all(componentKeys.map(async componentKey => {
+    return [componentKey, await Promise.all(documentationObject$1.components[componentKey].map(component => transformComponentTokens(componentKey, component))).then(res => res.filter(documentationObject.filterOutNull))];
+  }));
+  let previewComponents = result.reduce((obj, el) => {
+    obj[el[0]] = el[1];
+    return obj;
+  }, {});
+  previewComponents = (await pluginTransformer()).postPreview(documentationObject$1, previewComponents);
+  return {
+    components: previewComponents
+  };
 }
 
 const buildClientFiles = async () => {
@@ -1093,9 +1095,12 @@ const buildPreview = async documentationObject => {
  * @param documentationObject
  */
 const buildStyles = async (documentationObject, options) => {
-  const typeFiles = scssTypesTransformer(documentationObject, options);
-  const cssFiles = cssTransformer(documentationObject, options);
-  const scssFiles = scssTransformer(documentationObject, options);
+  let typeFiles = scssTypesTransformer(documentationObject, options);
+  typeFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, typeFiles);
+  let cssFiles = cssTransformer(documentationObject, options);
+  cssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, cssFiles);
+  let scssFiles = scssTransformer(documentationObject, options);
+  scssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, scssFiles);
   await Promise.all([fs__namespace$1.ensureDir(variablesFilePath).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/types`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/css`)).then(() => fs__namespace$1.ensureDir(`${variablesFilePath}/sass`)).then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/types/${name}.scss`, content)))).then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/css/${name}.css`, content)))).then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content)))).then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs__namespace$1.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))))]);
 };
 /**
@@ -1134,6 +1139,7 @@ const entirePipeline = async () => {
   await buildStyles(documentationObject$1, componentTransformerOptions);
   await buildIntegration(documentationObject$1);
   await buildPreview(documentationObject$1);
+  (await pluginTransformer()).postBuild(documentationObject$1);
   console.log(chalk__default["default"].green(`Figma pipeline complete:`, `${documentationObject.getRequestCount()} requests`));
 };
 
