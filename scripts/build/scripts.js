@@ -74,7 +74,7 @@ const copyPluginFile = async (config) => {
 /**
  * Run the exporter from figma with the configured settings.
  */
-const runFigmaExporter = async (type) => {
+export const runFigmaExporter = async (type) => {
   // Run figma-exporter in the project root
   console.log('Running figma exporter...');
   const args = [path.resolve(tmpDir, 'figma-exporter', 'dist', 'figma-exporter.cjs.js')];

@@ -3,7 +3,14 @@ const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs-extra');
 const dotenv = require('dotenv');
-const { buildTmpDir, mergePackageFile, mergePackageDir, mergeProjectFile, runPreviewExporter, copyProjectConfig, getPathToIntegration } = require('./build/scripts');
+const {
+  buildTmpDir,
+  mergePackageDir,
+  runPreviewExporter,
+  copyProjectConfig,
+  getPathToIntegration,
+  runFigmaExporter,
+} = require('./build/scripts');
 const spawnPromise = require('./build/spawn-promise');
 const chalk = require('chalk');
 
@@ -19,10 +26,9 @@ dotenv.config({ path: path.resolve(projectRootDir, '.env') });
 // override NODE_ENV because next dev goes crazy if it is set to something different than development
 process.env.NODE_ENV = 'development';
 
-
 (async function () {
   // Build the temp directory first
-  
+
   await buildTmpDir();
   const config = await copyProjectConfig();
   // What directories should we watch
@@ -30,6 +36,7 @@ process.env.NODE_ENV = 'development';
     [
       path.resolve(projectRootDir, 'config.js'),
       path.resolve(projectRootDir, 'exported'),
+      path.resolve(projectRootDir, 'exportables'),
       path.resolve(projectRootDir, 'public'),
       path.resolve(projectRootDir, 'pages'),
       path.resolve(projectRootDir, 'integration'),
@@ -48,11 +55,11 @@ process.env.NODE_ENV = 'development';
     if (relativePath === 'config.js') {
       return path.resolve(tmpDir, 'client-config.js');
     }
-    if(relativePath.startsWith('pages/')){
+    if (relativePath.startsWith('pages/')) {
       return path.resolve(tmpDir, relativePath.replace('pages/', 'docs/'));
     }
 
-    if(relativePath.startsWith('integration/sass')){
+    if (relativePath.startsWith('integration/sass')) {
       return path.resolve(tmpDir, relativePath.replace('integration/sass', getPathToIntegration(config) + '/sass'));
     }
 
@@ -64,7 +71,7 @@ process.env.NODE_ENV = 'development';
    * @param {string} inputPath
    */
   const getPackagePath = (inputPath) => {
-    return path.resolve(packageRootDir, inputPath);;
+    return path.resolve(packageRootDir, inputPath);
   };
 
   const resetDirectory = async () => {
@@ -74,7 +81,7 @@ process.env.NODE_ENV = 'development';
     await mergePackageDir('integration/sass', getPathToIntegration(config) + '/sass');
     await mergePackageDir('integration/templates', 'templates');
     await mergePackageDir('sass', 'sass');
-  }
+  };
   /**
    * Merge the public directory as files change
    * @param {string} file
@@ -82,11 +89,10 @@ process.env.NODE_ENV = 'development';
   const executePathHooks = async (file) => {
     const relativePath = path.relative(projectRootDir, file);
     if (relativePath.startsWith('public/')) {
-
-    }else if (relativePath.startsWith('integration/')) {
+    } else if (relativePath.startsWith('integration/')) {
       await runPreviewExporter();
-    }else if (relativePath.startsWith('exportables/')) {
-      await runPreviewExporter();
+    } else if (relativePath.startsWith('exportables/')) {
+      await runFigmaExporter();
     } else if (relativePath.startsWith('pages/')) {
     } else if (relativePath.startsWith('sass/')) {
     }
@@ -136,8 +142,8 @@ process.env.NODE_ENV = 'development';
       } else {
         console.log(`Reverting ${relativePath} to default`);
         const orginal = getPackagePath(relativePath.replace('pages', 'docs'));
-        if (fs.existsSync(orginal)){
-          fs.copy(orginal, getDestPath(relativePath.replace('pages', 'docs')))
+        if (fs.existsSync(orginal)) {
+          fs.copy(orginal, getDestPath(relativePath.replace('pages', 'docs')));
           console.log(`${relativePath} is reverted to default`);
         }
       }
@@ -160,10 +166,10 @@ process.env.NODE_ENV = 'development';
   };
 
   // Create a watcher
-  console.log('starting watcher')
+  console.log('starting watcher');
   watcher
     .on('add', async function (file) {
-      console.log('files adding')
+      console.log('files adding');
       try {
         const relativePath = path.relative(projectRootDir, file);
         console.log(`Added ${relativePath}`);
@@ -178,7 +184,7 @@ process.env.NODE_ENV = 'development';
         const relativePath = path.relative(projectRootDir, file);
         console.log(`Added dir ${relativePath}`);
         await resetDirectory();
-        fs.copySync(file, getDestPath(file), {overwrite: true});
+        fs.copySync(file, getDestPath(file), { overwrite: true });
       } catch (err) {
         console.log(`There was an error adding adding a directory`, err);
       }
@@ -217,6 +223,6 @@ process.env.NODE_ENV = 'development';
       console.error('Error happened', error);
     });
 
-    // Create a swawned node promis
+  // Create a swawned node promis
   const nodeSpawn = await spawnPromise('npx', ['next', 'dev'], { cwd: tmpDir, env: process.env, stdio: 'inherit' });
 })();
