@@ -839,9 +839,8 @@ const buildClientFiles = async () => {
  * @param alerts
  * @returns
  */
-const transformComponentsToCssVariables = (components, options) => {
+const transformComponentsToCssVariables = (componentName, components, options) => {
   const lines = [];
-  const componentName = components[0].name;
   const componentCssClass = options?.rootCssClass ?? componentName;
   lines.push(`.${componentCssClass} {`);
   const cssVars = components.map(component => `\t${formatComponentCodeBlockComment(componentName, component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options)).map(([variable, value]) => `\t${variable}: ${value.value};`).join('\n')}`);
@@ -916,7 +915,7 @@ function getTypeName(type) {
 function cssTransformer(documentationObject, options) {
   const components = {};
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options?.get(componentName));
+    components[componentName] = transformComponentsToCssVariables(componentName, documentationObject.components[componentName], options?.get(componentName));
   }
   const design = {
     colors: transformColors(documentationObject.design.color),

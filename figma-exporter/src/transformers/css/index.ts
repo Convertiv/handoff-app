@@ -17,7 +17,7 @@ export default function cssTransformer(documentationObject: DocumentationObject,
   const components: Record<string, string> = {};
 
   for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(documentationObject.components[componentName], options?.get(componentName));
+    components[componentName] = transformComponentsToCssVariables(componentName, documentationObject.components[componentName], options?.get(componentName));
   }
 
   const design = {
