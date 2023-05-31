@@ -10,6 +10,7 @@ const {
   copyProjectConfig,
   getPathToIntegration,
   runFigmaExporter,
+  copyPluginFile,
 } = require('./build/scripts');
 const spawnPromise = require('./build/spawn-promise');
 const chalk = require('chalk');
@@ -95,6 +96,10 @@ process.env.NODE_ENV = 'development';
       await runFigmaExporter();
     } else if (relativePath.startsWith('pages/')) {
     } else if (relativePath.startsWith('sass/')) {
+    }else if (relativePath.startsWith('config.js')) {
+      await copyProjectConfig();
+    } else if (relativePath.endsWith('plugin.js')) {
+      await copyPluginFile();
     }
   };
 
