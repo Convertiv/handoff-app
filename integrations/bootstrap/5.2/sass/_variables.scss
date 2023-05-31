@@ -904,13 +904,13 @@ $form-check-radio-border-radius:          50%;
 $form-check-input-focus-border:           $checkbox-off-border-color;
 $form-check-input-focus-box-shadow:       $checkbox-off-box-shadow;
 
-$form-check-input-checked-color:          $checkbox-on-icon-color;
+$form-check-input-checked-color:          $checkbox-icon-on-color;
 $form-check-input-checked-bg-color:       $checkbox-on-background;
 $form-check-input-checked-border-color:   $checkbox-on-border-color;
-$form-check-input-checked-bg-image:       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-checked-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1.5 6 3 3 6-6'/></svg>" );
+$form-check-input-checked-bg-image:       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-checked-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1.5 6 3 3 6-6'/></svg>" );
 $form-check-radio-checked-bg-image:       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 10 10'><circle r='2' fill='#{$form-check-input-checked-color}'/></svg>");
 
-$form-check-input-indeterminate-color:          $checkbox-on-icon-color;
+$form-check-input-indeterminate-color:          $checkbox-icon-on-color;
 $form-check-input-indeterminate-bg-color:       $checkbox-on-background;
 $form-check-input-indeterminate-border-color:   $checkbox-on-background;
 $form-check-input-indeterminate-bg-image:       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-indeterminate-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 6h8'/></svg>" );
@@ -925,16 +925,16 @@ $form-check-inline-margin-end:    1rem;
 // scss-docs-start form-switch-variables
 $form-switch-color:               rgba($black, .25);
 $form-switch-width:               $switch-off-width;
-$form-switch-padding-start:       $switch-off-width + $switch-off-padding-start;
-$form-switch-bg-image:            url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 10 10'><circle r='3' fill='#{$switch-thumb-off-background}'/></svg>");
+$form-switch-padding-start:       $switch-off-width + $switch-off-spacing;
+$form-switch-bg-image:            url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-color}'/></svg>");
 $form-switch-border-radius:       $form-switch-width;
 $form-switch-transition:          all .25s ease-in-out;
 
-$form-switch-focus-color:         $switch-thumb-off-background;
-$form-switch-focus-bg-image:      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 10 10'><circle r='3' fill='#{$form-switch-focus-color}'/></svg>");
+$form-switch-focus-color:         $switch-thumb-off-color;
+$form-switch-focus-bg-image:      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-focus-color}'/></svg>");
 
-$form-switch-checked-color:       $switch-thumb-on-background;
-$form-switch-checked-bg-image:    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 10 10'><circle r='3' fill='#{$form-switch-checked-color}'/></svg>");
+$form-switch-checked-color:       $switch-thumb-on-color;
+$form-switch-checked-bg-image:    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-checked-color}'/></svg>");
 $form-switch-checked-bg-position: right center;
 // scss-docs-end form-switch-variables
 
