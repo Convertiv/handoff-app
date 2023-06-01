@@ -48,7 +48,7 @@ An exportable consists of 3 components -
 
 Using exportables will allow quick tokenization of new components. For example,
 here is an annotated exportable for badges, a component not currently supported
-by handoff. https://gist.github.com/bradmering/d3106219943104a3a9beaff1f4da06ad
+by handoff. https://www.handoff.com/docs/customization/exportables/#badgejson
 If you add this file to `exportables/components` and add `components/badge`
 to the `figma.definitions` in your config.js, Handoff will start looking for a
 Badges component set, and generate tokens, css, scss, and types for you.
@@ -62,11 +62,11 @@ badges in a css frontend framework.
 If you want badges to work in the Handoff component preview as well, you would
 need to add a badge template to `integration/templates/badge/default.html`.
 That file would look like this for Bootstrap 5.2 -
-https://gist.github.com/bradmering/bb5a10d4444d1a9278f00923af80b116.
+https://www.handoff.com/docs/customization/exportables/#adding-a-template-to-preview-the-new-exportable.
 
 You would also want to map these tokens to the framework. This is how you might
 do that in Bootstrap 5.2, adding this file to `integration/sass/extended/badge.scss`
-https://gist.github.com/bradmering/6095b78c7a5bb51d2c4b0f9329adfb33
+https://www.handoff.com/docs/customization/exportables/#mapping-the-new-exportable-to-scss
 
 #### Integration Plugin
 
@@ -97,10 +97,10 @@ allowing it to query the object and then modify the css variables as needed.
 
 Here's a simple plugin example that will read the tokens and write a simple
 json file with an array of colors in it. -
-https://gist.github.com/bradmering/07a99fe3d2e14166100bac17affa4226
+https://www.handoff.com/docs/customization/plugins/#simple-example
 
 Here is a comprehensive plugin.js showing all the options in 0.5.0 -
-https://gist.github.com/bradmering/ba4a69cfbd4338dd13054ad108a7a1d9
+https://www.handoff.com/docs/customization/plugins/#full-example
 
 #### Bootstrap 5.2 Mapping Improvements
 
