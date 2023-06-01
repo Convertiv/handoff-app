@@ -81,7 +81,7 @@
           "export": [
             "BORDER",
             "SIZE",
-            "EFFECTS"
+            "EFFECT"
           ]
         },
         {
