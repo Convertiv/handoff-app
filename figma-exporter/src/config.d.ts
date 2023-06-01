@@ -16,7 +16,6 @@ export interface Integration {
 }
 
 export interface FigmaSearch {
-  size: ComponentSizeMap[];
   options: {
     shared: {
       defaults: {
@@ -26,18 +25,18 @@ export interface FigmaSearch {
         activity: string;
         layout: string;
         size: string;
-      }
-    }
-  };
-  transformer: {
-    replace: {
-      size: {
-        [key: string]: string;
-        small: string;
-        medium: string;
-        large: string;
-      }
-    }
+      };
+    };
+    transformer: {
+      replace: {
+        size: {
+          [key: string]: string;
+          small: string;
+          medium: string;
+          large: string;
+        };
+      };
+    };
   };
   definitions: string[];
 }
