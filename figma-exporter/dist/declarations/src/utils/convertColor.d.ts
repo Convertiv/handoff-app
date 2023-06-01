@@ -1,21 +1,5 @@
 import * as FigmaTypes from '../figma/types';
 import { GradientObject } from '../types';
-export declare const getScssVariableName: <Tokens extends {
-    component: string;
-    property: string;
-    part?: string | undefined;
-    theme?: string | undefined;
-    type?: string | undefined;
-    state?: string | undefined;
-}>(tokens: Tokens) => string;
-export declare const getCssVariableName: <Tokens extends {
-    component: string;
-    property: string;
-    part?: string | undefined;
-    theme?: string | undefined;
-    type?: string | undefined;
-    state?: string | undefined;
-}>(tokens: Tokens) => string;
 /**
  * Generate a CSS gradient from a color gradient object
  
@@ -46,37 +30,6 @@ export declare const transformFigmaTextAlignToCss: (textAlign: FigmaTypes.TypeSt
 export declare const transformFigmaTextDecorationToCss: (textDecoration: FigmaTypes.TypeStyle['textDecoration']) => string;
 export declare const transformFigmaTextCaseToCssTextTransform: (textCase: FigmaTypes.TypeStyle['textCase']) => string;
 export declare const transformFigmaEffectToCssBoxShadow: (effect: FigmaTypes.Effect) => string;
-export interface AbstractComponent {
-    componentType?: string;
-    /**
-     * Component theme (light, dark)
-     *
-     * @default 'light'
-     */
-    theme?: string;
-    /**
-     * Component type (primary, secondary, tertiary, etc.)
-     *
-     * @default 'primary'
-     */
-    type?: string;
-    /**
-     * Component state (default, hover, disabled)
-     *
-     * @default 'default'
-     */
-    state?: string;
-    /**
-     * Component size (lg, md, sm, xs, ...)
-     */
-    size?: string;
-    layout?: string;
-}
-export declare const getTypesFromComponents: (components: AbstractComponent[]) => string[];
-export declare const getStatesFromComponents: (components: AbstractComponent[]) => string[];
-export declare const getThemesFromComponents: (components: AbstractComponent[]) => string[];
-export declare const getSizesFromComponents: (components: AbstractComponent[]) => string[];
-export declare const cssCodeBlockComment: (type: string, component: AbstractComponent) => string;
 /**
  * Converts figma color to a RGB(A) in form of a array.
  *
@@ -88,11 +41,6 @@ export declare const cssCodeBlockComment: (type: string, component: AbstractComp
  * figmaRGBToWebRGB({r: 0.887499988079071, g: 0.07058823853731155, b: 0.0665624737739563, a: 1})
  */
 export declare function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA;
-/**
- * this function converts figma color to HEX (string)
- */
-export declare function figmaColorToHex(color: FigmaTypes.Color): string;
-export declare const transformFigmaNumberToCss: (value: number) => number;
 declare type webRGB = [number, number, number];
 declare type webRGBA = [number, number, number, number];
 export {};

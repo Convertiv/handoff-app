@@ -1,0 +1,43 @@
+{
+  "id": "tooltip",
+  "group": "Components",
+  "options": {
+    "exporter": {
+      "search": "Tooltip",
+      "supportedVariantProps": []
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": {},
+          "layout": {}
+        },
+        "designTokens": {
+          "design": {}
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [
+        {
+          "from": "FRAME[name='Body']",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING"
+          ]
+        },
+        {
+          "from": "FRAME[name='Body'] > TEXT",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ]
+    }
+  ]
+}

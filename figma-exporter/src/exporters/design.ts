@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectObject, TypographyObject } from '../types';
 import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType, isValidGradientType } from './components/utils';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './utils';
 
 interface GroupNameData {
   name: string;
@@ -112,7 +112,6 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
         if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
           color = transformFigmaColorToHex(document.fills[0].color);
         }
-
         typographyArray.push({
           name: document.name,
           machine_name,

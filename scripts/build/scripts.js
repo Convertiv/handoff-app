@@ -63,6 +63,14 @@ const copyProjectConfig = async () => {
   return config;
 };
 
+const copyPluginFile = async (config) => {
+  // Copy project's config.js to tmp dir's client-config.js
+  const plugin = path.resolve(projectRootDir, 'integration/plugin.js');
+  if (fs.existsSync(plugin)) {
+    await fs.copy(plugin, path.resolve(tmpDir, getPathToIntegration(config) + '/plugin.js'));
+  }
+};
+
 /**
  * Run the exporter from figma with the configured settings.
  */
@@ -190,10 +198,8 @@ const mergeProjectDir = async (dir, target) => {
   if (!target) {
     target = dir;
   }
-  console.log(`Merging project ${dir} dir into ${target}...`);
   if (!fs.existsSync(dir)) {
-    // Do nothing
-    console.log(`Project ${dir} doesn't exist. Using default.`);
+    // Do nothing if the dir doesn't exist
   } else {
     // Remove public dir
     if (fs.existsSync(path.resolve(tmpDir, target))) {
@@ -208,7 +214,7 @@ const mergeProjectDir = async (dir, target) => {
     }
 
     await mergePackageDir(dir, target);
-    console.log(`Project ${dir} dir merged.`);
+    console.log(chalk.green(`Project ${dir} dir merged into ${target}`));
   }
 };
 
@@ -216,7 +222,6 @@ const mergeProjectDir = async (dir, target) => {
  * Get the exports and copy them to the zip directory
  */
 const moveExportedZipFilesToPublicDir = async () => {
-  console.log('Moving exported zip files to public dir...');
   const zipFiles = (await fs.readdir(path.resolve(tmpDir, 'exported'))).filter((filename) => filename.endsWith('.zip'));
   try {
     await Promise.all(zipFiles.map((filename) => fs.rm(path.join(tmpDir, 'public', filename))));
@@ -224,7 +229,7 @@ const moveExportedZipFilesToPublicDir = async () => {
     console.log('No files to remove');
   }
   await Promise.all(zipFiles.map((filename) => fs.move(path.join(tmpDir, 'exported', filename), path.join(tmpDir, 'public', filename))));
-  console.log('Exported zip files moved to public dir.');
+  console.log(chalk.green('Exported zip files moved to public dir.'));
 };
 
 /**
@@ -249,18 +254,13 @@ const installNpmDependencies = async () => {
  */
 const buildStaticSite = async () => {
   // Build static site
-  console.log('Building static site app...');
   await spawnPromise('npx', ['next', 'build'], { cwd: tmpDir, env: process.env, stdio: 'inherit' });
-  console.log('Static site app built.');
-  console.log('Exporting static files...');
+  console.log(chalk.green('Static site app built.'));
   await spawnPromise('npx', ['next', 'export'], { cwd: tmpDir, env: process.env, stdio: 'inherit' });
-  console.log('Static files exported.');
-
-  // Move static site to project's dist dir
-  console.log('Moving static site to dist dir...');
+  console.log(chalk.green('Static files exported.'));
   await fs.remove(path.resolve(projectRootDir, 'dist'));
   await fs.copy(path.resolve(tmpDir, 'out'), path.resolve(projectRootDir, 'dist'));
-  console.log(`Static site generated successfully! Files written to ${path.resolve(projectRootDir, 'dist')}`);
+  console.log(chalk.green(`Static site generated successfully! Files written to ${path.resolve(projectRootDir, 'dist')}`));
 };
 
 /**
@@ -297,16 +297,18 @@ const getPathToIntegration = (config) => {
  */
 const buildTmpDir = async () => {
   await validateProject();
-  if (process.argv.indexOf('--fast') > 0 && await tempDirExists()) {
-    console.log(chalk.green("Skipping temp directory build"));
-  }else{
+  if (process.argv.indexOf('--fast') > 0 && (await tempDirExists())) {
+    console.log(chalk.green('Skipping temp directory build'));
+  } else {
     await prepareTmpDir();
     await installNpmDependencies();
   }
   const config = await copyProjectConfig();
+  copyPluginFile(config);
   await mergeProjectDir('integration/sass', getPathToIntegration(config) + '/sass');
-  await mergeProjectDir('integration/templates', 'templates');
+  await mergeProjectDir('integration/templates', getPathToIntegration(config) + '/templates');
   await mergeProjectDir('public', 'public');
+  await mergeProjectDir('exportables', 'exportables');
   await mergeProjectDir('pages', 'docs');
   await mergeProjectDir('sass', 'sass');
   if (process.env.SKIP_FIGMA_EXPORTER !== 'yes') {
@@ -328,6 +330,7 @@ const buildTmpDir = async () => {
 
 module.exports = {
   copyProjectConfig,
+  copyPluginFile,
   getPathToIntegration,
   mergePackageFile,
   mergePackageDir,
@@ -338,4 +341,5 @@ module.exports = {
   runStyleExporter,
   runIntegrationExporter,
   runFontExporter,
+  runFigmaExporter,
 };

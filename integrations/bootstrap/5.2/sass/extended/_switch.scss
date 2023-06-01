@@ -1,14 +1,22 @@
 /* =============================================================================
-   SWITCH (project/components/_switch.scss)
+   SWITCH (extended/_switch.scss)
    ========================================================================== */
 
-
 .form-switch {
-	min-height: $form-switch-min-height;
+	min-height: calc( $switch-label-off-font-size * $switch-label-off-line-height );
 
 	.form-check-input {
-		height: $form-switch-height;
-		margin-top: calc( ( $form-switch-min-height - $form-switch-height ) / 2 );
+		height: $switch-off-height;
+		margin-top: calc( ( ( $switch-label-off-font-size * $switch-label-off-line-height ) - $switch-off-height ) / 2 );
 		background-size: contain;
+		box-shadow: var( --switch-off-box-shadow );
+
+		&:checked {
+			box-shadow: var( --switch-on-box-shadow );
+		}
+
+		&:focus {
+			box-shadow: var( --switch-on-box-shadow );
+		}
 	}
 }

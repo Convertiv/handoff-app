@@ -11,53 +11,38 @@ const config = {
     version: '5.2', // Pick the integration version
   },
   figma: { // figma allows you to customize the way handoff fetches from figma.
-    size: [
-      // Component size map allows you to map figma
-      {
-        // size names (small, medium, large) to customize
-        figma: 'small', // your token names to match the sizes used
-        css: 'sm', // in your project like (sm, md, lg)
+    options: {
+      shared: {
+        defaults: {
+          theme: 'light',
+          state: 'default',
+          type: 'default',
+          activity: '',
+          layout: '',
+          size: '',
+        },
       },
-      {
-        figma: 'medium',
-        css: 'md',
-      },
-      {
-        figma: 'large',
-        css: 'lg',
-      },
-    ],
-    components: {
-      alert: {
-        // Customize the alert fetch
-        search: 'Alert', // Search for alerts in a frame called Alert
-      },
-      button: {
-        search: 'Button',
-      },
-      checkbox: {
-        search: 'Checkbox',
-      },
-      input: {
-        search: 'Input',
-      },
-      modal: {
-        search: 'Modal',
-      },
-      pagination: null,
-      radio: {
-        search: 'Radio',
-      },
-      select: {
-        search: 'Select',
-      },
-      switch: {
-        search: 'Switch',
-      },
-      tooltip: {
-        search: 'Tooltip',
+      transformer: {
+        replace: {
+          size: {
+            small: 'sm',
+            medium: 'md',
+            large: 'lg',
+          },
+        },
       },
     },
+    definitions: [
+      'components/alert',
+      'components/button',
+      'components/modal',
+      'components/tooltip',
+      'components/checkbox',
+      'components/input',
+      'components/radio',
+      'components/select',
+      'components/switch',
+    ],
   },
   poweredBy: true, // Show Powered By Handoff at the bottom of the site
   logo: '/logo.svg', // The logo to use on the site
