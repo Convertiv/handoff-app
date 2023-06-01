@@ -136,6 +136,8 @@ integration: {
 
 - The new exportable schema has normalized the token output, fixing several small
   inconsistencies in the way tokens were created.
+- Fixes a warning caused by loading the config into the next app outside of the
+  static properties
 
 ## [0.4.3] - 2023-04-19
 
