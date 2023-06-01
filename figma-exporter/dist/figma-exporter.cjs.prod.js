@@ -665,7 +665,6 @@ const pluginTransformer = async () => {
   const pluginPath = getPathToIntegration() + '/plugin.js';
   let plugin = generic;
   if (fs__namespace.existsSync(pluginPath)) {
-    console.log(pluginPath);
     const custom = await evaluatePlugin(pluginPath).then(globalVariables => globalVariables).catch(err => {
       console.error(err);
       return generic;
