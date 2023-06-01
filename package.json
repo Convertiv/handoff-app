@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
