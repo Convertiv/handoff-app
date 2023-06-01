@@ -17,7 +17,7 @@ module.exports = {
         ignore: ['consecutive-duplicates-with-different-values'],
       },
     ],
-    'declaration-block-no-shorthand-property-overrides': false,
+    'declaration-block-no-shorthand-property-overrides': null,
     'block-no-empty': null,
     'selector-pseudo-class-no-unknown': true,
     'selector-pseudo-element-no-unknown': true,
