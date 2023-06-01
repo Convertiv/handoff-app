@@ -10,20 +10,20 @@
 
 .form-check-input {
 	margin-top: calc( ( ( $checkbox-label-off-font-size * $checkbox-label-off-line-height ) - $checkbox-off-height ) / 2 );
-	box-shadow: $checkbox-off-box-shadow;
+	box-shadow: var( --checkbox-check-off-box-shadow );
 	background-size: $checkbox-icon-on-width;
 
 	&:focus {
 		background-color: $checkbox-off-color;
 		border-color: $checkbox-off-border-color;
-		box-shadow: $checkbox-off-box-shadow;
+		box-shadow: var( --checkbox-hover-check-off-box-shadow );
 	}
 
 	&:hover,
 	.form-check:hover & {
 		background-color: $checkbox-hover-off-color;
 		border-color: $checkbox-hover-off-border-color;
-		box-shadow: $checkbox-hover-off-box-shadow;
+		box-shadow: var( --checkbox-hover-check-off-box-shadow );
 	}
 
 	&[ disabled ],
@@ -40,19 +40,19 @@
 	&:checked {
 		background-color: $checkbox-on-color;
 		border-color: $checkbox-on-border-color;
-		box-shadow: $checkbox-on-box-shadow;
+		box-shadow: var( --checkbox-check-on-box-shadow );
 
 		&:focus {
 			background-color: $checkbox-on-color;
 			border-color: $checkbox-on-border-color;
-			box-shadow: $checkbox-on-box-shadow;
+			box-shadow: var( --checkbox-check-on-box-shadow );
 		}
 
 		&:hover,
 		.form-check:hover & {
 			background-color: $checkbox-hover-on-color;
 			border-color: $checkbox-hover-on-border-color;
-			box-shadow: $checkbox-hover-on-box-shadow;
+			box-shadow: var( --checkbox-hover-check-on-box-shadow );
 		}
 
 		&[ disabled ],

@@ -80,8 +80,8 @@ $checkbox-states: null;
 $checkbox-label-off-font-size: null;
 $checkbox-label-off-line-height: null;
 $checkbox-label-off-color: null;
-$checkbox-off-width: 1em;
-$checkbox-off-height: 1em;
+$checkbox-off-width: 16px;
+$checkbox-off-height: 16px;
 $checkbox-off-box-shadow: null;
 $checkbox-icon-on-width: null;
 $checkbox-off-background: null;
@@ -211,12 +211,12 @@ $switch-sizes: null;
 $switch-themes: null;
 $switch-states: null;
 
-$switch-off-width: 2em;
-$switch-off-height: 1em;
-$switch-label-off-font-size: 1rem;
+$switch-off-width: 32px;
+$switch-off-height: 16px;
+$switch-label-off-font-size: 16px;
 $switch-label-off-line-height: 1.5;
 $switch-thumb-off-color: null;
-$switch-thumb-on-background: null;
+$switch-thumb-on-color: null;
 $switch-off-padding-start: null;
 
 
