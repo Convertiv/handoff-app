@@ -65,7 +65,6 @@ export const pluginTransformer = async (): Promise<PluginTransformer> => {
   let plugin = generic;
 
   if (fs.existsSync(pluginPath)) {
-    console.log(pluginPath);
     const custom = await evaluatePlugin(pluginPath)
       .then((globalVariables) => globalVariables)
       .catch((err) => {
