@@ -5,9 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/tokens/types/switches';
-@import './exported/tokens/sass/switches';
-@import './exported/tokens/css/switches';
+@import './exported/tokens/types/switch';
+@import './exported/tokens/sass/switch';
+@import './exported/tokens/css/switch';
 
 // SIZES
 // ------------------------------------------------------------------
@@ -21,7 +21,7 @@ $form-switch-width:                       $switch-off-width;
 $form-switch-height:                      $switch-off-height;
 $form-switch-width-raw:                   $switch-off-width-raw;
 $form-switch-height-raw:                  $switch-off-height-raw;
-$form-switch-padding-start:               $form-switch-width + $switch-off-padding-start;
+$form-switch-padding-start:               $form-switch-width + $switch-off-spacing;
 $form-switch-border-radius:               $switch-off-border-radius;
 $form-switch-transition:                  all .25s ease-in-out;
 //$form-switch-checked-bg-position:         right center;
@@ -57,9 +57,9 @@ $form-switch-min-height:                  calc( $form-switch-label-font-size * $
 // -----
 
 // form check icon color
-$form-switch-color:                       $switch-thumb-off-background;
-$form-switch-focus-color:                 $switch-thumb-off-background;
-$form-switch-checked-color:               $switch-thumb-on-background;
+$form-switch-color:                       $switch-thumb-off-color;
+$form-switch-focus-color:                 $switch-thumb-off-color;
+$form-switch-checked-color:               $switch-thumb-on-color;
 
 // form check icons
 $form-switch-bg-image:                    url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-#{$form-switch-thumb-position} -#{$form-switch-thumb-position} #{$form-switch-height-raw} #{$form-switch-height-raw}'><circle r='#{$form-switch-thumb-radius-raw}' fill='#{$form-switch-color}'/></svg>" );

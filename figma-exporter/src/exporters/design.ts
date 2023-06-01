@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { getFileNodes, getFileStyles } from '../figma/api';
 import { ColorObject, EffectObject, TypographyObject } from '../types';
 import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType, isValidGradientType } from './components/utils';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './utils';
 
 interface GroupNameData {
   name: string;

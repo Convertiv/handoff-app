@@ -1,0 +1,108 @@
+{
+  "id": "checkbox",
+  "group": "Forms",
+  "options": {
+    "exporter": {
+      "search": "Checkbox",
+      "supportedVariantProps": [
+        "THEME",
+        "STATE",
+        "SIZE",
+        "ACTIVITY"
+      ]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": {
+            "state": [
+              "default",
+              "disabled"
+            ],
+            "activity": [
+              "off"
+            ]
+          }
+        },
+        "designTokens": {
+          "design": {
+            "state": [
+              "default"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "SPACING"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox']",
+          "export": [
+            "OPACITY"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
+          "export": [
+            "FILL",
+            "BORDER",
+            "SIZE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "label",
+      "tokens": [
+        {
+          "from": "TEXT[name='Checkbox Label']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL",
+            "OPACITY"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "tokens": [
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
+          "export": [
+            "BORDER",
+            "SIZE",
+            "EFFECT"
+          ]
+        },
+        {
+          "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='color']",
+          "export": [
+            "FILL"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "icon",
+      "tokens": [
+        {
+          "from": "GROUP[name=':: checkbox'] > INSTANCE[name='$activity']",
+          "export": [
+            "SIZE",
+            "FILL"
+          ]
+        }
+      ]
+    }
+  ]
+}

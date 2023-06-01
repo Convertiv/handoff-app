@@ -1,10 +1,12 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
-import { filter } from 'domutils';
+import { ExportableDefinition, ExportableIndex, ExportableOptions } from 'figma-exporter/src/types';
+import { filterOutNull } from 'figma-exporter/src/utils';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
+import { groupBy, merge } from 'lodash';
 import { SubPageType } from 'pages/[level1]/[level2]';
-import path, { dirname } from 'path';
+import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 
 // Get the parsed url string type
@@ -48,6 +50,8 @@ export interface ComponentDocumentationProps extends DocumentationProps {
   css: string;
   types: string;
   componentFound: boolean;
+  component: string;
+  exportable: ExportableDefinition;
 }
 
 export interface FoundationDocumentationProps extends DocumentationProps {
@@ -192,32 +196,44 @@ export const staticBuildMenu = () => {
       if (!fs.lstatSync(search).isDirectory() && search !== path.resolve('docs/index.md') && fileName.endsWith('md')) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
+
         if (metadata.enabled === false) {
           return undefined;
         }
+
         const path = `/${fileName.replace('.md', '')}`;
+        let subSections = [];
+        
+        if (path === '/components') {
+          const exportables = fetchExportables();
+          // Build the submenu of exportables (components)
+          const groupedExportables = groupBy(exportables, e => e.group ?? '');
+          Object.keys(groupedExportables).forEach(group => {
+            subSections.push({ path: '', title: group });
+            groupedExportables[group].forEach(exportable => {
+              const exportableDocs = fetchDocPageMetadataAndContent('docs/components/', exportable.id);
+              subSections.push({ path: `components/${exportable.id}`, title: exportableDocs.metadata.title ?? exportable.id });
+            })
+          })
+        }
+
+        if (metadata.menu) {
+          // Build the submenu
+          subSections = Object.keys(metadata.menu)
+          .map((key) => {
+            const sub = metadata.menu[key];
+            if (sub.enabled !== false) {
+              return sub;
+            }
+          })
+          .filter(filterOutUndefined)
+        }
+
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
           path,
-          // Build the submenus
-          subSections: metadata.menu
-            ? Object.keys(metadata.menu)
-                .map((key) => {
-                  const sub = metadata.menu[key];
-                  // Component menus are filtered by the presence of tokens
-                  if (path === '/components' && sub.path) {
-                    const componentName = sub.path.replace('components/', '');
-                    if (!componentExists(componentName, config)) {
-                      return undefined;
-                    }
-                  }
-                  if (sub.enabled !== false) {
-                    return sub;
-                  }
-                })
-                .filter(filterOutUndefined)
-            : [],
+          subSections,
         };
       }
     })
@@ -265,13 +281,73 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   return {
     props: {
       ...fetchDocPageMarkdown(path, slug, id).props,
-      componentFound: slug ? componentExists(pluralizeComponent(slug), undefined) : false,
-      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
-      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
-      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
+      // componentFound: slug ? componentExists(slug, undefined) : false,
+      scss: slug ? fetchTokensString(slug, 'scss') : '',
+      css: slug ? fetchTokensString(slug, 'css') : '',
+      types: slug ? fetchTokensString(slug, 'types') : '',
     },
   };
 };
+
+/**
+ * Fetch exportables id's from the JSON files in the exportables directory
+ * @returns {string[]}
+ */
+export const fetchExportables = () => {
+  try {
+    const config = getConfig();
+    const definitions = config.figma?.definitions;
+
+    if (!definitions || definitions.length === 0) {
+      return [];
+    }
+
+    const exportables = definitions
+      .map((def) => {
+        const defPath = path.join('exportables', `${def}.json`);
+
+        if (!fs.existsSync(defPath)) {
+          return null;
+        }
+
+        const defBuffer = fs.readFileSync(defPath);
+        const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
+
+        const exportableOptions = {};
+        merge(exportableOptions, config.figma?.options, exportable.options);
+        exportable.options = exportableOptions as ExportableOptions;
+
+        return exportable;
+      })
+      .filter(filterOutNull)
+
+    return exportables ? exportables : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export const fetchExportable = (name: string) => {
+  const config = getConfig();
+
+  const def = config?.figma?.definitions.filter((def) => {
+    return def.split('/').pop() === name;
+  });
+
+  if (!def || def.length === 0) {
+    return null;
+  }
+
+  const defPath = path.join('exportables', `${def}.json`);
+
+  if (!fs.existsSync(defPath)) {
+    return null;
+  }
+  
+  const data = fs.readFileSync(defPath, 'utf-8');
+  return JSON.parse(data.toString()) as ExportableDefinition;
+}
+
 
 /**
  * Fetch Component Doc Page Markdown
@@ -316,6 +392,9 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @returns
  */
 export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
+  if (!fs.existsSync(`${path}${slug}.md`)) {
+    return { metadata: {}, content: '' };
+  }
   const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
   const { data: metadata, content } = matter(currentContents);
 
@@ -341,11 +420,11 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: string): string => {
   let tokens = '';
-  if (type === 'scss') {
+  if (type === 'scss' && fs.existsSync(`./exported/tokens/sass/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
-  } else if (type === 'types') {
+  } else if (type === 'types' && fs.existsSync(`./exported/tokens/types/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
-  } else {
+  } else if (fs.existsSync(`./exported/tokens/css/${component}.css`)) {
     tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
   }
   return tokens;

@@ -9,7 +9,7 @@ import Head from 'next/head';
 import * as util from 'components/util';
 import Header from 'components/Header';
 import { EffectParametersObject } from 'figma-exporter/src/types';
-import { isShadowEffectType } from 'figma-exporter/src/exporters/components/utils';
+import { isShadowEffectType } from 'figma-exporter/src/exporters/utils';
 import CustomNav from 'components/SideNav/Custom';
 import AnchorNav from 'components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
@@ -90,7 +90,7 @@ const ColorsPage = ({ content, menu, metadata, current, css, scss, types }: util
                           // apply background color
                           cssProperties.backgroundColor = '#FFF';
                           // apply effects
-                          effect.effects.forEach((effect) => {
+                          effect.effects.forEach((effect: EffectParametersObject) => {
                             applyEffectToCssProperties(effect, cssProperties);
                           });
 

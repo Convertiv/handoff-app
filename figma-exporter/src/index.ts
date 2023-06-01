@@ -3,7 +3,7 @@ import path from 'path';
 import * as fs from 'fs-extra';
 import * as stream from 'node:stream';
 
-import { DocumentationObject } from './types';
+import { DocumentationObject, ExportableDefinition, ExportableIndex, ExportableOptions, ExportableSharedOptions, ExportableTransformerOptions } from './types';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './exporters/assets';
@@ -15,9 +15,15 @@ import chalk from 'chalk';
 import { getRequestCount } from './figma/api';
 import fontTransformer from './transformers/font';
 import integrationTransformer from './transformers/integration';
+import { filterOutNull } from './utils';
+import { getFetchConfig } from './utils/config';
+import { ExportableTransformerOptionsMap } from './transformers/types';
+import { merge } from 'lodash';
 import { pluginTransformer } from './transformers/plugin';
+import { Config } from './config';
 
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
+const exportablesFolder = process.env.OUTPUT_DIR || 'exportables';
 const tokensFilePath = path.join(outputFolder, 'tokens.json');
 const previewFilePath = path.join(outputFolder, 'preview.json');
 const changelogFilePath = path.join(outputFolder, 'changelog.json');
@@ -50,6 +56,46 @@ const readConfigFile = async (path: string) => {
     return undefined;
   }
 };
+
+const getExportables = async () => {
+  try {
+    const config: Config = getFetchConfig();
+    const definitions = config?.figma?.definitions;
+
+    if (!definitions || definitions.length === 0) {
+      return [];
+    }
+
+    const exportables = definitions
+      .map((def) => {
+        const defPath = path.resolve(path.join(__dirname, '../..', exportablesFolder, `${def}.json`));
+
+        if (!fs.existsSync(defPath)) {
+          return null;
+        }
+
+        const defBuffer = fs.readFileSync(defPath);
+        const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
+
+        const exportableOptions = {};
+        merge(exportableOptions, config?.figma?.options, exportable.options);
+        exportable.options = exportableOptions as ExportableOptions;
+
+        return exportable;
+      })
+      .filter(filterOutNull)
+
+    return exportables ? exportables : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+const formatComponentsTransformerOptions = (exportables: ExportableDefinition[]): ExportableTransformerOptionsMap => {
+  return new Map<string, ExportableTransformerOptions & ExportableSharedOptions>(Object.entries(exportables.reduce((res, exportable) => {
+    return { ...res, ...{ [exportable.id]: {...exportable.options.transformer, ...exportable.options.shared} } }
+  }, {})));
+}
 
 /**
  * Build just the custom fonts
@@ -89,10 +135,13 @@ const buildPreview = async (documentationObject: DocumentationObject) => {
  * Build only the styles pipeline
  * @param documentationObject
  */
-const buildStyles = async (documentationObject: DocumentationObject) => {
-  const typeFiles = scssTypesTransformer(documentationObject);
-  const cssFiles = cssTransformer(documentationObject);
-  const scssFiles = scssTransformer(documentationObject);
+const buildStyles = async (documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap) => {
+  let typeFiles = scssTypesTransformer(documentationObject, options);
+  typeFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, typeFiles);
+  let cssFiles = cssTransformer(documentationObject, options);
+  cssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, cssFiles);
+  let scssFiles = scssTransformer(documentationObject, options);
+  scssFiles = (await pluginTransformer()).postTypeTransformer(documentationObject, scssFiles);
   await Promise.all([
     fs
       .ensureDir(variablesFilePath)
@@ -151,7 +200,10 @@ const entirePipeline = async () => {
 
   await fs.emptyDir(outputFolder);
 
-  const documentationObject = await createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN);
+  const exportables = await getExportables();
+  const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+
+  const documentationObject = await createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN, exportables);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
 
   if (changelogRecord) {
@@ -173,9 +225,10 @@ const entirePipeline = async () => {
       : []),
   ]);
   await buildCustomFonts(documentationObject);
-  await buildStyles(documentationObject);
+  await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
   await buildPreview(documentationObject);
+  (await pluginTransformer()).postBuild(documentationObject);
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 
@@ -197,7 +250,9 @@ const entirePipeline = async () => {
       } else if (process.argv.indexOf('integration') > 0) {
         let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
         if (documentationObject) {
-          await buildStyles(documentationObject);
+          const exportables = await getExportables();
+          const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+          await buildStyles(documentationObject, componentTransformerOptions);
           await buildPreview(documentationObject);
           await buildIntegration(documentationObject);
         } else {
@@ -206,7 +261,9 @@ const entirePipeline = async () => {
       } else if (process.argv.indexOf('styles') > 0) {
         let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
         if (documentationObject) {
-          await buildStyles(documentationObject);
+          const exportables = await getExportables();
+          const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+          await buildStyles(documentationObject, componentTransformerOptions);
         } else {
           throw Error('Cannot run styles only because tokens do not exist. Run the fetch first.');
         }

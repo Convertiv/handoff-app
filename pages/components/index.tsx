@@ -1,15 +1,13 @@
 import * as React from 'react';
 import type { GetStaticProps, NextPage } from 'next';
-import Link from 'next/link';
 import Icon from 'components/Icon';
 import Head from 'next/head';
 import {
-  componentExists,
   DocumentationProps,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
+  fetchExportables,
   Metadata,
-  pluralizeComponent,
 } from 'components/util';
 import Header from 'components/Header';
 import ReactMarkdown from 'react-markdown';
@@ -17,26 +15,10 @@ import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { getConfig } from 'config';
-
-enum AvailableComponentPageComponents {
-  ALERT = 'alert',
-  BUTTON = 'button',
-  MODAL = 'modal',
-  TOOLTIP = 'tooltip',
-  CHECKBOX = 'checkbox',
-  INPUT = 'input',
-  RADIO = 'radio',
-  SELECT = 'select',
-  SWITCH = 'switch',
-  PAGINATION = 'pagination',
-}
-
-type ComponentPageComponents = AvailableComponentPageComponents;
+import Link from 'next/link';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
-  components: { [component in ComponentPageComponents]: Metadata };
-  available: ComponentPageComponents[];
-  unavailable: ComponentPageComponents[];
+  components: { [id: string]: Metadata };
 };
 
 const config = getConfig();
@@ -52,22 +34,18 @@ const config = getConfig();
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const result = fetchDocPageMarkdown('docs/', 'components', `/components`);
-  const componentsToFetch = [...(Object.values(AvailableComponentPageComponents) as string[])];
+  const components = fetchExportables().map(exportable => exportable.id);
 
-  const available: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter((comp: string) =>
-    componentExists(pluralizeComponent(comp), config)
-  );
-  const unavailable: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter(
-    (comp: string) => !componentExists(pluralizeComponent(comp), config)
-  );
-
+  // const available: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter((comp: string) =>
+  //   componentExists(pluralizeComponent(comp), config)
+  // );
   return {
     ...result,
     ...{
       props: {
         ...result.props,
         ...{
-          components: componentsToFetch.reduce(
+          components: components.reduce(
             (acc, component) => ({
               ...acc,
               ...{
@@ -76,15 +54,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
             }),
             {}
           ),
-          available,
-          unavailable,
         },
       } as ComponentPageDocumentationProps,
     },
   };
 };
 
-const ComponentsPage = ({ content, menu, metadata, current, components, available, unavailable }: ComponentPageDocumentationProps) => {
+const ComponentsPage = ({ content, menu, metadata, current, components }: ComponentPageDocumentationProps) => {
   return (
     <div className="c-page">
       <Head>
@@ -107,36 +83,18 @@ const ComponentsPage = ({ content, menu, metadata, current, components, availabl
             <div className="o-col-12@md">
               <div className="o-stack-2@md o-stack-3@lg u-mb-n-4">
                 <>
-                  {/* Available components */}
-                  {available.map((component) => (
-                    <ComponentsPageCard
-                      key={`component-${component}`}
-                      component={component}
-                      title={components[component].title}
-                      description={components[component].description}
-                      icon={components[component].image}
-                    />
-                  ))}
-                </>
-              </div>
-            </div>
-          </div>
-          <hr />
-          <div className="o-row">
-            <div className="o-col-12@md">
-              <div className="o-stack-2@md o-stack-3@lg u-mb-n-4">
-                <>
-                  {/* Unavailable components */}
-                  {unavailable.map((component) => (
-                    <ComponentsPageCard
-                      key={`component-${component}`}
-                      component={component}
-                      title={components[component].title}
-                      description={components[component].description}
-                      icon={components[component].image}
-                      available={false}
-                    />
-                  ))}
+                  {Object.keys(components).map((componentId) => {
+                    const component = components[componentId];
+                    return (
+                      <ComponentsPageCard
+                        key={`component-${componentId}`}
+                        component={componentId}
+                        title={components[componentId].title ?? componentId}
+                        description={components[componentId].description}
+                        icon={components[componentId].image}
+                      />
+                    )
+                  })}
                 </>
               </div>
             </div>

@@ -6,6 +6,8 @@ import path from 'path';
 import sortedUniq from 'lodash/sortedUniq';
 import * as stream from 'node:stream';
 import { FontFamily } from './types';
+import { pluginTransformer } from '../plugin';
+import { getIntegrationName } from '../integration';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from
@@ -20,7 +22,7 @@ export default async function fontTransformer(documentationObject: Documentation
       ...result,
       [current.values.fontFamily]: result[current.values.fontFamily]
         ? // sorts and returns unique font weights
-          sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
+        sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
         : [current.values.fontWeight],
     };
   }, {} as FontFamily);
@@ -36,11 +38,14 @@ export default async function fontTransformer(documentationObject: Documentation
       // Zip the font up and put the zip in the font location
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
+      const integrationName = getIntegrationName();
+      const fontsFolder = `exported/${integrationName}-tokens/fonts`;
+      await fs.copySync(fontDirName, fontsFolder);
       customFonts.push(`${name}.zip`);
     }
   });
-
-  return customFonts;
+  const hookReturn = (await pluginTransformer()).postFont(documentationObject, customFonts);
+  return hookReturn;
 }
 
 /**

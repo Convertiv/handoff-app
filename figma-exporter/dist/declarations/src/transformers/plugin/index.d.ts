@@ -1,23 +1,22 @@
 import { DocumentationObject } from '../../types';
 import { CssTransformerOutput } from '../css';
 import webpack from 'webpack';
+import { TransformedPreviewComponents } from '../preview';
 /**
  * This is the plugin transformer.  It will attempt to read the plugin folder
  * in the selected integration and then expose a set of hooks that will be
  * fired by the figma-exporter pipeline.
  */
-/**
- * The plugin transformer interface describing what a plugin function set should
- * be. Each function will be called at a different point in the pipeline.
- */
 export interface PluginTransformer {
     init: () => void;
     postExtract: (documentationObject: DocumentationObject) => void;
-    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => void;
-    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => void;
-    postIntegration: (documentationObject: DocumentationObject) => HookReturn | void;
+    postTypeTransformer: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput;
+    postCssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => CssTransformerOutput;
+    postScssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
+    postIntegration: (documentationObject: DocumentationObject) => HookReturn[] | void;
     modifyWebpackConfig: (webpackConfig: webpack.Configuration) => webpack.Configuration;
-    postPreview: (documentationObject: DocumentationObject) => void;
+    postPreview: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents;
+    postFont: (documentationObject: DocumentationObject, customFonts: string[]) => string[];
     postBuild: (documentationObject: DocumentationObject) => void;
 }
 export interface HookReturn {

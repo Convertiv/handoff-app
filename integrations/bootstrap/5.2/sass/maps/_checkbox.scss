@@ -5,9 +5,9 @@
 
 $prefix: '';
 // Load raw SCSS variables for mapping
-@import './exported/tokens/types/checkboxes';
-@import './exported/tokens/sass/checkboxes';
-@import './exported/tokens/css/checkboxes';
+@import './exported/tokens/types/checkbox';
+@import './exported/tokens/sass/checkbox';
+@import './exported/tokens/css/checkbox';
 
 
 
@@ -42,7 +42,7 @@ $form-check-label-cursor:                 pointer;
 // -----
 
 $form-check-min-height:                   calc( $form-check-label-font-size * $form-check-label-line-height );
-$form-check-padding-start:                $form-check-input-width + $checkbox-off-padding-start;
+$form-check-padding-start:                $form-check-input-width + $checkbox-off-spacing;
 $form-check-margin-bottom:                null;
 $form-check-transition:                   all .25s ease-in-out;
 $form-check-inline-margin-end:            1rem; /* Gutter between a group of checkboxes or radios on the same horizontal row */
@@ -58,15 +58,15 @@ $form-check-inline-margin-end:            1rem; /* Gutter between a group of che
 // -----
 
 // form check backgrounds
-$form-check-input-bg:                             var( --checkbox-off-background );
-$form-check-input-focus-bg-color:                 var( --checkbox-off-background );
-$form-check-input-hover-bg-color:                 var( --checkbox-hover-off-background );
-$form-check-input-disabled-bg-color:              var( --checkbox-disabled-off-background );
+$form-check-input-bg:                             var( --checkbox-off-color );
+$form-check-input-focus-bg-color:                 var( --checkbox-off-color );
+$form-check-input-hover-bg-color:                 var( --checkbox-hover-off-color );
+$form-check-input-disabled-bg-color:              var( --checkbox-disabled-off-color );
 
-$form-check-input-checked-bg-color:               var( --checkbox-on-background );
-$form-check-input-checked-focus-bg-color:         var( --checkbox-on-background );
-$form-check-input-checked-hover-bg-color:         var( --checkbox-hover-on-background );
-$form-check-input-checked-disabled-bg-color:      var( --checkbox-disabled-on-background );
+$form-check-input-checked-bg-color:               var( --checkbox-on-color );
+$form-check-input-checked-focus-bg-color:         var( --checkbox-on-color );
+$form-check-input-checked-hover-bg-color:         var( --checkbox-hover-on-color );
+$form-check-input-checked-disabled-bg-color:      var( --checkbox-disabled-on-color );
 
 // form check borders
 $form-check-input-border:                         $form-check-input-border-width solid var( --checkbox-off-border-color );
@@ -127,7 +127,7 @@ $form-check-label-disabled-opacity:               var( --checkbox-disabled-label
 // -----
 
 // form check icon color
-$form-check-input-checked-color:                  $checkbox-on-icon-color;
+$form-check-input-checked-color:                  $checkbox-icon-on-color;
 $form-check-input-indeterminate-color:            $form-check-input-checked-color;
 
 // form check icons

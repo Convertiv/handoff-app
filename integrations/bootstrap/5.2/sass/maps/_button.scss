@@ -1,0 +1,90 @@
+/* =============================================================================
+   BUTTONS (project/_buttons.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/button';
+@import './exported/tokens/sass/button';
+@import './exported/tokens/css/button';
+
+
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Button Layout
+// -----
+
+$btn-border-width-sm:                     $button-sm-border-width;
+$btn-border-width:                        $button-md-border-width;
+$btn-border-width-lg:                     $button-lg-border-width;
+
+$btn-padding-y-sm:                        $button-sm-padding-top - $btn-border-width-sm;
+$btn-padding-y:                           $button-md-padding-top - $btn-border-width;
+$btn-padding-y-lg:                        $button-lg-padding-top - $btn-border-width-lg;
+
+$btn-padding-x-sm:                        $button-sm-padding-left;
+$btn-padding-x:                           $button-md-padding-left;
+$btn-padding-x-lg:                        $button-lg-padding-left;
+
+$btn-border-radius-sm:                    $button-sm-border-radius;
+$btn-border-radius:                       $button-md-border-radius;
+$btn-border-radius-lg:                    $button-lg-border-radius;
+
+$btn-focus-width:                         .25rem;
+
+// -----
+// Button Typography
+// -----
+
+$btn-font-size-sm:                        $button-sm-font-size;
+$btn-font-size:                           $button-md-font-size;
+$btn-font-size-lg:                        $button-lg-font-size;
+
+$btn-line-height-sm:                      $button-sm-line-height;
+$btn-line-height:                         $button-md-line-height;
+$btn-line-height-lg:                      $button-lg-line-height;
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+$btn-font-family:                         var( --button-md-font-family );
+$btn-font-weight:                         var( --button-md-font-weight );
+$btn-white-space:                         null; // Set to `nowrap` to prevent text wrapping
+$btn-text-decoration:                     var( --button-md-text-decoration );
+$btn-letter-spacing:                      var( --button-md-letter-spacing );
+$btn-text-transform:                      var( --button-md-text-transform );
+
+//$btn-link-color:                          var(--#{$prefix}link-color);
+//$btn-link-hover-color:                    var(--#{$prefix}link-hover-color);
+//$btn-link-disabled-color:                 $gray-600;
+
+$btn-box-shadow:                          var( --button-primary-box-shadow );
+$btn-focus-box-shadow:                    var( --button-primary-hover-box-shadow );
+$btn-active-box-shadow:                   var( --button-primary-hover-box-shadow );
+
+$btn-disabled-opacity:                    .65;
+
+$btn-transition:                          color .25s ease-in-out, background-color .25s ease-in-out, border-color .25s ease-in-out, box-shadow .25s ease-in-out;
+
+
+
+/*
+$btn-hover-bg-shade-amount:                   15% !default;
+$btn-hover-bg-tint-amount:                    15% !default;
+$btn-hover-border-shade-amount:               20% !default;
+$btn-hover-border-tint-amount:                10% !default;
+$btn-active-bg-shade-amount:                  20% !default;
+$btn-active-bg-tint-amount:                   20% !default;
+$btn-active-border-shade-amount:              25% !default;
+$btn-active-border-tint-amount:               10% !default;
+*/
+
+//$buttons-transition-speed:                .2s;
