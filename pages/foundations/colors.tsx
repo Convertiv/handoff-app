@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import Icon from 'components/Icon';
@@ -14,28 +14,8 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
+import { getTokens } from 'components/util';
 
-const config = getConfig();
-
-const colorGroups = Object.fromEntries(
-  Object.entries(groupBy(config.design.color, 'group'))
-    .map(([groupKey, colors]) => {
-      return [
-        groupKey,
-        colors.map((colorObj) => {
-          return {
-            ...colorObj,
-          };
-        }),
-      ] as const;
-    })
-    .sort(function (a, b) {
-      const l = config.color_sort.indexOf(a[0]) >>> 0;
-      const r = config.color_sort.indexOf(b[0]) >>> 0;
-
-      return l !== r ? l - r : a[0].localeCompare(b[0]);
-    })
-);
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -45,11 +25,34 @@ const colorGroups = Object.fromEntries(
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`);
+  return {
+    props: {
+      ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
+      config: getConfig(),
+      design: getTokens().design,
+    },
+  };
 };
 
-const ColorsPage = ({ content, menu, metadata, current, scss, css, types }: util.FoundationDocumentationProps) => {
+const ColorsPage = ({ content, menu, metadata, current, scss, css, types, design, config }: util.FoundationDocumentationProps) => {
+  const colorGroups =  Object.fromEntries(
+    Object.entries(groupBy(design.color, 'group'))
+      .map(([groupKey, colors]) => {
+        return [
+          groupKey,
+          colors.map((colorObj) => {
+            return {
+              ...colorObj,
+            };
+          }),
+        ] as const;
+      })
+      .sort(function (a, b) {
+        const l = config.color_sort.indexOf(a[0]) >>> 0;
+        const r = config.color_sort.indexOf(b[0]) >>> 0;
+        return l !== r ? l - r : a[0].localeCompare(b[0]);
+      })
+  );
   return (
     <div className="c-page">
       <Head>

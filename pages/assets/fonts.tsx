@@ -2,19 +2,15 @@ import * as React from 'react';
 import type { GetStaticProps, NextPage } from 'next';
 import uniq from 'lodash/uniq';
 import * as fs from 'fs-extra';
-import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from 'components/util';
 import Header from 'components/Header';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
-const config = getConfig();
-const fontFamilies: string[] = uniq(config.design.typography.map((type) => type.values.fontFamily));
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -24,11 +20,9 @@ const fontFamilies: string[] = uniq(config.design.typography.map((type) => type.
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  const markdown = fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`);
   const fonts = fs.readdirSync('public/fonts');
   const customFonts: string[] = [];
-  console.log(fonts);
+
   fonts.map((font) => {
     if (font.endsWith('.zip')) {
       // We have a custom font
@@ -36,16 +30,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
       customFonts.push(name);
     }
   });
+
   return {
-    props: { ...markdown.props, customFonts },
+    props: {
+      ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
+      design: getTokens().design,
+      customFonts,
+    },
   };
 };
 
-interface FontDocProps extends DocumentationProps {
-  customFonts: string[];
-}
-
-const FontsPage = ({ content, menu, metadata, current, customFonts }: FontDocProps) => {
+const FontsPage = ({ content, menu, metadata, current, customFonts, design }: FontDocumentationProps) => {
+  const fontFamilies: string[] = uniq(design.typography.map((type) => type.values.fontFamily));
   const fontLinks: string[] = fontFamilies.map((fontFamily) => {
     const machine_name = fontFamily.replace(/\s/g, '');
     const custom = customFonts.find((font) => font === machine_name);

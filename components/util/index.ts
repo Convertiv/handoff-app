@@ -1,6 +1,9 @@
 import { Config } from 'client-config';
 import { getConfig } from 'config';
-import { ExportableDefinition, ExportableIndex, ExportableOptions } from 'figma-exporter/src/types';
+import { ChangelogRecord } from 'figma-exporter/src/changelog';
+import { ExportResult } from 'figma-exporter/src/config';
+import { Component } from 'figma-exporter/src/exporters/components/extractor';
+import { ExportableDefinition, ExportableOptions, PreviewJson, PreviewObject } from 'figma-exporter/src/types';
 import { filterOutNull } from 'figma-exporter/src/utils';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
@@ -43,21 +46,33 @@ export interface DocumentationProps {
   content: string;
   menu: SectionLink[];
   current: SectionLink;
+  config: Config;
+}
+
+export interface HomeDocumentationProps extends DocumentationProps {
+  changelog: ChangelogRecord[];
+}
+
+export interface FontDocumentationProps extends DocumentationProps {
+  customFonts: string[];
+  design: ExportResult['design'];
 }
 
 export interface ComponentDocumentationProps extends DocumentationProps {
   scss: string;
   css: string;
   types: string;
-  componentFound: boolean;
-  component: string;
   exportable: ExportableDefinition;
+  components: Component[];
+  previews: PreviewObject[];
+  component: string;
 }
 
 export interface FoundationDocumentationProps extends DocumentationProps {
   scss: string;
   css: string;
   types: string;
+  design: ExportResult['design'];
 }
 /**
  * List the default paths
@@ -157,26 +172,6 @@ export const buildL2StaticPaths = () => {
     })
     .filter(filterOutUndefined);
   return paths;
-};
-
-/**
- * Does a component exist in figma? Check the length of the component tokens
- * @param component
- * @param config
- * @returns
- */
-export const componentExists = (component: string, config?: Config): boolean => {
-  if (!config) {
-    config = getConfig();
-  }
-  const componentKey = pluralizeComponent(component) ?? false;
-  // If this is a component (we define it in the tokens file)
-  // but it has a length of 0, return the menu as undefined even
-  // if its set in the file list
-  if (config.components[componentKey] && config.components[componentKey].length === 0) {
-    return false;
-  }
-  return true;
 };
 
 /**
@@ -281,7 +276,6 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   return {
     props: {
       ...fetchDocPageMarkdown(path, slug, id).props,
-      // componentFound: slug ? componentExists(slug, undefined) : false,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
       types: slug ? fetchTokensString(slug, 'types') : '',
@@ -366,6 +360,21 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
     },
   };
 };
+
+export const getTokens = () : ExportResult => {
+  const data = fs.readFileSync('./exported/tokens.json', 'utf-8');
+  return JSON.parse(data.toString()) as ExportResult;
+}
+
+export const getChangelog = () => {
+  const data = fs.readFileSync('./exported/changelog.json', 'utf-8');
+  return JSON.parse(data.toString()) as ChangelogRecord[];
+}
+
+export const getPreview = () : PreviewJson => {
+  const data = fs.readFileSync('./exported/preview.json', 'utf-8');
+  return JSON.parse(data.toString()) as PreviewJson;
+}
 
 /**
  * Reduce a slug which can be either an array or string, to just a string by
