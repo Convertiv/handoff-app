@@ -49,13 +49,17 @@ export interface DocumentationProps {
   config: Config;
 }
 
-export interface HomeDocumentationProps extends DocumentationProps {
+export interface ChangelogDocumentationProps extends DocumentationProps {
   changelog: ChangelogRecord[];
 }
 
 export interface FontDocumentationProps extends DocumentationProps {
   customFonts: string[];
   design: ExportResult['design'];
+}
+
+export interface AssetDocumentationProps extends DocumentationProps {
+  assets: ExportResult['assets'];
 }
 
 export interface ComponentDocumentationProps extends DocumentationProps {
@@ -182,7 +186,6 @@ export const staticBuildMenu = () => {
   // Contents of docs
   const files = fs.readdirSync('docs');
   const sections: SectionLink[] = [];
-  const config = getConfig();
 
   // Build path tree
   const custom = files

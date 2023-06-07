@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getConfig } from 'config';
 import NavLink from './NavLink';
-import { SectionLink, staticBuildMenu } from './util';
+import { SectionLink } from './util';
 import React from 'react';
 
 const config = getConfig();

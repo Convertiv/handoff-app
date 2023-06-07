@@ -1,6 +1,5 @@
 import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from 'components/util';
 import { GetStaticProps } from 'next';
-import { getConfig } from 'config';
 import Head from 'next/head';
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
@@ -41,8 +40,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
   return fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`);
 };
-
-const config = getConfig();
 
 /**
  * Render Docs page

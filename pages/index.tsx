@@ -10,7 +10,7 @@ import Icon from 'components/Icon';
 import components from 'assets/images/components.png';
 import Head from 'next/head';
 import Header from 'components/Header';
-import { fetchDocPageMarkdown, getChangelog, HomeDocumentationProps } from 'components/util';
+import { fetchDocPageMarkdown, getChangelog, ChangelogDocumentationProps } from 'components/util';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
@@ -40,7 +40,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 };
 
-const Home = ({ content, menu, metadata, config, changelog }: HomeDocumentationProps) => {
+const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumentationProps) => {
   const router = useRouter();
 
   return (

@@ -1,23 +1,18 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-
 import type { AssetObject } from 'figma-exporter/src/types';
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from 'components/util';
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
-const config = getConfig();
-const logos = config.assets.logos;
-
-const DisplayLogo: React.FC<{ logo: AssetObject }> = ({ logo }) => {
+const DisplayLogo: React.FC<{ logo: AssetObject, content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {
     // For SSR
     if (typeof window === 'undefined') {
@@ -40,7 +35,7 @@ const DisplayLogo: React.FC<{ logo: AssetObject }> = ({ logo }) => {
     <div className="u-mb-5">
       <div className="u-mb-2" dangerouslySetInnerHTML={{ __html: htmlData }} />
       <small>
-        {config.client} {logo.description}.
+        {content} {logo.description}.
       </small>
     </div>
   );
@@ -54,11 +49,16 @@ const DisplayLogo: React.FC<{ logo: AssetObject }> = ({ logo }) => {
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`).props,
+      config: getConfig(),
+      assets: getTokens().assets,
+    }
+  }
 };
 
-const LogoPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
   return (
     <div className="c-page">
       <Head>
@@ -88,8 +88,8 @@ const LogoPage = ({ content, menu, metadata, current }: DocumentationProps) => {
           <div className="o-row">
             <div className="o-col-12@md">
               <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
-                {logos.map((logo) => (
-                  <DisplayLogo logo={logo} key={logo.path} />
+                {assets.logos.map((logo) => (
+                  <DisplayLogo logo={logo} content={config.client} key={logo.path} />
                 ))}
               </div>
             </div>

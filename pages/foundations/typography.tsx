@@ -41,6 +41,7 @@ const renderTypes: (type: TypographyObject, content: string) => typographyTypes 
   Link: <a style={pluckStyle(type)}>{content}</a>,
   Paragraph: <p style={pluckStyle(type)}>{content}</p>,
 })
+
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata

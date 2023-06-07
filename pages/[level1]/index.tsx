@@ -2,7 +2,6 @@ import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
 import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from 'components/util';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
-import { getConfig } from 'config';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import rehypeRaw from 'rehype-raw';
@@ -32,8 +31,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const { level1 } = context.params as IParams;
   return fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`);
 };
-
-const config = getConfig();
 
 /**
  * Render Docs page

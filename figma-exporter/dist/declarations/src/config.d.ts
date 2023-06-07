@@ -53,6 +53,10 @@ export interface ExportResult {
     typography: TypographyObject[];
   };
   components: DocumentComponentsObject;
+  assets: {
+    icons: AssetObject[];
+    logos: AssetObject[];
+  };
 }
 
 export interface Config {
@@ -71,10 +75,6 @@ export interface Config {
   type_copy: string;
   color_sort: string[];
   component_sort: string[];
-  assets: {
-    icons: AssetObject[];
-    logos: AssetObject[];
-  };
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
