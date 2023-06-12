@@ -69,8 +69,12 @@ const formatComponentsTransformerOptions = (exportables: ExportableDefinition[])
   );
 };
 
-const getExportables = async (config: Config) => {
+const getExportables = async (handoff: Handoff) => {
   try {
+    if (!handoff.config) {
+      throw new Error('Handoff config not found');
+    }
+    const config = handoff.config;
     const definitions = config?.figma?.definitions;
     if (!definitions || definitions.length === 0) {
       return [];
@@ -78,8 +82,8 @@ const getExportables = async (config: Config) => {
 
     const exportables = definitions
       .map((def) => {
-        let defPath = path.resolve(path.join(__dirname, '../..', exportablesFolder, `${def}.json`));
-        const projectPath = path.resolve(path.join(process.cwd(), exportablesFolder, `${def}.json`));
+        let defPath = path.resolve(path.join(handoff.modulePath, exportablesFolder, `${def}.json`));
+        const projectPath = path.resolve(path.join(handoff.workingPath, exportablesFolder, `${def}.json`));
         // If the project path exists, use that first as an override
         if (fs.existsSync(projectPath)) {
           defPath = projectPath;
@@ -119,7 +123,13 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  * @returns
  */
 const buildIntegration = async (documentationObject: DocumentationObject) => {
-  return await integrationTransformer(documentationObject);
+  handoff = global.handoff;
+  if (!handoff || !handoff.config) {
+    throw new Error('Handoff not initialized');
+  }
+  const integration = await integrationTransformer(documentationObject);
+  handoff.hooks.integration(documentationObject);
+  return integration;
 };
 
 /**
@@ -191,22 +201,28 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
  * Run the entire pipeline
  */
 const pipeline = async (handoff: Handoff) => {
-  if(!handoff.config) {
+  if (!handoff.config) {
     throw new Error('Handoff config not found');
   }
   let DEV_ACCESS_TOKEN = process.env.DEV_ACCESS_TOKEN;
   let FIGMA_PROJECT_ID = process.env.FIGMA_PROJECT_ID;
-
+  console.log(chalk.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
   // TODO: rename to something more meaningful
   if (!DEV_ACCESS_TOKEN) {
-    console.log(chalk.yellow(`Developer access token not found. Please enter your developer access token.`));
+    console.log(
+      chalk.yellow(`- Developer access token not found. You can supply it in an ENV or .env file at DEV_ACCESS_TOKEN.
+Please enter your developer access token.\n`)
+    );
     DEV_ACCESS_TOKEN = await maskPrompt(chalk.green('Figma Developer Key: '));
   }
   handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
 
   // TODO: rename to something more meaningful
   if (!FIGMA_PROJECT_ID) {
-    console.log(chalk.yellow(`Figma project id not found.`));
+    console.log(
+      chalk.yellow(`Figma project id not found. You can supply it in an ENV or .env file at FIGMA_PROJECT_ID.
+Please enter your Figma Project Id.\n`)
+    );
     FIGMA_PROJECT_ID = await maskPrompt(chalk.green('Figma Project Id: '));
   }
   handoff.config.dev_access_token = FIGMA_PROJECT_ID;
@@ -214,7 +230,7 @@ const pipeline = async (handoff: Handoff) => {
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath)) || [];
   await fs.emptyDir(outputFolder);
-  const exportables = await getExportables(handoff.config);
+  const exportables = await getExportables(handoff);
   const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
   const documentationObject = await createDocumentationObject(FIGMA_PROJECT_ID, DEV_ACCESS_TOKEN, exportables);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
@@ -239,8 +255,12 @@ const pipeline = async (handoff: Handoff) => {
   await buildCustomFonts(documentationObject);
   await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
-  await buildPreview(documentationObject);
-  await buildApp(handoff);
+  if (handoff.config.buildApp) {
+    await buildPreview(documentationObject);
+    await buildApp(handoff);
+  } else {
+    console.log(chalk.red('Skipping app generation'));
+  }
   // (await pluginTransformer()).postBuild(documentationObject);
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
@@ -250,11 +270,13 @@ global.handoff = null;
 class Handoff {
   config: Config | null;
   debug: boolean = false;
-
+  modulePath: string = path.resolve(fileURLToPath(import.meta.url), '../..');
+  workingPath: string = process.cwd();
   hooks: {
     init: () => void;
     fetch: () => void;
     build: (documentationObject: DocumentationObject) => void;
+    integration: (documentationObject: DocumentationObject) => void;
     typeTransformer: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput;
     cssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => CssTransformerOutput;
     scssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
@@ -264,11 +286,13 @@ class Handoff {
 
   constructor() {
     this.config = null;
+    console.log(this.modulePath);
     this.hooks = {
       init: () => {},
       fetch: () => {},
-      build: () => {},
+      build: (documentationObject) => {},
       typeTransformer: (documentationObject, types) => types,
+      integration: (documentationObject) => {},
       cssTransformer: (documentationObject, css) => css,
       scssTransformer: (documentationObject, scss) => scss,
       webpack: (webpackConfig) => webpackConfig,
@@ -276,13 +300,16 @@ class Handoff {
     };
     global.handoff = this;
   }
-  async init(): Promise<void> {
+  async init(): Promise<Handoff> {
     this.config = await getConfig();
+    return this;
   }
-  async fetch(): Promise<void> {
+  async fetch(): Promise<Handoff> {
+    console.log('running pipeline');
     if (this.config) {
       await pipeline(this);
     }
+    return this;
   }
   async build(): Promise<void> {
     if (this.config) {
@@ -301,14 +328,16 @@ class Handoff {
   postScssTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput) {
     this.hooks.scssTransformer = callback;
   }
-  postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents) {
+  postPreview(
+    callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents
+  ) {
     this.hooks.preview = callback;
   }
   postBuild(callback: (documentationObject: DocumentationObject) => void) {
     this.hooks.build = callback;
   }
   postIntegration(callback: (documentationObject: DocumentationObject) => HookReturn[]) {
-    this.hooks.build = callback;
+    this.hooks.integration = callback;
   }
   modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
     this.hooks.webpack = callback;

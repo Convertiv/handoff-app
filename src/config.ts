@@ -7,6 +7,7 @@ export const defaultConfig: Config = {
   figma_project_id: null,
   title: 'Convertiv Design System',
   client: 'Convertiv',
+  buildApp: false,
   google_tag_manager: null,
   integration: {
     name: 'bootstrap',

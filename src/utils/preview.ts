@@ -5,24 +5,26 @@ import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 import { getIntegrationEntryPoint } from '../transformers/integration/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.resolve(process.cwd());;
-
 export const buildClientFiles = async (): Promise<string> => {
   const entry = getIntegrationEntryPoint();
+  const handoff = global.handoff;
+  if (!handoff) {
+    throw Error('Handoff not initialized');
+  }
   return new Promise((resolve, reject) => {
+    console.log(path.resolve(handoff?.modulePath, 'node_modules'));
     let config: webpack.Configuration = {
       mode: 'production',
       entry,
       resolve: {
-        modules: [
-          path.resolve(__dirname, 'src'),
-          path.resolve(__dirname, 'node_modules'),
-        ],
+        modules: [path.resolve(handoff?.modulePath, 'src'), path.resolve(handoff?.modulePath, 'node_modules')],
       },
       output: {
-        path: path.resolve(__dirname, '../../public/components'),
+        path: path.resolve(handoff?.workingPath, 'public/components'),
         filename: 'bundle.js',
+      },
+      resolveLoader: {
+        modules: [path.resolve(handoff?.modulePath, 'node_modules')],
       },
       module: {
         rules: [

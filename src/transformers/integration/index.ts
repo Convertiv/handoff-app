@@ -1,4 +1,3 @@
-import { getFetchConfig } from '../../utils/config.js';
 import fs from 'fs-extra';
 import path, { basename } from 'path';
 import archiver from 'archiver';
@@ -7,6 +6,7 @@ import { DocumentationObject } from '../../types.js';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { getConfig } from '../../config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = basename(process.cwd());
@@ -17,23 +17,26 @@ const __dirname = basename(process.cwd());
  * integration if desired
  */
 export const getPathToIntegration = () => {
+  const handoff = global.handoff;
+  if(!handoff || !handoff?.config) {
+    throw Error('Handoff not initialized');
+  }
   const integrationFolder = 'config/integrations';
   const defaultIntegration = 'bootstrap';
   const defaultVersion = '5.2';
-
-  const defaultPath = path.resolve(path.join(__dirname, '..', integrationFolder, defaultIntegration, defaultVersion));
-
-  const config = getFetchConfig();
+  const defaultPath = path.resolve(path.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
+  
+  const config = handoff.config;
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(__dirname, '..', integrationFolder));
+      const customPath = path.resolve(path.join(handoff.workingPath, integrationFolder));
       if (!fs.existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }
       return customPath;
     }
-    const searchPath = path.resolve(path.join(__dirname, '..', integrationFolder, config.integration.name, config.integration.version));
+    const searchPath = path.resolve(path.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
     if (!fs.existsSync(searchPath)) {
       throw Error(
         `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
@@ -57,7 +60,7 @@ export const getIntegrationEntryPoint = (): string => {
  * @returns string
  */
 export const getIntegrationName = (): string => {
-  const config = getFetchConfig();
+  const config = getConfig();
   const defaultIntegration = 'bootstrap';
   if (config.integration) {
     if (config.integration.name) {

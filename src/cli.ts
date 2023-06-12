@@ -92,7 +92,6 @@ const run = async (
       handoff.debug = true;
     }
     await handoff.init();
-    console.log(args._[0]);
     switch (args._[0]) {
       case 'fetch':
         return handoff.fetch();
