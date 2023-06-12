@@ -1,10 +1,10 @@
 import { DocumentationObject } from '../../types';
-import transformColors, { transformColorTypes } from './design/colors.js';
-import transformEffects, { transformEffectTypes } from './design/effects.js';
-import transformTypography, { transformTypographyTypes } from './design/typography.js';
-import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component.js';
-import { formatComponentCodeBlockComment } from '../utils.js';
-import { ExportableTransformerOptionsMap } from '../types.js';
+import transformColors, { transformColorTypes } from './design/colors';
+import transformEffects, { transformEffectTypes } from './design/effects';
+import transformTypography, { transformTypographyTypes } from './design/typography';
+import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component';
+import { formatComponentCodeBlockComment } from '../utils';
+import { ExportableTransformerOptionsMap } from '../types';
 
 interface ScssTypesTransformerOutput {
   components: Record<keyof DocumentationObject['components'], string>;

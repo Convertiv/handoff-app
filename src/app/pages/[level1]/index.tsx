@@ -6,6 +6,7 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import getConfig from 'next/config';
 
 /**
  * Render all index pages
@@ -29,7 +30,12 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const { level1 } = context.params as IParams;
-  return fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`),
+      config: getConfig(),
+    },
+  };
 };
 
 /**
@@ -37,7 +43,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * @param param0
  * @returns
  */
-export default function DocPage({ content, menu, metadata, current }: DocumentationProps) {
+export default function DocPage({ content, menu, metadata, current, config }: DocumentationProps) {
   if (content) {
     return (
       <div className="c-page">
@@ -45,7 +51,7 @@ export default function DocPage({ content, menu, metadata, current }: Documentat
           <title>{metadata.metaTitle}</title>
           <meta name="description" content={metadata.metaDescription} />
         </Head>
-        <Header menu={menu} />
+        <Header menu={menu} config={config} />
         {current?.subSections?.length > 0 && <CustomNav menu={current} />}
         <section className="c-content">
           <div className="o-container-fluid">

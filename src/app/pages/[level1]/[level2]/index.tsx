@@ -6,6 +6,7 @@ import CustomNav from '../../../components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import getConfig from 'next/config';
 
 export interface SubPageType {
   params: {
@@ -38,7 +39,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (!level2) {
     level2 = '404';
   }
-  return fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`),
+      config: getConfig(),
+    },
+  };
 };
 
 /**
@@ -46,7 +52,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * @param param0
  * @returns
  */
-export default function DocSubPage({ content, menu, metadata, current }: DocumentationProps) {
+export default function DocSubPage({ content, menu, metadata, current, config }: DocumentationProps) {
   if (content) {
     return (
       <div className="c-page">
@@ -54,7 +60,7 @@ export default function DocSubPage({ content, menu, metadata, current }: Documen
           <title>{metadata.metaTitle}</title>
           <meta name="description" content={metadata.metaDescription} />
         </Head>
-        <Header menu={menu} />
+        <Header menu={menu} config={config} />
         {current?.subSections?.length > 0 && <CustomNav menu={current} />}
         <section className="c-content">
           <div className="o-container-fluid">

@@ -1,8 +1,8 @@
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
 import { DocumentationObject } from '../../types';
-import { filterOutNull } from '../../utils/index.js';
-import { getComponentTemplate } from './utils.js';
+import { filterOutNull } from '../../utils/index';
+import { getComponentTemplate } from './utils';
 import { Component } from '../../exporters/components/extractor';
 import { TokenSets } from '../../exporters/components/types';
 

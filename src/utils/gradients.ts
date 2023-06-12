@@ -1,5 +1,5 @@
 import { GradientObject, PositionObject } from "../types";
-import { getIntersection, rotate, rotateElipse } from "./math.js";
+import { getIntersection, rotate, rotateElipse } from "./math";
 
 /**
  * Returns the angle of the gradient

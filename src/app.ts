@@ -1,10 +1,10 @@
-import build from 'next/dist/build/index.js';
+import build from 'next/dist/build/index';
+import { nextDev } from 'next/dist/cli/next-dev';
 import Handoff from './handoff';
 import path from 'path';
 import { webpack } from 'next/dist/compiled/webpack/webpack';
 
 const buildApp = async (handoff: Handoff) => {
-  console.log(path.resolve('dist'));
   /** @type {import('next').NextConfig} */
   const nextConfig = {
     reactStrictMode: true,
@@ -37,7 +37,11 @@ const buildApp = async (handoff: Handoff) => {
     },
   };
   // @ts-ignore
-  return await build['default'](path.resolve('src/app'), nextConfig);
+  return await build(path.resolve('src/app'), nextConfig);
 };
+
+export const watchApp = async (handoff: Handoff) => {
+  nextDev([path.resolve('src/app'), '-p', '3000']);
+}
 
 export default buildApp;

@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import arg from 'arg';
-import Handoff from './handoff.js';
+import Handoff from './handoff';
 
 class HandoffCliError extends Error {
   exitCode: number;
@@ -19,6 +19,7 @@ const usage = `Usage: handoff-app <cmd> <opts>
 Commands:
   fetch [opts]
   build [opts]
+
   bootstrap [opts]
 
   make
@@ -57,7 +58,7 @@ const cliError = function (msg: string, exitCode = 1) {
   err.exitCode = exitCode;
   throw err;
 };
-
+let watching = false;
 const run = async (
   argv: string[],
   stdout: NodeJS.WriteStream & {
@@ -97,6 +98,9 @@ const run = async (
         return handoff.fetch();
       case 'build':
         return handoff.build();
+      case 'start':
+        watching = true;
+        return handoff.start();
     }
   } catch (e: any) {
     if (e.message.indexOf('Unknown or unexpected option') === -1) throw e;
@@ -106,7 +110,10 @@ const run = async (
 
 run(process.argv.slice(2), process.stdout, process.stderr)
   .then(() => {
-    process.exit(0);
+    if(!watching){
+      process.exit(0);
+    }
+    
   })
   .catch((e) => {
     if (!e.silent) console.error(e.messageOnly ? e.message : e);

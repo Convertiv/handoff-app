@@ -9,10 +9,10 @@ import {
   isValidNodeType,
   isValidVariantProperty,
   normalizeNamePart,
-} from '../utils.js';
+} from '../utils';
 import { Exportable, ExportableDefinition, ExportablePart, VariantProperty } from '../../types';
 import { GetComponentSetComponentsResult } from '.';
-import { filterOutNull } from '../../utils/index.js';
+import { filterOutNull } from '../../utils/index';
 
 interface NodePathTokens {
   activity: ComponentDesign['activity'];

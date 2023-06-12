@@ -1,9 +1,9 @@
 import { ValueProperty } from '../types';
-import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../css/utils.js';
-import { Component } from '../../exporters/components/extractor.js';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types.js';
-import { getTokenSetTransformer } from '../tokenSetTransformers.js';
-import { normalizeVariableToken } from '../utils.js';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../css/utils';
+import { Component } from '../../exporters/components/extractor';
+import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { getTokenSetTransformer } from '../tokenSetTransformers';
+import { normalizeVariableToken } from '../utils';
 
 export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];

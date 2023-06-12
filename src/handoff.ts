@@ -1,14 +1,14 @@
-import generateChangelogRecord, { ChangelogRecord } from './changelog.js';
-import { getConfig } from './config.js';
-import { Config } from './types/config.js';
-import { maskPrompt } from './utils/prompt.js';
+import generateChangelogRecord, { ChangelogRecord } from './changelog';
+import { getConfig, getHandoff, serializeHandoff } from './config';
+import { Config } from './types/config';
+import { maskPrompt } from './utils/prompt';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { filterOutNull } from './utils/index.js';
+import { filterOutNull } from './utils/index';
 import 'dotenv/config';
 import * as stream from 'node:stream';
-import { getRequestCount } from './figma/api.js';
+import { getRequestCount } from './figma/api';
 import webpack from 'webpack';
 import {
   DocumentationObject,
@@ -16,25 +16,25 @@ import {
   ExportableOptions,
   ExportableSharedOptions,
   ExportableTransformerOptions,
-} from './types.js';
-import merge from 'lodash/merge.js';
+} from './types';
+import merge from 'lodash/merge';
 import { ExportableTransformerOptionsMap } from './transformers/types';
-import { createDocumentationObject } from './documentation-object.js';
-import { zipAssets } from './api.js';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index.js';
-import cssTransformer, { CssTransformerOutput } from './transformers/css/index.js';
-import integrationTransformer from './transformers/integration/index.js';
-import fontTransformer from './transformers/font/index.js';
-import previewTransformer, { TransformedPreviewComponents } from './transformers/preview/index.js';
-import { buildClientFiles } from './utils/preview.js';
+import { createDocumentationObject } from './documentation-object';
+import { zipAssets } from './api';
+import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
+import cssTransformer, { CssTransformerOutput } from './transformers/css/index';
+import integrationTransformer from './transformers/integration/index';
+import fontTransformer from './transformers/font/index';
+import previewTransformer, { TransformedPreviewComponents } from './transformers/preview/index';
+import { buildClientFiles } from './utils/preview';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { type } from 'os';
-import { HookReturn } from './types/plugin.js';
-import buildApp from './app.js';
+import { HookReturn } from './types/plugin';
+import buildApp, { watchApp } from './app';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
 let config;
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
@@ -123,10 +123,7 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  * @returns
  */
 const buildIntegration = async (documentationObject: DocumentationObject) => {
-  handoff = global.handoff;
-  if (!handoff || !handoff.config) {
-    throw new Error('Handoff not initialized');
-  }
+  const handoff = getHandoff();
   const integration = await integrationTransformer(documentationObject);
   handoff.hooks.integration(documentationObject);
   return integration;
@@ -270,7 +267,7 @@ global.handoff = null;
 class Handoff {
   config: Config | null;
   debug: boolean = false;
-  modulePath: string = path.resolve(fileURLToPath(import.meta.url), '../..');
+  modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = process.cwd();
   hooks: {
     init: () => void;
@@ -286,7 +283,6 @@ class Handoff {
 
   constructor() {
     this.config = null;
-    console.log(this.modulePath);
     this.hooks = {
       init: () => {},
       fetch: () => {},
@@ -302,10 +298,10 @@ class Handoff {
   }
   async init(): Promise<Handoff> {
     this.config = await getConfig();
+    serializeHandoff();
     return this;
   }
   async fetch(): Promise<Handoff> {
-    console.log('running pipeline');
     if (this.config) {
       await pipeline(this);
     }
@@ -314,6 +310,11 @@ class Handoff {
   async build(): Promise<void> {
     if (this.config) {
       await buildApp(this);
+    }
+  }
+  async start(): Promise<void> {
+    if (this.config) {
+      await watchApp(this);
     }
   }
   postInit(callback: () => Promise<void>) {

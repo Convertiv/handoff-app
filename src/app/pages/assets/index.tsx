@@ -23,8 +23,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/', 'assets', `/assets`).props,
       config: getConfig(),
-    }
-  }
+    },
+  };
 };
 
 const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
@@ -34,7 +34,7 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

@@ -3,7 +3,7 @@ import path from 'path';
 import chalk from 'chalk';
 // import { pluginTransformer } from '../transformers/plugin';
 import { fileURLToPath } from 'url';
-import { getIntegrationEntryPoint } from '../transformers/integration/index.js';
+import { getIntegrationEntryPoint } from '../transformers/integration/index';
 
 export const buildClientFiles = async (): Promise<string> => {
   const entry = getIntegrationEntryPoint();

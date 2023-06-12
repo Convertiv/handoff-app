@@ -1,4 +1,4 @@
-import { getConfig } from '../../../config';
+import { getConfig, getHandoff } from '../../../config';
 import { ChangelogRecord } from '../../../changelog';
 import { ExportResult, Config } from '../../../types/config';
 import { Component } from '../../../exporters/components/extractor';
@@ -131,9 +131,11 @@ export const pluralizeComponent = (singular: string): string => {
  * @returns
  */
 export const buildL1StaticPaths = () => {
-  const files = fs.readdirSync('docs');
+  const handoff = getHandoff();
+  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const files = fs.readdirSync(docRoot);
   const paths = files
-    .filter((fileName) => !fs.lstatSync(path.join('docs', fileName)).isDirectory())
+    .filter((fileName) => !fs.lstatSync(path.join(docRoot, fileName)).isDirectory())
     .map((fileName) => {
       const path = fileName.replace('.md', '');
       if (knownPaths.indexOf(path) < 0) {
@@ -153,11 +155,13 @@ export const buildL1StaticPaths = () => {
  * @returns SubPathType[]
  */
 export const buildL2StaticPaths = () => {
-  const files = fs.readdirSync('docs');
+  const handoff = getHandoff();
+  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const files = fs.readdirSync(docRoot);
   const paths: SubPageType[] = files
     .flatMap((fileName) => {
-      if (fs.lstatSync(path.join('docs', fileName)).isDirectory()) {
-        const subFiles = fs.readdirSync(path.join('docs', fileName));
+      if (fs.lstatSync(path.join(docRoot, fileName)).isDirectory()) {
+        const subFiles = fs.readdirSync(path.join(docRoot, fileName));
         return subFiles
           .flatMap((subFile) => {
             const path = fileName.replace('.md', '');
@@ -183,14 +187,16 @@ export const buildL2StaticPaths = () => {
  */
 export const staticBuildMenu = () => {
   // Contents of docs
-  const files = fs.readdirSync('docs');
+  const handoff = getHandoff();
+  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const files = fs.readdirSync(docRoot);
   const sections: SectionLink[] = [];
 
   // Build path tree
   const custom = files
     .map((fileName) => {
-      const search = path.resolve(`docs/${fileName}`);
-      if (!fs.lstatSync(search).isDirectory() && search !== path.resolve('docs/index.md') && fileName.endsWith('md')) {
+      const search = path.resolve(docRoot, fileName);
+      if (!fs.lstatSync(search).isDirectory() && search !== path.resolve(docRoot, 'index.md') && fileName.endsWith('md')) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
 

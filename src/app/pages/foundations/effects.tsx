@@ -16,6 +16,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
+import { getConfig } from '../../../config';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -36,13 +37,14 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
+      config: getConfig(),
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
       design: getTokens().design,
-    }
-  }
+    },
+  };
 };
 
-const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design }: util.FoundationDocumentationProps) => {
+const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design, config }: util.FoundationDocumentationProps) => {
   const effectGroups = Object.fromEntries(
     Object.entries(groupBy(design.effect, 'group')).map(([groupKey, effects]) => {
       return [
@@ -61,7 +63,7 @@ const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

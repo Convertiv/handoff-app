@@ -1,16 +1,15 @@
 import Link from 'next/link';
-import { getConfig } from '../../config';
+import { Config, getConfig } from '../../config';
 import NavLink from './NavLink';
 import { SectionLink } from './util';
 import React from 'react';
 
-const config = getConfig();
-
 interface HeaderProps {
   menu: SectionLink[];
+  config: Config;
 }
 
-function Header({ menu }: HeaderProps) {
+function Header({ menu, config }: HeaderProps) {
   const [mobile, setMobile] = React.useState('');
   const toggle = () => {
     if (mobile === 'is-active') {

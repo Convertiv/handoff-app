@@ -2,14 +2,14 @@ import fs from 'fs-extra';
 import path, { basename } from 'path';
 import archiver from 'archiver';
 import * as stream from 'node:stream';
-import { DocumentationObject } from '../../types.js';
+import { DocumentationObject } from '../../types';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getConfig } from '../../config.js';
+import { getConfig } from '../../config';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = basename(process.cwd());
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = basename(process.cwd());
 
 /**
  * Derive the path to the integration. Use the config to find the integration

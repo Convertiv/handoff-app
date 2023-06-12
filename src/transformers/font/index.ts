@@ -3,11 +3,11 @@ import { DocumentationObject } from '../../types';
 import archiver from 'archiver';
 import fs from 'fs-extra';
 import path from 'path';
-import sortedUniq from 'lodash/sortedUniq.js';
+import sortedUniq from 'lodash/sortedUniq';
 import * as stream from 'node:stream';
 import { FontFamily } from './types';
 //import { pluginTransformer } from '../plugin';
-import { getIntegrationName } from '../integration/index.js';
+import { getIntegrationName } from '../integration/index';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from

@@ -12,7 +12,7 @@ import CustomNav from '../../../components/SideNav/Custom';
 import AnchorNav from '../../../components/AnchorNav';
 import Icon from '../../../components/Icon';
 import { ComponentTab } from '../../../../types/tabs';
-import startCase from 'lodash/startCase.js';
+import startCase from 'lodash/startCase';
 import { CodeHighlight } from '../../../components/Markdown/CodeHighlight';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -71,7 +71,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config}/>
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

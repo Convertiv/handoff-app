@@ -34,7 +34,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

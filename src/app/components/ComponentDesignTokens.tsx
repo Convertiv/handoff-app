@@ -1,6 +1,6 @@
-import startCase from 'lodash/startCase.js';
-import sortBy from 'lodash/sortBy.js';
-import round from 'lodash/round.js';
+import startCase from 'lodash/startCase';
+import sortBy from 'lodash/sortBy';
+import round from 'lodash/round';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
 import { ExportableTransformerOptions } from '../../types';

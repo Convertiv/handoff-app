@@ -35,7 +35,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 
 const ColorsPage = ({ content, menu, metadata, current, scss, css, types, design, config }: util.FoundationDocumentationProps) => {
-  const colorGroups =  Object.fromEntries(
+  const colorGroups = Object.fromEntries(
     Object.entries(groupBy(design.color, 'group'))
       .map(([groupKey, colors]) => {
         return [
@@ -59,7 +59,7 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, types, design
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
@@ -89,7 +89,10 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, types, design
                         {colorGroups[group].map((color) => (
                           <div className="c-color-preview" key={`color-${color.group}-${color.name}`}>
                             <div className="c-color-preview__wrapper">
-                              <span className="c-color-preview__sample" style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}></span>
+                              <span
+                                className="c-color-preview__sample"
+                                style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
+                              ></span>
                               <h5>{color.name}</h5>
                               <code>Value: {color.value}</code>
                               <code>Blend: {color.blend}</code>

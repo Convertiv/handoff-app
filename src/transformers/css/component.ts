@@ -1,8 +1,8 @@
 import { ValueProperty } from '../types';
-import { Component } from '../../exporters/components/extractor.js';
-import { formatComponentCodeBlockComment } from '../utils.js';
+import { Component } from '../../exporters/components/extractor';
+import { formatComponentCodeBlockComment } from '../utils';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
-import { getTokenSetTransformer } from '../tokenSetTransformers.js';
+import { getTokenSetTransformer } from '../tokenSetTransformers';
 
 /**
  * Map down to a variable object

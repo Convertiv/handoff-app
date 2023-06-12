@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import * as FigmaTypes from '../../figma/types';
-import { getComponentSetNodes, getComponentSets } from '../../figma/api.js';
-import { filterByNodeType } from '../utils.js';
-import { ExportableDefinition } from '../../types.js';
-import extractComponents, { Component } from './extractor.js';
+import { getComponentSetNodes, getComponentSets } from '../../figma/api';
+import { filterByNodeType } from '../utils';
+import { ExportableDefinition } from '../../types';
+import extractComponents, { Component } from './extractor';
 
 export interface DocumentComponentsObject {
   [key: string]: Component[];

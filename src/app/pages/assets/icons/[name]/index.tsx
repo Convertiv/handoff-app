@@ -94,7 +94,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
           <title>{`${icon.name} Icon | ${config?.client} Design System`}</title>
         )}
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current?.subSections?.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         {!icon ? (

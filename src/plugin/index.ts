@@ -62,7 +62,7 @@ const plugin = '';
 //  */
 // export const pluginTransformer = async (): Promise<PluginTransformer> => {
 //   let generic = genericPluginGenerator();
-//   const pluginPath = getPathToIntegration() + '/plugin.js';
+//   const pluginPath = getPathToIntegration() + '/plugin';
 //   let plugin = generic;
 
 //   if (fs.existsSync(pluginPath)) {

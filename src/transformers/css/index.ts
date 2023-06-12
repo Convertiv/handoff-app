@@ -1,9 +1,9 @@
-import { DocumentationObject } from '../../types.js';
-import { ExportableTransformerOptionsMap } from '../types.js';
-import { transformComponentsToCssVariables } from './component.js';
-import transformColors from './design/colors.js';
-import transformEffects from './design/effects.js';
-import transformTypography from './design/typography.js';
+import { DocumentationObject } from '../../types';
+import { ExportableTransformerOptionsMap } from '../types';
+import { transformComponentsToCssVariables } from './component';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
 
 /**
  * The output of the CSS transformer

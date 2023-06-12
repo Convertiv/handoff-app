@@ -15,6 +15,7 @@ import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
+import { getConfig } from '../../../config';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -31,10 +32,11 @@ type ComponentPageDocumentationProps = DocumentationProps & {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const components = fetchExportables().map(exportable => exportable.id);
-
+  const config = getConfig();
   return {
     ...{
       props: {
+        config,
         ...fetchDocPageMarkdown('docs/', 'components', `/components`).props,
         components: components.reduce(
           (acc, component) => ({
@@ -50,14 +52,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-const ComponentsPage = ({ content, menu, metadata, current, components }: ComponentPageDocumentationProps) => {
+const ComponentsPage = ({ content, menu, metadata, current, components, config }: ComponentPageDocumentationProps) => {
+  console.log('config', config)
   return (
     <div className="c-page">
       <Head>
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config}/>
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

@@ -1,8 +1,8 @@
-import assetsExporter from './exporters/assets.js';
-import getFileComponentTokens from './exporters/components/index.js';
-import getFileDesignTokens from './exporters/design.js';
+import assetsExporter from './exporters/assets';
+import getFileComponentTokens from './exporters/components/index';
+import getFileDesignTokens from './exporters/design';
 import { DocumentationObject, ExportableDefinition } from './types';
-import startCase from 'lodash/startCase.js';
+import startCase from 'lodash/startCase';
 import chalk from 'chalk';
 
 export const createDocumentationObject = async (figmaFileKey: string, figmaAccessToken: string, exportables: ExportableDefinition[]): Promise<DocumentationObject> => {

@@ -1,5 +1,5 @@
-import { filterOutUndefined } from '../../utils/index.js';
-import { transformFigmaColorToHex } from '../../utils/convertColor.js';
+import { filterOutUndefined } from '../../utils/index';
+import { transformFigmaColorToHex } from '../../utils/convertColor';
 import * as FigmaTypes from '../../figma/types';
 /**
  * Get the name of a SCSS variable from a token object

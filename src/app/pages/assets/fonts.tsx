@@ -10,6 +10,8 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import { getHandoff } from '../../../config';
+import path from 'path';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -20,7 +22,8 @@ import rehypeRaw from 'rehype-raw';
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  const fonts = fs.readdirSync('public/fonts');
+  const handoff = getHandoff();
+  const fonts = fs.readdirSync(path.resolve(handoff.modulePath, 'src/app/public/fonts'));
   const customFonts: string[] = [];
 
   fonts.map((font) => {
@@ -35,12 +38,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
       design: getTokens().design,
+      config: handoff.config,
       customFonts,
     },
   };
 };
 
-const FontsPage = ({ content, menu, metadata, current, customFonts, design }: FontDocumentationProps) => {
+const FontsPage = ({ content, menu, metadata, current, customFonts, design, config }: FontDocumentationProps) => {
   const fontFamilies: string[] = uniq(design.typography.map((type) => type.values.fontFamily));
   const fontLinks: string[] = fontFamilies.map((fontFamily) => {
     const machine_name = fontFamily.replace(/\s/g, '');
@@ -57,7 +61,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design }: Fo
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu}  config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

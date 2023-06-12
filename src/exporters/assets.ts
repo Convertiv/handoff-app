@@ -1,9 +1,9 @@
 import * as stream from 'node:stream';
 import axios from 'axios';
 import archiver from 'archiver';
-import { getAssetURL, getFileComponent } from '../figma/api.js';
-import * as Utils from '../utils/index.js';
-import { AssetObject } from '../types.js';
+import { getAssetURL, getFileComponent } from '../figma/api';
+import * as Utils from '../utils/index';
+import { AssetObject } from '../types';
 import chalk from 'chalk';
 const defaultExtension: string = 'svg';
 

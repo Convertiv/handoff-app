@@ -7,9 +7,9 @@ import {
   transformFigmaTextAlignToCss,
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
-} from '../utils/convertColor.js';
+} from '../utils/convertColor';
 import { ValueProperty } from './types';
-import { formatVariableName } from './utils.js';
+import { formatVariableName } from './utils';
 
 export const getTokenSetTransformer = (tokenSet: TokenSet) => {
   switch (tokenSet.name) {
