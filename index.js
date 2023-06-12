@@ -1,1 +1,0 @@
-console.log("hello world! handoff-app is coming soon.");

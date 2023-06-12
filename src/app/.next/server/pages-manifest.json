@@ -1,0 +1,21 @@
+{
+  "/_document": "pages/_document.js",
+  "/_app": "pages/_app.js",
+  "/assets/fonts": "pages/assets/fonts.js",
+  "/assets": "pages/assets.js",
+  "/[level1]/[level2]": "pages/[level1]/[level2].js",
+  "/[level1]": "pages/[level1].js",
+  "/assets/logos": "pages/assets/logos.js",
+  "/assets/icons/[name]": "pages/assets/icons/[name].js",
+  "/assets/icons": "pages/assets/icons.js",
+  "/foundations/colors": "pages/foundations/colors.js",
+  "/components": "pages/components.js",
+  "/changelog": "pages/changelog.js",
+  "/components/[component]": "pages/components/[component].js",
+  "/foundations/effects": "pages/foundations/effects.js",
+  "/foundations/logo": "pages/foundations/logo.js",
+  "/_error": "pages/_error.js",
+  "/foundations": "pages/foundations.js",
+  "/foundations/typography": "pages/foundations/typography.js",
+  "/": "pages/index.js"
+}
