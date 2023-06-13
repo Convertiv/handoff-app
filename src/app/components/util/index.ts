@@ -261,6 +261,7 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  */
 export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
   const menu = staticBuildMenu();
+  console.log(path);
   const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
   return {
@@ -408,11 +409,18 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @param slug
  * @returns
  */
-export const fetchDocPageMetadataAndContent = (path: string, slug: string | string[] | undefined) => {
-  if (!fs.existsSync(`${path}${slug}.md`)) {
-    return { metadata: {}, content: '' };
+export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
+  const handoff = getHandoff();
+  const filepath = path.resolve(handoff.modulePath, 'config', `${localPath}${slug}.md`);
+  const localpath = path.resolve(handoff.workingPath, 'config', `${localPath}${slug}.md`);
+  let currentContents = '';
+  if(fs.existsSync(localpath)) {
+    currentContents = fs.readFileSync(localpath, 'utf-8');
+  }else if (!fs.existsSync(filepath)) {
+    return { metadata: {}, content: currentContents };
+  }else{
+    currentContents = fs.readFileSync(filepath, 'utf-8');
   }
-  const currentContents = fs.readFileSync(`${path}${slug}.md`, 'utf-8');
   const { data: metadata, content } = matter(currentContents);
 
   return { metadata, content };

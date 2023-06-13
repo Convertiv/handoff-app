@@ -49,7 +49,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       <div className="o-container u-mt-6">
         <div className="o-row u-justify-center">
           <div className="o-col-10">
