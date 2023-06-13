@@ -30,9 +30,8 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "cd src/app && npx next dev",
+    "start": "node ./dist/cli.js start",
     "build": "tsc",
-    "build:cli": "node build-cli.js",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"sass/**/*.scss\"",
     "lint": "npm run lint:sass && npx next lint",

@@ -30,8 +30,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ...fetchDocPageMarkdown('docs/', 'changelog', `/changelog`).props,
       config: getConfig(),
       changelog: getChangelog(),
-    }
-  }
+    },
+  };
 };
 
 const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: ChangelogDocumentationProps) => {
@@ -41,7 +41,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
