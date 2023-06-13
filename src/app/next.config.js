@@ -7,7 +7,10 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
-
+  distDir: 'out',
+  serverRuntimeConfig: {
+    PROJECT_ROOT: path.resolve('public'),
+  },
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
     config.resolve.modules.push(path.resolve('dist/app'));

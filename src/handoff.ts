@@ -31,7 +31,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { type } from 'os';
 import { HookReturn } from './types/plugin';
-import buildApp, { watchApp } from './app';
+import buildApp, { exportNext, watchApp } from './app';
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = dirname(__filename);
@@ -307,15 +307,23 @@ class Handoff {
     }
     return this;
   }
-  async build(): Promise<void> {
+  async build(): Promise<Handoff> {
     if (this.config) {
       await buildApp(this);
     }
+    return this;
   }
-  async start(): Promise<void> {
+  async export(): Promise<Handoff> {
+    if (this.config) {
+      await exportNext(this);
+    }
+    return this;
+  }
+  async start(): Promise<Handoff> {
     if (this.config) {
       await watchApp(this);
     }
+    return this;
   }
   postInit(callback: () => Promise<void>) {
     this.hooks.init = callback;

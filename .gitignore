@@ -50,3 +50,4 @@ yarn-error.log*
 /public/tokens.zip
 /public/logos
 /public/components
+/src/app/out

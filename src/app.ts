@@ -1,43 +1,21 @@
 import build from 'next/dist/build/index';
+import exportApp from 'next/dist/export/index';
+import { trace } from 'next/dist/trace'
 import { nextDev } from 'next/dist/cli/next-dev';
 import Handoff from './handoff';
 import path from 'path';
-import { webpack } from 'next/dist/compiled/webpack/webpack';
 
 const buildApp = async (handoff: Handoff) => {
-  /** @type {import('next').NextConfig} */
-  const nextConfig = {
-    reactStrictMode: true,
-    swcMinify: true,
-    trailingSlash: true,
-    experimental: {
-      externalDir: true,
-    },
-    resolve: {
-      modules: [
-        path.resolve('dist/app'),
-        path.resolve('node_modules'),
-      ],
-    },
-    module: {
-      rules: [
-        {
-          test: /\.svg$/i,
-          type: 'asset',
-        },
-        {
-          test: /\.html$/i,
-          loader: 'html-loader',
-        },
-      ],
-    },
-    webpack: (config: webpack.Configuration) => {
-      config.resolve.fallback = { fs: false };
-      return config;
-    },
-  };
-  // @ts-ignore
-  return await build(path.resolve('src/app'), nextConfig);
+  return await build(path.resolve('src/app'));
+};
+
+export const exportNext = async (handoff: Handoff) => {
+  const nextExportCliSpan = trace('next-export-cli')
+  return await exportApp(path.resolve('src/app'), {
+    silent: false,
+    threads: 1,
+    outdir: path.resolve(handoff.workingPath, 'out'),
+  }, nextExportCliSpan);
 };
 
 export const watchApp = async (handoff: Handoff) => {

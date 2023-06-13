@@ -97,7 +97,9 @@ const run = async (
       case 'fetch':
         return handoff.fetch();
       case 'build':
-        return handoff.build();
+        await handoff.build();
+        await handoff.export();
+        return handoff;
       case 'start':
         watching = true;
         return handoff.start();

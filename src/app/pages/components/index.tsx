@@ -53,7 +53,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 
 const ComponentsPage = ({ content, menu, metadata, current, components, config }: ComponentPageDocumentationProps) => {
-  console.log('config', config)
   return (
     <div className="c-page">
       <Head>

@@ -6,7 +6,7 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import getConfig from 'next/config';
+import { getConfig } from '../../../config';
 
 /**
  * Render all index pages

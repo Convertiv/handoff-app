@@ -261,7 +261,6 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  */
 export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
   const menu = staticBuildMenu();
-  console.log(path);
   const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
   return {
@@ -299,6 +298,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
 export const fetchExportables = () => {
   try {
     const config = getConfig();
+    const handoff = getHandoff();
     const definitions = config.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -307,7 +307,7 @@ export const fetchExportables = () => {
 
     const exportables = definitions
       .map((def) => {
-        const defPath = path.join('exportables', `${def}.json`);
+        const defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
 
         if (!fs.existsSync(defPath)) {
           return null;
@@ -332,16 +332,15 @@ export const fetchExportables = () => {
 
 export const fetchExportable = (name: string) => {
   const config = getConfig();
-
+  const handoff = getHandoff();
   const def = config?.figma?.definitions.filter((def) => {
     return def.split('/').pop() === name;
   });
-
   if (!def || def.length === 0) {
     return null;
   }
 
-  const defPath = path.join('exportables', `${def}.json`);
+  const defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
 
   if (!fs.existsSync(defPath)) {
     return null;

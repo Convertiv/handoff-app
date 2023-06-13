@@ -18,6 +18,7 @@ function Header({ menu, config }: HeaderProps) {
       setMobile('is-active');
     }
   };
+
   return (
     <>
       <header id="site-header" className="c-site-header">

@@ -57,13 +57,14 @@ export async function getStaticPaths() {
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = (context) => {
+  const config = getConfig();
   return {
     props: {
+      config,
       ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
-      config: getConfig(),
       assets: getTokens().assets,
-    }
+    },
   };
 };
 
@@ -81,10 +82,10 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
     [icon]
   );
 
-  if(!menu){
+  if (!menu) {
     menu = [];
   }
-  
+
   return (
     <div className="c-page">
       <Head>
@@ -203,4 +204,4 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
       </section>
     </div>
   );
-};
+}
