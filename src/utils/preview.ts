@@ -17,7 +17,11 @@ export const buildClientFiles = async (): Promise<string> => {
       mode: 'production',
       entry,
       resolve: {
-        modules: [path.resolve(handoff?.modulePath, 'src'), path.resolve(handoff?.modulePath, 'node_modules')],
+        modules: [
+          path.resolve(handoff?.modulePath, 'src'), 
+          path.resolve(handoff?.modulePath, 'node_modules'),
+          path.resolve(handoff?.workingPath, 'node_modules'),
+        ],
       },
       output: {
         path: path.resolve(handoff?.workingPath, 'public/components'),
