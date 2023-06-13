@@ -21,7 +21,7 @@
     "handoff"
   ],
   "homepage": "https://www.handoff.com/",
-  "main": "./dist/cli.js",
+  "main": "./dist/index.js",
   "bin": {
     "handoff-app": "./dist/cli.js"
   },
