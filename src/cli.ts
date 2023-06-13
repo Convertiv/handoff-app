@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import arg from 'arg';
-import Handoff from './handoff';
+import Handoff from '.';
 
 class HandoffCliError extends Error {
   exitCode: number;

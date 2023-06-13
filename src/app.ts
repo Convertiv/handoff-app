@@ -2,7 +2,7 @@ import build from 'next/dist/build/index';
 import exportApp from 'next/dist/export/index';
 import { trace } from 'next/dist/trace'
 import { nextDev } from 'next/dist/cli/next-dev';
-import Handoff from './handoff';
+import Handoff from '.';
 import path from 'path';
 
 const buildApp = async (handoff: Handoff) => {
