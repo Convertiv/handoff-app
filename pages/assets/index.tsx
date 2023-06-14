@@ -1,8 +1,6 @@
-import type { GetStaticProps, NextPage } from 'next';
-
+import type { GetStaticProps } from 'next';
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import NavLink from 'components/NavLink';
 import Head from 'next/head';
 import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
@@ -12,7 +10,6 @@ import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
-const config = getConfig();
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -22,11 +19,15 @@ const config = getConfig();
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/', 'assets', `/assets`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/', 'assets', `/assets`).props,
+      config: getConfig(),
+    }
+  }
 };
 
-const AssetsPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
   return (
     <div className="c-page">
       <Head>

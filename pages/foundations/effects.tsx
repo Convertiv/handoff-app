@@ -3,7 +3,6 @@ import type { GetStaticProps } from 'next';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import Icon from 'components/Icon';
-import { getConfig } from 'config';
 import { lowerCase } from 'lodash';
 import Head from 'next/head';
 import * as util from 'components/util';
@@ -16,21 +15,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
-
-const config = getConfig();
-
-const effectGroups = Object.fromEntries(
-  Object.entries(groupBy(config.design.effect, 'group')).map(([groupKey, effects]) => {
-    return [
-      groupKey,
-      effects.map((effectObj) => {
-        return {
-          ...effectObj,
-        };
-      }),
-    ] as const;
-  })
-);
+import { getTokens } from 'components/util';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -48,10 +33,28 @@ export const applyEffectToCssProperties = (effect: EffectParametersObject, cssPr
  */
 export const getStaticProps: GetStaticProps = async () => {
   // Read current slug
-  return util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`);
+
+  return {
+    props: {
+      ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
+      design: getTokens().design,
+    }
+  }
 };
 
-const ColorsPage = ({ content, menu, metadata, current, css, scss, types }: util.FoundationDocumentationProps) => {
+const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design }: util.FoundationDocumentationProps) => {
+  const effectGroups = Object.fromEntries(
+    Object.entries(groupBy(design.effect, 'group')).map(([groupKey, effects]) => {
+      return [
+        groupKey,
+        effects.map((effectObj) => {
+          return {
+            ...effectObj,
+          };
+        }),
+      ] as const;
+    })
+  );
   return (
     <div className="c-page">
       <Head>

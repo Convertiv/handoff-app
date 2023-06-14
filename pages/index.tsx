@@ -1,17 +1,16 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import classNames from 'classnames';
-
-import { getConfig, getChangelog } from 'config';
+import { getConfig } from 'config';
 import Icon from 'components/Icon';
 import components from 'assets/images/components.png';
 import Head from 'next/head';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { fetchDocPageMarkdown, getChangelog, ChangelogDocumentationProps } from 'components/util';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
@@ -23,9 +22,6 @@ const getCountLabel = (count: number, singular: string, plural: string) => {
   return plural;
 };
 
-const config = getConfig();
-const changelog = getChangelog();
-
 /**
  * This statically renders the menu mixing markdown file links with the
  * normal menu
@@ -35,11 +31,16 @@ const changelog = getChangelog();
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/', 'index', `/`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
+      config: getConfig(),
+      changelog: getChangelog(),
+    }
+  }
 };
 
-const Home = ({ content, menu, metadata }: DocumentationProps) => {
+const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumentationProps) => {
   const router = useRouter();
 
   return (

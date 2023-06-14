@@ -1,18 +1,15 @@
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
 import Header from 'components/Header';
 import ReactMarkdown from 'react-markdown';
 import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 
-const config = getConfig();
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -22,11 +19,15 @@ const config = getConfig();
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/', 'foundations', `/foundations`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/', 'foundations', `/foundations`).props,
+      config: getConfig(),
+    }
+  }
 };
 
-const DesignPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const DesignPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
   return (
     <div className="c-page">
       <Head>

@@ -46,6 +46,19 @@ export interface ComponentSizeMap {
   css: string;
 }
 
+export interface ExportResult {
+  design: {
+    color: ColorObject[];
+    effect: EffectObject[];
+    typography: TypographyObject[];
+  };
+  components: DocumentComponentsObject;
+  assets: {
+    icons: AssetObject[];
+    logos: AssetObject[];
+  };
+}
+
 export interface Config {
   title: string;
   client: string;
@@ -62,16 +75,6 @@ export interface Config {
   type_copy: string;
   color_sort: string[];
   component_sort: string[];
-  design: {
-    color: ColorObject[];
-    effect: EffectObject[];
-    typography: TypographyObject[];
-  };
-  components: DocumentComponentsObject;
-  assets: {
-    icons: AssetObject[];
-    logos: AssetObject[];
-  };
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */

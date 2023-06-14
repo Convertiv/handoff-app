@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Icon from 'components/Icon';
 import Head from 'next/head';
 import {
@@ -14,14 +14,11 @@ import ReactMarkdown from 'react-markdown';
 import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import { getConfig } from 'config';
 import Link from 'next/link';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
 };
-
-const config = getConfig();
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -33,28 +30,21 @@ const config = getConfig();
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const result = fetchDocPageMarkdown('docs/', 'components', `/components`);
   const components = fetchExportables().map(exportable => exportable.id);
 
-  // const available: ComponentPageComponents[] = Object.values(AvailableComponentPageComponents).filter((comp: string) =>
-  //   componentExists(pluralizeComponent(comp), config)
-  // );
   return {
-    ...result,
     ...{
       props: {
-        ...result.props,
-        ...{
-          components: components.reduce(
-            (acc, component) => ({
-              ...acc,
-              ...{
-                [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
-              },
-            }),
-            {}
-          ),
-        },
+        ...fetchDocPageMarkdown('docs/', 'components', `/components`).props,
+        components: components.reduce(
+          (acc, component) => ({
+            ...acc,
+            ...{
+              [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
+            },
+          }),
+          {}
+        ),
       } as ComponentPageDocumentationProps,
     },
   };
@@ -85,13 +75,14 @@ const ComponentsPage = ({ content, menu, metadata, current, components }: Compon
                 <>
                   {Object.keys(components).map((componentId) => {
                     const component = components[componentId];
+
                     return (
                       <ComponentsPageCard
                         key={`component-${componentId}`}
                         component={componentId}
-                        title={components[componentId].title ?? componentId}
-                        description={components[componentId].description}
-                        icon={components[componentId].image}
+                        title={component.title ?? componentId}
+                        description={component.description}
+                        icon={component.image}
                       />
                     )
                   })}

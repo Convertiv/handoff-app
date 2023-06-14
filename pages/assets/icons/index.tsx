@@ -1,20 +1,16 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-
 import type { AssetObject } from 'figma-exporter/src/types';
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import Head from 'next/head';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from 'components/util';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from 'components/SideNav/Custom';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-
-const config = getConfig();
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -57,18 +53,23 @@ const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
+      config: getConfig(),
+      assets: getTokens().assets,
+    }
+  };
 };
 
-const IconsPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
   const [search, setSearch] = React.useState('');
 
   const icons = search
-    ? config.assets.icons.filter((icon) => {
+    ? assets.icons.filter((icon) => {
         return icon.index.includes(search);
       })
-    : config.assets.icons;
+    : assets.icons;
 
   const filterList = React.useCallback<React.ChangeEventHandler<HTMLInputElement>>((event) => {
     setSearch(event.currentTarget.value.toLowerCase().replace(/[\W_]+/g, ' '));

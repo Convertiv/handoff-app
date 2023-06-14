@@ -1,13 +1,12 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import { format } from 'date-fns';
-
-import { getChangelog, getConfig } from 'config';
 import Icon from 'components/Icon';
 import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown } from 'components/util';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from 'components/util';
 import Header from 'components/Header';
 import CustomNav from 'components/SideNav/Custom';
+import { getConfig } from 'config';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {
@@ -16,10 +15,6 @@ const getCountLabel = (count: number, singular: string, plural: string) => {
 
   return plural;
 };
-
-const changelog = getChangelog();
-
-const config = getConfig();
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -30,11 +25,16 @@ const config = getConfig();
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/', 'changelog', `/changelog`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/', 'changelog', `/changelog`).props,
+      config: getConfig(),
+      changelog: getChangelog(),
+    }
+  }
 };
 
-const ChangeLogPage = ({ content, menu, metadata, current }: DocumentationProps) => {
+const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: ChangelogDocumentationProps) => {
   return (
     <div className="c-page">
       <Head>

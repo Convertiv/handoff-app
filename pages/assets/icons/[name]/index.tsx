@@ -1,19 +1,14 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
 import HtmlReactParser from 'html-react-parser';
-import * as fs from 'fs-extra';
 import { AssetObject } from 'figma-exporter/src/types';
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import Head from 'next/head';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from 'components/util';
-import path from 'path';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
-
-const config = getConfig();
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -36,21 +31,24 @@ const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
 
   return <>{HtmlReactParser(htmlData)}</>;
 };
+
 /**
  * Render all index pages
  * @returns
  */
 export async function getStaticPaths() {
-  const paths = config.assets.icons.map((icon) => ({
+  const paths = getTokens().assets.icons.map((icon) => ({
     params: {
       name: icon.name,
     },
   }));
+
   return {
     paths,
     fallback: true,
   };
 }
+
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -60,14 +58,19 @@ export async function getStaticPaths() {
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  return fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`);
+  return {
+    props: {
+      ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
+      config: getConfig(),
+      assets: getTokens().assets,
+    }
+  };
 };
 
-const SingleIcon = ({ content, menu, metadata, current }: DocumentationProps) => {
+export default function SingleIcon({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) {
   const router = useRouter();
   let { name } = router.query;
-  const icon = config.assets.icons.find((icon) => icon.icon === name);
+  const icon = assets?.icons.find((icon) => icon.icon === name);
   const copySvg = React.useCallback<React.MouseEventHandler>(
     (event) => {
       event.preventDefault();
@@ -77,16 +80,18 @@ const SingleIcon = ({ content, menu, metadata, current }: DocumentationProps) =>
     },
     [icon]
   );
+
   if(!menu){
     menu = [];
   }
+  
   return (
     <div className="c-page">
       <Head>
         {!icon ? (
-          <title>{`Icon Not Found | ${config.client} Design System`}</title>
+          <title>{`Icon Not Found | ${config?.client} Design System`}</title>
         ) : (
-          <title>{`${icon.name} Icon | ${config.client} Design System`}</title>
+          <title>{`${icon.name} Icon | ${config?.client} Design System`}</title>
         )}
       </Head>
       <Header menu={menu} />
@@ -199,4 +204,3 @@ const SingleIcon = ({ content, menu, metadata, current }: DocumentationProps) =>
     </div>
   );
 };
-export default SingleIcon;

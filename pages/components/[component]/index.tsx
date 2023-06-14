@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables } from 'components/util';
-import { getConfig, getPreview } from 'config';
+import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from 'components/util';
+import { getConfig } from 'config';
 import { IParams, reduceSlugToString } from 'components/util';
 import { ExportableDefinition, PreviewObject } from 'figma-exporter/src/types';
 import { Component, ComponentDesign } from 'figma-exporter/src/exporters/components/extractor';
@@ -18,7 +18,6 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
 import ComponentDesignTokens from 'components/ComponentDesignTokens';
-import { Config } from 'client-config';
 import { filterOutNull } from 'figma-exporter/src/utils';
 
 /**
@@ -43,29 +42,28 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   const { component } = context.params as IParams;
   const componentSlug = reduceSlugToString(component);
-  const exportable = fetchExportable(componentSlug!);
   
   return {
     props: {
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
+      config: getConfig(),
+      exportable: fetchExportable(componentSlug!),
+      components: getTokens().components[componentSlug!],
+      previews: getPreview().components[componentSlug!],
       component,
-      exportable
     }
   };
 };
 
-const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, types }: ComponentDocumentationProps) => {
+const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, types, components, previews, config }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
-  const config = getConfig();
-
-  const components = config.components[component];
   const designComponents: ComponentDesign[] = components.filter(
     (component): component is ComponentDesign => component.componentType === 'design'
   );
 
-  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, config);
-  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, config)
+  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
+  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)
 
   return (
     <div className="c-page">
@@ -157,7 +155,7 @@ type ComponentPreview = {
 
 type ComponentPreviews = ComponentPreview[];
 
-const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', exportable: ExportableDefinition, components: Component[], config: Config) => {
+const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', exportable: ExportableDefinition, components: Component[], previews: PreviewObject[], sort: string[]) => {
   if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
 
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
@@ -216,7 +214,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
 
       return {
         component: component,
-        preview: getPreview().components[component.name].find((item) => item.id === component.id),
+        preview: previews.find((item) => item.id === component.id),
         overrides
       };
     })
@@ -224,8 +222,6 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
     .sort(function (a, b) {
       const firstComponent = a.component;
       const secondComponent = b.component;
-
-      const sort = getSortArr(firstComponent, config);
 
       if (!sort || sort.length === 0) {
         return 0
@@ -342,12 +338,3 @@ export const getComponentPreviewTitle = (component: Component): string => {
     ? `${startCase(component.type || component.state || component.activity)} ${startCase(component.name)}`
     : `${startCase(component.size || component.layout)} ${startCase(component.name)}`;
 }
-
-export const getSortArr = (component: Component, config: Config): string[] | null => {
-  if (component.componentType === 'design') {
-    return config.component_sort;
-  }
-
-  return null;
-}
-

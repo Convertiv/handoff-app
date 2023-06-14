@@ -1,24 +1,19 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type * as next from 'next';
 import sortedUniq from 'lodash/sortedUniq';
-import sortBy from 'lodash/sortBy';
-
 import type { TypographyObject } from 'figma-exporter/src/types';
 import { getConfig } from 'config';
 import Icon from 'components/Icon';
-
 import NavLink from 'components/NavLink';
 import { FontFamily } from 'types/font';
 import Head from 'next/head';
 import Header from 'components/Header';
-import { DocumentationProps, fetchDocPageMarkdown, fetchFoundationDocPageMarkdown, FoundationDocumentationProps, SectionLink, staticBuildMenu } from 'components/util';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from 'components/util';
 import CustomNav from 'components/SideNav/Custom';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from 'components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from 'components/DownloadTokens';
-
-const config = getConfig();
 
 const pluckStyle = (type: TypographyObject) => {
   return {
@@ -29,41 +24,24 @@ const pluckStyle = (type: TypographyObject) => {
   };
 };
 
-const typography = config.design.typography.slice().sort((a, b) => {
-  const l = config.type_sort.indexOf(a.name) >>> 0;
-  const r = config.type_sort.indexOf(b.name) >>> 0;
-
-  return l !== r ? l - r : a.name.localeCompare(b.name);
-});
-
-const families: FontFamily = typography.reduce((result, current) => {
-  return {
-    ...result,
-    [current.values.fontFamily]: result[current.values.fontFamily]
-      ? // sorts and returns unique font weights
-        sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
-      : [current.values.fontWeight],
-  };
-}, {} as FontFamily);
-
-const type_copy = config.type_copy ? config.type_copy : 'Almost before we knew it, we had left the ground.';
 interface typographyTypes {
   [key: string]: ReactElement;
 }
 
-const renderTypes: (type: TypographyObject) => typographyTypes = (type: TypographyObject) => ({
+const renderTypes: (type: TypographyObject, content: string) => typographyTypes = (type: TypographyObject, content: string) => ({
   Subheading: <h1 style={pluckStyle(type)}></h1>,
-  'Heading 1': <h1 style={pluckStyle(type)}>{type_copy}</h1>,
-  'Heading 2': <h2 style={pluckStyle(type)}>{type_copy}</h2>,
-  'Heading 3': <h3 style={pluckStyle(type)}>{type_copy}</h3>,
-  'Heading 4': <h4 style={pluckStyle(type)}>{type_copy}</h4>,
-  'Heading 5': <h5 style={pluckStyle(type)}>{type_copy}</h5>,
-  'Heading 6': <h6 style={pluckStyle(type)}>{type_copy}</h6>,
-  'Input Labels': <label style={pluckStyle(type)}>{type_copy}</label>,
-  Blockquote: <blockquote style={pluckStyle(type)}>{type_copy}</blockquote>,
-  Link: <a style={pluckStyle(type)}>{type_copy}</a>,
-  Paragraph: <p style={pluckStyle(type)}>{type_copy}</p>,
+  'Heading 1': <h1 style={pluckStyle(type)}>{content}</h1>,
+  'Heading 2': <h2 style={pluckStyle(type)}>{content}</h2>,
+  'Heading 3': <h3 style={pluckStyle(type)}>{content}</h3>,
+  'Heading 4': <h4 style={pluckStyle(type)}>{content}</h4>,
+  'Heading 5': <h5 style={pluckStyle(type)}>{content}</h5>,
+  'Heading 6': <h6 style={pluckStyle(type)}>{content}</h6>,
+  'Input Labels': <label style={pluckStyle(type)}>{content}</label>,
+  Blockquote: <blockquote style={pluckStyle(type)}>{content}</blockquote>,
+  Link: <a style={pluckStyle(type)}>{content}</a>,
+  Paragraph: <p style={pluckStyle(type)}>{content}</p>,
 })
+
 /**
  * This statically renders content from the markdown, creating menu and providing
  * metadata
@@ -72,13 +50,36 @@ const renderTypes: (type: TypographyObject) => typographyTypes = (type: Typograp
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async () => {
-  // Read current slug
-  return fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`);
+export const getStaticProps: next.GetStaticProps = async () => {
+  return {
+    props: {
+      ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
+      config: getConfig(),
+      design: getTokens().design,
+    },
+  }
 };
 
-const Typography = ({ content, menu, metadata, current, scss, css, types }: FoundationDocumentationProps) => {
+const Typography = ({ content, menu, metadata, current, scss, css, types, config, design }: FoundationDocumentationProps) => {
   const [copy, setCopy] = React.useState('Copy link to clipboard');
+
+  const typography = design.typography.slice().sort((a, b) => {
+    const l = config.type_sort.indexOf(a.name) >>> 0;
+    const r = config.type_sort.indexOf(b.name) >>> 0;
+    return l !== r ? l - r : a.name.localeCompare(b.name);
+  });
+
+  const families: FontFamily = typography.reduce((result, current) => {
+    return {
+      ...result,
+      [current.values.fontFamily]: result[current.values.fontFamily]
+        ? // sorts and returns unique font weights
+          sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
+        : [current.values.fontWeight],
+    };
+  }, {} as FontFamily);
+
+  const type_copy = config.type_copy ?? 'Almost before we knew it, we had left the ground.';
 
   return (
     <div className="c-page">
@@ -181,7 +182,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, types }: Foun
                     </p>
                   </div>
                   <div className="o-col-9@md">
-                    {renderTypes(type)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}
+                    {renderTypes(type, copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}
                   </div>
                 </div>
               </div>

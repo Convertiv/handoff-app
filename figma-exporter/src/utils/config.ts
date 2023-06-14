@@ -1,5 +1,4 @@
 import path from 'path';
-import { ComponentSizeMap } from '../config';
 
 /**
  * Get Config
@@ -17,25 +16,4 @@ export const getFetchConfig = () => {
   const parsed = { ...config };
 
   return parsed;
-};
-
-/**
- * Map a component size to the right name
- * @param figma
- * @returns
- */
-export const mapComponentSize = (figma: string, component?: string): string => {
-  const config = getFetchConfig();
-  if (component) {
-    if (config.figma.components[component]?.size) {
-      const componentMap = config.components[component]?.size as ComponentSizeMap[];
-      const componentSize = componentMap.find((size) => size.figma === figma);
-      if (componentSize && componentSize?.css) {
-        return componentSize?.css;
-      }
-    }
-  }
-  const coreMap = config.figma.size as ComponentSizeMap[];
-  const size = coreMap.find((size) => size.figma === figma);
-  return size?.css ?? figma;
 };
