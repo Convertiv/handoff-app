@@ -48,7 +48,7 @@ class Handoff {
   async init(): Promise<Handoff> {
     this.config = await getConfig();
     this.config = this.hooks.init(this.config);
-    serializeHandoff();
+    await serializeHandoff();
     return this;
   }
   async fetch(): Promise<Handoff> {

@@ -59,7 +59,7 @@ var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, f
         switch (_a.label) {
             case 0:
                 nextExportCliSpan = (0, trace_1.trace)('next-export-cli');
-                return [4 /*yield*/, (0, index_2.default)(path_1.default.resolve('src/app'), {
+                return [4 /*yield*/, (0, index_2.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), {
                         silent: false,
                         threads: 1,
                         outdir: path_1.default.resolve(handoff.workingPath, 'out'),
@@ -71,7 +71,7 @@ var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, f
 exports.exportNext = exportNext;
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        (0, next_dev_1.nextDev)([path_1.default.resolve('src/app'), '-p', '3000']);
+        (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
         return [2 /*return*/];
     });
 }); };

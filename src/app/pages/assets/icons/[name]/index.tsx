@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { GetStaticProps } from 'next';
+import { GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
 import HtmlReactParser from 'html-react-parser';
 import { AssetObject } from '../../../../../types';
@@ -58,17 +58,17 @@ export async function getStaticPaths() {
  * @returns
  */
 export const getStaticProps: GetStaticProps = (context) => {
-  const config = getConfig();
   return {
     props: {
-      config,
       ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
+      config: getConfig(),
       assets: getTokens().assets,
     },
   };
 };
 
 export default function SingleIcon({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) {
+  if(!config) console.log(config);
   const router = useRouter();
   let { name } = router.query;
   const icon = assets?.icons.find((icon) => icon.icon === name);

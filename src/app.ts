@@ -11,7 +11,7 @@ const buildApp = async (handoff: Handoff) => {
 
 export const exportNext = async (handoff: Handoff) => {
   const nextExportCliSpan = trace('next-export-cli')
-  return await exportApp(path.resolve('src/app'), {
+  return await exportApp(path.resolve(handoff.modulePath, 'src/app'), {
     silent: false,
     threads: 1,
     outdir: path.resolve(handoff.workingPath, 'out'),
@@ -19,7 +19,7 @@ export const exportNext = async (handoff: Handoff) => {
 };
 
 export const watchApp = async (handoff: Handoff) => {
-  nextDev([path.resolve('src/app'), '-p', '3000']);
+  nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
 }
 
 export default buildApp;

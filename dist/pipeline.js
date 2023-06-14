@@ -137,6 +137,11 @@ var formatComponentsTransformerOptions = function (exportables) {
         return __assign(__assign({}, res), (_a = {}, _a[exportable.id] = __assign(__assign({}, exportable.options.transformer), exportable.options.shared), _a));
     }, {})));
 };
+/**
+ * Get the exportables from the config
+ * @param handoff
+ * @returns Promise<ExportableDefinition[]>
+ */
 var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var config_2, definitions, exportables;
     var _a;

@@ -99,7 +99,9 @@ var Handoff = /** @class */ (function () {
                     case 1:
                         _a.config = _b.sent();
                         this.config = this.hooks.init(this.config);
-                        (0, config_1.serializeHandoff)();
+                        return [4 /*yield*/, (0, config_1.serializeHandoff)()];
+                    case 2:
+                        _b.sent();
                         return [2 /*return*/, this];
                 }
             });
