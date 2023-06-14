@@ -12,7 +12,6 @@ export const buildClientFiles = async (): Promise<string> => {
     throw Error('Handoff not initialized');
   }
   return new Promise((resolve, reject) => {
-    console.log(path.resolve(handoff?.modulePath, 'node_modules'));
     let config: webpack.Configuration = {
       mode: 'production',
       entry,
@@ -24,7 +23,7 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
       output: {
-        path: path.resolve(handoff?.workingPath, 'public/components'),
+        path: path.resolve(handoff?.modulePath, 'public/components'),
         filename: 'bundle.js',
       },
       resolveLoader: {
@@ -46,8 +45,8 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
     };
-    //const newConfig = plugin.modifyWebpackConfig(config);
-    const compile = webpack(config);
+    const newConfig = handoff.hooks.webpack(config);
+    const compile = webpack(newConfig);
     compile.run((err, stats) => {
       if (err) {
         let error = 'Errors encountered trying to build preview styles1.\n';

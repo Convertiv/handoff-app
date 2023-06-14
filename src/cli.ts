@@ -17,21 +17,20 @@ class HandoffCliError extends Error {
 const usage = `Usage: handoff-app <cmd> <opts>
 
 Commands:
-  fetch [opts]
-  build [opts]
-
-  bootstrap [opts]
+  fetch [opts] - Fetches the design tokens from the design system
+  build [opts] - Builds the design system
+  start [opts] - Starts the design system in development mode
 
   make
-    make:schema <name> [opts]
-    make:template <component> <state> [opts]
-    make:page <component> <state> [opts]
+    make:schema <name> [opts] - Creates a new schema
+    make:template <component> <state> [opts] - Creates a new template
+    make:page <component> <state> [opts] - Creates a new page
 
-  export - Exports the default configuration to the current directory
-    export:config [opts]
-    export:integration [opts]
-    export:schema [opts]
-    export:pages [opts]
+  eject - Ejects the default configuration to the current directory
+    eject:config [opts] - Ejects the default configuration to the current directory
+    eject:integration [opts] - Ejects the default integration to the current directory
+    eject:exportables [opts] - Ejects the default exportables to the current directory
+    eject:pages [opts] - Ejects the default pages to the current directory
 
 Options:
   -c, --config [file]      Define the path to the config file
@@ -45,6 +44,13 @@ Options:
  */
 const showHelp = () => {
   cliError(usage, 2);
+};
+
+/**
+ * Show the help message
+ */
+const showVersion = () => {
+  cliError('Handoff App - v0.5.1', 2);
 };
 
 /**
@@ -88,6 +94,9 @@ const run = async (
     if (args['--help']) {
       return showHelp();
     }
+    if (args['--version']) {
+      return showVersion();
+    }
     const handoff = new Handoff();
     if (args['--debug']) {
       handoff.debug = true;
@@ -98,11 +107,18 @@ const run = async (
         return handoff.fetch();
       case 'build':
         await handoff.build();
-        await handoff.export();
+        await handoff.exportApp();
         return handoff;
       case 'start':
         watching = true;
         return handoff.start();
+      case 'eject':
+        cliError(
+          `Eject commands will eject the default configuration into the working directory so you can customize it. \n\nEject must have a subcommand. Did you mean: \n  - eject:config \n  - eject:exportables.\n  - eject:integration\n  - eject:docs.`,
+          2
+        );
+      case 'eject:config':
+        return handoff.ejectConfig();
     }
   } catch (e: any) {
     if (e.message.indexOf('Unknown or unexpected option') === -1) throw e;
@@ -112,10 +128,9 @@ const run = async (
 
 run(process.argv.slice(2), process.stdout, process.stderr)
   .then(() => {
-    if(!watching){
+    if (!watching) {
       process.exit(0);
     }
-    
   })
   .catch((e) => {
     if (!e.silent) console.error(e.messageOnly ? e.message : e);

@@ -69,12 +69,18 @@ var HandoffCliError = /** @class */ (function (_super) {
     }
     return HandoffCliError;
 }(Error));
-var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts]\n  build [opts]\n\n  bootstrap [opts]\n\n  make\n    make:schema <name> [opts]\n    make:template <component> <state> [opts]\n    make:page <component> <state> [opts]\n\n  export - Exports the default configuration to the current directory\n    export:config [opts]\n    export:integration [opts]\n    export:schema [opts]\n    export:pages [opts]\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
+var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts] - Fetches the design tokens from the design system\n  build [opts] - Builds the design system\n  start [opts] - Starts the design system in development mode\n\n  make\n    make:schema <name> [opts] - Creates a new schema\n    make:template <component> <state> [opts] - Creates a new template\n    make:page <component> <state> [opts] - Creates a new page\n\n  eject - Ejects the default configuration to the current directory\n    eject:config [opts] - Ejects the default configuration to the current directory\n    eject:integration [opts] - Ejects the default integration to the current directory\n    eject:exportables [opts] - Ejects the default exportables to the current directory\n    eject:pages [opts] - Ejects the default pages to the current directory\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
 /**
  * Show the help message
  */
 var showHelp = function () {
     cliError(usage, 2);
+};
+/**
+ * Show the help message
+ */
+var showVersion = function () {
+    cliError('Handoff App - v0.5.1', 2);
 };
 /**
  * Define a CLI error
@@ -94,7 +100,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 8, , 9]);
+                _b.trys.push([0, 10, , 11]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -111,6 +117,9 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (args['--help']) {
                     return [2 /*return*/, showHelp()];
                 }
+                if (args['--version']) {
+                    return [2 /*return*/, showVersion()];
+                }
                 handoff_1 = new _1.default();
                 if (args['--debug']) {
                     handoff_1.debug = true;
@@ -123,26 +132,32 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'fetch': return [3 /*break*/, 2];
                     case 'build': return [3 /*break*/, 3];
                     case 'start': return [3 /*break*/, 6];
+                    case 'eject': return [3 /*break*/, 7];
+                    case 'eject:config': return [3 /*break*/, 8];
                 }
-                return [3 /*break*/, 7];
+                return [3 /*break*/, 9];
             case 2: return [2 /*return*/, handoff_1.fetch()];
             case 3: return [4 /*yield*/, handoff_1.build()];
             case 4:
                 _b.sent();
-                return [4 /*yield*/, handoff_1.export()];
+                return [4 /*yield*/, handoff_1.exportApp()];
             case 5:
                 _b.sent();
                 return [2 /*return*/, handoff_1];
             case 6:
                 watching = true;
                 return [2 /*return*/, handoff_1.start()];
-            case 7: return [3 /*break*/, 9];
-            case 8:
+            case 7:
+                cliError("Eject commands will eject the default configuration into the working directory so you can customize it. \n\nEject must have a subcommand. Did you mean: \n  - eject:config \n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
+                _b.label = 8;
+            case 8: return [2 /*return*/, handoff_1.ejectConfig()];
+            case 9: return [3 /*break*/, 11];
+            case 10:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 9: return [2 /*return*/];
+            case 11: return [2 /*return*/];
         }
     });
 }); };

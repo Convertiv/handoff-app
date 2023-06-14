@@ -6,7 +6,8 @@ import { DocumentationObject } from '../../types';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { getConfig } from '../../config';
+import { getConfig, getHandoff } from '../../config';
+import { get } from 'lodash';
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = basename(process.cwd());
@@ -27,6 +28,7 @@ export const getPathToIntegration = () => {
   const defaultPath = path.resolve(path.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
   
   const config = handoff.config;
+  console.log(config);
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
@@ -86,12 +88,8 @@ export default async function integrationTransformer(documentationObject: Docume
   fs.copySync(integrationTemplates, templatesFolder);
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
-  // const hookReturn = (await pluginTransformer()).postIntegration(documentationObject);
-  // if(hookReturn) {
-  //   hookReturn.map((file) => {
-  //     fs.writeFileSync(path.join(sassFolder, file.filename), file.data);
-  //   });
-  // }
+  const handoff = getHandoff();
+  handoff.hooks.integration(documentationObject);
 }
 
 /**

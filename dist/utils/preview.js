@@ -53,7 +53,6 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
             throw Error('Handoff not initialized');
         }
         return [2 /*return*/, new Promise(function (resolve, reject) {
-                console.log(path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'));
                 var config = {
                     mode: 'production',
                     entry: entry,
@@ -65,7 +64,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         ],
                     },
                     output: {
-                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'public/components'),
+                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'public/components'),
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
@@ -87,8 +86,8 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         ],
                     },
                 };
-                //const newConfig = plugin.modifyWebpackConfig(config);
-                var compile = (0, webpack_1.default)(config);
+                var newConfig = handoff.hooks.webpack(config);
+                var compile = (0, webpack_1.default)(newConfig);
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {

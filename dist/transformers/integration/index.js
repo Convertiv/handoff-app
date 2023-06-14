@@ -61,6 +61,7 @@ var getPathToIntegration = function () {
     var defaultVersion = '5.2';
     var defaultPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
     var config = handoff.config;
+    console.log(config);
     if (config.integration) {
         if (config.integration.name === 'custom') {
             // Look for a custom integration
@@ -108,7 +109,7 @@ exports.getIntegrationName = getIntegrationName;
  */
 function integrationTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream;
+        var outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream, handoff;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -125,6 +126,8 @@ function integrationTransformer(documentationObject) {
                     return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
                 case 1:
                     _a.sent();
+                    handoff = (0, config_1.getHandoff)();
+                    handoff.hooks.integration(documentationObject);
                     return [2 /*return*/];
             }
         });
