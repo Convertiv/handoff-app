@@ -196,15 +196,15 @@ export const getHandoff = (): Handoff => {
  */
 export const serializeHandoff = () => {
   const handoff = getHandoff();
-  fs.writeFileSync(path.join(handoff.workingPath, 'handoff.state.json'), JSON.stringify(handoff));
+  fs.writeFileSync(path.join(handoff.workingPath, 'exported', 'handoff.state.json'), JSON.stringify(handoff));
 };
 
 /**
  * Deserialize the handoff from the working directory
- * @returns 
+ * @returns
  */
 export const deserializeHandoff = () => {
-  const statePath = path.join(process.cwd(), 'handoff.state.json');
+  const statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
   if (fs.existsSync(statePath)) {
     const stateBuffer = fs.readFileSync(statePath);
     const state = JSON.parse(stateBuffer.toString());
