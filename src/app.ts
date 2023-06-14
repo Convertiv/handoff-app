@@ -6,7 +6,7 @@ import Handoff from '.';
 import path from 'path';
 
 const buildApp = async (handoff: Handoff) => {
-  return await build(path.resolve('src/app'));
+  return await build(path.resolve(handoff.modulePath, 'src/app'));
 };
 
 export const exportNext = async (handoff: Handoff) => {

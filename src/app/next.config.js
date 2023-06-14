@@ -1,5 +1,4 @@
 const path = require('path');
-console.log('reading config');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

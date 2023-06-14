@@ -28,7 +28,6 @@ export const getPathToIntegration = () => {
   const defaultPath = path.resolve(path.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
   
   const config = handoff.config;
-  console.log(config);
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration

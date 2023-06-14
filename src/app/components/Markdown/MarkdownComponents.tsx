@@ -34,7 +34,6 @@ export type CustomRenderers = {
  * @returns
  */
 const Headings = ({ level, children }: HeadingProps) => {
-  console.log(level);
   // Access actual (string) value of heading
   if (children[0]) {
     const heading = children[0];

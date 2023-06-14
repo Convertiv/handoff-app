@@ -61,7 +61,6 @@ var getPathToIntegration = function () {
     var defaultVersion = '5.2';
     var defaultPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
     var config = handoff.config;
-    console.log(config);
     if (config.integration) {
         if (config.integration.name === 'custom') {
             // Look for a custom integration
