@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2023-06-14
+
+### Changes
+
+- Tokens, changelog and previews are now read form the file system using the `fs.readFileSync` instead of the `import` statement.
+- Updated the Next.js app pages to utilize `getStaticProps` for fetching of the configuration and the exported tokens.
+- Removed `componentExists` utility method as it's no longer used
+- Removed `mapComponentSize` utility method as it's no longer used
+
+### Bugfixes
+
+- By changing the way in which the configuration, tokens, changelog and previews are read and passed into the pages a bug has been resolved that would occur while running the `fetch` command while the `dev` command was already running which would cause the app from stop responding correctly and would require app restart.
+
 ## [0.5.1] - 2023-06-01
 
 ### Changes
