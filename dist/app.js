@@ -56,7 +56,6 @@ var index_2 = __importDefault(require("next/dist/export/index"));
 var trace_1 = require("next/dist/trace");
 var next_dev_1 = require("next/dist/cli/next-dev");
 var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath;
     return __generator(this, function (_a) {
@@ -65,9 +64,9 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 tsconfigPath = 'tsconfig.json';
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'tsconfig.json'))) {
-                    tsconfigPath = path_1.default.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
-                }
+                // if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
+                //   tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
+                // }
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
                 return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
             case 1: return [2 /*return*/, _a.sent()];

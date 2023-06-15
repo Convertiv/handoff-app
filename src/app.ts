@@ -11,9 +11,9 @@ const buildApp = async (handoff: Handoff) => {
   const config = require(path.resolve(appPath, 'next.config.js'));
   // does a ts config exist?
   let tsconfigPath = 'tsconfig.json';
-  if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
-    tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
-  }
+  // if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
+  //   tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
+  // }
 
   config.typescript = {
     ...config.typescript,
