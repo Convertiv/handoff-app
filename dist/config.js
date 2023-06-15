@@ -117,6 +117,9 @@ exports.getHandoff = getHandoff;
  */
 var serializeHandoff = function () {
     var handoff = (0, exports.getHandoff)();
+    if (!fs_extra_1.default.existsSync(path_1.default.join(process.cwd(), 'exported'))) {
+        fs_extra_1.default.mkdirSync(path_1.default.join(process.cwd(), 'exported'));
+    }
     var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
     fs_extra_1.default.writeFileSync(statePath, JSON.stringify(handoff));
 };

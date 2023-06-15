@@ -196,6 +196,9 @@ export const getHandoff = (): Handoff => {
  */
 export const serializeHandoff = () => {
   const handoff = getHandoff();
+  if(!fs.existsSync(path.join(process.cwd(), 'exported'))) {
+    fs.mkdirSync(path.join(process.cwd(), 'exported'));
+  }
   const statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
   fs.writeFileSync(statePath, JSON.stringify(handoff));
 };

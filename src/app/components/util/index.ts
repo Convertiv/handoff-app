@@ -135,8 +135,11 @@ export const buildL1StaticPaths = () => {
   const docRoot = path.resolve(handoff.modulePath, 'config/docs');
   const files = fs.readdirSync(docRoot);
   const pageRoot = path.resolve(handoff.workingPath, 'pages');
-  const pages = fs.readdirSync(pageRoot);
-  const list = files.concat(pages);
+  let list = files;
+  if(fs.existsSync(pageRoot)){
+    const pages = fs.readdirSync(pageRoot);
+    list = files.concat(pages);
+  }
   const paths = list
     .filter((fileName) => {
       if(fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
@@ -166,8 +169,11 @@ export const buildL2StaticPaths = () => {
   const docRoot = path.resolve(handoff.modulePath, 'config/docs');
   const files = fs.readdirSync(docRoot);
   const pageRoot = path.resolve(handoff.workingPath, 'pages');
-  const pages = fs.readdirSync(pageRoot);
-  const list = files.concat(pages);
+  let list = files;
+  if(fs.existsSync(pageRoot)){
+    const pages = fs.readdirSync(pageRoot);
+    list = files.concat(pages);
+  }
   const paths: SubPageType[] = list
     .flatMap((fileName) => {
       let calculatePath;
