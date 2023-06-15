@@ -34,13 +34,7 @@ const NormalizeValue = (value: string): string => {
     }
   }
 
-  const rgbaValue = value.match(/(.*?)rgba\(([0-9]+), ([0-9]+), ([0-9]+), [+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\)/);
-
-  if (rgbaValue && rgbaValue.length === 7) {
-    return `${rgbaValue[1]}rgba(${rgbaValue[2]}, ${rgbaValue[3]}, ${rgbaValue[4]}, ${round(Number(rgbaValue[5]), 2).toFixed(2)})`;
-  }
-
-  return value;
+  return value.replaceAll(/\d*\.\d+/g, (match) => round(Number(match), 2).toFixed(2));
 };
 
 const state_sort = ['default', 'hover', 'focus', 'active', 'disabled'];
