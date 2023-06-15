@@ -105,7 +105,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
           <div className="c-form-element c-form-element--fullwidth c-form-element--big">
             <div className="c-form-element__field">
               <div className="c-form-element__icon">
-                <Icon name="search" />
+                <Icon name="search" className='o-icon'/>
               </div>
               <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
             </div>

@@ -110,19 +110,19 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                 <small>&bull;</small>
                 <small>
                   <a href="#">
-                    <Icon name="share" className="u-mr-1" /> Share Asset
+                    <Icon name="share" className="u-mr-1 o-icon" /> Share Asset
                   </a>
                 </small>
                 <small>&bull;</small>
                 <small>
                   <a href="#" onClick={copySvg}>
-                    <Icon name="code" className="u-mr-1" /> Copy SVG
+                    <Icon name="code" className="u-mr-1 o-icon" /> Copy SVG
                   </a>
                 </small>
                 <small>&bull;</small>
                 <small>
                   <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data)} download={icon.name}>
-                    <Icon name="download" className="u-mr-1" /> Download SVG
+                    <Icon name="download" className="u-mr-1 o-icon" /> Download SVG
                   </a>
                 </small>
               </div>
@@ -150,14 +150,14 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                   <div className="c-icon-live-preview__menu">
                     <ul>
                       <li>
-                        <Icon name="plus-circle" /> <span>Add item</span>
+                        <Icon name="plus-circle" className="o-icon" /> <span>Add item</span>
                       </li>
                       <li className="c-icon-live-preview__menu--active">
                         <DisplayIcon icon={icon} />
                         <span>Menu label</span>
                       </li>
                       <li>
-                        <Icon name="search" /> <span>Search items</span>
+                        <Icon name="search" className="o-icon" /> <span>Search items</span>
                         <small>6</small>
                       </li>
                     </ul>
@@ -181,7 +181,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                   <div className="c-icon-live-preview__nav">
                     <span>
                       <a href="#">
-                        <Icon name="plus-circle" />
+                        <Icon name="plus-circle" className="o-icon" />
                       </a>
                     </span>
                     <span>
@@ -191,7 +191,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                     </span>
                     <span>
                       <a href="#">
-                        <Icon name="search" />
+                        <Icon name="search" className="o-icon" />
                       </a>
                     </span>
                   </div>

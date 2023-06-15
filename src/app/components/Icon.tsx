@@ -1,16 +1,25 @@
 import classNames from 'classnames';
+import Image from 'next/image';
 import * as React from 'react';
 
 export interface IconProps {
   name: string;
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-export const Icon: React.FC<IconProps> = ({ name, className }) => {
+export const Icon: React.FC<IconProps> = ({ name, className, width, height }) => {
   return (
-    <svg className={classNames('o-icon', className)}>
-      <use xmlnsXlink="http://www.w3.org/1999/xlink" xlinkHref={`/assets/icons.svg#icon-${name}`} />
-    </svg>
+    <div className={`icon-wrapper ${className}`}>
+      <Image
+        src={`/assets/svg/${name}.svg`}
+        className={className}
+        alt={`Icon for ${name}`}
+        width={width ?? '100%'}
+        height={height ?? '100%'}
+      />
+    </div>
   );
 };
 

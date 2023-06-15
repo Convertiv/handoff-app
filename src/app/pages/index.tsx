@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import classNames from 'classnames';
 import { getConfig } from '../../config';
 import Icon from '../components/Icon';
-import components from 'assets/images/components.png';
 import Head from 'next/head';
 import Header from '../components/Header';
 import { fetchDocPageMarkdown, getChangelog, ChangelogDocumentationProps } from '../components/util';
@@ -36,8 +35,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
       config: getConfig(),
       changelog: getChangelog(),
-    }
-  }
+    },
+  };
 };
 
 const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumentationProps) => {
@@ -73,7 +72,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 <a className="c-button c-button--primary u-pl-5 u-mb-5 u-pr-5">View Components</a>
               </Link>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={components.src} width={components.width} height={components.height} alt="Components" />
+              <img src="assets/images/components.png" width={1528} height={1250} alt="Components" />
             </div>
           </div>
           <div className="o-col-6@lg u-animation-fadein">
@@ -84,27 +83,27 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 <li>
                   <Link href="/foundations/typography">
                     <a className={classNames({ 'is-selected': router.asPath === '/foundations/typography' })}>
-                      Explore Typography <Icon name="arrow-right" />
+                      Explore Typography <Icon name="arrow-right" className="o-icon" />
                     </a>
                   </Link>
                 </li>
                 <li>
                   <Link href="/foundations/colors">
                     <a className={classNames({ 'is-selected': router.asPath === '/foundations/colors' })}>
-                      Explore Colors <Icon name="arrow-right" />
+                      Explore Colors <Icon name="arrow-right" className="o-icon" />
                     </a>
                   </Link>
                 </li>
                 <li>
                   <Link href="/foundations/logo">
                     <a className={classNames({ 'is-selected': router.asPath === '/foundations/logo' })}>
-                      Explore Logos <Icon name="arrow-right" />
+                      Explore Logos <Icon name="arrow-right" className="o-icon" />
                     </a>
                   </Link>
                 </li>
                 <li>
                   <a href="/tokens.zip">
-                    Download All Tokens <Icon name="arrow-right" />
+                    Download All Tokens <Icon name="arrow-right" className="o-icon" />
                   </a>
                 </li>
               </ul>
@@ -142,7 +141,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {added.colors.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="activity" /> Added{' '}
+                            <Icon name="activity" className="o-icon" /> Added{' '}
                             <strong>
                               {added.colors.length} {getCountLabel(added.colors.length, 'color', 'colors')}
                             </strong>
@@ -153,7 +152,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {added.typography.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="activity" /> Added{' '}
+                            <Icon name="activity" className="o-icon" /> Added{' '}
                             <strong>
                               {added.typography.length} {getCountLabel(added.typography.length, 'typography', 'typographies')}
                             </strong>
@@ -164,7 +163,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {added.icons.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="activity" /> Added{' '}
+                            <Icon name="activity" className="o-icon" /> Added{' '}
                             <strong>
                               {added.icons.length} {getCountLabel(added.icons.length, 'icon', 'icons')}
                             </strong>
@@ -175,7 +174,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {added.logos.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="activity" /> Added{' '}
+                            <Icon name="activity" className="o-icon" /> Added{' '}
                             <strong>
                               {added.logos.length} {getCountLabel(added.logos.length, 'logo', 'logos')}
                             </strong>
@@ -187,7 +186,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {changed.colors.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="sun" /> Changed{' '}
+                            <Icon name="sun" className="o-icon" /> Changed{' '}
                             <strong>
                               {changed.colors.length} {getCountLabel(changed.colors.length, 'color', 'colors')}
                             </strong>
@@ -198,7 +197,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {changed.typography.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="sun" /> Changed{' '}
+                            <Icon name="sun" className="o-icon" /> Changed{' '}
                             <strong>
                               {changed.typography.length} {getCountLabel(changed.typography.length, 'typography', 'typographies')}
                             </strong>
@@ -209,7 +208,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {changed.icons.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="sun" /> Changed{' '}
+                            <Icon name="sun" className="o-icon" /> Changed{' '}
                             <strong>
                               {changed.icons.length} {getCountLabel(changed.icons.length, 'icon', 'icons')}
                             </strong>
@@ -220,7 +219,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {changed.logos.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="sun" /> Changed{' '}
+                            <Icon name="sun" className="o-icon" /> Changed{' '}
                             <strong>
                               {changed.logos.length} {getCountLabel(changed.logos.length, 'logo', 'logos')}
                             </strong>
@@ -232,7 +231,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {deleted.colors.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="zap" /> Removed{' '}
+                            <Icon name="zap" className="o-icon" /> Removed{' '}
                             <strong>
                               {deleted.colors.length} {getCountLabel(deleted.colors.length, 'color', 'colors')}
                             </strong>
@@ -243,7 +242,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {deleted.typography.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="zap" /> Removed{' '}
+                            <Icon name="zap" className="o-icon" /> Removed{' '}
                             <strong>
                               {deleted.typography.length} {getCountLabel(deleted.typography.length, 'typography', 'typographies')}
                             </strong>
@@ -254,7 +253,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {deleted.icons.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="zap" /> Removed{' '}
+                            <Icon name="zap" className="o-icon" /> Removed{' '}
                             <strong>
                               {deleted.icons.length} {getCountLabel(deleted.icons.length, 'icon', 'icons')}
                             </strong>
@@ -265,7 +264,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                       {deleted.logos.length > 0 && (
                         <li>
                           <p>
-                            <Icon name="zap" /> Removed{' '}
+                            <Icon name="zap" className="o-icon" /> Removed{' '}
                             <strong>
                               {deleted.logos.length} {getCountLabel(deleted.logos.length, 'logo', 'logos')}
                             </strong>

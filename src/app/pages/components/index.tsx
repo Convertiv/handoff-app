@@ -51,7 +51,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
     },
   };
 };
-
+/**
+ * Define the components page
+ * @param param0 
+ * @returns 
+ */
 const ComponentsPage = ({ content, menu, metadata, current, components, config }: ComponentPageDocumentationProps) => {
   return (
     <div className="c-page">

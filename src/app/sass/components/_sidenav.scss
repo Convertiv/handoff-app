@@ -80,8 +80,12 @@
 			color: #757575;
 		}
 	}
+	.icon-wrapper {
+		display: inline-block;
+		vertical-align: middle;
+	}
 
-	svg {
+	svg, .icon-wrapper {
 		margin-right: rem( 15px );
 		opacity: .17;
 		width: rem( 16px );
