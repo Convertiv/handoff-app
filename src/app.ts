@@ -4,13 +4,20 @@ import { trace } from 'next/dist/trace';
 import { nextDev } from 'next/dist/cli/next-dev';
 import Handoff from '.';
 import path from 'path';
+import fs from 'fs-extra';
 
 const buildApp = async (handoff: Handoff) => {
   const appPath = path.resolve(handoff.modulePath, 'src/app');
   const config = require(path.resolve(appPath, 'next.config.js'));
+  // does a ts config exist?
+  let tsconfigPath = 'tsconfig.json';
+  if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
+    tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
+  }
+
   config.typescript = {
     ...config.typescript,
-    tsconfigPath: 'tsconfig.json',
+    tsconfigPath,
   };
   return await build(path.resolve(handoff.modulePath, 'src/app'), config);
 };
