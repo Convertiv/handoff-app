@@ -6,7 +6,7 @@ import { ExportableDefinition, ExportableOptions, PreviewJson, PreviewObject } f
 import { filterOutNull } from '../../../utils';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy, merge } from 'lodash';
+import { groupBy, merge, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -134,8 +134,15 @@ export const buildL1StaticPaths = () => {
   const handoff = getHandoff();
   const docRoot = path.resolve(handoff.modulePath, 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const paths = files
-    .filter((fileName) => !fs.lstatSync(path.join(docRoot, fileName)).isDirectory())
+  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pages = fs.readdirSync(pageRoot);
+  const list = files.concat(pages);
+  const paths = list
+    .filter((fileName) => {
+      if(fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
+      if(fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
+      return false;
+    })
     .map((fileName) => {
       const path = fileName.replace('.md', '');
       if (knownPaths.indexOf(path) < 0) {
@@ -158,14 +165,25 @@ export const buildL2StaticPaths = () => {
   const handoff = getHandoff();
   const docRoot = path.resolve(handoff.modulePath, 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const paths: SubPageType[] = files
+  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pages = fs.readdirSync(pageRoot);
+  const list = files.concat(pages);
+  const paths: SubPageType[] = list
     .flatMap((fileName) => {
-      if (fs.lstatSync(path.join(docRoot, fileName)).isDirectory()) {
-        const subFiles = fs.readdirSync(path.join(docRoot, fileName));
+      let calculatePath;
+      if(fs.existsSync(path.join(pageRoot, fileName))){
+        calculatePath = path.join(pageRoot, fileName);
+      }else if(fs.existsSync(path.join(docRoot, fileName))){
+        calculatePath = path.join(docRoot, fileName);
+      }else{
+        return undefined;
+      }
+      if (fs.lstatSync(calculatePath).isDirectory()) {
+        const subFiles = fs.readdirSync(calculatePath);
         return subFiles
           .flatMap((subFile) => {
-            const path = fileName.replace('.md', '');
-            if (knownPaths.indexOf(path) < 0) {
+            const childPath = fileName.replace('.md', '');
+            if (knownPaths.indexOf(childPath) < 0) {
               return {
                 params: {
                   level1: fileName,
@@ -190,12 +208,23 @@ export const staticBuildMenu = () => {
   const handoff = getHandoff();
   const docRoot = path.resolve(handoff.modulePath, 'config/docs');
   const files = fs.readdirSync(docRoot);
+  let list = files;
+  const workingPages = path.resolve(handoff.workingPath, 'pages');
+  let pages = [];
+  if (fs.existsSync(workingPages)) {
+    pages = fs.readdirSync(workingPages);
+    list = list.concat(pages);
+  }
   const sections: SectionLink[] = [];
-
   // Build path tree
-  const custom = files
+  const custom = uniq(list)
     .map((fileName) => {
-      const search = path.resolve(docRoot, fileName);
+      let search = '';
+      if (pages.includes(fileName)) {
+        search = path.resolve(workingPages, fileName);
+      } else {
+        search = path.resolve(docRoot, fileName);
+      }
       if (!fs.lstatSync(search).isDirectory() && search !== path.resolve(docRoot, 'index.md') && fileName.endsWith('md')) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
@@ -206,30 +235,30 @@ export const staticBuildMenu = () => {
 
         const path = `/${fileName.replace('.md', '')}`;
         let subSections = [];
-        
+
         if (path === '/components') {
           const exportables = fetchExportables();
           // Build the submenu of exportables (components)
-          const groupedExportables = groupBy(exportables, e => e.group ?? '');
-          Object.keys(groupedExportables).forEach(group => {
+          const groupedExportables = groupBy(exportables, (e) => e.group ?? '');
+          Object.keys(groupedExportables).forEach((group) => {
             subSections.push({ path: '', title: group });
-            groupedExportables[group].forEach(exportable => {
+            groupedExportables[group].forEach((exportable) => {
               const exportableDocs = fetchDocPageMetadataAndContent('docs/components/', exportable.id);
               subSections.push({ path: `components/${exportable.id}`, title: exportableDocs.metadata.title ?? exportable.id });
-            })
-          })
+            });
+          });
         }
 
         if (metadata.menu) {
           // Build the submenu
           subSections = Object.keys(metadata.menu)
-          .map((key) => {
-            const sub = metadata.menu[key];
-            if (sub.enabled !== false) {
-              return sub;
-            }
-          })
-          .filter(filterOutUndefined)
+            .map((key) => {
+              const sub = metadata.menu[key];
+              if (sub.enabled !== false) {
+                return sub;
+              }
+            })
+            .filter(filterOutUndefined);
         }
 
         return {
@@ -322,13 +351,13 @@ export const fetchExportables = () => {
 
         return exportable;
       })
-      .filter(filterOutNull)
+      .filter(filterOutNull);
 
     return exportables ? exportables : [];
   } catch (e) {
     return [];
   }
-}
+};
 
 export const fetchExportable = (name: string) => {
   const config = getConfig();
@@ -345,11 +374,10 @@ export const fetchExportable = (name: string) => {
   if (!fs.existsSync(defPath)) {
     return null;
   }
-  
+
   const data = fs.readFileSync(defPath, 'utf-8');
   return JSON.parse(data.toString()) as ExportableDefinition;
-}
-
+};
 
 /**
  * Fetch Component Doc Page Markdown
@@ -369,20 +397,20 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-export const getTokens = () : ExportResult => {
+export const getTokens = (): ExportResult => {
   const data = fs.readFileSync('./exported/tokens.json', 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
-}
+};
 
 export const getChangelog = () => {
   const data = fs.readFileSync('./exported/changelog.json', 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
-}
+};
 
-export const getPreview = () : PreviewJson => {
+export const getPreview = (): PreviewJson => {
   const data = fs.readFileSync('./exported/preview.json', 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
-}
+};
 
 /**
  * Reduce a slug which can be either an array or string, to just a string by
@@ -411,17 +439,18 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
 export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
   const handoff = getHandoff();
   const filepath = path.resolve(handoff.modulePath, 'config', `${localPath}${slug}.md`);
-  const localpath = path.resolve(handoff.workingPath, 'config', `${localPath}${slug}.md`);
+  const pagePath = localPath.replace('docs/', 'pages/');
+  const workingPath = path.resolve(handoff.workingPath, `${pagePath}${slug}.md`);
   let currentContents = '';
-  if(fs.existsSync(localpath)) {
-    currentContents = fs.readFileSync(localpath, 'utf-8');
-  }else if (!fs.existsSync(filepath)) {
+  
+  if (fs.existsSync(workingPath)) {
+    currentContents = fs.readFileSync(workingPath, 'utf-8');
+  } else if (!fs.existsSync(filepath)) {
     return { metadata: {}, content: currentContents };
-  }else{
+  } else {
     currentContents = fs.readFileSync(filepath, 'utf-8');
   }
   const { data: metadata, content } = matter(currentContents);
-
   return { metadata, content };
 };
 /**

@@ -118,7 +118,6 @@ exports.getHandoff = getHandoff;
 var serializeHandoff = function () {
     var handoff = (0, exports.getHandoff)();
     var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
-    console.log(statePath);
     fs_extra_1.default.writeFileSync(statePath, JSON.stringify(handoff));
 };
 exports.serializeHandoff = serializeHandoff;
@@ -128,7 +127,6 @@ exports.serializeHandoff = serializeHandoff;
  */
 var deserializeHandoff = function () {
     var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
-    console.log(statePath);
     if (fs_extra_1.default.existsSync(statePath)) {
         var stateBuffer = fs_extra_1.default.readFileSync(statePath);
         var state = JSON.parse(stateBuffer.toString());

@@ -68,7 +68,6 @@ export const getStaticProps: GetStaticProps = (context) => {
 };
 
 export default function SingleIcon({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) {
-  if(!config) console.log(config);
   const router = useRouter();
   let { name } = router.query;
   const icon = assets?.icons.find((icon) => icon.icon === name);

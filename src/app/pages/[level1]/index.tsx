@@ -13,6 +13,7 @@ import { getConfig } from '../../../config';
  * @returns
  */
 export async function getStaticPaths() {
+  console.log(buildL1StaticPaths());
   return {
     paths: buildL1StaticPaths(),
     fallback: true,
@@ -27,12 +28,12 @@ export async function getStaticPaths() {
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = (context) => {
   // Read current slug
   const { level1 } = context.params as IParams;
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`),
+      ...fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`).props,
       config: getConfig(),
     },
   };
@@ -69,6 +70,14 @@ export default function DocPage({ content, menu, metadata, current, config }: Do
       </div>
     );
   } else {
-    <div className="c-page">Page Not Found</div>;
+    return (
+      <div className="c-page">
+        <Head>
+          <title>Page Not Found</title>
+          <meta name="description" content="Page Not found" />
+        </Head>
+        Page Not Found
+      </div>
+    );
   }
 }

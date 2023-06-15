@@ -41,7 +41,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
   return {
     props: {
-      ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`),
+      ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props,
       config: getConfig(),
     },
   };
@@ -78,6 +78,14 @@ export default function DocSubPage({ content, menu, metadata, current, config }:
       </div>
     );
   } else {
-    <div className="c-page">Page Not Found</div>;
+    return (
+      <div className="c-page">
+        <Head>
+          <title>Page Not Found</title>
+          <meta name="description" content="Page Not found" />
+        </Head>
+        Page Not Found
+      </div>
+    );
   }
 }

@@ -36,7 +36,7 @@ function Header({ menu, config }: HeaderProps) {
                 <Link href="/">
                   <a className="c-site-logo c-site-logo--basic" title="" rel="home" aria-label="logo">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={config.logo || '/logo.svg'} alt={config.title} />
+                    <img src={config?.logo || '/logo.svg'} alt={config?.title} />
                   </a>
                 </Link>
               </div>
