@@ -1,25 +1,19 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var component_1 = require("./component");
-var colors_1 = __importDefault(require("./design/colors"));
-var effects_1 = __importDefault(require("./design/effects"));
-var typography_1 = __importDefault(require("./design/typography"));
-function cssTransformer(documentationObject, options) {
+import { transformComponentsToCssVariables } from './component';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
+export default function cssTransformer(documentationObject, options) {
     var components = {};
     for (var componentName in documentationObject.components) {
-        components[componentName] = (0, component_1.transformComponentsToCssVariables)(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName));
+        components[componentName] = transformComponentsToCssVariables(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName));
     }
     var design = {
-        colors: (0, colors_1.default)(documentationObject.design.color),
-        typography: (0, typography_1.default)(documentationObject.design.typography),
-        effects: (0, effects_1.default)(documentationObject.design.effect),
+        colors: transformColors(documentationObject.design.color),
+        typography: transformTypography(documentationObject.design.typography),
+        effects: transformEffects(documentationObject.design.effect),
     };
     return {
         components: components,
         design: design,
     };
 }
-exports.default = cssTransformer;

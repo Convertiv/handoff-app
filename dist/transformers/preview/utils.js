@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -44,13 +43,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getComponentTemplate = void 0;
-var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
+import path from 'path';
+import fs from 'fs-extra';
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = dirname(__filename);
 /**
@@ -59,7 +53,7 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
  * @param parts
  * @returns
  */
-var getComponentTemplate = function (component) {
+export var getComponentTemplate = function (component) {
     var parts = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         parts[_i - 1] = arguments[_i];
@@ -69,37 +63,36 @@ var getComponentTemplate = function (component) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    componentFallbackPath = path_1.default.resolve(__dirname, "../../templates/".concat(component, "/default.html"));
-                    componentFallbackOverridePath = path_1.default.resolve(process.cwd(), "integration/templates/".concat(component, "/default.html"));
+                    componentFallbackPath = path.resolve(__dirname, "../../templates/".concat(component, "/default.html"));
+                    componentFallbackOverridePath = path.resolve(process.cwd(), "integration/templates/".concat(component, "/default.html"));
                     if (!!parts.length) return [3 /*break*/, 7];
-                    return [4 /*yield*/, fs_extra_1.default.pathExists(componentFallbackOverridePath)];
+                    return [4 /*yield*/, fs.pathExists(componentFallbackOverridePath)];
                 case 1:
                     if (!_a.sent()) return [3 /*break*/, 3];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(componentFallbackOverridePath, 'utf8')];
+                    return [4 /*yield*/, fs.readFile(componentFallbackOverridePath, 'utf8')];
                 case 2: return [2 /*return*/, _a.sent()];
-                case 3: return [4 /*yield*/, fs_extra_1.default.pathExists(componentFallbackPath)];
+                case 3: return [4 /*yield*/, fs.pathExists(componentFallbackPath)];
                 case 4:
                     if (!_a.sent()) return [3 /*break*/, 6];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(componentFallbackPath, 'utf8')];
+                    return [4 /*yield*/, fs.readFile(componentFallbackPath, 'utf8')];
                 case 5: return [2 /*return*/, _a.sent()];
                 case 6: return [2 /*return*/, null];
                 case 7:
-                    partsTemplatePath = path_1.default.resolve(__dirname, "../../templates/".concat(component, "/").concat(parts.join('/'), ".html"));
-                    partsTemplateOverridePath = path_1.default.resolve(process.cwd(), "integration/templates/".concat(component, "/").concat(parts.join('/'), ".html"));
-                    return [4 /*yield*/, fs_extra_1.default.pathExists(partsTemplateOverridePath)];
+                    partsTemplatePath = path.resolve(__dirname, "../../templates/".concat(component, "/").concat(parts.join('/'), ".html"));
+                    partsTemplateOverridePath = path.resolve(process.cwd(), "integration/templates/".concat(component, "/").concat(parts.join('/'), ".html"));
+                    return [4 /*yield*/, fs.pathExists(partsTemplateOverridePath)];
                 case 8:
                     if (!_a.sent()) return [3 /*break*/, 10];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(partsTemplateOverridePath, 'utf8')];
+                    return [4 /*yield*/, fs.readFile(partsTemplateOverridePath, 'utf8')];
                 case 9: return [2 /*return*/, _a.sent()];
-                case 10: return [4 /*yield*/, fs_extra_1.default.pathExists(partsTemplatePath)];
+                case 10: return [4 /*yield*/, fs.pathExists(partsTemplatePath)];
                 case 11:
                     if (!_a.sent()) return [3 /*break*/, 13];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(partsTemplatePath, 'utf8')];
+                    return [4 /*yield*/, fs.readFile(partsTemplatePath, 'utf8')];
                 case 12: return [2 /*return*/, _a.sent()];
-                case 13: return [4 /*yield*/, exports.getComponentTemplate.apply(void 0, __spreadArray([component], parts.slice(0, -1), false))];
+                case 13: return [4 /*yield*/, getComponentTemplate.apply(void 0, __spreadArray([component], parts.slice(0, -1), false))];
                 case 14: return [2 /*return*/, _a.sent()];
             }
         });
     });
 };
-exports.getComponentTemplate = getComponentTemplate;

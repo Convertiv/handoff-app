@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,30 +34,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ejectConfig = void 0;
-var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var chalk_1 = __importDefault(require("chalk"));
+import path from 'path';
+import fs from 'fs-extra';
+import chalk from 'chalk';
 /**
  * Eject the config to the working directory
  * @param handoff
  */
-var ejectConfig = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+export var ejectConfig = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var config, configPath;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, handoff.config];
             case 1:
                 config = _a.sent();
-                configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
-                fs_extra_1.default.writeFileSync(configPath, "".concat(JSON.stringify(config, null, 2)));
-                console.log(chalk_1.default.green("Config ejected to ".concat(configPath)));
+                configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.json'));
+                fs.writeFileSync(configPath, "".concat(JSON.stringify(config, null, 2)));
+                console.log(chalk.green("Config ejected to ".concat(configPath)));
                 return [2 /*return*/];
         }
     });
 }); };
-exports.ejectConfig = ejectConfig;

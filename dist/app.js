@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -46,58 +45,51 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.watchApp = exports.exportNext = void 0;
-var index_1 = __importDefault(require("next/dist/build/index"));
-var index_2 = __importDefault(require("next/dist/export/index"));
-var trace_1 = require("next/dist/trace");
-var next_dev_1 = require("next/dist/cli/next-dev");
-var path_1 = __importDefault(require("path"));
+import build from 'next/dist/build/index';
+import exportApp from 'next/dist/export/index';
+import { trace } from 'next/dist/trace';
+import { nextDev } from 'next/dist/cli/next-dev';
+import path from 'path';
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
-                config = require(path_1.default.resolve(appPath, 'next.config.js'));
+                appPath = path.resolve(handoff.modulePath, 'src/app');
+                config = require(path.resolve(appPath, 'next.config.js'));
                 tsconfigPath = 'tsconfig.json';
                 // if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
                 //   tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
                 // }
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
-                return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
+                return [4 /*yield*/, build(path.resolve(handoff.modulePath, 'src/app'), config)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
 }); };
-var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+export var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var nextExportCliSpan;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                nextExportCliSpan = (0, trace_1.trace)('next-export-cli');
-                return [4 /*yield*/, (0, index_2.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), {
+                nextExportCliSpan = trace('next-export-cli');
+                return [4 /*yield*/, exportApp(path.resolve(handoff.modulePath, 'src/app'), {
                         silent: false,
                         threads: 1,
-                        outdir: path_1.default.resolve(handoff.workingPath, 'out'),
+                        outdir: path.resolve(handoff.workingPath, 'out'),
                     }, nextExportCliSpan)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
 }); };
-exports.exportNext = exportNext;
 /**
  *
  * @param handoff
  */
-var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
+        nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
         return [2 /*return*/];
     });
 }); };
-exports.watchApp = watchApp;
-exports.default = buildApp;
+export default buildApp;

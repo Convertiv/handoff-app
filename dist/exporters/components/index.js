@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -55,14 +54,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var chalk_1 = __importDefault(require("chalk"));
-var api_1 = require("../../figma/api");
-var utils_1 = require("../utils");
-var extractor_1 = __importDefault(require("./extractor"));
+import chalk from 'chalk';
+import { getComponentSetNodes, getComponentSets } from '../../figma/api';
+import { filterByNodeType } from '../utils';
+import extractComponents from './extractor';
 var getComponentSetComponents = function (metadata, componentSets, componentMetadata, name) {
     var componentSet = componentSets.find(function (componentSet) { return componentSet.name === name; });
     if (!componentSet) {
@@ -97,7 +92,7 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
         switch (_c.label) {
             case 0:
                 _c.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, (0, api_1.getComponentSets)(fileId, accessToken)];
+                return [4 /*yield*/, getComponentSets(fileId, accessToken)];
             case 1:
                 fileComponentSetsRes = _c.sent();
                 return [3 /*break*/, 3];
@@ -106,16 +101,16 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                 throw new Error('Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide');
             case 3:
                 if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
-                    console.error(chalk_1.default.red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
-                    console.log(chalk_1.default.blue('Continuing fetch with only colors and typography design foundations'));
+                    console.error(chalk.red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
+                    console.log(chalk.blue('Continuing fetch with only colors and typography design foundations'));
                     return [2 /*return*/, {}];
                 }
-                return [4 /*yield*/, (0, api_1.getComponentSetNodes)(fileId, fileComponentSetsRes.data.meta.component_sets.map(function (item) { return item.node_id; }), accessToken)];
+                return [4 /*yield*/, getComponentSetNodes(fileId, fileComponentSetsRes.data.meta.component_sets.map(function (item) { return item.node_id; }), accessToken)];
             case 4:
                 componentSetsNodesRes = _c.sent();
                 componentSets = Object.values(componentSetsNodesRes.data.nodes)
                     .map(function (node) { return node === null || node === void 0 ? void 0 : node.document; })
-                    .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'));
+                    .filter(filterByNodeType('COMPONENT_SET'));
                 componentMetadata = new Map(Object.entries((_a = Object.values(componentSetsNodesRes.data.nodes)
                     .map(function (node) {
                     return node === null || node === void 0 ? void 0 : node.components;
@@ -127,17 +122,17 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                 for (_i = 0, exportables_1 = exportables; _i < exportables_1.length; _i++) {
                     exportable = exportables_1[_i];
                     if (!exportable.id) {
-                        console.error(chalk_1.default.red('Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'));
+                        console.error(chalk.red('Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'));
                         continue;
                     }
                     if (!exportable.options.exporter.search) {
-                        console.error(chalk_1.default.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
+                        console.error(chalk.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
                         continue;
                     }
-                    componentTokens[(_b = exportable.id) !== null && _b !== void 0 ? _b : ''] = (0, extractor_1.default)(getComponentSetComponents(fileComponentSetsRes.data.meta.component_sets, componentSets, componentMetadata, exportable.options.exporter.search), exportable);
+                    componentTokens[(_b = exportable.id) !== null && _b !== void 0 ? _b : ''] = extractComponents(getComponentSetComponents(fileComponentSetsRes.data.meta.component_sets, componentSets, componentMetadata, exportable.options.exporter.search), exportable);
                 }
                 return [2 /*return*/, componentTokens];
         }
     });
 }); };
-exports.default = getFileComponentTokens;
+export default getFileComponentTokens;

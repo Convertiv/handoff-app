@@ -32,6 +32,7 @@
   "scripts": {
     "start": "node ./dist/cli.js start",
     "build": "tsc",
+    "build:static": "node ./dist/cli.js build",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"sass/**/*.scss\"",
     "lint": "npm run lint:sass && npx next lint",

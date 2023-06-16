@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,41 +34,36 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createDocumentationObject = void 0;
-var assets_1 = __importDefault(require("./exporters/assets"));
-var index_1 = __importDefault(require("./exporters/components/index"));
-var design_1 = __importDefault(require("./exporters/design"));
-var startCase_1 = __importDefault(require("lodash/startCase"));
-var chalk_1 = __importDefault(require("chalk"));
-var createDocumentationObject = function (figmaFileKey, figmaAccessToken, exportables) { return __awaiter(void 0, void 0, void 0, function () {
+import assetsExporter from './exporters/assets';
+import getFileComponentTokens from './exporters/components/index';
+import getFileDesignTokens from './exporters/design';
+import startCase from 'lodash/startCase';
+import chalk from 'chalk';
+export var createDocumentationObject = function (figmaFileKey, figmaAccessToken, exportables) { return __awaiter(void 0, void 0, void 0, function () {
     var components, design, icons, logos;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.default)(figmaFileKey, figmaAccessToken, exportables)];
+            case 0: return [4 /*yield*/, getFileComponentTokens(figmaFileKey, figmaAccessToken, exportables)];
             case 1:
                 components = _a.sent();
                 // Log out components
                 if (Object.keys(components).filter(function (component) { return components[component].length > 0; }).length > 0) {
                     Object.keys(components).map(function (component) {
                         if (components[component].length === 0) {
-                            console.error(chalk_1.default.grey("".concat((0, startCase_1.default)(component), " could not be located in the figma file")));
+                            console.error(chalk.grey("".concat(startCase(component), " could not be located in the figma file")));
                         }
                         else {
-                            console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].length);
+                            console.log(chalk.green("".concat(startCase(component), " exported:")), components[component].length);
                         }
                     });
                 }
-                return [4 /*yield*/, (0, design_1.default)(figmaFileKey, figmaAccessToken)];
+                return [4 /*yield*/, getFileDesignTokens(figmaFileKey, figmaAccessToken)];
             case 2:
                 design = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Icons')];
+                return [4 /*yield*/, assetsExporter(figmaFileKey, figmaAccessToken, 'Icons')];
             case 3:
                 icons = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Logo')];
+                return [4 /*yield*/, assetsExporter(figmaFileKey, figmaAccessToken, 'Logo')];
             case 4:
                 logos = _a.sent();
                 return [2 /*return*/, {
@@ -84,4 +78,3 @@ var createDocumentationObject = function (figmaFileKey, figmaAccessToken, export
         }
     });
 }); };
-exports.createDocumentationObject = createDocumentationObject;

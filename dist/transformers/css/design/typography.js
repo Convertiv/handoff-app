@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function transformTypography(typography) {
+export default function transformTypography(typography) {
     var stringBuilder = [];
     typography.forEach(function (type) {
         stringBuilder.push([
@@ -14,7 +12,6 @@ function transformTypography(typography) {
     });
     return ":root {\n".concat(stringBuilder.join('\n'), "\n}\n");
 }
-exports.default = transformTypography;
 function getTypeName(type) {
     return type.group
         ? "".concat(type.group, "-").concat(type.machine_name)

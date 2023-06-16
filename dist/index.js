@@ -1,27 +1,3 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -58,21 +34,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var config_1 = require("./config");
-var path_1 = __importDefault(require("path"));
-require("dotenv/config");
-var app_1 = __importStar(require("./app"));
-var pipeline_1 = __importDefault(require("./pipeline"));
-var eject_1 = require("./eject");
+import { getConfig, serializeHandoff } from './config';
+import path from 'path';
+import 'dotenv/config';
+import buildApp, { exportNext, watchApp } from './app';
+import pipeline from './pipeline';
+import { ejectConfig } from './eject';
 global.handoff = null;
 var Handoff = /** @class */ (function () {
     function Handoff() {
         this.debug = false;
-        this.modulePath = path_1.default.resolve(__filename, '../..');
+        this.modulePath = path.resolve(__filename, '../..');
         this.workingPath = process.cwd();
         this.config = null;
         this.hooks = {
@@ -95,11 +67,11 @@ var Handoff = /** @class */ (function () {
                 switch (_b.label) {
                     case 0:
                         _a = this;
-                        return [4 /*yield*/, (0, config_1.getConfig)()];
+                        return [4 /*yield*/, getConfig()];
                     case 1:
                         _a.config = _b.sent();
                         this.config = this.hooks.init(this.config);
-                        return [4 /*yield*/, (0, config_1.serializeHandoff)()];
+                        return [4 /*yield*/, serializeHandoff()];
                     case 2:
                         _b.sent();
                         return [2 /*return*/, this];
@@ -113,7 +85,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, pipeline_1.default)(this)];
+                        return [4 /*yield*/, pipeline(this)];
                     case 1:
                         _a.sent();
                         this.hooks.fetch();
@@ -129,7 +101,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.default)(this)];
+                        return [4 /*yield*/, buildApp(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -144,7 +116,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.exportNext)(this)];
+                        return [4 /*yield*/, exportNext(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -159,7 +131,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectConfig)(this)];
+                        return [4 /*yield*/, ejectConfig(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -174,7 +146,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.watchApp)(this)];
+                        return [4 /*yield*/, watchApp(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -209,4 +181,4 @@ var Handoff = /** @class */ (function () {
     };
     return Handoff;
 }());
-exports.default = Handoff;
+export default Handoff;
