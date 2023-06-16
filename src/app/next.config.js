@@ -30,4 +30,9 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = nextConfig;
+if (__dirname.includes('node_modules')) {
+  const withTM = require('next-transpile-modules')(['handoff-app']);
+  module.exports = withTM(nextConfig);
+} else {
+  module.exports = nextConfig;
+}
