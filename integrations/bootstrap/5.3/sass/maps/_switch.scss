@@ -1,0 +1,67 @@
+/* =============================================================================
+   SWITCH (project/_switch.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/switch';
+@import './exported/tokens/sass/switch';
+@import './exported/tokens/css/switch';
+
+// SIZES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Input
+// -----
+
+$form-switch-width:                       $switch-off-width;
+$form-switch-height:                      $switch-off-height;
+$form-switch-width-raw:                   $switch-off-width-raw;
+$form-switch-height-raw:                  $switch-off-height-raw;
+$form-switch-padding-start:               $form-switch-width + $switch-off-spacing;
+$form-switch-border-radius:               $switch-off-border-radius;
+$form-switch-transition:                  all .25s ease-in-out;
+//$form-switch-checked-bg-position:         right center;
+
+// -----
+// Form Check Thumb
+// -----
+
+$form-switch-thumb-radius-raw:            $switch-thumb-off-width-raw * .5;
+$form-switch-thumb-position:              $form-switch-height-raw * .5;
+
+// -----
+// Form Check Label
+// -----
+
+$form-switch-label-font-size:             $switch-label-off-font-size;
+$form-switch-label-line-height:           $switch-label-off-line-height;
+
+// -----
+// Form Check Wrapper
+// -----
+
+$form-switch-min-height:                  calc( $form-switch-label-font-size * $form-switch-label-line-height );
+
+
+
+// STYLES
+// ------------------------------------------------------------------
+
+
+// -----
+// Form Check Icons
+// -----
+
+// form check icon color
+$form-switch-color:                       $switch-thumb-off-color;
+$form-switch-focus-color:                 $switch-thumb-off-color;
+$form-switch-checked-color:               $switch-thumb-on-color;
+
+// form check icons
+$form-switch-bg-image:                    url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-#{$form-switch-thumb-position} -#{$form-switch-thumb-position} #{$form-switch-height-raw} #{$form-switch-height-raw}'><circle r='#{$form-switch-thumb-radius-raw}' fill='#{$form-switch-color}'/></svg>" );
+$form-switch-focus-bg-image:              url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-#{$form-switch-thumb-position} -#{$form-switch-thumb-position} #{$form-switch-height-raw} #{$form-switch-height-raw}'><circle r='#{$form-switch-thumb-radius-raw}' fill='#{$form-switch-focus-color}'/></svg>" );
+$form-switch-checked-bg-image:            url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-#{$form-switch-thumb-position} -#{$form-switch-thumb-position} #{$form-switch-height-raw} #{$form-switch-height-raw}'><circle r='#{$form-switch-thumb-radius-raw}' fill='#{$form-switch-checked-color}'/></svg>" );

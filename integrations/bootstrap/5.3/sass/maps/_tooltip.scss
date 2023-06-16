@@ -1,0 +1,37 @@
+/* =============================================================================
+   TOOLTIPS (project/_tooltips.scss)
+   ========================================================================== */
+
+
+$prefix: '';
+// Load raw SCSS variables for mapping
+@import './exported/tokens/types/tooltip';
+@import './exported/tokens/sass/tooltip';
+@import './exported/tokens/css/tooltip';
+
+
+/*
+$tooltip-font-size:                 $tooltip-font-size;
+$tooltip-max-width:                 200px !default;
+$tooltip-color:                     #fff;
+$tooltip-bg:                        --tooltip-background;
+$tooltip-border-radius:             $tooltip-border-radius;
+$tooltip-opacity:                   1 !default;
+$tooltip-padding-y:                 $tooltip-padding-y;
+$tooltip-padding-x:                 $tooltip-padding-x;
+$tooltip-margin:                    0;
+
+$tooltip-arrow-width:               .8rem !default;
+$tooltip-arrow-height:              .4rem !default; */
+// fusv-disable
+$tooltip-arrow-color:               null !default; // Deprecated in Bootstrap 5.2.0 for CSS variables
+// fusv-enable
+/*
+// Form tooltips must come after regular tooltips
+$form-feedback-tooltip-padding-y:     $tooltip-padding-y !default;
+$form-feedback-tooltip-padding-x:     $tooltip-padding-x !default;
+$form-feedback-tooltip-font-size:     $tooltip-font-size !default;
+$form-feedback-tooltip-line-height:   null !default;
+$form-feedback-tooltip-opacity:       $tooltip-opacity !default;
+$form-feedback-tooltip-border-radius: $tooltip-border-radius !default;
+*/
