@@ -11,7 +11,7 @@ export interface IconProps {
 
 export const Icon: React.FC<IconProps> = ({ name, className, width, height }) => {
   return (
-    <div className={`icon-wrapper ${className}`}>
+    <div className={`icon-wrapper ${className ? className : ''}`}>
       <Image
         src={`/assets/svg/${name}.svg`}
         className={className}
