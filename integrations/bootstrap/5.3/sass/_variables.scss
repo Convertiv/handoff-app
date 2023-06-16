@@ -1,5 +1,5 @@
 /* =============================================================================
-   Variables - Bootstrap 5.2 (_variables.scss)
+   Variables - Bootstrap 5.3 (_variables.scss)
    ========================================================================== */
 
 /* stylelint-disable */
@@ -333,6 +333,40 @@ $theme-colors: (
 );
 // scss-docs-end theme-colors-map
 
+
+// scss-docs-start theme-text-variables
+$primary-text-emphasis:   shade-color($primary, 60%);
+$secondary-text-emphasis: shade-color($secondary, 60%);
+$success-text-emphasis:   shade-color($success, 60%);
+$info-text-emphasis:      shade-color($info, 60%);
+$warning-text-emphasis:   shade-color($warning, 60%);
+$danger-text-emphasis:    shade-color($danger, 60%);
+$light-text-emphasis:     $gray-700;
+$dark-text-emphasis:      $gray-700;
+// scss-docs-end theme-text-variables
+
+// scss-docs-start theme-bg-subtle-variables
+$primary-bg-subtle:       tint-color($primary, 80%);
+$secondary-bg-subtle:     tint-color($secondary, 80%);
+$success-bg-subtle:       tint-color($success, 80%);
+$info-bg-subtle:          tint-color($info, 80%);
+$warning-bg-subtle:       tint-color($warning, 80%);
+$danger-bg-subtle:        tint-color($danger, 80%);
+$light-bg-subtle:         mix($gray-100, $white);
+$dark-bg-subtle:          $gray-400;
+// scss-docs-end theme-bg-subtle-variables
+
+// scss-docs-start theme-border-subtle-variables
+$primary-border-subtle:   tint-color($primary, 60%);
+$secondary-border-subtle: tint-color($secondary, 60%);
+$success-border-subtle:   tint-color($success, 60%);
+$info-border-subtle:      tint-color($info, 60%);
+$warning-border-subtle:   tint-color($warning, 60%);
+$danger-border-subtle:    tint-color($danger, 60%);
+$light-border-subtle:     $gray-200;
+$dark-border-subtle:      $gray-500;
+// scss-docs-end theme-border-subtle-variables
+
 // Characters which are escaped by the escape-svg function
 $escaped-characters: (
   ("<", "%3c"),
@@ -362,6 +396,9 @@ $enable-validation-icons:     true;
 $enable-negative-margins:     true;
 $enable-deprecation-messages: true;
 $enable-important-utilities:  true;
+
+$enable-dark-mode:            false;
+$color-mode-type:             data; // `data` or `media-query`
 
 // Prefix for :root CSS variables
 
@@ -410,9 +447,17 @@ $position-values: (
 //
 // Settings for the `<body>` element.
 
-$body-bg:                   $white;
-$body-color:                $gray-900;
 $body-text-align:           null;
+$body-color:                $gray-900;
+$body-bg:                   $white;
+
+$body-secondary-color:      rgba($body-color, .75);
+$body-secondary-bg:         $gray-200;
+
+$body-tertiary-color:       rgba($body-color, .5);
+$body-tertiary-bg:          $gray-100;
+
+$body-emphasis-color:       $black;
 
 // Links
 //
@@ -426,6 +471,15 @@ $link-hover-decoration:                   null;
 
 $stretched-link-pseudo-element:           after;
 $stretched-link-z-index:                  1;
+
+// Icon links
+// scss-docs-start icon-link-variables
+$icon-link-gap:               .375rem;
+$icon-link-underline-offset:  .25em;
+$icon-link-icon-size:         1em;
+$icon-link-icon-transition:   .2s ease-in-out transform;
+$icon-link-icon-transform:    translate3d(.25em, 0, 0);
+// scss-docs-end icon-link-variables
 
 // Paragraphs
 //
@@ -509,7 +563,7 @@ $border-radius-xs:            .125rem;
 $border-radius-sm:            .25rem;
 $border-radius-lg:            .5rem;
 $border-radius-xl:            1rem;
-$border-radius-2xl:           2rem;
+$border-radius-xxl:           2rem;
 $border-radius-pill:          50rem;
 // scss-docs-end border-radius-variables
 
@@ -522,6 +576,14 @@ $box-shadow-inset:            inset 0 1px 2px rgba($black, .08);
 
 $component-active-color:      $white;
 $component-active-bg:         $primary;
+
+// scss-docs-start focus-ring-variables
+$focus-ring-width:      .25rem;
+$focus-ring-opacity:    .25;
+$focus-ring-color:      rgba($primary, $focus-ring-opacity);
+$focus-ring-blur:       0;
+$focus-ring-box-shadow: 0 0 $focus-ring-blur $focus-ring-width $focus-ring-color;
+// scss-docs-end focus-ring-variables
 
 // scss-docs-start caret-variables
 $caret-width:                 .3em;
@@ -616,7 +678,7 @@ $headings-font-family:        null;
 $headings-font-style:         null;
 $headings-font-weight:        500;
 $headings-line-height:        1.2;
-$headings-color:              null;
+$headings-color:              inherit;
 // scss-docs-end headings-variables
 
 // scss-docs-start display-headings
@@ -1422,17 +1484,27 @@ $modal-dialog-margin-y-sm-up:       1.75rem;
 $modal-title-line-height:           $line-height-base;
 
 $modal-content-color:               null;
-@if variable-exists(modal-background)    { $modal-content-bg:                  $modal-background; }
-@if variable-exists(modal-border-color)  { $modal-content-border-color:        $modal-border-color; }
-@if variable-exists(modal-border-width)  { $modal-content-border-width:        $modal-border-width; }
-@if variable-exists(modal-border-radius) { $modal-content-border-radius:       $modal-border-radius; }
-@if variable-exists(modal-content-border-radius) and variable-exists(modal-content-border-width) { $modal-content-inner-border-radius: subtract($modal-content-border-radius, $modal-content-border-width); }
-@if variable-exists(modal-box-shadow)    { $modal-content-box-shadow-xs:       $modal-box-shadow; }
-@if variable-exists(modal-box-shadow)    { $modal-content-box-shadow-sm-up:    $modal-box-shadow; }
+$modal-content-bg:                  $modal-background;
+$modal-content-border-color:        $modal-border-color;
+$modal-content-border-width:        $modal-border-width;
+$modal-content-border-radius:       $modal-border-radius;
+$modal-content-inner-border-radius: subtract($modal-content-border-radius, $modal-content-border-width);
+$modal-content-box-shadow-xs:       $box-shadow-sm;
+$modal-content-box-shadow-sm-up:    $modal-box-shadow;
 
 $modal-backdrop-bg:                 $black;
 $modal-backdrop-opacity:            .5;
 
+$modal-header-border-color:         var(--#{$prefix}border-color) !default;
+$modal-header-border-width:         $modal-content-border-width !default;
+$modal-header-padding-y:            $modal-header-padding-y;
+$modal-header-padding-x:            $modal-header-padding-x;
+$modal-header-padding:              $modal-header-padding-y $modal-header-padding-x !default; // Keep this for backwards compatibility
+
+$modal-footer-bg:                   $modal-footer-background;
+$modal-footer-border-color:         $modal-footer-border-color;
+$modal-footer-border-width:         $modal-footer-border-width;
+/////////
 @if variable-exists(modal-header-border-color)    { $modal-header-border-color:         $modal-header-border-color; }
 @if variable-exists(modal-header-border-width)    { $modal-header-border-width:         $modal-header-border-width; }
 @if variable-exists(modal-header-padding-y)       { $modal-header-padding-y:            $modal-header-padding-y; }
@@ -1442,7 +1514,7 @@ $modal-backdrop-opacity:            .5;
 @if variable-exists(modal-footer-background)   { $modal-footer-bg:                   $modal-footer-background; }
 @if variable-exists(modal-footer-border-color) { $modal-footer-border-color:         $modal-footer-border-color; }
 @if variable-exists(modal-footer-border-width) { $modal-footer-border-width:         $modal-footer-border-width; }
-
+//////////
 $modal-sm:                          300px;
 $modal-md:                          500px;
 $modal-lg:                          800px;
