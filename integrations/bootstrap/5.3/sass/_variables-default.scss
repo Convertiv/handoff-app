@@ -1,5 +1,5 @@
 /* =============================================================================
-   Default Variables - Bootstrap 5.2 (_variables-default.scss)
+   Default Variables - Bootstrap 5.3 (_variables-default.scss)
    ========================================================================== */
 
 /* stylelint-disable */
@@ -15,14 +15,14 @@
 // Color system
 
 // Typography
-$typography-heading-1-font-size: 100px;
+$typography-heading-1-font-size: null;
 $typography-heading-2-font-size: null;
 $typography-heading-3-font-size: null;
 $typography-heading-4-font-size: null;
 $typography-heading-5-font-size: null;
 $typography-heading-6-font-size: null;
 
-$typography-h1-font-size: 100px;
+$typography-h1-font-size: null;
 $typography-h2-font-size: null;
 $typography-h3-font-size: null;
 $typography-h4-font-size: null;
@@ -120,6 +120,7 @@ $checkbox-hover-on-color: null;
 $checkbox-disabled-label-off-opacity: null;
 $checkbox-disabled-on-box-shadow: null;
 
+$checkbox-label-off-font-family: null;
 $checkbox-label-off-font-size: 1rem;
 $checkbox-label-off-font-weight: null;
 $checkbox-label-off-line-height: 1.5;
@@ -136,6 +137,18 @@ $checkbox-disabled-label-on-color: null;
 // Input
 
 // Modal
+$modal-background: null;
+$modal-border-color: null;
+$modal-border-width: null;
+$modal-border-radius: null;
+$modal-box-shadow: null;
+
+$modal-header-padding-y: null;
+$modal-header-padding-x: null;
+
+$modal-footer-background: null;
+$modal-footer-border-color: null;
+$modal-footer-border-width: null;
 
 // Pagination
 
