@@ -1,0 +1,13 @@
+/* =============================================================================
+   RADIO (project/components/_radio.scss)
+   ========================================================================== */
+
+
+.form-check-input {
+	&[ type='radio' ] {
+		width: $radio-off-width;
+		height: $radio-off-height;
+		margin-top: calc( ( ( $radio-label-off-font-size * $radio-label-off-line-height ) - $radio-off-height ) / 2 );
+		background-size: contain;
+	}
+}

@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2023-06-16
+
+This release adds Bootstrap 5.3 support with dark mode disabled by default.
+
+### Changes
+
+- Added Bootstrap 5.3 integration
+- Bootstrap 5.3 is now the default integration
+- Updated color preview in the Next.js app to work with color values such as linear-gradient(...) and rgba(...)
+
+### Bugfixes
+
+- Resolved a value normalization error in the Next.js app when normalizing value with multiple color layers
+
+##### How to switch integrations
+
+To use an integration change `client-config.js` to desired integration and version. For example:
+
+```
+integration: {
+  name: 'bootstrap',
+  version: '5.3',
+},
+```
+
+Currently supported integrations:
+
+- Bootstrap 5.2
+- Bootstrap 5.3
+
 ## [0.5.2] - 2023-06-14
 
 ### Changes
