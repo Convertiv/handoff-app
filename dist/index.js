@@ -66,7 +66,7 @@ var config_1 = require("./config");
 var path_1 = __importDefault(require("path"));
 require("dotenv/config");
 var app_1 = __importStar(require("./app"));
-var pipeline_1 = __importDefault(require("./pipeline"));
+var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./eject");
 global.handoff = null;
 var Handoff = /** @class */ (function () {
@@ -85,19 +85,22 @@ var Handoff = /** @class */ (function () {
             scssTransformer: function (documentationObject, scss) { return scss; },
             webpack: function (webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
+            configureExportables: function (exportables) { return exportables; },
         };
         global.handoff = this;
+        this.init();
     }
     Handoff.prototype.init = function () {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
+            var config;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0:
-                        _a = this;
-                        return [4 /*yield*/, (0, config_1.getConfig)()];
+                    case 0: return [4 /*yield*/, (0, config_1.getConfig)()];
                     case 1:
-                        _a.config = _b.sent();
+                        config = _b.sent();
+                        config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
+                        this.config = config;
                         this.config = this.hooks.init(this.config);
                         return [4 /*yield*/, (0, config_1.serializeHandoff)()];
                     case 2:
@@ -117,6 +120,21 @@ var Handoff = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         this.hooks.fetch();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.integration = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(this)];
+                    case 1:
+                        _a.sent();
                         _a.label = 2;
                     case 2: return [2 /*return*/, this];
                 }
@@ -206,6 +224,9 @@ var Handoff = /** @class */ (function () {
     };
     Handoff.prototype.modifyWebpackConfig = function (callback) {
         this.hooks.webpack = callback;
+    };
+    Handoff.prototype.configureExportables = function (callback) {
+        this.hooks.configureExportables = callback;
     };
     return Handoff;
 }());

@@ -19,6 +19,7 @@ const usage = `Usage: handoff-app <cmd> <opts>
 Commands:
   fetch [opts] - Fetches the design tokens from the design system
   build [opts] - Builds the design system
+  build:integration [opts] - Builds the design system integration
   start [opts] - Starts the design system in development mode
 
   make
@@ -112,6 +113,8 @@ const run = async (
       case 'start':
         watching = true;
         return handoff.start();
+      case 'build:integration':
+        return handoff.integration();
       case 'eject':
         cliError(
           `Eject commands will eject the default configuration into the working directory so you can customize it. \n\nEject must have a subcommand. Did you mean: \n  - eject:config \n  - eject:exportables.\n  - eject:integration\n  - eject:docs.`,

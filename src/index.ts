@@ -8,7 +8,7 @@ import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types/plugin';
 import buildApp, { exportNext, watchApp } from './app';
-import pipeline from './pipeline';
+import pipeline, { buildIntegrationOnly } from './pipeline';
 import { ejectConfig } from './eject';
 
 global.handoff = null;
@@ -28,6 +28,7 @@ class Handoff {
     scssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
+    configureExportables: (exportables: string[]) => string[];
   };
 
   constructor() {
@@ -42,11 +43,15 @@ class Handoff {
       scssTransformer: (documentationObject, scss) => scss,
       webpack: (webpackConfig) => webpackConfig,
       preview: (webpackConfig, preview) => preview,
+      configureExportables: (exportables) => exportables,
     };
     global.handoff = this;
+    this.init();
   }
   async init(): Promise<Handoff> {
-    this.config = await getConfig();
+    const config = await getConfig();
+    config.figma.definitions = this.hooks.configureExportables(config.figma?.definitions || []);
+    this.config = config;
     this.config = this.hooks.init(this.config);
     await serializeHandoff();
     return this;
@@ -55,6 +60,12 @@ class Handoff {
     if (this.config) {
       await pipeline(this);
       this.hooks.fetch();
+    }
+    return this;
+  }
+  async integration(): Promise<Handoff> {
+    if (this.config) {
+      await buildIntegrationOnly(this);
     }
     return this;
   }
@@ -107,6 +118,9 @@ class Handoff {
   }
   modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
     this.hooks.webpack = callback;
+  }
+  configureExportables(callback: (exportables: string[]) => string[]) {
+    this.hooks.configureExportables = callback;
   }
 }
 

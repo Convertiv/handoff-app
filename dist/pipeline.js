@@ -82,6 +82,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildIntegrationOnly = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var config_1 = require("./config");
 var prompt_1 = require("./utils/prompt");
@@ -420,6 +421,30 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
         }
     });
 }); };
+/**
+ * Build only integrations and previews
+ * @param handoff
+ */
+var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var documentationObject;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath)];
+            case 1:
+                documentationObject = _a.sent();
+                if (!documentationObject) return [3 /*break*/, 4];
+                return [4 /*yield*/, buildIntegration(documentationObject)];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, buildPreview(documentationObject)];
+            case 3:
+                _a.sent();
+                _a.label = 4;
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.buildIntegrationOnly = buildIntegrationOnly;
 /**
  * Run the entire pipeline
  */

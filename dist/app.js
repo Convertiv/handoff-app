@@ -64,9 +64,6 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 tsconfigPath = 'tsconfig.json';
-                // if(!fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json'))) {
-                //   tsconfigPath = path.join('node_modules', 'handoff-app', 'src/app', 'tsconfig.json');
-                // }
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
                 return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
             case 1: return [2 /*return*/, _a.sent()];

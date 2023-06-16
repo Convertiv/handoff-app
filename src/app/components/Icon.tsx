@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import Image from 'next/image';
+import Image from 'next/future/image'
 import * as React from 'react';
 
 export interface IconProps {
@@ -11,7 +11,6 @@ export interface IconProps {
 
 export const Icon: React.FC<IconProps> = ({ name, className, width, height }) => {
   return (
-    <div className={`icon-wrapper ${className ? className : ''}`}>
       <Image
         src={`/assets/svg/${name}.svg`}
         className={className}
@@ -19,7 +18,6 @@ export const Icon: React.FC<IconProps> = ({ name, className, width, height }) =>
         width={width ?? '100%'}
         height={height ?? '100%'}
       />
-    </div>
   );
 };
 

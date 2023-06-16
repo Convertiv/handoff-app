@@ -63,7 +63,7 @@ const formatComponentsTransformerOptions = (exportables: ExportableDefinition[])
 
 /**
  * Get the exportables from the config
- * @param handoff 
+ * @param handoff
  * @returns Promise<ExportableDefinition[]>
  */
 const getExportables = async (handoff: Handoff): Promise<ExportableDefinition[]> => {
@@ -307,6 +307,18 @@ const figmaExtract = async (
       : []),
   ]);
   return documentationObject;
+};
+
+/**
+ * Build only integrations and previews
+ * @param handoff
+ */
+export const buildIntegrationOnly = async (handoff: Handoff) => {
+  let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+  if (documentationObject) {
+    await buildIntegration(documentationObject);
+    await buildPreview(documentationObject);
+  }
 };
 
 /**

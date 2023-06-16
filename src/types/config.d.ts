@@ -17,7 +17,7 @@ export interface Integration {
 
 export interface FigmaSearch {
   options: {
-    shared: {
+    shared?: {
       defaults: {
         theme: string;
         state: string;
@@ -27,7 +27,7 @@ export interface FigmaSearch {
         size: string;
       };
     };
-    transformer: {
+    transformer?: {
       replace: {
         size: {
           [key: string]: string;
@@ -69,7 +69,7 @@ export interface Config {
   integration?: Integration;
   favicon?: string;
   poweredBy?: boolean;
-  figma?: FigmaSearch;
+  figma: FigmaSearch;
   /**
    * @default "/logo.svg"
    */
