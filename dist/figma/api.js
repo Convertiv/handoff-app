@@ -1,9 +1,15 @@
-import axios from 'axios';
-var figmaRestApi = axios.create({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRequestCount = exports.getComponentSetNodes = exports.getComponentSets = exports.getFileStyles = exports.getAssetURL = exports.getFileNodes = exports.getFileComponent = exports.getFile = void 0;
+var axios_1 = __importDefault(require("axios"));
+var figmaRestApi = axios_1.default.create({
     baseURL: process.env.FIGMA_BASE_URL || 'https://api.figma.com/v1/',
 });
 var counter = 0;
-export var getFile = function (fileId, accessToken) {
+var getFile = function (fileId, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId, {
         headers: {
@@ -11,13 +17,14 @@ export var getFile = function (fileId, accessToken) {
         },
     });
 };
+exports.getFile = getFile;
 /**
  * Fetch the frontend components
  * @param fileId
  * @param accessToken
  * @returns Promise<FileComponentsResponse>
  */
-export var getFileComponent = function (fileId, accessToken) {
+var getFileComponent = function (fileId, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId + '/components', {
         headers: {
@@ -25,7 +32,8 @@ export var getFileComponent = function (fileId, accessToken) {
         },
     });
 };
-export var getFileNodes = function (fileId, ids, accessToken) {
+exports.getFileComponent = getFileComponent;
+var getFileNodes = function (fileId, ids, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId + '/nodes?ids=' + ids.join(','), {
         headers: {
@@ -33,7 +41,8 @@ export var getFileNodes = function (fileId, ids, accessToken) {
         },
     });
 };
-export var getAssetURL = function (fileId, ids, extension, accessToken) {
+exports.getFileNodes = getFileNodes;
+var getAssetURL = function (fileId, ids, extension, accessToken) {
     counter++;
     return figmaRestApi.get('images/' + fileId + '/?ids=' + ids.join(',') + '&format=' + extension, {
         headers: {
@@ -41,7 +50,8 @@ export var getAssetURL = function (fileId, ids, extension, accessToken) {
         },
     });
 };
-export var getFileStyles = function (fileId, accessToken) {
+exports.getAssetURL = getAssetURL;
+var getFileStyles = function (fileId, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId + '/styles', {
         headers: {
@@ -49,7 +59,8 @@ export var getFileStyles = function (fileId, accessToken) {
         },
     });
 };
-export var getComponentSets = function (fileId, accessToken) {
+exports.getFileStyles = getFileStyles;
+var getComponentSets = function (fileId, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId + '/component_sets', {
         headers: {
@@ -57,7 +68,8 @@ export var getComponentSets = function (fileId, accessToken) {
         },
     });
 };
-export var getComponentSetNodes = function (fileId, ids, accessToken) {
+exports.getComponentSets = getComponentSets;
+var getComponentSetNodes = function (fileId, ids, accessToken) {
     counter++;
     return figmaRestApi.get('files/' + fileId + '/nodes?ids=' + ids.join(','), {
         headers: {
@@ -65,5 +77,7 @@ export var getComponentSetNodes = function (fileId, ids, accessToken) {
         },
     });
 };
-export var getRequestCount = function () { return counter; };
-export default figmaRestApi;
+exports.getComponentSetNodes = getComponentSetNodes;
+var getRequestCount = function () { return counter; };
+exports.getRequestCount = getRequestCount;
+exports.default = figmaRestApi;

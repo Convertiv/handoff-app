@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9,22 +10,24 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../css/utils';
-import { getTokenSetTransformer } from '../tokenSetTransformers';
-import { normalizeVariableToken } from '../utils';
-export var transformComponentsToScssTypes = function (name, components, options) {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.transformComponentTokensToScssVariables = exports.transformComponentsToScssTypes = void 0;
+var utils_1 = require("../css/utils");
+var tokenSetTransformers_1 = require("../tokenSetTransformers");
+var utils_2 = require("../utils");
+var transformComponentsToScssTypes = function (name, components, options) {
     var lines = [];
-    var themes = getThemesFromComponents(components);
-    var types = getTypesFromComponents(components);
-    var states = getStatesFromComponents(components);
-    var sizes = getSizesFromComponents(components);
+    var themes = (0, utils_1.getThemesFromComponents)(components);
+    var types = (0, utils_1.getTypesFromComponents)(components);
+    var states = (0, utils_1.getStatesFromComponents)(components);
+    var sizes = (0, utils_1.getSizesFromComponents)(components);
     // Types
     if (types && types.length > 0) {
         lines.push("$".concat(name, "-variants: ( ").concat(types.map(function (type) { return "\"".concat(type, "\""); }).join(', '), ");"));
     }
     // Sizes
     if (sizes && sizes.length > 0) {
-        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat(normalizeVariableToken('size', type, options), "\""); }).join(', '), " );"));
+        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat((0, utils_2.normalizeVariableToken)('size', type, options), "\""); }).join(', '), " );"));
     }
     // Themes
     if (themes && themes.length > 0) {
@@ -36,7 +39,8 @@ export var transformComponentsToScssTypes = function (name, components, options)
     }
     return lines.join('\n\n') + '\n';
 };
-export var transformComponentTokensToScssVariables = function (component, options) {
+exports.transformComponentsToScssTypes = transformComponentsToScssTypes;
+var transformComponentTokensToScssVariables = function (component, options) {
     var result = {};
     for (var part in component.parts) {
         var tokenSets = component.parts[part];
@@ -45,7 +49,7 @@ export var transformComponentTokensToScssVariables = function (component, option
         }
         for (var _i = 0, tokenSets_1 = tokenSets; _i < tokenSets_1.length; _i++) {
             var tokenSet = tokenSets_1[_i];
-            var transformer = getTokenSetTransformer(tokenSet);
+            var transformer = (0, tokenSetTransformers_1.getTokenSetTransformer)(tokenSet);
             if (!transformer) {
                 continue;
             }
@@ -54,3 +58,4 @@ export var transformComponentTokensToScssVariables = function (component, option
     }
     return result;
 };
+exports.transformComponentTokensToScssVariables = transformComponentTokensToScssVariables;

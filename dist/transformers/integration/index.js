@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,10 +35,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import fs from 'fs-extra';
-import path from 'path';
-import archiver from 'archiver';
-import { getConfig, getHandoff } from '../../config';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.addFileToZip = exports.zipTokens = exports.getIntegrationName = exports.getIntegrationEntryPoint = exports.getPathToIntegration = void 0;
+var fs_extra_1 = __importDefault(require("fs-extra"));
+var path_1 = __importDefault(require("path"));
+var archiver_1 = __importDefault(require("archiver"));
+var config_1 = require("../../config");
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = basename(process.cwd());
 /**
@@ -45,7 +51,7 @@ import { getConfig, getHandoff } from '../../config';
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
  * integration if desired
  */
-export var getPathToIntegration = function () {
+var getPathToIntegration = function () {
     var handoff = global.handoff;
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
@@ -53,38 +59,40 @@ export var getPathToIntegration = function () {
     var integrationFolder = 'config/integrations';
     var defaultIntegration = 'bootstrap';
     var defaultVersion = '5.2';
-    var defaultPath = path.resolve(path.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
+    var defaultPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
     var config = handoff.config;
     if (config.integration) {
         if (config.integration.name === 'custom') {
             // Look for a custom integration
-            var customPath = path.resolve(path.join(handoff.workingPath, integrationFolder));
-            if (!fs.existsSync(customPath)) {
+            var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, integrationFolder));
+            if (!fs_extra_1.default.existsSync(customPath)) {
                 throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
             }
             return customPath;
         }
-        var searchPath = path.resolve(path.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
-        if (!fs.existsSync(searchPath)) {
+        var searchPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
+        if (!fs_extra_1.default.existsSync(searchPath)) {
             throw Error("The requested integration was ".concat(config.integration.name, " version ").concat(config.integration.version, " but no integration plugin with that name was found"));
         }
         return searchPath;
     }
     return defaultPath;
 };
+exports.getPathToIntegration = getPathToIntegration;
 /**
  * Get the entry point for the integration
  * @returns string
  */
-export var getIntegrationEntryPoint = function () {
-    return path.resolve(path.join(getPathToIntegration(), 'templates', 'main.js'));
+var getIntegrationEntryPoint = function () {
+    return path_1.default.resolve(path_1.default.join((0, exports.getPathToIntegration)(), 'templates', 'main.js'));
 };
+exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
 /**
  * Get the name of the current integration
  * @returns string
  */
-export var getIntegrationName = function () {
-    var config = getConfig();
+var getIntegrationName = function () {
+    var config = (0, config_1.getConfig)();
     var defaultIntegration = 'bootstrap';
     if (config.integration) {
         if (config.integration.name) {
@@ -93,48 +101,50 @@ export var getIntegrationName = function () {
     }
     return defaultIntegration;
 };
+exports.getIntegrationName = getIntegrationName;
 /**
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
-export default function integrationTransformer(documentationObject) {
+function integrationTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream, handoff;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    outputFolder = path.join('public');
-                    integrationPath = getPathToIntegration();
-                    integrationName = getIntegrationName();
+                    outputFolder = path_1.default.join('public');
+                    integrationPath = (0, exports.getPathToIntegration)();
+                    integrationName = (0, exports.getIntegrationName)();
                     sassFolder = "exported/".concat(integrationName, "-tokens");
-                    templatesFolder = path.resolve(__dirname, '../../templates');
-                    integrationsSass = path.resolve(integrationPath, 'sass');
-                    integrationTemplates = path.resolve(integrationPath, 'templates');
-                    fs.copySync(integrationsSass, sassFolder);
-                    fs.copySync(integrationTemplates, templatesFolder);
-                    stream = fs.createWriteStream(path.join(outputFolder, "tokens.zip"));
-                    return [4 /*yield*/, zipTokens('exported', stream)];
+                    templatesFolder = path_1.default.resolve(__dirname, '../../templates');
+                    integrationsSass = path_1.default.resolve(integrationPath, 'sass');
+                    integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
+                    fs_extra_1.default.copySync(integrationsSass, sassFolder);
+                    fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
+                    stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
+                    return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
                 case 1:
                     _a.sent();
-                    handoff = getHandoff();
+                    handoff = (0, config_1.getHandoff)();
                     handoff.hooks.integration(documentationObject);
                     return [2 /*return*/];
             }
         });
     });
 }
+exports.default = integrationTransformer;
 /**
  * Zip the fonts for download
  * @param dirPath
  * @param destination
  * @returns
  */
-export var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
+var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
     var archive, directory;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                archive = archiver('zip', {
+                archive = (0, archiver_1.default)('zip', {
                     zlib: { level: 9 }, // Sets the compression level.
                 });
                 // good practice to catch this error explicitly
@@ -142,10 +152,10 @@ export var zipTokens = function (dirPath, destination) { return __awaiter(void 0
                     throw err;
                 });
                 archive.pipe(destination);
-                return [4 /*yield*/, fs.readdir(dirPath)];
+                return [4 /*yield*/, fs_extra_1.default.readdir(dirPath)];
             case 1:
                 directory = _a.sent();
-                return [4 /*yield*/, addFileToZip(directory, dirPath, archive)];
+                return [4 /*yield*/, (0, exports.addFileToZip)(directory, dirPath, archive)];
             case 2:
                 archive = _a.sent();
                 return [4 /*yield*/, archive.finalize()];
@@ -155,6 +165,7 @@ export var zipTokens = function (dirPath, destination) { return __awaiter(void 0
         }
     });
 }); };
+exports.zipTokens = zipTokens;
 /**
  * A recusrive function for building a zip of the tokens
  * @param directory
@@ -162,7 +173,7 @@ export var zipTokens = function (dirPath, destination) { return __awaiter(void 0
  * @param archive
  * @returns
  */
-export var addFileToZip = function (directory, dirPath, archive) { return __awaiter(void 0, void 0, void 0, function () {
+var addFileToZip = function (directory, dirPath, archive) { return __awaiter(void 0, void 0, void 0, function () {
     var _i, directory_1, file, pathFile, recurse, data;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -172,17 +183,17 @@ export var addFileToZip = function (directory, dirPath, archive) { return __awai
             case 1:
                 if (!(_i < directory_1.length)) return [3 /*break*/, 6];
                 file = directory_1[_i];
-                pathFile = path.join(dirPath, file);
-                if (!fs.lstatSync(pathFile).isDirectory()) return [3 /*break*/, 4];
-                return [4 /*yield*/, fs.readdir(pathFile)];
+                pathFile = path_1.default.join(dirPath, file);
+                if (!fs_extra_1.default.lstatSync(pathFile).isDirectory()) return [3 /*break*/, 4];
+                return [4 /*yield*/, fs_extra_1.default.readdir(pathFile)];
             case 2:
                 recurse = _a.sent();
-                return [4 /*yield*/, addFileToZip(recurse, pathFile, archive)];
+                return [4 /*yield*/, (0, exports.addFileToZip)(recurse, pathFile, archive)];
             case 3:
                 archive = _a.sent();
                 return [3 /*break*/, 5];
             case 4:
-                data = fs.readFileSync(pathFile, 'utf-8');
+                data = fs_extra_1.default.readFileSync(pathFile, 'utf-8');
                 archive.append(data, { name: pathFile });
                 _a.label = 5;
             case 5:
@@ -192,3 +203,4 @@ export var addFileToZip = function (directory, dirPath, archive) { return __awai
         }
     });
 }); };
+exports.addFileToZip = addFileToZip;

@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9,9 +10,14 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import fs from 'fs-extra';
-import path from 'path';
-export var defaultConfig = {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deserializeHandoff = exports.serializeHandoff = exports.getHandoff = exports.getConfig = exports.defaultConfig = void 0;
+var fs_extra_1 = __importDefault(require("fs-extra"));
+var path_1 = __importDefault(require("path"));
+exports.defaultConfig = {
     dev_access_token: null,
     figma_project_id: null,
     title: 'Convertiv Design System',
@@ -80,51 +86,55 @@ export var defaultConfig = {
  * Get the config, either from the root of the project or from the default config
  * @returns Promise<Config>
  */
-export var getConfig = function () {
+var getConfig = function () {
     if (global.handoff && global.handoff.config) {
         return global.handoff.config;
     }
     // Check to see if there is a config in the root of the project
-    var config = {}, configPath = path.resolve(process.cwd(), 'client-config.json');
-    if (fs.existsSync(configPath)) {
-        var defBuffer = fs.readFileSync(configPath);
+    var config = {}, configPath = path_1.default.resolve(process.cwd(), 'client-config.json');
+    if (fs_extra_1.default.existsSync(configPath)) {
+        var defBuffer = fs_extra_1.default.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
     }
-    return __assign(__assign({}, defaultConfig), config);
+    return __assign(__assign({}, exports.defaultConfig), config);
 };
-export var getHandoff = function () {
+exports.getConfig = getConfig;
+var getHandoff = function () {
     if (global.handoff) {
         return global.handoff;
     }
     // check for a serialized version
-    var handoff = deserializeHandoff();
+    var handoff = (0, exports.deserializeHandoff)();
     if (handoff) {
         global.handoff = handoff;
         return handoff;
     }
     throw Error('Handoff not initialized');
 };
+exports.getHandoff = getHandoff;
 /**
  * Serialize the handoff to the working directory
  */
-export var serializeHandoff = function () {
-    var handoff = getHandoff();
-    if (!fs.existsSync(path.join(process.cwd(), 'exported'))) {
-        fs.mkdirSync(path.join(process.cwd(), 'exported'));
+var serializeHandoff = function () {
+    var handoff = (0, exports.getHandoff)();
+    if (!fs_extra_1.default.existsSync(path_1.default.join(process.cwd(), 'exported'))) {
+        fs_extra_1.default.mkdirSync(path_1.default.join(process.cwd(), 'exported'));
     }
-    var statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
-    fs.writeFileSync(statePath, JSON.stringify(handoff));
+    var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
+    fs_extra_1.default.writeFileSync(statePath, JSON.stringify(handoff));
 };
+exports.serializeHandoff = serializeHandoff;
 /**
  * Deserialize the handoff from the working directory
  * @returns
  */
-export var deserializeHandoff = function () {
-    var statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
-    if (fs.existsSync(statePath)) {
-        var stateBuffer = fs.readFileSync(statePath);
+var deserializeHandoff = function () {
+    var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
+    if (fs_extra_1.default.existsSync(statePath)) {
+        var stateBuffer = fs_extra_1.default.readFileSync(statePath);
         var state = JSON.parse(stateBuffer.toString());
         return state;
     }
     throw Error('Handoff cannot be deserialized');
 };
+exports.deserializeHandoff = deserializeHandoff;

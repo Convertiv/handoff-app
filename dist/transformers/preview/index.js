@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -54,10 +55,14 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import Mustache from 'mustache';
-import { parse } from 'node-html-parser';
-import { filterOutNull } from '../../utils/index';
-import { getComponentTemplate } from './utils';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var mustache_1 = __importDefault(require("mustache"));
+var node_html_parser_1 = require("node-html-parser");
+var index_1 = require("../../utils/index");
+var utils_1 = require("./utils");
 function mergeTokenSets(list) {
     var obj = {};
     list.forEach(function (item) {
@@ -77,7 +82,7 @@ var getComponentTemplateByKey = function (componentKey, component) { return __aw
             case 0:
                 parts = component.componentType === 'design'
                     ? __spreadArray(__spreadArray(__spreadArray([], (component.type ? [component.type] : []), true), (component.state ? [component.state] : []), true), (component.activity ? [component.activity] : []), true) : __spreadArray(__spreadArray([], (component.size ? [component.size] : []), true), (component.layout ? [component.layout] : []), true);
-                return [4 /*yield*/, getComponentTemplate.apply(void 0, __spreadArray([componentKey], parts, false))];
+                return [4 /*yield*/, utils_1.getComponentTemplate.apply(void 0, __spreadArray([componentKey], parts, false))];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -102,8 +107,8 @@ var transformComponentTokens = function (componentKey, component) { return __awa
                     });
                 }
                 renderableComponent = __assign(__assign({}, component), { parts: parts });
-                preview = Mustache.render(template, renderableComponent);
-                bodyEl = parse(preview).querySelector('body');
+                preview = mustache_1.default.render(template, renderableComponent);
+                bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
                 return [2 /*return*/, {
                         id: component.id,
                         preview: preview,
@@ -115,7 +120,7 @@ var transformComponentTokens = function (componentKey, component) { return __awa
 /**
  * Transforms the documentation object components into a preview and code
  */
-export default function previewTransformer(documentationObject) {
+function previewTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var components, componentKeys, result, previewComponents;
         var _this = this;
@@ -130,7 +135,7 @@ export default function previewTransformer(documentationObject) {
                                 switch (_b.label) {
                                     case 0:
                                         _a = [componentKey];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentKey].map(function (component) { return transformComponentTokens(componentKey, component); })).then(function (res) { return res.filter(filterOutNull); })];
+                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentKey].map(function (component) { return transformComponentTokens(componentKey, component); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
                                     case 1: return [2 /*return*/, _a.concat([
                                             _b.sent()
                                         ])];
@@ -151,3 +156,4 @@ export default function previewTransformer(documentationObject) {
         });
     });
 }
+exports.default = previewTransformer;

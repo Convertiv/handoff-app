@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -45,10 +46,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import chalk from 'chalk';
-import { getFileNodes, getFileStyles } from '../figma/api';
-import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType, isValidGradientType } from './utils';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var chalk_1 = __importDefault(require("chalk"));
+var api_1 = require("../figma/api");
+var convertColor_1 = require("../utils/convertColor");
+var utils_1 = require("./utils");
 var toMachineName = function (name) {
     return name
         .toLowerCase()
@@ -82,7 +87,7 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 3, , 4]);
-                return [4 /*yield*/, getFileStyles(fileId, accessToken)];
+                return [4 /*yield*/, (0, api_1.getFileStyles)(fileId, accessToken)];
             case 1:
                 apiResponse = _a.sent();
                 file = apiResponse.data;
@@ -102,7 +107,7 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
                     return 0;
                 })
                     .map(function (item) { return item.node_id; });
-                return [4 /*yield*/, getFileNodes(fileId, nodeIds, accessToken)];
+                return [4 /*yield*/, (0, api_1.getFileNodes)(fileId, nodeIds, accessToken)];
             case 2:
                 childrenApiResponse = _a.sent();
                 tokens = Object.entries(childrenApiResponse.data.nodes);
@@ -123,17 +128,17 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
                                 machineName: machine_name,
                                 group: group,
                                 effects: document.effects
-                                    .filter(function (effect) { return isValidEffectType(effect.type) && effect.visible; })
+                                    .filter(function (effect) { return (0, utils_1.isValidEffectType)(effect.type) && effect.visible; })
                                     .map(function (effect) { return ({
                                     type: effect.type,
-                                    value: isShadowEffectType(effect.type)
-                                        ? transformFigmaEffectToCssBoxShadow(effect)
+                                    value: (0, utils_1.isShadowEffectType)(effect.type)
+                                        ? (0, convertColor_1.transformFigmaEffectToCssBoxShadow)(effect)
                                         : '',
                                 }); })
                             });
                         }
-                        else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
-                            var color = transformFigmaFillsToCssColor(document.fills);
+                        else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || (0, utils_1.isValidGradientType)(document.fills[0].type))) {
+                            var color = (0, convertColor_1.transformFigmaFillsToCssColor)(document.fills);
                             colorsArray_1.push({
                                 name: name_1,
                                 group: group,
@@ -148,7 +153,7 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
                         var _c = fieldData(document.name), machine_name = _c.machine_name, group = _c.group;
                         var color = void 0;
                         if (isArray(document.fills) && document.fills[0] && document.fills[0].type === 'SOLID' && document.fills[0].color) {
-                            color = transformFigmaColorToHex(document.fills[0].color);
+                            color = (0, convertColor_1.transformFigmaColorToHex)(document.fills[0].color);
                         }
                         typographyArray_1.push({
                             name: document.name,
@@ -158,7 +163,7 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
                         });
                     }
                 });
-                chalk.green('Colors, Effects and Typography Exported');
+                chalk_1.default.green('Colors, Effects and Typography Exported');
                 data = {
                     color: colorsArray_1,
                     effect: effectsArray_1,
@@ -172,4 +177,4 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
         }
     });
 }); };
-export default getFileDesignTokens;
+exports.default = getFileDesignTokens;

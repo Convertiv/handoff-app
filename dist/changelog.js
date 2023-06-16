@@ -1,3 +1,4 @@
+"use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -7,7 +8,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import isEqual from 'lodash/isEqual';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var isEqual_1 = __importDefault(require("lodash/isEqual"));
 var generateChangelogObjectArr = function (prevArr, newArr, discriminator) {
     return __spreadArray(__spreadArray(__spreadArray([], newArr
         .filter(function (newItem) { return !prevArr.find(function (prevItem) { return prevItem[discriminator] === newItem[discriminator]; }); })
@@ -20,7 +25,7 @@ var generateChangelogObjectArr = function (prevArr, newArr, discriminator) {
         return { type: 'change', old: prevItem, new: newItem };
     })
         .filter(function (changeItem) {
-        return !isEqual(changeItem.old, changeItem.new);
+        return !(0, isEqual_1.default)(changeItem.old, changeItem.new);
     }), true);
 };
 var generateChangelogRecord = function (prevDoc, newDoc) {
@@ -42,4 +47,4 @@ var generateChangelogRecord = function (prevDoc, newDoc) {
     }
     return undefined;
 };
-export default generateChangelogRecord;
+exports.default = generateChangelogRecord;

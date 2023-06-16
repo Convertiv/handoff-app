@@ -1,4 +1,7 @@
-export function transformEffectTypes(effects) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.transformEffectTypes = void 0;
+function transformEffectTypes(effects) {
     var stringBuilder = [];
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -7,7 +10,8 @@ export function transformEffectTypes(effects) {
     }
     return stringBuilder.join('\n');
 }
-export default function transformEffects(effects) {
+exports.transformEffectTypes = transformEffectTypes;
+function transformEffects(effects) {
     var stringBuilder = [];
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -17,3 +21,4 @@ export default function transformEffects(effects) {
     }
     return stringBuilder.join('\n');
 }
+exports.default = transformEffects;

@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,14 +35,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import webpack from 'webpack';
-import path from 'path';
-import chalk from 'chalk';
-import { getIntegrationEntryPoint } from '../transformers/integration/index';
-export var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, function () {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildClientFiles = void 0;
+var webpack_1 = __importDefault(require("webpack"));
+var path_1 = __importDefault(require("path"));
+var chalk_1 = __importDefault(require("chalk"));
+var index_1 = require("../transformers/integration/index");
+var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, function () {
     var entry, handoff;
     return __generator(this, function (_a) {
-        entry = getIntegrationEntryPoint();
+        entry = (0, index_1.getIntegrationEntryPoint)();
         handoff = global.handoff;
         if (!handoff) {
             throw Error('Handoff not initialized');
@@ -52,17 +58,17 @@ export var buildClientFiles = function () { return __awaiter(void 0, void 0, voi
                     entry: entry,
                     resolve: {
                         modules: [
-                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
-                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
                         ],
                     },
                     output: {
-                        path: path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'public/components'),
+                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'public/components'),
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
-                        modules: [path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
+                        modules: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
                     },
                     module: {
                         rules: [
@@ -81,7 +87,7 @@ export var buildClientFiles = function () { return __awaiter(void 0, void 0, voi
                     },
                 };
                 var newConfig = handoff.hooks.webpack(config);
-                var compile = webpack(newConfig);
+                var compile = (0, webpack_1.default)(newConfig);
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {
@@ -105,7 +111,7 @@ export var buildClientFiles = function () { return __awaiter(void 0, void 0, voi
                             var error = 'Warnings encountered when building preview styles.\n';
                             if (process.argv.indexOf('--debug') > 0) {
                                 error += buildWarnings;
-                                console.error(chalk.yellow(error));
+                                console.error(chalk_1.default.yellow(error));
                             }
                         }
                     }
@@ -114,3 +120,4 @@ export var buildClientFiles = function () { return __awaiter(void 0, void 0, voi
             })];
     });
 }); };
+exports.buildClientFiles = buildClientFiles;

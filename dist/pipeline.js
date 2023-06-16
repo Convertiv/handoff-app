@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -8,6 +9,29 @@ var __assign = (this && this.__assign) || function () {
         return t;
     };
     return __assign.apply(this, arguments);
+};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -54,35 +78,39 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import generateChangelogRecord from './changelog';
-import { getHandoff } from './config';
-import { maskPrompt, prompt } from './utils/prompt';
-import chalk from 'chalk';
-import fs from 'fs-extra';
-import path from 'path';
-import { filterOutNull } from './utils/index';
-import 'dotenv/config';
-import * as stream from 'node:stream';
-import { getRequestCount } from './figma/api';
-import merge from 'lodash/merge';
-import { createDocumentationObject } from './documentation-object';
-import { zipAssets } from './api';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
-import cssTransformer from './transformers/css/index';
-import integrationTransformer from './transformers/integration/index';
-import fontTransformer from './transformers/font/index';
-import previewTransformer from './transformers/preview/index';
-import { buildClientFiles } from './utils/preview';
-import buildApp from './app';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var changelog_1 = __importDefault(require("./changelog"));
+var config_1 = require("./config");
+var prompt_1 = require("./utils/prompt");
+var chalk_1 = __importDefault(require("chalk"));
+var fs_extra_1 = __importDefault(require("fs-extra"));
+var path_1 = __importDefault(require("path"));
+var index_1 = require("./utils/index");
+require("dotenv/config");
+var stream = __importStar(require("node:stream"));
+var api_1 = require("./figma/api");
+var merge_1 = __importDefault(require("lodash/merge"));
+var documentation_object_1 = require("./documentation-object");
+var api_2 = require("./api");
+var index_2 = __importStar(require("./transformers/scss/index"));
+var index_3 = __importDefault(require("./transformers/css/index"));
+var index_4 = __importDefault(require("./transformers/integration/index"));
+var index_5 = __importDefault(require("./transformers/font/index"));
+var index_6 = __importDefault(require("./transformers/preview/index"));
+var preview_1 = require("./utils/preview");
+var app_1 = __importDefault(require("./app"));
 var config;
 var outputFolder = process.env.OUTPUT_DIR || 'exported';
 var exportablesFolder = 'config/exportables';
-var tokensFilePath = path.join(outputFolder, 'tokens.json');
-var previewFilePath = path.join(outputFolder, 'preview.json');
-var changelogFilePath = path.join(outputFolder, 'changelog.json');
-var variablesFilePath = path.join(outputFolder, 'tokens');
-var iconsZipFilePath = path.join(outputFolder, 'icons.zip');
-var logosZipFilePath = path.join(outputFolder, 'logos.zip');
+var tokensFilePath = path_1.default.join(outputFolder, 'tokens.json');
+var previewFilePath = path_1.default.join(outputFolder, 'preview.json');
+var changelogFilePath = path_1.default.join(outputFolder, 'changelog.json');
+var variablesFilePath = path_1.default.join(outputFolder, 'tokens');
+var iconsZipFilePath = path_1.default.join(outputFolder, 'icons.zip');
+var logosZipFilePath = path_1.default.join(outputFolder, 'logos.zip');
 /**
  * Read Previous Json File
  * @param path
@@ -94,7 +122,7 @@ var readPrevJSONFile = function (path) { return __awaiter(void 0, void 0, void 0
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, fs.readJSON(path)];
+                return [4 /*yield*/, fs_extra_1.default.readJSON(path)];
             case 1: return [2 /*return*/, _a.sent()];
             case 2:
                 e_1 = _a.sent();
@@ -115,38 +143,38 @@ var formatComponentsTransformerOptions = function (exportables) {
  * @returns Promise<ExportableDefinition[]>
  */
 var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config_1, definitions, exportables;
+    var config_2, definitions, exportables;
     var _a;
     return __generator(this, function (_b) {
         try {
             if (!handoff.config) {
                 throw new Error('Handoff config not found');
             }
-            config_1 = handoff.config;
-            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
+            config_2 = handoff.config;
+            definitions = (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.definitions;
             if (!definitions || definitions.length === 0) {
                 return [2 /*return*/, []];
             }
             exportables = definitions
                 .map(function (def) {
                 var _a;
-                var defPath = path.resolve(path.join(handoff.modulePath, exportablesFolder, "".concat(def, ".json")));
-                var projectPath = path.resolve(path.join(handoff.workingPath, exportablesFolder, "".concat(def, ".json")));
+                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, exportablesFolder, "".concat(def, ".json")));
+                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, exportablesFolder, "".concat(def, ".json")));
                 // If the project path exists, use that first as an override
-                if (fs.existsSync(projectPath)) {
+                if (fs_extra_1.default.existsSync(projectPath)) {
                     defPath = projectPath;
                 }
-                else if (!fs.existsSync(defPath)) {
+                else if (!fs_extra_1.default.existsSync(defPath)) {
                     return null;
                 }
-                var defBuffer = fs.readFileSync(defPath);
+                var defBuffer = fs_extra_1.default.readFileSync(defPath);
                 var exportable = JSON.parse(defBuffer.toString());
                 var exportableOptions = {};
-                merge(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                (0, merge_1.default)(exportableOptions, (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
                 exportable.options = exportableOptions;
                 return exportable;
             })
-                .filter(filterOutNull);
+                .filter(index_1.filterOutNull);
             return [2 /*return*/, exportables ? exportables : []];
         }
         catch (e) {
@@ -163,7 +191,7 @@ var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 
 var buildCustomFonts = function (documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, fontTransformer(documentationObject)];
+            case 0: return [4 /*yield*/, (0, index_5.default)(documentationObject)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -178,8 +206,8 @@ var buildIntegration = function (documentationObject) { return __awaiter(void 0,
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                handoff = getHandoff();
-                return [4 /*yield*/, integrationTransformer(documentationObject)];
+                handoff = (0, config_1.getHandoff)();
+                return [4 /*yield*/, (0, index_4.default)(documentationObject)];
             case 1:
                 integration = _a.sent();
                 handoff.hooks.integration(documentationObject);
@@ -196,11 +224,11 @@ var buildPreview = function (documentationObject) { return __awaiter(void 0, voi
         switch (_a.label) {
             case 0:
                 if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].length > 0; }).length > 0)) return [3 /*break*/, 3];
-                return [4 /*yield*/, Promise.all([previewTransformer(documentationObject).then(function (out) { return fs.writeJSON(previewFilePath, out, { spaces: 2 }); })])];
+                return [4 /*yield*/, Promise.all([(0, index_6.default)(documentationObject).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath, out, { spaces: 2 }); })])];
             case 1:
                 _a.sent();
-                return [4 /*yield*/, buildClientFiles()
-                        .then(function (value) { return console.log(chalk.green(value)); })
+                return [4 /*yield*/, (0, preview_1.buildClientFiles)()
+                        .then(function (value) { return console.log(chalk_1.default.green(value)); })
                         .catch(function (error) {
                         throw new Error(error);
                     })];
@@ -208,7 +236,7 @@ var buildPreview = function (documentationObject) { return __awaiter(void 0, voi
                 _a.sent();
                 return [3 /*break*/, 4];
             case 3:
-                console.log(chalk.red('Skipping preview generation'));
+                console.log(chalk_1.default.red('Skipping preview generation'));
                 _a.label = 4;
             case 4: return [2 /*return*/];
         }
@@ -223,53 +251,53 @@ var buildStyles = function (documentationObject, options) { return __awaiter(voi
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                handoff = getHandoff();
-                typeFiles = scssTypesTransformer(documentationObject, options);
+                handoff = (0, config_1.getHandoff)();
+                typeFiles = (0, index_2.scssTypesTransformer)(documentationObject, options);
                 typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-                cssFiles = cssTransformer(documentationObject, options);
+                cssFiles = (0, index_3.default)(documentationObject, options);
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-                scssFiles = scssTransformer(documentationObject, options);
+                scssFiles = (0, index_2.default)(documentationObject, options);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
                 return [4 /*yield*/, Promise.all([
-                        fs
+                        fs_extra_1.default
                             .ensureDir(variablesFilePath)
-                            .then(function () { return fs.ensureDir("".concat(variablesFilePath, "/types")); })
-                            .then(function () { return fs.ensureDir("".concat(variablesFilePath, "/css")); })
-                            .then(function () { return fs.ensureDir("".concat(variablesFilePath, "/sass")); })
+                            .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/types")); })
+                            .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/css")); })
+                            .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/sass")); })
                             .then(function () {
                             return Promise.all(Object.entries(typeFiles.components).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/types/").concat(name, ".scss"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/types/").concat(name, ".scss"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(typeFiles.design).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/types/").concat(name, ".scss"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/types/").concat(name, ".scss"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(cssFiles.components).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/css/").concat(name, ".css"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/css/").concat(name, ".css"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(cssFiles.design).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/css/").concat(name, ".css"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/css/").concat(name, ".css"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(scssFiles.components).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/sass/").concat(name, ".scss"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sass/").concat(name, ".scss"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(scssFiles.design).map(function (_a) {
                                 var name = _a[0], content = _a[1];
-                                return fs.writeFile("".concat(variablesFilePath, "/sass/").concat(name, ".scss"), content);
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sass/").concat(name, ".scss"), content);
                             }));
                         }),
                     ])];
@@ -293,8 +321,8 @@ var validateHandoffRequirements = function (handoff) { return __awaiter(void 0, 
             // couldn't find the right version, but ...
         }
         if (!requirements) {
-            console.log(chalk.redBright('Handoff Installation failed'));
-            console.log(chalk.yellow('- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'));
+            console.log(chalk_1.default.redBright('Handoff Installation failed'));
+            console.log(chalk_1.default.yellow('- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'));
             throw new Error('Could not run handoff');
         }
         return [2 /*return*/];
@@ -314,34 +342,34 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
-                console.log(chalk.yellow("\nFigma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
-                return [4 /*yield*/, maskPrompt(chalk.green('Figma Developer Key: '))];
+                console.log(chalk_1.default.yellow("\nFigma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
+                return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '))];
             case 1:
                 DEV_ACCESS_TOKEN = _a.sent();
                 _a.label = 2;
             case 2:
                 if (!!FIGMA_PROJECT_ID) return [3 /*break*/, 4];
                 missingEnvVars = true;
-                console.log(chalk.yellow("Figma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
-                return [4 /*yield*/, maskPrompt(chalk.green('Figma Project Id: '))];
+                console.log(chalk_1.default.yellow("Figma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
+                return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '))];
             case 3:
                 FIGMA_PROJECT_ID = _a.sent();
                 _a.label = 4;
             case 4:
                 if (!missingEnvVars) return [3 /*break*/, 8];
-                console.log(chalk.yellow("\nAt least one required environment variable was not supplied. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
-                return [4 /*yield*/, prompt(chalk.green('Write environment variables to .env file? (y/n): '))];
+                console.log(chalk_1.default.yellow("\nAt least one required environment variable was not supplied. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
+                return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
                 writeEnvFile = _a.sent();
                 if (!(writeEnvFile !== 'y')) return [3 /*break*/, 6];
-                console.log(chalk.green("Skipping .env file creation. You will need to supply these variables in the future.\n"));
+                console.log(chalk_1.default.green("Skipping .env file creation. You will need to supply these variables in the future.\n"));
                 return [3 /*break*/, 8];
             case 6:
                 envFile = "\nDEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nFIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
-                return [4 /*yield*/, fs.writeFile(path.resolve(handoff.workingPath, '.env'), envFile)];
+                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(handoff.workingPath, '.env'), envFile)];
             case 7:
                 _a.sent();
-                console.log(chalk.green("\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n"));
+                console.log(chalk_1.default.green("\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n"));
                 _a.label = 8;
             case 8: return [2 /*return*/, {
                     dev_access_token: DEV_ACCESS_TOKEN,
@@ -355,33 +383,33 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log(chalk.green("Starting Figma data extraction."));
+                console.log(chalk_1.default.green("Starting Figma data extraction."));
                 return [4 /*yield*/, readPrevJSONFile(tokensFilePath)];
             case 1:
                 prevDocumentationObject = _a.sent();
                 return [4 /*yield*/, readPrevJSONFile(changelogFilePath)];
             case 2:
                 changelog = (_a.sent()) || [];
-                return [4 /*yield*/, fs.emptyDir(outputFolder)];
+                return [4 /*yield*/, fs_extra_1.default.emptyDir(outputFolder)];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, createDocumentationObject(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables)];
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables)];
             case 4:
                 documentationObject = _a.sent();
-                changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
+                changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
                     changelog = __spreadArray([changelogRecord], changelog, true);
                 }
                 handoff.hooks.build(documentationObject);
                 return [4 /*yield*/, Promise.all(__spreadArray([
-                        fs.writeJSON(tokensFilePath, documentationObject, { spaces: 2 }),
-                        fs.writeJSON(changelogFilePath, changelog, { spaces: 2 })
+                        fs_extra_1.default.writeJSON(tokensFilePath, documentationObject, { spaces: 2 }),
+                        fs_extra_1.default.writeJSON(changelogFilePath, changelog, { spaces: 2 })
                     ], (!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
                         ? [
-                            zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath)).then(function (writeStream) {
+                            (0, api_2.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(iconsZipFilePath)).then(function (writeStream) {
                                 return stream.promises.finished(writeStream);
                             }),
-                            zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath)).then(function (writeStream) {
+                            (0, api_2.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(logosZipFilePath)).then(function (writeStream) {
                                 return stream.promises.finished(writeStream);
                             }),
                         ]
@@ -403,7 +431,7 @@ var pipeline = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!handoff.config) {
                     throw new Error('Handoff config not found');
                 }
-                console.log(chalk.green("Starting Handoff Figma data pipeline. Checking for environment and config.\n"));
+                console.log(chalk_1.default.green("Starting Handoff Figma data pipeline. Checking for environment and config.\n"));
                 return [4 /*yield*/, validateHandoffRequirements(handoff)];
             case 1:
                 _a.sent();
@@ -430,18 +458,18 @@ var pipeline = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, buildPreview(documentationObject)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, buildApp(handoff)];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
                 _a.sent();
                 return [3 /*break*/, 11];
             case 10:
-                console.log(chalk.red('Skipping app generation'));
+                console.log(chalk_1.default.red('Skipping app generation'));
                 _a.label = 11;
             case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
-                console.log(chalk.green("Figma pipeline complete:", "".concat(getRequestCount(), " requests")));
+                console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];
         }
     });
 }); };
-export default pipeline;
+exports.default = pipeline;

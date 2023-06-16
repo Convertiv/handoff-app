@@ -1,4 +1,4 @@
-import Handoff from './dist/handoff.js';
+import Handoff from './dist/index.js';
 
 const handoff = new Handoff({
     title: 'Handoff Custom',

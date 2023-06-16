@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -54,30 +55,35 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import chalk from 'chalk';
-import archiver from 'archiver';
-import fs from 'fs-extra';
-import path from 'path';
-import sortedUniq from 'lodash/sortedUniq';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.zipFonts = void 0;
+var chalk_1 = __importDefault(require("chalk"));
+var archiver_1 = __importDefault(require("archiver"));
+var fs_extra_1 = __importDefault(require("fs-extra"));
+var path_1 = __importDefault(require("path"));
+var sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
 //import { pluginTransformer } from '../plugin';
-import { getIntegrationName } from '../integration/index';
+var index_1 = require("../integration/index");
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use
  */
-export default function fontTransformer(documentationObject) {
+function fontTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var design, outputFolder, fontLocation, families, customFonts;
         var _this = this;
         return __generator(this, function (_a) {
             design = documentationObject.design;
             outputFolder = 'public';
-            fontLocation = path.join(outputFolder, 'fonts');
+            fontLocation = path_1.default.join(outputFolder, 'fonts');
             families = design.typography.reduce(function (result, current) {
                 var _a;
                 return __assign(__assign({}, result), (_a = {}, _a[current.values.fontFamily] = result[current.values.fontFamily]
                     ? // sorts and returns unique font weights
-                        sortedUniq(__spreadArray(__spreadArray([], result[current.values.fontFamily], true), [current.values.fontWeight], false).sort(function (a, b) { return a - b; }))
+                        (0, sortedUniq_1.default)(__spreadArray(__spreadArray([], result[current.values.fontFamily], true), [current.values.fontWeight], false).sort(function (a, b) { return a - b; }))
                     : [current.values.fontWeight], _a));
             }, {});
             customFonts = [];
@@ -87,16 +93,16 @@ export default function fontTransformer(documentationObject) {
                     switch (_a.label) {
                         case 0:
                             name = key.replace(/\s/g, '');
-                            fontDirName = path.join(fontLocation, name);
-                            if (!fs.existsSync(fontDirName)) return [3 /*break*/, 3];
-                            console.log(chalk.green("Found a custom font ".concat(name)));
-                            stream_1 = fs.createWriteStream(path.join(fontLocation, "".concat(name, ".zip")));
-                            return [4 /*yield*/, zipFonts(fontDirName, stream_1)];
+                            fontDirName = path_1.default.join(fontLocation, name);
+                            if (!fs_extra_1.default.existsSync(fontDirName)) return [3 /*break*/, 3];
+                            console.log(chalk_1.default.green("Found a custom font ".concat(name)));
+                            stream_1 = fs_extra_1.default.createWriteStream(path_1.default.join(fontLocation, "".concat(name, ".zip")));
+                            return [4 /*yield*/, (0, exports.zipFonts)(fontDirName, stream_1)];
                         case 1:
                             _a.sent();
-                            integrationName = getIntegrationName();
+                            integrationName = (0, index_1.getIntegrationName)();
                             fontsFolder = "exported/".concat(integrationName, "-tokens/fonts");
-                            return [4 /*yield*/, fs.copySync(fontDirName, fontsFolder)];
+                            return [4 /*yield*/, fs_extra_1.default.copySync(fontDirName, fontsFolder)];
                         case 2:
                             _a.sent();
                             customFonts.push("".concat(name, ".zip"));
@@ -109,18 +115,19 @@ export default function fontTransformer(documentationObject) {
         });
     });
 }
+exports.default = fontTransformer;
 /**
  * Zip the fonts for download
  * @param dirPath
  * @param destination
  * @returns
  */
-export var zipFonts = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
+var zipFonts = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
     var archive, fontDir, _i, fontDir_1, file, data;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                archive = archiver('zip', {
+                archive = (0, archiver_1.default)('zip', {
                     zlib: { level: 9 }, // Sets the compression level.
                 });
                 // good practice to catch this error explicitly
@@ -128,13 +135,13 @@ export var zipFonts = function (dirPath, destination) { return __awaiter(void 0,
                     throw err;
                 });
                 archive.pipe(destination);
-                return [4 /*yield*/, fs.readdir(dirPath)];
+                return [4 /*yield*/, fs_extra_1.default.readdir(dirPath)];
             case 1:
                 fontDir = _a.sent();
                 for (_i = 0, fontDir_1 = fontDir; _i < fontDir_1.length; _i++) {
                     file = fontDir_1[_i];
-                    data = fs.readFileSync(path.join(dirPath, file), 'utf-8');
-                    archive.append(data, { name: path.basename(file) });
+                    data = fs_extra_1.default.readFileSync(path_1.default.join(dirPath, file), 'utf-8');
+                    archive.append(data, { name: path_1.default.basename(file) });
                 }
                 return [4 /*yield*/, archive.finalize()];
             case 2:
@@ -143,3 +150,4 @@ export var zipFonts = function (dirPath, destination) { return __awaiter(void 0,
         }
     });
 }); };
+exports.zipFonts = zipFonts;

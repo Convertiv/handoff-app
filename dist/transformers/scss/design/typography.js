@@ -1,9 +1,13 @@
-export function transformTypographyTypes(typography) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.transformTypographyTypes = void 0;
+function transformTypographyTypes(typography) {
     var stringBuilder = [];
     stringBuilder.push("$type-sizes: ( ".concat(typography.map(function (type) { return "\"".concat(getTypeName(type), "\""); }).join(', '), " );"));
     return stringBuilder.join('\n');
 }
-export default function transformTypography(typography) {
+exports.transformTypographyTypes = transformTypographyTypes;
+function transformTypography(typography) {
     var stringBuilder = [];
     typography.forEach(function (type) {
         stringBuilder.push([
@@ -17,6 +21,7 @@ export default function transformTypography(typography) {
     });
     return stringBuilder.join('\n');
 }
+exports.default = transformTypography;
 function getTypeName(type) {
     return type.group
         ? "".concat(type.group, "-").concat(type.machine_name)

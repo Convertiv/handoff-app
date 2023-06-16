@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -18,39 +19,43 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import _ from 'lodash';
-import { findChildNodeWithType, findChildNodeWithTypeAndName, getComponentNamePart, isExportable, isValidNodeType, isValidVariantProperty, normalizeNamePart, } from '../utils';
-import { filterOutNull } from '../../utils/index';
-export default function extractComponents(componentSetComponentsResult, definition) {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var lodash_1 = __importDefault(require("lodash"));
+var utils_1 = require("../utils");
+var index_1 = require("../../utils/index");
+function extractComponents(componentSetComponentsResult, definition) {
     var supportedVariantPropertiesWithParams = getComponentSupportedVariantProperties(definition);
     var supportedVariantProperties = supportedVariantPropertiesWithParams.map(function (item) { return item.property; });
     var stateVariantProperty = supportedVariantPropertiesWithParams.filter(function (item) { return item.property === 'STATE'; });
     var componentSharedStates = stateVariantProperty.length > 0 ? stateVariantProperty[0].params : null;
     var sharedStateComponents = {};
-    var components = _.uniqBy(componentSetComponentsResult.components
+    var components = lodash_1.default.uniqBy(componentSetComponentsResult.components
         .map(function (component) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13;
         // Design
         var theme = supportedVariantProperties.includes('THEME')
-            ? normalizeNamePart((_e = (_a = getComponentNamePart(component.name, 'Theme')) !== null && _a !== void 0 ? _a : (_d = (_c = (_b = definition.options) === null || _b === void 0 ? void 0 : _b.shared) === null || _c === void 0 ? void 0 : _c.defaults) === null || _d === void 0 ? void 0 : _d.theme) !== null && _e !== void 0 ? _e : '')
+            ? (0, utils_1.normalizeNamePart)((_e = (_a = (0, utils_1.getComponentNamePart)(component.name, 'Theme')) !== null && _a !== void 0 ? _a : (_d = (_c = (_b = definition.options) === null || _b === void 0 ? void 0 : _b.shared) === null || _c === void 0 ? void 0 : _c.defaults) === null || _d === void 0 ? void 0 : _d.theme) !== null && _e !== void 0 ? _e : '')
             : undefined;
         var type = supportedVariantProperties.includes('TYPE')
-            ? normalizeNamePart((_k = (_f = getComponentNamePart(component.name, 'Type')) !== null && _f !== void 0 ? _f : (_j = (_h = (_g = definition.options) === null || _g === void 0 ? void 0 : _g.shared) === null || _h === void 0 ? void 0 : _h.defaults) === null || _j === void 0 ? void 0 : _j.type) !== null && _k !== void 0 ? _k : '')
+            ? (0, utils_1.normalizeNamePart)((_k = (_f = (0, utils_1.getComponentNamePart)(component.name, 'Type')) !== null && _f !== void 0 ? _f : (_j = (_h = (_g = definition.options) === null || _g === void 0 ? void 0 : _g.shared) === null || _h === void 0 ? void 0 : _h.defaults) === null || _j === void 0 ? void 0 : _j.type) !== null && _k !== void 0 ? _k : '')
             : undefined;
         var state = supportedVariantProperties.includes('STATE')
-            ? normalizeNamePart((_q = (_l = getComponentNamePart(component.name, 'State')) !== null && _l !== void 0 ? _l : (_p = (_o = (_m = definition.options) === null || _m === void 0 ? void 0 : _m.shared) === null || _o === void 0 ? void 0 : _o.defaults) === null || _p === void 0 ? void 0 : _p.state) !== null && _q !== void 0 ? _q : '')
+            ? (0, utils_1.normalizeNamePart)((_q = (_l = (0, utils_1.getComponentNamePart)(component.name, 'State')) !== null && _l !== void 0 ? _l : (_p = (_o = (_m = definition.options) === null || _m === void 0 ? void 0 : _m.shared) === null || _o === void 0 ? void 0 : _o.defaults) === null || _p === void 0 ? void 0 : _p.state) !== null && _q !== void 0 ? _q : '')
             : undefined;
         var activity = supportedVariantProperties.includes('ACTIVITY')
-            ? normalizeNamePart((_v = (_r = getComponentNamePart(component.name, 'Activity')) !== null && _r !== void 0 ? _r : (_u = (_t = (_s = definition.options) === null || _s === void 0 ? void 0 : _s.shared) === null || _t === void 0 ? void 0 : _t.defaults) === null || _u === void 0 ? void 0 : _u.activity) !== null && _v !== void 0 ? _v : '')
+            ? (0, utils_1.normalizeNamePart)((_v = (_r = (0, utils_1.getComponentNamePart)(component.name, 'Activity')) !== null && _r !== void 0 ? _r : (_u = (_t = (_s = definition.options) === null || _s === void 0 ? void 0 : _s.shared) === null || _t === void 0 ? void 0 : _t.defaults) === null || _u === void 0 ? void 0 : _u.activity) !== null && _v !== void 0 ? _v : '')
             : undefined;
         // Layout
         var layout = supportedVariantProperties.includes('LAYOUT')
-            ? normalizeNamePart((_0 = (_w = getComponentNamePart(component.name, 'Layout')) !== null && _w !== void 0 ? _w : (_z = (_y = (_x = definition.options) === null || _x === void 0 ? void 0 : _x.shared) === null || _y === void 0 ? void 0 : _y.defaults) === null || _z === void 0 ? void 0 : _z.layout) !== null && _0 !== void 0 ? _0 : '')
+            ? (0, utils_1.normalizeNamePart)((_0 = (_w = (0, utils_1.getComponentNamePart)(component.name, 'Layout')) !== null && _w !== void 0 ? _w : (_z = (_y = (_x = definition.options) === null || _x === void 0 ? void 0 : _x.shared) === null || _y === void 0 ? void 0 : _y.defaults) === null || _z === void 0 ? void 0 : _z.layout) !== null && _0 !== void 0 ? _0 : '')
             : undefined;
         var size = supportedVariantProperties.includes('SIZE')
-            ? normalizeNamePart((_5 = (_1 = getComponentNamePart(component.name, 'Size')) !== null && _1 !== void 0 ? _1 : (_4 = (_3 = (_2 = definition.options) === null || _2 === void 0 ? void 0 : _2.shared) === null || _3 === void 0 ? void 0 : _3.defaults) === null || _4 === void 0 ? void 0 : _4.size) !== null && _5 !== void 0 ? _5 : '')
+            ? (0, utils_1.normalizeNamePart)((_5 = (_1 = (0, utils_1.getComponentNamePart)(component.name, 'Size')) !== null && _1 !== void 0 ? _1 : (_4 = (_3 = (_2 = definition.options) === null || _2 === void 0 ? void 0 : _2.shared) === null || _3 === void 0 ? void 0 : _3.defaults) === null || _4 === void 0 ? void 0 : _4.size) !== null && _5 !== void 0 ? _5 : '')
             : undefined;
-        var instanceNode = layout || size ? component : findChildNodeWithType(component, 'INSTANCE');
+        var instanceNode = layout || size ? component : (0, utils_1.findChildNodeWithType)(component, 'INSTANCE');
         if (!instanceNode) {
             throw new Error("No instance node found for component ".concat(component.name));
         }
@@ -94,7 +99,7 @@ export default function extractComponents(componentSetComponentsResult, definiti
         }
         return designComponent;
     })
-        .filter(filterOutNull), 'id');
+        .filter(index_1.filterOutNull), 'id');
     if (componentSharedStates && Object.keys(sharedStateComponents).length > 0) {
         components
             .filter(function (component) {
@@ -111,6 +116,7 @@ export default function extractComponents(componentSetComponentsResult, definiti
     }
     return components;
 }
+exports.default = extractComponents;
 function extractComponentPartTokenSets(root, part, tokens) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
@@ -127,7 +133,7 @@ function extractComponentPartTokenSets(root, part, tokens) {
         }
         for (var _b = 0, _c = def.export; _b < _c.length; _b++) {
             var exportable = _c[_b];
-            if (!isExportable(exportable)) {
+            if (!(0, utils_1.isExportable)(exportable)) {
                 continue;
             }
             var tokenSet = extractNodeExportable(node, exportable);
@@ -160,8 +166,8 @@ function resolveNodeFromPath(root, path, tokens) {
         }
         nodeDef.name = nodeDef.name ? nodeDef.name.replaceAll('$activity', (_a = tokens === null || tokens === void 0 ? void 0 : tokens.activity) !== null && _a !== void 0 ? _a : '') : nodeDef.name;
         currentNode = nodeDef.name
-            ? findChildNodeWithTypeAndName(currentNode, nodeDef.type, nodeDef.name)
-            : findChildNodeWithType(currentNode, nodeDef.type);
+            ? (0, utils_1.findChildNodeWithTypeAndName)(currentNode, nodeDef.type, nodeDef.name)
+            : (0, utils_1.findChildNodeWithType)(currentNode, nodeDef.type);
         if (!currentNode) {
             return null;
         }
@@ -182,12 +188,12 @@ function parsePathNodeParams(path) {
         });
     }
     return {
-        type: isValidNodeType(type) ? type : undefined,
+        type: (0, utils_1.isValidNodeType)(type) ? type : undefined,
         name: selectors.get('name'),
     };
 }
 function mergeTokenSets(first, second) {
-    return _.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
+    return lodash_1.default.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
 }
 function getComponentSupportedVariantProperties(definition) {
     var _a;
@@ -201,7 +207,7 @@ function getComponentSupportedVariantProperties(definition) {
         }
         var key = matches[1].trim();
         var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
-        if (!isValidVariantProperty(key)) {
+        if (!(0, utils_1.isValidVariantProperty)(key)) {
             return null; // ignore if variant property isn't supported
         }
         return {
@@ -209,7 +215,7 @@ function getComponentSupportedVariantProperties(definition) {
             params: value ? value.substring(1).split(':') : null,
         };
     })
-        .filter(filterOutNull);
+        .filter(index_1.filterOutNull);
 }
 function generateDesignId(theme, type, state, activity) {
     var parts = ['design'];
