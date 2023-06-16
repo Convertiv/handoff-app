@@ -24,7 +24,7 @@ export const CopyCode: React.FC<CopyCodeProps> = ({ code }) => {
         }
       }}
     >
-      <Icon name="copy" />
+      <Icon name="copy" width={15} height={15}/>
     </a>
   );
 };

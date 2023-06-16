@@ -1,4 +1,3 @@
-import classNames from 'classnames';
 import Image from 'next/future/image'
 import * as React from 'react';
 
@@ -15,8 +14,8 @@ export const Icon: React.FC<IconProps> = ({ name, className, width, height }) =>
         src={`/assets/svg/${name}.svg`}
         className={className}
         alt={`Icon for ${name}`}
-        width={width ?? '100%'}
-        height={height ?? '100%'}
+        width={width ?? '100'}
+        height={height ?? '100'}
       />
   );
 };

@@ -13,7 +13,7 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
               <small>{item.title}</small>
             ) : (
               <NavLink href={`/${item.path}`}>
-                {item.image && <Icon name={item.image}/>}
+                {item.image && <Icon name={item.image} height={20} width={20}/>}
                 {item.title}
               </NavLink>
             )}

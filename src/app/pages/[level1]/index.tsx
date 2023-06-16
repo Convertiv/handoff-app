@@ -13,7 +13,6 @@ import { getConfig } from '../../../config';
  * @returns
  */
 export async function getStaticPaths() {
-  console.log(buildL1StaticPaths());
   return {
     paths: buildL1StaticPaths(),
     fallback: true,
