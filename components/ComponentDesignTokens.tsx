@@ -24,7 +24,9 @@ const PropertyIconPathMap = {
   'text-align': 'token-alignment',
 } as { [k: string]: string };
 
-const IsHexValue = (value: string) => value.match(/^#[0-9A-F]{6}$/i);
+const IsColorValue = (value: string) => {
+  return value.match(/^#[0-9A-F]{6}$/i) || value.match(/linear-gradient\(.*?\)|rgba\(.*?\)/)
+}
 
 const NormalizeValue = (value: string): string => {
   if (!Number.isNaN(Number(value))) {
@@ -197,9 +199,9 @@ const PropertyStateValue: React.FC<{ property: string; variable: string; value: 
         }
       }}
     >
-      {IsHexValue(value) && (
+      {IsColorValue(value) && (
         <div className="c-token-preview__color">
-          <span style={{ backgroundColor: value }}></span>
+          <span style={{ background: value }}></span>
         </div>
       )}
       <PropertyIcon name={property} />
