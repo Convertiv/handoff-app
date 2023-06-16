@@ -50,7 +50,7 @@ export const buildClientFiles = async (): Promise<string> => {
     compile.run((err, stats) => {
       if (err) {
         let error = 'Errors encountered trying to build preview styles1.\n';
-        if (process.argv.indexOf('--debug') > 0) {
+        if (handoff.debug) {
           error += err.stack || err;
         }
         return reject(error);
@@ -60,7 +60,7 @@ export const buildClientFiles = async (): Promise<string> => {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map((err) => err.message);
           let error = 'Errors encountered trying to build preview styles2.\n';
-          if (process.argv.indexOf('--debug') > 0) {
+          if (handoff.debug) {
             error += buildErrors;
           }
           return reject(error);
@@ -69,7 +69,7 @@ export const buildClientFiles = async (): Promise<string> => {
         if (stats.hasWarnings()) {
           let buildWarnings = stats.compilation.warnings?.map((err) => err.message);
           let error = 'Warnings encountered when building preview styles.\n';
-          if (process.argv.indexOf('--debug') > 0) {
+          if (handoff.debug) {
             error += buildWarnings;
             console.error(chalk.yellow(error));
           }

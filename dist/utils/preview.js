@@ -92,7 +92,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                     var _a, _b;
                     if (err) {
                         var error = 'Errors encountered trying to build preview styles1.\n';
-                        if (process.argv.indexOf('--debug') > 0) {
+                        if (handoff.debug) {
                             error += err.stack || err;
                         }
                         return reject(error);
@@ -101,7 +101,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         if (stats.hasErrors()) {
                             var buildErrors = (_a = stats.compilation.errors) === null || _a === void 0 ? void 0 : _a.map(function (err) { return err.message; });
                             var error = 'Errors encountered trying to build preview styles2.\n';
-                            if (process.argv.indexOf('--debug') > 0) {
+                            if (handoff.debug) {
                                 error += buildErrors;
                             }
                             return reject(error);
@@ -109,7 +109,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         if (stats.hasWarnings()) {
                             var buildWarnings = (_b = stats.compilation.warnings) === null || _b === void 0 ? void 0 : _b.map(function (err) { return err.message; });
                             var error = 'Warnings encountered when building preview styles.\n';
-                            if (process.argv.indexOf('--debug') > 0) {
+                            if (handoff.debug) {
                                 error += buildWarnings;
                                 console.error(chalk_1.default.yellow(error));
                             }

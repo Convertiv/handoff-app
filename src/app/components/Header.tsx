@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { Config, getConfig } from '../../config';
+import { getConfig } from '../../config';
 import NavLink from './NavLink';
 import { SectionLink } from './util';
 import React from 'react';
+import { Config } from '../../types/config';
 
 interface HeaderProps {
   menu: SectionLink[];
