@@ -80,7 +80,15 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                                     // Translates CSS into CommonJS
                                     'css-loader',
                                     // Compiles Sass to CSS
-                                    'sass-loader',
+                                    {
+                                        loader: 'sass-loader',
+                                        options: {
+                                            sassOptions: {
+                                                indentWidth: 4,
+                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
+                                            },
+                                        },
+                                    },
                                 ],
                             },
                         ],

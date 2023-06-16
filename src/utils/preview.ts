@@ -39,7 +39,15 @@ export const buildClientFiles = async (): Promise<string> => {
               // Translates CSS into CommonJS
               'css-loader',
               // Compiles Sass to CSS
-              'sass-loader',
+              {
+                loader: 'sass-loader',
+                options: {
+                  sassOptions: {
+                    indentWidth: 4,
+                    includePaths: [path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
+                  },
+                },
+              },
             ],
           },
         ],
