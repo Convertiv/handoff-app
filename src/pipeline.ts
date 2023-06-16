@@ -80,7 +80,7 @@ const getExportables = async (handoff: Handoff): Promise<ExportableDefinition[]>
     const exportables = definitions
       .map((def) => {
         let defPath = path.resolve(path.join(handoff.modulePath, exportablesFolder, `${def}.json`));
-        const projectPath = path.resolve(path.join(handoff.workingPath, exportablesFolder, `${def}.json`));
+        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
         // If the project path exists, use that first as an override
         if (fs.existsSync(projectPath)) {
           defPath = projectPath;

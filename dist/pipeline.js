@@ -160,7 +160,7 @@ var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 
                 .map(function (def) {
                 var _a;
                 var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, exportablesFolder, "".concat(def, ".json")));
-                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, exportablesFolder, "".concat(def, ".json")));
+                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
                 // If the project path exists, use that first as an override
                 if (fs_extra_1.default.existsSync(projectPath)) {
                     defPath = projectPath;

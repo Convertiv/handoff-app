@@ -45,9 +45,7 @@ class Handoff {
       preview: (webpackConfig, preview) => preview,
       configureExportables: (exportables) => exportables,
     };
-    console.log('Initializing Handoff');
     this.init();
-    console.log('Handoff initialized');
     global.handoff = this;
   }
   init(): Handoff {

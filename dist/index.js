@@ -87,9 +87,7 @@ var Handoff = /** @class */ (function () {
             preview: function (webpackConfig, preview) { return preview; },
             configureExportables: function (exportables) { return exportables; },
         };
-        console.log('Initializing Handoff');
         this.init();
-        console.log('Handoff initialized');
         global.handoff = this;
     }
     Handoff.prototype.init = function () {

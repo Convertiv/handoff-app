@@ -18,12 +18,14 @@ const usage = `Usage: handoff-app <cmd> <opts>
 
 Commands:
   fetch [opts] - Fetches the design tokens from the design system
+
   build [opts] - Builds the design system
   build:integration [opts] - Builds the design system integration
+
   start [opts] - Starts the design system in development mode
 
   make
-    make:schema <name> [opts] - Creates a new schema
+    make:exportable <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page
 
