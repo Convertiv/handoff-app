@@ -328,6 +328,7 @@ const pipeline = async (handoff: Handoff) => {
   await buildIntegration(documentationObject);
   if (handoff.config.buildApp) {
     await buildPreview(documentationObject);
+    await serializeHandoff();
     await buildApp(handoff);
   } else {
     console.log(chalk.red('Skipping app generation'));
