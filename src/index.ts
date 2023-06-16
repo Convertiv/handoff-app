@@ -45,15 +45,17 @@ class Handoff {
       preview: (webpackConfig, preview) => preview,
       configureExportables: (exportables) => exportables,
     };
-    global.handoff = this;
+    console.log('Initializing Handoff');
     this.init();
+    console.log('Handoff initialized');
+    global.handoff = this;
   }
-  async init(): Promise<Handoff> {
-    const config = await getConfig();
+  init(): Handoff {
+    const config = getConfig();
     config.figma.definitions = this.hooks.configureExportables(config.figma?.definitions || []);
     this.config = config;
     this.config = this.hooks.init(this.config);
-    await serializeHandoff();
+    serializeHandoff();
     return this;
   }
   async fetch(): Promise<Handoff> {

@@ -87,28 +87,19 @@ var Handoff = /** @class */ (function () {
             preview: function (webpackConfig, preview) { return preview; },
             configureExportables: function (exportables) { return exportables; },
         };
-        global.handoff = this;
+        console.log('Initializing Handoff');
         this.init();
+        console.log('Handoff initialized');
+        global.handoff = this;
     }
     Handoff.prototype.init = function () {
         var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var config;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, (0, config_1.getConfig)()];
-                    case 1:
-                        config = _b.sent();
-                        config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
-                        this.config = config;
-                        this.config = this.hooks.init(this.config);
-                        return [4 /*yield*/, (0, config_1.serializeHandoff)()];
-                    case 2:
-                        _b.sent();
-                        return [2 /*return*/, this];
-                }
-            });
-        });
+        var config = (0, config_1.getConfig)();
+        config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
+        this.config = config;
+        this.config = this.hooks.init(this.config);
+        (0, config_1.serializeHandoff)();
+        return this;
     };
     Handoff.prototype.fetch = function () {
         return __awaiter(this, void 0, void 0, function () {
