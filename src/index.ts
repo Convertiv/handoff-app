@@ -55,7 +55,7 @@ class Handoff {
     config.figma.definitions = this.hooks.configureExportables(config.figma?.definitions || []);
     this.config = config;
     this.config = this.hooks.init(this.config);
-    serializeHandoff();
+    serializeHandoff(this);
     return this;
   }
   async fetch(): Promise<Handoff> {

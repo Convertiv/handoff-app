@@ -98,7 +98,7 @@ var Handoff = /** @class */ (function () {
         config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         this.config = config;
         this.config = this.hooks.init(this.config);
-        (0, config_1.serializeHandoff)();
+        (0, config_1.serializeHandoff)(this);
         return this;
     };
     Handoff.prototype.fetch = function () {

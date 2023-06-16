@@ -112,8 +112,7 @@ export const getHandoff = (): Handoff => {
 /**
  * Serialize the handoff to the working directory
  */
-export const serializeHandoff = () => {
-  const handoff = getHandoff();
+export const serializeHandoff = (handoff: Handoff) => {
   if(!fs.existsSync(path.join(process.cwd(), 'exported'))) {
     fs.mkdirSync(path.join(process.cwd(), 'exported'));
   }

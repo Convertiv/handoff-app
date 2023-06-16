@@ -115,8 +115,7 @@ exports.getHandoff = getHandoff;
 /**
  * Serialize the handoff to the working directory
  */
-var serializeHandoff = function () {
-    var handoff = (0, exports.getHandoff)();
+var serializeHandoff = function (handoff) {
     if (!fs_extra_1.default.existsSync(path_1.default.join(process.cwd(), 'exported'))) {
         fs_extra_1.default.mkdirSync(path_1.default.join(process.cwd(), 'exported'));
     }

@@ -483,7 +483,7 @@ var pipeline = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, buildPreview(documentationObject)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, (0, config_1.serializeHandoff)()];
+                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
             case 9:
                 _a.sent();
                 return [4 /*yield*/, (0, app_1.default)(handoff)];
