@@ -20,7 +20,6 @@
     "figma",
     "handoff"
   ],
-  "type": "module",
   "homepage": "https://www.handoff.com/",
   "main": "./dist/index.js",
   "bin": {
