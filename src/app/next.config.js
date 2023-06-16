@@ -15,7 +15,6 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config) => {
-    console.log(config.module.rules);
     config.resolve.fallback = { fs: false };
     config.resolve.modules.push(path.resolve('dist/app'));
     config.resolve.modules.push(path.resolve('node_modules'));
