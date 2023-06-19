@@ -9,13 +9,14 @@ import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types/plugin';
 import buildApp, { exportNext, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';
-import { ejectConfig } from './eject';
+import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
 
 global.handoff = null;
 
 class Handoff {
   config: Config | null;
   debug: boolean = false;
+  force: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = process.cwd();
   hooks: {
@@ -84,6 +85,24 @@ class Handoff {
   async ejectConfig(): Promise<Handoff> {
     if (this.config) {
       await ejectConfig(this);
+    }
+    return this;
+  }
+  async ejectIntegration(): Promise<Handoff> {
+    if (this.config) {
+      await ejectIntegration(this);
+    }
+    return this;
+  }
+  async ejectExportables(): Promise<Handoff> {
+    if (this.config) {
+      await ejectExportables(this);
+    }
+    return this;
+  }
+  async ejectPages(): Promise<Handoff> {
+    if (this.config) {
+      await ejectPages(this);
     }
     return this;
   }

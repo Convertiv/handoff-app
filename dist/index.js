@@ -67,11 +67,12 @@ var path_1 = __importDefault(require("path"));
 require("dotenv/config");
 var app_1 = __importStar(require("./app"));
 var pipeline_1 = __importStar(require("./pipeline"));
-var eject_1 = require("./eject");
+var eject_1 = require("./cli/eject");
 global.handoff = null;
 var Handoff = /** @class */ (function () {
     function Handoff() {
         this.debug = false;
+        this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
         this.workingPath = process.cwd();
         this.config = null;
@@ -167,6 +168,51 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, eject_1.ejectConfig)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.ejectIntegration = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, eject_1.ejectIntegration)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.ejectExportables = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, eject_1.ejectExportables)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.ejectPages = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, eject_1.ejectPages)(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;

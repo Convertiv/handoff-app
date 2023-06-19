@@ -100,7 +100,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 11, , 12]);
+                _b.trys.push([0, 14, , 15]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -110,6 +110,8 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     '-c': '--config',
                     '--debug': Boolean,
                     '-d': '--debug',
+                    '--force': Boolean,
+                    '-f': '--force',
                 }, {
                     permissive: false,
                     argv: argv,
@@ -124,42 +126,49 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (args['--debug']) {
                     handoff_1.debug = true;
                 }
-                return [4 /*yield*/, handoff_1.init()];
-            case 1:
-                _b.sent();
+                if (args['--force']) {
+                    handoff_1.force = true;
+                }
                 _a = args._[0];
                 switch (_a) {
-                    case 'fetch': return [3 /*break*/, 2];
-                    case 'build': return [3 /*break*/, 3];
-                    case 'start': return [3 /*break*/, 6];
-                    case 'build:integration': return [3 /*break*/, 7];
-                    case 'eject': return [3 /*break*/, 8];
-                    case 'eject:config': return [3 /*break*/, 9];
+                    case 'fetch': return [3 /*break*/, 1];
+                    case 'build': return [3 /*break*/, 2];
+                    case 'start': return [3 /*break*/, 5];
+                    case 'build:integration': return [3 /*break*/, 6];
+                    case 'eject': return [3 /*break*/, 7];
+                    case 'eject:config': return [3 /*break*/, 8];
+                    case 'eject:integration': return [3 /*break*/, 9];
+                    case 'eject:exportables': return [3 /*break*/, 10];
+                    case 'eject:pages': return [3 /*break*/, 11];
                 }
-                return [3 /*break*/, 10];
-            case 2: return [2 /*return*/, handoff_1.fetch()];
-            case 3: return [4 /*yield*/, handoff_1.build()];
-            case 4:
+                return [3 /*break*/, 12];
+            case 1: return [2 /*return*/, handoff_1.fetch()];
+            case 2: return [4 /*yield*/, handoff_1.build()];
+            case 3:
                 _b.sent();
                 return [4 /*yield*/, handoff_1.exportApp()];
-            case 5:
+            case 4:
                 _b.sent();
                 return [2 /*return*/, handoff_1];
-            case 6:
+            case 5:
                 watching = true;
                 return [2 /*return*/, handoff_1.start()];
-            case 7: return [2 /*return*/, handoff_1.integration()];
-            case 8:
-                cliError("Eject commands will eject the default configuration into the working directory so you can customize it. \n\nEject must have a subcommand. Did you mean: \n  - eject:config \n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
-                _b.label = 9;
-            case 9: return [2 /*return*/, handoff_1.ejectConfig()];
-            case 10: return [3 /*break*/, 12];
-            case 11:
+            case 6: return [2 /*return*/, handoff_1.integration()];
+            case 7:
+                cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean: \n  - eject:config\n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
+                _b.label = 8;
+            case 8: return [2 /*return*/, handoff_1.ejectConfig()];
+            case 9: return [2 /*return*/, handoff_1.ejectIntegration()];
+            case 10: return [2 /*return*/, handoff_1.ejectExportables()];
+            case 11: return [2 /*return*/, handoff_1.ejectPages()];
+            case 12: return [2 /*return*/, showHelp()];
+            case 13: return [3 /*break*/, 15];
+            case 14:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 12: return [2 /*return*/];
+            case 15: return [2 /*return*/];
         }
     });
 }); };

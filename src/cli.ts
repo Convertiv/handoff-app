@@ -88,6 +88,8 @@ const run = async (
         '-c': '--config',
         '--debug': Boolean,
         '-d': '--debug',
+        '--force': Boolean,
+        '-f': '--force',
       },
       {
         permissive: false,
@@ -104,7 +106,9 @@ const run = async (
     if (args['--debug']) {
       handoff.debug = true;
     }
-    await handoff.init();
+    if (args['--force']) {
+      handoff.force = true;
+    }
     switch (args._[0]) {
       case 'fetch':
         return handoff.fetch();
@@ -119,11 +123,25 @@ const run = async (
         return handoff.integration();
       case 'eject':
         cliError(
-          `Eject commands will eject the default configuration into the working directory so you can customize it. \n\nEject must have a subcommand. Did you mean: \n  - eject:config \n  - eject:exportables.\n  - eject:integration\n  - eject:docs.`,
+          `Eject commands will eject the default configuration into the working directory so you can customize it.
+
+Eject must have a subcommand. Did you mean: 
+  - eject:config
+  - eject:exportables.
+  - eject:integration
+  - eject:docs.`,
           2
         );
       case 'eject:config':
         return handoff.ejectConfig();
+      case 'eject:integration':
+        return handoff.ejectIntegration();
+      case 'eject:exportables':
+        return handoff.ejectExportables();
+      case 'eject:pages':
+        return handoff.ejectPages();
+      default:
+        return showHelp();
     }
   } catch (e: any) {
     if (e.message.indexOf('Unknown or unexpected option') === -1) throw e;
