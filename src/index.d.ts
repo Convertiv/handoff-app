@@ -6,6 +6,7 @@ import { DocumentationObject } from './types';
 import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 
+declare module 'handoff-app';
 
 declare class Handoff {
     config: Config;
