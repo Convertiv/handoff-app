@@ -23,7 +23,7 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
       output: {
-        path: path.resolve(handoff?.modulePath, 'public/components'),
+        path: path.resolve(handoff?.modulePath, 'src/app/public/components'),
         filename: 'bundle.js',
       },
       resolveLoader: {

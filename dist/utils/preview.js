@@ -64,7 +64,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         ],
                     },
                     output: {
-                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'public/components'),
+                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src/app/public/components'),
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
