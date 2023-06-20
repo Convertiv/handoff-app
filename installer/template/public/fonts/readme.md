@@ -1,1 +1,0 @@
-You can add fonts here and include them in your templates.

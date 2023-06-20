@@ -30,7 +30,7 @@ Commands:
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page
 
-  eject - Ejects the default configuration to the current directory
+  eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
     eject:integration [opts] - Ejects the default integration to the current directory
     eject:exportables [opts] - Ejects the default exportables to the current directory
