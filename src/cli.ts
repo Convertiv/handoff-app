@@ -19,13 +19,14 @@ const usage = `Usage: handoff-app <cmd> <opts>
 Commands:
   fetch [opts] - Fetches the design tokens from the design system
 
-  build [opts] - Builds the design system
-  build:integration [opts] - Builds the design system integration
+  build - Using the current tokens, build various outputs
+    build:app [opts] - Builds the design system static application
+    build:integration [opts] - Builds current selected integration, styles and previews
 
   start [opts] - Starts the design system in development mode
 
   make
-    make:exportable <name> [opts] - Creates a new schema
+    make:exportable <type> <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page
 
@@ -112,7 +113,7 @@ const run = async (
     switch (args._[0]) {
       case 'fetch':
         return handoff.fetch();
-      case 'build':
+      case 'build:app':
         await handoff.build();
         await handoff.exportApp();
         return handoff;
@@ -140,6 +141,19 @@ Eject must have a subcommand. Did you mean:
         return handoff.ejectExportables();
       case 'eject:pages':
         return handoff.ejectPages();
+      case 'make:exportable':
+        const type = args._[1];
+        if (!type) {
+          cliError(`You must specify a type of 'component' or 'foundation'`, 2);
+        }
+        const name = args._[2];
+        if (!name) {
+          cliError(`You must specify a name for the exportable`, 2);
+        }
+        if (!/^[a-z0-9]+$/i.test(name)) {
+          cliError(`Exportable name must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        return handoff.makeExportable(type, name);
       default:
         return showHelp();
     }

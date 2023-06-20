@@ -10,6 +10,7 @@ import { HookReturn } from './types/plugin';
 import buildApp, { exportNext, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';
 import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
+import { makeExportable } from './cli/make';
 
 global.handoff = null;
 
@@ -103,6 +104,12 @@ class Handoff {
   async ejectPages(): Promise<Handoff> {
     if (this.config) {
       await ejectPages(this);
+    }
+    return this;
+  }
+  async makeExportable(type: string, name: string): Promise<Handoff> {
+    if (this.config) {
+      await makeExportable(this, type, name);
     }
     return this;
   }

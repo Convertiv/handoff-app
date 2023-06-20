@@ -68,6 +68,7 @@ require("dotenv/config");
 var app_1 = __importStar(require("./app"));
 var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./cli/eject");
+var make_1 = require("./cli/make");
 global.handoff = null;
 var Handoff = /** @class */ (function () {
     function Handoff() {
@@ -213,6 +214,21 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, eject_1.ejectPages)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.makeExportable = function (type, name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, make_1.makeExportable)(this, type, name)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
