@@ -122,7 +122,6 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
 const buildIntegration = async (documentationObject: DocumentationObject) => {
   const handoff = getHandoff();
   const integration = await integrationTransformer(documentationObject);
-  handoff.hooks.integration(documentationObject);
   return integration;
 };
 

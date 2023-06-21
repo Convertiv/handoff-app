@@ -211,7 +211,6 @@ var buildIntegration = function (documentationObject) { return __awaiter(void 0,
                 return [4 /*yield*/, (0, index_4.default)(documentationObject)];
             case 1:
                 integration = _a.sent();
-                handoff.hooks.integration(documentationObject);
                 return [2 /*return*/, integration];
         }
     });

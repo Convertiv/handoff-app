@@ -39,13 +39,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addFileToZip = exports.zipTokens = exports.getIntegrationName = exports.getIntegrationEntryPoint = exports.getPathToIntegration = void 0;
+exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationName = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var archiver_1 = __importDefault(require("archiver"));
 var config_1 = require("../../config");
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = basename(process.cwd());
+var tailwind_1 = require("./tailwind");
+var defaultIntegration = 'bootstrap';
+var defaultVersion = '5.2';
+var HandoffIntegration = /** @class */ (function () {
+    function HandoffIntegration(name, version) {
+        this.name = name;
+        this.version = version;
+        this.hooks = {
+            integration: function (documentationObject, artifacts) { return artifacts; },
+            webpack: function (webpackConfig) { return webpackConfig; },
+            preview: function (webpackConfig, preview) { return preview; },
+        };
+    }
+    HandoffIntegration.prototype.postIntegration = function (callback) {
+        this.hooks.integration = callback;
+    };
+    HandoffIntegration.prototype.modifyWebpackConfig = function (callback) {
+        this.hooks.webpack = callback;
+    };
+    HandoffIntegration.prototype.postPreview = function (callback) {
+        this.hooks.preview = callback;
+    };
+    return HandoffIntegration;
+}());
+exports.HandoffIntegration = HandoffIntegration;
 /**
  * Derive the path to the integration. Use the config to find the integration
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
@@ -57,8 +80,6 @@ var getPathToIntegration = function () {
         throw Error('Handoff not initialized');
     }
     var integrationFolder = 'config/integrations';
-    var defaultIntegration = 'bootstrap';
-    var defaultVersion = '5.2';
     var defaultPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
     var config = handoff.config;
     if (config.integration) {
@@ -102,70 +123,26 @@ var getIntegrationName = function () {
     return defaultIntegration;
 };
 exports.getIntegrationName = getIntegrationName;
-/**
- * Find the integration to sync and sync the sass files and template files.
- * @param documentationObject
- */
-function integrationTransformer(documentationObject) {
-    return __awaiter(this, void 0, void 0, function () {
-        var outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream, handoff;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    outputFolder = path_1.default.join('public');
-                    integrationPath = (0, exports.getPathToIntegration)();
-                    integrationName = (0, exports.getIntegrationName)();
-                    sassFolder = "exported/".concat(integrationName, "-tokens");
-                    templatesFolder = path_1.default.resolve(__dirname, '../../templates');
-                    integrationsSass = path_1.default.resolve(integrationPath, 'sass');
-                    integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
-                    fs_extra_1.default.copySync(integrationsSass, sassFolder);
-                    fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
-                    stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
-                    return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
-                case 1:
-                    _a.sent();
-                    handoff = (0, config_1.getHandoff)();
-                    handoff.hooks.integration(documentationObject);
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-exports.default = integrationTransformer;
-/**
- * Zip the fonts for download
- * @param dirPath
- * @param destination
- * @returns
- */
-var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
-    var archive, directory;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                archive = (0, archiver_1.default)('zip', {
-                    zlib: { level: 9 }, // Sets the compression level.
-                });
-                // good practice to catch this error explicitly
-                archive.on('error', function (err) {
-                    throw err;
-                });
-                archive.pipe(destination);
-                return [4 /*yield*/, fs_extra_1.default.readdir(dirPath)];
-            case 1:
-                directory = _a.sent();
-                return [4 /*yield*/, (0, exports.addFileToZip)(directory, dirPath, archive)];
-            case 2:
-                archive = _a.sent();
-                return [4 /*yield*/, archive.finalize()];
-            case 3:
-                _a.sent();
-                return [2 /*return*/, destination];
+var instantiateIntegration = function (handoff) {
+    var _a;
+    if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
+        throw Error('Handoff not initialized');
+    }
+    var config = handoff.config;
+    if (config.integration) {
+        switch ((_a = config === null || config === void 0 ? void 0 : config.integration) === null || _a === void 0 ? void 0 : _a.name) {
+            case 'tailwind':
+                var integration = new HandoffIntegration(config.integration.name, config.integration.version);
+                integration.postIntegration(tailwind_1.postTailwindIntegration);
+                integration.modifyWebpackConfig(tailwind_1.modifyWebpackConfigForTailwind);
+                return integration;
+            default:
+                return new HandoffIntegration(config.integration.name, config.integration.version);
         }
-    });
-}); };
-exports.zipTokens = zipTokens;
+    }
+    return new HandoffIntegration(defaultIntegration, defaultVersion);
+};
+exports.instantiateIntegration = instantiateIntegration;
 /**
  * A recusrive function for building a zip of the tokens
  * @param directory
@@ -204,3 +181,73 @@ var addFileToZip = function (directory, dirPath, archive) { return __awaiter(voi
     });
 }); };
 exports.addFileToZip = addFileToZip;
+/**
+ * Zip the fonts for download
+ * @param dirPath
+ * @param destination
+ * @returns
+ */
+var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
+    var archive, directory;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                archive = (0, archiver_1.default)('zip', {
+                    zlib: { level: 9 }, // Sets the compression level.
+                });
+                // good practice to catch this error explicitly
+                archive.on('error', function (err) {
+                    throw err;
+                });
+                archive.pipe(destination);
+                return [4 /*yield*/, fs_extra_1.default.readdir(dirPath)];
+            case 1:
+                directory = _a.sent();
+                return [4 /*yield*/, (0, exports.addFileToZip)(directory, dirPath, archive)];
+            case 2:
+                archive = _a.sent();
+                return [4 /*yield*/, archive.finalize()];
+            case 3:
+                _a.sent();
+                return [2 /*return*/, destination];
+        }
+    });
+}); };
+exports.zipTokens = zipTokens;
+/**
+ * Find the integration to sync and sync the sass files and template files.
+ * @param documentationObject
+ */
+function integrationTransformer(documentationObject) {
+    return __awaiter(this, void 0, void 0, function () {
+        var handoff, outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream, data;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    handoff = (0, config_1.getHandoff)();
+                    outputFolder = path_1.default.join('public');
+                    integrationPath = (0, exports.getPathToIntegration)();
+                    integrationName = (0, exports.getIntegrationName)();
+                    sassFolder = path_1.default.resolve(handoff.workingPath, "exported/".concat(integrationName, "-tokens"));
+                    templatesFolder = path_1.default.resolve(__dirname, '../../templates');
+                    integrationsSass = path_1.default.resolve(integrationPath, 'sass');
+                    integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
+                    fs_extra_1.default.copySync(integrationsSass, sassFolder);
+                    fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
+                    stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
+                    return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
+                case 1:
+                    _a.sent();
+                    data = handoff.integrationHooks.hooks.integration(documentationObject, []);
+                    data = handoff.hooks.integration(documentationObject, data);
+                    if (data.length > 0) {
+                        data.map(function (artifact) {
+                            fs_extra_1.default.writeFileSync(path_1.default.join(sassFolder, artifact.filename), artifact.data);
+                        });
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.default = integrationTransformer;

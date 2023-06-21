@@ -13,6 +13,10 @@ export declare const defaultConfig: Config;
  * @returns Promise<Config>
  */
 export declare const getConfig: () => Config;
+/**
+ * Get the handoff from the global scope
+ * @returns Handoff
+ */
 export declare const getHandoff: () => Handoff;
 /**
  * Serialize the handoff to the working directory

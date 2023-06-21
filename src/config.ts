@@ -89,14 +89,17 @@ export const getConfig = (): Config => {
   }
   // Check to see if there is a config in the root of the project
   let config = {},
-    configPath = path.resolve(process.cwd(), 'client-config.json');
+    configPath = path.resolve(process.cwd(), 'handoff.config.json');
   if (fs.existsSync(configPath)) {
     const defBuffer = fs.readFileSync(configPath);
     config = JSON.parse(defBuffer.toString()) as Config;
   }
   return { ...defaultConfig, ...config } as unknown as Config;
 };
-
+/**
+ * Get the handoff from the global scope
+ * @returns Handoff
+ */
 export const getHandoff = (): Handoff => {
   if (global.handoff) {
     return global.handoff;
@@ -113,7 +116,7 @@ export const getHandoff = (): Handoff => {
  * Serialize the handoff to the working directory
  */
 export const serializeHandoff = (handoff: Handoff) => {
-  if(!fs.existsSync(path.join(process.cwd(), 'exported'))) {
+  if (!fs.existsSync(path.join(process.cwd(), 'exported'))) {
     fs.mkdirSync(path.join(process.cwd(), 'exported'));
   }
   const statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');

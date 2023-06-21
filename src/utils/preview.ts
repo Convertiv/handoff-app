@@ -56,8 +56,9 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
     };
-    const newConfig = handoff.hooks.webpack(config);
-    const compile = webpack(newConfig);
+    config = handoff.integrationHooks.hooks.webpack(config);
+    config = handoff.hooks.webpack(config);
+    const compile = webpack(config);
     compile.run((err, stats) => {
       if (err) {
         let error = 'Errors encountered trying to build preview styles1.\n';

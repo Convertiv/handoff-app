@@ -97,8 +97,9 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         ],
                     },
                 };
-                var newConfig = handoff.hooks.webpack(config);
-                var compile = (0, webpack_1.default)(newConfig);
+                config = handoff.integrationHooks.hooks.webpack(config);
+                config = handoff.hooks.webpack(config);
+                var compile = (0, webpack_1.default)(config);
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {

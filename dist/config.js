@@ -91,7 +91,7 @@ var getConfig = function () {
         return global.handoff.config;
     }
     // Check to see if there is a config in the root of the project
-    var config = {}, configPath = path_1.default.resolve(process.cwd(), 'client-config.json');
+    var config = {}, configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs_extra_1.default.existsSync(configPath)) {
         var defBuffer = fs_extra_1.default.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
@@ -99,6 +99,10 @@ var getConfig = function () {
     return __assign(__assign({}, exports.defaultConfig), config);
 };
 exports.getConfig = getConfig;
+/**
+ * Get the handoff from the global scope
+ * @returns Handoff
+ */
 var getHandoff = function () {
     if (global.handoff) {
         return global.handoff;

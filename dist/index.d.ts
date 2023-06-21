@@ -5,17 +5,19 @@ import { DocumentationObject } from './types';
 import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types/plugin';
+import { HandoffIntegration } from './transformers/integration';
 declare class Handoff {
     config: Config | null;
     debug: boolean;
     force: boolean;
     modulePath: string;
     workingPath: string;
+    integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;
         fetch: () => void;
         build: (documentationObject: DocumentationObject) => void;
-        integration: (documentationObject: DocumentationObject) => void;
+        integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
         typeTransformer: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput;
         cssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => CssTransformerOutput;
         scssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
@@ -41,7 +43,7 @@ declare class Handoff {
     postScssTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput): void;
     postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
     postBuild(callback: (documentationObject: DocumentationObject) => void): void;
-    postIntegration(callback: (documentationObject: DocumentationObject) => HookReturn[]): void;
+    postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
     configureExportables(callback: (exportables: string[]) => string[]): void;
 }

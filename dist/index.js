@@ -69,6 +69,7 @@ var app_1 = __importStar(require("./app"));
 var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./cli/eject");
 var make_1 = require("./cli/make");
+var integration_1 = require("./transformers/integration");
 global.handoff = null;
 var Handoff = /** @class */ (function () {
     function Handoff() {
@@ -82,7 +83,7 @@ var Handoff = /** @class */ (function () {
             fetch: function () { },
             build: function (documentationObject) { },
             typeTransformer: function (documentationObject, types) { return types; },
-            integration: function (documentationObject) { },
+            integration: function (documentationObject, data) { return data; },
             cssTransformer: function (documentationObject, css) { return css; },
             scssTransformer: function (documentationObject, scss) { return scss; },
             webpack: function (webpackConfig) { return webpackConfig; },
@@ -90,6 +91,7 @@ var Handoff = /** @class */ (function () {
             configureExportables: function (exportables) { return exportables; },
         };
         this.init();
+        this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
     Handoff.prototype.init = function () {
