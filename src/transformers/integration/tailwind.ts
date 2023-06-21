@@ -3,7 +3,6 @@ import { DocumentationObject } from '../../types';
 import { HookReturn } from '../../types/plugin';
 import webpack from 'webpack';
 import fs from 'fs-extra';
-import { getHandoff } from '../../config';
 import { getPathToIntegration } from '.';
 
 export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {

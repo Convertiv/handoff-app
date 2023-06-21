@@ -18,11 +18,11 @@ const nextConfig = {
     config.resolve.fallback = { fs: false };
     config.resolve.modules.push(path.resolve('dist/app'));
     config.resolve.modules.push(path.resolve('node_modules'));
-    config.resolveLoader.modules.push(path.resolve('node_modules')),
-      config.module.rules.push({
-        test: /\.svg$/i,
-        type: 'asset',
-      });
+    config.resolveLoader.modules.push(path.resolve('node_modules'));
+    config.module.rules.push({
+      test: /\.svg$/i,
+      type: 'asset',
+    });
     config.module.rules.push({
       test: /\.html$/i,
       loader: 'html-loader',

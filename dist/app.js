@@ -56,6 +56,11 @@ var index_2 = __importDefault(require("next/dist/export/index"));
 var trace_1 = require("next/dist/trace");
 var next_dev_1 = require("next/dist/cli/next-dev");
 var path_1 = __importDefault(require("path"));
+/**
+ * Build the next js application
+ * @param handoff
+ * @returns
+ */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath;
     return __generator(this, function (_a) {
@@ -70,6 +75,11 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
         }
     });
 }); };
+/**
+ * Export the next js application
+ * @param handoff
+ * @returns
+ */
 var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var nextExportCliSpan;
     return __generator(this, function (_a) {
@@ -87,13 +97,15 @@ var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, f
 }); };
 exports.exportNext = exportNext;
 /**
- *
+ * Watch the next js application
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
-        return [2 /*return*/];
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
     });
 }); };
 exports.watchApp = watchApp;
