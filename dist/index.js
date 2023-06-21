@@ -72,7 +72,7 @@ var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 global.handoff = null;
 var Handoff = /** @class */ (function () {
-    function Handoff() {
+    function Handoff(config) {
         this.debug = false;
         this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
@@ -90,13 +90,13 @@ var Handoff = /** @class */ (function () {
             preview: function (webpackConfig, preview) { return preview; },
             configureExportables: function (exportables) { return exportables; },
         };
-        this.init();
+        this.init(config);
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
-    Handoff.prototype.init = function () {
+    Handoff.prototype.init = function (configOverride) {
         var _a;
-        var config = (0, config_1.getConfig)();
+        var config = (0, config_1.getConfig)(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         this.config = config;
         this.config = this.hooks.init(this.config);

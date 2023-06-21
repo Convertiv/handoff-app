@@ -12,7 +12,7 @@ export declare const defaultConfig: Config;
  * Get the config, either from the root of the project or from the default config
  * @returns Promise<Config>
  */
-export declare const getConfig: () => Config;
+export declare const getConfig: (configOverride?: any) => Config;
 /**
  * Get the handoff from the global scope
  * @returns Handoff

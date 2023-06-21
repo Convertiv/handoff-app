@@ -83,7 +83,7 @@ export const defaultConfig: Config = {
  * Get the config, either from the root of the project or from the default config
  * @returns Promise<Config>
  */
-export const getConfig = (): Config => {
+export const getConfig = (configOverride?: any): Config => {
   if (global.handoff && global.handoff.config) {
     return global.handoff.config;
   }
@@ -93,6 +93,9 @@ export const getConfig = (): Config => {
   if (fs.existsSync(configPath)) {
     const defBuffer = fs.readFileSync(configPath);
     config = JSON.parse(defBuffer.toString()) as Config;
+  }
+  if(configOverride) {
+    config = {...config, ...configOverride};
   }
   return { ...defaultConfig, ...config } as unknown as Config;
 };

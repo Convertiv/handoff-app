@@ -25,8 +25,8 @@ declare class Handoff {
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
         configureExportables: (exportables: string[]) => string[];
     };
-    constructor();
-    init(): Handoff;
+    constructor(config?: Config);
+    init(configOverride?: Config): Handoff;
     fetch(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;

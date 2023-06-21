@@ -35,7 +35,7 @@ class Handoff {
     configureExportables: (exportables: string[]) => string[];
   };
 
-  constructor() {
+  constructor(config?: Config) {
     this.config = null;
     this.hooks = {
       init: (config: Config): Config => config,
@@ -49,12 +49,12 @@ class Handoff {
       preview: (webpackConfig, preview) => preview,
       configureExportables: (exportables) => exportables,
     };
-    this.init();
+    this.init(config);
     this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
-  init(): Handoff {
-    const config = getConfig();
+  init(configOverride?: Config): Handoff {
+    const config = getConfig(configOverride ?? {});
     config.figma.definitions = this.hooks.configureExportables(config.figma?.definitions || []);
     this.config = config;
     this.config = this.hooks.init(this.config);

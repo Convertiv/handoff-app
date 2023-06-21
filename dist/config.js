@@ -86,7 +86,7 @@ exports.defaultConfig = {
  * Get the config, either from the root of the project or from the default config
  * @returns Promise<Config>
  */
-var getConfig = function () {
+var getConfig = function (configOverride) {
     if (global.handoff && global.handoff.config) {
         return global.handoff.config;
     }
@@ -95,6 +95,9 @@ var getConfig = function () {
     if (fs_extra_1.default.existsSync(configPath)) {
         var defBuffer = fs_extra_1.default.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
+    }
+    if (configOverride) {
+        config = __assign(__assign({}, config), configOverride);
     }
     return __assign(__assign({}, exports.defaultConfig), config);
 };
