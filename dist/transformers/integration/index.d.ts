@@ -4,7 +4,7 @@ import { DocumentationObject } from '../../types';
 import { TransformedPreviewComponents } from '../preview';
 import webpack from 'webpack';
 import { HookReturn } from '../../types/plugin';
-import Handoff from 'src';
+import Handoff from '../../index';
 export declare class HandoffIntegration {
     name: string;
     version: string;
