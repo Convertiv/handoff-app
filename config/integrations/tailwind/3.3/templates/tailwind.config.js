@@ -6,7 +6,6 @@ const theme = require(path.resolve(process.cwd(), "exported/tailwind-tokens/them
 const tokenFile = path.resolve("./exported/tokens.json");
 const tokenData = fs.readFileSync(tokenFile, "utf8");
 const tokens = JSON.parse(tokenData);
-console.log(path.resolve("./config/integrations/tailwind/3.3/**/*.{html,js}"));
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {

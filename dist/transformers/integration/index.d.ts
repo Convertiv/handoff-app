@@ -1,10 +1,9 @@
-/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
 import { TransformedPreviewComponents } from '../preview';
 import webpack from 'webpack';
-import { HookReturn } from 'src/types/plugin';
+import { HookReturn } from '../../types/plugin';
 import Handoff from 'src';
 export declare class HandoffIntegration {
     name: string;

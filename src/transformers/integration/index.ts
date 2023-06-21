@@ -7,7 +7,7 @@ import { DocumentationObject } from '../../types';
 import { getConfig, getHandoff } from '../../config';
 import { TransformedPreviewComponents } from '../preview';
 import webpack from 'webpack';
-import { HookReturn } from 'src/types/plugin';
+import { HookReturn } from '../../types/plugin';
 import Handoff from 'src';
 import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
 const defaultIntegration = 'bootstrap';

@@ -8,9 +8,7 @@ var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var _1 = require(".");
 var modifyWebpackConfigForTailwind = function (webpackConfig) {
-    console.log((0, _1.getPathToIntegration)());
     var tailwindPath = path_1.default.resolve(path_1.default.join((0, _1.getPathToIntegration)(), 'templates/tailwind.config.js'));
-    console.log(tailwindPath);
     var plugins = [];
     try {
         var tailwindcss = require('tailwindcss');
@@ -18,7 +16,6 @@ var modifyWebpackConfigForTailwind = function (webpackConfig) {
         plugins = [tailwindcss(tailwindPath), autoprefixer];
     }
     catch (e) {
-        console.log(e);
         console.log('Tailwind not installed.  Please run `npm install tailwindcss autoprefixer`', e);
         return webpackConfig;
     }

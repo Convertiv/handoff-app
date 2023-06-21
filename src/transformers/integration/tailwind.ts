@@ -7,16 +7,13 @@ import { getHandoff } from '../../config';
 import { getPathToIntegration } from '.';
 
 export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {
-  console.log(getPathToIntegration());
   const tailwindPath = path.resolve(path.join(getPathToIntegration(), 'templates/tailwind.config.js'));
-  console.log(tailwindPath);
   let plugins: any[] = [];
   try {
     const tailwindcss = require('tailwindcss');
     const autoprefixer = require('autoprefixer');
     plugins = [tailwindcss(tailwindPath), autoprefixer];
   } catch (e) {
-    console.log(e);
     console.log('Tailwind not installed.  Please run `npm install tailwindcss autoprefixer`', e);
     return webpackConfig;
   }
