@@ -47,7 +47,7 @@ export const buildClientFiles = async (): Promise<string> => {
                 options: {
                   sassOptions: {
                     indentWidth: 4,
-                    includePaths: [path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
+                    includePaths: [ path.resolve(handoff?.workingPath, 'node_modules'),path.resolve(handoff?.modulePath, 'node_modules')],
                   },
                 },
               },

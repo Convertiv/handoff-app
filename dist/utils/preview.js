@@ -88,7 +88,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                                         options: {
                                             sassOptions: {
                                                 indentWidth: 4,
-                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
+                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules')],
                                             },
                                         },
                                     },
