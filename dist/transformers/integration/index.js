@@ -46,7 +46,7 @@ var archiver_1 = __importDefault(require("archiver"));
 var config_1 = require("../../config");
 var tailwind_1 = require("./tailwind");
 var defaultIntegration = 'bootstrap';
-var defaultVersion = '5.2';
+var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
     function HandoffIntegration(name, version) {
         this.name = name;

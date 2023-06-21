@@ -11,7 +11,7 @@ import { HookReturn } from '../../types/plugin';
 import Handoff from '../../index';
 import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
 const defaultIntegration = 'bootstrap';
-const defaultVersion = '5.2';
+const defaultVersion = '5.3';
 export class HandoffIntegration {
   name: string;
   version: string;

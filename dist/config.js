@@ -26,7 +26,7 @@ exports.defaultConfig = {
     google_tag_manager: null,
     integration: {
         name: 'bootstrap',
-        version: '5.2',
+        version: '5.3',
     },
     favicon: '/favicon.ico',
     logo: '/logo.svg',
