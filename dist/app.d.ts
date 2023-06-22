@@ -16,4 +16,9 @@ export declare const exportNext: (handoff: Handoff) => Promise<void>;
  * @param handoff
  */
 export declare const watchApp: (handoff: Handoff) => Promise<void>;
+/**
+ * Watch the next js application
+ * @param handoff
+ */
+export declare const devApp: (handoff: Handoff) => Promise<void>;
 export default buildApp;

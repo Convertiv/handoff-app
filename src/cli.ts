@@ -120,6 +120,9 @@ const run = async (
       case 'start':
         watching = true;
         return handoff.start();
+      case 'dev':
+        watching = true;
+        return handoff.dev();
       case 'build:integration':
         return handoff.integration();
       case 'eject':

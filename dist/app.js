@@ -50,13 +50,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.watchApp = exports.exportNext = void 0;
+exports.devApp = exports.watchApp = exports.exportNext = void 0;
 var index_1 = __importDefault(require("next/dist/build/index"));
+var next_dev_1 = require("next/dist/cli/next-dev");
 var index_2 = __importDefault(require("next/dist/export/index"));
 var trace_1 = require("next/dist/trace");
 var path_1 = __importDefault(require("path"));
-var start_server_1 = require("next/dist/server/lib/start-server");
-var output_1 = require("next/dist/build/output");
+var http_1 = require("http");
+var url_1 = require("url");
+var next_1 = __importDefault(require("next"));
 /**
  * Build the next js application
  * @param handoff
@@ -71,7 +73,6 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 tsconfigPath = 'tsconfig.json';
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
-                console.log(config);
                 return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
             case 1: return [2 /*return*/, _a.sent()];
         }
@@ -103,58 +104,79 @@ exports.exportNext = exportNext;
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var dir;
+    var appPath, config, tsconfigPath, dev, hostname, port, app, handle;
     return __generator(this, function (_a) {
-        dir = path_1.default.resolve(handoff.modulePath, 'src/app');
-        console.log(dir);
-        (0, start_server_1.startServer)({
-            allowRetry: true,
-            dev: true,
-            dir: dir,
-            hostname: '0.0.0.0',
-            isNextDevCommand: true,
-            port: 3000,
-        })
-            .then(function (app) { return __awaiter(void 0, void 0, void 0, function () {
-            var appUrl;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        appUrl = "http://".concat(app.hostname, ":").concat(app.port);
-                        (0, output_1.startedDevelopmentServer)(appUrl, "'0.0.0.0':3000");
-                        // Start preflight after server is listening and ignore errors:
-                        // Finalize server bootup:
-                        return [4 /*yield*/, app.prepare()];
-                    case 1:
-                        // Start preflight after server is listening and ignore errors:
-                        // Finalize server bootup:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        }); })
-            .catch(function (err) {
-            if (err.code === 'EADDRINUSE') {
-                var errorMessage = "Port 3000 is already in use.";
-                var pkgAppPath = require('next/dist/compiled/find-up').sync('package.json', {
-                    cwd: dir,
-                });
-                var appPackage = require(pkgAppPath);
-                if (appPackage.scripts) {
-                    var nextScript = Object.entries(appPackage.scripts).find(function (scriptLine) { return scriptLine[1] === 'next'; });
-                    if (nextScript) {
-                        errorMessage += "\nUse `npm run ".concat(nextScript[0], " -- -p <some other port>`.");
+        appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
+        config = require(path_1.default.resolve(appPath, 'next.config.js'));
+        tsconfigPath = 'tsconfig.json';
+        config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
+        dev = process.env.NODE_ENV !== 'production';
+        hostname = 'localhost';
+        port = 3000;
+        app = (0, next_1.default)({
+            dev: dev,
+            dir: path_1.default.resolve(handoff.modulePath, 'src/app'),
+            hostname: hostname,
+            port: port,
+            conf: config,
+        });
+        handle = app.getRequestHandler();
+        app.prepare().then(function () {
+            (0, http_1.createServer)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+                var parsedUrl, pathname, query, err_1;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            _a.trys.push([0, 2, , 3]);
+                            console.log('handling', req.url);
+                            // Be sure to pass `true` as the second argument to `url.parse`.
+                            // This tells it to parse the query portion of the URL.
+                            if (!req.url)
+                                throw new Error('No url');
+                            parsedUrl = (0, url_1.parse)(req.url, true);
+                            pathname = parsedUrl.pathname, query = parsedUrl.query;
+                            return [4 /*yield*/, handle(req, res, parsedUrl)];
+                        case 1:
+                            _a.sent();
+                            return [3 /*break*/, 3];
+                        case 2:
+                            err_1 = _a.sent();
+                            console.error('Error occurred handling', req.url, err_1);
+                            res.statusCode = 500;
+                            res.end('internal server error');
+                            return [3 /*break*/, 3];
+                        case 3: return [2 /*return*/];
                     }
-                }
-                console.error(errorMessage);
-            }
-            else {
+                });
+            }); })
+                .once('error', function (err) {
                 console.error(err);
-            }
-            process.nextTick(function () { return process.exit(1); });
+                process.exit(1);
+            })
+                .listen(port, function () {
+                console.log("> Ready on http://".concat(hostname, ":").concat(port));
+            });
         });
         return [2 /*return*/];
     });
 }); };
 exports.watchApp = watchApp;
+/**
+ * Watch the next js application
+ * @param handoff
+ */
+var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath, config;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
+                config = require(path_1.default.resolve(appPath, 'next.config.js'));
+                console.log(config);
+                return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); };
+exports.devApp = devApp;
 exports.default = buildApp;

@@ -32,6 +32,7 @@
   },
   "scripts": {
     "start": "node ./dist/cli.js start",
+    "dev": "node ./dist/cli.js dev",
     "build": "tsc",
     "build:static": "node ./dist/cli.js build",
     "fetch": "node ./dist/cli.js fetch",

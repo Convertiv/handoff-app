@@ -37,6 +37,7 @@ declare class Handoff {
     ejectPages(): Promise<Handoff>;
     makeExportable(type: string, name: string): Promise<Handoff>;
     start(): Promise<Handoff>;
+    dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;
     postTypeTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput): void;
     postCssTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput): void;

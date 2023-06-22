@@ -1,13 +1,12 @@
 import build from 'next/dist/build/index';
+import { nextDev } from 'next/dist/cli/next-dev';
 import exportApp from 'next/dist/export/index';
 import { trace } from 'next/dist/trace';
-import { nextDev } from 'next/dist/cli/next-dev';
 import Handoff from '.';
 import path from 'path';
-
-import { watchFile } from 'fs';
-import { startServer } from 'next/dist/server/lib/start-server';
-import { startedDevelopmentServer } from 'next/dist/build/output';
+import { createServer } from 'http';
+import { parse } from 'url';
+import next from 'next';
 
 /**
  * Build the next js application
@@ -24,7 +23,6 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
     ...config.typescript,
     tsconfigPath,
   };
-  console.log(config);
   return await build(path.resolve(handoff.modulePath, 'src/app'), config);
 };
 
@@ -51,52 +49,64 @@ export const exportNext = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  const dir = path.resolve(handoff.modulePath, 'src/app');
-  console.log(dir);
-  startServer({
-    allowRetry: true,
-    dev: true,
-    dir,
-    hostname: '0.0.0.0',
-    isNextDevCommand: true,
-    port: 3000,
-  })
-    .then(async (app) => {
-      const appUrl = `http://${app.hostname}:${app.port}`;
-      startedDevelopmentServer(appUrl, `'0.0.0.0':3000`);
-      // Start preflight after server is listening and ignore errors:
-      // Finalize server bootup:
-      await app.prepare();
-    })
-    .catch((err) => {
-      if (err.code === 'EADDRINUSE') {
-        let errorMessage = `Port 3000 is already in use.`;
-        const pkgAppPath = require('next/dist/compiled/find-up').sync('package.json', {
-          cwd: dir,
-        });
-        const appPackage = require(pkgAppPath);
-        if (appPackage.scripts) {
-          const nextScript = Object.entries(appPackage.scripts).find((scriptLine) => scriptLine[1] === 'next');
-          if (nextScript) {
-            errorMessage += `\nPlease free port 3000 before running Handoff.`;
-          }
-        }
-        console.error(errorMessage);
-      } else {
-        console.error(err);
+  const appPath = path.resolve(handoff.modulePath, 'src/app');
+  const config = require(path.resolve(appPath, 'next.config.js'));
+  // does a ts config exist?
+  let tsconfigPath = 'tsconfig.json';
+
+  config.typescript = {
+    ...config.typescript,
+    tsconfigPath,
+  };
+  const dev = process.env.NODE_ENV !== 'production';
+  const hostname = 'localhost';
+  const port = 3000;
+  // when using middleware `hostname` and `port` must be provided below
+  const app = next({
+    dev,
+    dir: path.resolve(handoff.modulePath, 'src/app'),
+    hostname,
+    port,
+    conf: config,
+  });
+  const handle = app.getRequestHandler();
+
+  app.prepare().then(() => {
+    createServer(async (req, res) => {
+      try {
+        console.log('handling', req.url);
+        // Be sure to pass `true` as the second argument to `url.parse`.
+        // This tells it to parse the query portion of the URL.
+        if (!req.url) throw new Error('No url');
+        const parsedUrl = parse(req.url, true);
+        const { pathname, query } = parsedUrl;
+
+        await handle(req, res, parsedUrl);
+      } catch (err) {
+        console.error('Error occurred handling', req.url, err);
+        res.statusCode = 500;
+        res.end('internal server error');
       }
-      process.nextTick(() => process.exit(1));
-    });
-  // TODO: Build watch for all files
-  // for (const CONFIG_FILE of CONFIG_FILES) {
-  //   watchFile(path.join(dir, CONFIG_FILE), (cur: any, prev: any) => {
-  //     if (cur.size > 0 || prev.size > 0) {
-  //       console.log(
-  //         `\n> Found a change in ${CONFIG_FILE}. Restart the server to see the changes in effect.`
-  //       )
-  //     }
-  //   })
-  // }
+    })
+      .once('error', (err: string) => {
+        console.error(err);
+        process.exit(1);
+      })
+      .listen(port, () => {
+        console.log(`> Ready on http://${hostname}:${port}`);
+      });
+  });
+};
+
+/**
+ * Watch the next js application
+ * @param handoff
+ */
+export const devApp = async (handoff: Handoff): Promise<void> => {
+  const appPath = path.resolve(handoff.modulePath, 'src/app');
+  const config = require(path.resolve(appPath, 'next.config.js'));
+  console.log(config);
+  return await nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
 };
 
 export default buildApp;
