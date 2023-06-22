@@ -50,11 +50,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.devApp = exports.watchApp = exports.exportNext = void 0;
-var index_1 = __importDefault(require("next/dist/build/index"));
+exports.devApp = exports.watchApp = void 0;
+var next_build_1 = require("next/dist/cli/next-build");
 var next_dev_1 = require("next/dist/cli/next-dev");
-var index_2 = __importDefault(require("next/dist/export/index"));
-var trace_1 = require("next/dist/trace");
 var path_1 = __importDefault(require("path"));
 var http_1 = require("http");
 var url_1 = require("url");
@@ -65,40 +63,15 @@ var next_1 = __importDefault(require("next"));
  * @returns
  */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
-                config = require(path_1.default.resolve(appPath, 'next.config.js'));
-                tsconfigPath = 'tsconfig.json';
-                config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
-                return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
-            case 1: return [2 /*return*/, _a.sent()];
+            case 0: return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
         }
     });
 }); };
-/**
- * Export the next js application
- * @param handoff
- * @returns
- */
-var exportNext = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var nextExportCliSpan;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                nextExportCliSpan = (0, trace_1.trace)('next-export-cli');
-                return [4 /*yield*/, (0, index_2.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), {
-                        silent: false,
-                        threads: 1,
-                        outdir: path_1.default.resolve(handoff.workingPath, 'out'),
-                    }, nextExportCliSpan)];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
-exports.exportNext = exportNext;
 /**
  * Watch the next js application
  * @param handoff
@@ -128,7 +101,6 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     switch (_a.label) {
                         case 0:
                             _a.trys.push([0, 2, , 3]);
-                            console.log('handling', req.url);
                             // Be sure to pass `true` as the second argument to `url.parse`.
                             // This tells it to parse the query portion of the URL.
                             if (!req.url)
@@ -166,14 +138,9 @@ exports.watchApp = watchApp;
  * @param handoff
  */
 var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
-                config = require(path_1.default.resolve(appPath, 'next.config.js'));
-                console.log(config);
-                return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
+            case 0: return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });

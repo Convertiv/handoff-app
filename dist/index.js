@@ -70,7 +70,8 @@ var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./cli/eject");
 var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
-global.handoff = null;
+var handoff = null;
+global.handoff = handoff;
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
@@ -141,21 +142,6 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, app_1.default)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    Handoff.prototype.exportApp = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.exportNext)(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;

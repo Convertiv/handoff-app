@@ -6,6 +6,9 @@ import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types/plugin';
 import { HandoffIntegration } from './transformers/integration';
+declare global {
+    var handoff: Handoff | null;
+}
 declare class Handoff {
     config: Config | null;
     debug: boolean;
@@ -30,7 +33,6 @@ declare class Handoff {
     fetch(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
-    exportApp(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
     ejectIntegration(): Promise<Handoff>;
     ejectExportables(): Promise<Handoff>;

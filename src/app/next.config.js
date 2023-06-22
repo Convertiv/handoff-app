@@ -1,6 +1,7 @@
 const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
   swcMinify: true,
   trailingSlash: true,
@@ -33,9 +34,4 @@ const nextConfig = {
     return config;
   },
 };
-if (__dirname.includes('node_modules')) {
-  const withTM = require('next-transpile-modules')(['handoff-app']);
-  module.exports = withTM(nextConfig);
-} else {
-  module.exports = nextConfig;
-}
+module.exports = nextConfig;

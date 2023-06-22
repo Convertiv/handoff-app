@@ -216,7 +216,7 @@ export const staticBuildMenu = () => {
   const files = fs.readdirSync(docRoot);
   let list = files;
   const workingPages = path.resolve(handoff.workingPath, 'pages');
-  let pages = [];
+  let pages: string[] = [];
   if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
     list = list.concat(pages);

@@ -34,7 +34,7 @@
     "start": "node ./dist/cli.js start",
     "dev": "node ./dist/cli.js dev",
     "build": "tsc",
-    "build:static": "node ./dist/cli.js build",
+    "build:static": "node ./dist/cli.js build:app",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"sass/**/*.scss\"",
     "lint": "npm run lint:sass && npx next lint",
@@ -48,6 +48,7 @@
     "trailingComma": "es5"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.18.6",
     "@figma-plugin/helpers": "^0.15.2",
     "@figma/plugin-typings": "^1.55.1",
     "@popperjs/core": "^2.11.6",
@@ -73,7 +74,7 @@
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
     "eslint": "^8.23.1",
-    "eslint-config-next": "^12.3.1",
+    "eslint-config-next": "^13.4.7",
     "fs-extra": "^10.1.0",
     "gray-matter": "^4.0.3",
     "html-react-parser": "^3.0.4",
@@ -81,8 +82,7 @@
     "jquery": "^3.6.1",
     "lodash": "^4.17.21",
     "mustache": "^4.2.0",
-    "next": "12.3.0",
-    "next-transpile-modules": "^10.0.0",
+    "next": "^13.4.7",
     "node-html-parser": "^6.1.4",
     "postcss": "^8.4.16",
     "postcss-loader": "^7.3.0",
@@ -101,8 +101,9 @@
     "stylelint-scss": "^4.3.0",
     "tailwindcss": "^3.3.2",
     "typescript": "4.8.3",
-    "webpack": "^5.75.0",
-    "@babel/preset-typescript": "^7.18.6",
+    "webpack": "^5.75.0"
+  },
+  "devDependencies": {
     "@types/bootstrap": "^5.2.6",
     "@types/cross-spawn": "^6.0.2",
     "@types/markdown-it": "^12.2.3",
@@ -110,10 +111,7 @@
     "@types/react-syntax-highlighter": "^15.5.6",
     "@types/webpack": "^5.28.0",
     "@types/yargs": "^17.0.24",
-    "@vercel/ncc": "^0.36.1"
-  },
-  "devDependencies": {
-
+    "@vercel/ncc": "^0.36.1",
     "np": "^7.6.2",
     "tslib": "^2.5.3"
   }

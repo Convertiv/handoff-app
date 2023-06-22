@@ -1,4 +1,5 @@
 import build from 'next/dist/build/index';
+import { nextBuild } from 'next/dist/cli/next-build';
 import { nextDev } from 'next/dist/cli/next-dev';
 import exportApp from 'next/dist/export/index';
 import { trace } from 'next/dist/trace';
@@ -14,34 +15,8 @@ import next from 'next';
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
-  const appPath = path.resolve(handoff.modulePath, 'src/app');
-  const config = require(path.resolve(appPath, 'next.config.js'));
-  // does a ts config exist?
-  let tsconfigPath = 'tsconfig.json';
-
-  config.typescript = {
-    ...config.typescript,
-    tsconfigPath,
-  };
-  return await build(path.resolve(handoff.modulePath, 'src/app'), config);
-};
-
-/**
- * Export the next js application
- * @param handoff
- * @returns
- */
-export const exportNext = async (handoff: Handoff): Promise<void> => {
-  const nextExportCliSpan = trace('next-export-cli');
-  return await exportApp(
-    path.resolve(handoff.modulePath, 'src/app'),
-    {
-      silent: false,
-      threads: 1,
-      outdir: path.resolve(handoff.workingPath, 'out'),
-    },
-    nextExportCliSpan
-  );
+  await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
+//  return await build(path.resolve(handoff.modulePath, 'src/app'), true, true, true, false, false, true, 'default');
 };
 
 /**
@@ -74,7 +49,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   app.prepare().then(() => {
     createServer(async (req, res) => {
       try {
-        console.log('handling', req.url);
         // Be sure to pass `true` as the second argument to `url.parse`.
         // This tells it to parse the query portion of the URL.
         if (!req.url) throw new Error('No url');
@@ -103,9 +77,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
-  const appPath = path.resolve(handoff.modulePath, 'src/app');
-  const config = require(path.resolve(appPath, 'next.config.js'));
-  console.log(config);
   return await nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
 };
 

@@ -7,13 +7,16 @@ import { DocumentationObject } from './types';
 import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types/plugin';
-import buildApp, { devApp, exportNext, watchApp } from './app';
+import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';
 import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
 import { makeExportable } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
-
-global.handoff = null;
+var handoff = null;
+declare global {
+  var handoff: Handoff | null;
+}
+global.handoff = handoff;
 
 class Handoff {
   config: Config | null;
@@ -77,12 +80,6 @@ class Handoff {
   async build(): Promise<Handoff> {
     if (this.config) {
       await buildApp(this);
-    }
-    return this;
-  }
-  async exportApp(): Promise<Handoff> {
-    if (this.config) {
-      await exportNext(this);
     }
     return this;
   }

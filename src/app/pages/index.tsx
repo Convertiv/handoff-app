@@ -68,8 +68,8 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
               </h3>
               <hr className="u-mt-2 u-mb-2"></hr>
               <h3 className="u-mb-4">Building blocks for all digital {config.client} experiences.</h3>
-              <Link href="/components">
-                <a className="c-button c-button--primary u-pl-5 u-mb-5 u-pr-5">View Components</a>
+              <Link href="/components" className="c-button c-button--primary u-pl-5 u-mb-5 u-pr-5">
+                View Components
               </Link>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="assets/images/components.png" width={1528} height={1250} alt="Components" />
@@ -81,24 +81,21 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
               <p>Sets of recommendations on how to apply design principles to provide a positive user experience.</p>
               <ul className="c-list--boxed u-pt-2">
                 <li>
-                  <Link href="/foundations/typography">
-                    <a className={classNames({ 'is-selected': router.asPath === '/foundations/typography' })}>
-                      Explore Typography <Icon name="arrow-right" className="o-icon" />
-                    </a>
+                  <Link
+                    href="/foundations/typography"
+                    className={classNames({ 'is-selected': router.asPath === '/foundations/typography' })}
+                  >
+                    Explore Typography <Icon name="arrow-right" className="o-icon" />
                   </Link>
                 </li>
                 <li>
-                  <Link href="/foundations/colors">
-                    <a className={classNames({ 'is-selected': router.asPath === '/foundations/colors' })}>
-                      Explore Colors <Icon name="arrow-right" className="o-icon" />
-                    </a>
+                  <Link href="/foundations/colors" className={classNames({ 'is-selected': router.asPath === '/foundations/colors' })}>
+                    Explore Colors <Icon name="arrow-right" className="o-icon" />
                   </Link>
                 </li>
                 <li>
-                  <Link href="/foundations/logo">
-                    <a className={classNames({ 'is-selected': router.asPath === '/foundations/logo' })}>
+                  <Link href="/foundations/logo" className={classNames({ 'is-selected': router.asPath === '/foundations/logo' })}>
                       Explore Logos <Icon name="arrow-right" className="o-icon" />
-                    </a>
                   </Link>
                 </li>
                 <li>

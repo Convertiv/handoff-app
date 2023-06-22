@@ -14,8 +14,8 @@ const NavLink = React.forwardRef<
   const router = useRouter();
 
   return (
-    <Link {...props} ref={ref}>
-      <a className={classNames(className, { [activeClassName]: router.asPath.startsWith(props.href.toString()) })}>{children}</a>
+    <Link {...props} ref={ref} className={classNames(className, { [activeClassName]: router.asPath.startsWith(props.href.toString()) })}>
+      {children}
     </Link>
   );
 });

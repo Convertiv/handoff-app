@@ -34,12 +34,10 @@ const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   return (
     <div>
       <Link href={`/assets/icons/${icon.icon}`}>
-        <a>
-          <div className="c-card c-card--icon-preview">
-            <div dangerouslySetInnerHTML={{ __html: htmlData }} />
-            <p>{icon.icon}</p>
-          </div>
-        </a>
+        <div className="c-card c-card--icon-preview">
+          <div dangerouslySetInnerHTML={{ __html: htmlData }} />
+          <p>{icon.icon}</p>
+        </div>
       </Link>
     </div>
   );
@@ -58,7 +56,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
       config: getConfig(),
       assets: getTokens().assets,
-    }
+    },
   };
 };
 
@@ -97,15 +95,15 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                 </div>
               </div>
             </div>
-            {metadata.image && (<Icon name={metadata.image} className="c-hero__img c-hero__image--small" />)}
+            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-              {content}
-            </ReactMarkdown>
+            {content}
+          </ReactMarkdown>
           <div className="c-form-element c-form-element--fullwidth c-form-element--big">
             <div className="c-form-element__field">
               <div className="c-form-element__icon">
-                <Icon name="search" className='o-icon'/>
+                <Icon name="search" className="o-icon" />
               </div>
               <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
             </div>
