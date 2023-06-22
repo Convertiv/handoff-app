@@ -7,6 +7,9 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  typescript: {
+    tsconfigPath: 'tsconfig.json',
+  },
   distDir: 'out',
   serverRuntimeConfig: {
     PROJECT_ROOT: path.resolve('public'),
@@ -20,7 +23,7 @@ const nextConfig = {
     config.resolve.modules.push(path.resolve('node_modules'));
     config.resolveLoader.modules.push(path.resolve('node_modules'));
     config.module.rules.push({
-      test: /\.svg$/i,
+      test: /\.svg$/i, 
       type: 'asset',
     });
     config.module.rules.push({

@@ -54,8 +54,9 @@ exports.watchApp = exports.exportNext = void 0;
 var index_1 = __importDefault(require("next/dist/build/index"));
 var index_2 = __importDefault(require("next/dist/export/index"));
 var trace_1 = require("next/dist/trace");
-var next_dev_1 = require("next/dist/cli/next-dev");
 var path_1 = __importDefault(require("path"));
+var start_server_1 = require("next/dist/server/lib/start-server");
+var output_1 = require("next/dist/build/output");
 /**
  * Build the next js application
  * @param handoff
@@ -70,6 +71,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 tsconfigPath = 'tsconfig.json';
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
+                console.log(config);
                 return [4 /*yield*/, (0, index_1.default)(path_1.default.resolve(handoff.modulePath, 'src/app'), config)];
             case 1: return [2 /*return*/, _a.sent()];
         }
@@ -101,11 +103,57 @@ exports.exportNext = exportNext;
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var dir;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
+        dir = path_1.default.resolve(handoff.modulePath, 'src/app');
+        console.log(dir);
+        (0, start_server_1.startServer)({
+            allowRetry: true,
+            dev: true,
+            dir: dir,
+            hostname: '0.0.0.0',
+            isNextDevCommand: true,
+            port: 3000,
+        })
+            .then(function (app) { return __awaiter(void 0, void 0, void 0, function () {
+            var appUrl;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        appUrl = "http://".concat(app.hostname, ":").concat(app.port);
+                        (0, output_1.startedDevelopmentServer)(appUrl, "'0.0.0.0':3000");
+                        // Start preflight after server is listening and ignore errors:
+                        // Finalize server bootup:
+                        return [4 /*yield*/, app.prepare()];
+                    case 1:
+                        // Start preflight after server is listening and ignore errors:
+                        // Finalize server bootup:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        }); })
+            .catch(function (err) {
+            if (err.code === 'EADDRINUSE') {
+                var errorMessage = "Port 3000 is already in use.";
+                var pkgAppPath = require('next/dist/compiled/find-up').sync('package.json', {
+                    cwd: dir,
+                });
+                var appPackage = require(pkgAppPath);
+                if (appPackage.scripts) {
+                    var nextScript = Object.entries(appPackage.scripts).find(function (scriptLine) { return scriptLine[1] === 'next'; });
+                    if (nextScript) {
+                        errorMessage += "\nUse `npm run ".concat(nextScript[0], " -- -p <some other port>`.");
+                    }
+                }
+                console.error(errorMessage);
+            }
+            else {
+                console.error(err);
+            }
+            process.nextTick(function () { return process.exit(1); });
+        });
+        return [2 /*return*/];
     });
 }); };
 exports.watchApp = watchApp;
