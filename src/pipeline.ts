@@ -323,11 +323,10 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
 /**
  * Run the entire pipeline
  */
-const pipeline = async (handoff: Handoff) => {
+const pipeline = async (handoff: Handoff, build?: boolean) => {
   if (!handoff.config) {
     throw new Error('Handoff config not found');
   }
-
   console.log(chalk.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
   await validateHandoffRequirements(handoff);
   const figmaConfig = await validateFigmaAuth(handoff);
@@ -337,7 +336,7 @@ const pipeline = async (handoff: Handoff) => {
   await buildCustomFonts(documentationObject);
   await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
-  if (handoff.config.buildApp) {
+  if (build) {
     await buildPreview(documentationObject);
     await serializeHandoff(handoff);
     await buildApp(handoff);

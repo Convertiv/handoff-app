@@ -447,7 +447,7 @@ exports.buildIntegrationOnly = buildIntegrationOnly;
 /**
  * Run the entire pipeline
  */
-var pipeline = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void 0, function () {
     var figmaConfig, exportables, documentationObject, componentTransformerOptions;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -478,7 +478,7 @@ var pipeline = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, buildIntegration(documentationObject)];
             case 7:
                 _a.sent();
-                if (!handoff.config.buildApp) return [3 /*break*/, 11];
+                if (!build) return [3 /*break*/, 11];
                 return [4 /*yield*/, buildPreview(documentationObject)];
             case 8:
                 _a.sent();

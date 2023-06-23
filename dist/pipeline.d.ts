@@ -8,5 +8,5 @@ export declare const buildIntegrationOnly: (handoff: Handoff) => Promise<void>;
 /**
  * Run the entire pipeline
  */
-declare const pipeline: (handoff: Handoff) => Promise<void>;
+declare const pipeline: (handoff: Handoff, build?: boolean) => Promise<void>;
 export default pipeline;
