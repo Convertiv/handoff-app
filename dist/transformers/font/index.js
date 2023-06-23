@@ -67,18 +67,20 @@ var path_1 = __importDefault(require("path"));
 var sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
 //import { pluginTransformer } from '../plugin';
 var index_1 = require("../integration/index");
+var config_1 = require("src/config");
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use
  */
 function fontTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var design, outputFolder, fontLocation, families, customFonts;
+        var design, outputFolder, handoff, fontLocation, families, customFonts;
         var _this = this;
         return __generator(this, function (_a) {
             design = documentationObject.design;
             outputFolder = 'public';
-            fontLocation = path_1.default.join(outputFolder, 'fonts');
+            handoff = (0, config_1.getHandoff)();
+            fontLocation = path_1.default.join(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'fonts');
             families = design.typography.reduce(function (result, current) {
                 var _a;
                 return __assign(__assign({}, result), (_a = {}, _a[current.values.fontFamily] = result[current.values.fontFamily]
@@ -101,7 +103,10 @@ function fontTransformer(documentationObject) {
                         case 1:
                             _a.sent();
                             integrationName = (0, index_1.getIntegrationName)();
-                            fontsFolder = "exported/".concat(integrationName, "-tokens/fonts");
+                            fontsFolder = path_1.default.resolve(handoff.workingPath, "exported/".concat(integrationName, "-tokens/fonts"));
+                            if (!fs_extra_1.default.existsSync(fontsFolder)) {
+                                fs_extra_1.default.mkdirSync(fontsFolder);
+                            }
                             return [4 /*yield*/, fs_extra_1.default.copySync(fontDirName, fontsFolder)];
                         case 2:
                             _a.sent();

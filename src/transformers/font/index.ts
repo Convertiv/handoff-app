@@ -8,6 +8,7 @@ import * as stream from 'node:stream';
 import { FontFamily } from './types';
 //import { pluginTransformer } from '../plugin';
 import { getIntegrationName } from '../integration/index';
+import { getHandoff } from 'src/config';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from
@@ -16,7 +17,8 @@ import { getIntegrationName } from '../integration/index';
 export default async function fontTransformer(documentationObject: DocumentationObject) {
   const { design } = documentationObject;
   const outputFolder = 'public';
-  const fontLocation = path.join(outputFolder, 'fonts');
+  const handoff = getHandoff();
+  const fontLocation = path.join(handoff?.workingPath, 'fonts');
   const families: FontFamily = design.typography.reduce((result, current) => {
     return {
       ...result,
@@ -39,7 +41,10 @@ export default async function fontTransformer(documentationObject: Documentation
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
       const integrationName = getIntegrationName();
-      const fontsFolder = `exported/${integrationName}-tokens/fonts`;
+      const fontsFolder = path.resolve(handoff.workingPath, `exported/${integrationName}-tokens/fonts`);
+      if(!fs.existsSync(fontsFolder)) {
+        fs.mkdirSync(fontsFolder);
+      }
       await fs.copySync(fontDirName, fontsFolder);
       customFonts.push(`${name}.zip`);
     }
