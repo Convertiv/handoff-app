@@ -58,32 +58,42 @@ class Handoff {
   }
   init(configOverride?: Config): Handoff {
     const config = getConfig(configOverride ?? {});
-    config.figma.definitions = this.hooks.configureExportables(config.figma?.definitions || []);
     this.config = config;
     this.config = this.hooks.init(this.config);
     serializeHandoff(this);
     return this;
   }
+  preRunner(): Handoff {
+    if(!this.config) {
+      throw Error('Handoff not initialized');
+    }
+    this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
+    return this;
+  }
   async fetch(): Promise<Handoff> {
     if (this.config) {
+      this.preRunner();
       await pipeline(this);
       this.hooks.fetch();
     }
     return this;
   }
   async integration(): Promise<Handoff> {
+    this.preRunner();
     if (this.config) {
       await buildIntegrationOnly(this);
     }
     return this;
   }
   async build(): Promise<Handoff> {
+    this.preRunner();
     if (this.config) {
       await buildApp(this);
     }
     return this;
   }
   async ejectConfig(): Promise<Handoff> {
+    this.preRunner();
     if (this.config) {
       await ejectConfig(this);
     }
@@ -115,12 +125,14 @@ class Handoff {
   }
   async start(): Promise<Handoff> {
     if (this.config) {
+      this.preRunner();
       await watchApp(this);
     }
     return this;
   }
   async dev(): Promise<Handoff> {
     if (this.config) {
+      this.preRunner();
       await devApp(this);
     }
     return this;

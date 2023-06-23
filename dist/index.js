@@ -96,12 +96,18 @@ var Handoff = /** @class */ (function () {
         global.handoff = this;
     }
     Handoff.prototype.init = function (configOverride) {
-        var _a;
         var config = (0, config_1.getConfig)(configOverride !== null && configOverride !== void 0 ? configOverride : {});
-        config.figma.definitions = this.hooks.configureExportables(((_a = config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         this.config = config;
         this.config = this.hooks.init(this.config);
         (0, config_1.serializeHandoff)(this);
+        return this;
+    };
+    Handoff.prototype.preRunner = function () {
+        var _a;
+        if (!this.config) {
+            throw Error('Handoff not initialized');
+        }
+        this.config.figma.definitions = this.hooks.configureExportables(((_a = this.config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         return this;
     };
     Handoff.prototype.fetch = function () {
@@ -110,6 +116,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
+                        this.preRunner();
                         return [4 /*yield*/, (0, pipeline_1.default)(this)];
                     case 1:
                         _a.sent();
@@ -125,6 +132,7 @@ var Handoff = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this.preRunner();
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(this)];
                     case 1:
@@ -140,6 +148,7 @@ var Handoff = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this.preRunner();
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, app_1.default)(this)];
                     case 1:
@@ -155,6 +164,7 @@ var Handoff = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this.preRunner();
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, eject_1.ejectConfig)(this)];
                     case 1:
@@ -231,6 +241,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
+                        this.preRunner();
                         return [4 /*yield*/, (0, app_1.watchApp)(this)];
                     case 1:
                         _a.sent();
@@ -246,6 +257,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
+                        this.preRunner();
                         return [4 /*yield*/, (0, app_1.devApp)(this)];
                     case 1:
                         _a.sent();

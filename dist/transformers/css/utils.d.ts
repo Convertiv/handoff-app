@@ -1,4 +1,3 @@
-/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../../figma/types';
 /**
  * Get the name of a SCSS variable from a token object
