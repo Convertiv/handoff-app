@@ -478,21 +478,18 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildIntegration(documentationObject)];
             case 7:
                 _a.sent();
-                if (!build) return [3 /*break*/, 11];
                 return [4 /*yield*/, buildPreview(documentationObject)];
             case 8:
                 _a.sent();
                 return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
             case 9:
                 _a.sent();
+                if (!build) return [3 /*break*/, 11];
                 return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 10:
                 _a.sent();
-                return [3 /*break*/, 12];
+                _a.label = 11;
             case 11:
-                console.log(chalk_1.default.red('Skipping app generation'));
-                _a.label = 12;
-            case 12:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

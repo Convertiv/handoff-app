@@ -8,13 +8,16 @@ import path from 'path';
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-
+import fs from 'fs';
 /**
  * Build the next js application
  * @param handoff
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
+  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+  }
   await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
 //  return await build(path.resolve(handoff.modulePath, 'src/app'), true, true, true, false, false, true, 'default');
 };
@@ -24,6 +27,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
+  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+  }
   const appPath = path.resolve(handoff.modulePath, 'src/app');
   const config = require(path.resolve(appPath, 'next.config.js'));
   // does a ts config exist?
@@ -77,6 +83,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
+  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+  }
   return await nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
 };
 

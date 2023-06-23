@@ -8,6 +8,7 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  transpilePackages: ['awesome_module'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },

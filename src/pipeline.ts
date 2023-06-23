@@ -336,12 +336,10 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildCustomFonts(documentationObject);
   await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
+  await buildPreview(documentationObject);
+  await serializeHandoff(handoff);
   if (build) {
-    await buildPreview(documentationObject);
-    await serializeHandoff(handoff);
     await buildApp(handoff);
-  } else {
-    console.log(chalk.red('Skipping app generation'));
   }
   // (await pluginTransformer()).postBuild(documentationObject);
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));

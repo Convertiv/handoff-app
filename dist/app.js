@@ -57,6 +57,7 @@ var path_1 = __importDefault(require("path"));
 var http_1 = require("http");
 var url_1 = require("url");
 var next_1 = __importDefault(require("next"));
+var fs_1 = __importDefault(require("fs"));
 /**
  * Build the next js application
  * @param handoff
@@ -65,7 +66,11 @@ var next_1 = __importDefault(require("next"));
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
+            case 0:
+                if (!fs_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+                    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+                }
+                return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
@@ -79,6 +84,9 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath, dev, hostname, port, app, handle;
     return __generator(this, function (_a) {
+        if (!fs_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+            throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+        }
         appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
         config = require(path_1.default.resolve(appPath, 'next.config.js'));
         tsconfigPath = 'tsconfig.json';
@@ -140,7 +148,11 @@ exports.watchApp = watchApp;
 var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
+            case 0:
+                if (!fs_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+                    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+                }
+                return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
