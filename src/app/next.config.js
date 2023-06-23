@@ -8,7 +8,7 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
-  transpilePackages: ['awesome_module'],
+  transpilePackages: ['handoff-app'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
