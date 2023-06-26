@@ -33,10 +33,7 @@ jobs:
           git config --global user.name "Convertiv Development"
       - name: Fetch from figma
         run: |
-          npm install --legacy-peer-deps
-          npm run install:lib
-          npm run build:lib
-          npm run build:svg-sprite
+          npm install
           npm run fetch
       - name: Build static site
         run: |
