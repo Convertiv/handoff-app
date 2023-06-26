@@ -74,6 +74,10 @@ export interface DocumentationObject {
         logos: AssetObject[];
     };
 }
+export interface HookReturn {
+    filename: string;
+    data: string;
+}
 export interface PreviewObject {
     id: string;
     preview: string;

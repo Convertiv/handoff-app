@@ -4,7 +4,7 @@ import webpack from 'webpack';
 import { DocumentationObject } from './types';
 import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
-import { HookReturn } from './types/plugin';
+import { HookReturn } from './types';
 import { HandoffIntegration } from './transformers/integration';
 declare global {
     var handoff: Handoff | null;

@@ -1,6 +1,6 @@
 import path from 'path';
 import { DocumentationObject } from '../../types';
-import { HookReturn } from '../../types/plugin';
+import { HookReturn } from '../../types';
 import webpack from 'webpack';
 import fs from 'fs-extra';
 import { getPathToIntegration } from '.';

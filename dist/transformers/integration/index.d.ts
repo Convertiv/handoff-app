@@ -3,7 +3,7 @@ import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
 import { TransformedPreviewComponents } from '../preview';
 import webpack from 'webpack';
-import { HookReturn } from '../../types/plugin';
+import { HookReturn } from '../../types';
 import Handoff from '../../index';
 export declare class HandoffIntegration {
     name: string;
