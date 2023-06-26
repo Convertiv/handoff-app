@@ -19,7 +19,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
-//  return await build(path.resolve(handoff.modulePath, 'src/app'), true, true, true, false, false, true, 'default');
+  fs.cpSync(path.resolve(handoff.modulePath, 'src/app/out/'), path.resolve(handoff.workingPath, 'out/'));
 };
 
 /**

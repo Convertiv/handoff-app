@@ -73,6 +73,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
             case 1:
                 _a.sent();
+                fs_1.default.cpSync(path_1.default.resolve(handoff.modulePath, 'src/app/out/'), path_1.default.resolve(handoff.workingPath, 'out/'));
                 return [2 /*return*/];
         }
     });
