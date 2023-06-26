@@ -67,7 +67,7 @@ var path_1 = __importDefault(require("path"));
 var sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
 //import { pluginTransformer } from '../plugin';
 var index_1 = require("../integration/index");
-var config_1 = require("src/config");
+var config_1 = require("../../config");
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use

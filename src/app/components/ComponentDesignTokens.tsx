@@ -208,7 +208,7 @@ const PropertyStateValue: React.FC<{ property: string; variable: string; value: 
 
 const PropertyIcon: React.FC<{ name: string }> = ({ name }) => {
   const icon = PropertyIconPathMap[name];
-  return icon !== undefined ? <Icon name={icon} className="" /> : <></>;
+  return icon !== undefined ? <Icon name={icon} className="o-icon" /> : <></>;
 };
 
 export default ComponentDesignTokens;

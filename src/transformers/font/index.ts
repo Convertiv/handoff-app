@@ -8,7 +8,7 @@ import * as stream from 'node:stream';
 import { FontFamily } from './types';
 //import { pluginTransformer } from '../plugin';
 import { getIntegrationName } from '../integration/index';
-import { getHandoff } from 'src/config';
+import { getHandoff } from '../../config';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from

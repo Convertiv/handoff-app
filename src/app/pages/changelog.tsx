@@ -83,7 +83,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {added.colors.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="activity" /> Added{' '}
+                          <Icon name="activity" className="o-icon" /> Added{' '}
                           <strong>
                             {added.colors.length} {getCountLabel(added.colors.length, 'color', 'colors')}
                           </strong>
@@ -94,7 +94,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {added.typography.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="activity" /> Added{' '}
+                          <Icon name="activity" className="o-icon" /> Added{' '}
                           <strong>
                             {added.typography.length} {getCountLabel(added.typography.length, 'typography', 'typographies')}
                           </strong>
@@ -105,7 +105,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {added.icons.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="activity" /> Added{' '}
+                          <Icon name="activity" className="o-icon" /> Added{' '}
                           <strong>
                             {added.icons.length} {getCountLabel(added.icons.length, 'icon', 'icons')}
                           </strong>
@@ -116,7 +116,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {added.logos.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="activity" /> Added{' '}
+                          <Icon name="activity" className="o-icon" /> Added{' '}
                           <strong>
                             {added.logos.length} {getCountLabel(added.logos.length, 'logo', 'logos')}
                           </strong>
@@ -128,7 +128,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {changed.colors.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="sun" /> Changed{' '}
+                          <Icon name="sun" className="o-icon" /> Changed{' '}
                           <strong>
                             {changed.colors.length} {getCountLabel(changed.colors.length, 'color', 'colors')}
                           </strong>
@@ -139,7 +139,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {changed.typography.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="sun" /> Changed{' '}
+                          <Icon name="sun" className="o-icon" /> Changed{' '}
                           <strong>
                             {changed.typography.length} {getCountLabel(changed.typography.length, 'typography', 'typographies')}
                           </strong>
@@ -150,7 +150,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {changed.icons.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="sun" /> Changed{' '}
+                          <Icon name="sun" className="o-icon" /> Changed{' '}
                           <strong>
                             {changed.icons.length} {getCountLabel(changed.icons.length, 'icon', 'icons')}
                           </strong>
@@ -161,7 +161,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {changed.logos.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="sun" /> Changed{' '}
+                          <Icon name="sun" className="o-icon" /> Changed{' '}
                           <strong>
                             {changed.logos.length} {getCountLabel(changed.logos.length, 'logo', 'logos')}
                           </strong>
@@ -173,7 +173,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {deleted.colors.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="zap" /> Removed{' '}
+                          <Icon name="zap" className="o-icon" /> Removed{' '}
                           <strong>
                             {deleted.colors.length} {getCountLabel(deleted.colors.length, 'color', 'colors')}
                           </strong>
@@ -195,7 +195,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {deleted.icons.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="zap" /> Removed{' '}
+                          <Icon name="zap" className="o-icon" /> Removed{' '}
                           <strong>
                             {deleted.icons.length} {getCountLabel(deleted.icons.length, 'icon', 'icons')}
                           </strong>
@@ -206,7 +206,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {deleted.logos.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="zap" /> Removed{' '}
+                          <Icon name="zap" className="o-icon" /> Removed{' '}
                           <strong>
                             {deleted.logos.length} {getCountLabel(deleted.logos.length, 'logo', 'logos')}
                           </strong>

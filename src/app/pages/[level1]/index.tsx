@@ -15,7 +15,7 @@ import { getConfig } from '../../../config';
 export async function getStaticPaths() {
   return {
     paths: buildL1StaticPaths(),
-    fallback: true,
+    fallback: false,
   };
 }
 
