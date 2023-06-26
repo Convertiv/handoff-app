@@ -15,7 +15,3 @@ export interface Plugin {
   postBuild: (documentationObject: DocumentationObject) => void;
 }
 
-export interface HookReturn {
-  filename: string;
-  data: string;
-}
