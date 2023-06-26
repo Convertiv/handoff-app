@@ -6,7 +6,6 @@
 	&:hover {
 		color: $select-option-active-color;
 		background-color: $select-hover-background;
-		background: $select-hover-background;
 		border-color: $select-hover-border-color;
 		box-shadow: $select-hover-box-shadow;
 	}
@@ -14,7 +13,6 @@
 	&:focus {
 		color: $select-option-active-color;
 		background-color: $select-active-background;
-		background: $select-active-background;
 		border-color: $select-active-border-color;
 		box-shadow: $select-active-box-shadow;
 	}
@@ -22,7 +20,6 @@
 	&:disabled {
 		color: $select-option-disabled-color;
 		background-color: $select-disabled-background;
-		background: $select-disabled-background;
 		border-color: $select-disabled-border-color;
 		box-shadow: $select-disabled-box-shadow;
 	}
@@ -32,7 +29,6 @@
 	&.is-invalid:focus {
 		color: $select-option-error-color;
 		background-color: $select-error-background;
-		background: $select-error-background;
 		background-repeat: no-repeat;
 		border-color: $select-error-border-color;
 		box-shadow: $select-error-box-shadow;
