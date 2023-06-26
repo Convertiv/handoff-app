@@ -8,7 +8,7 @@ import path from 'path';
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import fs from 'fs';
+import fs from 'fs-extra';
 /**
  * Build the next js application
  * @param handoff
@@ -19,7 +19,8 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
-  fs.cpSync(path.resolve(handoff.modulePath, 'src/app/out/'), path.resolve(handoff.workingPath, 'out/'));
+  fs.removeSync(path.resolve(handoff.workingPath, 'out'));
+  fs.moveSync(path.resolve(handoff.modulePath, 'src/app/out'), path.resolve(handoff.workingPath, 'out'));
 };
 
 /**
