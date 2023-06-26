@@ -22,7 +22,7 @@
   ],
   "homepage": "https://www.handoff.com/",
   "main": "./dist/index.js",
-  "types": "./lib/main.d.ts",
+  "types": "./dist/index.d.ts",
   "bin": {
     "handoff-app": "./dist/cli.js"
   },
