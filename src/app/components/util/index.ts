@@ -404,16 +404,19 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getTokens = (): ExportResult => {
+  if(!fs.existsSync('./exported/tokens.json')) return {} as ExportResult;
   const data = fs.readFileSync('./exported/tokens.json', 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
 };
 
 export const getChangelog = () => {
+  if(!fs.existsSync('./exported/changelog.json')) return [];
   const data = fs.readFileSync('./exported/changelog.json', 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 export const getPreview = (): PreviewJson => {
+  if(!fs.existsSync('./exported/preview.json')) return {} as PreviewJson;
   const data = fs.readFileSync('./exported/preview.json', 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
 };
