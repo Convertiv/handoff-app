@@ -27,13 +27,11 @@ handoff.fetch();
 3. Build your typescript `tsc`
 4. Run your project `node handoff.js`
 
-## The API
-
-### Methods
+## Methods
 
 Methods of the handoff class can be called to run actions in the
 
-#### init
+### init
 
 ```js
 handoff.init();
@@ -43,7 +41,7 @@ Init will check and build the local state, including the configuration. You
 probably don't need to call this method since it is executed as part of the
 class constructor
 
-#### fetch
+### fetch
 
 ```js
 handoff.fetch();
@@ -54,7 +52,7 @@ Fetch will connect to the defined Figma file id provided in the
 will export all of the tokens and generated data into an `exported` directory
 in the local working root.
 
-#### build
+### build
 
 ```js
 handoff.build();
@@ -67,7 +65,7 @@ in the current working root
 This method will throw an error if the `exported` directory or the `tokens.json`
 files do not exist
 
-#### integration
+### integration
 
 ```js
 handoff.integration();
@@ -77,7 +75,7 @@ The integration method will run just the preview and integration generation.
 This step is done as part of the build step, but its often useful to be able
 to generate only the integration code.
 
-### Hooks
+## Hooks
 
 Hooks allow a typescript or javascript app to interact with the pipeline.
 This is especially useful for modifying or extending the output of the pipeline.
@@ -111,7 +109,7 @@ handoff.postIntegration((documentationObject: DocumentationObject, data: HookRet
 handoff.fetch();
 ```
 
-#### postIntegration
+### postIntegration
 
 The Post integration hook will allow you to add a function that will be executed
 after the integration build is complete. The function accepts two arguments -
@@ -127,7 +125,7 @@ after the integration build is complete. The function accepts two arguments -
 **return**
 The hook must return an array of `HookReturn` objects, or an empty array
 
-##### Example
+#### Example
 
 ```js
 handoff.postIntegration((documentationObject: DocumentationObject, data: HookReturn[]) => {
@@ -145,7 +143,7 @@ handoff.postIntegration((documentationObject: DocumentationObject, data: HookRet
 });
 ```
 
-#### postBuild
+### postBuild
 
 This function is called after the app build is complete.
 
@@ -157,7 +155,7 @@ This function is called after the app build is complete.
 **returns**
 Nothing is returned from the postBuild hook
 
-#### postCssTransformer
+### postCssTransformer
 
 This function is called after the css generation is complete. It allows an
 application to alter the css generation in transit
@@ -175,7 +173,7 @@ application to alter the css generation in transit
   tokens for components and foundations, formatted as CSS variables.
   Any changes you return here will be written to the css files
 
-#### postCssTransformer
+### postCssTransformer
 
 This function is called after the css generation is complete. It allows an
 application to alter the css generation in transit. It will allow you to alter
@@ -194,7 +192,7 @@ the transformed output prior to being written to disk.
   tokens for components and foundations, formatted as CSS variables.
   Any changes you return here will be written to the css files.
 
-#### postScssTransformer
+### postScssTransformer
 
 This function is called after the scss generation is complete. It allows an
 application to alter the scss generation in transit. It will allow you to alter
@@ -213,7 +211,7 @@ the transformed output prior to being written to disk.
   tokens for components and foundations, formatted as SCSS variables.
   Any changes you return here will be written to the scss files.
 
-#### postTypeTransformer
+### postTypeTransformer
 
 Handoff generates a set of scss files that list all the possible types of
 a component (type, state, activity, size, theme, etc.). This allows frontend
@@ -236,7 +234,7 @@ the transformed output prior to being written to disk.
   tokens for components and foundations, formatted as type variables.
   Any changes you return here will be written to the scss type files.
 
-#### modifyWebpackConfig
+### modifyWebpackConfig
 
 When the application is built, Handoff uses webpack to compile css, scss,
 and javascript in the entry point to build a little live preview of the
@@ -262,7 +260,7 @@ export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configurat
 };
 ```
 
-#### configureExportables
+### configureExportables
 
 This hook allows you to alter the exportable list. You could do this by ejecting
 the handoff configuration and modifying the list, but this hook allows you to
