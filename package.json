@@ -37,7 +37,7 @@
     "build:static": "node ./dist/cli.js build:app",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"src/app/sass/**/*.scss\"",
-    "lint": "npm run lint:sass && npx next lint --dir=src/app",
+    "lint": "npm run lint:sass && cd src/app && npx next lint",
     "release": "np --any-branch",
     "test": "npm run lint"
   },
