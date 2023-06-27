@@ -23,12 +23,6 @@
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@figma"
-    ],
-    "noEmit": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
     ]
   },
   "include": [
