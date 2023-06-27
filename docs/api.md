@@ -112,20 +112,23 @@ handoff.fetch();
 ```
 
 #### postIntegration
+
 The Post integration hook will allow you to add a function that will be executed
-after the integration build is complete. The function accepts two arguments - 
+after the integration build is complete. The function accepts two arguments -
 
-__arguments__ 
-- `tokens: DocumentationObject` This is an instance of the exported 
-DocumentationObject containing all of the tokens.
-- `data: HookReturn[]` This an array of HookReturns, consisting of `filename` 
-and `data`. Each object in this array will be written out to 
-`exported/{integration}-tokens`
+**arguments**
 
-__return__ 
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+- `data: HookReturn[]` This an array of HookReturns, consisting of `filename`
+  and `data`. Each object in this array will be written out to
+  `exported/{integration}-tokens`
+
+**return**
 The hook must return an array of `HookReturn` objects, or an empty array
 
 ##### Example
+
 ```js
 handoff.postIntegration((documentationObject: DocumentationObject, data: HookReturn[]) => {
   const colors = documentationObject.design.color.map((color) => {
@@ -143,22 +146,135 @@ handoff.postIntegration((documentationObject: DocumentationObject, data: HookRet
 ```
 
 #### postBuild
-This function is called after the app build is complete. 
 
-__arguments__ 
-- `tokens: DocumentationObject` This is an instance of the exported 
-DocumentationObject containing all of the tokens.
+This function is called after the app build is complete.
 
-__returns__ 
+**arguments**
+
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+
+**returns**
 Nothing is returned from the postBuild hook
 
 #### postCssTransformer
-This function is called after the css generation is complete. 
 
-__arguments__ 
-- `tokens: DocumentationObject` This is an instance of the exported 
-DocumentationObject containing all of the tokens.
-- `tokens: DocumentationObject` This is an instance of the exported 
-DocumentationObject containing all of the tokens.
+This function is called after the css generation is complete. It allows an
+application to alter the css generation in transit
 
-__returns__ 
+**arguments**
+
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as CSS variables
+
+**returns**
+
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as CSS variables.
+  Any changes you return here will be written to the css files
+
+#### postCssTransformer
+
+This function is called after the css generation is complete. It allows an
+application to alter the css generation in transit. It will allow you to alter
+the transformed output prior to being written to disk.
+
+**arguments**
+
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as CSS variables
+
+**returns**
+
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as CSS variables.
+  Any changes you return here will be written to the css files.
+
+#### postScssTransformer
+
+This function is called after the scss generation is complete. It allows an
+application to alter the scss generation in transit. It will allow you to alter
+the transformed output prior to being written to disk.
+
+**arguments**
+
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+- `scss: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as SCSS variables
+
+**returns**
+
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as SCSS variables.
+  Any changes you return here will be written to the scss files.
+
+#### postTypeTransformer
+
+Handoff generates a set of scss files that list all the possible types of
+a component (type, state, activity, size, theme, etc.). This allows frontend
+engineers to iterate over the types and build scss maps with the variables.
+
+This function is called after the type generation is complete. It allows an
+application to alter the type generation in transit. It will allow you to alter
+the transformed output prior to being written to disk.
+
+**arguments**
+
+- `tokens: DocumentationObject` This is an instance of the exported
+  DocumentationObject containing all of the tokens.
+- `scss: CssTransformerOutput` This is an object containing all of the
+  type arrays for components and foundations, formatted as SCSS variables
+
+**returns**
+
+- `css: CssTransformerOutput` This is an object containing all of the
+  tokens for components and foundations, formatted as type variables.
+  Any changes you return here will be written to the scss type files.
+
+#### modifyWebpackConfig
+
+When the application is built, Handoff uses webpack to compile css, scss,
+and javascript in the entry point to build a little live preview of the
+components. This hook accepts a webpack.Configuration as the first argument
+and allows you to alter and return that configuration.
+
+**arguments**
+
+- `webpackConfig: webpack.Configuration` This is a full webpack configuration.
+
+**returns**
+
+- `webpackConfig: webpack.Configuration` Return the webpack configuration that
+  you have altered to fit your needs.
+
+**Example**
+
+```js
+export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {
+  // Enable webpack dev mode
+  webpackConfig.mode = 'development';
+  return webpackConfig;
+};
+```
+
+#### configureExportables
+
+This hook allows you to alter the exportable list. You could do this by ejecting
+the handoff configuration and modifying the list, but this hook allows you to
+alter the exportable list with just a couple of lines of code rather than 
+exporting the whole list
+
+**arguments**
+
+- `exportables: string[]` The current list of exportables
+
+**returns**
+
+- `exportables: string[]` Return the list with whatever additions and subtractions
+you need for your application.
+
