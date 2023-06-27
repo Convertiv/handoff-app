@@ -229,7 +229,7 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<FigmaAuthConfig> => 
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`\nFigma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.
+      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.
 Use these instructions to generate them ${chalk.blue(
         `https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
       )}\n`)
@@ -241,7 +241,7 @@ Use these instructions to generate them ${chalk.blue(
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`Figma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.
+      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.
 You can find this by looking at the url of your Figma file. If the url is ${chalk.blue(
         `https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`
       )}
@@ -251,7 +251,7 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
   }
   if (missingEnvVars) {
     console.log(
-      chalk.yellow(`\nAt least one required environment variable was not supplied. We can write these variables to a local env 
+      chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env 
 file for you to make it easier to run the pipeline in the future.\n`)
     );
     const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));

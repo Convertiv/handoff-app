@@ -342,7 +342,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("\nFigma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
+                console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '))];
             case 1:
                 DEV_ACCESS_TOKEN = _a.sent();
@@ -350,14 +350,14 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
             case 2:
                 if (!!FIGMA_PROJECT_ID) return [3 /*break*/, 4];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("Figma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
+                console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '))];
             case 3:
                 FIGMA_PROJECT_ID = _a.sent();
                 _a.label = 4;
             case 4:
                 if (!missingEnvVars) return [3 /*break*/, 8];
-                console.log(chalk_1.default.yellow("\nAt least one required environment variable was not supplied. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
+                console.log(chalk_1.default.yellow("\nYou supplied at least one required variable. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
                 return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
                 writeEnvFile = _a.sent();
