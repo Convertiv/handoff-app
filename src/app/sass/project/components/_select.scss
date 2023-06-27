@@ -1,0 +1,51 @@
+/* =============================================================================
+   SELECT (project/components/_select.scss)
+   ========================================================================== */
+
+
+.form-select {
+	&:hover {
+		color: $form-select-hover-color;
+		background-color: $form-select-hover-bg;
+		background: $form-select-hover-bg;
+		border-color: $form-select-hover-border-color;
+		box-shadow: $form-select-hover-box-shadow;
+	}
+
+	&:focus {
+		color: $form-select-focus-color;
+		background-color: $form-select-focus-bg;
+		background: $form-select-focus-bg;
+		border-color: $form-select-focus-border-color;
+		box-shadow: $form-select-focus-box-shadow;
+	}
+
+	&:disabled {
+		color: $form-select-disabled-color;
+		background-color: $form-select-disabled-bg;
+		background: $form-select-disabled-bg;
+		border-color: $form-select-disabled-border-color;
+		box-shadow: $form-select-disabled-box-shadow;
+	}
+
+	&.is-invalid,
+	&.is-invalid:hover,
+	&.is-invalid:focus {
+		color: $form-select-invalid-color;
+		background-color: $form-select-invalid-bg;
+		background: $form-select-invalid-bg;
+		background-repeat: no-repeat;
+		border-color: $form-select-invalid-border-color;
+		box-shadow: $form-select-invalid-box-shadow;
+	}
+}
+
+.form-select-sm {
+	line-height: $form-select-line-height-sm;
+	border-width: $form-select-border-width-sm;
+}
+
+.form-select-lg {
+	line-height: $form-select-line-height-lg;
+	border-width: $form-select-border-width-lg;
+}

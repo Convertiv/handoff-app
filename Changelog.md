@@ -6,6 +6,211 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2023-06-16
+
+This release adds Bootstrap 5.3 support with dark mode disabled by default.
+
+### Changes
+
+- Added Bootstrap 5.3 integration
+- Bootstrap 5.3 is now the default integration
+- Updated color preview in the Next.js app to work with color values such as linear-gradient(...) and rgba(...)
+
+### Bugfixes
+
+- Resolved a value normalization error in the Next.js app when normalizing value with multiple color layers
+
+##### How to switch integrations
+
+To use an integration change `client-config.js` to desired integration and version. For example:
+
+```
+integration: {
+  name: 'bootstrap',
+  version: '5.3',
+},
+```
+
+Currently supported integrations:
+
+- Bootstrap 5.2
+- Bootstrap 5.3
+
+## [0.5.2] - 2023-06-14
+
+### Changes
+
+- Tokens, changelog and previews are now read form the file system using the `fs.readFileSync` instead of the `import` statement.
+- Updated the Next.js app pages to utilize `getStaticProps` for fetching of the configuration and the exported tokens.
+- Removed `componentExists` utility method as it's no longer used
+- Removed `mapComponentSize` utility method as it's no longer used
+
+### Bugfixes
+
+- By changing the way in which the configuration, tokens, changelog and previews are read and passed into the pages a bug has been resolved that would occur while running the `fetch` command while the `dev` command was already running which would cause the app from stop responding correctly and would require app restart.
+
+## [0.5.1] - 2023-06-01
+
+### Changes
+
+- Minor release to increment the installer default version
+- Adding documentation to exportables folder
+
+## [0.5.0] - 2023-06-01
+
+0.5.0 brings two major improvements
+
+- Exportable schemas for Figma components
+  - Allows Handoff to connect to any component set in Figma
+  - Defines semantic meaning for components
+  - Automatically generates well formed tokens based on object type
+- Javascript plugins for each integration
+  - Hooks into the Figma extraction and transformation
+  - Allows Handoff projects to customize the artifacts
+  - Created to support Tailwind theme.js and Wordpress theme.json artifacts
+
+Also in 0.5.0 is improved bootstrap 5.2 support, a simple tailwind color
+integration, and a cluster of bugfixes.
+
+### Major Features
+
+#### Exportable schemas
+
+Exportable schemas allows Handoff to connect to any component sets in Figma and
+generate tokens. In simple json, developers can define the structure of a Figma
+component and what tokens to extract from each element. This allows Handoff to
+adapt to the component set of any Figma file, and define semantic meaning for the
+Figma component. This will enable many features going forward, including -
+
+- Figma Linting
+- Component Change Detection and Changelog
+- Automatic Figma Schema Detection
+
+Exportables are stored in `./exportables`. In 0.5.0 we only support exportable
+components, so put component definitions in `./exportables/components`.
+An exportable consists of 3 components -
+
+- Metadata - describe the component (id, group)
+- Options - control how the component is rendered in Handoff (tokens, preview)
+- Parts - define the semantic structure of the Figma component
+
+##### How to use exportables
+
+Using exportables will allow quick tokenization of new components. For example,
+here is an annotated exportable for badges, a component not currently supported
+by handoff. https://www.handoff.com/docs/customization/exportables/#badgejson
+If you add this file to `exportables/components` and add `components/badge`
+to the `figma.definitions` in your config.js, Handoff will start looking for a
+Badges component set, and generate tokens, css, scss, and types for you.
+
+With no other changes, handoff will create a set of badge token files for you.
+For example, it will render something like this for css variables -
+https://gist.github.com/bradmering/020429c30f11d95bfb2577ea57809878. You can see
+that creates a comprehensive list of all the tokens you would need to render
+badges in a css frontend framework.
+
+If you want badges to work in the Handoff component preview as well, you would
+need to add a badge template to `integration/templates/badge/default.html`.
+That file would look like this for Bootstrap 5.2 -
+https://www.handoff.com/docs/customization/exportables/#adding-a-template-to-preview-the-new-exportable.
+
+You would also want to map these tokens to the framework. This is how you might
+do that in Bootstrap 5.2, adding this file to `integration/sass/extended/badge.scss`
+https://www.handoff.com/docs/customization/exportables/#mapping-the-new-exportable-to-scss
+
+#### Integration Plugin
+
+Handoff allows users to integrate with particular frontend frameworks. We call
+these integrations. We currently support bootstrap 5.2 out of the box.
+
+0.5.0 now allows these integrations to hook into the data extraction pipeline
+and modify the output, and optionally write files to the exported directory.
+This will allow developers to tailor the Figma data pipeline to their needs.
+
+##### How to use the Integration Plugin
+
+To use this feature, create a `plugin.js` in the `integration` folder of your
+project. This plugin will have access to any of the core node.js libraries
+you need. Export a sandbox module like this -
+
+```
+sandbox.exports = {
+  postCssTransformer: (documentationObject, css) => {
+    // Modify the css variables prior to save
+    return css;
+  },
+}
+```
+
+In this example, the plugin has the full documentation object available,
+allowing it to query the object and then modify the css variables as needed.
+
+Here's a simple plugin example that will read the tokens and write a simple
+json file with an array of colors in it. -
+https://www.handoff.com/docs/customization/plugins/#simple-example
+
+Here is a comprehensive plugin.js showing all the options in 0.5.0 -
+https://www.handoff.com/docs/customization/plugins/#full-example
+
+#### Bootstrap 5.2 Mapping Improvements
+
+In 0.5.0 the Bootstrap 5.2 integration was rewritten to simplify and rationalize
+the way that tokens are being used. Since Bootstrap 5.2 is the first end to end
+Handoff integration, these improvements will form the template for other
+integrations.
+
+#### Simple Tailwind 3.3 Integration
+
+This release has a simple version of a Tailwind integration. It only supports
+colors and typography right now. Its in this release to start testing with
+simple tailwind projects.
+
+To test it out, change the integration in the `config.js` to this -
+
+```
+integration: {
+    name: 'tailwind',
+    version: '3.3',
+  },
+}
+```
+
+### Bugfixes
+
+- The new exportable schema has normalized the token output, fixing several small
+  inconsistencies in the way tokens were created.
+- Fixes a warning caused by loading the config into the next app outside of the
+  static properties
+
+## [0.4.3] - 2023-04-19
+
+Continuing incremental improvement over the 0.4.0 release. This release fixes
+a couple of small build inconsistencies, improves debug mode when running the
+build and fetch, and creates a fast run mode.
+
+### Improvements
+
+- Errors in the webpack execution will now cause the fetch script to halt and
+  bubble up into the error handling.
+- Running build/fetch with `-- --debug` will now send the error trace from the
+  webpack when building a preview. This is especially useful when there is an error
+  either in the template or scss maps.
+- Running build/fetch with `-- --fast` will execute the script but if there is
+  already a built temp directory, it will use the built dir rather than recreating
+  it. This speeds up runtime significantly. If this option is supplied but the
+  temp dir does not yet exist, it will be created.
+
+### Bugfixes
+
+- The transformer stand alone pipelines weren't working. This release fixes that
+  so executing `npm run transform:preview` or
+  `node node_modules/handoff-app/scripts/fetch.js preview` will properly execute
+  just a single portion of the pipeline rather than the whole pipeline.
+- The default component guidelines were not rendering the `<ul>` wrapper for the
+  subsequent lists.
+- The bootstrap 5.2 scss mapping had an error that caused the carrot and icon
+  on error and disabled state select boxes to display incorrectly.
+
 ## [0.4.2] - 2023-04-16
 
 When 0.4.0 was released, we found a structural problem with the way
@@ -13,7 +218,7 @@ integrations were published into projects. 0.4.1 resolved a couple of issues,
 but a couple of significant new pieces of code were required to fully resolve
 the issue.
 
-The resolution is fixing paths so that they work properly when running the 
+The resolution is fixing paths so that they work properly when running the
 handoff source as well as running handoff in a project.
 
 ### Bugfixes
@@ -260,3 +465,7 @@ package version was set to ^0.1.0 rather than ^0.2.0. This release fixes that.
   - Component design tokens (buttons, alerts, modal, tooltips, inputs, radios, checkboxes, radio, switches)
   - Transformers for sass variables, css variables, previews and custom fonts
   - Static web application that can be published to any web host
+
+```
+
+```

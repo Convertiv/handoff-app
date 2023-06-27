@@ -9,7 +9,7 @@
 /coverage
 
 # next.js
-/.next
+/src/app/.next
 /out
 
 # production
@@ -43,9 +43,10 @@ yarn-error.log*
 
 # figma exported
 /exported
-/public/icons.zip
-/public/icons
-/public/logos.zip
-/public/tokens.zip
-/public/logos
-/public/components
+/public
+
+/src/app/out
+/src/app/public/components
+/dist/templates
+/next-env.d.ts
+/.next
