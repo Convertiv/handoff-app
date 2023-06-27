@@ -49,3 +49,4 @@ yarn-error.log*
 /src/app/public/components
 /dist/templates
 /next-env.d.ts
+/.next
