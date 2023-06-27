@@ -357,7 +357,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 _a.label = 4;
             case 4:
                 if (!missingEnvVars) return [3 /*break*/, 8];
-                console.log(chalk_1.default.yellow("\nYou supplied at least one required variable. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
+                console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
                 return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
                 writeEnvFile = _a.sent();

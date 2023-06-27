@@ -58,6 +58,8 @@ var http_1 = require("http");
 var url_1 = require("url");
 var next_1 = __importDefault(require("next"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
+var chokidar_1 = __importDefault(require("chokidar"));
+var chalk_1 = __importDefault(require("chalk"));
 /**
  * Build the next js application
  * @param handoff
@@ -139,6 +141,40 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 console.log("> Ready on http://".concat(hostname, ":").concat(port));
             });
         });
+        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
+                    handoff.fetch();
+                    return [2 /*return*/];
+                });
+            }); });
+        }
+        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log(chalk_1.default.yellow('Integration changed. Handoff will fetch new tokens...'));
+                    handoff.integration();
+                    return [2 /*return*/];
+                });
+            }); });
+        }
+        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                    return [2 /*return*/];
+                });
+            }); });
+        }
+        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
+                    return [2 /*return*/];
+                });
+            }); });
+        }
         return [2 /*return*/];
     });
 }); };

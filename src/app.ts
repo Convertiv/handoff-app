@@ -1,21 +1,20 @@
-import build from 'next/dist/build/index';
 import { nextBuild } from 'next/dist/cli/next-build';
 import { nextDev } from 'next/dist/cli/next-dev';
-import exportApp from 'next/dist/export/index';
-import { trace } from 'next/dist/trace';
 import Handoff from '.';
 import path from 'path';
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import fs from 'fs-extra';
+import chokidar from 'chokidar';
+import chalk from 'chalk';
 /**
  * Build the next js application
  * @param handoff
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
-  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
@@ -28,7 +27,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   const appPath = path.resolve(handoff.modulePath, 'src/app');
@@ -77,6 +76,28 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         console.log(`> Ready on http://${hostname}:${port}`);
       });
   });
+  if (fs.existsSync(path.resolve(handoff.workingPath, 'exportables'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, 'exportables')).on('all', async (event, path) => {
+      console.log(chalk.yellow('Exportables changed. Handoff will fetch new tokens...'));
+      handoff.fetch();
+    });
+  }
+  if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, 'exportables')).on('all', async (event, path) => {
+      console.log(chalk.yellow('Integration changed. Handoff will fetch new tokens...'));
+      handoff.integration();
+    });
+  }
+  if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, 'pages')).on('all', async (event, path) => {
+      console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
+    });
+  }
+  if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json')).on('all', async (event, path) => {
+      console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
+    });
+  }
 };
 
 /**
@@ -84,7 +105,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
-  if(!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   return await nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
