@@ -1,7 +1,7 @@
 import React, { FunctionComponent, ReactElement } from 'react';
 import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 import yaml from 'react-syntax-highlighter/dist/cjs/languages/prism/yaml';
 import json from 'react-syntax-highlighter/dist/cjs/languages/prism/json';
 import markdown from 'react-syntax-highlighter/dist/cjs/languages/prism/json';
