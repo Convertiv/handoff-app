@@ -1,6 +1,6 @@
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-import html from 'react-syntax-highlighter/dist/cjs/languages/prism/xml-doc';
+import html from 'refractor/lang/xml-doc';
 import { PreviewObject } from '../../../types';
 import CopyCode from '../CopyCode';
 SyntaxHighlighter.registerLanguage('html', html);
