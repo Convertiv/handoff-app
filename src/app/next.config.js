@@ -8,7 +8,7 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
-  transpilePackages: ['handoff-app'],
+  transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
@@ -32,6 +32,7 @@ const nextConfig = {
       test: /\.html$/i,
       loader: 'html-loader',
     });
+    console.log(config.module.rules)
     return config;
   },
 };
