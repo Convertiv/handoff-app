@@ -1,6 +1,6 @@
-import React, { FunctionComponent, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 import yaml from 'refractor/lang/yaml';
 import json from 'refractor/lang/json';
@@ -8,6 +8,12 @@ import markdown from 'refractor/lang/json';
 import bash from 'refractor/lang/bash';
 import sass from 'refractor/lang/sass';
 import html from 'refractor/lang/xml-doc';
+// @ts-ignore
+import highlight from 'react-syntax-highlighter/src/highlight';
+import refractor  from 'refractor/core';
+const SyntaxHighlighter = highlight(refractor, {});
+SyntaxHighlighter.registerLanguage = (_: string, language: any) =>
+  refractor.register(language);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
