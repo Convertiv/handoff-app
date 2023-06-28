@@ -225,7 +225,8 @@ function integrationTransformer(documentationObject) {
             switch (_a.label) {
                 case 0:
                     handoff = (0, config_1.getHandoff)();
-                    outputFolder = path_1.default.join('public');
+                    outputFolder = path_1.default.resolve(handoff.modulePath, 'src/app/public');
+                    console.log(outputFolder);
                     integrationPath = (0, exports.getPathToIntegration)();
                     integrationName = (0, exports.getIntegrationName)();
                     sassFolder = path_1.default.resolve(handoff.workingPath, "exported/".concat(integrationName, "-tokens"));

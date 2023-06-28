@@ -416,6 +416,8 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
                         : []), true))];
             case 5:
                 _a.sent();
+                fs_extra_1.default.copyFileSync(iconsZipFilePath, path_1.default.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
+                fs_extra_1.default.copyFileSync(logosZipFilePath, path_1.default.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
                 return [2 /*return*/, documentationObject];
         }
     });

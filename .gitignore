@@ -50,3 +50,9 @@ yarn-error.log*
 /dist/templates
 /next-env.d.ts
 /.next
+
+/src/app/public/icons.zip
+/src/app/public/icons
+/src/app/public/logos.zip
+/src/app/public/logos
+/src/app/public/tokens.zip

@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { DocumentationObject } from '../../types';
 import * as stream from 'node:stream';
 /**
