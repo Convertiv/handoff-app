@@ -32,7 +32,6 @@ const nextConfig = {
       test: /\.html$/i,
       loader: 'html-loader',
     });
-    console.log(config.module.rules)
     return config;
   },
 };
