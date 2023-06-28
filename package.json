@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "0.5.4-0",
+  "version": "0.6.0-4",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
@@ -66,6 +66,7 @@
     "@types/react-scroll": "^1.8.6",
     "@types/react-syntax-highlighter": "^15.5.7",
     "@types/webpack": "^5.28.0",
+    "@types/refractor": "^3.0.2",
     "archiver": "^5.3.1",
     "arg": "^5.0.2",
     "autoprefixer": "^10.4.14",
@@ -111,7 +112,6 @@
     "webpack": "^5.75.0"
   },
   "devDependencies": {
-    "np": "^7.6.2",
-    "tslib": "^2.5.3"
+    "np": "^7.6.2"
   }
 }
