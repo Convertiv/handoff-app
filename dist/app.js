@@ -86,7 +86,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath, dev, hostname, port, app, handle;
+    var appPath, config, tsconfigPath, dev, hostname, port, app, handle, chokidarConfig, debounce;
     return __generator(this, function (_a) {
         if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
             throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -141,21 +141,65 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 console.log("> Ready on http://".concat(hostname, ":").concat(port));
             });
         });
+        chokidarConfig = {
+            ignored: /(^|[\/\\])\../,
+            persistent: true,
+            ignoreInitial: true,
+        };
+        debounce = false;
         if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
-                    handoff.fetch();
-                    return [2 /*return*/];
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = event;
+                            switch (_a) {
+                                case 'add': return [3 /*break*/, 1];
+                                case 'change': return [3 /*break*/, 1];
+                                case 'unlink': return [3 /*break*/, 1];
+                            }
+                            return [3 /*break*/, 4];
+                        case 1:
+                            if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
+                            console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
+                            debounce = true;
+                            return [4 /*yield*/, handoff.fetch()];
+                        case 2:
+                            _b.sent();
+                            debounce = false;
+                            _b.label = 3;
+                        case 3: return [3 /*break*/, 4];
+                        case 4: return [2 /*return*/];
+                    }
                 });
             }); });
         }
         if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log(chalk_1.default.yellow('Integration changed. Handoff will fetch new tokens...'));
-                    handoff.integration();
-                    return [2 /*return*/];
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = event;
+                            switch (_a) {
+                                case 'add': return [3 /*break*/, 1];
+                                case 'change': return [3 /*break*/, 1];
+                                case 'unlink': return [3 /*break*/, 1];
+                            }
+                            return [3 /*break*/, 4];
+                        case 1:
+                            if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
+                            console.log(chalk_1.default.yellow('Integration changed. Handoff will rerender the integrations...'));
+                            debounce = true;
+                            return [4 /*yield*/, handoff.integration()];
+                        case 2:
+                            _b.sent();
+                            debounce = false;
+                            _b.label = 3;
+                        case 3: return [3 /*break*/, 4];
+                        case 4: return [2 /*return*/];
+                    }
                 });
             }); });
         }

@@ -76,16 +76,43 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         console.log(`> Ready on http://${hostname}:${port}`);
       });
   });
+
+  const chokidarConfig = {
+    ignored: /(^|[\/\\])\../, // ignore dotfiles
+    persistent: true,
+    ignoreInitial: true,
+  }
+  let debounce = false;
   if (fs.existsSync(path.resolve(handoff.workingPath, 'exportables'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'exportables')).on('all', async (event, path) => {
-      console.log(chalk.yellow('Exportables changed. Handoff will fetch new tokens...'));
-      handoff.fetch();
+    chokidar.watch(path.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if(path.includes('json') && !debounce){
+            console.log(chalk.yellow('Exportables changed. Handoff will fetch new tokens...'));
+            debounce = true;
+            await handoff.fetch();
+            debounce = false;
+          }
+          break;
+      }
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'exportables')).on('all', async (event, path) => {
-      console.log(chalk.yellow('Integration changed. Handoff will fetch new tokens...'));
-      handoff.integration();
+    chokidar.watch(path.resolve(handoff.workingPath, 'integration')).on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if(path.includes('json') && !debounce){
+            console.log(chalk.yellow('Integration changed. Handoff will rerender the integrations...'));
+            debounce = true;
+            await handoff.integration();
+            debounce = false;
+          }
+          break;
+      }
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {

@@ -58,9 +58,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
 const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, types, components, previews, config }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
-  const designComponents: ComponentDesign[] = components.filter(
+  const designComponents: ComponentDesign[] = components ? components.filter(
     (component): component is ComponentDesign => component.componentType === 'design'
-  );
+  ) : [];
 
   const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
   const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)

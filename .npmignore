@@ -39,11 +39,6 @@ yarn-error.log*
 # assets
 /public/assets
 
-# figma exporter
-/figma-exporter/dist
-/figma-exporter/api/dist
-/figma-exporter/node_modules
-
 # figma exported
 /exported
 /public/icons.zip
@@ -59,9 +54,6 @@ yarn-error.log*
 
 # assets
 !/public/assets
-
-# client config
-/client-config.js
 
 # exported files
 /exported
