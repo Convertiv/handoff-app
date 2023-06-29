@@ -45,6 +45,11 @@ yarn-error.log*
 /public/icons
 /public/logos.zip
 /public/logos
+/src/app/public/icons.zip
+/src/app/public/icons
+/src/app/public/logos.zip
+/src/app/public/logos
+/src/app/public/tokens.zip
 
 ### END .gitignore ###
 

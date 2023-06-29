@@ -171,15 +171,19 @@ export const zipTokens = async (dirPath: string, destination: stream.Writable) =
  */
 export default async function integrationTransformer(documentationObject: DocumentationObject) {
   const handoff = getHandoff();
-  const outputFolder = path.join('public');
+  // define the output folder
+  const outputFolder = path.resolve(handoff.modulePath, 'src/app/public');
+  // define the integration path
   const integrationPath = getPathToIntegration();
   const integrationName = getIntegrationName();
+  // copy the sass and templates to the exported folder
   const sassFolder = path.resolve(handoff.workingPath, `exported/${integrationName}-tokens`);
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
   fs.copySync(integrationsSass, sassFolder);
   fs.copySync(integrationTemplates, templatesFolder);
+  // zip the tokens
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
   let data = handoff.integrationHooks.hooks.integration(documentationObject, []);

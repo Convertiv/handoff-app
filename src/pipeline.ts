@@ -305,6 +305,8 @@ const figmaExtract = async (
         ]
       : []),
   ]);
+  fs.copyFileSync(iconsZipFilePath, path.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
+  fs.copyFileSync(logosZipFilePath, path.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
   return documentationObject;
 };
 

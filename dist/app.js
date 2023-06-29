@@ -66,6 +66,7 @@ var chalk_1 = __importDefault(require("chalk"));
  * @returns
  */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var output;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -75,7 +76,10 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
             case 1:
                 _a.sent();
-                fs_extra_1.default.removeSync(path_1.default.resolve(handoff.workingPath, 'out'));
+                output = path_1.default.resolve(handoff.workingPath, 'out');
+                if (fs_extra_1.default.existsSync(output)) {
+                    fs_extra_1.default.removeSync(output);
+                }
                 fs_extra_1.default.moveSync(path_1.default.resolve(handoff.modulePath, 'src/app/out'), path_1.default.resolve(handoff.workingPath, 'out'));
                 return [2 /*return*/];
         }
