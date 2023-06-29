@@ -99,7 +99,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
         config = require(path_1.default.resolve(appPath, 'next.config.js'));
         tsconfigPath = 'tsconfig.json';
         config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
-        dev = process.env.NODE_ENV !== 'production';
+        dev = true;
         hostname = 'localhost';
         port = 3000;
         app = (0, next_1.default)({
