@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2023-06-28
+
+### Bugfixes
+
+- Resolves an issue with level two paths in the app not rendering right
+- Resolves an issue if the project env is set to production but the app start mode is run
+
 ## [0.6.0] - 2023-06-28
 
 0.6.0 introduces two major new tools that will make it much easier to integrate Handoff with existing projects and data pipelines. This release also reorganizes the Handoff code to make the pipeline significantly more robust, easier to extend, and easier to use in existing projects. Our goal with this release is to establish a stable Typescript API as we approach a 1.0 release.
