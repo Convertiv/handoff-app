@@ -39,7 +39,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (!level2) {
     level2 = '404';
   }
-  console.log({...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props});
   return {
     props: {
       ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props,
