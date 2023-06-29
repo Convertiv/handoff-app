@@ -6,6 +6,86 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2023-06-28
+
+0.6.0 introduces two major new tools that will make it much easier to integrate Handoff with existing projects and data pipelines. This release also reorganizes the Handoff code to make the pipeline significantly more robust, easier to extend, and easier to use in existing projects. Our goal with this release is to establish a stable Typescript API as we approach a 1.0 release.
+
+### Features
+
+#### Handoff CLI
+
+Handoff now comes with a CLI toolchain that allows you to run Handoff commands in any context. This CLI replaces the installer from previous versions to scaffold up projects in a directory.
+
+- Can be installed globally as a node binary `npm i -g handoff-app`
+- Run in any directory using `handoff-app <command>`
+- Will detect in the current working root and use that config if present
+- Has sane default configs that will work for normal projects
+- All configurations are sparse, so you can override a single config file and the rest of the config will inherit the defaults
+- Allows users to make config or eject the default config into the current working root
+- Can be run interactively to configure a project or non-interactively with `env` variables
+- Run `handoff-app --help` for a full list of commands
+- See https://github.com/Convertiv/handoff-app/blob/main/docs/cli.md for documentation
+
+#### Handoff Typescript API
+
+Handoff now exposes a full typescript API published as commonjs modules. This API will allow you to use Handoff in your Node 16+ javascript or typescript projects. With just a few lines of code you can have Handoff run programmatically.
+
+This API supersedes and replaces the plugin architecture introduced in 0.5.0. The API call structure is maintained, but now the API can be used directly in existing Node applications and can be used with typescript.
+
+Here's a simple example that will fetch the data down. This example expects a DEV_ACCESS_TOKEN and a FIGMA_PROJECT_ID env variable, or those to be provided in `process.env`. If not supplied, they will be prompted for when the pipeline is run.
+
+```js
+import Handoff from 'handoff-app';
+const handoff = new Handoff({
+  title: 'Handoff Bootstrap',
+  integration: {
+    name: 'bootstrap',
+    version: '5.3',
+  },
+});
+await handoff.fetch();
+```
+
+- Fully typed API + full access to all the pipeline functions for transforming the tokens
+- Methods to support fetching tokens, building the documentation app, building the integration, and running the app locally for testing
+- A hook system allowing javascript functions to be passed as callbacks to be executed at points in the pipeline
+
+```js
+// This hook will execute after the integration step and allow you to extract
+// data from the pipeline and write it to a file
+handoff.postIntegration((documentationObject: DocumentationObject, data: HookReturn[]) => {
+  const colors = documentationObject.design.color.map((color) => {
+    return {
+      name: color.name,
+      value: color.value,
+    };
+  });
+  data.push({
+    filename: 'colors.json',
+    data: JSON.stringify(colors, null, 2),
+  });
+  return data;
+});
+```
+
+- API matches the methods of the CLI so you can script in code what you can do with the CLI
+- See https://github.com/Convertiv/handoff-app/blob/main/docs/api.md for documentation
+
+### Improvements
+
+- The handoff code base was refactored to eliminate the monorepo architecture and consolidate on a more coherent package architecture. This refactoring eliminated a number of weak points and improves reliability.
+  - Sharing code between the data pipeline and the Nextjs documentation app is safer
+  - The hook architecture introduced in 0.5 was fragile and less secure than we wanted. This reorganization makes a much more robust API, with full access to the typings
+  - The previous structure merged configurations in a way that could fail easily. The new architecture reads and merges the various Handoff configurations in a much more robust manor.
+  - Previously handoff required a folder architecture, with the proper files, and could fail if those files were moved. Now Handoff can be run in an empty directory, and can accommodate configs being added and removed during operation.
+- Upgrade Nextjs from 12 to 13 providing cleaner, faster application builds
+- Tailwind integration hook has been added to the pipeline
+
+### Bugfixes
+
+- Fixes several style issues in the Bootstrap 5.3 release
+- Corrects a missing caret in Bootstrap 5.2 and 5.3 selects
+
 ## [0.5.3] - 2023-06-16
 
 This release adds Bootstrap 5.3 support with dark mode disabled by default.

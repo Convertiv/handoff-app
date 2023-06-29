@@ -1,0 +1,144 @@
+// ------------------------------------------------------------------
+// Bootstrap 5.2 - Handoff Design Tokens Map
+// Include this file in a Bootstrap 5.2 project to map Figma tokens
+// produced by the Handoff design system.
+// ------------------------------------------------------------------
+// Order is following:
+//
+// 1. Initialize Bootstrap
+// 2. Load empty default variables and raw design tokens from Handoff export
+// 3. Map Handoff to basic set of Bootstrap variables
+// 4. Load all default Bootstrap variables that weren't mapped from Handoff
+// 5. Load Bootstrap base and components layers
+// 6. Extend Bootstrap components by mapping additional Handoff variables
+
+
+// 1. Initialize Bootstrap
+// ------------------------------------------------------------------
+
+@import 'bootstrap/scss/functions';
+
+// 2. Handoff Tokens
+//    Load empty default variables that prevent the build from
+//    breaking if some components are not being used.
+//    Then load raw design tokens from Handoff export.
+// ------------------------------------------------------------------
+
+@import 'variables-default';
+
+@import './exported/tokens/types/alert';
+@import './exported/tokens/sass/alert';
+@import './exported/tokens/css/alert';
+
+@import './exported/tokens/types/button';
+@import './exported/tokens/sass/button';
+@import './exported/tokens/css/button';
+
+@import './exported/tokens/types/checkbox';
+@import './exported/tokens/sass/checkbox';
+@import './exported/tokens/css/checkbox';
+
+@import './exported/tokens/types/colors';
+@import './exported/tokens/sass/colors';
+@import './exported/tokens/css/colors';
+
+@import './exported/tokens/types/effects';
+@import './exported/tokens/sass/effects';
+@import './exported/tokens/css/effects';
+
+@import './exported/tokens/types/input';
+@import './exported/tokens/sass/input';
+@import './exported/tokens/css/input';
+
+@import './exported/tokens/types/modal';
+@import './exported/tokens/sass/modal';
+@import './exported/tokens/css/modal';
+
+@import './exported/tokens/types/radio';
+@import './exported/tokens/sass/radio';
+@import './exported/tokens/css/radio';
+
+@import './exported/tokens/types/select';
+@import './exported/tokens/sass/select';
+@import './exported/tokens/css/select';
+
+@import './exported/tokens/types/switch';
+@import './exported/tokens/sass/switch';
+@import './exported/tokens/css/switch';
+
+@import './exported/tokens/types/tooltip';
+@import './exported/tokens/sass/tooltip';
+@import './exported/tokens/css/tooltip';
+
+@import './exported/tokens/types/typography';
+@import './exported/tokens/sass/typography';
+@import './exported/tokens/css/typography';
+
+// 3. Project Variables
+// ------------------------------------------------------------------
+
+$prefix: '';
+@import 'variables';
+
+// 4. Bootstrap Variables
+//    Load Bootstrap variables
+// ------------------------------------------------------------------
+
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+
+
+// 5. Bootstrap Base and Components
+//    Load Bootstrap configuration, layout, components, helpers, utilities
+// ------------------------------------------------------------------
+
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/type';
+@import 'bootstrap/scss/images';
+@import 'bootstrap/scss/containers';
+@import 'bootstrap/scss/grid';
+@import 'bootstrap/scss/tables';
+@import 'bootstrap/scss/forms';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/dropdown';
+@import 'bootstrap/scss/button-group';
+@import 'bootstrap/scss/nav';
+@import 'bootstrap/scss/navbar';
+@import 'bootstrap/scss/card';
+@import 'bootstrap/scss/accordion';
+@import 'bootstrap/scss/breadcrumb';
+@import 'bootstrap/scss/pagination';
+@import 'bootstrap/scss/badge';
+@import 'bootstrap/scss/alert';
+@import 'bootstrap/scss/progress';
+@import 'bootstrap/scss/list-group';
+@import 'bootstrap/scss/close';
+@import 'bootstrap/scss/toasts';
+@import 'bootstrap/scss/modal';
+@import 'bootstrap/scss/tooltip';
+@import 'bootstrap/scss/popover';
+@import 'bootstrap/scss/carousel';
+@import 'bootstrap/scss/spinners';
+@import 'bootstrap/scss/offcanvas';
+@import 'bootstrap/scss/placeholders';
+@import 'bootstrap/scss/helpers';
+@import 'bootstrap/scss/utilities/api';
+
+
+// 6. Project Components
+//    Extend default Bootstrap components by mapping all the tokens
+// ------------------------------------------------------------------
+
+@import 'extended/alert';
+@import 'extended/button';
+@import 'extended/checkbox';
+//@import 'extended/input';
+@import 'extended/modal';
+@import 'extended/radio';
+@import 'extended/select';
+@import 'extended/switch';
+@import 'extended/tooltip';

@@ -1,0 +1,65 @@
+/* =============================================================================
+   COMPONENT (components/_component.scss)
+   ========================================================================== */
+iframe {
+	border: none;
+	height: auto;
+	width: 100%;
+}
+
+.c-component-preview {
+	background-color: #f7f7f7;
+	border-radius: rem( 6px ) rem( 6px ) 0 0;
+	display: flex;
+	justify-content: center;
+
+	&--dark {
+		background-color: #000;
+	}
+
+	& > * {
+		all: unset;
+	}
+
+	a {
+		cursor: pointer;
+	}
+
+	.c-button {
+		line-height: 1;
+		border-style: solid;
+		min-width: rem( 150px );
+		text-align: center;
+	}
+
+	&--column {
+		flex-direction: column;
+
+		& > div:first-child {
+			margin-bottom: rem( 24px );
+		}
+	}
+}
+
+.c-component-preview {
+	.c-button--primary {
+		background-color: $button-primary-background;
+		border-color: $button-primary-border-color;
+		border-radius: rem( $button-primary-border-radius );
+		border-width: $button-primary-border-width;
+		color: $button-primary-color;
+		font-size: rem( $button-primary-font-size );
+		padding-top: rem( $button-primary-padding-top );
+		padding-right: rem( $button-primary-padding-right );
+		padding-bottom: rem( $button-primary-padding-bottom );
+		padding-left: rem( $button-primary-padding-left );
+		// transition: $button-transition-speed all ease-in-out;
+
+		&:hover {
+			background-color: $button-primary-hover-background;
+			border-color: $button-primary-hover-border-color;
+			border-width: $button-primary-hover-border-width;
+			color: $button-primary-hover-color;
+		}
+	}
+}
