@@ -42,7 +42,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     ...config.typescript,
     tsconfigPath,
   };
-  const dev = process.env.NODE_ENV !== 'production';
+  const dev = true;
   const hostname = 'localhost';
   const port = 3000;
   // when using middleware `hostname` and `port` must be provided below
