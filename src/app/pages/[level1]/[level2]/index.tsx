@@ -6,7 +6,7 @@ import CustomNav from '../../../components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import getConfig from 'next/config';
+import { getConfig } from '../../../../config';
 
 export interface SubPageType {
   params: {
@@ -39,6 +39,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (!level2) {
     level2 = '404';
   }
+  console.log({...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props});
   return {
     props: {
       ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props,
