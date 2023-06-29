@@ -8,18 +8,13 @@ and this project adheres to
 
 ## [0.6.0] - 2023-06-28
 
-0.6.0 introduces two major new tools that will make it much easier to integrate
-Handoff with existing projects and data pipelines. It also reorganized the
-Handoff code to make it significantly more robust, easier to extend, and easier
-to use in existing code and pipeline projects.
+0.6.0 introduces two major new tools that will make it much easier to integrate Handoff with existing projects and data pipelines. This release also reorganizes the Handoff code to make the pipeline significantly more robust, easier to extend, and easier to use in existing projects. Our goal with this release is to establish a stable Typescript API as we approach a 1.0 release.
 
 ### Features
 
 #### Handoff CLI
 
-Handoff now comes with a CLI toolchain that allows you to run Handoff commands
-in any context. This CLI replaces the installer from previous versions to scaffold
-up projects in a directory.
+Handoff now comes with a CLI toolchain that allows you to run Handoff commands in any context. This CLI replaces the installer from previous versions to scaffold up projects in a directory.
 
 - Can be installed globally as a node binary `npm i -g handoff-app`
 - Run in any directory using `handoff-app <command>`
@@ -33,18 +28,11 @@ up projects in a directory.
 
 #### Handoff Typescript API
 
-Handoff now exposes a full typescript API published as commonjs modules. This
-API will allow you to use Handoff in your Node 16+ javascript or typescript projects.
-With just a few lines of code you can have Handoff run programmatically.
+Handoff now exposes a full typescript API published as commonjs modules. This API will allow you to use Handoff in your Node 16+ javascript or typescript projects. With just a few lines of code you can have Handoff run programmatically.
 
-This API supersedes and replaces the plugin architecture introduced in 0.5.0.
-The API call structure is maintained, but now the API can be used directly in
-existing Node applications and can be used with typescript.
+This API supersedes and replaces the plugin architecture introduced in 0.5.0. The API call structure is maintained, but now the API can be used directly in existing Node applications and can be used with typescript.
 
-Here's a simple example that will fetch the data down. This example expects
-a DEV_ACCESS_TOKEN and a FIGMA_PROJECT_ID env variable, or those to be provided
-in `process.env`. If not supplied, they will be prompted for when the pipeline
-is run.
+Here's a simple example that will fetch the data down. This example expects a DEV_ACCESS_TOKEN and a FIGMA_PROJECT_ID env variable, or those to be provided in `process.env`. If not supplied, they will be prompted for when the pipeline is run.
 
 ```js
 import Handoff from 'handoff-app';
@@ -85,8 +73,8 @@ handoff.postIntegration((documentationObject: DocumentationObject, data: HookRet
 
 ### Improvements
 
-- The handoff code base was refactored to eliminate the monorepo architecture and consolidate on a more coherent package architecture. This refactoring eliminated a number of weakpoints and improves reliability.
-  - Sharing code between the data pipeline and the nextjs documentation app is safer
+- The handoff code base was refactored to eliminate the monorepo architecture and consolidate on a more coherent package architecture. This refactoring eliminated a number of weak points and improves reliability.
+  - Sharing code between the data pipeline and the Nextjs documentation app is safer
   - The hook architecture introduced in 0.5 was fragile and less secure than we wanted. This reorganization makes a much more robust API, with full access to the typings
   - The previous structure merged configurations in a way that could fail easily. The new architecture reads and merges the various Handoff configurations in a much more robust manor.
   - Previously handoff required a folder architecture, with the proper files, and could fail if those files were moved. Now Handoff can be run in an empty directory, and can accommodate configs being added and removed during operation.
