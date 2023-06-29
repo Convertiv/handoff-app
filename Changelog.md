@@ -96,6 +96,7 @@ handoff.postIntegration((documentationObject: DocumentationObject, data: HookRet
 ### Bugfixes
 
 - Fixes several style issues in the Bootstrap 5.3 release
+- Corrects a missing caret in Bootstrap 5.2 and 5.3 selects
 
 ## [0.5.3] - 2023-06-16
 
