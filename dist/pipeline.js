@@ -103,6 +103,7 @@ var index_5 = __importDefault(require("./transformers/font/index"));
 var index_6 = __importDefault(require("./transformers/preview/index"));
 var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
+var sd_1 = __importDefault(require("./transformers/sd"));
 var config;
 var outputFolder = process.env.OUTPUT_DIR || 'exported';
 var exportablesFolder = 'config/exportables';
@@ -247,7 +248,7 @@ var buildPreview = function (documentationObject) { return __awaiter(void 0, voi
  * @param documentationObject
  */
 var buildStyles = function (documentationObject, options) { return __awaiter(void 0, void 0, void 0, function () {
-    var handoff, typeFiles, cssFiles, scssFiles;
+    var handoff, typeFiles, cssFiles, scssFiles, sdFiles;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -258,12 +259,20 @@ var buildStyles = function (documentationObject, options) { return __awaiter(voi
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
                 scssFiles = (0, index_2.default)(documentationObject, options);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
+                sdFiles = (0, sd_1.default)(documentationObject, options);
+                // TODO
+                // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
                             .ensureDir(variablesFilePath)
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/types")); })
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/css")); })
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/sass")); })
+                            .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/sd/tokens")); })
+                            .then(function () { return Promise.all(Object.entries(sdFiles.components).map(function (_a) {
+                            var name = _a[0], _ = _a[1];
+                            return fs_extra_1.default.ensureDir("".concat(variablesFilePath, "/sd/tokens/").concat(name));
+                        })); })
                             .then(function () {
                             return Promise.all(Object.entries(typeFiles.components).map(function (_a) {
                                 var name = _a[0], content = _a[1];
@@ -299,9 +308,17 @@ var buildStyles = function (documentationObject, options) { return __awaiter(voi
                                 var name = _a[0], content = _a[1];
                                 return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sass/").concat(name, ".scss"), content);
                             }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(sdFiles.components).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sd/tokens/").concat(name, "/").concat(name, ".tokens.json"), content);
+                            }));
                         }),
                     ])];
             case 1:
+                // TODO
+                // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
                 _a.sent();
                 return [2 /*return*/];
         }

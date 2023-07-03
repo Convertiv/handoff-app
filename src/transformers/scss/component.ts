@@ -1,9 +1,8 @@
 import { ValueProperty } from '../types';
-import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents } from '../css/utils';
+import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents, normalizeTokenNameVariableValue } from '../utils';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 import { getTokenSetTransformer } from '../tokenSetTransformers';
-import { normalizeVariableToken } from '../utils';
 
 export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
@@ -23,7 +22,7 @@ export const transformComponentsToScssTypes = (name: string, components: Compone
   // Sizes
   if (sizes && sizes.length > 0) {
     lines.push(
-      `$${name}-sizes: ( ${sizes.map((type) => `"${normalizeVariableToken('size', type, options)}"`).join(', ')} );`
+      `$${name}-sizes: ( ${sizes.map((type) => `"${normalizeTokenNameVariableValue('size', type, options)}"`).join(', ')} );`
     );
   }
 

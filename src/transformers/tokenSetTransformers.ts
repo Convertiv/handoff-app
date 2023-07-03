@@ -8,8 +8,8 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../utils/convertColor';
-import { ValueProperty } from './types';
-import { formatVariableName } from './utils';
+import { ValueProperty, TokenType } from './types';
+import { formatTokenName } from './utils';
 
 export const getTokenSetTransformer = (tokenSet: TokenSet) => {
   switch (tokenSet.name) {
@@ -35,7 +35,7 @@ export const getTokenSetTransformer = (tokenSet: TokenSet) => {
 };
 
 const transformBackgroundTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -43,17 +43,17 @@ const transformBackgroundTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'BACKGROUND'
     ? {
-        [formatVariableName(variableType, component, part, 'background', options)]: {
+        [formatTokenName(tokenType, component, part, 'background', options)]: {
           value: transformFigmaFillsToCssColor(tokenSet.background).color,
           property: 'background',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformSpacingTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -62,57 +62,57 @@ const transformSpacingTokenSet = (
   return tokenSet.name === 'SPACING'
     ? {
         // Padding
-        [formatVariableName(variableType, component, part, 'padding-y', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-y', options)]: {
           value: `${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`,
           property: 'padding-y',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-x', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-x', options)]: {
           value: `${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`,
           property: 'padding-x',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-top', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-top', options)]: {
           value: `${tokenSet.padding.TOP}px`,
           property: 'padding-top',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-right', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-right', options)]: {
           value: `${tokenSet.padding.RIGHT}px`,
           property: 'padding-right',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-bottom', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-bottom', options)]: {
           value: `${tokenSet.padding.BOTTOM}px`,
           property: 'padding-bottom',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-left', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-left', options)]: {
           value: `${tokenSet.padding.LEFT}px`,
           property: 'padding-left',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-start', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-start', options)]: {
           value: `${tokenSet.padding.LEFT}px`,
           property: 'padding-start',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'padding-end', options)]: {
+        [formatTokenName(tokenType, component, part, 'padding-end', options)]: {
           value: `${tokenSet.padding.RIGHT}px`,
           property: 'padding-end',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'spacing', options)]: {
+        [formatTokenName(tokenType, component, part, 'spacing', options)]: {
           value: `${tokenSet.spacing}px`,
           property: 'spacing',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformBorderTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -120,27 +120,27 @@ const transformBorderTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'BORDER'
     ? {
-        [formatVariableName(variableType, component, part, 'border-width', options)]: {
+        [formatTokenName(tokenType, component, part, 'border-width', options)]: {
           value: `${tokenSet.weight}px`,
           property: 'border-width',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'border-radius', options)]: {
+        [formatTokenName(tokenType, component, part, 'border-radius', options)]: {
           value: `${tokenSet.radius}px`,
           property: 'border-radius',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'border-color', options)]: {
+        [formatTokenName(tokenType, component, part, 'border-color', options)]: {
           value: transformFigmaFillsToCssColor(tokenSet.strokes).color,
           property: 'border-color',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformTypographyTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -148,52 +148,52 @@ const transformTypographyTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'TYPOGRAPHY'
     ? {
-        [formatVariableName(variableType, component, part, 'font-family', options)]: {
+        [formatTokenName(tokenType, component, part, 'font-family', options)]: {
           value: `'${tokenSet.fontFamily}'`,
           property: 'font-family',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'font-size', options)]: {
+        [formatTokenName(tokenType, component, part, 'font-size', options)]: {
           value: `${tokenSet.fontSize}px`,
           property: 'font-size',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'font-weight', options)]: {
+        [formatTokenName(tokenType, component, part, 'font-weight', options)]: {
           value: `${tokenSet.fontWeight}`,
           property: 'font-weight',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'line-height', options)]: {
+        [formatTokenName(tokenType, component, part, 'line-height', options)]: {
           value: `${tokenSet.lineHeight}`,
           property: 'line-height',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'letter-spacing', options)]: {
+        [formatTokenName(tokenType, component, part, 'letter-spacing', options)]: {
           value: `${tokenSet.letterSpacing}px`,
           property: 'letter-spacing',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'text-align', options)]: {
+        [formatTokenName(tokenType, component, part, 'text-align', options)]: {
           value: transformFigmaTextAlignToCss(tokenSet.textAlignHorizontal),
           property: 'text-align',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'text-decoration', options)]: {
+        [formatTokenName(tokenType, component, part, 'text-decoration', options)]: {
           value: transformFigmaTextDecorationToCss(tokenSet.textDecoration),
           property: 'text-decoration',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'text-transform', options)]: {
+        [formatTokenName(tokenType, component, part, 'text-transform', options)]: {
           value: transformFigmaTextCaseToCssTextTransform(tokenSet.textCase),
           property: 'text-transform',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformFillTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -201,17 +201,17 @@ const transformFillTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'FILL'
     ? {
-        [formatVariableName(variableType, component, part, 'color', options)]: {
+        [formatTokenName(tokenType, component, part, 'color', options)]: {
           value: transformFigmaFillsToCssColor(tokenSet.color).color,
           property: 'color',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformEffectTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -219,17 +219,17 @@ const transformEffectTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'EFFECT'
     ? {
-        [formatVariableName(variableType, component, part, 'box-shadow', options)]: {
+        [formatTokenName(tokenType, component, part, 'box-shadow', options)]: {
           value: tokenSet.effect.map(transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
           property: 'color',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformOpacityTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -237,17 +237,17 @@ const transformOpacityTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'OPACITY'
     ? {
-        [formatVariableName(variableType, component, part, 'opacity', options)]: {
+        [formatTokenName(tokenType, component, part, 'opacity', options)]: {
           value: `${tokenSet.opacity}`,
           property: 'opacity',
-          group: part,
+          part,
         },
       }
     : {};
 };
 
 const transformSizeTokenSet = (
-  variableType: 'css' | 'scss',
+  tokenType: TokenType,
   component: Component,
   part: string,
   tokenSet: TokenSet,
@@ -255,25 +255,25 @@ const transformSizeTokenSet = (
 ): Record<string, ValueProperty> => {
   return tokenSet.name === 'SIZE'
     ? {
-        [formatVariableName(variableType, component, part, 'width', options)]: {
+        [formatTokenName(tokenType, component, part, 'width', options)]: {
           value: `${tokenSet.width ?? '0'}px`,
           property: 'width',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'width-raw', options)]: {
+        [formatTokenName(tokenType, component, part, 'width-raw', options)]: {
           value: `${tokenSet.width ?? '0'}`,
           property: 'width-raw',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'height', options)]: {
+        [formatTokenName(tokenType, component, part, 'height', options)]: {
           value: `${tokenSet.height ?? '0'}px`,
           property: 'height',
-          group: part,
+          part,
         },
-        [formatVariableName(variableType, component, part, 'height-raw', options)]: {
+        [formatTokenName(tokenType, component, part, 'height-raw', options)]: {
           value: `${tokenSet.height ?? '0'}`,
           property: 'height-raw',
-          group: part,
+          part,
         },
       }
     : {};

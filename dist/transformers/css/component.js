@@ -27,7 +27,7 @@ var transformComponentsToCssVariables = function (componentName, components, opt
     var cssVars = components.map(function (component) { return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(componentName, component, '/**/'), "\n").concat(Object.entries((0, exports.transformComponentTokensToCssVariables)(component, options))
         .map(function (_a) {
         var variable = _a[0], value = _a[1];
-        return "\t".concat(variable, ": ").concat(value.value, ";");
+        return "\t".concat(variable.replaceAll('//', '-'), ": ").concat(value.value, ";");
     })
         .join('\n')); });
     return lines.concat(cssVars).join('\n\n') + '\n}\n';

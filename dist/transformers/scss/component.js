@@ -12,9 +12,8 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformComponentTokensToScssVariables = exports.transformComponentsToScssTypes = void 0;
-var utils_1 = require("../css/utils");
+var utils_1 = require("../utils");
 var tokenSetTransformers_1 = require("../tokenSetTransformers");
-var utils_2 = require("../utils");
 var transformComponentsToScssTypes = function (name, components, options) {
     var lines = [];
     var themes = (0, utils_1.getThemesFromComponents)(components);
@@ -27,7 +26,7 @@ var transformComponentsToScssTypes = function (name, components, options) {
     }
     // Sizes
     if (sizes && sizes.length > 0) {
-        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat((0, utils_2.normalizeVariableToken)('size', type, options), "\""); }).join(', '), " );"));
+        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat((0, utils_1.normalizeTokenNameVariableValue)('size', type, options), "\""); }).join(', '), " );"));
     }
     // Themes
     if (themes && themes.length > 0) {

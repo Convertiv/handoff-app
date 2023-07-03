@@ -27,6 +27,7 @@ import previewTransformer from './transformers/preview/index';
 import { buildClientFiles } from './utils/preview';
 import buildApp from './app';
 import Handoff from '.';
+import sdTransformer from './transformers/sd';
 
 let config;
 const outputFolder = process.env.OUTPUT_DIR || 'exported';
@@ -154,12 +155,22 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
   cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
   let scssFiles = scssTransformer(documentationObject, options);
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
+  let sdFiles = sdTransformer(documentationObject, options);
+  // TODO
+  // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
+
   await Promise.all([
     fs
       .ensureDir(variablesFilePath)
       .then(() => fs.ensureDir(`${variablesFilePath}/types`))
       .then(() => fs.ensureDir(`${variablesFilePath}/css`))
       .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
+
+      .then(() => fs.ensureDir(`${variablesFilePath}/sd/tokens`))
+      .then(() => Promise.all(
+        Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath}/sd/tokens/${name}`))
+      ))
+
       .then(() =>
         Promise.all(
           Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
@@ -186,6 +197,12 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
       .then(() =>
         Promise.all(
           Object.entries(scssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))
+        )
+      )
+      
+      .then(() =>
+        Promise.all(
+          Object.entries(sdFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sd/tokens/${name}/${name}.tokens.json`, content))
         )
       ),
   ]);

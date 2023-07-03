@@ -16,7 +16,7 @@ export const transformComponentsToCssVariables = (componentName: string, compone
   
   lines.push(`.${componentCssClass} {`)
   const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(componentName, component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options))
-    .map(([variable, value]) => `\t${variable}: ${value.value};`)
+    .map(([variable, value]) => `\t${variable.replaceAll('//', '-')}: ${value.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
