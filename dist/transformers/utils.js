@@ -1,23 +1,12 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizeTokenNameVariableValue = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.transformComponentTokens = exports.getSizesFromComponents = exports.getThemesFromComponents = exports.getStatesFromComponents = exports.getTypesFromComponents = void 0;
+exports.getReducedTokenPropertyPath = exports.normalizeTokenNameVariableValue = exports.getReducedTokenName = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getSizesFromComponents = exports.getThemesFromComponents = exports.getStatesFromComponents = exports.getTypesFromComponents = void 0;
 var capitalize_js_1 = __importDefault(require("lodash/capitalize.js"));
-var tokenSetTransformers_1 = require("./tokenSetTransformers");
 var utils_1 = require("../utils");
+var constants_1 = require("./constants");
 var getTypesFromComponents = function (components) {
     return Array.from(new Set(components
         .map(function (component) { return component.type; })
@@ -42,32 +31,6 @@ var getSizesFromComponents = function (components) {
         .filter(utils_1.filterOutUndefined)));
 };
 exports.getSizesFromComponents = getSizesFromComponents;
-/**
- * Performs the transformation of the component tokens.
- *
- * @param component
- * @param options
- * @returns
- */
-var transformComponentTokens = function (component, options) {
-    var result = {};
-    for (var part in component.parts) {
-        var tokenSets = component.parts[part];
-        if (!tokenSets || tokenSets.length === 0) {
-            continue;
-        }
-        for (var _i = 0, tokenSets_1 = tokenSets; _i < tokenSets_1.length; _i++) {
-            var tokenSet = tokenSets_1[_i];
-            var transformer = (0, tokenSetTransformers_1.getTokenSetTransformer)(tokenSet);
-            if (!transformer) {
-                continue;
-            }
-            result = __assign(__assign({}, result), transformer('sd', component, part, tokenSet, options));
-        }
-    }
-    return result;
-};
-exports.transformComponentTokens = transformComponentTokens;
 /**
  * Generates a standardized component comment block.
  *
@@ -101,7 +64,6 @@ exports.formatComponentCodeBlockComment = formatComponentCodeBlockComment;
  * @returns
  */
 var formatTokenName = function (tokenType, component, part, property, options) {
-    var _a = getReducedTokenNameParts(component, options), theme = _a.theme, type = _a.type, state = _a.state;
     // Only CSS and SCSS token types support templates
     var tokenNameTemplate = tokenType === 'css' ?
         options === null || options === void 0 ? void 0 : options.cssVariableTemplate :
@@ -110,14 +72,7 @@ var formatTokenName = function (tokenType, component, part, property, options) {
             : null;
     var variableName = tokenNameTemplate
         ? parseTokenNameTemplate(tokenNameTemplate, component, part, property, options)
-        : [
-            component.name,
-            type,
-            normalizeComponentPartName(part),
-            theme,
-            state,
-            property,
-        ].filter(Boolean).join('//');
+        : (0, exports.getReducedTokenName)(component, part, property, options);
     if (tokenType === 'css') {
         return "--".concat(variableName);
     }
@@ -127,6 +82,10 @@ var formatTokenName = function (tokenType, component, part, property, options) {
     return variableName;
 };
 exports.formatTokenName = formatTokenName;
+var getReducedTokenName = function (component, part, property, options) {
+    return (0, exports.getReducedTokenPropertyPath)(component, part, property, options).join(constants_1.tokenNamePropertyPathPartsSeparator);
+};
+exports.getReducedTokenName = getReducedTokenName;
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
  * with some other value based replace rules defined in the transformer options of the exportable
@@ -158,17 +117,25 @@ exports.normalizeTokenNameVariableValue = normalizeTokenNameVariableValue;
  * @param options
  * @returns
  */
-var getReducedTokenNameParts = function (component, options) {
+var getReducedTokenPropertyPath = function (component, part, property, options) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-    var theme = component.componentType === 'design' ? (0, exports.normalizeTokenNameVariableValue)('theme', ((_a = component.theme) !== null && _a !== void 0 ? _a : ''), options) : undefined;
-    var state = component.componentType === 'design'
-        ? (_c = (0, exports.normalizeTokenNameVariableValue)('activity', ((_b = component.activity) !== null && _b !== void 0 ? _b : undefined), options)) !== null && _c !== void 0 ? _c : (0, exports.normalizeTokenNameVariableValue)('state', ((_d = component.state) !== null && _d !== void 0 ? _d : undefined), options)
+    var l3 = component.componentType === 'design'
+        ? (_b = (0, exports.normalizeTokenNameVariableValue)('activity', ((_a = component.activity) !== null && _a !== void 0 ? _a : undefined), options)) !== null && _b !== void 0 ? _b : (0, exports.normalizeTokenNameVariableValue)('state', ((_c = component.state) !== null && _c !== void 0 ? _c : undefined), options)
         : undefined;
-    var type = component.componentType === 'design'
-        ? (state && state === (0, exports.normalizeTokenNameVariableValue)('activity', ((_e = component.activity) !== null && _e !== void 0 ? _e : ''), options) ? (0, exports.normalizeTokenNameVariableValue)('state', ((_f = component.state) !== null && _f !== void 0 ? _f : ''), options) : (0, exports.normalizeTokenNameVariableValue)('type', ((_g = component.type) !== null && _g !== void 0 ? _g : ''), options))
+    var l2 = component.componentType === 'design' ? (0, exports.normalizeTokenNameVariableValue)('theme', ((_d = component.theme) !== null && _d !== void 0 ? _d : ''), options) : undefined;
+    var l1 = component.componentType === 'design'
+        ? (l3 && l3 === (0, exports.normalizeTokenNameVariableValue)('activity', ((_e = component.activity) !== null && _e !== void 0 ? _e : ''), options) ? (0, exports.normalizeTokenNameVariableValue)('state', ((_f = component.state) !== null && _f !== void 0 ? _f : ''), options) : (0, exports.normalizeTokenNameVariableValue)('type', ((_g = component.type) !== null && _g !== void 0 ? _g : ''), options))
         : (_j = (0, exports.normalizeTokenNameVariableValue)('layout', ((_h = component.layout) !== null && _h !== void 0 ? _h : undefined), options)) !== null && _j !== void 0 ? _j : (0, exports.normalizeTokenNameVariableValue)('size', ((_k = component.size) !== null && _k !== void 0 ? _k : undefined), options);
-    return { theme: theme, type: type, state: state };
+    return [
+        component.name,
+        l1 !== null && l1 !== void 0 ? l1 : '',
+        normalizeComponentPartName(part),
+        l2 !== null && l2 !== void 0 ? l2 : '',
+        l3 !== null && l3 !== void 0 ? l3 : '',
+        property,
+    ].filter(function (part) { return part !== ''; });
 };
+exports.getReducedTokenPropertyPath = getReducedTokenPropertyPath;
 var parseTokenNameTemplate = function (template, component, part, property, options) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     return template

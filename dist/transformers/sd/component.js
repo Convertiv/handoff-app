@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformComponentsToStyleDictionary = void 0;
-var utils_1 = require("../utils");
+var transformer_1 = require("../transformer");
+var constants_1 = require("../constants");
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
@@ -9,14 +10,14 @@ var utils_1 = require("../utils");
  */
 var transformComponentsToStyleDictionary = function (_, components, options) {
     var sd = {};
-    var tokenNamePartSeparator = '//'; // TODO: Temp
     components.forEach(function (component) {
-        Object.entries((0, utils_1.transformComponentTokens)(component, options)).forEach(function (_a) {
-            var tokenName = _a[0], tokenValue = _a[1];
-            var path = tokenName.split(tokenNamePartSeparator); // TODO: Improve/remove by returning the property name structure?
-            var lastIdx = path.length - 1;
+        var tokens = (0, transformer_1.transform)('sd', component, options);
+        Object.entries(tokens).forEach(function (_a) {
+            var _ = _a[0], tokenValue = _a[1];
+            var propPath = tokenValue.metadata.propertyPath;
+            var lastIdx = propPath.length - 1;
             var ref = sd;
-            path.forEach(function (el, idx) {
+            propPath.forEach(function (el, idx) {
                 var _a;
                 if (idx === lastIdx) {
                     return;
@@ -24,7 +25,7 @@ var transformComponentsToStyleDictionary = function (_, components, options) {
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});
                 ref = ref[el];
             });
-            var propParts = path[lastIdx].split('-');
+            var propParts = propPath[lastIdx].split(constants_1.tokenNamePropertyPathPartsSeparator);
             propParts.forEach(function (el) {
                 var _a;
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});

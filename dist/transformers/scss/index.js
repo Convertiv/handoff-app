@@ -60,7 +60,7 @@ function scssTransformer(documentationObject, options) {
             (0, utils_1.formatComponentCodeBlockComment)(componentName, component, '//'),
             Object.entries((0, component_1.transformComponentTokensToScssVariables)(component, options === null || options === void 0 ? void 0 : options.get(componentName))).map(function (_a) {
                 var variable = _a[0], value = _a[1];
-                return "".concat(variable.replaceAll('//', '-'), ": ").concat(value.value, ";");
+                return "".concat(variable, ": ").concat(value.value, ";");
             }).join('\n')
         ].join('\n')); }).join('\n\n');
     };

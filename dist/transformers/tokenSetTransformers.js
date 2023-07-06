@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTokenSetTransformer = void 0;
 var convertColor_1 = require("../utils/convertColor");
@@ -27,192 +38,82 @@ var getTokenSetTransformer = function (tokenSet) {
 };
 exports.getTokenSetTransformer = getTokenSetTransformer;
 var transformBackgroundTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'BACKGROUND'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'background', options)] = {
-                value: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color,
-                property: 'background',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'background': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color
+        }, tokenType, component, part, options) : {};
 };
 var transformSpacingTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'SPACING'
-        ? (_a = {},
-            // Padding
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-y', options)] = {
-                value: "".concat((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2, "px"),
-                property: 'padding-y',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-x', options)] = {
-                value: "".concat((tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2, "px"),
-                property: 'padding-x',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-top', options)] = {
-                value: "".concat(tokenSet.padding.TOP, "px"),
-                property: 'padding-top',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-right', options)] = {
-                value: "".concat(tokenSet.padding.RIGHT, "px"),
-                property: 'padding-right',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-bottom', options)] = {
-                value: "".concat(tokenSet.padding.BOTTOM, "px"),
-                property: 'padding-bottom',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-left', options)] = {
-                value: "".concat(tokenSet.padding.LEFT, "px"),
-                property: 'padding-left',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-start', options)] = {
-                value: "".concat(tokenSet.padding.LEFT, "px"),
-                property: 'padding-start',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'padding-end', options)] = {
-                value: "".concat(tokenSet.padding.RIGHT, "px"),
-                property: 'padding-end',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'spacing', options)] = {
-                value: "".concat(tokenSet.spacing, "px"),
-                property: 'spacing',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'padding-y': "".concat((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2, "px"),
+            'padding-x': "".concat((tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2, "px"),
+            'padding-top': "".concat(tokenSet.padding.TOP, "px"),
+            'padding-right': "".concat(tokenSet.padding.RIGHT, "px"),
+            'padding-bottom': "".concat(tokenSet.padding.BOTTOM, "px"),
+            'padding-left': "".concat(tokenSet.padding.LEFT, "px"),
+            'padding-start': "".concat(tokenSet.padding.LEFT, "px"),
+            'padding-end': "".concat(tokenSet.padding.RIGHT, "px"),
+            'spacing': "".concat(tokenSet.spacing, "px"),
+        }, tokenType, component, part, options) : {};
 };
 var transformBorderTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'BORDER'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'border-width', options)] = {
-                value: "".concat(tokenSet.weight, "px"),
-                property: 'border-width',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'border-radius', options)] = {
-                value: "".concat(tokenSet.radius, "px"),
-                property: 'border-radius',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'border-color', options)] = {
-                value: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes).color,
-                property: 'border-color',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'border-width': "".concat(tokenSet.weight, "px"),
+            'border-radius': "".concat(tokenSet.radius, "px"),
+            'border-color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes).color,
+        }, tokenType, component, part, options) : {};
 };
 var transformTypographyTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'TYPOGRAPHY'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'font-family', options)] = {
-                value: "'".concat(tokenSet.fontFamily, "'"),
-                property: 'font-family',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'font-size', options)] = {
-                value: "".concat(tokenSet.fontSize, "px"),
-                property: 'font-size',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'font-weight', options)] = {
-                value: "".concat(tokenSet.fontWeight),
-                property: 'font-weight',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'line-height', options)] = {
-                value: "".concat(tokenSet.lineHeight),
-                property: 'line-height',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'letter-spacing', options)] = {
-                value: "".concat(tokenSet.letterSpacing, "px"),
-                property: 'letter-spacing',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'text-align', options)] = {
-                value: (0, convertColor_1.transformFigmaTextAlignToCss)(tokenSet.textAlignHorizontal),
-                property: 'text-align',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'text-decoration', options)] = {
-                value: (0, convertColor_1.transformFigmaTextDecorationToCss)(tokenSet.textDecoration),
-                property: 'text-decoration',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'text-transform', options)] = {
-                value: (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase),
-                property: 'text-transform',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'font-family': "'".concat(tokenSet.fontFamily, "'"),
+            'font-size': "".concat(tokenSet.fontSize, "px"),
+            'font-weight': "".concat(tokenSet.fontWeight),
+            'line-height': "".concat(tokenSet.lineHeight),
+            'letter-spacing': "".concat(tokenSet.letterSpacing, "px"),
+            'text-align': (0, convertColor_1.transformFigmaTextAlignToCss)(tokenSet.textAlignHorizontal),
+            'text-decoration': (0, convertColor_1.transformFigmaTextDecorationToCss)(tokenSet.textDecoration),
+            'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase)
+        }, tokenType, component, part, options) : {};
 };
 var transformFillTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'FILL'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'color', options)] = {
-                value: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
-                property: 'color',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
+        }, tokenType, component, part, options) : {};
 };
 var transformEffectTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'EFFECT'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'box-shadow', options)] = {
-                value: tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
-                property: 'color',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
+        }, tokenType, component, part, options) : {};
 };
 var transformOpacityTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
     return tokenSet.name === 'OPACITY'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'opacity', options)] = {
-                value: "".concat(tokenSet.opacity),
-                property: 'opacity',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'opacity': "".concat(tokenSet.opacity),
+        }, tokenType, component, part, options) : {};
 };
 var transformSizeTokenSet = function (tokenType, component, part, tokenSet, options) {
-    var _a;
-    var _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     return tokenSet.name === 'SIZE'
-        ? (_a = {},
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'width', options)] = {
-                value: "".concat((_b = tokenSet.width) !== null && _b !== void 0 ? _b : '0', "px"),
-                property: 'width',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'width-raw', options)] = {
-                value: "".concat((_c = tokenSet.width) !== null && _c !== void 0 ? _c : '0'),
-                property: 'width-raw',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'height', options)] = {
-                value: "".concat((_d = tokenSet.height) !== null && _d !== void 0 ? _d : '0', "px"),
-                property: 'height',
-                part: part,
-            },
-            _a[(0, utils_1.formatTokenName)(tokenType, component, part, 'height-raw', options)] = {
-                value: "".concat((_e = tokenSet.height) !== null && _e !== void 0 ? _e : '0'),
-                property: 'height-raw',
-                part: part,
-            },
-            _a) : {};
+        ? transformTokens({
+            'width': "".concat((_a = tokenSet.width) !== null && _a !== void 0 ? _a : '0', "px"),
+            'width-raw': "".concat((_b = tokenSet.width) !== null && _b !== void 0 ? _b : '0'),
+            'height': "".concat((_c = tokenSet.height) !== null && _c !== void 0 ? _c : '0', "px"),
+            'height-raw': "".concat((_d = tokenSet.height) !== null && _d !== void 0 ? _d : '0'),
+        }, tokenType, component, part, options) : {};
+};
+var transformTokens = function (tokens, tokenType, component, part, options) {
+    return Object.entries(tokens).reduce(function (acc, _a) {
+        var _b;
+        var property = _a[0], value = _a[1];
+        return __assign(__assign({}, acc), (_b = {}, _b[(0, utils_1.formatTokenName)(tokenType, component, part, property, options)] = {
+            value: value,
+            property: property,
+            part: part,
+        }, _b));
+    }, {});
 };

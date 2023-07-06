@@ -1,18 +1,10 @@
 import { Component } from "../exporters/components/extractor";
 import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
-import { ValueProperty, TokenType, AbstractComponent } from "./types";
+import { TokenType, AbstractComponent } from "./types";
 export declare const getTypesFromComponents: (components: AbstractComponent[]) => string[];
 export declare const getStatesFromComponents: (components: AbstractComponent[]) => string[];
 export declare const getThemesFromComponents: (components: AbstractComponent[]) => string[];
 export declare const getSizesFromComponents: (components: AbstractComponent[]) => string[];
-/**
- * Performs the transformation of the component tokens.
- *
- * @param component
- * @param options
- * @returns
- */
-export declare const transformComponentTokens: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, ValueProperty>;
 /**
  * Generates a standardized component comment block.
  *
@@ -31,6 +23,7 @@ export declare const formatComponentCodeBlockComment: (type: string, component: 
  * @returns
  */
 export declare const formatTokenName: (tokenType: TokenType, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const getReducedTokenName: (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
  * with some other value based replace rules defined in the transformer options of the exportable
@@ -43,3 +36,11 @@ export declare const formatTokenName: (tokenType: TokenType, component: Componen
  * @returns
  */
 export declare const normalizeTokenNameVariableValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string | undefined;
+/**
+ * Reduces the number of the token name parts to just 3 items.
+ *
+ * @param component
+ * @param options
+ * @returns
+ */
+export declare const getReducedTokenPropertyPath: (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string[];

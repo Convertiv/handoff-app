@@ -1,6 +1,7 @@
 import { Component } from '../../exporters/components/extractor';
-import { transformComponentTokens } from '../utils';
+import { transform } from '../transformer';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { tokenNamePropertyPathPartsSeparator } from '../constants';
 
 /**
  * Transforms the component tokens into a style dictionary
@@ -9,15 +10,16 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../typ
  */
 export const transformComponentsToStyleDictionary = (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const sd = {} as any;
-  const tokenNamePartSeparator = '//'; // TODO: Temp
 
   components.forEach(component => {
-    Object.entries(transformComponentTokens(component, options)).forEach(([tokenName, tokenValue]) =>{
-      const path = tokenName.split(tokenNamePartSeparator); // TODO: Improve/remove by returning the property name structure?
-      const lastIdx = path.length - 1;
+    const tokens = transform('sd', component, options);
 
+    Object.entries(tokens).forEach(([_, tokenValue]) =>{
+      const propPath = tokenValue.metadata.propertyPath;
+      const lastIdx = propPath.length - 1;
       let ref = sd;
-      path.forEach((el, idx) => {
+
+      propPath.forEach((el, idx) => {
         if (idx === lastIdx) {
           return;
         }
@@ -26,12 +28,12 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
         ref = ref[el];
       });
 
-      const propParts = path[lastIdx].split('-');
+      const propParts = propPath[lastIdx].split(tokenNamePropertyPathPartsSeparator);
+
       propParts.forEach(el => {
         ref[el] ??= {};
         ref = ref[el];
       });
-
 
       ref['value'] = tokenValue.value;
     });
