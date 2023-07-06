@@ -1,4 +1,13 @@
 "use strict";
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -6,9 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postTailwindIntegration = exports.modifyWebpackConfigForTailwind = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
-var _1 = require(".");
+var __1 = require("..");
+var components_1 = require("./components");
 var modifyWebpackConfigForTailwind = function (webpackConfig) {
-    var tailwindPath = path_1.default.resolve(path_1.default.join((0, _1.getPathToIntegration)(), 'templates/tailwind.config.js'));
+    var tailwindPath = path_1.default.resolve(path_1.default.join((0, __1.getPathToIntegration)(), 'templates/tailwind.config.js'));
     var plugins = [];
     try {
         var tailwindcss = require('tailwindcss');
@@ -55,9 +65,19 @@ var modifyWebpackConfigForTailwind = function (webpackConfig) {
     return webpackConfig;
 };
 exports.modifyWebpackConfigForTailwind = modifyWebpackConfigForTailwind;
-var postTailwindIntegration = function (documentationObject, artifacts) {
-    var extend = {
-        colors: {},
+var makeModule = function (data) {
+    return "module.exports = ".concat(JSON.stringify(data, null, 2), ";");
+};
+var tailwindConfig = function () {
+    return "\nconst colors = require('./colors');  \nconst fonts = require('./colors');  \nmodule.exports = {\n  theme: {\n    colors: colors,\n    fontSize: fonts.fontSize,\n    lineHeight: fonts.lineHeight,\n    textColor: fonts.textColor,\n    fontFamily: fonts.fontFamily,\n    fontWeight: fonts.fontWeight,\n    letterSpacing: fonts.letterSpacing\n  }\n};\n";
+};
+var tailwindColors = function (colors) {
+    var output = {};
+    colors.map(function (color) { var _a; return (output["".concat(color.group, "-").concat(color.machineName)] = (_a = color.value) !== null && _a !== void 0 ? _a : ''); });
+    return makeModule(output);
+};
+var tailwindFonts = function (typography) {
+    var output = {
         fontSize: {},
         lineHeight: {},
         textColor: {},
@@ -65,32 +85,38 @@ var postTailwindIntegration = function (documentationObject, artifacts) {
         fontWeight: {},
         letterSpacing: {},
     };
-    documentationObject.design.color.map(function (color) { return (extend.colors["".concat(color.group, "-").concat(color.machineName)] = color.value); });
-    documentationObject.design.typography.map(function (type) {
-        extend.fontSize[type.machine_name] = "".concat(type.values.fontSize, "px");
-        extend.lineHeight[type.machine_name] = "".concat(Math.round(type.values.lineHeightPx), "px");
-        extend.textColor[type.machine_name] = type.values.color;
-        extend.fontFamily[type.machine_name] = [type.values.fontFamily];
-        extend.fontWeight[type.machine_name] = type.values.fontWeight;
-        extend.letterSpacing[type.machine_name] = "".concat(type.values.letterSpacing, "px");
+    typography.map(function (type) {
+        output.fontSize[type.machine_name] = "".concat(type.values.fontSize, "px");
+        output.lineHeight[type.machine_name] = "".concat(Math.round(type.values.lineHeightPx), "px");
+        output.textColor[type.machine_name] = type.values.color;
+        output.fontFamily[type.machine_name] = [type.values.fontFamily];
+        output.fontWeight[type.machine_name] = type.values.fontWeight;
+        output.letterSpacing[type.machine_name] = "".concat(type.values.letterSpacing, "px");
     });
-    var defaults = {
-        theme: extend,
-    };
-    var data = "/** You can include this file in your tailwind.config.js */ \n module.exports = ".concat(JSON.stringify(defaults, null, 2), ";");
-    //const plugin = transformButtonComponentTokensToTailwinds(documentationObject);
-    //const pluginString = JSON.stringify(plugin, null, 2);
-    return [
+    return makeModule(output);
+};
+var postTailwindIntegration = function (documentationObject, artifact, options) {
+    var components = [];
+    for (var componentName in documentationObject.components) {
+        components.push({
+            filename: "".concat(componentName, ".js"),
+            data: (0, components_1.transformComponentsToTailwind)(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName)),
+        });
+    }
+    return __spreadArray(__spreadArray([], components, true), [
         {
-            filename: 'theme.js',
-            data: data,
+            filename: 'tailwind.config.js',
+            data: tailwindConfig(),
         },
-        //     {
-        //       filename: 'components.js',
-        //       data: `/** This exports all the components as Tailwinds Components for Handoff Preview. */ \n
-        // module.exports = ${pluginString};`,
-        //     },
-    ];
+        {
+            filename: 'colors.js',
+            data: tailwindColors(documentationObject.design.color),
+        },
+        {
+            filename: 'fonts.js',
+            data: tailwindFonts(documentationObject.design.typography),
+        },
+    ], false);
 };
 exports.postTailwindIntegration = postTailwindIntegration;
 // /**

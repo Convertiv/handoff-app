@@ -1,9 +1,11 @@
 import path from 'path';
-import { DocumentationObject } from '../../types';
-import { HookReturn } from '../../types';
+import { ColorObject, DocumentationObject, TypographyObject } from '../../../types';
+import { HookReturn } from '../../../types';
 import webpack from 'webpack';
 import fs from 'fs-extra';
-import { getPathToIntegration } from '.';
+import { getPathToIntegration } from '..';
+import { ExportableTransformerOptionsMap } from '../../types';
+import { transformComponentsToTailwind } from './components';
 
 export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {
   const tailwindPath = path.resolve(path.join(getPathToIntegration(), 'templates/tailwind.config.js'));
@@ -52,9 +54,45 @@ export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configurat
   return webpackConfig;
 };
 
-export const postTailwindIntegration = (documentationObject: DocumentationObject, artifacts: HookReturn[]): HookReturn[] => {
-  const extend: { [key: string]: any } = {
-    colors: {},
+const makeModule = (data: any) => {
+  return `module.exports = ${JSON.stringify(data, null, 2)};`;
+};
+
+const tailwindConfig = (): string => {
+  return `
+const colors = require('./colors');  
+const fonts = require('./colors');  
+module.exports = {
+  theme: {
+    colors: colors,
+    fontSize: fonts.fontSize,
+    lineHeight: fonts.lineHeight,
+    textColor: fonts.textColor,
+    fontFamily: fonts.fontFamily,
+    fontWeight: fonts.fontWeight,
+    letterSpacing: fonts.letterSpacing
+  }
+};
+`;
+};
+
+const tailwindColors = (colors: ColorObject[]): string => {
+  const output: { [key: string]: string } = {};
+  colors.map((color) => (output[`${color.group}-${color.machineName}`] = color.value ?? ''));
+  return makeModule(output);
+};
+
+interface TailwindFont {
+  fontSize: { [key: string]: string };
+  lineHeight: { [key: string]: string };
+  textColor: { [key: string]: string };
+  fontFamily: { [key: string]: [string] };
+  fontWeight: { [key: string]: string };
+  letterSpacing: { [key: string]: string };
+}
+
+const tailwindFonts = (typography: TypographyObject[]): string => {
+  const output: TailwindFont = {
     fontSize: {},
     lineHeight: {},
     textColor: {},
@@ -62,32 +100,45 @@ export const postTailwindIntegration = (documentationObject: DocumentationObject
     fontWeight: {},
     letterSpacing: {},
   };
-  documentationObject.design.color.map((color) => (extend.colors[`${color.group}-${color.machineName}`] = color.value));
-  documentationObject.design.typography.map((type) => {
-    extend.fontSize[type.machine_name] = `${type.values.fontSize}px`;
-    extend.lineHeight[type.machine_name] = `${Math.round(type.values.lineHeightPx)}px`;
-    extend.textColor[type.machine_name] = type.values.color;
-    extend.fontFamily[type.machine_name] = [type.values.fontFamily];
-    extend.fontWeight[type.machine_name] = type.values.fontWeight;
-    extend.letterSpacing[type.machine_name] = `${type.values.letterSpacing}px`;
+  typography.map((type) => {
+    output.fontSize[type.machine_name] = `${type.values.fontSize}px`;
+    output.lineHeight[type.machine_name] = `${Math.round(type.values.lineHeightPx)}px`;
+    output.textColor[type.machine_name] = type.values.color;
+    output.fontFamily[type.machine_name] = [type.values.fontFamily];
+    output.fontWeight[type.machine_name] = type.values.fontWeight;
+    output.letterSpacing[type.machine_name] = `${type.values.letterSpacing}px`;
   });
-  const defaults = {
-    theme: extend,
-  };
-  const data = `/** You can include this file in your tailwind.config.js */ \n module.exports = ${JSON.stringify(defaults, null, 2)};`;
+  return makeModule(output);
+};
 
-  //const plugin = transformButtonComponentTokensToTailwinds(documentationObject);
-  //const pluginString = JSON.stringify(plugin, null, 2);
+export const postTailwindIntegration = (
+  documentationObject: DocumentationObject,
+  artifact: HookReturn[],
+  options?: ExportableTransformerOptionsMap
+): HookReturn[] => {
+  const components: HookReturn[] = [];
+
+  for (const componentName in documentationObject.components) {
+    components.push({
+      filename: `${componentName}.js`,
+      data: transformComponentsToTailwind(componentName, documentationObject.components[componentName], options?.get(componentName)),
+    });
+  }
+
   return [
+    ...components,
     {
-      filename: 'theme.js',
-      data,
+      filename: 'tailwind.config.js',
+      data: tailwindConfig(),
     },
-    //     {
-    //       filename: 'components.js',
-    //       data: `/** This exports all the components as Tailwinds Components for Handoff Preview. */ \n
-    // module.exports = ${pluginString};`,
-    //     },
+    {
+      filename: 'colors.js',
+      data: tailwindColors(documentationObject.design.color),
+    },
+    {
+      filename: 'fonts.js',
+      data: tailwindFonts(documentationObject.design.typography),
+    },
   ];
 };
 

@@ -100,6 +100,11 @@ export const getIntegrationName = (): string => {
   return defaultIntegration;
 };
 
+/**
+ * Create integration hook
+ * @param handoff 
+ * @returns 
+ */
 export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => {
   if (!handoff || !handoff?.config) {
     throw Error('Handoff not initialized');

@@ -35,6 +35,7 @@
     "dev": "node ./dist/cli.js dev",
     "build": "tsc",
     "build:static": "node ./dist/cli.js build:app",
+    "build:integration": "node ./dist/cli.js build:integration",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"src/app/sass/**/*.scss\"",
     "lint": "npm run lint:sass && cd src/app && npx next lint",

@@ -123,6 +123,11 @@ var getIntegrationName = function () {
     return defaultIntegration;
 };
 exports.getIntegrationName = getIntegrationName;
+/**
+ * Create integration hook
+ * @param handoff
+ * @returns
+ */
 var instantiateIntegration = function (handoff) {
     var _a;
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {

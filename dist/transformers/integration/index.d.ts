@@ -35,6 +35,11 @@ export declare const getIntegrationEntryPoint: () => string;
  * @returns string
  */
 export declare const getIntegrationName: () => string;
+/**
+ * Create integration hook
+ * @param handoff
+ * @returns
+ */
 export declare const instantiateIntegration: (handoff: Handoff) => HandoffIntegration;
 /**
  * A recusrive function for building a zip of the tokens
