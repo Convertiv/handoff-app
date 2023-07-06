@@ -27,9 +27,12 @@ export interface TransformerOutput {
 }
 
 export interface ValueProperty {
-  value: string;
   property: string;
-  part?: string;
+  value: string;
+  part: string;
+  metadata: {
+    propertyPath: string[]
+  }
 }
 
 export type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;

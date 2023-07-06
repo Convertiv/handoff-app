@@ -1,9 +1,9 @@
 import capitalize from "lodash/capitalize.js";
 import { Component } from "../exporters/components/extractor";
 import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
-import { ValueProperty, TokenType, AbstractComponent } from "./types";
-import { getTokenSetTransformer } from "./tokenSetTransformers";
+import { TokenType, AbstractComponent } from "./types";
 import { filterOutUndefined } from "../utils";
+import { tokenNamePropertyPathPartsSeparator } from "./constants";
 
 export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components
@@ -27,37 +27,6 @@ export const getSizesFromComponents = (components: AbstractComponent[]): string[
   return Array.from(new Set(components
     .map((component) => component.size)
     .filter(filterOutUndefined)));
-};
-
-/**
- * Performs the transformation of the component tokens.
- * 
- * @param component 
- * @param options 
- * @returns 
- */
-export const transformComponentTokens = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
-  let result = {};
-
-  for (const part in component.parts) {
-    const tokenSets = component.parts[part];
-
-    if (!tokenSets || tokenSets.length === 0) {
-      continue;
-    }
-
-    for (const tokenSet of tokenSets) {
-      const transformer = getTokenSetTransformer(tokenSet);
-
-      if (!transformer) {
-        continue;
-      }
-
-      result = {...result, ...transformer('sd', component, part, tokenSet, options)}
-    }
-  }
-  
-  return result;
 };
 
 /**
@@ -96,8 +65,6 @@ export const formatComponentCodeBlockComment = (type: string, component: Compone
  * @returns 
  */
 export const formatTokenName = (tokenType: TokenType, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
-  const { theme, type, state } = getReducedTokenNameParts(component, options);
-  
   // Only CSS and SCSS token types support templates
   const tokenNameTemplate = tokenType === 'css' ?
     options?.cssVariableTemplate :
@@ -107,15 +74,7 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
 
   const variableName = tokenNameTemplate
     ? parseTokenNameTemplate(tokenNameTemplate, component, part, property, options)
-    : [
-      component.name,
-      type,
-      normalizeComponentPartName(part),
-      theme,
-      state,
-      property,
-    ].filter(Boolean).join('//');
-
+    : getReducedTokenName(component, part, property, options);
 
     if (tokenType === 'css') {
       return `--${variableName}`;
@@ -127,6 +86,10 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
 
     return variableName;
 };
+
+export const getReducedTokenName = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePropertyPathPartsSeparator);
+}
 
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
@@ -161,18 +124,25 @@ export const normalizeTokenNameVariableValue = (variable: string, value?: string
  * @param options 
  * @returns 
  */
-const getReducedTokenNameParts = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  const theme = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', (component.theme ?? ''), options) : undefined;
-
-  const state = component.componentType === 'design'
+export const getReducedTokenPropertyPath = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  const l3 = component.componentType === 'design'
     ? normalizeTokenNameVariableValue('activity', (component.activity ?? undefined), options) ?? normalizeTokenNameVariableValue('state', (component.state ?? undefined), options)
     : undefined;
 
-  const type = component.componentType === 'design'
-    ? (state && state === normalizeTokenNameVariableValue('activity', (component.activity ?? ''), options) ? normalizeTokenNameVariableValue('state', (component.state ?? ''), options) : normalizeTokenNameVariableValue('type', (component.type ?? ''), options))
+  const l2 = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', (component.theme ?? ''), options) : undefined;
+
+  const l1 = component.componentType === 'design'
+    ? (l3 && l3 === normalizeTokenNameVariableValue('activity', (component.activity ?? ''), options) ? normalizeTokenNameVariableValue('state', (component.state ?? ''), options) : normalizeTokenNameVariableValue('type', (component.type ?? ''), options))
     : normalizeTokenNameVariableValue('layout', (component.layout ?? undefined), options) ?? normalizeTokenNameVariableValue('size', (component.size ?? undefined), options);
 
-  return { theme, type, state }
+  return [
+    component.name,
+    l1 ?? '',
+    normalizeComponentPartName(part),
+    l2 ?? '',
+    l3 ?? '',
+    property,
+  ].filter(part => part !== '');
 }
 
 const parseTokenNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {

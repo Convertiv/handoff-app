@@ -4,7 +4,6 @@ import path from 'path';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
-import { CssTransformerOutput } from './transformers/css/index';
 import { TransformedPreviewComponents } from './transformers/preview/index';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
@@ -12,6 +11,7 @@ import pipeline, { buildIntegrationOnly } from './pipeline';
 import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
 import { makeExportable } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
+import { TransformerOutput } from './transformers/types';
 var handoff = null;
 declare global {
   var handoff: Handoff | null;
@@ -30,9 +30,9 @@ class Handoff {
     fetch: () => void;
     build: (documentationObject: DocumentationObject) => void;
     integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
-    typeTransformer: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput;
-    cssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => CssTransformerOutput;
-    scssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
+    typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
+    cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
+    scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     configureExportables: (exportables: string[]) => string[];
@@ -140,13 +140,13 @@ class Handoff {
   postInit(callback: (config: Config) => Config) {
     this.hooks.init = callback;
   }
-  postTypeTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput) {
+  postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
     this.hooks.typeTransformer = callback;
   }
-  postCssTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput) {
+  postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
     this.hooks.cssTransformer = callback;
   }
-  postScssTransformer(callback: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput) {
+  postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
     this.hooks.scssTransformer = callback;
   }
   postPreview(

@@ -2,7 +2,7 @@ import { ValueProperty } from '../types';
 import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents, normalizeTokenNameVariableValue } from '../utils';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
-import { getTokenSetTransformer } from '../tokenSetTransformers';
+import { transform } from '../transformer';
 
 export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
@@ -44,25 +44,5 @@ export const transformComponentsToScssTypes = (name: string, components: Compone
 }
 
 export const transformComponentTokensToScssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
-  let result = {};
-
-  for (const part in component.parts) {
-    const tokenSets = component.parts[part];
-
-    if (!tokenSets || tokenSets.length === 0) {
-      continue;
-    }
-
-    for (const tokenSet of tokenSets) {
-      const transformer = getTokenSetTransformer(tokenSet);
-
-      if (!transformer) {
-        continue;
-      }
-
-      result = {...result, ...transformer('scss', component, part, tokenSet, options)}
-    }
-  }
-  
-  return result;
+  return transform('scss', component, options);
 }

@@ -24,9 +24,12 @@ export interface TransformerOutput {
     design: Record<'colors' | 'typography' | 'effects', string>;
 }
 export interface ValueProperty {
-    value: string;
     property: string;
-    part?: string;
+    value: string;
+    part: string;
+    metadata: {
+        propertyPath: string[];
+    };
 }
 export declare type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;
 export declare type TokenType = 'css' | 'scss' | 'sd';
