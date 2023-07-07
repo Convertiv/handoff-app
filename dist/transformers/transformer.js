@@ -60,7 +60,7 @@ var getTokenSetTokens = function (tokenSet) {
     }
 };
 var getBackgroundTokenSetTokens = function (tokenSet) { return ({
-    'background': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color
+    background: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color,
 }); };
 var getSpacingTokenSetTokens = function (tokenSet) { return ({
     'padding-y': "".concat((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2, "px"),
@@ -71,7 +71,7 @@ var getSpacingTokenSetTokens = function (tokenSet) { return ({
     'padding-left': "".concat(tokenSet.padding.LEFT, "px"),
     'padding-start': "".concat(tokenSet.padding.LEFT, "px"),
     'padding-end': "".concat(tokenSet.padding.RIGHT, "px"),
-    'spacing': "".concat(tokenSet.spacing, "px"),
+    spacing: "".concat(tokenSet.spacing, "px"),
 }); };
 var getBorderTokenSetTokens = function (tokenSet) { return ({
     'border-width': "".concat(tokenSet.weight, "px"),
@@ -86,37 +86,37 @@ var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'letter-spacing': "".concat(tokenSet.letterSpacing, "px"),
     'text-align': (0, convertColor_1.transformFigmaTextAlignToCss)(tokenSet.textAlignHorizontal),
     'text-decoration': (0, convertColor_1.transformFigmaTextDecorationToCss)(tokenSet.textDecoration),
-    'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase)
+    'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase),
 }); };
 var getFillTokenSetTokens = function (tokenSet) { return ({
-    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
+    color: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
 }); };
 var getEffectTokenSetTokens = function (tokenSet) { return ({
-    'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
+    'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
 }); };
 var getOpacityTokenSetTokens = function (tokenSet) { return ({
-    'opacity': "".concat(tokenSet.opacity),
+    opacity: "".concat(tokenSet.opacity),
 }); };
 var getSizeTokenSetTokens = function (tokenSet) {
     var _a, _b, _c, _d;
     return ({
-        'width': "".concat((_a = tokenSet.width) !== null && _a !== void 0 ? _a : '0', "px"),
+        width: "".concat((_a = tokenSet.width) !== null && _a !== void 0 ? _a : '0', "px"),
         'width-raw': "".concat((_b = tokenSet.width) !== null && _b !== void 0 ? _b : '0'),
-        'height': "".concat((_c = tokenSet.height) !== null && _c !== void 0 ? _c : '0', "px"),
+        height: "".concat((_c = tokenSet.height) !== null && _c !== void 0 ? _c : '0', "px"),
         'height-raw': "".concat((_d = tokenSet.height) !== null && _d !== void 0 ? _d : '0'),
     });
 };
 var transformTokens = function (tokens, tokenType, component, part, options) {
-    return tokens ? Object.entries(tokens).reduce(function (record, _a) {
-        var _b;
-        var property = _a[0], value = _a[1];
-        return (__assign(__assign({}, record), (_b = {}, _b[(0, utils_1.formatTokenName)(tokenType, component, part, property, options)] = {
-            value: value,
-            property: property,
-            part: part,
-            metadata: {
-                propertyPath: (0, utils_1.getReducedTokenPropertyPath)(component, part, property, options)
-            }
-        }, _b)));
-    }, {}) : {};
+    return tokens
+        ? Object.entries(tokens).reduce(function (record, _a) {
+            var _b;
+            var property = _a[0], value = _a[1];
+            return (__assign(__assign({}, record), (_b = {}, _b[(0, utils_1.formatTokenName)(tokenType, component, part, property, options)] = {
+                value: value,
+                property: property,
+                part: part,
+                metadata: __assign(__assign({}, (0, utils_1.getTokenMetadata)(component, part, options)), { propertyPath: (0, utils_1.getReducedTokenPropertyPath)(component, part, property, options) }),
+            }, _b)));
+        }, {})
+        : {};
 };

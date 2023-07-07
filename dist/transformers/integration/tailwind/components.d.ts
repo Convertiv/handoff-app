@@ -1,3 +1,4 @@
+import { DocumentComponentsObject } from '../../../exporters/components';
 import { Component } from '../../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../../types';
 /**
@@ -6,3 +7,4 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../../
  * @returns
  */
 export declare const transformComponentsToTailwind: (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const componentMapFile: (components: DocumentComponentsObject) => string;

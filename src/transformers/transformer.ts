@@ -1,5 +1,15 @@
 import { Component } from '../exporters/components/extractor';
-import { BackgroundTokenSet, BorderTokenSet, EffectTokenSet, FillTokenSet, OpacityTokenSet, SizeTokenSet, SpacingTokenSet, TokenSet, TypographyTokenSet } from '../exporters/components/types';
+import {
+  BackgroundTokenSet,
+  BorderTokenSet,
+  EffectTokenSet,
+  FillTokenSet,
+  OpacityTokenSet,
+  SizeTokenSet,
+  SpacingTokenSet,
+  TokenSet,
+  TypographyTokenSet,
+} from '../exporters/components/types';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
 import {
   transformFigmaEffectToCssBoxShadow,
@@ -9,16 +19,20 @@ import {
   transformFigmaTextDecorationToCss,
 } from '../utils/convertColor';
 import { ValueProperty, TokenType } from './types';
-import { formatTokenName, getReducedTokenPropertyPath } from './utils';
+import { formatTokenName, getReducedTokenPropertyPath, getTokenMetadata } from './utils';
 
 /**
  * Performs the transformation of the component tokens.
- * 
- * @param component 
- * @param options 
- * @returns 
+ *
+ * @param component
+ * @param options
+ * @returns
  */
-export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
+export const transform = (
+  tokenType: TokenType,
+  component: Component,
+  options?: ExportableTransformerOptions & ExportableSharedOptions
+): Record<string, ValueProperty> => {
   let result = {};
 
   for (const part in component.parts) {
@@ -30,10 +44,10 @@ export const transform = (tokenType: TokenType, component: Component, options?: 
 
     for (const tokenSet of tokenSets) {
       const tokens = getTokenSetTokens(tokenSet);
-      result = {...result, ...transformTokens(tokens, tokenType, component, part, options)}
+      result = { ...result, ...transformTokens(tokens, tokenType, component, part, options) };
     }
   }
-  
+
   return result;
 };
 
@@ -61,7 +75,7 @@ const getTokenSetTokens = (tokenSet: TokenSet): PropValDict | undefined => {
 };
 
 const getBackgroundTokenSetTokens = (tokenSet: BackgroundTokenSet): PropValDict => ({
-  'background': transformFigmaFillsToCssColor(tokenSet.background).color
+  background: transformFigmaFillsToCssColor(tokenSet.background).color,
 });
 
 const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): PropValDict => ({
@@ -73,7 +87,7 @@ const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): PropValDict => ({
   'padding-left': `${tokenSet.padding.LEFT}px`,
   'padding-start': `${tokenSet.padding.LEFT}px`,
   'padding-end': `${tokenSet.padding.RIGHT}px`,
-  'spacing': `${tokenSet.spacing}px`,
+  spacing: `${tokenSet.spacing}px`,
 });
 
 const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): PropValDict => ({
@@ -90,39 +104,52 @@ const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): PropValDict 
   'letter-spacing': `${tokenSet.letterSpacing}px`,
   'text-align': transformFigmaTextAlignToCss(tokenSet.textAlignHorizontal),
   'text-decoration': transformFigmaTextDecorationToCss(tokenSet.textDecoration),
-  'text-transform': transformFigmaTextCaseToCssTextTransform(tokenSet.textCase)
+  'text-transform': transformFigmaTextCaseToCssTextTransform(tokenSet.textCase),
 });
 
 const getFillTokenSetTokens = (tokenSet: FillTokenSet): PropValDict => ({
-  'color': transformFigmaFillsToCssColor(tokenSet.color).color,
+  color: transformFigmaFillsToCssColor(tokenSet.color).color,
 });
 
 const getEffectTokenSetTokens = (tokenSet: EffectTokenSet): PropValDict => ({
-  'box-shadow': tokenSet.effect.map(transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
+  'box-shadow': tokenSet.effect.map(transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
 });
 
 const getOpacityTokenSetTokens = (tokenSet: OpacityTokenSet): PropValDict => ({
-  'opacity': `${tokenSet.opacity}`,
+  opacity: `${tokenSet.opacity}`,
 });
 
 const getSizeTokenSetTokens = (tokenSet: SizeTokenSet): PropValDict => ({
-  'width': `${tokenSet.width ?? '0'}px`,
+  width: `${tokenSet.width ?? '0'}px`,
   'width-raw': `${tokenSet.width ?? '0'}`,
-  'height': `${tokenSet.height ?? '0'}px`,
+  height: `${tokenSet.height ?? '0'}px`,
   'height-raw': `${tokenSet.height ?? '0'}`,
 });
 
-const transformTokens = (tokens: { [property: string]: string } | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  return tokens ? Object.entries(tokens).reduce((record, [property, value]) => ({
-    ...record, [formatTokenName(tokenType, component, part, property, options)]: {
-      value,
-      property,
-      part,
-      metadata: {
-        propertyPath: getReducedTokenPropertyPath(component, part, property, options)
-      }
-    }
-  }), {} as Record<string, ValueProperty>) : {}
+const transformTokens = (
+  tokens: { [property: string]: string } | undefined,
+  tokenType: TokenType,
+  component: Component,
+  part: string,
+  options?: ExportableTransformerOptions & ExportableSharedOptions
+) => {
+  return tokens
+    ? Object.entries(tokens).reduce(
+        (record, [property, value]) => ({
+          ...record,
+          [formatTokenName(tokenType, component, part, property, options)]: {
+            value,
+            property,
+            part,
+            metadata: {
+              ...getTokenMetadata(component, part, options),
+              propertyPath: getReducedTokenPropertyPath(component, part, property, options),
+            },
+          },
+        }),
+        {} as Record<string, ValueProperty>
+      )
+    : {};
 };
 
-type PropValDict = { [property: string]: string }
+type PropValDict = { [property: string]: string };

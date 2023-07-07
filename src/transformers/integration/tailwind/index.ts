@@ -5,10 +5,12 @@ import webpack from 'webpack';
 import fs from 'fs-extra';
 import { getPathToIntegration } from '..';
 import { ExportableTransformerOptionsMap } from '../../types';
-import { transformComponentsToTailwind } from './components';
+import { componentMapFile, transformComponentsToTailwind } from './components';
+import { getHandoff } from '../../../config';
 
 export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {
-  const tailwindPath = path.resolve(path.join(getPathToIntegration(), 'templates/tailwind.config.js'));
+  const handoff = getHandoff();
+  const tailwindPath = path.resolve(handoff?.workingPath, 'exported/tailwind-tokens/tailwind.config.js');
   let plugins: any[] = [];
   try {
     const tailwindcss = require('tailwindcss');
@@ -60,9 +62,15 @@ const makeModule = (data: any) => {
 
 const tailwindConfig = (): string => {
   return `
+const path = require("path");
+const fs = require('fs');
+const plugin = require('tailwindcss/plugin')
 const colors = require('./colors');  
-const fonts = require('./colors');  
+const fonts = require('./fonts');  
+const components = require('./components');  
 module.exports = {
+  content: ["../templates/**/*.{html,js}"],
+  blocklist: [],
   theme: {
     colors: colors,
     fontSize: fonts.fontSize,
@@ -71,7 +79,12 @@ module.exports = {
     fontFamily: fonts.fontFamily,
     fontWeight: fonts.fontWeight,
     letterSpacing: fonts.letterSpacing
-  }
+  },
+  plugins: [
+    plugin(function ({ addComponents }) {
+      addComponents(components);
+    }),
+  ],
 };
 `;
 };
@@ -139,45 +152,9 @@ export const postTailwindIntegration = (
       filename: 'fonts.js',
       data: tailwindFonts(documentationObject.design.typography),
     },
+    {
+      filename: 'components.js',
+      data: componentMapFile(documentationObject.components),
+    }
   ];
 };
-
-// /**
-//  * Transform Buton components into Css vars
-//  * @param tokens
-//  * @returns
-//  */
-// const transformButtonComponentTokensToTailwinds = (documentationObject: DocumentationObject) => {
-//   const plugins: {[key: string]: any} = [];
-//   // Find default buttons
-//   documentationObject.components.buttons
-//     .filter((button) => button.state === 'default' && button.theme === 'light')
-//     .map((button) => {
-//       const rendered = {
-//         background: `var(--button-${button.type}-background)`,
-//         color: `var(--button-${button.type}-color)`,
-//         paddingTop: `var(--button-${button.type}-padding-top)`,
-//         paddingRight: `var(--button-${button.type}-padding-right)`,
-//         paddingBottom: `var(--button-${button.type}-padding-bottom)`,
-//         paddingLeft: `var(--button-${button.type}-padding-left)`,
-//         borderWidth: `var(--button-${button.type}-border-width)`,
-//         borderRadius: `var(--button-${button.type}-border-radius)`,
-//         borderColor: `var(--button-${button.type}-border-color)`,
-//         fontFamily: `var(--button-${button.type}-font-family)`,
-//         fontSize: `var(--button-${button.type}-font-size)`,
-//         fontWeight: `var(--button-${button.type}-font-weight)`,
-//         lineHeight: `var(--button-${button.type}-line-height)`,
-//         letterSpacing: `var(--button-${button.type}-letter-spacing)`,
-//         textAlign: `var(--button-${button.type}-text-align)`,
-//         textDecoration: `var(--button-${button.type}-text-decoration)`,
-//         textTransform: `var(--button-${button.type}-text-transform)`,
-//         boxShadow: `var(--button-${button.type}-box-shadow)`,
-//         opacity: `var(--button-${button.type}-opacity)`,
-//         $hover: {},
-//       };
-//       plugins.push({
-//         [`.btn-${button.type}`]: rendered,
-//       });
-//     });
-//   return plugins;
-// };

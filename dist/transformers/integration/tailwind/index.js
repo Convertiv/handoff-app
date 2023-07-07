@@ -15,10 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postTailwindIntegration = exports.modifyWebpackConfigForTailwind = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
-var __1 = require("..");
 var components_1 = require("./components");
+var config_1 = require("../../../config");
 var modifyWebpackConfigForTailwind = function (webpackConfig) {
-    var tailwindPath = path_1.default.resolve(path_1.default.join((0, __1.getPathToIntegration)(), 'templates/tailwind.config.js'));
+    var handoff = (0, config_1.getHandoff)();
+    var tailwindPath = path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'exported/tailwind-tokens/tailwind.config.js');
     var plugins = [];
     try {
         var tailwindcss = require('tailwindcss');
@@ -69,7 +70,7 @@ var makeModule = function (data) {
     return "module.exports = ".concat(JSON.stringify(data, null, 2), ";");
 };
 var tailwindConfig = function () {
-    return "\nconst colors = require('./colors');  \nconst fonts = require('./colors');  \nmodule.exports = {\n  theme: {\n    colors: colors,\n    fontSize: fonts.fontSize,\n    lineHeight: fonts.lineHeight,\n    textColor: fonts.textColor,\n    fontFamily: fonts.fontFamily,\n    fontWeight: fonts.fontWeight,\n    letterSpacing: fonts.letterSpacing\n  }\n};\n";
+    return "\nconst path = require(\"path\");\nconst fs = require('fs');\nconst plugin = require('tailwindcss/plugin')\nconst colors = require('./colors');  \nconst fonts = require('./fonts');  \nconst components = require('./components');  \nmodule.exports = {\n  content: [\"../templates/**/*.{html,js}\"],\n  blocklist: [],\n  theme: {\n    colors: colors,\n    fontSize: fonts.fontSize,\n    lineHeight: fonts.lineHeight,\n    textColor: fonts.textColor,\n    fontFamily: fonts.fontFamily,\n    fontWeight: fonts.fontWeight,\n    letterSpacing: fonts.letterSpacing\n  },\n  plugins: [\n    plugin(function ({ addComponents }) {\n      addComponents(components);\n    }),\n  ],\n};\n";
 };
 var tailwindColors = function (colors) {
     var output = {};
@@ -116,6 +117,10 @@ var postTailwindIntegration = function (documentationObject, artifact, options) 
             filename: 'fonts.js',
             data: tailwindFonts(documentationObject.design.typography),
         },
+        {
+            filename: 'components.js',
+            data: (0, components_1.componentMapFile)(documentationObject.components),
+        }
     ], false);
 };
 exports.postTailwindIntegration = postTailwindIntegration;

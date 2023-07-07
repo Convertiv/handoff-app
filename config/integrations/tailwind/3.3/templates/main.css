@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.alert {
+	width: 100%;
+}
 
 body {
 	background-color: #f7f7f7;

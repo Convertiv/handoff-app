@@ -1,6 +1,6 @@
-import { Component } from "../exporters/components/extractor";
-import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
-import { TokenType, AbstractComponent } from "./types";
+import { Component } from '../exporters/components/extractor';
+import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
+import { TokenType, AbstractComponent } from './types';
 export declare const getTypesFromComponents: (components: AbstractComponent[]) => string[];
 export declare const getStatesFromComponents: (components: AbstractComponent[]) => string[];
 export declare const getThemesFromComponents: (components: AbstractComponent[]) => string[];
@@ -12,7 +12,7 @@ export declare const getSizesFromComponents: (components: AbstractComponent[]) =
  * @param component
  * @returns
  */
-export declare const formatComponentCodeBlockComment: (type: string, component: Component, format: "/**/" | "//") => string;
+export declare const formatComponentCodeBlockComment: (type: string, component: Component, format: '/**/' | '//') => string;
 /**
  * Formats the component token name for the given token type
  * @param tokenType
@@ -36,6 +36,16 @@ export declare const getReducedTokenName: (component: Component, part: string, p
  * @returns
  */
 export declare const normalizeTokenNameVariableValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string | undefined;
+export declare const getTokenMetadata: (component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+    name: string;
+    type: "layout" | "design";
+    variant: string;
+    state: string;
+    theme: string;
+    layout: string;
+    size: string;
+    part: string;
+};
 /**
  * Reduces the number of the token name parts to just 3 items.
  *

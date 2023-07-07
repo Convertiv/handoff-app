@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.transformComponentsToTailwind = void 0;
-var utils_1 = require("../../utils");
+exports.componentMapFile = exports.transformComponentsToTailwind = void 0;
+var transformer_1 = require("../../transformer");
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
@@ -9,26 +9,27 @@ var utils_1 = require("../../utils");
  */
 var transformComponentsToTailwind = function (_, components, options) {
     var sd = {};
-    var tokenNamePartSeparator = '//'; // TODO: Temp
     components.forEach(function (component) {
-        Object.entries((0, utils_1.transformComponentTokens)(component, options)).forEach(function (_a) {
-            var tokenName = _a[0], tokenValue = _a[1];
-            console.log(tokenName);
-            var path = tokenName.split(tokenNamePartSeparator); // TODO: Improve/remove by returning the property name structure?
-            var lastIdx = path.length - 1;
-            var componentName = path[0];
-            var componentType = path[1];
-            var componentState = path[2];
+        var tokens = (0, transformer_1.transform)('sd', component, options);
+        Object.entries(tokens).forEach(function (_a) {
+            var _ = _a[0], tokenValue = _a[1];
+            var metadata = tokenValue.metadata;
+            var lastIdx = tokenValue.metadata.propertyPath.length - 1;
+            var componentName = metadata.name;
+            var componentType = metadata.variant;
+            var componentState = metadata.state;
+            if (metadata.type === 'layout')
+                return;
             var className = ".".concat(componentName, "-").concat(componentType);
             var ref = sd;
             if (!ref[className])
                 ref[className] = {};
-            var propParts = path[lastIdx].split('-');
+            var propParts = tokenValue.metadata.propertyPath[lastIdx].split('-');
             var key = "".concat(propParts[0]).concat(propParts
                 .slice(1)
                 .map(function (el) { return el.charAt(0).toUpperCase() + el.slice(1); })
                 .join(''));
-            if (componentState === 'default') {
+            if (componentState === 'default' || !componentState) {
                 ref[className][key] = tokenValue.value;
             }
             else {
@@ -41,3 +42,17 @@ var transformComponentsToTailwind = function (_, components, options) {
     return "module.exports = ".concat(JSON.stringify(sd, null, 2), ";");
 };
 exports.transformComponentsToTailwind = transformComponentsToTailwind;
+var componentMapFile = function (components) {
+    var output = "";
+    for (var componentName in components) {
+        output += "const ".concat(componentName, "Components = require('./").concat(componentName, "');\n");
+    }
+    output += "const createComponentMap = () => {\n    const componentMap = {\n";
+    for (var componentName in components) {
+        output += "      ...".concat(componentName, "Components,\n");
+    }
+    ;
+    output += "  };\n  return componentMap;\n  };\n\nmodule.exports = createComponentMap;";
+    return output;
+};
+exports.componentMapFile = componentMapFile;
