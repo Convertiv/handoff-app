@@ -65,15 +65,15 @@ const getBackgroundTokenSetTokens = (tokenSet: BackgroundTokenSet): PropValDict 
 });
 
 const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): PropValDict => ({
-  'padding-y': `${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`,
-  'padding-x': `${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`,
+  'padding-y': [`${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`, false],
+  'padding-x': [`${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`, false],
   'padding-top': `${tokenSet.padding.TOP}px`,
   'padding-right': `${tokenSet.padding.RIGHT}px`,
   'padding-bottom': `${tokenSet.padding.BOTTOM}px`,
-  'padding-left': `${tokenSet.padding.LEFT}px`,
-  'padding-start': `${tokenSet.padding.LEFT}px`,
+  'padding-left': [`${tokenSet.padding.LEFT}px`, false],
+  'padding-start': [`${tokenSet.padding.LEFT}px`, false],
   'padding-end': `${tokenSet.padding.RIGHT}px`,
-  'spacing': `${tokenSet.spacing}px`,
+  'spacing': [`${tokenSet.spacing}px`, false],
 });
 
 const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): PropValDict => ({
@@ -107,22 +107,23 @@ const getOpacityTokenSetTokens = (tokenSet: OpacityTokenSet): PropValDict => ({
 
 const getSizeTokenSetTokens = (tokenSet: SizeTokenSet): PropValDict => ({
   'width': `${tokenSet.width ?? '0'}px`,
-  'width-raw': `${tokenSet.width ?? '0'}`,
+  'width-raw': [`${tokenSet.width ?? '0'}`, false],
   'height': `${tokenSet.height ?? '0'}px`,
-  'height-raw': `${tokenSet.height ?? '0'}`,
+  'height-raw': [`${tokenSet.height ?? '0'}`, false],
 });
 
-const transformTokens = (tokens: { [property: string]: string } | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+const transformTokens = (tokens: PropValDict | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return tokens ? Object.entries(tokens).reduce((record, [property, value]) => ({
     ...record, [formatTokenName(tokenType, component, part, property, options)]: {
-      value,
+      value: value instanceof Array ? value[0] : value,
       property,
       part,
       metadata: {
-        propertyPath: getReducedTokenPropertyPath(component, part, property, options)
+        propertyPath: getReducedTokenPropertyPath(component, part, property, options),
+        isSupportedCssProperty: value instanceof Array ? value[1] : true 
       }
     }
   }), {} as Record<string, ValueProperty>) : {}
 };
 
-type PropValDict = { [property: string]: string }
+type PropValDict = { [property: string]: string | [value: string, isSupportedCssProperty: boolean] }

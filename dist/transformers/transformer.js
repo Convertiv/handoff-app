@@ -63,15 +63,15 @@ var getBackgroundTokenSetTokens = function (tokenSet) { return ({
     'background': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color
 }); };
 var getSpacingTokenSetTokens = function (tokenSet) { return ({
-    'padding-y': "".concat((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2, "px"),
-    'padding-x': "".concat((tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2, "px"),
+    'padding-y': ["".concat((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2, "px"), false],
+    'padding-x': ["".concat((tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2, "px"), false],
     'padding-top': "".concat(tokenSet.padding.TOP, "px"),
     'padding-right': "".concat(tokenSet.padding.RIGHT, "px"),
     'padding-bottom': "".concat(tokenSet.padding.BOTTOM, "px"),
-    'padding-left': "".concat(tokenSet.padding.LEFT, "px"),
-    'padding-start': "".concat(tokenSet.padding.LEFT, "px"),
+    'padding-left': ["".concat(tokenSet.padding.LEFT, "px"), false],
+    'padding-start': ["".concat(tokenSet.padding.LEFT, "px"), false],
     'padding-end': "".concat(tokenSet.padding.RIGHT, "px"),
-    'spacing': "".concat(tokenSet.spacing, "px"),
+    'spacing': ["".concat(tokenSet.spacing, "px"), false],
 }); };
 var getBorderTokenSetTokens = function (tokenSet) { return ({
     'border-width': "".concat(tokenSet.weight, "px"),
@@ -101,9 +101,9 @@ var getSizeTokenSetTokens = function (tokenSet) {
     var _a, _b, _c, _d;
     return ({
         'width': "".concat((_a = tokenSet.width) !== null && _a !== void 0 ? _a : '0', "px"),
-        'width-raw': "".concat((_b = tokenSet.width) !== null && _b !== void 0 ? _b : '0'),
+        'width-raw': ["".concat((_b = tokenSet.width) !== null && _b !== void 0 ? _b : '0'), false],
         'height': "".concat((_c = tokenSet.height) !== null && _c !== void 0 ? _c : '0', "px"),
-        'height-raw': "".concat((_d = tokenSet.height) !== null && _d !== void 0 ? _d : '0'),
+        'height-raw': ["".concat((_d = tokenSet.height) !== null && _d !== void 0 ? _d : '0'), false],
     });
 };
 var transformTokens = function (tokens, tokenType, component, part, options) {
@@ -111,11 +111,12 @@ var transformTokens = function (tokens, tokenType, component, part, options) {
         var _b;
         var property = _a[0], value = _a[1];
         return (__assign(__assign({}, record), (_b = {}, _b[(0, utils_1.formatTokenName)(tokenType, component, part, property, options)] = {
-            value: value,
+            value: value instanceof Array ? value[0] : value,
             property: property,
             part: part,
             metadata: {
-                propertyPath: (0, utils_1.getReducedTokenPropertyPath)(component, part, property, options)
+                propertyPath: (0, utils_1.getReducedTokenPropertyPath)(component, part, property, options),
+                isSupportedCssProperty: value instanceof Array ? value[1] : true
             }
         }, _b)));
     }, {}) : {};
