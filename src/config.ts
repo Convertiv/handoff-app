@@ -20,8 +20,8 @@ export const defaultConfig: Config = {
   client: 'Convertiv',
   google_tag_manager: null,
   integration: {
-    name: 'bootstrap',
-    version: '5.3',
+    name: 'tailwind',
+    version: '3.3',
   },
   favicon: '/favicon.ico',
   logo: '/logo.svg',

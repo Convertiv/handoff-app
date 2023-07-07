@@ -18,9 +18,12 @@ var transformComponentsToTailwind = function (_, components, options) {
             var componentName = metadata.name;
             var componentType = metadata.variant;
             var componentState = metadata.state;
+            var part = metadata.part;
             if (metadata.type === 'layout')
                 return;
             var className = ".".concat(componentName, "-").concat(componentType);
+            if (part !== '$' && part !== '')
+                className = "".concat(className, "-").concat(part);
             var ref = sd;
             if (!ref[className])
                 ref[className] = {};

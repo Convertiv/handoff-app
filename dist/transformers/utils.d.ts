@@ -38,7 +38,7 @@ export declare const getReducedTokenName: (component: Component, part: string, p
 export declare const normalizeTokenNameVariableValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string | undefined;
 export declare const getTokenMetadata: (component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
     name: string;
-    type: "layout" | "design";
+    type: "design" | "layout";
     variant: string;
     state: string;
     theme: string;

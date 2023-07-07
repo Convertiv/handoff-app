@@ -23,8 +23,10 @@ export const transformComponentsToTailwind = (
       const componentName = metadata.name;
       const componentType = metadata.variant;
       const componentState = metadata.state;
+      const part = metadata.part;
       if(metadata.type === 'layout') return;
-      const className = `.${componentName}-${componentType}`;
+      let className = `.${componentName}-${componentType}`;
+      if(part !== '$' && part !== '') className = `${className}-${part}`;
       let ref = sd;
       if (!ref[className]) ref[className] = {};
 
@@ -33,6 +35,7 @@ export const transformComponentsToTailwind = (
         .slice(1)
         .map((el) => el.charAt(0).toUpperCase() + el.slice(1))
         .join('')}`;
+      
       if (componentState === 'default' || !componentState) {
         ref[className][key] = tokenValue.value;
       } else {
