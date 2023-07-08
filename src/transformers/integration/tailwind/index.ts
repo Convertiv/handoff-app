@@ -69,7 +69,7 @@ const colors = require('./colors');
 const fonts = require('./fonts');  
 const components = require('./components');  
 module.exports = {
-  content: ["../templates/**/*.{html,js}"],
+  content: ["./config/integrations/tailwind/3.3/templates/**/*.{html,js}"],
   blocklist: [],
   theme: {
     colors: colors,

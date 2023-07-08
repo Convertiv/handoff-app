@@ -1,7 +1,9 @@
 <script src="/components/bundle.js"></script>
 
 <body class="preview-body">
-  <div class="alert alert-{{ type }}" role="alert">
-    <p class="alert-{{type}}-text">{{ parts.text.characters }}</p>
-  </div>
+<div class="alert alert-{{ type }} relative" role="alert">
+  <span class="alert-{{type}}-title">{{ parts.title.characters }}</span>
+  <span class="alert-{{type}}-text">{{ parts.text.characters }}</span>
+  <span class="alert-{{type}}-actions float-right">{{ parts.actions.characters }}</span>
+</div>
 </body>

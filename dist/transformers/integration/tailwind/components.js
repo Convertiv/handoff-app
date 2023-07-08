@@ -19,9 +19,9 @@ var transformComponentsToTailwind = function (_, components, options) {
             var componentType = metadata.variant;
             var componentState = metadata.state;
             var part = metadata.part;
-            if (metadata.type === 'layout')
-                return;
-            var className = ".".concat(componentName, "-").concat(componentType);
+            var className = ".".concat(componentName);
+            if (componentType !== '')
+                className = "".concat(className, "-").concat(componentType);
             if (part !== '$' && part !== '')
                 className = "".concat(className, "-").concat(part);
             var ref = sd;
@@ -36,9 +36,9 @@ var transformComponentsToTailwind = function (_, components, options) {
                 ref[className][key] = tokenValue.value;
             }
             else {
-                if (!ref[className]["$".concat(componentState)])
-                    ref[className]["$".concat(componentState)] = {};
-                ref[className]["$".concat(componentState)][key] = tokenValue.value;
+                if (!ref[className]["&:".concat(componentState)])
+                    ref[className]["&:".concat(componentState)] = {};
+                ref[className]["&:".concat(componentState)][key] = tokenValue.value;
             }
         });
     });

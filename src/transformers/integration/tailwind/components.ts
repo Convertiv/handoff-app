@@ -24,8 +24,8 @@ export const transformComponentsToTailwind = (
       const componentType = metadata.variant;
       const componentState = metadata.state;
       const part = metadata.part;
-      if(metadata.type === 'layout') return;
-      let className = `.${componentName}-${componentType}`;
+      let className = `.${componentName}`;
+      if(componentType !== '') className = `${className}-${componentType}`;
       if(part !== '$' && part !== '') className = `${className}-${part}`;
       let ref = sd;
       if (!ref[className]) ref[className] = {};
@@ -39,8 +39,8 @@ export const transformComponentsToTailwind = (
       if (componentState === 'default' || !componentState) {
         ref[className][key] = tokenValue.value;
       } else {
-        if (!ref[className][`$${componentState}`]) ref[className][`$${componentState}`] = {};
-        ref[className][`$${componentState}`][key] = tokenValue.value;
+        if (!ref[className][`&:${componentState}`]) ref[className][`&:${componentState}`] = {};
+        ref[className][`&:${componentState}`][key] = tokenValue.value;
       }
     });
   });

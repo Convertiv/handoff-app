@@ -70,7 +70,7 @@ var makeModule = function (data) {
     return "module.exports = ".concat(JSON.stringify(data, null, 2), ";");
 };
 var tailwindConfig = function () {
-    return "\nconst path = require(\"path\");\nconst fs = require('fs');\nconst plugin = require('tailwindcss/plugin')\nconst colors = require('./colors');  \nconst fonts = require('./fonts');  \nconst components = require('./components');  \nmodule.exports = {\n  content: [\"../templates/**/*.{html,js}\"],\n  blocklist: [],\n  theme: {\n    colors: colors,\n    fontSize: fonts.fontSize,\n    lineHeight: fonts.lineHeight,\n    textColor: fonts.textColor,\n    fontFamily: fonts.fontFamily,\n    fontWeight: fonts.fontWeight,\n    letterSpacing: fonts.letterSpacing\n  },\n  plugins: [\n    plugin(function ({ addComponents }) {\n      addComponents(components);\n    }),\n  ],\n};\n";
+    return "\nconst path = require(\"path\");\nconst fs = require('fs');\nconst plugin = require('tailwindcss/plugin')\nconst colors = require('./colors');  \nconst fonts = require('./fonts');  \nconst components = require('./components');  \nmodule.exports = {\n  content: [\"./config/integrations/tailwind/3.3/templates/**/*.{html,js}\"],\n  blocklist: [],\n  theme: {\n    colors: colors,\n    fontSize: fonts.fontSize,\n    lineHeight: fonts.lineHeight,\n    textColor: fonts.textColor,\n    fontFamily: fonts.fontFamily,\n    fontWeight: fonts.fontWeight,\n    letterSpacing: fonts.letterSpacing\n  },\n  plugins: [\n    plugin(function ({ addComponents }) {\n      addComponents(components);\n    }),\n  ],\n};\n";
 };
 var tailwindColors = function (colors) {
     var output = {};
