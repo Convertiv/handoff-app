@@ -1,9 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var component_1 = require("./component");
-// import transformColors from './design/colors';
-// import transformEffects from './design/effects';
-// import transformTypography from './design/typography';
+var colors_1 = __importDefault(require("./design/colors"));
+var effects_1 = __importDefault(require("./design/effects"));
+var typography_1 = __importDefault(require("./design/typography"));
 function sdTransformer(documentationObject, options) {
     var components = {};
     for (var componentName in documentationObject.components) {
@@ -11,9 +14,9 @@ function sdTransformer(documentationObject, options) {
     }
     // TODO
     var design = {
-        colors: '',
-        typography: '',
-        effects: '',
+        colors: (0, colors_1.default)(documentationObject.design.color),
+        typography: (0, typography_1.default)(documentationObject.design.typography),
+        effects: (0, effects_1.default)(documentationObject.design.effect),
     };
     return {
         components: components,

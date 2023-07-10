@@ -156,8 +156,7 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
   let scssFiles = scssTransformer(documentationObject, options);
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
   let sdFiles = sdTransformer(documentationObject, options);
-  // TODO
-  // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
+  sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
 
   await Promise.all([
     fs
@@ -165,7 +164,6 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
       .then(() => fs.ensureDir(`${variablesFilePath}/types`))
       .then(() => fs.ensureDir(`${variablesFilePath}/css`))
       .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
-
       .then(() => fs.ensureDir(`${variablesFilePath}/sd/tokens`))
       .then(() => Promise.all(
         Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath}/sd/tokens/${name}`))
@@ -199,10 +197,14 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
           Object.entries(scssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))
         )
       )
-      
       .then(() =>
         Promise.all(
           Object.entries(sdFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sd/tokens/${name}/${name}.tokens.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(sdFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sd/tokens/${name}.tokens.json`, content))
         )
       ),
   ]);

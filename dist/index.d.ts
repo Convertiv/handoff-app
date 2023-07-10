@@ -24,6 +24,7 @@ declare class Handoff {
         typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
         cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
         scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
+        styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
         configureExportables: (exportables: string[]) => string[];

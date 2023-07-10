@@ -33,6 +33,7 @@ class Handoff {
     typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
     cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
     scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
+    styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     configureExportables: (exportables: string[]) => string[];
@@ -48,6 +49,7 @@ class Handoff {
       integration: (documentationObject, data: HookReturn[]) => data,
       cssTransformer: (documentationObject, css) => css,
       scssTransformer: (documentationObject, scss) => scss,
+      styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
       webpack: (webpackConfig) => webpackConfig,
       preview: (webpackConfig, preview) => preview,
       configureExportables: (exportables) => exportables,
