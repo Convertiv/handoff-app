@@ -1,9 +1,18 @@
 import capitalize from "lodash/capitalize.js";
 import { Component } from "../exporters/components/extractor";
-import { ExportableSharedOptions, ExportableTransformerOptions } from "../types";
+import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
 import { TokenType, AbstractComponent } from "./types";
 import { filterOutUndefined } from "../utils";
 import { tokenNamePropertyPathPartsSeparator } from "./constants";
+
+/**
+ * Returns normalized type name
+ * @param type 
+ * @returns 
+ */
+export const getTypeName = (type: TypographyObject) => type.group 
+  ? `${type.group}-${type.machine_name}`
+  : `${type.machine_name}`;
 
 export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components

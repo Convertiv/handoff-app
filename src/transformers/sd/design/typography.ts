@@ -1,3 +1,4 @@
+import { getTypeName } from "../../utils";
 import { TypographyObject } from "../../../types";
 
 /**
@@ -27,11 +28,4 @@ export default function transformTypography(typography: TypographyObject[]): str
   });
   
   return JSON.stringify({ 'typography': sd }, null, 2);
-}
-
-// TODO: Move to utils
-function getTypeName(type: TypographyObject): string {
-  return type.group
-    ? `${type.group}-${type.machine_name}`
-    : `${type.machine_name}`;
 }

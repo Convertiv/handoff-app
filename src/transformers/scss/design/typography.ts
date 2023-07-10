@@ -1,4 +1,6 @@
+import { getTypeName } from "../../utils";
 import { TypographyObject } from "../../../types";
+
 export function transformTypographyTypes(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];
 
@@ -22,10 +24,4 @@ export default function transformTypography(typography: TypographyObject[]): str
   })
   
   return stringBuilder.join('\n');
-}
-
-function getTypeName(type: TypographyObject): string {
-  return type.group
-    ? `${type.group}-${type.machine_name}`
-    : `${type.machine_name}`;
 }
