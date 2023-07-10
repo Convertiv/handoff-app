@@ -14,24 +14,44 @@ export const getTypeName = (type: TypographyObject) => type.group
   ? `${type.group}-${type.machine_name}`
   : `${type.machine_name}`;
 
+/**
+ * Returns a distinct list of types found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components
     .map((component) => component.type)
     .filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of states found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getStatesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components
     .map((component) => component.state)
     .filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of themes found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getThemesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components
     .map((component) => component.theme)
     .filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of sizes found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getSizesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components
     .map((component) => component.size)
@@ -40,7 +60,6 @@ export const getSizesFromComponents = (components: AbstractComponent[]): string[
 
 /**
  * Generates a standardized component comment block.
- * 
  * @param type
  * @param component
  * @returns
@@ -96,39 +115,20 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
     return variableName;
 };
 
+/**
+ * Returns a reduced token name in form of a string.
+ * @param component 
+ * @param part 
+ * @param property 
+ * @param options 
+ * @returns 
+ */
 export const getReducedTokenName = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePropertyPathPartsSeparator);
 }
 
 /**
- * Normalizes the token name variable (specifier) by considering if the value should be replaced
- * with some other value based replace rules defined in the transformer options of the exportable
- * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options.
- * 
- * @param variable
- * @param value 
- * @param options 
- * @returns 
- */
-export const normalizeTokenNameVariableValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  const replace = options?.replace ?? {};
-  const defaults = options?.defaults ?? {};
-
-  if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
-    return replace[variable][value] ?? '';
-  }
-
-  if (variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
-    return '';
-  }
-
-  return value;
-}
-
-/**
- * Reduces the number of the token name parts to just 3 items.
- * 
+ * Reduces the token property path to a fixed number of parts.
  * @param component 
  * @param options 
  * @returns 
@@ -154,6 +154,40 @@ export const getReducedTokenPropertyPath = (component: Component, part: string, 
   ].filter(part => part !== '');
 }
 
+/**
+ * Normalizes the token name variable (specifier) by considering if the value should be replaced
+ * with some other value based replace rules defined in the transformer options of the exportable
+ * or removed entirely (replaced with empty string) if the value matches the default value
+ * defined in the exportable shared options.
+ * @param variable
+ * @param value 
+ * @param options 
+ * @returns 
+ */
+export const normalizeTokenNameVariableValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  const replace = options?.replace ?? {};
+  const defaults = options?.defaults ?? {};
+
+  if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
+    return replace[variable][value] ?? '';
+  }
+
+  if (variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+    return '';
+  }
+
+  return value;
+}
+
+/**
+ * Replaces the template variables with actual values.
+ * @param template 
+ * @param component 
+ * @param part 
+ * @param property 
+ * @param options 
+ * @returns 
+ */
 const parseTokenNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return template
     .replaceAll('{$theme}', component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', (component.theme ?? ''), options) ?? '' : '')
@@ -167,6 +201,11 @@ const parseTokenNameTemplate = (template: string, component: Component, part: st
     .replace(/-+/g, '-')
 }
 
+/**
+ * Returns the normalized part name.
+ * @param part 
+ * @returns 
+ */
 const normalizeComponentPartName = (part: string) => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
 }

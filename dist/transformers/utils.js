@@ -3,28 +3,57 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReducedTokenPropertyPath = exports.normalizeTokenNameVariableValue = exports.getReducedTokenName = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getSizesFromComponents = exports.getThemesFromComponents = exports.getStatesFromComponents = exports.getTypesFromComponents = void 0;
+exports.normalizeTokenNameVariableValue = exports.getReducedTokenPropertyPath = exports.getReducedTokenName = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getSizesFromComponents = exports.getThemesFromComponents = exports.getStatesFromComponents = exports.getTypesFromComponents = exports.getTypeName = void 0;
 var capitalize_js_1 = __importDefault(require("lodash/capitalize.js"));
 var utils_1 = require("../utils");
 var constants_1 = require("./constants");
+/**
+ * Returns normalized type name
+ * @param type
+ * @returns
+ */
+var getTypeName = function (type) { return type.group
+    ? "".concat(type.group, "-").concat(type.machine_name)
+    : "".concat(type.machine_name); };
+exports.getTypeName = getTypeName;
+/**
+ * Returns a distinct list of types found within the given list of components.
+ * @param components
+ * @returns
+ */
 var getTypesFromComponents = function (components) {
     return Array.from(new Set(components
         .map(function (component) { return component.type; })
         .filter(utils_1.filterOutUndefined)));
 };
 exports.getTypesFromComponents = getTypesFromComponents;
+/**
+ * Returns a distinct list of states found within the given list of components.
+ * @param components
+ * @returns
+ */
 var getStatesFromComponents = function (components) {
     return Array.from(new Set(components
         .map(function (component) { return component.state; })
         .filter(utils_1.filterOutUndefined)));
 };
 exports.getStatesFromComponents = getStatesFromComponents;
+/**
+ * Returns a distinct list of themes found within the given list of components.
+ * @param components
+ * @returns
+ */
 var getThemesFromComponents = function (components) {
     return Array.from(new Set(components
         .map(function (component) { return component.theme; })
         .filter(utils_1.filterOutUndefined)));
 };
 exports.getThemesFromComponents = getThemesFromComponents;
+/**
+ * Returns a distinct list of sizes found within the given list of components.
+ * @param components
+ * @returns
+ */
 var getSizesFromComponents = function (components) {
     return Array.from(new Set(components
         .map(function (component) { return component.size; })
@@ -33,7 +62,6 @@ var getSizesFromComponents = function (components) {
 exports.getSizesFromComponents = getSizesFromComponents;
 /**
  * Generates a standardized component comment block.
- *
  * @param type
  * @param component
  * @returns
@@ -82,37 +110,20 @@ var formatTokenName = function (tokenType, component, part, property, options) {
     return variableName;
 };
 exports.formatTokenName = formatTokenName;
+/**
+ * Returns a reduced token name in form of a string.
+ * @param component
+ * @param part
+ * @param property
+ * @param options
+ * @returns
+ */
 var getReducedTokenName = function (component, part, property, options) {
     return (0, exports.getReducedTokenPropertyPath)(component, part, property, options).join(constants_1.tokenNamePropertyPathPartsSeparator);
 };
 exports.getReducedTokenName = getReducedTokenName;
 /**
- * Normalizes the token name variable (specifier) by considering if the value should be replaced
- * with some other value based replace rules defined in the transformer options of the exportable
- * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options.
- *
- * @param variable
- * @param value
- * @param options
- * @returns
- */
-var normalizeTokenNameVariableValue = function (variable, value, options) {
-    var _a, _b, _c, _d, _e;
-    var replace = (_a = options === null || options === void 0 ? void 0 : options.replace) !== null && _a !== void 0 ? _a : {};
-    var defaults = (_b = options === null || options === void 0 ? void 0 : options.defaults) !== null && _b !== void 0 ? _b : {};
-    if (variable in (replace !== null && replace !== void 0 ? replace : {}) && value && value in ((_c = replace[variable]) !== null && _c !== void 0 ? _c : {})) {
-        return (_d = replace[variable][value]) !== null && _d !== void 0 ? _d : '';
-    }
-    if (variable in (defaults !== null && defaults !== void 0 ? defaults : {}) && value === ((_e = defaults[variable]) !== null && _e !== void 0 ? _e : '')) {
-        return '';
-    }
-    return value;
-};
-exports.normalizeTokenNameVariableValue = normalizeTokenNameVariableValue;
-/**
- * Reduces the number of the token name parts to just 3 items.
- *
+ * Reduces the token property path to a fixed number of parts.
  * @param component
  * @param options
  * @returns
@@ -136,6 +147,38 @@ var getReducedTokenPropertyPath = function (component, part, property, options) 
     ].filter(function (part) { return part !== ''; });
 };
 exports.getReducedTokenPropertyPath = getReducedTokenPropertyPath;
+/**
+ * Normalizes the token name variable (specifier) by considering if the value should be replaced
+ * with some other value based replace rules defined in the transformer options of the exportable
+ * or removed entirely (replaced with empty string) if the value matches the default value
+ * defined in the exportable shared options.
+ * @param variable
+ * @param value
+ * @param options
+ * @returns
+ */
+var normalizeTokenNameVariableValue = function (variable, value, options) {
+    var _a, _b, _c, _d, _e;
+    var replace = (_a = options === null || options === void 0 ? void 0 : options.replace) !== null && _a !== void 0 ? _a : {};
+    var defaults = (_b = options === null || options === void 0 ? void 0 : options.defaults) !== null && _b !== void 0 ? _b : {};
+    if (variable in (replace !== null && replace !== void 0 ? replace : {}) && value && value in ((_c = replace[variable]) !== null && _c !== void 0 ? _c : {})) {
+        return (_d = replace[variable][value]) !== null && _d !== void 0 ? _d : '';
+    }
+    if (variable in (defaults !== null && defaults !== void 0 ? defaults : {}) && value === ((_e = defaults[variable]) !== null && _e !== void 0 ? _e : '')) {
+        return '';
+    }
+    return value;
+};
+exports.normalizeTokenNameVariableValue = normalizeTokenNameVariableValue;
+/**
+ * Replaces the template variables with actual values.
+ * @param template
+ * @param component
+ * @param part
+ * @param property
+ * @param options
+ * @returns
+ */
 var parseTokenNameTemplate = function (template, component, part, property, options) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     return template
@@ -149,6 +192,11 @@ var parseTokenNameTemplate = function (template, component, part, property, opti
         .replaceAll('{$property}', property)
         .replace(/-+/g, '-');
 };
+/**
+ * Returns the normalized part name.
+ * @param part
+ * @returns
+ */
 var normalizeComponentPartName = function (part) {
     return part === '$' ? '' : part.replace(/[A-Z]/g, function (m) { return "-" + m.toLowerCase(); });
 };
