@@ -14,8 +14,8 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
   components.forEach(component => {
     const tokens = transform('sd', component, options);
 
-    Object.entries(tokens).forEach(([_, tokenValue]) =>{
-      const propPath = tokenValue.metadata.propertyPath;
+    Object.entries(tokens).forEach(([_, token]) =>{
+      const propPath = token.metadata.propertyPath;
       const lastIdx = propPath.length - 1;
       let ref = sd;
 
@@ -35,7 +35,7 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
         ref = ref[el];
       });
 
-      ref['value'] = tokenValue.value;
+      ref['value'] = token.value;
     });
   })
 

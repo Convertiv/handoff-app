@@ -18,7 +18,7 @@ export interface TransformerOutput {
   design: Record<FoundationType, string>;
 }
 
-export interface ValueProperty {
+export interface Token {
   property: string;
   value: string;
   part: string;

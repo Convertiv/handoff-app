@@ -14,7 +14,7 @@ export interface TransformerOutput {
     components: Record<keyof DocumentationObject['components'], string>;
     design: Record<FoundationType, string>;
 }
-export interface ValueProperty {
+export interface Token {
     property: string;
     value: string;
     part: string;

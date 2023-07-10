@@ -8,17 +8,16 @@ import {
   transformFigmaTextCaseToCssTextTransform,
   transformFigmaTextDecorationToCss,
 } from '../utils/convertColor';
-import { ValueProperty, TokenType } from './types';
+import { Token, TokenType } from './types';
 import { formatTokenName, getReducedTokenPropertyPath } from './utils';
 
 /**
  * Performs the transformation of the component tokens.
- * 
  * @param component 
  * @param options 
  * @returns 
  */
-export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, ValueProperty> => {
+export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, Token> => {
   let result = {};
 
   for (const part in component.parts) {
@@ -37,7 +36,7 @@ export const transform = (tokenType: TokenType, component: Component, options?: 
   return result;
 };
 
-const getTokenSetTokens = (tokenSet: TokenSet): PropValDict | undefined => {
+const getTokenSetTokens = (tokenSet: TokenSet): TokenDict | undefined => {
   switch (tokenSet.name) {
     case 'BACKGROUND':
       return getBackgroundTokenSetTokens(tokenSet);
@@ -60,11 +59,11 @@ const getTokenSetTokens = (tokenSet: TokenSet): PropValDict | undefined => {
   }
 };
 
-const getBackgroundTokenSetTokens = (tokenSet: BackgroundTokenSet): PropValDict => ({
+const getBackgroundTokenSetTokens = (tokenSet: BackgroundTokenSet): TokenDict => ({
   'background': transformFigmaFillsToCssColor(tokenSet.background).color
 });
 
-const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): PropValDict => ({
+const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): TokenDict => ({
   'padding-y': [`${(tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2}px`, false],
   'padding-x': [`${(tokenSet.padding.LEFT + tokenSet.padding.RIGHT) / 2}px`, false],
   'padding-top': `${tokenSet.padding.TOP}px`,
@@ -76,13 +75,13 @@ const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): PropValDict => ({
   'spacing': [`${tokenSet.spacing}px`, false],
 });
 
-const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): PropValDict => ({
+const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): TokenDict => ({
   'border-width': `${tokenSet.weight}px`,
   'border-radius': `${tokenSet.radius}px`,
   'border-color': transformFigmaFillsToCssColor(tokenSet.strokes).color,
 });
 
-const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): PropValDict => ({
+const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): TokenDict => ({
   'font-family': `'${tokenSet.fontFamily}'`,
   'font-size': `${tokenSet.fontSize}px`,
   'font-weight': `${tokenSet.fontWeight}`,
@@ -93,26 +92,26 @@ const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): PropValDict 
   'text-transform': transformFigmaTextCaseToCssTextTransform(tokenSet.textCase)
 });
 
-const getFillTokenSetTokens = (tokenSet: FillTokenSet): PropValDict => ({
+const getFillTokenSetTokens = (tokenSet: FillTokenSet): TokenDict => ({
   'color': transformFigmaFillsToCssColor(tokenSet.color).color,
 });
 
-const getEffectTokenSetTokens = (tokenSet: EffectTokenSet): PropValDict => ({
+const getEffectTokenSetTokens = (tokenSet: EffectTokenSet): TokenDict => ({
   'box-shadow': tokenSet.effect.map(transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
 });
 
-const getOpacityTokenSetTokens = (tokenSet: OpacityTokenSet): PropValDict => ({
+const getOpacityTokenSetTokens = (tokenSet: OpacityTokenSet): TokenDict => ({
   'opacity': `${tokenSet.opacity}`,
 });
 
-const getSizeTokenSetTokens = (tokenSet: SizeTokenSet): PropValDict => ({
+const getSizeTokenSetTokens = (tokenSet: SizeTokenSet): TokenDict => ({
   'width': `${tokenSet.width ?? '0'}px`,
   'width-raw': [`${tokenSet.width ?? '0'}`, false],
   'height': `${tokenSet.height ?? '0'}px`,
   'height-raw': [`${tokenSet.height ?? '0'}`, false],
 });
 
-const transformTokens = (tokens: PropValDict | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return tokens ? Object.entries(tokens).reduce((record, [property, value]) => ({
     ...record, [formatTokenName(tokenType, component, part, property, options)]: {
       value: value instanceof Array ? value[0] : value,
@@ -123,7 +122,7 @@ const transformTokens = (tokens: PropValDict | undefined, tokenType: TokenType, 
         isSupportedCssProperty: value instanceof Array ? value[1] : true 
       }
     }
-  }), {} as Record<string, ValueProperty>) : {}
+  }), {} as Record<string, Token>) : {}
 };
 
-type PropValDict = { [property: string]: string | [value: string, isSupportedCssProperty: boolean] }
+type TokenDict = { [property: string]: string | [value: string, isSupportedCssProperty: boolean] }

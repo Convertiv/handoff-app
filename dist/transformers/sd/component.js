@@ -13,8 +13,8 @@ var transformComponentsToStyleDictionary = function (_, components, options) {
     components.forEach(function (component) {
         var tokens = (0, transformer_1.transform)('sd', component, options);
         Object.entries(tokens).forEach(function (_a) {
-            var _ = _a[0], tokenValue = _a[1];
-            var propPath = tokenValue.metadata.propertyPath;
+            var _ = _a[0], token = _a[1];
+            var propPath = token.metadata.propertyPath;
             var lastIdx = propPath.length - 1;
             var ref = sd;
             propPath.forEach(function (el, idx) {
@@ -31,7 +31,7 @@ var transformComponentsToStyleDictionary = function (_, components, options) {
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});
                 ref = ref[el];
             });
-            ref['value'] = tokenValue.value;
+            ref['value'] = token.value;
         });
     });
     return JSON.stringify(sd, null, 2);

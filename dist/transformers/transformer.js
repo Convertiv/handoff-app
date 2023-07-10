@@ -16,7 +16,6 @@ var convertColor_1 = require("../utils/convertColor");
 var utils_1 = require("./utils");
 /**
  * Performs the transformation of the component tokens.
- *
  * @param component
  * @param options
  * @returns
