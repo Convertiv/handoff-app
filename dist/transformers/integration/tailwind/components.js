@@ -18,6 +18,9 @@ var transformComponentsToTailwind = function (_, components, options) {
             var componentName = metadata.name;
             var componentType = metadata.variant;
             var componentState = metadata.state;
+            var componentActivity = metadata.activity;
+            if (metadata.type !== 'design')
+                return;
             var part = metadata.part;
             var className = ".".concat(componentName);
             if (componentType !== '')
@@ -32,8 +35,13 @@ var transformComponentsToTailwind = function (_, components, options) {
                 .slice(1)
                 .map(function (el) { return el.charAt(0).toUpperCase() + el.slice(1); })
                 .join(''));
-            if (componentState === 'default' || !componentState) {
+            if (componentState === 'default' || componentState === 'off' || !componentState) {
                 ref[className][key] = tokenValue.value;
+            }
+            else if (componentActivity === 'on') {
+                if (!ref[className]["&:checked"])
+                    ref[className]["&:checked"] = {};
+                ref[className]["&:checked"][key] = tokenValue.value;
             }
             else {
                 if (!ref[className]["&:".concat(componentState)])

@@ -37,6 +37,7 @@ export interface ValueProperty {
         size: string;
         part: string;
         variant: string;
+        activity: string;
     };
 }
 export declare type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;

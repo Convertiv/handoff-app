@@ -44,6 +44,7 @@ export declare const getTokenMetadata: (component: Component, part: string, opti
     theme: string;
     layout: string;
     size: string;
+    activity: string;
     part: string;
 };
 /**

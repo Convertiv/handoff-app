@@ -40,6 +40,7 @@ export interface ValueProperty {
     size: string;
     part: string;
     variant: string;
+    activity: string;
   }
 }
 

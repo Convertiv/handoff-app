@@ -23,6 +23,8 @@ export const transformComponentsToTailwind = (
       const componentName = metadata.name;
       const componentType = metadata.variant;
       const componentState = metadata.state;
+      const componentActivity = metadata.activity;
+      if(metadata.type !== 'design') return;
       const part = metadata.part;
       let className = `.${componentName}`;
       if(componentType !== '') className = `${className}-${componentType}`;
@@ -36,8 +38,11 @@ export const transformComponentsToTailwind = (
         .map((el) => el.charAt(0).toUpperCase() + el.slice(1))
         .join('')}`;
       
-      if (componentState === 'default' || !componentState) {
+      if (componentState === 'default' || componentState === 'off' || !componentState) {
         ref[className][key] = tokenValue.value;
+      } else if (componentActivity === 'on') {
+        if (!ref[className][`&:checked`]) ref[className][`&:checked`] = {};
+        ref[className][`&:checked`][key] = tokenValue.value;
       } else {
         if (!ref[className][`&:${componentState}`]) ref[className][`&:${componentState}`] = {};
         ref[className][`&:${componentState}`][key] = tokenValue.value;

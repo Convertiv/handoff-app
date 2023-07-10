@@ -99,21 +99,25 @@ var normalizeTokenNameVariableValue = function (variable, value, options) {
 };
 exports.normalizeTokenNameVariableValue = normalizeTokenNameVariableValue;
 var getTokenMetadata = function (component, part, options) {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f;
     var state = component.componentType === 'design'
-        ? (_b = (0, exports.normalizeTokenNameVariableValue)('activity', (_a = component.activity) !== null && _a !== void 0 ? _a : undefined, options)) !== null && _b !== void 0 ? _b : (0, exports.normalizeTokenNameVariableValue)('state', (_c = component.state) !== null && _c !== void 0 ? _c : undefined, options)
+        ? (0, exports.normalizeTokenNameVariableValue)('state', (_a = component.state) !== null && _a !== void 0 ? _a : undefined, options)
         : undefined;
-    var theme = component.componentType === 'design' ? (0, exports.normalizeTokenNameVariableValue)('theme', (_d = component.theme) !== null && _d !== void 0 ? _d : '', options) : undefined;
-    var layout = component.componentType === 'design' ? '' : (0, exports.normalizeTokenNameVariableValue)('layout', (_e = component.layout) !== null && _e !== void 0 ? _e : undefined, options);
-    var size = component.componentType === 'design' ? '' : (0, exports.normalizeTokenNameVariableValue)('size', (_f = component.size) !== null && _f !== void 0 ? _f : undefined, options);
+    var activity = component.componentType === 'design'
+        ? (0, exports.normalizeTokenNameVariableValue)('activity', (_b = component.activity) !== null && _b !== void 0 ? _b : undefined, options)
+        : undefined;
+    var theme = component.componentType === 'design' ? (0, exports.normalizeTokenNameVariableValue)('theme', (_c = component.theme) !== null && _c !== void 0 ? _c : '', options) : undefined;
+    var layout = component.componentType === 'design' ? '' : (0, exports.normalizeTokenNameVariableValue)('layout', (_d = component.layout) !== null && _d !== void 0 ? _d : undefined, options);
+    var size = component.componentType === 'design' ? '' : (0, exports.normalizeTokenNameVariableValue)('size', (_e = component.size) !== null && _e !== void 0 ? _e : undefined, options);
     return {
         name: component.name,
         type: component.componentType,
-        variant: component.componentType === 'design' ? (_g = component.type) !== null && _g !== void 0 ? _g : '' : '',
+        variant: component.componentType === 'design' ? (_f = component.type) !== null && _f !== void 0 ? _f : '' : '',
         state: state !== null && state !== void 0 ? state : '',
         theme: theme !== null && theme !== void 0 ? theme : '',
         layout: layout !== null && layout !== void 0 ? layout : '',
         size: size !== null && size !== void 0 ? size : '',
+        activity: activity !== null && activity !== void 0 ? activity : '',
         part: normalizeComponentPartName(part),
     };
 };

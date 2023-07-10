@@ -128,9 +128,12 @@ export const getTokenMetadata = (
 ) => {
   const state =
     component.componentType === 'design'
-      ? normalizeTokenNameVariableValue('activity', component.activity ?? undefined, options) ??
-        normalizeTokenNameVariableValue('state', component.state ?? undefined, options)
+      ? normalizeTokenNameVariableValue('state', component.state ?? undefined, options)
       : undefined;
+  const activity =
+      component.componentType === 'design'
+        ? normalizeTokenNameVariableValue('activity', component.activity ?? undefined, options)
+        : undefined;
 
   const theme = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', component.theme ?? '', options) : undefined;
   const layout =
@@ -145,6 +148,7 @@ export const getTokenMetadata = (
     theme: theme ?? '',
     layout: layout ?? '',
     size: size ?? '',
+    activity: activity ?? '',
     part: normalizeComponentPartName(part),
   };
 };
