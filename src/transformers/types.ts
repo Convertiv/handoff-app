@@ -3,6 +3,7 @@ import { DocumentationObject, ExportableSharedOptions, ExportableTransformerOpti
 export type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;
 export type FoundationType = 'colors' | 'typography' | 'effects';
 export type TokenType = 'css' | 'scss' | 'sd';
+export type TokenDict = { [property: string]: string | [value: string, isSupportedCssProperty: boolean] }
 
 export interface AbstractComponent {
   componentType?: string;
