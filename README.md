@@ -82,13 +82,13 @@ You'll need a developer token if you don't have one already
 
 ## On your computer
 
-- Run `npx handoff-app create`
-- Enter a project name at the prompt
-- Enter your developer token, and the file id of your figma file. The file id
-  can be found in the url of the file - https://www.figma.com/file/{file_id}/{slug}
-- A folder will be created with the project name in the current directory. Use
-  `cd project-name` to open that directory
-- Start the project `npm run start`
+- Run `npm install -g handoff-app`
+- Create a new directory for your project `mkdir my-new-project`
+- In that folder, run `handoff-app fetch`
+- Handoff will prompt for your developer token, and the file id of your figma 
+  file. The file id can be found in the url of the file - 
+  https://www.figma.com/file/{file_id}/{slug}
+- Start the project `handoff-app start`
 
 This will fetch the latest from your Figma file and it will boot a demo site at
 http://localhost:3000
