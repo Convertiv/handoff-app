@@ -5,40 +5,41 @@ import { filterOutNull } from '../../utils/index';
 import { getComponentTemplate } from './utils';
 import { Component } from '../../exporters/components/extractor';
 import { TokenSets } from '../../exporters/components/types';
+import { TransformComponentTokensResult, TransformedPreviewComponents } from './types';
 
-type GetComponentTemplateByKeyResult = string | null;
-type TransformComponentTokensResult = { id: string; preview: string; code: string } | null;
+type GetComponentTemplateByComponentIdResult = string | null;
 
-function mergeTokenSets(list: TokenSets): { [key: string]: any } {
+function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
   const obj: { [key: string]: any } = {};
-  list.forEach((item) => {
+
+  tokenSetList.forEach((item) => {
     Object.entries(item).forEach(([key, value]) => {
       if (key !== 'name') {
         obj[key] = value;
       }
     });
   });
+
   return obj;
 }
 
-const getComponentTemplateByKey = async (componentKey: string, component: Component): Promise<GetComponentTemplateByKeyResult> => {
-  const parts =
-    component.componentType === 'design'
-      ? [
-          ...(component.type ? [component.type] : []),
-          ...(component.state ? [component.state] : []),
-          ...(component.activity ? [component.activity] : []),
-        ]
-      : [...(component.size ? [component.size] : []), ...(component.layout ? [component.layout] : [])];
+const getComponentTemplateByComponentId = async (componentId: string, component: Component): Promise<GetComponentTemplateByComponentIdResult> => {
+  const parts = component.componentType === 'design'
+    ? [
+      ...(component.type ? [component.type] : []),
+      ...(component.state ? [component.state] : []),
+      ...(component.activity ? [component.activity] : []),
+    ]
+    : [...(component.size ? [component.size] : []), ...(component.layout ? [component.layout] : [])];
 
-  return await getComponentTemplate(componentKey, ...parts);
+  return await getComponentTemplate(componentId, ...parts);
 };
 
 /**
  * Transforms the component tokens into a preview and code
  */
-const transformComponentTokens = async (componentKey: string, component: Component): Promise<TransformComponentTokensResult> => {
-  const template = await getComponentTemplateByKey(componentKey, component);
+const transformComponentTokens = async (componentId: string, component: Component): Promise<TransformComponentTokensResult> => {
+  const template = await getComponentTemplateByComponentId(componentId, component);
 
   if (!template) {
     return null;
@@ -56,6 +57,7 @@ const transformComponentTokens = async (componentKey: string, component: Compone
     ...component,
     parts,
   };
+
   const preview = Mustache.render(template, renderableComponent);
   const bodyEl = parse(preview).querySelector('body');
 
@@ -66,36 +68,29 @@ const transformComponentTokens = async (componentKey: string, component: Compone
   };
 };
 
-export interface TransformedPreviewComponents {
-  [key: string]: TransformComponentTokensResult[];
-}
-
 /**
  * Transforms the documentation object components into a preview and code
  */
 export default async function previewTransformer(documentationObject: DocumentationObject) {
   const { components } = documentationObject;
-  const componentKeys = Object.keys(components);
+  const componenetIds = Object.keys(components);
 
   const result = await Promise.all(
-    componentKeys.map(async (componentKey) => {
-      return [
-        componentKey,
-        await Promise.all(
-          documentationObject.components[componentKey].map((component) => transformComponentTokens(componentKey, component))
-        ).then((res) => res.filter(filterOutNull)),
-      ] as [string, TransformComponentTokensResult[]];
+    componenetIds.map(async (componentId) => {
+      return [componentId, await Promise.all(
+        documentationObject.components[componentId].map((component) => transformComponentTokens(componentId, component))
+      ).then((res) => res.filter(filterOutNull))] as [string, TransformComponentTokensResult[]];
     })
   );
-  let previewComponents: TransformedPreviewComponents = result.reduce(
-    (obj: { [key: string]: TransformComponentTokensResult[] }, el: [string, TransformComponentTokensResult[]]) => {
+
+  let previews = result.reduce(
+    (obj, el) => {
       obj[el[0]] = el[1];
       return obj;
-    },
-    {}
+    }, {} as { [key: string]: TransformComponentTokensResult[] }
   );
-  // previewComponents = (await pluginTransformer()).postPreview(documentationObject, previewComponents);
+
   return {
-    components: previewComponents,
+    components: previews,
   };
 }

@@ -25,7 +25,7 @@ var transformComponentsToStyleDictionary = function (_, components, options) {
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});
                 ref = ref[el];
             });
-            var propParts = propPath[lastIdx].split(constants_1.tokenNamePropertyPathPartsSeparator);
+            var propParts = propPath[lastIdx].split(constants_1.tokenNamePartsSeparator);
             propParts.forEach(function (el) {
                 var _a;
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});

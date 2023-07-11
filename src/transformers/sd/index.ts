@@ -12,7 +12,6 @@ export default function sdTransformer(documentationObject: DocumentationObject, 
     components[componentName] = transformComponentsToStyleDictionary(componentName, documentationObject.components[componentName], options?.get(componentName));
   }
 
-  // TODO
   const design = {
     colors: transformColors(documentationObject.design.color),
     typography: transformTypography(documentationObject.design.typography),

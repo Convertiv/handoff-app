@@ -3,7 +3,7 @@ import { Component } from "../exporters/components/extractor";
 import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
 import { TokenType, AbstractComponent } from "./types";
 import { filterOutUndefined } from "../utils";
-import { tokenNamePropertyPathPartsSeparator } from "./constants";
+import { tokenNamePartsSeparator } from "./constants";
 
 /**
  * Returns normalized type name
@@ -124,7 +124,7 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
  * @returns 
  */
 export const getReducedTokenName = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePropertyPathPartsSeparator);
+  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePartsSeparator);
 }
 
 /**

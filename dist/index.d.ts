@@ -2,7 +2,7 @@ import { Config } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/index';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import { HandoffIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';

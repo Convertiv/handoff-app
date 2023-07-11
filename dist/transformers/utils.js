@@ -119,7 +119,7 @@ exports.formatTokenName = formatTokenName;
  * @returns
  */
 var getReducedTokenName = function (component, part, property, options) {
-    return (0, exports.getReducedTokenPropertyPath)(component, part, property, options).join(constants_1.tokenNamePropertyPathPartsSeparator);
+    return (0, exports.getReducedTokenPropertyPath)(component, part, property, options).join(constants_1.tokenNamePartsSeparator);
 };
 exports.getReducedTokenName = getReducedTokenName;
 /**

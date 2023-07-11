@@ -1,1 +1,1 @@
-export const tokenNamePropertyPathPartsSeparator = '-';
+export const tokenNamePartsSeparator = '-';

@@ -4,7 +4,7 @@ import path from 'path';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/index';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';

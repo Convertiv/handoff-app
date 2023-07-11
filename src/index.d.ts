@@ -4,7 +4,7 @@ import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
 import { TransformerOutput } from './transformers/types';
-import { TransformedPreviewComponents } from './transformers/preview/index';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 
 declare module 'handoff-app';
 

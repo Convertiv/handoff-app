@@ -12,7 +12,6 @@ function sdTransformer(documentationObject, options) {
     for (var componentName in documentationObject.components) {
         components[componentName] = (0, component_1.transformComponentsToStyleDictionary)(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName));
     }
-    // TODO
     var design = {
         colors: (0, colors_1.default)(documentationObject.design.color),
         typography: (0, typography_1.default)(documentationObject.design.typography),
