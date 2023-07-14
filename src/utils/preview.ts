@@ -61,7 +61,7 @@ export const buildClientFiles = async (): Promise<string> => {
     const compile = webpack(config);
     compile.run((err, stats) => {
       if (err) {
-        let error = 'Errors encountered trying to build preview styles1.\n';
+        let error = 'Errors encountered trying to build preview styles.\n';
         if (handoff.debug) {
           error += err.stack || err;
         }
@@ -71,7 +71,7 @@ export const buildClientFiles = async (): Promise<string> => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map((err) => err.message);
-          let error = 'Errors encountered trying to build preview styles2.\n';
+          let error = 'Errors encountered trying to build preview styles.\n';
           if (handoff.debug) {
             error += buildErrors;
           }
