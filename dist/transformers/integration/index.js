@@ -85,7 +85,7 @@ var getPathToIntegration = function () {
     if (config.integration) {
         if (config.integration.name === 'custom') {
             // Look for a custom integration
-            var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, integrationFolder));
+            var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
             if (!fs_extra_1.default.existsSync(customPath)) {
                 throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
             }
