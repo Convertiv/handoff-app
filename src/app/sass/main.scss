@@ -32,10 +32,10 @@ $enable-shadows: true;
 
 @import 'tools/all';
 @import 'settings/all';
+@import 'themes/default';
 @import 'generic/all';
 @import 'elements/all';
 @import 'objects/all';
-@import 'default_vars/defaults';
 @import 'components/all';
 @import 'utilities/all';
 //@import 'vendor/prism.scss';
