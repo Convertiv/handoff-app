@@ -1,7 +1,8 @@
+/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
-import { TransformedPreviewComponents } from '../preview';
+import { TransformedPreviewComponents } from '../preview/types';
 import webpack from 'webpack';
 import { HookReturn } from '../../types';
 import Handoff from '../../index';

@@ -63,9 +63,9 @@ var mustache_1 = __importDefault(require("mustache"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
 var utils_1 = require("./utils");
-function mergeTokenSets(list) {
+function mergeTokenSets(tokenSetList) {
     var obj = {};
-    list.forEach(function (item) {
+    tokenSetList.forEach(function (item) {
         Object.entries(item).forEach(function (_a) {
             var key = _a[0], value = _a[1];
             if (key !== 'name') {
@@ -75,14 +75,14 @@ function mergeTokenSets(list) {
     });
     return obj;
 }
-var getComponentTemplateByKey = function (componentKey, component) { return __awaiter(void 0, void 0, void 0, function () {
+var getComponentTemplateByComponentId = function (componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
     var parts;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 parts = component.componentType === 'design'
                     ? __spreadArray(__spreadArray(__spreadArray([], (component.type ? [component.type] : []), true), (component.state ? [component.state] : []), true), (component.activity ? [component.activity] : []), true) : __spreadArray(__spreadArray([], (component.size ? [component.size] : []), true), (component.layout ? [component.layout] : []), true);
-                return [4 /*yield*/, utils_1.getComponentTemplate.apply(void 0, __spreadArray([componentKey], parts, false))];
+                return [4 /*yield*/, utils_1.getComponentTemplate.apply(void 0, __spreadArray([componentId], parts, false))];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -90,11 +90,11 @@ var getComponentTemplateByKey = function (componentKey, component) { return __aw
 /**
  * Transforms the component tokens into a preview and code
  */
-var transformComponentTokens = function (componentKey, component) { return __awaiter(void 0, void 0, void 0, function () {
+var transformComponentTokens = function (componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
     var template, parts, renderableComponent, preview, bodyEl;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, getComponentTemplateByKey(componentKey, component)];
+            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(componentId, component)];
             case 1:
                 template = _a.sent();
                 if (!template) {
@@ -122,35 +122,32 @@ var transformComponentTokens = function (componentKey, component) { return __awa
  */
 function previewTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentKeys, result, previewComponents;
+        var components, componenetIds, result, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     components = documentationObject.components;
-                    componentKeys = Object.keys(components);
-                    return [4 /*yield*/, Promise.all(componentKeys.map(function (componentKey) { return __awaiter(_this, void 0, void 0, function () {
+                    componenetIds = Object.keys(components);
+                    return [4 /*yield*/, Promise.all(componenetIds.map(function (componentId) { return __awaiter(_this, void 0, void 0, function () {
                             var _a;
                             return __generator(this, function (_b) {
                                 switch (_b.label) {
                                     case 0:
-                                        _a = [componentKey];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentKey].map(function (component) { return transformComponentTokens(componentKey, component); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
-                                    case 1: return [2 /*return*/, _a.concat([
-                                            _b.sent()
-                                        ])];
+                                        _a = [componentId];
+                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].map(function (component) { return transformComponentTokens(componentId, component); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
+                                    case 1: return [2 /*return*/, _a.concat([_b.sent()])];
                                 }
                             });
                         }); }))];
                 case 1:
                     result = _a.sent();
-                    previewComponents = result.reduce(function (obj, el) {
+                    previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;
                     }, {});
-                    // previewComponents = (await pluginTransformer()).postPreview(documentationObject, previewComponents);
                     return [2 /*return*/, {
-                            components: previewComponents,
+                            components: previews,
                         }];
             }
         });
