@@ -60,7 +60,7 @@ export const getPathToIntegration = () => {
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(handoff.workingPath, integrationFolder));
+      const customPath = path.resolve(path.join(handoff.workingPath, 'integration'));
       if (!fs.existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }

@@ -25,6 +25,7 @@ You will find the new style dictionary output in the exported artifact at `./exp
 ### Bugfix
 
 - Updated readme to correct quickstart guide for CLI
+- Fixes a bug where the integration is ejected but not read, even when the integration is set to custom.
 - Remove defunct default icons from top of assets page
 
 ## [0.6.1] - 2023-06-28
