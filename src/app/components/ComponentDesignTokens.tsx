@@ -78,7 +78,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
     })
   ;
 
-  const propertiesOfType = Object.entries(transformComponentTokensToScssVariables(componentsOfType[0], transformerOptions)).map(([_, r]) => `${r.group}\\${r.property}`);
+  const propertiesOfType = Object.entries(transformComponentTokensToScssVariables(componentsOfType[0], transformerOptions)).map(([_, r]) => `${r.part}\\${r.property}`);
 
   const propertiesWithStatesOfType: PropertyStatesMap = propertiesOfType.reduce(
     (prev, next) => ({ ...prev, [next]: statesOfType.reduce((prev, next) => ({ ...prev, [next]: {} }), {}) }),
@@ -88,8 +88,8 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
   statesOfType.forEach((state) => {
     const componentOfState = componentsOfType.find((component) => component.state === state || (state === FallbackState && !component.state));
     Object.entries(transformComponentTokensToScssVariables(componentOfState!, transformerOptions)).forEach(([l, r]) => {
-      propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].variable = l;
-      propertiesWithStatesOfType[`${r.group}\\${r.property}`][state].value = r.value;
+      propertiesWithStatesOfType[`${r.part}\\${r.property}`][state].variable = l;
+      propertiesWithStatesOfType[`${r.part}\\${r.property}`][state].value = r.value;
     });
   });
 

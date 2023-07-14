@@ -3,31 +3,41 @@
    ========================================================================== */
 
 h1 {
-	font-weight: normal;
-	line-height: 1.2;
+	font-weight: var( --heading-1-font-weight );
+	line-height: var( --heading-1-line-height );
 }
 
 h2 {
-	font-weight: 500;
-	line-height: 1.2;
+	font-weight: var( --heading-2-font-weight );
+	line-height: var( --heading-2-line-height );
 }
 
 h3 {
-	font-weight: normal;
+	font-weight: var( --heading-3-font-weight );
+	line-height: var( --heading-3-line-height );
 }
 
-h4, h5 {
-	font-weight: normal;
+h4 {
+	font-weight: var( --heading-4-font-weight );
+	line-height: var( --heading-4-line-height );
 	margin-bottom: rem( 10px );
 }
 
 h5 {
+	font-weight: var( --heading-5-font-weight );
+	line-height: var( --heading-5-line-height );
 	margin-bottom: rem( 10px );
 }
 
+h6 {
+	font-weight: var( --heading-6-font-weight );
+	line-height: var( --heading-6-line-height );
+}
+
 p {
-	font-size: rem( 16px );
-	line-height: 1.68;
+	font-size: var( --paragraph-font-size );
+	font-weight: var( --paragraph-font-weight );
+	line-height: var( --paragraph-line-height );
 	color: #383b3e;
 	color: #757575;
 }

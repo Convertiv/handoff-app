@@ -3,12 +3,13 @@
    ========================================================================== */
 
 .c-sidenav {
-	background-color: #fafafa;
+	background-color: var( --sidenav-background-color );
 	max-width: rem( 220px );
 	width: 100%;
 	font-size: rem( 13px );
 	height: 2500px;
 	padding: rem( 24px ) rem( 18px ) 0 rem( 18px );
+	padding: var( --sidenav-padding-top ) var( --sidenav-padding-right ) var( --sidenav-padding-bottom ) var( --sidenav-padding-left );
 	float: left;
 
 	@include media-breakpoint-down( md ) {
@@ -24,20 +25,25 @@
 		margin-bottom: rem( 1px );
 
 		a {
-			color: #545454;
+			background-color: var( --sidenav-item-background-color );
+			border-radius: var( --sidenav-item-border-radius );
+			box-shadow: var( --sidenav-item-box-shadow );
+			font-size: var( --sidenav-link-font-size );
+			font-weight: var( --sidenav-link-font-weight );
+			color: var( --sidenav-link-font-color );
+			padding: var( --sidenav-item-padding-top ) var( --sidenav-item-padding-right ) var( --sidenav-item-padding-bottom ) var( --sidenav-item-padding-left );
 			display: block;
 			width: 100%;
-			border-radius: rem( 4px );
-			padding: rem( 8px ) rem( 5px ) rem( 8px ) rem( 16px );
 			border: 1px solid transparent;
 			position: relative;
-			font-size: rem( 12px );
 			margin-bottom: rem( 4px );
 
 			&.is-selected {
-				background-color: #e8eff0;
-				color: #1f1f1f;
-				font-weight: 500;
+				background-color: var( --sidenav-item-active-background-color );
+				border-radius: var( --sidenav-item-active-border-radius );
+				box-shadow: var( --sidenav-item-active-box-shadow );
+				color: var( --sidenav-link-active-font-color );
+				font-weight: var( --sidenav-link-active-font-weight );
 
 				&::before {
 					content: '';
@@ -57,9 +63,12 @@
 			}
 
 			&:hover {
-				background-color: #fff;
+				background-color: var( --sidenav-item-hover-background-color );
+				border-radius: var( --sidenav-item-hover-border-radius );
+				box-shadow: var( --sidenav-item-hover-box-shadow );
+				color: var( --sidenav-link-hover-font-color );
+				font-weight: var( --sidenav-link-hover-font-weight );
 				border: 1px solid #f1f1f1;
-				box-shadow: 0 2px 2px 0 rgb( 0, 0, 0, .03 );
 
 				&.is-selected {
 					background-color: #e8eff0;

@@ -1,4 +1,4 @@
-import { ValueProperty } from '../types';
+import { Token } from '../types';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 /**
@@ -12,4 +12,4 @@ export declare const transformComponentsToCssVariables: (componentName: string, 
  * @param tokens
  * @returns
  */
-export declare const transformComponentTokensToCssVariables: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, ValueProperty>;
+export declare const transformComponentTokensToCssVariables: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, Token>;

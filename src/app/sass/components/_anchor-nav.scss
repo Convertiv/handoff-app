@@ -6,7 +6,7 @@
 	/* Keep the anchor nav visible on the side */
 	position: sticky;
 	top: rem( 100px );
-	font-size: rem( 12px );
+	font-size: var( --anchor-nav-link-font-size );
 	list-style: none;
 
 	li {
@@ -26,19 +26,26 @@
 	}
 
 	a {
+		color: var( --anchor-nav-link-font-color );
+		font-weight: var( --anchor-nav-link-font-weight );
 		display: block;
-		color: #757575;
 		padding: rem( 4px ) rem( 12px );
-		border-radius: rem( 3px );
 
 		&:hover {
-			background-color: #fafafa;
+			background-color: var( --anchor-nav-item-hover-background-color );
+			border-radius: var( --anchor-nav-item-hover-border-radius );
+			box-shadow: var( --anchor-nav-item-hover-box-shadow );
+			color: var( --anchor-nav-link-hover-font-color );
+			font-weight: var( --anchor-nav-link-hover-font-weight );
 			transition: all .2s ease-in-out;
 		}
 
 		&.is-selected {
-			background-color: #fafafa;
-			color: #2670a9;
+			background-color: var( --anchor-nav-item-active-background-color );
+			border-radius: var( --anchor-nav-item-active-border-radius );
+			box-shadow: var( --anchor-nav-item-active-box-shadow );
+			color: var( --anchor-nav-link-active-font-color );
+			font-weight: var( --anchor-nav-link-active-font-weight );
 		}
 	}
 }

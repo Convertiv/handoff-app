@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2023-07-14
+
+This release introduces support for AWS Style Dictionaries - https://amzn.github.io/style-dictionary/#/. Style dictionary is a widely used token format that can be compiled down to a number of application formats using the AWS Style Dictionary CLI tool. 
+
+You will find the new style dictionary output in the exported artifact at `./exported/tokens/sd`.
+
+### Changes
+
+- Added support for Style Dictionary export.
+- `ValueProperty` is now `Token` and it can now carry additional metadata (added `isSupportedCssProperty` metadata property).
+- All transformers now return data as the same `TransformerOutput` interface type. All other interfaces such as `CssTransformerOutput` and `ScssTransformerOutput` have been removed entirely.
+- Updated function and variable names to be more concise and provide more information about what they do.
+- Restructured the documentation app to use CSS variables in preparation for user theming. Following styles can be changed:
+  - Global typography, header, side nav and anchor nav. Custom user theme examples coming in the next release.
+- General quality of life improvements.
+
+### Bugfix
+
+- Updated readme to correct quickstart guide for CLI
+- Remove defunct default icons from top of assets page
+
 ## [0.6.1] - 2023-06-28
 
 ### Bugfixes

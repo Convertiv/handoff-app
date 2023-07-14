@@ -1,20 +1,8 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformComponentTokensToScssVariables = exports.transformComponentsToScssTypes = void 0;
-var utils_1 = require("../css/utils");
-var tokenSetTransformers_1 = require("../tokenSetTransformers");
-var utils_2 = require("../utils");
+var utils_1 = require("../utils");
+var transformer_1 = require("../transformer");
 var transformComponentsToScssTypes = function (name, components, options) {
     var lines = [];
     var themes = (0, utils_1.getThemesFromComponents)(components);
@@ -27,7 +15,7 @@ var transformComponentsToScssTypes = function (name, components, options) {
     }
     // Sizes
     if (sizes && sizes.length > 0) {
-        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat((0, utils_2.normalizeVariableToken)('size', type, options), "\""); }).join(', '), " );"));
+        lines.push("$".concat(name, "-sizes: ( ").concat(sizes.map(function (type) { return "\"".concat((0, utils_1.normalizeTokenNameVariableValue)('size', type, options), "\""); }).join(', '), " );"));
     }
     // Themes
     if (themes && themes.length > 0) {
@@ -41,21 +29,6 @@ var transformComponentsToScssTypes = function (name, components, options) {
 };
 exports.transformComponentsToScssTypes = transformComponentsToScssTypes;
 var transformComponentTokensToScssVariables = function (component, options) {
-    var result = {};
-    for (var part in component.parts) {
-        var tokenSets = component.parts[part];
-        if (!tokenSets || tokenSets.length === 0) {
-            continue;
-        }
-        for (var _i = 0, tokenSets_1 = tokenSets; _i < tokenSets_1.length; _i++) {
-            var tokenSet = tokenSets_1[_i];
-            var transformer = (0, tokenSetTransformers_1.getTokenSetTransformer)(tokenSet);
-            if (!transformer) {
-                continue;
-            }
-            result = __assign(__assign({}, result), transformer('scss', component, part, tokenSet, options));
-        }
-    }
-    return result;
+    return (0, transformer_1.transform)('scss', component, options);
 };
 exports.transformComponentTokensToScssVariables = transformComponentTokensToScssVariables;
