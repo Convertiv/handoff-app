@@ -3,8 +3,8 @@
    ========================================================================== */
 
 .c-site-header {
-	background-color: #fff;
-	box-shadow: 0 rem( 4px ) rem( 2px ) 0 rgb( 0, 0, 0, .03 );
+	background-color: var( --header-background-color );
+	box-shadow: var( --header-box-shadow );
 	position: fixed;
 	top: 0;
 	width: 100%;
@@ -36,7 +36,7 @@
 	padding: rem( 15px ) 0;
 
 	@include media-breakpoint-up( lg ) {
-		padding: rem( 18px ) 0 rem( 15px ) rem( 15px );
+		padding: var( --header-padding-top ) var( --header-padding-right ) var( --header-padding-bottom ) var( --header-padding-left );
 	}
 
 	& > div {
@@ -66,19 +66,23 @@
 			margin: rem( 3px ) rem( 45px ) 0 0;
 
 			a {
-				color: #2c2c2c;
-				font-size: rem( 14px );
+				color: var( --header-link-font-color );
+				font-size: var( --header-link-font-size );
+				font-weight: var( --header-link-font-weight );
 				letter-spacing: rem( -.2px );
 				padding-bottom: rem( 18px );
 				border-bottom: rem( 3px ) solid #fff;
-				font-weight: normal;
 
 				&.is-selected,
 				&.is-selected:hover {
+					color: var( --header-link-active-font-color );
+					font-weight: var( --header-link-active-font-weight );
 					border-bottom: rem( 3px ) solid #2670a9;
 				}
 
 				&:hover {
+					color: var( --header-link-hover-font-color );
+					font-weight: var( --header-link-hover-font-weight );
 					border-bottom: rem( 3px ) solid #dcdcdc;
 					transition: .2s all ease-in-out;
 				}
