@@ -48,6 +48,13 @@ export interface DocumentationProps {
   config: Config;
 }
 
+export interface DocumentationWithTokensProps {
+  css: string;
+  scss: string;
+  styleDictionary: string;
+  types: string;
+}
+
 export interface ChangelogDocumentationProps extends DocumentationProps {
   changelog: ChangelogRecord[];
 }
@@ -61,20 +68,14 @@ export interface AssetDocumentationProps extends DocumentationProps {
   assets: ExportResult['assets'];
 }
 
-export interface ComponentDocumentationProps extends DocumentationProps {
-  scss: string;
-  css: string;
-  types: string;
+export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   exportable: ExportableDefinition;
   components: Component[];
   previews: PreviewObject[];
   component: string;
 }
 
-export interface FoundationDocumentationProps extends DocumentationProps {
-  scss: string;
-  css: string;
-  types: string;
+export interface FoundationDocumentationProps extends DocumentationWithTokensProps {
   design: ExportResult['design'];
 }
 /**
@@ -321,6 +322,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
       ...fetchDocPageMarkdown(path, slug, id).props,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
+      styleDictionary: slug ? fetchTokensString(slug, 'styleDictionary') : '',
       types: slug ? fetchTokensString(slug, 'types') : '',
     },
   };
@@ -398,6 +400,7 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
       ...fetchDocPageMarkdown(path, slug, id).props,
       scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
       css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      styleDictionary: slug ? fetchTokensString(pluralizeComponent(slug), 'styleDictionary') : '',
       types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
     },
   };
@@ -480,12 +483,20 @@ export const titleString = (prefix: string | null): string => {
   return `${prefix}${config.client} Design System`;
 };
 
-export const fetchTokensString = (component: string, type: string): string => {
+export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
   if (type === 'scss' && fs.existsSync(`./exported/tokens/sass/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
   } else if (type === 'types' && fs.existsSync(`./exported/tokens/types/${component}.scss`)) {
     tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
+  } else if (type === 'styleDictionary') {
+    if (fs.existsSync(`./exported/tokens/sd/tokens/${component}.tokens.json`)) {
+      // Foundations
+      tokens = fs.readFileSync(`./exported/tokens/sd/tokens/${component}.tokens.json`).toString();
+    } else {
+      // Components
+      tokens = fs.readFileSync(`./exported/tokens/sd/tokens/${component}/${component}.tokens.json`).toString();
+    }
   } else if (fs.existsSync(`./exported/tokens/css/${component}.css`)) {
     tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
   }
