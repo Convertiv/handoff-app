@@ -48,7 +48,7 @@ export interface DocumentationProps {
   config: Config;
 }
 
-export interface DocumentationWithTokensProps {
+export interface DocumentationWithTokensProps extends DocumentationProps {
   css: string;
   scss: string;
   styleDictionary: string;
