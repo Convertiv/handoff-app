@@ -1,7 +1,7 @@
 import { Component } from '../../exporters/components/extractor';
 import { transform } from '../transformer';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
-import { tokenNamePropertyPathPartsSeparator } from '../constants';
+import { tokenNamePartsSeparator } from '../constants';
 
 /**
  * Transforms the component tokens into a style dictionary
@@ -14,8 +14,8 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
   components.forEach(component => {
     const tokens = transform('sd', component, options);
 
-    Object.entries(tokens).forEach(([_, tokenValue]) =>{
-      const propPath = tokenValue.metadata.propertyPath;
+    Object.entries(tokens).forEach(([_, token]) =>{
+      const propPath = token.metadata.propertyPath;
       const lastIdx = propPath.length - 1;
       let ref = sd;
 
@@ -28,14 +28,14 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
         ref = ref[el];
       });
 
-      const propParts = propPath[lastIdx].split(tokenNamePropertyPathPartsSeparator);
+      const propParts = propPath[lastIdx].split(tokenNamePartsSeparator);
 
       propParts.forEach(el => {
         ref[el] ??= {};
         ref = ref[el];
       });
 
-      ref['value'] = tokenValue.value;
+      ref['value'] = token.value;
     });
   })
 

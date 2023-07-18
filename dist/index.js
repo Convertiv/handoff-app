@@ -87,6 +87,7 @@ var Handoff = /** @class */ (function () {
             integration: function (documentationObject, data) { return data; },
             cssTransformer: function (documentationObject, css) { return css; },
             scssTransformer: function (documentationObject, scss) { return scss; },
+            styleDictionaryTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
             webpack: function (webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
             configureExportables: function (exportables) { return exportables; },

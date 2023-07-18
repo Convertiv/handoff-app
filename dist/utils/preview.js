@@ -103,7 +103,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {
-                        var error = 'Errors encountered trying to build preview styles1.\n';
+                        var error = 'Errors encountered trying to build preview styles.\n';
                         if (handoff.debug) {
                             error += err.stack || err;
                         }
@@ -112,7 +112,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                     if (stats) {
                         if (stats.hasErrors()) {
                             var buildErrors = (_a = stats.compilation.errors) === null || _a === void 0 ? void 0 : _a.map(function (err) { return err.message; });
-                            var error = 'Errors encountered trying to build preview styles2.\n';
+                            var error = 'Errors encountered trying to build preview styles.\n';
                             if (handoff.debug) {
                                 error += buildErrors;
                             }

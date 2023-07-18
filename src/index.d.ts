@@ -3,8 +3,8 @@ import { Config } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
-import { CssTransformerOutput } from './transformers/css/index';
-import { TransformedPreviewComponents } from './transformers/preview/index';
+import { TransformerOutput } from './transformers/types';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 
 declare module 'handoff-app';
 
@@ -19,9 +19,10 @@ declare class Handoff {
         fetch: () => void;
         build: (documentationObject: DocumentationObject) => void;
         integration: (documentationObject: DocumentationObject) => void;
-        typeTransformer: (documentationObject: DocumentationObject, types: CssTransformerOutput) => CssTransformerOutput;
-        cssTransformer: (documentationObject: DocumentationObject, css: CssTransformerOutput) => CssTransformerOutput;
-        scssTransformer: (documentationObject: DocumentationObject, scss: CssTransformerOutput) => CssTransformerOutput;
+        typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
+        cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
+        scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
+        styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
         configureExportables: (exportables: string[]) => string[];

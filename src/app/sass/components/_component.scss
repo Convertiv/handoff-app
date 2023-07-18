@@ -40,26 +40,3 @@ iframe {
 		}
 	}
 }
-
-.c-component-preview {
-	.c-button--primary {
-		background-color: $button-primary-background;
-		border-color: $button-primary-border-color;
-		border-radius: rem( $button-primary-border-radius );
-		border-width: $button-primary-border-width;
-		color: $button-primary-color;
-		font-size: rem( $button-primary-font-size );
-		padding-top: rem( $button-primary-padding-top );
-		padding-right: rem( $button-primary-padding-right );
-		padding-bottom: rem( $button-primary-padding-bottom );
-		padding-left: rem( $button-primary-padding-left );
-		// transition: $button-transition-speed all ease-in-out;
-
-		&:hover {
-			background-color: $button-primary-hover-background;
-			border-color: $button-primary-hover-border-color;
-			border-width: $button-primary-hover-border-width;
-			color: $button-primary-hover-color;
-		}
-	}
-}

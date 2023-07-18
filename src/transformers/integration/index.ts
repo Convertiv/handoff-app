@@ -5,7 +5,7 @@ import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
 
 import { getConfig, getHandoff } from '../../config';
-import { TransformedPreviewComponents } from '../preview';
+import { TransformedPreviewComponents } from '../preview/types';
 import webpack from 'webpack';
 import { HookReturn } from '../../types';
 import Handoff from '../../index';
@@ -60,7 +60,7 @@ export const getPathToIntegration = () => {
   if (config.integration) {
     if (config.integration.name === 'custom') {
       // Look for a custom integration
-      const customPath = path.resolve(path.join(handoff.workingPath, integrationFolder));
+      const customPath = path.resolve(path.join(handoff.workingPath, 'integration'));
       if (!fs.existsSync(customPath)) {
         throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
       }

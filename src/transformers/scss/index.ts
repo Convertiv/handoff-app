@@ -39,7 +39,7 @@ export default function scssTransformer(documentationObject: DocumentationObject
     components[componentName] = documentationObject.components[componentName]
       .map((component) => ([
         formatComponentCodeBlockComment(componentName, component, '//'),
-        Object.entries(transformComponentTokensToScssVariables(component, options?.get(componentName))).map(([variable, value]) => `${variable}: ${value.value};`).join('\n')
+        Object.entries(transformComponentTokensToScssVariables(component, options?.get(componentName))).map(([name, token]) => `${name}: ${token.value};`).join('\n')
       ].join('\n'))).join('\n\n');
   }
 

@@ -260,8 +260,7 @@ var buildStyles = function (documentationObject, options) { return __awaiter(voi
                 scssFiles = (0, index_2.default)(documentationObject, options);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
                 sdFiles = (0, sd_1.default)(documentationObject, options);
-                // TODO
-                // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
+                sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
                             .ensureDir(variablesFilePath)
@@ -314,11 +313,15 @@ var buildStyles = function (documentationObject, options) { return __awaiter(voi
                                 var name = _a[0], content = _a[1];
                                 return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sd/tokens/").concat(name, "/").concat(name, ".tokens.json"), content);
                             }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(sdFiles.design).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath, "/sd/tokens/").concat(name, ".tokens.json"), content);
+                            }));
                         }),
                     ])];
             case 1:
-                // TODO
-                // sdFiles = handoff.hooks.sdTransformer(documentationObject, scssFiles);
                 _a.sent();
                 return [2 /*return*/];
         }

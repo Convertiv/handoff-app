@@ -1,0 +1,103 @@
+/* =============================================================================
+   Default Theme (themes/_default.scss)
+   ========================================================================== */
+
+:root {
+
+	// Font size
+	--heading-1-font-size: 2rem;
+	--heading-2-font-size: 1.75rem;
+	--heading-3-font-size: 1.5rem;
+	--heading-4-font-size: 1.25rem;
+	--heading-5-font-size: 1.125rem;
+	--heading-6-font-size: 1rem;
+	--paragraph-font-size: 1rem;
+	// Font weight
+	--heading-1-font-weight: 400;
+	--heading-2-font-weight: 500;
+	--heading-3-font-weight: 400;
+	--heading-4-font-weight: 400;
+	--heading-5-font-weight: 400;
+	--heading-6-font-weight: 300;
+	--paragraph-font-weight: 400;
+	// Font line height
+	--heading-1-line-height: 1.2;
+	--heading-2-line-height: 1.2;
+	--heading-3-line-height: 1.2;
+	--heading-4-line-height: 1.6;
+	--heading-5-line-height: 1.6;
+	--heading-6-line-height: 1.6;
+	--paragraph-line-height: 1.6;
+
+	// Header
+	--header-background-color: #fff;
+	--header-box-shadow: 0 .25rem .125rem 0 rgb( 0, 0, 0, .03 );
+	--header-padding-top: 1.125rem;
+	--header-padding-right: 0;
+	--header-padding-bottom: 1rem;
+	--header-padding-left: 1rem;
+	// Header navigation links
+	--header-link-font-color: #2c2c2c;
+	--header-link-font-size: .875rem;
+	--header-link-font-weight: 400;
+	// Header link wrapper [hover]
+	--header-item-hover-background-color: transparent;
+	--header-item-hover-border-radius: .25rem;
+	--header-item-hover-box-shadow: none;
+	--header-link-hover-font-color: #2c2c2c;
+	--header-link-hover-font-weight: 400;
+	// Header link wrapper [active]
+	--header-item-active-background-color: transparent;
+	--header-item-active-border-radius: .25rem;
+	--header-item-active-box-shadow: none;
+	--header-link-active-font-color: #2c2c2c;
+	--header-link-active-font-weight: 400;
+
+	// Sidenav
+	--sidenav-background-color: #fafafa;
+	--sidenav-padding-top: 1.5rem;
+	--sidenav-padding-right: 1.125rem;
+	--sidenav-padding-bottom: 0;
+	--sidenav-padding-left: 1.125rem;
+	// Sidenav link wrapper
+	--sidenav-item-background-color: transparent;
+	--sidenav-item-border-radius: .25rem;
+	--sidenav-item-box-shadow: none;
+	--sidenav-link-font-color: #545454;
+	--sidenav-link-font-size: .75rem;
+	--sidenav-link-font-weight: 400;
+	--sidenav-item-margin-bottom: 1px;
+	--sidenav-item-padding-top: .5rem;
+	--sidenav-item-padding-right: .5rem;
+	--sidenav-item-padding-bottom: .5rem;
+	--sidenav-item-padding-left: 1rem;
+	// Sidenav link wrapper [hover]
+	--sidenav-item-hover-background-color: #fff;
+	--sidenav-item-hover-border-radius: .25rem;
+	--sidenav-item-hover-box-shadow: 0 .125rem .125rem 0 rgb( 0, 0, 0, .03 );
+	--sidenav-link-hover-font-color: #545454;
+	--sidenav-link-hover-font-weight: 400;
+	// Sidenav link wrapper [active]
+	--sidenav-item-active-background-color: #e8eff0;
+	--sidenav-item-active-border-radius: .25rem;
+	--sidenav-item-active-box-shadow: none;
+	--sidenav-link-active-font-color: #1f1f1f;
+	--sidenav-link-active-font-weight: 500;
+
+	// Anchor Nav links
+	--anchor-nav-link-font-color: #757575;
+	--anchor-nav-link-font-size: .75rem;
+	--anchor-nav-link-font-weight: 400;
+	// Anchor Nav link wrapper [hover]
+	--anchor-nav-item-hover-background-color: #fafafa;
+	--anchor-nav-item-hover-border-radius: .25rem;
+	--anchor-nav-item-hover-box-shadow: none;
+	--anchor-nav-link-hover-font-color: #757575;
+	--anchor-nav-link-hover-font-weight: 400;
+	// Anchor Nav link wrapper [active]
+	--anchor-nav-item-active-background-color: #fafafa;
+	--anchor-nav-item-active-border-radius: .25rem;
+	--anchor-nav-item-active-box-shadow: none;
+	--anchor-nav-link-active-font-color: #2670a9;
+	--anchor-nav-link-active-font-weight: 400;
+}

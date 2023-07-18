@@ -1,29 +1,57 @@
-import capitalize from 'lodash/capitalize.js';
-import { Component } from '../exporters/components/extractor';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
-import { TokenType, AbstractComponent } from './types';
-import { filterOutUndefined } from '../utils';
-import { tokenNamePropertyPathPartsSeparator } from './constants';
+import capitalize from "lodash/capitalize.js";
+import { Component } from "../exporters/components/extractor";
+import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
+import { TokenType, AbstractComponent } from "./types";
+import { filterOutUndefined } from "../utils";
+import { tokenNamePartsSeparator } from "./constants";
 
+/**
+ * Returns normalized type name
+ * @param type 
+ * @returns 
+ */
+export const getTypeName = (type: TypographyObject) => type.group 
+  ? `${type.group}-${type.machine_name}`
+  : `${type.machine_name}`;
+
+/**
+ * Returns a distinct list of types found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components.map((component) => component.type).filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of states found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getStatesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components.map((component) => component.state).filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of themes found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getThemesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components.map((component) => component.theme).filter(filterOutUndefined)));
 };
 
+/**
+ * Returns a distinct list of sizes found within the given list of components.
+ * @param components 
+ * @returns 
+ */
 export const getSizesFromComponents = (components: AbstractComponent[]): string[] => {
   return Array.from(new Set(components.map((component) => component.size).filter(filterOutUndefined)));
 };
 
 /**
  * Generates a standardized component comment block.
- *
  * @param type
  * @param component
  * @returns
@@ -82,83 +110,23 @@ export const formatTokenName = (
   return variableName;
 };
 
-export const getReducedTokenName = (
-  component: Component,
-  part: string,
-  property: string,
-  options?: ExportableTransformerOptions & ExportableSharedOptions
-) => {
-  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePropertyPathPartsSeparator);
-};
-
 /**
- * Normalizes the token name variable (specifier) by considering if the value should be replaced
- * with some other value based replace rules defined in the transformer options of the exportable
- * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options.
- *
- * @param variable
- * @param value
- * @param options
- * @returns
+ * Returns a reduced token name in form of a string.
+ * @param component 
+ * @param part 
+ * @param property 
+ * @param options 
+ * @returns 
  */
-export const normalizeTokenNameVariableValue = (
-  variable: string,
-  value?: string,
-  options?: ExportableTransformerOptions & ExportableSharedOptions
-) => {
-  const replace = options?.replace ?? {};
-  const defaults = options?.defaults ?? {};
-
-  if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
-    return replace[variable][value] ?? '';
-  }
-
-  if (variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '')) {
-    return '';
-  }
-
-  return value;
-};
-
-export const getTokenMetadata = (
-  component: Component,
-  part: string,
-  options?: ExportableTransformerOptions & ExportableSharedOptions
-) => {
-  const state =
-    component.componentType === 'design'
-      ? normalizeTokenNameVariableValue('state', component.state ?? undefined, options)
-      : undefined;
-  const activity =
-      component.componentType === 'design'
-        ? normalizeTokenNameVariableValue('activity', component.activity ?? undefined, options)
-        : undefined;
-
-  const theme = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', component.theme ?? '', options) : undefined;
-  const layout =
-    component.componentType === 'design' ? '' : normalizeTokenNameVariableValue('layout', component.layout ?? undefined, options);
-  const size = component.componentType === 'design' ? '' : normalizeTokenNameVariableValue('size', component.size ?? undefined, options);
-
-  return {
-    name: component.name,
-    type: component.componentType,
-    variant: component.componentType === 'design' ? component.type ?? '' : '',
-    state: state ?? '',
-    theme: theme ?? '',
-    layout: layout ?? '',
-    size: size ?? '',
-    activity: activity ?? '',
-    part: normalizeComponentPartName(part),
-  };
-};
+export const getReducedTokenName = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePartsSeparator);
+}
 
 /**
- * Reduces the number of the token name parts to just 3 items.
- *
- * @param component
- * @param options
- * @returns
+ * Reduces the token property path to a fixed number of parts.
+ * @param component 
+ * @param options 
+ * @returns 
  */
 export const getReducedTokenPropertyPath = (
   component: Component,
@@ -185,13 +153,41 @@ export const getReducedTokenPropertyPath = (
   return [component.name, l1 ?? '', normalizeComponentPartName(part), l2 ?? '', l3 ?? '', property].filter((part) => part !== '');
 };
 
-const parseTokenNameTemplate = (
-  template: string,
-  component: Component,
-  part: string,
-  property: string,
-  options?: ExportableTransformerOptions & ExportableSharedOptions
-) => {
+/**
+ * Normalizes the token name variable (specifier) by considering if the value should be replaced
+ * with some other value based replace rules defined in the transformer options of the exportable
+ * or removed entirely (replaced with empty string) if the value matches the default value
+ * defined in the exportable shared options.
+ * @param variable
+ * @param value 
+ * @param options 
+ * @returns 
+ */
+export const normalizeTokenNameVariableValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  const replace = options?.replace ?? {};
+  const defaults = options?.defaults ?? {};
+
+  if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
+    return replace[variable][value] ?? '';
+  }
+
+  if (variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+    return '';
+  }
+
+  return value;
+}
+
+/**
+ * Replaces the template variables with actual values.
+ * @param template 
+ * @param component 
+ * @param part 
+ * @param property 
+ * @param options 
+ * @returns 
+ */
+const parseTokenNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return template
     .replaceAll(
       '{$theme}',
@@ -222,6 +218,51 @@ const parseTokenNameTemplate = (
     .replace(/-+/g, '-');
 };
 
+/**
+ * Returns the normalized part name.
+ * @param part 
+ * @returns 
+ */
 const normalizeComponentPartName = (part: string) => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+};
+
+
+/**
+ * Generates a token metadata object for the given component.
+ * @param component 
+ * @param part 
+ * @param options 
+ * @returns 
+ */
+export const getTokenMetadata = (
+  component: Component,
+  part: string,
+  options?: ExportableTransformerOptions & ExportableSharedOptions
+) => {
+  const state =
+    component.componentType === 'design'
+      ? normalizeTokenNameVariableValue('state', component.state ?? undefined, options)
+      : undefined;
+  const activity =
+      component.componentType === 'design'
+        ? normalizeTokenNameVariableValue('activity', component.activity ?? undefined, options)
+        : undefined;
+
+  const theme = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', component.theme ?? '', options) : undefined;
+  const layout =
+    component.componentType === 'design' ? '' : normalizeTokenNameVariableValue('layout', component.layout ?? undefined, options);
+  const size = component.componentType === 'design' ? '' : normalizeTokenNameVariableValue('size', component.size ?? undefined, options);
+
+  return {
+    name: component.name,
+    type: component.componentType,
+    variant: component.componentType === 'design' ? component.type ?? '' : '',
+    state: state ?? '',
+    theme: theme ?? '',
+    layout: layout ?? '',
+    size: size ?? '',
+    activity: activity ?? '',
+    part: normalizeComponentPartName(part),
+  };
 };
