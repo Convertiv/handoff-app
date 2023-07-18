@@ -12,6 +12,7 @@ var transformComponentsToTailwind = function (_, components, options) {
     components.forEach(function (component) {
         var tokens = (0, transformer_1.transform)('sd', component, options);
         Object.entries(tokens).forEach(function (_a) {
+            var _b, _c, _d, _e, _f;
             var _ = _a[0], tokenValue = _a[1];
             var metadata = tokenValue.metadata;
             var lastIdx = tokenValue.metadata.propertyPath.length - 1;
@@ -44,9 +45,16 @@ var transformComponentsToTailwind = function (_, components, options) {
                 ref[className]["&:checked"][key] = tokenValue.value;
             }
             else {
-                if (!ref[className]["&:".concat(componentState)])
-                    ref[className]["&:".concat(componentState)] = {};
-                ref[className]["&:".concat(componentState)][key] = tokenValue.value;
+                if ((_f = (_e = (_d = (_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.figma) === null || _c === void 0 ? void 0 : _c.options) === null || _d === void 0 ? void 0 : _d.transformer) === null || _e === void 0 ? void 0 : _e.pseudoStates) === null || _f === void 0 ? void 0 : _f.includes(componentState)) {
+                    if (!ref[className]["&:".concat(componentState)])
+                        ref[className]["&:".concat(componentState)] = {};
+                    ref[className]["&:".concat(componentState)][key] = tokenValue.value;
+                }
+                else {
+                    if (!ref["".concat(className, "-").concat(componentState)])
+                        ref["".concat(className, "-").concat(componentState)] = {};
+                    ref["".concat(className, "-").concat(componentState)][key] = tokenValue.value;
+                }
             }
         });
     });

@@ -1,8 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '.';
-import type { DocumentComponentsObject } from './exporters/components';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from './types';
 import { Config } from './types/config';
 
 export interface ImageStyle {
@@ -52,6 +50,28 @@ export const defaultConfig: Config = {
         },
       },
       transformer: {
+        pseudoStates: [
+          'active',
+          'blank',
+          'checked',
+          'current',
+          'default',
+          'disabled',
+          'empty',
+          'enabled',
+          'focus',
+          'hover',
+          'invalid',
+          'left',
+          'link',
+          'modal',
+          'paused',
+          'playing',
+          'required',
+          'target',
+          'valid',
+          'visited',
+        ],
         replace: {
           size: {
             small: 'sm',

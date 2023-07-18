@@ -44,8 +44,14 @@ export const transformComponentsToTailwind = (
         if (!ref[className][`&:checked`]) ref[className][`&:checked`] = {};
         ref[className][`&:checked`][key] = tokenValue.value;
       } else {
-        if (!ref[className][`&:${componentState}`]) ref[className][`&:${componentState}`] = {};
-        ref[className][`&:${componentState}`][key] = tokenValue.value;
+        if(handoff?.config?.figma?.options?.transformer?.pseudoStates?.includes(componentState)) {
+          if (!ref[className][`&:${componentState}`]) ref[className][`&:${componentState}`] = {};
+          ref[className][`&:${componentState}`][key] = tokenValue.value;
+        }else{
+          if (!ref[`${className}-${componentState}`]) ref[`${className}-${componentState}`] = {};
+          ref[`${className}-${componentState}`][key] = tokenValue.value;
+        }
+        
       }
     });
   });

@@ -56,6 +56,28 @@ exports.defaultConfig = {
                 },
             },
             transformer: {
+                pseudoStates: [
+                    'active',
+                    'blank',
+                    'checked',
+                    'current',
+                    'default',
+                    'disabled',
+                    'empty',
+                    'enabled',
+                    'focus',
+                    'hover',
+                    'invalid',
+                    'left',
+                    'link',
+                    'modal',
+                    'paused',
+                    'playing',
+                    'required',
+                    'target',
+                    'valid',
+                    'visited',
+                ],
                 replace: {
                     size: {
                         small: 'sm',

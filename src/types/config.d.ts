@@ -28,6 +28,7 @@ export interface FigmaSearch {
       };
     };
     transformer?: {
+      pseudoStates: string[];
       replace: {
         size: {
           [key: string]: string;
