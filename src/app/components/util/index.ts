@@ -342,9 +342,12 @@ export const fetchExportables = () => {
 
     const exportables = definitions
       .map((def) => {
-        const defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-
-        if (!fs.existsSync(defPath)) {
+        let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
+        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+        // If the project path exists, use that first as an override
+        if (fs.existsSync(projectPath)) {
+          defPath = projectPath;
+        } else if (!fs.existsSync(defPath)) {
           return null;
         }
 
