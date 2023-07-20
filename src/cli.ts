@@ -156,6 +156,19 @@ Eject must have a subcommand. Did you mean:
           cliError(`Exportable name must be alphanumeric and may contain dashes or underscores`, 2);
         }
         return handoff.makeExportable(type, name);
+      case 'make:template':
+          const templateComponent = args._[1];
+          if (!templateComponent) {
+            cliError(`You must supply a component name`, 2);
+          }
+          if (!/^[a-z0-9]+$/i.test(templateComponent)) {
+            cliError(`Template component must be alphanumeric and may contain dashes or underscores`, 2);
+          }
+          let templateState = args._[2];
+          if (templateState && !/^[a-z0-9]+$/i.test(templateComponent)) {
+            cliError(`Template state must be alphanumeric and may contain dashes or underscores`, 2);
+          }
+          return handoff.makeTemplate(templateComponent, templateState);
       default:
         return showHelp();
     }

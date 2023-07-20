@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeExportable = void 0;
+exports.makeTemplate = exports.makeExportable = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
@@ -80,8 +80,8 @@ var makeExportable = function (handoff, type, name) { return __awaiter(void 0, v
                 templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'exportable.json'));
                 template = JSON.parse(fs_extra_1.default.readFileSync(templatePath, 'utf8'));
                 template.id = name;
-                template.group = type;
-                template.options.exporter.search = name;
+                template.group = type.slice(0, 1).toUpperCase() + type.slice(1, type.length) + 's';
+                template.options.exporter.search = name.slice(0, 1).toUpperCase() + name.slice(1, type.length);
                 template.options.transformer.rootCssClass = name;
                 template.options.transformer.cssVariableTemplate = name + template.options.transformer.cssVariableTemplate;
                 template.options.transformer.scssVariableTemplate = name + template.options.transformer.scssVariableTemplate;
@@ -92,3 +92,49 @@ var makeExportable = function (handoff, type, name) { return __awaiter(void 0, v
     });
 }); };
 exports.makeExportable = makeExportable;
+/**
+ * Make a new exportable component
+ * @param handoff
+ */
+var makeTemplate = function (handoff, component, state) { return __awaiter(void 0, void 0, void 0, function () {
+    var config, workingPath, target, templatePath, template;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, handoff.config];
+            case 1:
+                config = _a.sent();
+                if (!component) {
+                    console.log(chalk_1.default.red("Template component must be set"));
+                    return [2 /*return*/];
+                }
+                if (!state) {
+                    state = 'default';
+                }
+                if (!/^[a-z0-9]+$/i.test(component)) {
+                    console.log(chalk_1.default.red("Template component must be alphanumeric and may contain dashes or underscores"));
+                    return [2 /*return*/];
+                }
+                if (!/^[a-z0-9]+$/i.test(state)) {
+                    console.log(chalk_1.default.red("Template state must be alphanumeric and may contain dashes or underscores"));
+                    return [2 /*return*/];
+                }
+                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/templates/".concat(component, "s")));
+                if (!fs_extra_1.default.existsSync(workingPath)) {
+                    fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
+                }
+                target = path_1.default.resolve(workingPath, "".concat(state, ".html"));
+                if (fs_extra_1.default.existsSync(target)) {
+                    if (!handoff.force) {
+                        console.log(chalk_1.default.yellow("'".concat(state, "' already exists as custom template.  Use the --force flag revert it to default.")));
+                        return [2 /*return*/];
+                    }
+                }
+                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'template.html'));
+                template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
+                fs_extra_1.default.writeFileSync(target, template);
+                console.log(chalk_1.default.green("New template ".concat(state, ".html was created in ").concat(workingPath)));
+                return [2 /*return*/, handoff];
+        }
+    });
+}); };
+exports.makeTemplate = makeTemplate;

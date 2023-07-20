@@ -350,14 +350,12 @@ export const fetchExportables = () => {
         } else if (!fs.existsSync(defPath)) {
           return null;
         }
-
         const defBuffer = fs.readFileSync(defPath);
         const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
 
         const exportableOptions = {};
         merge(exportableOptions, config.figma?.options, exportable.options);
         exportable.options = exportableOptions as ExportableOptions;
-
         return exportable;
       })
       .filter(filterOutNull);
@@ -378,8 +376,14 @@ export const fetchExportable = (name: string) => {
     return null;
   }
 
-  const defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-
+  let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+  // If the project path exists, use that first as an override
+  if (fs.existsSync(projectPath)) {
+    defPath = projectPath;
+  } else if (!fs.existsSync(defPath)) {
+    return null;
+  }
   if (!fs.existsSync(defPath)) {
     return null;
   }
