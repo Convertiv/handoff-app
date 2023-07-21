@@ -60,7 +60,7 @@ var _1 = __importDefault(require("."));
 var HandoffCliError = /** @class */ (function (_super) {
     __extends(HandoffCliError, _super);
     function HandoffCliError(message) {
-        var _this = 
+        var _this =
         // 'Error' breaks prototype chain here
         _super.call(this, message) || this;
         _this.exitCode = 1;
@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.6.1', 2);
+    cliError('Handoff App - 0.7.1', 2);
 };
 /**
  * Define a CLI error
@@ -158,7 +158,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 return [2 /*return*/, handoff_1.dev()];
             case 6: return [2 /*return*/, handoff_1.integration()];
             case 7:
-                cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean: \n  - eject:config\n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
+                cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
                 _b.label = 8;
             case 8: return [2 /*return*/, handoff_1.ejectConfig()];
             case 9: return [2 /*return*/, handoff_1.ejectIntegration()];
