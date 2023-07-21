@@ -118,7 +118,7 @@ var makeTemplate = function (handoff, component, state) { return __awaiter(void 
                     console.log(chalk_1.default.red("Template state must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/templates/".concat(component, "s")));
+                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/templates/".concat(component)));
                 if (!fs_extra_1.default.existsSync(workingPath)) {
                     fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
                 }
