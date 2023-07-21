@@ -74,4 +74,4 @@ export declare const getReducedTokenPropertyPath: (component: Component, part: s
  * @param options
  * @returns
  */
-export declare const normalizeTokenNameVariableValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string | undefined;
+export declare const normalizeTokenNameVariableValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string;

@@ -43,7 +43,7 @@ export declare function findChildNodeWithType<Type extends FigmaTypes.Node['type
 export declare function findChildNodeWithTypeAndName<Type extends FigmaTypes.Node['type']>(node: FigmaTypes.Node, type: Type, name: string): Extract<FigmaTypes.Node, {
     type: Type;
 }> | null;
-export declare function getComponentNamePart(componentName: string, partKey: string): string | undefined;
+export declare function getComponentNamePart(componentName: string, partKey: string): string;
 export declare const isValidVariantProperty: (variantProperty: string) => variantProperty is VariantProperty;
 export declare const isExportable: (exportable: string) => exportable is Exportable;
 export declare const isValidNodeType: (type: string) => type is "DOCUMENT" | "CANVAS" | "FRAME" | "GROUP" | "VECTOR" | "BOOLEAN_OPERATION" | "STAR" | "LINE" | "ELLIPSE" | "REGULAR_POLYGON" | "RECTANGLE" | "TEXT" | "SLICE" | "COMPONENT" | "COMPONENT_SET" | "INSTANCE";

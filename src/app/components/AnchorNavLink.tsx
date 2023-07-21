@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { Link } from 'react-scroll';
 
 export interface AnchorNavLinkProps {
-  children?: React.ReactNode;
+  children: ReactNode;
   to: string;
 }
 
