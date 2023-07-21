@@ -60,7 +60,7 @@ export const getStaticProps: next.GetStaticProps = async () => {
   }
 };
 
-const Typography = ({ content, menu, metadata, current, scss, css, types, config, design }: FoundationDocumentationProps) => {
+const Typography = ({ content, menu, metadata, current, scss, css, styleDictionary, types, config, design }: FoundationDocumentationProps) => {
   const [copy, setCopy] = React.useState('Copy link to clipboard');
 
   const typography = design.typography.slice().sort((a, b) => {
@@ -95,7 +95,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, types, config
             <div>
               <h1 className="c-title--extra-large">{metadata.title}</h1>
               <p className="u-mb-2">{metadata.description}</p>
-              <DownloadTokens componentId="typography" scss={scss} css={css} types={types} />
+              <DownloadTokens componentId="typography" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
           </div>

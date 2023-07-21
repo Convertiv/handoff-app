@@ -44,7 +44,7 @@ export const getStaticProps: GetStaticProps = async () => {
   };
 };
 
-const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design, config }: util.FoundationDocumentationProps) => {
+const ColorsPage = ({ content, menu, metadata, current, css, scss, styleDictionary, types, design, config }: util.FoundationDocumentationProps) => {
   const effectGroups = Object.fromEntries(
     Object.entries(groupBy(design.effect, 'group')).map(([groupKey, effects]) => {
       return [
@@ -71,7 +71,7 @@ const ColorsPage = ({ content, menu, metadata, current, css, scss, types, design
             <div>
               <h1 className="c-title--extra-large">{metadata.title}</h1>
               <p className="u-mb-2">{metadata.description}</p>
-              <DownloadTokens componentId="effects" scss={scss} css={css} types={types} />
+              <DownloadTokens componentId="effects" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
           </div>

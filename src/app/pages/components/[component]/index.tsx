@@ -55,7 +55,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, types, components, previews, config }: ComponentDocumentationProps) => {
+const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, styleDictionary, types, components, previews, config }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   const designComponents: ComponentDesign[] = components ? components.filter(
     (component): component is ComponentDesign => component.componentType === 'design'
@@ -121,7 +121,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {activeTab == ComponentTab.DesignTokens && (
               <>
                 <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
-                  <DownloadTokens componentId={component} scss={scss} css={css} types={types} />
+                  <DownloadTokens componentId={component} scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
                 </div>
                 {designTokensTabComponents.map(previewableComponent => (
                   <ComponentDesignTokens
