@@ -41,6 +41,7 @@ declare class Handoff {
     ejectPages(): Promise<Handoff>;
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
+    makePage(name: string, parent: string): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;

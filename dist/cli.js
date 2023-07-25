@@ -60,7 +60,7 @@ var _1 = __importDefault(require("."));
 var HandoffCliError = /** @class */ (function (_super) {
     __extends(HandoffCliError, _super);
     function HandoffCliError(message) {
-        var _this =
+        var _this = 
         // 'Error' breaks prototype chain here
         _super.call(this, message) || this;
         _this.exitCode = 1;
@@ -69,7 +69,7 @@ var HandoffCliError = /** @class */ (function (_super) {
     }
     return HandoffCliError;
 }(Error));
-var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts] - Fetches the design tokens from the design system\n\n  build - Using the current tokens, build various outputs\n    build:app [opts] - Builds the design system static application\n    build:integration [opts] - Builds current selected integration, styles and previews\n\n  start [opts] - Starts the design system in development mode\n\n  make\n    make:exportable <type> <name> [opts] - Creates a new schema\n    make:template <component> <state> [opts] - Creates a new template\n    make:page <component> <state> [opts] - Creates a new page\n\n  eject - Ejects the default entire configuration to the current directory\n    eject:config [opts] - Ejects the default configuration to the current directory\n    eject:integration [opts] - Ejects the default integration to the current directory\n    eject:exportables [opts] - Ejects the default exportables to the current directory\n    eject:pages [opts] - Ejects the default pages to the current directory\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
+var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts] - Fetches the design tokens from the design system\n\n  build - Using the current tokens, build various outputs\n    build:app [opts] - Builds the design system static application\n    build:integration [opts] - Builds current selected integration, styles and previews\n\n  start [opts] - Starts the design system in development mode\n\n  make\n    make:exportable <type> <name> [opts] - Creates a new schema\n    make:template <component> <state> [opts] - Creates a new template\n    make:page <name> <parent> [opts] - Creates a new custom page\n\n  eject - Ejects the default entire configuration to the current directory\n    eject:config [opts] - Ejects the default configuration to the current directory\n    eject:integration [opts] - Ejects the default integration to the current directory\n    eject:exportables [opts] - Ejects the default exportables to the current directory\n    eject:pages [opts] - Ejects the default pages to the current directory\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
 /**
  * Show the help message
  */
@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.7.1', 2);
+    cliError('Handoff App - 0.7.2', 2);
 };
 /**
  * Define a CLI error
@@ -96,11 +96,11 @@ var cliError = function (msg, exitCode) {
 };
 var watching = false;
 var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, void 0, function () {
-    var args, handoff_1, _a, type, name_1, templateComponent, templateState, e_1;
+    var args, handoff_1, _a, type, name_1, templateComponent, templateState, pageName, pageParent, e_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 16, , 17]);
+                _b.trys.push([0, 17, , 18]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -143,8 +143,9 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'eject:pages': return [3 /*break*/, 11];
                     case 'make:exportable': return [3 /*break*/, 12];
                     case 'make:template': return [3 /*break*/, 13];
+                    case 'make:page': return [3 /*break*/, 14];
                 }
-                return [3 /*break*/, 14];
+                return [3 /*break*/, 15];
             case 1: return [2 /*return*/, handoff_1.fetch()];
             case 2: return [4 /*yield*/, handoff_1.build()];
             case 3:
@@ -190,14 +191,27 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Template state must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff_1.makeTemplate(templateComponent, templateState)];
-            case 14: return [2 /*return*/, showHelp()];
-            case 15: return [3 /*break*/, 17];
-            case 16:
+            case 14:
+                pageName = args._[1];
+                if (!pageName) {
+                    cliError("You must supply a page name", 2);
+                }
+                if (!/^[a-z0-9]+$/i.test(pageName)) {
+                    cliError("Page name must be alphanumeric and may contain dashes or underscores", 2);
+                }
+                pageParent = args._[2];
+                if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
+                    cliError("Page parent must be alphanumeric and may contain dashes or underscores", 2);
+                }
+                return [2 /*return*/, handoff_1.makePage(pageName, pageParent)];
+            case 15: return [2 /*return*/, showHelp()];
+            case 16: return [3 /*break*/, 18];
+            case 17:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 17: return [2 /*return*/];
+            case 18: return [2 /*return*/];
         }
     });
 }); };

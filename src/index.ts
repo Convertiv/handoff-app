@@ -9,7 +9,7 @@ import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';
 import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
-import { makeExportable, makeTemplate } from './cli/make';
+import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 var handoff = null;
@@ -128,6 +128,12 @@ class Handoff {
   async makeTemplate(component: string, state: string): Promise<Handoff> {
     if (this.config) {
       await makeTemplate(this, component, state);
+    }
+    return this;
+  }
+  async makePage(name: string, parent: string): Promise<Handoff> {
+    if (this.config) {
+      await makePage(this, name, parent);
     }
     return this;
   }
