@@ -1,4 +1,6 @@
 import webpack from 'webpack';
+import fs from 'fs-extra';
+import globImporter from 'node-sass-glob-importer';
 import path from 'path';
 import chalk from 'chalk';
 // import { pluginTransformer } from '../transformers/plugin';
@@ -16,10 +18,14 @@ export const buildClientFiles = async (): Promise<string> => {
       mode: 'production',
       entry,
       resolve: {
+        alias: {
+          '@integration': path.join(handoff.workingPath, 'integration/sass'),
+        },
         modules: [
           path.resolve(handoff?.modulePath, 'src'),
           path.resolve(handoff?.modulePath, 'node_modules'),
           path.resolve(handoff?.workingPath, 'node_modules'),
+          path.resolve(handoff?.workingPath, 'integration/sass'),
         ],
       },
       output: {
@@ -27,10 +33,7 @@ export const buildClientFiles = async (): Promise<string> => {
         filename: 'bundle.js',
       },
       resolveLoader: {
-        modules: [
-          path.resolve(handoff?.modulePath, 'node_modules'), 
-          path.resolve(handoff?.workingPath, 'node_modules')
-        ],
+        modules: [path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
       },
       module: {
         rules: [
@@ -46,8 +49,19 @@ export const buildClientFiles = async (): Promise<string> => {
                 loader: 'sass-loader',
                 options: {
                   sassOptions: {
+                    importer: globImporter(),
                     indentWidth: 4,
-                    includePaths: [ path.resolve(handoff?.workingPath, 'node_modules'),path.resolve(handoff?.modulePath, 'node_modules')],
+                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules')],
+                  },
+                  additionalData: async (content, loaderContext) => {
+                    const integrationPath = path.join(handoff.workingPath, 'integration/sass');
+
+                    if (fs.existsSync(integrationPath)) {
+                      fs.readdirSync(integrationPath).forEach(file => {
+                        content = content + `\n @import "@integration/${file}";`;
+                      });
+                    }
+                    return content;
                   },
                 },
               },
