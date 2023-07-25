@@ -60,7 +60,7 @@ var _1 = __importDefault(require("."));
 var HandoffCliError = /** @class */ (function (_super) {
     __extends(HandoffCliError, _super);
     function HandoffCliError(message) {
-        var _this =
+        var _this = 
         // 'Error' breaks prototype chain here
         _super.call(this, message) || this;
         _this.exitCode = 1;
@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.7.1', 2);
+    cliError('Handoff App - 0.7.1-dev', 2);
 };
 /**
  * Define a CLI error

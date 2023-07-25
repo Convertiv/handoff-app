@@ -57,6 +57,9 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                     mode: 'production',
                     entry: entry,
                     resolve: {
+                        alias: {
+                            integration: path_1.default.join(handoff.workingPath, 'integration/scss'),
+                        },
                         modules: [
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
@@ -68,10 +71,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
-                        modules: [
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')
-                        ],
+                        modules: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
                     },
                     module: {
                         rules: [
