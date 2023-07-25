@@ -26,53 +26,9 @@
 
 @import 'variables-default';
 
-@import './exported/tokens/types/alert';
-@import './exported/tokens/sass/alert';
-@import './exported/tokens/css/alert';
-
-@import './exported/tokens/types/button';
-@import './exported/tokens/sass/button';
-@import './exported/tokens/css/button';
-
-@import './exported/tokens/types/checkbox';
-@import './exported/tokens/sass/checkbox';
-@import './exported/tokens/css/checkbox';
-
-@import './exported/tokens/types/colors';
-@import './exported/tokens/sass/colors';
-@import './exported/tokens/css/colors';
-
-@import './exported/tokens/types/effects';
-@import './exported/tokens/sass/effects';
-//@import './exported/tokens/css/effects';
-
-@import './exported/tokens/types/input';
-@import './exported/tokens/sass/input';
-@import './exported/tokens/css/input';
-
-//@import './exported/tokens/types/modal';
-//@import './exported/tokens/sass/modal';
-//@import './exported/tokens/css/modal';
-
-@import './exported/tokens/types/radio';
-@import './exported/tokens/sass/radio';
-@import './exported/tokens/css/radio';
-
-//@import './exported/tokens/types/select';
-//@import './exported/tokens/sass/select';
-//@import './exported/tokens/css/select';
-
-@import './exported/tokens/types/switch';
-@import './exported/tokens/sass/switch';
-@import './exported/tokens/css/switch';
-
-@import './exported/tokens/types/tooltip';
-@import './exported/tokens/sass/tooltip';
-@import './exported/tokens/css/tooltip';
-
-@import './exported/tokens/types/typography';
-@import './exported/tokens/sass/typography';
-@import './exported/tokens/css/typography';
+@import './exported/tokens/types/*';
+@import './exported/tokens/sass/*';
+@import './exported/tokens/css/*';
 
 // 3. Project Variables
 // ------------------------------------------------------------------
