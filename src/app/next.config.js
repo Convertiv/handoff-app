@@ -29,8 +29,8 @@ const nextConfig = {
         const clientConfig = require(path.resolve('handoff.config.json'));
         // Check if client configuration is a valid object
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
-          // Check if the client configuration specifies a theme + also
-          // check if the theme exists in the 'themes' folder
+          // Check if the client configuration specifies a theme
+          // If the theme is specified, check if the theme exists in the 'themes' folder
           if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('themes', `${clientConfig['theme']}.scss`))) {
             // Use custom theme
             return content + `@import 'themes/${clientConfig['theme']}';`;
