@@ -55,6 +55,12 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   });
   const handle = app.getRequestHandler();
 
+  // purge out cache
+  const moduleOutput = path.resolve(appPath, 'out');
+  if (fs.existsSync(moduleOutput)) {
+    fs.removeSync(moduleOutput);
+  }
+
   app.prepare().then(() => {
     createServer(async (req, res) => {
       try {
@@ -138,6 +144,14 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // purge out cache
+  const appPath = path.resolve(handoff.modulePath, 'src', 'app');
+  const moduleOutput = path.resolve(appPath, 'out');
+  if (fs.existsSync(moduleOutput)) {
+    fs.removeSync(moduleOutput);
+  }
+
   return await nextDev([path.resolve(handoff.modulePath, 'src/app'), '-p', '3000']);
 };
 
