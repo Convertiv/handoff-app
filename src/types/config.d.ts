@@ -73,6 +73,7 @@ export interface Config {
    * @default "/logo.svg"
    */
   logo?: string;
+  theme?: string;
   type_sort: string[];
   type_copy: string;
   color_sort: string[];
