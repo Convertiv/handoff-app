@@ -16,7 +16,7 @@
 	&:focus {
 		background-color: $checkbox-off-color;
 		border-color: $checkbox-off-border-color;
-    border-style: $checkbox-off-border-style;
+		border-style: $checkbox-off-border-style;
 		box-shadow: var( --checkbox-hover-check-off-box-shadow );
 	}
 
@@ -24,7 +24,7 @@
 	.form-check:hover & {
 		background-color: $checkbox-hover-off-color;
 		border-color: $checkbox-hover-off-border-color;
-    border-style: $checkbox-hover-off-border-style;
+		border-style: $checkbox-hover-off-border-style;
 		box-shadow: var( --checkbox-hover-check-off-box-shadow );
 	}
 
@@ -36,20 +36,20 @@
 	.form-check:hover &:disabled {
 		background-color: $checkbox-disabled-off-color;
 		border-color: $checkbox-disabled-off-border-color;
-    border-style: $checkbox-disabled-off-border-style;
+		border-style: $checkbox-disabled-off-border-style;
 		box-shadow: $checkbox-disabled-off-box-shadow;
 	}
 
 	&:checked {
 		background-color: $checkbox-on-color;
 		border-color: $checkbox-on-border-color;
-    border-style: $checkbox-on-border-style;
+		border-style: $checkbox-on-border-style;
 		box-shadow: var( --checkbox-check-on-box-shadow );
 
 		&:focus {
 			background-color: $checkbox-on-color;
 			border-color: $checkbox-on-border-color;
-      border-style: $checkbox-on-border-style;
+			border-style: $checkbox-on-border-style;
 			box-shadow: var( --checkbox-check-on-box-shadow );
 		}
 
@@ -57,7 +57,7 @@
 		.form-check:hover & {
 			background-color: $checkbox-hover-on-color;
 			border-color: $checkbox-hover-on-border-color;
-      border-style: $checkbox-hover-on-border-style;
+			border-style: $checkbox-hover-on-border-style;
 			box-shadow: var( --checkbox-hover-check-on-box-shadow );
 		}
 
@@ -69,7 +69,7 @@
 		.form-check:hover &:disabled {
 			background-color: $checkbox-disabled-on-color;
 			border-color: $checkbox-disabled-on-border-color;
-      border-style: $checkbox-disabled-on-border-style;
+			border-style: $checkbox-disabled-on-border-style;
 			box-shadow: $checkbox-disabled-on-box-shadow;
 		}
 	}
