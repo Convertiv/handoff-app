@@ -87,4 +87,32 @@ export const ejectPages = async (handoff: Handoff) => {
   return handoff;
 };
 
+/**
+ * Eject the integration to the working directory
+ * @param handoff
+ */
+export const ejectTheme = async (handoff: Handoff) => {
+  const config = await handoff.config;
+  // does an local page exist?
+  const workingPath = path.resolve(path.join(handoff.workingPath, 'theme', 'main.scss'));
+  if (fs.existsSync(workingPath)) {
+    if (!handoff.force) {
+      console.log(
+        chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`)
+      );
+      return;
+    }
+  }
+  const currentTheme = handoff.config.theme ?? 'default';
+  const docsPath = path.resolve(path.join(handoff.modulePath, `src/app/sass/_${currentTheme}.scss`));
+  if(fs.existsSync(docsPath)){
+    fs.copySync(docsPath, workingPath, { overwrite: false });
+    console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
+  }else {
+    console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
+  }
+  
+  return handoff;
+};
+
 export default ejectConfig;
