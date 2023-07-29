@@ -23,6 +23,13 @@ const nextConfig = {
   },
   sassOptions: {
     additionalData: (content, loaderContext) => {
+      // Check if custom CSS exists
+      if(fs.existsSync('theme')) {
+        fs.readdirSync('theme').forEach(file => {
+          // Ingest additional css
+          content = content + `\n @import "theme/${file}";`;
+        });
+      }
       // Check if client configuration exists
       if (fs.existsSync('handoff.config.json')) {
         // Load client configuration
