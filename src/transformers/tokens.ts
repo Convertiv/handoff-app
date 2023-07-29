@@ -45,6 +45,7 @@ const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): TokenDict => ({
   'border-width': `${tokenSet.weight}px`,
   'border-radius': `${tokenSet.radius}px`,
   'border-color': transformFigmaFillsToCssColor(tokenSet.strokes, true).color,
+  'border-style': (tokenSet.dashes[0] ?? 0) === 0 ? 'solid' : 'dashed',
 });
 
 const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): TokenDict => ({

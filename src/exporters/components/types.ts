@@ -25,6 +25,7 @@ export interface BorderTokenSet extends BaseTokenSet {
   weight: number;
   radius: number;
   strokes: FigmaTypes.Paint[];
+  dashes: number[];
 }
 
 export interface SpacingTokenSet extends BaseTokenSet {

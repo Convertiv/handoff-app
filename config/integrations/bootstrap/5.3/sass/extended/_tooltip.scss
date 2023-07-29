@@ -6,6 +6,7 @@
 .tooltip {
 	border-width: var( --tooltip-border-width );
 	border-color: var( --tooltip-border-color );
+  border-style: var( --tooltip-border-style );
 }
 
 // Tooltip content
