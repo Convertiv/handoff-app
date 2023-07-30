@@ -42,7 +42,7 @@ var getSpacingTokenSetTokens = function (tokenSet) { return ({
 var getBorderTokenSetTokens = function (tokenSet) { return ({
     'border-width': "".concat(tokenSet.weight, "px"),
     'border-radius': "".concat(tokenSet.radius, "px"),
-    'border-color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes).color,
+    'border-color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes, true).color,
 }); };
 var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'font-family': "'".concat(tokenSet.fontFamily, "'"),
@@ -55,7 +55,7 @@ var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase)
 }); };
 var getFillTokenSetTokens = function (tokenSet) { return ({
-    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
+    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color, true).color,
 }); };
 var getEffectTokenSetTokens = function (tokenSet) { return ({
     'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
