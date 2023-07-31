@@ -19,6 +19,7 @@ This release improves existing functionalities and issue detected within the des
 - Added `eject:theme` which will eject the currently set theme into `theme/main.scss`
 - Added `make:page` command to CLI for creating custom pages or editing existing pages
 - Adds a flattening algorithm when color blending on properties that do not support blending like `color` and `border-color`
+- Purge the app build cache when restarting the app to prevent cache from holding old copies of customized files.
 
 ### Bugfixes
 
