@@ -1,4 +1,6 @@
+const fs = require('fs-extra');
 const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
@@ -18,6 +20,26 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+  sassOptions: {
+    additionalData: (content, loaderContext) => {
+      // Check if client configuration exists
+      if (fs.existsSync('handoff.config.json')) {
+        // Load client configuration
+        const clientConfig = require(path.resolve('handoff.config.json'));
+        // Check if client configuration is a valid object
+        if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
+          // Check if the client configuration specifies a theme
+          // If the theme is specified, check if the theme exists in the 'themes' folder
+          if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('themes', `${clientConfig['theme']}.scss`))) {
+            // Use custom theme
+            return content + `@import 'themes/${clientConfig['theme']}';`;
+          }
+        }
+      }
+      // Use default theme
+      return content + `@import 'themes/default';`
+    },
   },
   webpack: (config) => {
     config.resolve.fallback = { fs: false };

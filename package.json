@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
@@ -64,6 +64,7 @@
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "@types/react-scroll": "^1.8.6",
+    "@types/react-syntax-highlighter": "^15.5.7",
     "@types/refractor": "^3.0.2",
     "@types/webpack": "^5.28.0",
     "archiver": "^5.3.1",
@@ -75,6 +76,7 @@
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
     "classnames": "^2.3.2",
+    "clsx": "^2.0.0",
     "concurrently": "^7.4.0",
     "cross-spawn": "^7.0.3",
     "css-loader": "^6.7.2",
@@ -91,6 +93,7 @@
     "mustache": "^4.2.0",
     "next": "^13.4.7",
     "node-html-parser": "^6.1.4",
+    "node-sass-glob-importer": "^5.3.3",
     "postcss": "^8.4.16",
     "postcss-loader": "^7.3.0",
     "postcss-scss": "^4.0.5",
@@ -108,8 +111,7 @@
     "stylelint-scss": "^4.3.0",
     "tailwindcss": "^3.3.2",
     "typescript": "4.8.3",
-    "webpack": "^5.75.0",
-    "@types/react-syntax-highlighter": "^15.5.7"
+    "webpack": "^5.75.0"
   },
   "devDependencies": {
     "np": "^7.6.2"

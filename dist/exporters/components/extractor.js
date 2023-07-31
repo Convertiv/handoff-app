@@ -273,6 +273,7 @@ function extractNodeBorder(node) {
         weight: 'strokeWeight' in node ? (_a = node.strokeWeight) !== null && _a !== void 0 ? _a : 0 : 0,
         radius: 'cornerRadius' in node ? (_b = node.cornerRadius) !== null && _b !== void 0 ? _b : 0 : 0,
         strokes: 'strokes' in node ? node.strokes.slice() : [],
+        dashes: 'strokeDashes' in node ? node.strokeDashes.concat() : [0, 0],
     };
 }
 function extractNodeSpacing(node) {

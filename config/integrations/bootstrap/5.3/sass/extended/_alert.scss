@@ -11,6 +11,7 @@
 		--#{$prefix}alert-border: var( --alert-#{$variant}-border-width ) solid var( --alert-#{$variant}-border-color );
 		background: var( --alert-#{$variant}-background );
 		border-radius: var( --alert-#{$variant}-border-radius );
+		border-style: var( --alert-#{$variant}-border-style );
 		font-family: var( --alert-#{$variant}-text-font-family );
 		font-size: var( --alert-#{$variant}-text-font-size );
 		font-weight: var( --alert-#{$variant}-text-font-weight );

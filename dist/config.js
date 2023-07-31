@@ -29,6 +29,7 @@ exports.defaultConfig = {
     },
     favicon: '/favicon.ico',
     logo: '/logo.svg',
+    theme: 'default',
     poweredBy: true,
     type_sort: [
         'Heading 1',

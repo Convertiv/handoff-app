@@ -124,19 +124,32 @@ function transformFigmaPaintToCssColor(paint, asLinearGradient) {
     return gradient ? transformGradientToCss(gradient, paint.type) : null;
 }
 exports.transformFigmaPaintToCssColor = transformFigmaPaintToCssColor;
-var transformFigmaFillsToCssColor = function (fills, fallbackColor, fallbackBlendMode) {
+var transformFigmaFillsToCssColor = function (fills, forceHexOrRgbaValue) {
     var _a;
-    if (fallbackColor === void 0) { fallbackColor = 'transparent'; }
-    if (fallbackBlendMode === void 0) { fallbackBlendMode = 'normal'; }
-    fills = __spreadArray([], fills, true).reverse();
+    if (forceHexOrRgbaValue === void 0) { forceHexOrRgbaValue = false; }
     var count = (_a = fills === null || fills === void 0 ? void 0 : fills.length) !== null && _a !== void 0 ? _a : 0;
-    var hasMoreThanOneLayer = count > 1;
-    var colorValue = count > 0
-        ? fills.map(function (fill, i) { return transformFigmaPaintToCssColor(fill, hasMoreThanOneLayer && i !== (count - 1)); }).filter(Boolean).join(', ')
-        : fallbackColor;
-    var blendValue = hasMoreThanOneLayer
-        ? fills.map(function (fill) { return fill.blendMode.toLowerCase().replaceAll('_', '-'); }).filter(Boolean).join(', ')
-        : fallbackBlendMode;
+    var hasLayers = count > 0;
+    var hasMultipleLayers = count > 1;
+    var colorValue = 'transparent';
+    var blendValue = 'normal';
+    if (hasLayers) {
+        if (forceHexOrRgbaValue && hasMultipleLayers) {
+            colorValue = (0, exports.transformFigmaColorToCssColor)(blendFigmaColors(fills.map(function (fill) {
+                var _a;
+                return ({
+                    r: fill.color.r,
+                    g: fill.color.g,
+                    b: fill.color.b,
+                    a: fill.color.a * ((_a = fill.opacity) !== null && _a !== void 0 ? _a : 1)
+                });
+            })));
+        }
+        else {
+            fills = __spreadArray([], fills, true).reverse();
+            colorValue = fills.map(function (fill, i) { return transformFigmaPaintToCssColor(fill, hasMultipleLayers && i !== (count - 1)); }).filter(Boolean).join(', ');
+            blendValue = fills.map(function (fill) { return fill.blendMode.toLowerCase().replaceAll('_', '-'); }).filter(Boolean).join(', ');
+        }
+    }
     return {
         color: colorValue,
         blend: blendValue
@@ -199,3 +212,39 @@ function figmaColorToWebRGB(color) {
     return [Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255)];
 }
 exports.figmaColorToWebRGB = figmaColorToWebRGB;
+/**
+ * Blends multiple Figma colors into a single Figma color.
+ * Based on the JordanDelcros's JavaScript implementation https://gist.github.com/JordanDelcros/518396da1c13f75ee057
+ *
+ * @param {FigmaTypes.Color[]} figmaColors
+ * @returns
+ */
+function blendFigmaColors(figmaColors) {
+    var _a;
+    var base = [0, 0, 0, 0];
+    var mix, added;
+    var colors = figmaColors.map(function (color) { return figmaColorToWebRGB(color); });
+    while (added = colors.shift()) {
+        (_a = added[3]) !== null && _a !== void 0 ? _a : (added[3] = 1);
+        if (base[3] && added[3]) {
+            mix = [0, 0, 0, 0];
+            mix[3] = 1 - (1 - added[3]) * (1 - base[3]); // A
+            mix[0] = Math.round((added[0] * added[3] / mix[3]) + (base[0] * base[3] * (1 - added[3]) / mix[3])); // R
+            mix[1] = Math.round((added[1] * added[3] / mix[3]) + (base[1] * base[3] * (1 - added[3]) / mix[3])); // G
+            mix[2] = Math.round((added[2] * added[3] / mix[3]) + (base[2] * base[3] * (1 - added[3]) / mix[3])); // B
+        }
+        else if (added) {
+            mix = added;
+        }
+        else {
+            mix = base;
+        }
+        base = mix;
+    }
+    return {
+        r: mix[0] / 255,
+        g: mix[1] / 255,
+        b: mix[2] / 255,
+        a: mix[3],
+    };
+}

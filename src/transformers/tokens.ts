@@ -44,7 +44,8 @@ const getSpacingTokenSetTokens = (tokenSet: SpacingTokenSet): TokenDict => ({
 const getBorderTokenSetTokens = (tokenSet: BorderTokenSet): TokenDict => ({
   'border-width': `${tokenSet.weight}px`,
   'border-radius': `${tokenSet.radius}px`,
-  'border-color': transformFigmaFillsToCssColor(tokenSet.strokes).color,
+  'border-color': transformFigmaFillsToCssColor(tokenSet.strokes, true).color,
+  'border-style': (tokenSet.dashes[0] ?? 0) === 0 ? 'solid' : 'dashed',
 });
 
 const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): TokenDict => ({
@@ -59,7 +60,7 @@ const getTypographyTokenSetTokens = (tokenSet: TypographyTokenSet): TokenDict =>
 });
 
 const getFillTokenSetTokens = (tokenSet: FillTokenSet): TokenDict => ({
-  'color': transformFigmaFillsToCssColor(tokenSet.color).color,
+  'color': transformFigmaFillsToCssColor(tokenSet.color, true).color,
 });
 
 const getEffectTokenSetTokens = (tokenSet: EffectTokenSet): TokenDict => ({

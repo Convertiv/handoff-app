@@ -28,7 +28,7 @@ Commands:
   make
     make:exportable <type> <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
-    make:page <component> <state> [opts] - Creates a new page
+    make:page <name> <parent> [opts] - Creates a new custom page
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
@@ -54,7 +54,7 @@ const showHelp = () => {
  * Show the help message
  */
 const showVersion = () => {
-  cliError('Handoff App - 0.7.1-dev', 2);
+  cliError('Handoff App - 0.7.2', 2);
 };
 
 /**
@@ -130,11 +130,13 @@ const run = async (
 
 Eject must have a subcommand. Did you mean:
   - eject:config
-  - eject:exportables.
+  - eject:exportables
   - eject:integration
-  - eject:docs.`,
+  - eject:docs
+  - eject:theme.`,
           2
         );
+        break;
       case 'eject:config':
         return handoff.ejectConfig();
       case 'eject:integration':
@@ -143,6 +145,17 @@ Eject must have a subcommand. Did you mean:
         return handoff.ejectExportables();
       case 'eject:pages':
         return handoff.ejectPages();
+      case 'make':
+          cliError(
+            `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
+  
+  Make must have a subcommand. Did you mean:
+    - make:template
+    - make:exportable
+    - make:page`,
+            2
+          );
+          break;
       case 'make:exportable':
         const type = args._[1];
         if (!type) {
@@ -157,18 +170,31 @@ Eject must have a subcommand. Did you mean:
         }
         return handoff.makeExportable(type, name);
       case 'make:template':
-          const templateComponent = args._[1];
-          if (!templateComponent) {
-            cliError(`You must supply a component name`, 2);
-          }
-          if (!/^[a-z0-9]+$/i.test(templateComponent)) {
-            cliError(`Template component must be alphanumeric and may contain dashes or underscores`, 2);
-          }
-          let templateState = args._[2];
-          if (templateState && !/^[a-z0-9]+$/i.test(templateComponent)) {
-            cliError(`Template state must be alphanumeric and may contain dashes or underscores`, 2);
-          }
-          return handoff.makeTemplate(templateComponent, templateState);
+        const templateComponent = args._[1];
+        if (!templateComponent) {
+          cliError(`You must supply a component name`, 2);
+        }
+        if (!/^[a-z0-9]+$/i.test(templateComponent)) {
+          cliError(`Template component must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        let templateState = args._[2];
+        if (templateState && !/^[a-z0-9]+$/i.test(templateComponent)) {
+          cliError(`Template state must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        return handoff.makeTemplate(templateComponent, templateState);
+      case 'make:page':
+        const pageName = args._[1];
+        if (!pageName) {
+          cliError(`You must supply a page name`, 2);
+        }
+        if (!/^[a-z0-9]+$/i.test(pageName)) {
+          cliError(`Page name must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        let pageParent = args._[2];
+        if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
+          cliError(`Page parent must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        return handoff.makePage(pageName, pageParent);
       default:
         return showHelp();
     }

@@ -39,11 +39,15 @@ var getSpacingTokenSetTokens = function (tokenSet) { return ({
     'padding-end': "".concat(tokenSet.padding.RIGHT, "px"),
     'spacing': ["".concat(tokenSet.spacing, "px"), false],
 }); };
-var getBorderTokenSetTokens = function (tokenSet) { return ({
-    'border-width': "".concat(tokenSet.weight, "px"),
-    'border-radius': "".concat(tokenSet.radius, "px"),
-    'border-color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes).color,
-}); };
+var getBorderTokenSetTokens = function (tokenSet) {
+    var _a;
+    return ({
+        'border-width': "".concat(tokenSet.weight, "px"),
+        'border-radius': "".concat(tokenSet.radius, "px"),
+        'border-color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.strokes, true).color,
+        'border-style': ((_a = tokenSet.dashes[0]) !== null && _a !== void 0 ? _a : 0) === 0 ? 'solid' : 'dashed',
+    });
+};
 var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'font-family': "'".concat(tokenSet.fontFamily, "'"),
     'font-size': "".concat(tokenSet.fontSize, "px"),
@@ -55,7 +59,7 @@ var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase)
 }); };
 var getFillTokenSetTokens = function (tokenSet) { return ({
-    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color).color,
+    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color, true).color,
 }); };
 var getEffectTokenSetTokens = function (tokenSet) { return ({
     'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'

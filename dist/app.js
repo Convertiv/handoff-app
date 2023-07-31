@@ -90,7 +90,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath, dev, hostname, port, app, handle, chokidarConfig, debounce;
+    var appPath, config, tsconfigPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
     return __generator(this, function (_a) {
         if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
             throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -110,6 +110,10 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             conf: config,
         });
         handle = app.getRequestHandler();
+        moduleOutput = path_1.default.resolve(appPath, 'out');
+        if (fs_extra_1.default.existsSync(moduleOutput)) {
+            fs_extra_1.default.removeSync(moduleOutput);
+        }
         app.prepare().then(function () {
             (0, http_1.createServer)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
                 var parsedUrl, pathname, query, err_1;
@@ -232,11 +236,17 @@ exports.watchApp = watchApp;
  * @param handoff
  */
 var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath, moduleOutput;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+                }
+                appPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
+                moduleOutput = path_1.default.resolve(appPath, 'out');
+                if (fs_extra_1.default.existsSync(moduleOutput)) {
+                    fs_extra_1.default.removeSync(moduleOutput);
                 }
                 return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
             case 1: return [2 /*return*/, _a.sent()];
