@@ -39,6 +39,7 @@ declare class Handoff {
     ejectIntegration(): Promise<Handoff>;
     ejectExportables(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
+    ejectTheme(): Promise<Handoff>;
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;

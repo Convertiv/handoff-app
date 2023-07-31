@@ -23,6 +23,7 @@ const nextConfig = {
   },
   sassOptions: {
     additionalData: (content, loaderContext) => {
+      let foundTheme = false;
       // Check if client configuration exists
       if (fs.existsSync('handoff.config.json')) {
         // Load client configuration
@@ -33,12 +34,21 @@ const nextConfig = {
           // If the theme is specified, check if the theme exists in the 'themes' folder
           if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('themes', `${clientConfig['theme']}.scss`))) {
             // Use custom theme
-            return content + `@import 'themes/${clientConfig['theme']}';`;
+            foundTheme = true;
+            content = content + `\n@import 'themes/${clientConfig['theme']}';`;
           }
         }
       }
-      // Use default theme
-      return content + `@import 'themes/default';`
+      if (!foundTheme) {
+        // Use default theme
+        content = content + `\n@import 'themes/default';`;
+      }
+
+      // Check if custom CSS exists
+      if (fs.existsSync('theme/main.scss')) {
+        content = content + `\n@import "theme/main.scss";`;
+      }
+      return content;
     },
   },
   webpack: (config) => {
@@ -47,7 +57,7 @@ const nextConfig = {
     config.resolve.modules.push(path.resolve('node_modules'));
     config.resolveLoader.modules.push(path.resolve('node_modules'));
     config.module.rules.push({
-      test: /\.svg$/i, 
+      test: /\.svg$/i,
       type: 'asset',
     });
     config.module.rules.push({
