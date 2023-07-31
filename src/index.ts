@@ -8,7 +8,7 @@ import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly } from './pipeline';
-import { ejectConfig, ejectExportables, ejectIntegration, ejectPages } from './cli/eject';
+import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
@@ -66,7 +66,7 @@ class Handoff {
     return this;
   }
   preRunner(): Handoff {
-    if(!this.config) {
+    if (!this.config) {
       throw Error('Handoff not initialized');
     }
     this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
@@ -116,6 +116,12 @@ class Handoff {
   async ejectPages(): Promise<Handoff> {
     if (this.config) {
       await ejectPages(this);
+    }
+    return this;
+  }
+  async ejectTheme(): Promise<Handoff> {
+    if (this.config) {
+      await ejectTheme(this);
     }
     return this;
   }

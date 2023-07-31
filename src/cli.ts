@@ -35,6 +35,7 @@ Commands:
     eject:integration [opts] - Ejects the default integration to the current directory
     eject:exportables [opts] - Ejects the default exportables to the current directory
     eject:pages [opts] - Ejects the default pages to the current directory
+    eject:theme [opts] - Ejects the currently selected theme to theme/main.scss
 
 Options:
   -c, --config [file]      Define the path to the config file
@@ -141,6 +142,8 @@ Eject must have a subcommand. Did you mean:
         return handoff.ejectIntegration();
       case 'eject:exportables':
         return handoff.ejectExportables();
+      case 'eject:theme':
+        return handoff.ejectTheme();
       case 'eject:pages':
         return handoff.ejectPages();
       case 'make:exportable':
