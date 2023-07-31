@@ -12,7 +12,18 @@ This release improves existing functionalities and issue detected within the des
 
 ### Changes
 
+- Component style maps placed in `integration/scss` are now read in at build time allowing developers to provide custom scss mappings for components.
+- A new config `theme` has been added to allow toggling between themes. At present only a single default theme is provided
+- If a folder `theme/main.scss` is found in the working root of the project, that file will be included at build time to allow styling the app.
+- Globbing is now supported in scss integrations allowing more flexible ingest of component variables
+- Added `eject:theme` which will eject the currently set theme into `theme/main.scss`
 - Added `make:page` command to CLI for creating custom pages or editing existing pages
+- Adds a flattening algorithm when color blending on properties that do not support blending like `color` and `border-color`
+
+### Bugfixes
+
+- Fixes a bug with a missing `border-style` property when fetching from figma
+- Resolves issues where scss files in custom integration were not read.
 
 ## [0.7.1] - 2023-07-21
 
