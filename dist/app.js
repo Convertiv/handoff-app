@@ -61,6 +61,23 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
 var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
 /**
+ * Copy the public dir from the working dir to the module dir
+ * @param handoff
+ */
+var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var publicWorkingDir, publicModuleDir;
+    return __generator(this, function (_a) {
+        publicWorkingDir = path_1.default.resolve(handoff.workingPath, 'public');
+        publicModuleDir = path_1.default.resolve(handoff.modulePath, 'src/app/public');
+        // if public dir exists in working dir
+        if (fs_extra_1.default.existsSync(publicWorkingDir)) {
+            // move public dir from working dir to module dir
+            fs_extra_1.default.copySync(publicWorkingDir, publicModuleDir, { overwrite: true });
+        }
+        return [2 /*return*/];
+    });
+}); };
+/**
  * Build the next js application
  * @param handoff
  * @returns
@@ -73,6 +90,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                mergePublicDir(handoff);
                 return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
             case 1:
                 _a.sent();
@@ -95,6 +113,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
         if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
             throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
         }
+        mergePublicDir(handoff);
         appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
         config = require(path_1.default.resolve(appPath, 'next.config.js'));
         tsconfigPath = 'tsconfig.json';
@@ -180,6 +199,21 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         case 3: return [3 /*break*/, 4];
                         case 4: return [2 /*return*/];
                     }
+                });
+            }); });
+        }
+        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
+            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (event) {
+                        case 'add':
+                        case 'change':
+                        case 'unlink':
+                            console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
+                            mergePublicDir(handoff);
+                            break;
+                    }
+                    return [2 /*return*/];
                 });
             }); });
         }
