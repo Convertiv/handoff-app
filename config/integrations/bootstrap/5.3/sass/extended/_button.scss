@@ -20,6 +20,7 @@
 				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}#{$state}-font-weight );
 				--#{$prefix}btn#{$state}-bg: var( --button-#{$variant}#{$state}-background );
 				--#{$prefix}btn#{$state}-border-color: var( --button-#{$variant}#{$state}-border-color );
+				--#{$prefix}btn#{$state}-border-style: var( --button-#{$variant}#{$state}-border-style );
 				--#{$prefix}btn#{$state}-border-radius: var( --button-#{$variant}#{$state}-border-radius );
 				--#{$prefix}btn#{$state}-box-shadow: var( --button-#{$variant}#{$state}-box-shadow );
 			}
@@ -53,6 +54,7 @@
 				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}-dark#{$state}-font-weight );
 				--#{$prefix}btn#{$state}-bg: var( --button-#{$variant}-dark#{$state}-background );
 				--#{$prefix}btn#{$state}-border-color: var( --button-#{$variant}-dark#{$state}-border-color );
+				--#{$prefix}btn#{$state}-border-style: var( --button-#{$variant}-dark#{$state}-border-style );
 				--#{$prefix}btn#{$state}-border-radius: var( --button-#{$variant}-dark#{$state}-border-radius );
 				--#{$prefix}btn#{$state}-box-shadow: var( --button-#{$variant}-dark#{$state}-box-shadow );
 			}

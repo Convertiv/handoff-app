@@ -360,6 +360,7 @@ function extractNodeBorder(node: FigmaTypes.Node): ExportTypes.BorderTokenSet | 
     weight: 'strokeWeight' in node ? node.strokeWeight ?? 0 : 0,
     radius: 'cornerRadius' in node ? node.cornerRadius ?? 0 : 0,
     strokes: 'strokes' in node ? node.strokes.slice() : [],
+    dashes: 'strokeDashes' in node ? node.strokeDashes.concat() : [0, 0],
   };
 }
 
