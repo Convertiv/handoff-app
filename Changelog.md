@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2023-07-28
+
+This release allows custom theme files in the working directory to override the main theme
+
+### Changes
+
+- Added `eject:theme` which will eject the currently set theme into `theme/main.scss`
+- A new config `theme` has been added to allow toggling between themes. At present only a single default theme is provided
+- Improvements to cli help text
+
+### Cleanup
+
+- Removes unneeded template files from the root dir
+
 ## [0.7.2] - 2023-07-28
 
 This release improves existing functionalities and issue detected within the design system app.
@@ -13,10 +27,8 @@ This release improves existing functionalities and issue detected within the des
 ### Changes
 
 - Component style maps placed in `integration/scss` are now read in at build time allowing developers to provide custom scss mappings for components.
-- A new config `theme` has been added to allow toggling between themes. At present only a single default theme is provided
 - If a folder `theme/main.scss` is found in the working root of the project, that file will be included at build time to allow styling the app.
 - Globbing is now supported in scss integrations allowing more flexible ingest of component variables
-- Added `eject:theme` which will eject the currently set theme into `theme/main.scss`
 - Added `make:page` command to CLI for creating custom pages or editing existing pages
 - Adds a flattening algorithm when color blending on properties that do not support blending like `color` and `border-color`
 - Purge the app build cache when restarting the app to prevent cache from holding old copies of customized files.

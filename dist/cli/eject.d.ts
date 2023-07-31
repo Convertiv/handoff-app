@@ -19,4 +19,9 @@ export declare const ejectExportables: (handoff: Handoff) => Promise<Handoff>;
  * @param handoff
  */
 export declare const ejectPages: (handoff: Handoff) => Promise<Handoff>;
+/**
+ * Eject the integration to the working directory
+ * @param handoff
+ */
+export declare const ejectTheme: (handoff: Handoff) => Promise<Handoff>;
 export default ejectConfig;
