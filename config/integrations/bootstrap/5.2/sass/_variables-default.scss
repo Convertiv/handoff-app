@@ -87,6 +87,8 @@ $checkbox-icon-on-width: null;
 $checkbox-off-background: #fff;
 $checkbox-off-border-width: 1px;
 $checkbox-off-border-color: #fff;
+$checkbox-off-border-style: none;
+$checkbox-on-border-style: none;
 $checkbox-off-box-shadow: null;
 $checkbox-off-spacing: 12px;
 $checkbox-off-color: null;
@@ -94,6 +96,7 @@ $checkbox-off-border-radius: null;
 $checkbox-hover-off-background: #fff;
 $checkbox-hover-off-color: #fff;
 $checkbox-hover-off-border-color: #fff;
+$checkbox-hover-on-border-style: none;
 $checkbox-hover-off-box-shadow: null;
 $checkbox-disabled-off-background: #fff;
 $checkbox-disabled-off-border-color: #fff;
@@ -119,6 +122,8 @@ $checkbox-disabled-on-color: #fff;
 $checkbox-hover-on-color: #fff;
 $checkbox-disabled-label-off-opacity: null;
 $checkbox-disabled-on-box-shadow: null;
+$checkbox-disabled-off-border-style: none;
+$checkbox-disabled-on-border-style: none;
 
 $checkbox-label-off-font-size: 1rem;
 $checkbox-label-off-font-weight: null;
@@ -131,7 +136,7 @@ $checkbox-disabled-label-off-color: null;
 $checkbox-label-on-color: #fff;
 $checkbox-hover-label-on-color: #fff;
 $checkbox-disabled-label-on-color: #fff;
-
+$checkbox-hover-off-border-style: none;
 
 // Input
 

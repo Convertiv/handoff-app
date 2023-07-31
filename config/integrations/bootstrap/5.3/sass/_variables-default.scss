@@ -87,6 +87,8 @@ $checkbox-icon-on-width: null;
 $checkbox-off-background: null;
 $checkbox-off-border-width: 1px;
 $checkbox-off-border-color: null;
+$checkbox-off-border-style: none;
+$checkbox-on-border-style: none;
 $checkbox-off-box-shadow: null;
 $checkbox-off-spacing: 12px;
 $checkbox-off-color: null;
@@ -116,9 +118,12 @@ $checkbox-disabled-off-color: null;
 $checkbox-on-color: null;
 $checkbox-disabled-on-color: null;
 $checkbox-disabled-on-color: null;
+$checkbox-disabled-off-border-style: none;
+$checkbox-hover-on-border-style: none;
 $checkbox-hover-on-color: null;
 $checkbox-disabled-label-off-opacity: null;
 $checkbox-disabled-on-box-shadow: null;
+$checkbox-disabled-on-border-style: none;
 
 $checkbox-label-off-font-family: null;
 $checkbox-label-off-font-size: 1rem;
@@ -132,7 +137,7 @@ $checkbox-disabled-label-off-color: null;
 $checkbox-label-on-color: null;
 $checkbox-hover-label-on-color: null;
 $checkbox-disabled-label-on-color: null;
-
+$checkbox-hover-off-border-style: none;
 
 // Input
 
