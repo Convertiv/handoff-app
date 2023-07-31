@@ -45,11 +45,8 @@ const nextConfig = {
       }
 
       // Check if custom CSS exists
-      if (fs.existsSync('theme')) {
-        fs.readdirSync('theme').forEach((file) => {
-          // Ingest additional css
-          content = content + `\n@import "theme/${file}";`;
-        });
+      if (fs.existsSync('theme/main.scss')) {
+        content = content + `\n@import "theme/main.scss";`;
       }
       return content;
     },

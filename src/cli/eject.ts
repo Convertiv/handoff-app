@@ -104,11 +104,12 @@ export const ejectTheme = async (handoff: Handoff) => {
     }
   }
   const currentTheme = handoff.config.theme ?? 'default';
-  const docsPath = path.resolve(path.join(handoff.modulePath, `src/app/sass/_${currentTheme}.scss`));
+  const docsPath = path.resolve(path.join(handoff.modulePath, `src/app/sass/themes/_${currentTheme}.scss`));
   if(fs.existsSync(docsPath)){
     fs.copySync(docsPath, workingPath, { overwrite: false });
     console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
   }else {
+    fs.copySync(path.resolve(path.join(handoff.modulePath, `src/app/sass/themes/_default.scss`)), workingPath, { overwrite: false });
     console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
   }
   
