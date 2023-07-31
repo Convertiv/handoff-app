@@ -8,6 +8,25 @@ import next from 'next';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+
+/**
+ * Copy the public dir from the working dir to the module dir
+ * @param handoff 
+ */
+const mergePublicDir = async (handoff: Handoff): Promise<void> => {
+  // public working dir
+  const publicWorkingDir = path.resolve(handoff.workingPath, 'public');
+  // public module dir
+  const publicModuleDir = path.resolve(handoff.modulePath, 'src/app/public');
+
+  // if public dir exists in working dir
+  if (fs.existsSync(publicWorkingDir)) {
+
+    // move public dir from working dir to module dir
+    fs.copySync(publicWorkingDir, publicModuleDir, { overwrite: true });
+  }
+}
+
 /**
  * Build the next js application
  * @param handoff
@@ -17,6 +36,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+  mergePublicDir(handoff);
   await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
   const output = path.resolve(handoff.workingPath, 'out');
   if (fs.existsSync(output)) {
@@ -33,6 +53,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+  mergePublicDir(handoff);
   const appPath = path.resolve(handoff.modulePath, 'src/app');
   const config = require(path.resolve(appPath, 'next.config.js'));
   // does a ts config exist?
@@ -108,6 +129,19 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     });
   }
+  if (fs.existsSync(path.resolve(handoff.workingPath, 'public'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
+          mergePublicDir(handoff);
+          break;
+      }
+    });
+  }
+
   if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'integration')).on('all', async (event, path) => {
       switch (event) {
