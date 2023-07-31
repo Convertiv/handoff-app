@@ -69,7 +69,6 @@ exports.defaultConfig = {
         definitions: [
             'components/alert',
             'components/button',
-            'components/badge',
             'components/modal',
             'components/tooltip',
             'components/checkbox',

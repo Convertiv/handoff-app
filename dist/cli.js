@@ -100,7 +100,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 18, , 19]);
+                _b.trys.push([0, 19, , 20]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -142,11 +142,12 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'eject:exportables': return [3 /*break*/, 10];
                     case 'eject:theme': return [3 /*break*/, 11];
                     case 'eject:pages': return [3 /*break*/, 12];
-                    case 'make:exportable': return [3 /*break*/, 13];
-                    case 'make:template': return [3 /*break*/, 14];
-                    case 'make:page': return [3 /*break*/, 15];
+                    case 'make': return [3 /*break*/, 13];
+                    case 'make:exportable': return [3 /*break*/, 14];
+                    case 'make:template': return [3 /*break*/, 15];
+                    case 'make:page': return [3 /*break*/, 16];
                 }
-                return [3 /*break*/, 16];
+                return [3 /*break*/, 17];
             case 1: return [2 /*return*/, handoff_1.fetch()];
             case 2: return [4 /*yield*/, handoff_1.build()];
             case 3:
@@ -160,14 +161,17 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 return [2 /*return*/, handoff_1.dev()];
             case 6: return [2 /*return*/, handoff_1.integration()];
             case 7:
-                cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables.\n  - eject:integration\n  - eject:docs.", 2);
-                _b.label = 8;
+                cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables\n  - eject:integration\n  - eject:docs\n  - eject:theme.", 2);
+                return [3 /*break*/, 18];
             case 8: return [2 /*return*/, handoff_1.ejectConfig()];
             case 9: return [2 /*return*/, handoff_1.ejectIntegration()];
             case 10: return [2 /*return*/, handoff_1.ejectExportables()];
             case 11: return [2 /*return*/, handoff_1.ejectTheme()];
             case 12: return [2 /*return*/, handoff_1.ejectPages()];
             case 13:
+                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n  \n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
+                return [3 /*break*/, 18];
+            case 14:
                 type = args._[1];
                 if (!type) {
                     cliError("You must specify a type of 'component' or 'foundation'", 2);
@@ -180,7 +184,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Exportable name must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff_1.makeExportable(type, name_1)];
-            case 14:
+            case 15:
                 templateComponent = args._[1];
                 if (!templateComponent) {
                     cliError("You must supply a component name", 2);
@@ -193,7 +197,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Template state must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff_1.makeTemplate(templateComponent, templateState)];
-            case 15:
+            case 16:
                 pageName = args._[1];
                 if (!pageName) {
                     cliError("You must supply a page name", 2);
@@ -206,14 +210,14 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Page parent must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff_1.makePage(pageName, pageParent)];
-            case 16: return [2 /*return*/, showHelp()];
-            case 17: return [3 /*break*/, 19];
-            case 18:
+            case 17: return [2 /*return*/, showHelp()];
+            case 18: return [3 /*break*/, 20];
+            case 19:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 19: return [2 /*return*/];
+            case 20: return [2 /*return*/];
         }
     });
 }); };

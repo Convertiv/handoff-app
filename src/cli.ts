@@ -131,11 +131,13 @@ const run = async (
 
 Eject must have a subcommand. Did you mean:
   - eject:config
-  - eject:exportables.
+  - eject:exportables
   - eject:integration
-  - eject:docs.`,
+  - eject:docs
+  - eject:theme.`,
           2
         );
+        break;
       case 'eject:config':
         return handoff.ejectConfig();
       case 'eject:integration':
@@ -146,6 +148,17 @@ Eject must have a subcommand. Did you mean:
         return handoff.ejectTheme();
       case 'eject:pages':
         return handoff.ejectPages();
+      case 'make':
+          cliError(
+            `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
+  
+  Make must have a subcommand. Did you mean:
+    - make:template
+    - make:exportable
+    - make:page`,
+            2
+          );
+          break;
       case 'make:exportable':
         const type = args._[1];
         if (!type) {

@@ -1,4 +1,3 @@
-/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { GradientObject } from '../types';
 /**
@@ -23,7 +22,7 @@ export declare function transformFigmaPaintToGradient(paint: FigmaTypes.Paint): 
 export declare function transformFigmaColorToHex(color: FigmaTypes.Color): string;
 export declare const transformFigmaColorToCssColor: (color: FigmaTypes.Color) => string;
 export declare function transformFigmaPaintToCssColor(paint: FigmaTypes.Paint, asLinearGradient?: boolean): string | null;
-export declare const transformFigmaFillsToCssColor: (fills: ReadonlyArray<FigmaTypes.Paint>, fallbackColor?: string, fallbackBlendMode?: string) => {
+export declare const transformFigmaFillsToCssColor: (fills: ReadonlyArray<FigmaTypes.Paint>, forceHexOrRgbaValue?: boolean) => {
     color: string;
     blend: string;
 };

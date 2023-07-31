@@ -57,7 +57,9 @@ export const buildClientFiles = async (): Promise<string> => {
                     const integrationPath = path.join(handoff.workingPath, 'integration/sass');
 
                     if (fs.existsSync(integrationPath)) {
-                      fs.readdirSync(integrationPath).forEach(file => {
+                      fs.readdirSync(integrationPath).filter(file => {
+                        return path.extname(file).toLowerCase() === '.scss';
+                      }).forEach(file => {
                         content = content + `\n @import "@integration/${file}";`;
                       });
                     }

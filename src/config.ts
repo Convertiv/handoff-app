@@ -65,7 +65,6 @@ export const defaultConfig: Config = {
     definitions: [
       'components/alert',
       'components/button',
-      'components/badge',
       'components/modal',
       'components/tooltip',
       'components/checkbox',
