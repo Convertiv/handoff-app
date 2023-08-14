@@ -1,23 +1,44 @@
-# Handoff Design System
+# Handoff Design Tokens
+
+<a aria-label="NPM version" href="https://www.npmjs.com/package/handoff-app">
+  <img alt="" src="https://img.shields.io/npm/v/handoff-app?style=for-the-badge&labelColor=000000">
+</a>
+<a aria-label="License" href="https://github.com/convertiv/handoff-app/blob/canary/license.md">
+  <img alt="" src="https://img.shields.io/npm/l/handoff-app?style=for-the-badge&labelColor=000000">
+</a>
+
+A design token pipeline to read figma files, extract tokens as JSON, and
+transform tokens into dev ready artifacts.
+
+## Table of Contents
+
+- [What Is Handoff?](#what-is-handoff)
+- [How does it work](#how-does-it-work)
+  - [Handoff is in Beta!](#handoff-is-in-beta)
+- [Requirements](#requirements)
+- [Get Started](#get-started)
+- [Table of Contents](#table-of-contents-1)
+  - [Figma](#figma)
+  - [Create a project](#create-a-project)
+  - [Test fetch](#test-fetch)
+- [Further Reading](#further-reading)
+- [Maintainers](#maintainers)
+- [Contributing](#contributing)
+- [License](#license)
+
+## What Is Handoff?
 
 Handoff is an open source tool for extracting design tokens from the Figma REST
 API and building frontend developer documentation from that Figma file. By
 automating the design token delivery, Handoff helps to eliminate bottlenecks
-between design and development. We call this Design Operations.
-
-## Handoff is in Beta!
-Handoff is Awesome. Handoff is also really new. We're constantly building
-new features, and expanding what it can do. We'd love to chat if you have
-a use case that isn't quite met.
-
-## Ok, but what is handoff?
+between design and development.
 
 Handoff is a collection of 4 javascript tools:
 
 - **Figma Token Extraction** - A framework for extracting
   standardized design foundations and components from Figma.
-- **Transformation Pipeline** - A set of transformers for producing SASS, CSS, AWS Design
-  Tokens, and preview snippets from that data.
+- **Transformation Pipeline** - A set of transformers for producing SASS, CSS,
+  Style Dictionary, and preview snippets from that data.
 - **Documentation Web App** - A static, client side, Javascript web app that
   renders live, working previews of your components, tokens and styles.
 - **Delivery Tools** - Easy build tooling and CI/CD wrapper that allows
@@ -53,13 +74,21 @@ to provide automatic, up-to-date, easily readable developer documentation.
 
 - [CI/CD Integration](https://www.handoff.com/docs/guide/cicd)
 
+## Handoff is in Beta!
+
+Handoff is Awesome. Handoff is also really new. We're constantly building
+new features, and expanding what it can do. We'd love to chat if you have
+a use case that isn't quite met.
+
 ## Requirements
 
 - A paid Figma account is required to publish the Figma file library
 - Node 16+
 - NPM 8+
 
-## Figma
+## Get Started
+
+### Figma
 
 1. Open the [Handoff Figma starter](https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D?node-id=0%3A1&t=iPYW37yDmNkJBt1t-0)
    and duplicate this project to your account
@@ -80,13 +109,13 @@ You'll need a developer token if you don't have one already
 - Enter a token name and hit enter
 - Note that token for the next steps
 
-## On your computer
+## Create a project
 
 - Run `npm install -g handoff-app`
 - Create a new directory for your project `mkdir my-new-project`
-- In that folder, run `handoff-app fetch`
-- Handoff will prompt for your developer token, and the file id of your figma 
-  file. The file id can be found in the url of the file - 
+- In that folder (`cd my-new-project`), run `handoff-app fetch`
+- Handoff will prompt for your developer token, and the file id of your figma
+  file. The file id can be found in the url of the file -
   https://www.figma.com/file/{file_id}/{slug}
 - Start the project `handoff-app start`
 
@@ -109,4 +138,21 @@ Once that runs, your browser should update with the new colors.
 - [Customize the content](https://www.handoff.com/docs/customization/content)
 - [Integrate tokens with your project](https://www.handoff.com/docs/tokens/integration)
 - [Build to Static Assets](https://www.handoff.com/docs/tokens/publishing)
-- [Integrate with your CI/CD](https://www.handoff.com/docs/guide/cicd)
+- [Integrate with Github Actions CI/CD](https://www.handoff.com/docs/infrastructure/github/)
+- [Integrate with Bitbucket Pipelines CI/CD](https://www.handoff.com/docs/infrastructure/bitbucket/)
+
+## Maintainers
+
+[@bradmering](https://github.com/bradmering).
+[@DomagojGojak](https://github.com/DomagojGojak).
+[@Natko](https://github.com/Natko).
+
+## Contributing
+
+Feel free to dive in! [Open an issue](https://github.com/Convertiv/handoff-app/issues/new) or submit PRs.
+
+Standard Readme follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+
+## License
+
+[MIT](LICENSE) ©Convertiv
