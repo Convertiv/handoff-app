@@ -1,4 +1,4 @@
-# Handoff Design Tokens
+# Handoff - Design Token Automation
 
 <a aria-label="NPM version" href="https://www.npmjs.com/package/handoff-app">
   <img alt="" src="https://img.shields.io/npm/v/handoff-app?style=for-the-badge&labelColor=000000">
@@ -143,8 +143,10 @@ Once that runs, your browser should update with the new colors.
 
 ## Maintainers
 
-[@bradmering](https://github.com/bradmering).
+[@bradmering](https://github.com/bradmering)
+
 [@DomagojGojak](https://github.com/DomagojGojak).
+
 [@Natko](https://github.com/Natko).
 
 ## Contributing
