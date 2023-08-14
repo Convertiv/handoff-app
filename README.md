@@ -153,7 +153,7 @@ Once that runs, your browser should update with the new colors.
 
 Feel free to dive in! [Open an issue](https://github.com/Convertiv/handoff-app/issues/new) or submit PRs.
 
-Standard Readme follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+Handoff follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
 
 ## License
 
