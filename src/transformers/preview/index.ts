@@ -7,7 +7,6 @@ import { Component } from '../../exporters/components/extractor';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
 import { ExportableTransformerOptionsMap } from '../types';
-import { getComponentVariantPropertiesAsMap } from '../utils';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -28,9 +27,7 @@ function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
 const getComponentTemplateByComponentId = async (componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
   const parts: string[] = [];
 
-  const variantProps = getComponentVariantPropertiesAsMap(component);
-
-  variantProps.forEach((val, variantProp) => {
+  component.variantProperties.forEach(([variantProp, val]) => {
     if (!options?.roles?.theme || variantProp !== options.roles.theme) {
       parts.push(val);
     }

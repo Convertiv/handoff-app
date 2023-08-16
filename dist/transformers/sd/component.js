@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformComponentsToStyleDictionary = void 0;
 var transformer_1 = require("../transformer");
-var constants_1 = require("../constants");
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
@@ -25,7 +24,7 @@ var transformComponentsToStyleDictionary = function (_, components, options) {
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});
                 ref = ref[el];
             });
-            var propParts = propPath[lastIdx].split(constants_1.tokenNamePartsSeparator);
+            var propParts = propPath[lastIdx].split('-');
             propParts.forEach(function (el) {
                 var _a;
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});

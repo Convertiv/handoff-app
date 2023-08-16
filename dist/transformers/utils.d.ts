@@ -42,9 +42,3 @@ export declare const getTokenNameSegments: (component: Component, part: string, 
  * @returns
  */
 export declare const normalizeTokenNamePartValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions, keepDefaults?: boolean) => string;
-/**
- * Returns the component variant properties in form of a map.
- * @param component
- * @returns
- */
-export declare const getComponentVariantPropertiesAsMap: (component: Component) => Map<string, string>;

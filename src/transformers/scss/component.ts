@@ -1,5 +1,5 @@
 import { Token } from '../types';
-import { getComponentVariantPropertiesAsMap, normalizeTokenNamePartValue } from '../utils';
+import { normalizeTokenNamePartValue } from '../utils';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 import { transform } from '../transformer';
@@ -9,8 +9,7 @@ export const transformComponentsToScssTypes = (name: string, components: Compone
   const result: { [variantProp: string]: Set<string> } = {};
 
   components.forEach(component => {
-    const componentVariantProps = getComponentVariantPropertiesAsMap(component);
-    componentVariantProps.forEach((value, variantProp) => {
+    component.variantProperties.forEach(([variantProp, value]) => {
       if (value) {
         result[variantProp] ??= new Set<string>();
         result[variantProp].add(component.type === 'design'

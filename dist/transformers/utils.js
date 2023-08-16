@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getComponentVariantPropertiesAsMap = exports.normalizeTokenNamePartValue = exports.getTokenNameSegments = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getTypeName = void 0;
-var constants_1 = require("./constants");
+exports.normalizeTokenNamePartValue = exports.getTokenNameSegments = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getTypeName = void 0;
 var index_1 = require("../utils/index");
 var lodash_1 = require("lodash");
 /**
@@ -21,8 +20,8 @@ exports.getTypeName = getTypeName;
  */
 var formatComponentCodeBlockComment = function (component, format) {
     var parts = [(0, lodash_1.capitalize)(component.name)];
-    var componentVariantPropsMap = (0, exports.getComponentVariantPropertiesAsMap)(component);
-    componentVariantPropsMap.forEach(function (val, variantProp) {
+    component.variantProperties.forEach(function (_a) {
+        var variantProp = _a[0], val = _a[1];
         parts.push("".concat(variantProp.toLowerCase(), ": ").concat(val));
     });
     var str = parts.join(', ');
@@ -41,7 +40,7 @@ exports.formatComponentCodeBlockComment = formatComponentCodeBlockComment;
 var formatTokenName = function (tokenType, component, part, property, options) {
     var prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
     var tokenNameParts = (0, exports.getTokenNameSegments)(component, part, property, options);
-    return "".concat(prefix).concat(tokenNameParts.join(constants_1.tokenNamePartsSeparator));
+    return "".concat(prefix).concat(tokenNameParts.join('-'));
 };
 exports.formatTokenName = formatTokenName;
 /**
@@ -51,11 +50,10 @@ exports.formatTokenName = formatTokenName;
  * @returns
  */
 var getTokenNameSegments = function (component, part, property, options) {
-    var componentVariantPropsMap = (0, exports.getComponentVariantPropertiesAsMap)(component);
     if (options === null || options === void 0 ? void 0 : options.tokenNameSegments) {
         return options.tokenNameSegments.map(function (tokenNamePart) {
             tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map([['Component', component.name], ['Part', normalizeComponentPartName(part)], ['Property', property]]), function (token, _, value) { return value === '' ? token : value; });
-            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, componentVariantPropsMap, function (_, variantProp, value) { return (0, exports.normalizeTokenNamePartValue)(variantProp, value, options); });
+            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map(component.variantProperties), function (_, variantProp, value) { return (0, exports.normalizeTokenNamePartValue)(variantProp, value, options); });
             return tokenNamePart;
         }).filter(function (part) { return part !== ''; });
     }
@@ -63,7 +61,8 @@ var getTokenNameSegments = function (component, part, property, options) {
         component.name,
         normalizeComponentPartName(part)
     ];
-    componentVariantPropsMap.forEach(function (value, variantProp) {
+    component.variantProperties.forEach(function (_a) {
+        var variantProp = _a[0], value = _a[1];
         parts.push((0, exports.normalizeTokenNamePartValue)(variantProp, value, options));
     });
     parts.push(property);
@@ -94,13 +93,6 @@ var normalizeTokenNamePartValue = function (variable, value, options, keepDefaul
     return value;
 };
 exports.normalizeTokenNamePartValue = normalizeTokenNamePartValue;
-/**
- * Returns the component variant properties in form of a map.
- * @param component
- * @returns
- */
-var getComponentVariantPropertiesAsMap = function (component) { return new Map(component.variantProperties); };
-exports.getComponentVariantPropertiesAsMap = getComponentVariantPropertiesAsMap;
 /**
  * Returns the normalized part name.
  * @param part

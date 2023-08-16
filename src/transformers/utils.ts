@@ -1,7 +1,6 @@
 import { Component } from "../exporters/components/extractor";
 import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
 import { TokenType } from "./types";
-import { tokenNamePartsSeparator } from "./constants";
 import { replaceTokens } from "../utils/index";
 import { capitalize } from "lodash";
 
@@ -22,9 +21,8 @@ export const getTypeName = (type: TypographyObject) => type.group
  */
 export const formatComponentCodeBlockComment = (component: Component, format: "/**/" | "//"): string => {
   const parts = [capitalize(component.name)];
-  const componentVariantPropsMap = getComponentVariantPropertiesAsMap(component);
 
-  componentVariantPropsMap.forEach((val, variantProp) => {
+  component.variantProperties.forEach(([variantProp, val]) => {
     parts.push(`${variantProp.toLowerCase()}: ${val}`);
   });
   
@@ -46,7 +44,7 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
   const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
   const tokenNameParts = getTokenNameSegments(component, part, property, options);
 
-  return `${prefix}${tokenNameParts.join(tokenNamePartsSeparator)}`;
+  return `${prefix}${tokenNameParts.join('-')}`;
 };
 
 /**
@@ -56,12 +54,10 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
  * @returns 
  */
 export const getTokenNameSegments = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  const componentVariantPropsMap = getComponentVariantPropertiesAsMap(component);
-
   if (options?.tokenNameSegments) {
     return options.tokenNameSegments.map(tokenNamePart => {
       tokenNamePart = replaceTokens(tokenNamePart, new Map([['Component', component.name], ['Part', normalizeComponentPartName(part)], ['Property', property]]), (token, _, value) => value === '' ? token : value);
-      tokenNamePart = replaceTokens(tokenNamePart, componentVariantPropsMap, (_, variantProp, value) => normalizeTokenNamePartValue(variantProp, value, options));
+      tokenNamePart = replaceTokens(tokenNamePart, new Map(component.variantProperties), (_, variantProp, value) => normalizeTokenNamePartValue(variantProp, value, options));
       return tokenNamePart;
     }).filter(part => part !== '');
   }
@@ -71,7 +67,7 @@ export const getTokenNameSegments = (component: Component, part: string, propert
     normalizeComponentPartName(part)
   ];
 
-  componentVariantPropsMap.forEach((value, variantProp) => {
+  component.variantProperties.forEach(([variantProp, value]) => {
     parts.push(normalizeTokenNamePartValue(variantProp, value, options));
   });
 
@@ -104,13 +100,6 @@ export const normalizeTokenNamePartValue = (variable: string, value?: string, op
 
   return value;
 }
-
-/**
- * Returns the component variant properties in form of a map.
- * @param component 
- * @returns 
- */
-export const getComponentVariantPropertiesAsMap = (component: Component) => new Map<string, string>(component.variantProperties);
 
 /**
  * Returns the normalized part name.

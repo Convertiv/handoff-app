@@ -52,7 +52,6 @@ var mustache_1 = __importDefault(require("mustache"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
 var utils_1 = require("./utils");
-var utils_2 = require("../utils");
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {
@@ -66,15 +65,15 @@ function mergeTokenSets(tokenSetList) {
     return obj;
 }
 var getComponentTemplateByComponentId = function (componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
-    var parts, variantProps;
+    var parts;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 parts = [];
-                variantProps = (0, utils_2.getComponentVariantPropertiesAsMap)(component);
-                variantProps.forEach(function (val, variantProp) {
-                    var _a;
-                    if (!((_a = options === null || options === void 0 ? void 0 : options.roles) === null || _a === void 0 ? void 0 : _a.theme) || variantProp !== options.roles.theme) {
+                component.variantProperties.forEach(function (_a) {
+                    var _b;
+                    var variantProp = _a[0], val = _a[1];
+                    if (!((_b = options === null || options === void 0 ? void 0 : options.roles) === null || _b === void 0 ? void 0 : _b.theme) || variantProp !== options.roles.theme) {
                         parts.push(val);
                     }
                 });

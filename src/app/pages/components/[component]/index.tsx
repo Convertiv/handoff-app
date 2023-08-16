@@ -19,7 +19,6 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import { filterOutNull } from '../../../../utils';
-import { getComponentVariantPropertiesAsMap } from '../../../../transformers/utils';
 
 /**
  * Render all index pages
@@ -170,7 +169,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
         return null;
       }
 
-      const variantProps = getComponentVariantPropertiesAsMap(component);
+      const variantProps = new Map(component.variantProperties);
 
       if (tabFilters[component.type] === null) {
         return null;
@@ -329,10 +328,9 @@ export const getComponentPreviewTitle = (component: Component, options?: Exporta
 }
 
 const getDefaultVariantDiscriminator = (component: Component, options?: ExportableOptions): string => {
-  const variantPropsArr = Array.from(getComponentVariantPropertiesAsMap(component).entries());
   const defaultDiscriminatorItem = options?.shared?.roles?.theme
-    ? variantPropsArr.filter(item => item[0] !== options.shared.roles.theme)[0]
-    : variantPropsArr[0];
+    ? component.variantProperties.filter(item => item[0] !== options.shared.roles.theme)[0]
+    : component.variantProperties[0];
 
   return defaultDiscriminatorItem ? defaultDiscriminatorItem[1] : undefined;
 }

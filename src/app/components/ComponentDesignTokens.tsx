@@ -5,7 +5,6 @@ import Icon from './Icon';
 import { ExportableTransformerOptions } from '../../types';
 import { transformComponentTokensToScssVariables } from '../../transformers/scss/component';
 import { Component } from '../../exporters/components/extractor';
-import { getComponentVariantPropertiesAsMap } from '../../transformers/utils';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -49,7 +48,7 @@ interface DataTableRow extends Map<string, DataTableCell> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
-  const previewObjectVariantPropsMap = getComponentVariantPropertiesAsMap(previewObject);
+  const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
 
   const headings: Set<string> = new Set<string>();
   const dataTable = new Map() as DataTable;
@@ -68,7 +67,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
         return state_sort.indexOf(lVal) - state_sort.indexOf(rVal);
       })
       .forEach(component => {
-        const componentVariantPropsMap = getComponentVariantPropertiesAsMap(component);
+        const componentVariantPropsMap = new Map(component.variantProperties);
 
         for (const [variantProp, value] of component.variantProperties) {
           if (!overrideVariantProps.includes(variantProp) && value !== previewObjectVariantPropsMap.get(variantProp)) {

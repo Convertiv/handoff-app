@@ -7,11 +7,11 @@ var utils_2 = require("../../utils");
 var transformComponentsToScssTypes = function (name, components, options) {
     var result = {};
     components.forEach(function (component) {
-        var componentVariantProps = (0, utils_1.getComponentVariantPropertiesAsMap)(component);
-        componentVariantProps.forEach(function (value, variantProp) {
-            var _a;
+        component.variantProperties.forEach(function (_a) {
+            var _b;
+            var variantProp = _a[0], value = _a[1];
             if (value) {
-                (_a = result[variantProp]) !== null && _a !== void 0 ? _a : (result[variantProp] = new Set());
+                (_b = result[variantProp]) !== null && _b !== void 0 ? _b : (result[variantProp] = new Set());
                 result[variantProp].add(component.type === 'design'
                     ? (0, utils_1.normalizeTokenNamePartValue)(variantProp, value, options, true)
                     : (0, utils_1.normalizeTokenNamePartValue)(variantProp, value, options, true));
