@@ -4,29 +4,48 @@
   "options": {
     "exporter": {
       "search": "Button",
-      "supportedVariantProps": [
-        "THEME",
-        "TYPE",
-        "STATE(:disabled)",
-        "SIZE"
-      ]
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "Type",
+          "State(:disabled)"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
     },
     "transformer": {
-      "rootCssClass": "btn",
-      "cssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
-      "scssVariableTemplate": "button-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}"
+      "cssRootClass": "btn",
+      "tokenNameSegments": [
+        "${Component}",
+        "${Type}",
+        "${Size}",
+        "${Part}",
+        "${Theme}",
+        "${State}",
+        "${Property}"
+      ]
     },
     "demo": {
       "tabs": {
         "overview": {
           "design": {
-            "state": "default"
+            "State": "default"
           },
           "layout": {}
         },
         "designTokens": {
           "design": {
-            "state": "default"
+            "State": {
+              "default" : {
+                "State": [
+                  "default",
+                  "hover",
+                  "disabled"
+                ]
+              }
+            }
           }
         }
       }

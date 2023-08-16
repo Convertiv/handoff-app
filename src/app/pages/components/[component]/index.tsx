@@ -4,8 +4,8 @@ import IframeResizer from 'iframe-resizer-react';
 import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from '../../../components/util';
 import { getConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import { ExportableDefinition, PreviewObject } from '../../../../types';
-import { Component, ComponentDesign } from '../../../../exporters/components/extractor';
+import { ExportableDefinition, ExportableOptions, PreviewObject } from '../../../../types';
+import { Component } from '../../../../exporters/components/extractor';
 import Head from 'next/head';
 import Header from '../../../components/Header';
 import CustomNav from '../../../components/SideNav/Custom';
@@ -19,6 +19,7 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import { filterOutNull } from '../../../../utils';
+import { getComponentVariantPropertiesAsMap } from '../../../../transformers/utils';
 
 /**
  * Render all index pages
@@ -57,9 +58,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, styleDictionary, types, components, previews, config }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
-  const designComponents: ComponentDesign[] = components ? components.filter(
-    (component): component is ComponentDesign => component.componentType === 'design'
-  ) : [];
+  const designComponents = components ? components.filter(component => component.type === 'design') : [];
 
   const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
   const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)
@@ -99,18 +98,18 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {activeTab == ComponentTab.Overview && (
               <>
                 <div className="o-col-9@xl">
-                  <OverviewComponentPreview components={overviewTabComponents} />
+                  <OverviewComponentPreview components={overviewTabComponents} options={exportable.options} />
                   <div id="guidelines">
                     <OverviewComponentGuidlines content={content} />
                   </div>
                   <div id="classes">
-                    <OverviewComponentClasses components={overviewTabComponents} />
+                    <OverviewComponentClasses components={overviewTabComponents} options={exportable.options} />
                   </div>
                 </div>
                 <div className="o-col-3@xl u-visible@lg">
                   <AnchorNav
                     groups={[
-                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj.component) }))]),
+                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj.component, exportable.options) }))]),
                       { guidelines: 'Component Guidelines' },
                       { classes: 'Classes' },
                     ]}
@@ -126,7 +125,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 {designTokensTabComponents.map(previewableComponent => (
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
-                    title={getComponentPreviewTitle(previewableComponent.component)}
+                    title={getComponentPreviewTitle(previewableComponent.component, exportable.options)}
                     previewObject={previewableComponent.component}
                     transformerOptions={exportable.options.transformer}
                     designComponents={designComponents}
@@ -160,54 +159,57 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
   const tabComponents: ComponentPreview[] = components
     .filter((component) => {
-      if (component.componentType === 'design' && component.theme !== undefined) {
+      if (component.type === 'design' && component.theme !== undefined) {
         return component.theme === 'light';
       }
 
       return true;
     })
     .map((component) => {
-      if (!(component.componentType in tabFilters)) {
+      if (!(component.type in tabFilters)) {
         return null;
       }
 
-      const reducedComponentModel = getReducedComponentModel(component);
+      const variantProps = getComponentVariantPropertiesAsMap(component);
 
-      if (tabFilters[component.componentType] === null) {
+      if (tabFilters[component.type] === null) {
         return null;
       }
 
       let overrides: { states?: string[] } | undefined = undefined;
 
-      const filterProps = Object.keys(tabFilters[component.componentType]);
+      const filterProps = Object.keys(tabFilters[component.type]);
       for (const filterProp of filterProps) {
-        if (filterProp in reducedComponentModel ) {
-          const filterValue = tabFilters[component.componentType][filterProp];
-          if (typeof filterValue === 'object' && filterValue !== null) {
-            if (Array.isArray(filterValue)) {
-              // Filter value is a array so we check if the value of the respective component property
-              // is contained in the filter value array
-              if (!filterValue.includes(reducedComponentModel[filterProp])) {
-                // Filter value array does not contain the value of the respective component property
-                // Since component should not be displayed we return null value
-                return null;
-              }
-            } else {
-              // Filter value is a object so we check if the value of the respective component property
-              // is contained within the array of object keys
-              if (!Object.keys(filterValue).includes(reducedComponentModel[filterProp])) {
-                // Filter value object keys do not contain the value of the respective component property
-                // Since component should not be displayed we return null value
-                return null;
-              } else {
-                // Filter value object keys do contain the value of the respective component property
-                // We will store the property value of the filter value object for later use
-                overrides = filterValue[reducedComponentModel[filterProp]];
-              }
+        if (!variantProps.get(filterProp)) {
+          continue;
+        }
+        
+        const filterValue = tabFilters[component.type][filterProp];
+
+        if (typeof filterValue === 'object' && filterValue !== null) {
+          if (Array.isArray(filterValue)) {
+            // Filter value is a array so we check if the value of the respective component property
+            // is contained in the filter value array
+            if (!filterValue.includes(variantProps.get(filterProp))) {
+              // Filter value array does not contain the value of the respective component property
+              // Since component should not be displayed we return null value
+              return null;
             }
-          } else if (typeof filterValue === 'string' && reducedComponentModel[filterProp] !== filterValue) {
-            return null;
+          } else {
+            // Filter value is a object so we check if the value of the respective component property
+            // is contained within the array of object keys
+            if (!Object.keys(filterValue).includes(variantProps.get(filterProp))) {
+              // Filter value object keys do not contain the value of the respective component property
+              // Since component should not be displayed we return null value
+              return null;
+            } else {
+              // Filter value object keys do contain the value of the respective component property
+              // We will store the property value of the filter value object for later use
+              overrides = filterValue[variantProps.get(filterProp)];
+            }
           }
+        } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
+          return null;
         }
       }
 
@@ -221,36 +223,35 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
     .sort(function (a, b) {
       const firstComponent = a.component;
       const secondComponent = b.component;
+      const componentTypeOrder = ["design", "layout"];
 
       if (!sort || sort.length === 0) {
         return 0
       };
 
-      let lStr = firstComponent.componentType === 'design'
-        ? firstComponent.type ?? firstComponent.state ?? firstComponent.activity ?? ''
-        : firstComponent.layout ?? firstComponent.size ?? '';
+      const lStr = getDefaultVariantDiscriminator(firstComponent, exportable.options);
+      const rStr = getDefaultVariantDiscriminator(secondComponent, exportable.options);
 
-      let rStr = secondComponent.componentType === 'design'
-        ? secondComponent.type ?? secondComponent.state ?? secondComponent.activity ?? ''
-        : secondComponent.layout ?? secondComponent.size ?? '';
+      const l = sort.indexOf(lStr) >>> 0;
+      const r = sort.indexOf(rStr) >>> 0;
 
-      let l = sort.indexOf(lStr) >>> 0;
-      let r = sort.indexOf(rStr) >>> 0;
+      const componentTypeCompareResult = componentTypeOrder.indexOf(a.component.type) - componentTypeOrder.indexOf(b.component.type)
+      const discriminatorCompareResult = l !== r ? l - r : lStr.localeCompare(rStr);
       
-      return l !== r ? l - r : lStr.localeCompare(rStr);
+      return componentTypeCompareResult || discriminatorCompareResult;
     });
 
     return tabComponents;
 }
 
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
   return (
     <>
       {components.map(previewableComponent => {
         const component = previewableComponent.component;
         return (
           <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(component)}</h4>
+            <h4>{getComponentPreviewTitle(component, options)}</h4>
             <p>{component.description}</p>
             <div className="c-component-preview">
               <ComponentDisplay component={previewableComponent.preview} />
@@ -264,7 +265,7 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({
   );
 }
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
   return (
     <>
       <h4>Classes</h4>
@@ -282,16 +283,10 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({
               const component = previewableComponent.component;
               return (
                 <tr key={`classes-${component.id}`}>
-                  <td>{getComponentPreviewTitle(component)}</td>
-                  {component.componentType === 'design' ? (
-                    <td>
-                      <code>{component.name} {component.name}-{component.type || component.state || component.activity}</code>
-                    </td>
-                  ) : (
-                    <td>
-                      <code>{component.name} {component.name}-{component.size || component.layout}</code>
-                    </td>
-                  )}
+                  <td>{getComponentPreviewTitle(component, options)}</td>
+                  <td>
+                    <code>{component.name} {component.name}-{getDefaultVariantDiscriminator(component, options)}</code>
+                  </td>
                 </tr>
               )
             })}
@@ -325,15 +320,19 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
   );
 };
 
-export const getReducedComponentModel = (component: Component): { [key: string]: string } => {
-  return {
-    state: component.componentType === 'design' ? component.state ?? '' : '',
-    activity: component.componentType === 'design' ? component.activity ?? '' : '',
-  };
+export const getComponentPreviewTitle = (component: Component, options?: ExportableOptions): string => { 
+  const defaultDiscriminator = getDefaultVariantDiscriminator(component, options);
+
+  return defaultDiscriminator
+    ? `${startCase(defaultDiscriminator)} ${startCase(component.name)}`
+    : `${startCase(component.name)}`;
 }
 
-export const getComponentPreviewTitle = (component: Component): string => {
-  return component.componentType === 'design'
-    ? `${startCase(component.type || component.state || component.activity)} ${startCase(component.name)}`
-    : `${startCase(component.size || component.layout)} ${startCase(component.name)}`;
+const getDefaultVariantDiscriminator = (component: Component, options?: ExportableOptions): string => {
+  const variantPropsArr = Array.from(getComponentVariantPropertiesAsMap(component).entries());
+  const defaultDiscriminatorItem = options?.shared?.roles?.theme
+    ? variantPropsArr.filter(item => item[0] !== options.shared.roles.theme)[0]
+    : variantPropsArr[0];
+
+  return defaultDiscriminatorItem ? defaultDiscriminatorItem[1] : undefined;
 }

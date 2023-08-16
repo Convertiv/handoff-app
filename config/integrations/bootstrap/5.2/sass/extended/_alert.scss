@@ -2,7 +2,7 @@
    ALERTS (extended/_alerts.scss)
    ========================================================================== */
 
-@each $variant in $alert-variants {
+@each $variant in $alert-type-map {
 	.alert-#{$variant} {
 		--#{$prefix}alert-color: var( --alert-#{$variant}-text-color );
 		--#{$prefix}alert-bg: var( --alert-#{$variant}-background );

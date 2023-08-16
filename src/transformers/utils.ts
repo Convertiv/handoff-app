@@ -1,9 +1,9 @@
-import capitalize from "lodash/capitalize.js";
 import { Component } from "../exporters/components/extractor";
 import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
-import { TokenType, AbstractComponent } from "./types";
-import { filterOutUndefined } from "../utils";
+import { TokenType } from "./types";
 import { tokenNamePartsSeparator } from "./constants";
+import { replaceTokens } from "../utils/index";
+import { capitalize } from "lodash";
 
 /**
  * Returns normalized type name
@@ -15,70 +15,20 @@ export const getTypeName = (type: TypographyObject) => type.group
   : `${type.machine_name}`;
 
 /**
- * Returns a distinct list of types found within the given list of components.
- * @param components 
- * @returns 
- */
-export const getTypesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.type)
-    .filter(filterOutUndefined)));
-};
-
-/**
- * Returns a distinct list of states found within the given list of components.
- * @param components 
- * @returns 
- */
-export const getStatesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.state)
-    .filter(filterOutUndefined)));
-};
-
-/**
- * Returns a distinct list of themes found within the given list of components.
- * @param components 
- * @returns 
- */
-export const getThemesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.theme)
-    .filter(filterOutUndefined)));
-};
-
-/**
- * Returns a distinct list of sizes found within the given list of components.
- * @param components 
- * @returns 
- */
-export const getSizesFromComponents = (components: AbstractComponent[]): string[] => {
-  return Array.from(new Set(components
-    .map((component) => component.size)
-    .filter(filterOutUndefined)));
-};
-
-/**
  * Generates a standardized component comment block.
  * @param type
  * @param component
  * @returns
  */
-export const formatComponentCodeBlockComment = (type: string, component: Component, format: "/**/" | "//"): string => {
-  let str = type;
+export const formatComponentCodeBlockComment = (component: Component, format: "/**/" | "//"): string => {
+  const parts = [capitalize(component.name)];
+  const componentVariantPropsMap = getComponentVariantPropertiesAsMap(component);
 
-  if (component.componentType === 'design') {
-    str = (component.type !== undefined) ? `${capitalize(component.type)} ${str}` : `${capitalize(str)}`;
-    str += (component.theme !== undefined) ? `, theme: ${component.theme}` : ``;
-    str += (component.state !== undefined) ? `, state: ${component.state}` : ``;
-    str += (component.activity !== undefined) ? `, activity: ${component.activity}` : ``;
-  }
-
-  if (component.componentType === 'layout') {
-    str = `${capitalize(str)}`;
-    str += (component.layout !== undefined) ? `, layout: ${component.layout}` : ``;
-    str += (component.size !== undefined) ? `, size: ${component.size}` : ``;
-  }
+  componentVariantPropsMap.forEach((val, variantProp) => {
+    parts.push(`${variantProp.toLowerCase()}: ${val}`);
+  });
+  
+  const str = parts.join(', ');
 
   return format === "/**/" ? `/* ${str} */` : `// ${str}`
 }
@@ -93,78 +43,54 @@ export const formatComponentCodeBlockComment = (type: string, component: Compone
  * @returns 
  */
 export const formatTokenName = (tokenType: TokenType, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
-  // Only CSS and SCSS token types support templates
-  const tokenNameTemplate = tokenType === 'css' ?
-    options?.cssVariableTemplate :
-    tokenType === 'scss'
-      ? options?.scssVariableTemplate
-      : null;
+  const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
+  const tokenNameParts = getTokenNameSegments(component, part, property, options);
 
-  const variableName = tokenNameTemplate
-    ? parseTokenNameTemplate(tokenNameTemplate, component, part, property, options)
-    : getReducedTokenName(component, part, property, options);
-
-    if (tokenType === 'css') {
-      return `--${variableName}`;
-    }
-
-    if (tokenType === 'scss') {
-      return `$${variableName}`;
-    }
-
-    return variableName;
+  return `${prefix}${tokenNameParts.join(tokenNamePartsSeparator)}`;
 };
 
 /**
- * Returns a reduced token name in form of a string.
- * @param component 
- * @param part 
- * @param property 
- * @param options 
- * @returns 
- */
-export const getReducedTokenName = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  return getReducedTokenPropertyPath(component, part, property, options).join(tokenNamePartsSeparator);
-}
-
-/**
- * Reduces the token property path to a fixed number of parts.
+ * Returns the token name segments
  * @param component 
  * @param options 
  * @returns 
  */
-export const getReducedTokenPropertyPath = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  const l3 = component.componentType === 'design'
-    ? normalizeTokenNameVariableValue('activity', (component.activity ?? undefined), options) ?? normalizeTokenNameVariableValue('state', (component.state ?? undefined), options)
-    : undefined;
+export const getTokenNameSegments = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  const componentVariantPropsMap = getComponentVariantPropertiesAsMap(component);
 
-  const l2 = component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', (component.theme ?? ''), options) : undefined;
+  if (options?.tokenNameSegments) {
+    return options.tokenNameSegments.map(tokenNamePart => {
+      tokenNamePart = replaceTokens(tokenNamePart, new Map([['Component', component.name], ['Part', normalizeComponentPartName(part)], ['Property', property]]), (token, _, value) => value === '' ? token : value);
+      tokenNamePart = replaceTokens(tokenNamePart, componentVariantPropsMap, (_, variantProp, value) => normalizeTokenNamePartValue(variantProp, value, options));
+      return tokenNamePart;
+    }).filter(part => part !== '');
+  }
 
-  const l1 = component.componentType === 'design'
-    ? (l3 && l3 === normalizeTokenNameVariableValue('activity', (component.activity ?? ''), options) ? normalizeTokenNameVariableValue('state', (component.state ?? ''), options) : normalizeTokenNameVariableValue('type', (component.type ?? ''), options))
-    : normalizeTokenNameVariableValue('layout', (component.layout ?? undefined), options) ?? normalizeTokenNameVariableValue('size', (component.size ?? undefined), options);
-
-  return [
+  const parts: string[] = [
     component.name,
-    l1 ?? '',
-    normalizeComponentPartName(part),
-    l2 ?? '',
-    l3 ?? '',
-    property,
-  ].filter(part => part !== '');
+    normalizeComponentPartName(part)
+  ];
+
+  componentVariantPropsMap.forEach((value, variantProp) => {
+    parts.push(normalizeTokenNamePartValue(variantProp, value, options));
+  });
+
+  parts.push(property);
+
+  return parts.filter(part => part !== '');
 }
 
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
  * with some other value based replace rules defined in the transformer options of the exportable
  * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options.
+ * defined in the exportable shared options (assuming keepDefaults is set to false).
  * @param variable
  * @param value 
  * @param options 
  * @returns 
  */
-export const normalizeTokenNameVariableValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+export const normalizeTokenNamePartValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions, keepDefaults: boolean = false) => {
   const replace = options?.replace ?? {};
   const defaults = options?.defaults ?? {};
 
@@ -172,7 +98,7 @@ export const normalizeTokenNameVariableValue = (variable: string, value?: string
     return replace[variable][value] ?? '';
   }
 
-  if (variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+  if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
     return '';
   }
 
@@ -180,26 +106,11 @@ export const normalizeTokenNameVariableValue = (variable: string, value?: string
 }
 
 /**
- * Replaces the template variables with actual values.
- * @param template 
+ * Returns the component variant properties in form of a map.
  * @param component 
- * @param part 
- * @param property 
- * @param options 
  * @returns 
  */
-const parseTokenNameTemplate = (template: string, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  return template
-    .replaceAll('{$theme}', component.componentType === 'design' ? normalizeTokenNameVariableValue('theme', (component.theme ?? ''), options) ?? '' : '')
-    .replaceAll('{$type}', component.componentType === 'design' ? normalizeTokenNameVariableValue('type', (component.type ?? ''), options) ?? '' : '')
-    .replaceAll('{$state}', component.componentType === 'design' ? normalizeTokenNameVariableValue('state', (component.state ?? ''), options) ?? '' : '')
-    .replaceAll('{$activity}', component.componentType === 'design' ? normalizeTokenNameVariableValue('activity', (component.activity ?? ''), options) ?? '' : '')
-    .replaceAll('{$layout}', component.componentType === 'layout' ? normalizeTokenNameVariableValue('layout', (component.layout ?? ''), options) ?? '' : '')
-    .replaceAll('{$size}', component.componentType === 'layout' ? normalizeTokenNameVariableValue('size', (component.size ?? ''), options) ?? '' : '')
-    .replaceAll('{$part}', normalizeComponentPartName(part))
-    .replaceAll('{$property}', property)
-    .replace(/-+/g, '-')
-}
+export const getComponentVariantPropertiesAsMap = (component: Component) => new Map<string, string>(component.variantProperties);
 
 /**
  * Returns the normalized part name.

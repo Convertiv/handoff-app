@@ -1,46 +1,30 @@
 import { Token } from '../types';
-import { getSizesFromComponents, getStatesFromComponents, getThemesFromComponents, getTypesFromComponents, normalizeTokenNameVariableValue } from '../utils';
+import { getComponentVariantPropertiesAsMap, normalizeTokenNamePartValue } from '../utils';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 import { transform } from '../transformer';
+import { slugify } from '../../utils';
 
 export const transformComponentsToScssTypes = (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
-  const lines = [];
+  const result: { [variantProp: string]: Set<string> } = {};
 
-  const themes = getThemesFromComponents(components);
-  const types = getTypesFromComponents(components);
-  const states = getStatesFromComponents(components);
-  const sizes = getSizesFromComponents(components);
+  components.forEach(component => {
+    const componentVariantProps = getComponentVariantPropertiesAsMap(component);
+    componentVariantProps.forEach((value, variantProp) => {
+      if (value) {
+        result[variantProp] ??= new Set<string>();
+        result[variantProp].add(component.type === 'design'
+          ? normalizeTokenNamePartValue(variantProp, value, options, true)
+          : normalizeTokenNamePartValue(variantProp, value, options, true)
+        );
+      }
+    });
+  });
 
-  // Types
-  if (types && types.length > 0) {
-    lines.push(
-      `$${name}-variants: ( ${types.map((type) => `"${type}"`).join(', ')});`
-    );
-  }
-  
-  // Sizes
-  if (sizes && sizes.length > 0) {
-    lines.push(
-      `$${name}-sizes: ( ${sizes.map((type) => `"${normalizeTokenNameVariableValue('size', type, options)}"`).join(', ')} );`
-    );
-  }
-
-  // Themes
-  if (themes && themes.length > 0) {
-    lines.push(
-      `$${name}-themes: ( ${themes.map((type) => `"${type}"`).join(', ')} );`
-    );
-  }
-  
-  // States
-  if (states && states.length > 0) {
-    lines.push(
-      `$${name}-states: ( ${states.map((type) => `"${type == 'default' ? '' : type}"`).join(', ')} );`
-    );
-  }
-
-  return lines.join('\n\n') + '\n';
+  return Object.keys(result).map(variantProp => {
+    const mapValsStr = Array.from(result[variantProp]).map((val) => `"${val}"`).join(', ');
+    return `$${name}-${slugify(variantProp)}-map: ( ${mapValsStr} );`
+  }).join('\n\n') + '\n';
 }
 
 export const transformComponentTokensToScssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, Token> => {

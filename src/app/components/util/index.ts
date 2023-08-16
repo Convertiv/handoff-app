@@ -391,7 +391,12 @@ export const fetchExportable = (name: string) => {
   }
 
   const data = fs.readFileSync(defPath, 'utf-8');
-  return JSON.parse(data.toString()) as ExportableDefinition;
+  const exportable = JSON.parse(data.toString()) as ExportableDefinition;
+
+  const exportableOptions = {};
+  merge(exportableOptions, config.figma?.options, exportable.options);
+  exportable.options = exportableOptions as ExportableOptions;
+  return exportable;
 };
 
 /**

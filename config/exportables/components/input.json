@@ -4,17 +4,31 @@
   "options": {
     "exporter": {
       "search": "Input",
-      "supportedVariantProps": [
-        "THEME",
-        "STATE",
-        "SIZE"
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "State"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
+    },
+    "transformer": {
+      "tokenNameSegments": [
+        "${Component}",
+        "${Size}",
+        "${Part}",
+        "${Theme}",
+        "${State}",
+        "${Property}"
       ]
     },
     "demo": {
       "tabs": {
         "overview": {
           "design": {
-            "state": [
+            "State": [
               "default",
               "error",
               "disabled"
@@ -23,30 +37,30 @@
         },
         "designTokens": {
           "design": {
-            "state": {
+            "State": {
               "default": {
-                "states": [
+                "State": [
                   "default",
                   "hover",
                   "active"
                 ]
               },
               "error": {
-                "states": [
+                "State": [
                   "error",
                   "hover",
                   "active"
                 ]
               },
               "complete": {
-                "states": [
+                "State": [
                   "complete",
                   "hover",
                   "active"
                 ]
               },
               "disabled": {
-                "states": [
+                "State": [
                   "disabled",
                   "hover"
                 ]

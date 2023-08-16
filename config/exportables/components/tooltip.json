@@ -4,7 +4,7 @@
   "options": {
     "exporter": {
       "search": "Tooltip",
-      "supportedVariantProps": []
+      "supportedVariantProps": {}
     },
     "demo": {
       "tabs": {

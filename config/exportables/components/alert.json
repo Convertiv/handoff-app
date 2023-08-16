@@ -4,15 +4,24 @@
   "options": {
     "exporter": {
       "search": "Alert",
-      "supportedVariantProps": [
-        "TYPE",
-        "LAYOUT"
-      ]
+      "supportedVariantProps": {
+        "design": [
+          "Type"
+        ],
+        "layout": [
+          "Layout"
+        ]
+      }
     },
     "transformer": {
-      "rootCssClass": "alert",
-      "cssVariableTemplate": "alert-{$type}{$layout}-{$part}-{$property}",
-      "scssVariableTemplate": "alert-{$type}{$layout}-{$part}-{$property}"
+      "cssRootClass": "alert",
+      "tokenNameSegments": [
+        "${Component}",
+        "${Type}",
+        "${Layout}",
+        "${Part}",
+        "${Property}"
+      ]
     },
     "demo": {
       "tabs": {

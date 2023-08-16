@@ -27,35 +27,32 @@ var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
 function extractComponents(componentSetComponentsResult, definition) {
-    var supportedVariantPropertiesWithParams = getComponentSupportedVariantProperties(definition);
-    var supportedVariantProperties = supportedVariantPropertiesWithParams.map(function (item) { return item.property; });
-    var stateVariantProperty = supportedVariantPropertiesWithParams.filter(function (item) { return item.property === 'STATE'; });
-    var componentSharedStates = stateVariantProperty.length > 0 ? stateVariantProperty[0].params : null;
-    var sharedStateComponents = {};
+    var _a, _b, _c;
+    var sharedComponentVariants = [];
+    var _themeVariantProp = (_c = (_b = (_a = definition === null || definition === void 0 ? void 0 : definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.roles) === null || _c === void 0 ? void 0 : _c.theme;
+    var supportedVariantProperties = getComponentSupportedVariantProperties(definition);
+    var supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(function (variantProperty) { var _a; return ((_a = variantProperty.params) !== null && _a !== void 0 ? _a : []).length > 0; });
+    var hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
     var components = lodash_1.default.uniqBy(componentSetComponentsResult.components
         .map(function (component) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13;
-        // Design
-        var theme = supportedVariantProperties.includes('THEME')
-            ? (0, utils_1.normalizeNamePart)((_e = (_a = (0, utils_1.getComponentNamePart)(component.name, 'Theme')) !== null && _a !== void 0 ? _a : (_d = (_c = (_b = definition.options) === null || _b === void 0 ? void 0 : _b.shared) === null || _c === void 0 ? void 0 : _c.defaults) === null || _d === void 0 ? void 0 : _d.theme) !== null && _e !== void 0 ? _e : '')
-            : undefined;
-        var type = supportedVariantProperties.includes('TYPE')
-            ? (0, utils_1.normalizeNamePart)((_k = (_f = (0, utils_1.getComponentNamePart)(component.name, 'Type')) !== null && _f !== void 0 ? _f : (_j = (_h = (_g = definition.options) === null || _g === void 0 ? void 0 : _g.shared) === null || _h === void 0 ? void 0 : _h.defaults) === null || _j === void 0 ? void 0 : _j.type) !== null && _k !== void 0 ? _k : '')
-            : undefined;
-        var state = supportedVariantProperties.includes('STATE')
-            ? (0, utils_1.normalizeNamePart)((_q = (_l = (0, utils_1.getComponentNamePart)(component.name, 'State')) !== null && _l !== void 0 ? _l : (_p = (_o = (_m = definition.options) === null || _m === void 0 ? void 0 : _m.shared) === null || _o === void 0 ? void 0 : _o.defaults) === null || _p === void 0 ? void 0 : _p.state) !== null && _q !== void 0 ? _q : '')
-            : undefined;
-        var activity = supportedVariantProperties.includes('ACTIVITY')
-            ? (0, utils_1.normalizeNamePart)((_v = (_r = (0, utils_1.getComponentNamePart)(component.name, 'Activity')) !== null && _r !== void 0 ? _r : (_u = (_t = (_s = definition.options) === null || _s === void 0 ? void 0 : _s.shared) === null || _t === void 0 ? void 0 : _t.defaults) === null || _u === void 0 ? void 0 : _u.activity) !== null && _v !== void 0 ? _v : '')
-            : undefined;
-        // Layout
-        var layout = supportedVariantProperties.includes('LAYOUT')
-            ? (0, utils_1.normalizeNamePart)((_0 = (_w = (0, utils_1.getComponentNamePart)(component.name, 'Layout')) !== null && _w !== void 0 ? _w : (_z = (_y = (_x = definition.options) === null || _x === void 0 ? void 0 : _x.shared) === null || _y === void 0 ? void 0 : _y.defaults) === null || _z === void 0 ? void 0 : _z.layout) !== null && _0 !== void 0 ? _0 : '')
-            : undefined;
-        var size = supportedVariantProperties.includes('SIZE')
-            ? (0, utils_1.normalizeNamePart)((_5 = (_1 = (0, utils_1.getComponentNamePart)(component.name, 'Size')) !== null && _1 !== void 0 ? _1 : (_4 = (_3 = (_2 = definition.options) === null || _2 === void 0 ? void 0 : _2.shared) === null || _3 === void 0 ? void 0 : _3.defaults) === null || _4 === void 0 ? void 0 : _4.size) !== null && _5 !== void 0 ? _5 : '')
-            : undefined;
-        var instanceNode = layout || size ? component : (0, utils_1.findChildNodeWithType)(component, 'INSTANCE');
+        // BEGIN: Get variant properties
+        var _a, _b, _c, _d, _e, _f;
+        var defaults = (_c = (_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults) !== null && _c !== void 0 ? _c : {};
+        var _g = (0, utils_1.extractComponentVariantProps)(component.name, supportedVariantProperties.design, defaults), designVariantProperties = _g[0], _ = _g[1];
+        var _h = (0, utils_1.extractComponentVariantProps)(component.name, supportedVariantProperties.layout, defaults), layoutVariantProperties = _h[0], hasAnyNonDefaultLayoutVariantProperty = _h[1];
+        // END: Get variant properties
+        // BEGIN: Set component type indicator
+        var isLayoutComponent = hasAnyNonDefaultLayoutVariantProperty;
+        // END: Set component type indicator
+        // BEGIN: Define required component properties
+        var variantProperties = isLayoutComponent ? layoutVariantProperties : designVariantProperties;
+        var type = isLayoutComponent ? 'layout' : 'design';
+        var description = (_e = (_d = componentSetComponentsResult.metadata[component.id]) === null || _d === void 0 ? void 0 : _d.description) !== null && _e !== void 0 ? _e : '';
+        var name = (_f = definition.id) !== null && _f !== void 0 ? _f : '';
+        var id = generateComponentId(variantProperties, isLayoutComponent);
+        // END: Define required component properties
+        // BEGIN: Get component parts
+        var instanceNode = isLayoutComponent ? component : (0, utils_1.findChildNodeWithType)(component, 'INSTANCE');
         if (!instanceNode) {
             throw new Error("No instance node found for component ".concat(component.name));
         }
@@ -65,56 +62,99 @@ function extractComponents(componentSetComponentsResult, definition) {
         }
         var parts = partsToExport.reduce(function (previous, current) {
             var _a;
-            var tokenSets = extractComponentPartTokenSets(instanceNode, current, { activity: activity });
+            var tokenSets = extractComponentPartTokenSets(instanceNode, current, variantProperties);
             return __assign(__assign({}, previous), (_a = {}, _a[current.id] = tokenSets, _a));
         }, {});
-        var name = (_6 = definition.id) !== null && _6 !== void 0 ? _6 : '';
-        var description = (_8 = (_7 = componentSetComponentsResult.metadata[component.id]) === null || _7 === void 0 ? void 0 : _7.description) !== null && _8 !== void 0 ? _8 : '';
-        if (layout || size) {
-            return {
-                id: generateLayoutId(layout, size),
-                name: name,
-                description: description,
-                componentType: 'layout',
-                size: size,
-                layout: layout,
-                parts: parts,
-            };
-        }
-        var designComponent = {
-            id: generateDesignId(theme, type, state, activity),
+        // END: Get component parts
+        // BEGIN: Initialize the resulting component
+        var theme = _themeVariantProp ? variantProperties.get(_themeVariantProp) : undefined;
+        var result = {
+            id: id,
             name: name,
             description: description,
-            theme: theme,
             type: type,
-            state: state,
-            activity: activity,
-            componentType: 'design',
+            variantProperties: variantProperties,
             parts: parts,
+            theme: theme
         };
-        if (state && (componentSharedStates !== null && componentSharedStates !== void 0 ? componentSharedStates : []).includes(state)) {
-            (_9 = sharedStateComponents[state]) !== null && _9 !== void 0 ? _9 : (sharedStateComponents[state] = {});
-            sharedStateComponents[state][(_13 = theme !== null && theme !== void 0 ? theme : (_12 = (_11 = (_10 = definition.options) === null || _10 === void 0 ? void 0 : _10.shared) === null || _11 === void 0 ? void 0 : _11.defaults) === null || _12 === void 0 ? void 0 : _12.theme) !== null && _13 !== void 0 ? _13 : ''] = designComponent;
+        // END: Initialize the resulting component
+        // BEGIN: Store resulting component if component variant should be shared
+        var componentVariantIsBeingShared = false;
+        if (type === 'design' && hasAnyVariantPropertiesWithSharedVariants) {
+            supportedDesignVariantPropertiesWithSharedVariants.forEach(function (variantProperty) {
+                var _a;
+                // Get the variant property value of the component and validate that the value is set
+                var variantPropertyValue = variantProperties.get(variantProperty.name);
+                // Check if the component has a value set for the variant property we are checking
+                if (!variantPropertyValue) {
+                    // If the component doesn't have a value set we bail early
+                    return;
+                }
+                // Check if the component is set to be shared based on the value of the variant property
+                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (val) { return val === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
+                // Check if there are any matches
+                if (matchesByComponentVariantPropertyValue.length === 0) {
+                    // If there aren't any matches, we bail early
+                    return;
+                }
+                // Signal that the component variant is considered to be shared
+                componentVariantIsBeingShared = true;
+                // Current component is a shared component.
+                // We store the component for later when we will do the binding.
+                matchesByComponentVariantPropertyValue.forEach(function (match) {
+                    sharedComponentVariants.push({
+                        variantProperty: variantProperty.name,
+                        component: result
+                    });
+                });
+            });
+        }
+        // END: Store resulting component if component variant should be shared
+        if (componentVariantIsBeingShared) {
             return null;
         }
-        return designComponent;
+        return result;
     })
         .filter(index_1.filterOutNull), 'id');
-    if (componentSharedStates && Object.keys(sharedStateComponents).length > 0) {
-        components
-            .filter(function (component) {
-            var _a, _b, _c, _d;
-            return component.componentType === 'design' && component.state === ((_d = (_c = (_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults) === null || _c === void 0 ? void 0 : _c.state) !== null && _d !== void 0 ? _d : '');
-        })
-            .forEach(function (component) {
-            Object.keys(sharedStateComponents).forEach(function (stateToApply) {
-                var _a, _b, _c, _d, _e;
-                var sharedStateComponent = sharedStateComponents[stateToApply][(_e = (_a = component.theme) !== null && _a !== void 0 ? _a : (_d = (_c = (_b = definition.options) === null || _b === void 0 ? void 0 : _b.shared) === null || _c === void 0 ? void 0 : _c.defaults) === null || _d === void 0 ? void 0 : _d.theme) !== null && _e !== void 0 ? _e : ''];
-                components.push(__assign(__assign({}, sharedStateComponent), { id: generateDesignId(component.theme, component.type, sharedStateComponent.state, component.activity), theme: component.theme, type: component.type, activity: component.activity }));
+    if (sharedComponentVariants.length > 0) {
+        sharedComponentVariants.forEach(function (sharedComponentVariant) {
+            var sharedComponentVariantProps = sharedComponentVariant.component.variantProperties;
+            components
+                .filter(function (component) {
+                var _a, _b;
+                // check if the component is a design component
+                if (component.type !== 'design') {
+                    return false; // ignore component if it's not a design component
+                }
+                if (sharedComponentVariant.component.theme) {
+                    if (sharedComponentVariant.component.theme !== component.theme) {
+                        return false;
+                    }
+                }
+                if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
+                    return false; // ignore if the variant property value is not the default one
+                }
+                return true;
+            })
+                .forEach(function (component) {
+                var componentToPush = __assign({}, sharedComponentVariant.component);
+                var componentToPushVariantProps = new Map(component.variantProperties);
+                componentToPushVariantProps.set(sharedComponentVariant.variantProperty, sharedComponentVariantProps.get(sharedComponentVariant.variantProperty));
+                componentToPush.id = generateComponentId(componentToPushVariantProps, false);
+                componentToPush.variantProperties = componentToPushVariantProps;
+                components.push(componentToPush);
             });
         });
     }
-    return components;
+    return components.map(function (component) { return ({
+        id: component.id,
+        name: component.name,
+        description: component.description,
+        type: component.type,
+        variantProperties: Array.from(component.variantProperties.entries()),
+        parts: component.parts,
+        theme: component.theme
+    }); });
 }
 exports.default = extractComponents;
 function extractComponentPartTokenSets(root, part, tokens) {
@@ -152,7 +192,6 @@ function extractComponentPartTokenSets(root, part, tokens) {
     return tokenSets;
 }
 function resolveNodeFromPath(root, path, tokens) {
-    var _a;
     var pathArr = path
         .split('>')
         .filter(function (part) { return part !== '$'; })
@@ -164,7 +203,9 @@ function resolveNodeFromPath(root, path, tokens) {
         if (!nodeDef.type) {
             continue;
         }
-        nodeDef.name = nodeDef.name ? nodeDef.name.replaceAll('$activity', (_a = tokens === null || tokens === void 0 ? void 0 : tokens.activity) !== null && _a !== void 0 ? _a : '') : nodeDef.name;
+        if (nodeDef.name) {
+            nodeDef.name = (0, index_1.replaceTokens)(nodeDef.name, tokens);
+        }
         currentNode = nodeDef.name
             ? (0, utils_1.findChildNodeWithTypeAndName)(currentNode, nodeDef.type, nodeDef.name)
             : (0, utils_1.findChildNodeWithType)(currentNode, nodeDef.type);
@@ -195,46 +236,32 @@ function parsePathNodeParams(path) {
 function mergeTokenSets(first, second) {
     return lodash_1.default.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
 }
-function getComponentSupportedVariantProperties(definition) {
+function getComponentPropertyWithParams(variantProperty) {
     var _a;
-    return ((_a = definition.options.exporter.supportedVariantProps) !== null && _a !== void 0 ? _a : [])
-        .map(function (variantProperty) {
-        var _a;
-        var regex = /^([^:]+)(?:\(([^)]+)\))?$/;
-        var matches = variantProperty.match(regex);
-        if (!matches || matches.length !== 3) {
-            return null; // ignore if format is invalid
-        }
-        var key = matches[1].trim();
-        var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
-        if (!(0, utils_1.isValidVariantProperty)(key)) {
-            return null; // ignore if variant property isn't supported
-        }
-        return {
-            property: key,
-            params: value ? value.substring(1).split(':') : null,
-        };
-    })
-        .filter(index_1.filterOutNull);
+    var regex = /^([^:]+)(?:\(([^)]+)\))?$/;
+    var matches = variantProperty.match(regex);
+    if (!matches || matches.length !== 3) {
+        return null; // ignore if format is invalid
+    }
+    var key = matches[1].trim();
+    var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
+    return {
+        name: key,
+        params: value ? value.substring(1).split(':') : undefined,
+    };
 }
-function generateDesignId(theme, type, state, activity) {
-    var parts = ['design'];
-    if (theme !== undefined)
-        parts.push("theme-".concat(theme));
-    if (type !== undefined)
-        parts.push("type-".concat(type));
-    if (state !== undefined)
-        parts.push("state-".concat(state));
-    if (activity !== undefined)
-        parts.push("activity-".concat(activity));
-    return parts.join('-');
+function getComponentSupportedVariantProperties(definition) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    return {
+        design: ((_d = (_c = (_b = (_a = definition === null || definition === void 0 ? void 0 : definition.options) === null || _a === void 0 ? void 0 : _a.exporter) === null || _b === void 0 ? void 0 : _b.supportedVariantProps) === null || _c === void 0 ? void 0 : _c.design) !== null && _d !== void 0 ? _d : []).map(function (variantProperty) { return getComponentPropertyWithParams(variantProperty); }),
+        layout: ((_h = (_g = (_f = (_e = definition === null || definition === void 0 ? void 0 : definition.options) === null || _e === void 0 ? void 0 : _e.exporter) === null || _f === void 0 ? void 0 : _f.supportedVariantProps) === null || _g === void 0 ? void 0 : _g.layout) !== null && _h !== void 0 ? _h : []).map(function (variantProperty) { return getComponentPropertyWithParams(variantProperty); }),
+    };
 }
-function generateLayoutId(layout, size) {
-    var parts = [];
-    if (layout)
-        parts.push("layout-".concat(layout));
-    if (size)
-        parts.push("size-".concat(size));
+function generateComponentId(variantProperties, isLayoutComponent) {
+    var parts = isLayoutComponent ? [] : ['design'];
+    variantProperties.forEach(function (val, variantProp) {
+        parts.push("".concat(variantProp, "-").concat(val));
+    });
     return parts.join('-');
 }
 function extractNodeFill(node) {

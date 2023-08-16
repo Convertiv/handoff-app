@@ -38,9 +38,7 @@ export const makeExportable = async (handoff: Handoff, type: string, name: strin
   template.id = name;
   template.group = type.slice(0, 1).toUpperCase() + type.slice(1, type.length) + 's';
   template.options.exporter.search = name.slice(0, 1).toUpperCase() + name.slice(1, type.length);
-  template.options.transformer.rootCssClass = name;
-  template.options.transformer.cssVariableTemplate = name + template.options.transformer.cssVariableTemplate;
-  template.options.transformer.scssVariableTemplate = name + template.options.transformer.scssVariableTemplate;
+  template.options.transformer.cssRootClass = name;
   fs.writeFileSync(target, `${JSON.stringify(template, null, 2)}`);
   console.log(chalk.green(`New exportable schema ${name}.json was created in ${targetDir}`));
   return handoff;
