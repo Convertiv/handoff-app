@@ -20,7 +20,7 @@ export interface ColorObject {
   value: string | null;
   blend: string | null;
   group: string;
-  sass: string; // do we need this? (currently only essential in the changelog)
+  sass: string;
 }
 
 export interface TypographyObject {
@@ -106,8 +106,6 @@ export type PreviewJson = {
   };
 };
 
-export type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE" ;
-
 export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
 
 export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
@@ -120,42 +118,44 @@ export interface ExportableIndex {
 export interface ExportableDefinition {
   id: string,
   group?: string,
-  options: ExportableOptions,
+  options?: ExportableOptions,
   parts: ExportableParts,
 }
 
 export interface ExportableOptions {
-  shared: ExportableSharedOptions,
+  shared?: ExportableSharedOptions,
   exporter: ExportableExporterOptions,
   transformer: ExportableTransformerOptions,
   demo: ExportableDemoOptions,
 }
 
 export interface ExportableSharedOptions {
+  roles?: {
+    theme?: string
+  }
   defaults?: {
-    theme?: string,
-    state?: string,
-    type?: string,
-    activity?: string,
-    layout?: string,
-    size?: string,
+    [variantProperty: string]: string
   }
 }
 
 export interface ExportableExporterOptions {
   search: string,
-  supportedVariantProps: VariantProperty[],
+  supportedVariantProps: { design: string[], layout: string[] },
 }
 
 export interface ExportableTransformerOptions {
-  rootCssClass?: string,
-  cssVariableTemplate?: string,
-  scssVariableTemplate?: string,
-  replace: {[token: string]: {[search: string]: string}}
+  cssRootClass?: string,
+  tokenNameSegments?: string[],
+  replace: {[variantProperty: string]: {[source: string]: string}}
 }
 
 export interface ExportableDemoOptions {
   tabs: { [tab: string]: { [componentType: string]: ExportableDefinitionPageFilter } }
+}
+
+export interface VariantPropertyWithParams {
+  name: string,
+  params?: string[]
 }
 
 export interface ExportablePart {

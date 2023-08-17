@@ -1,6 +1,6 @@
 /// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
-import { Exportable, VariantProperty } from '../types';
+import { Exportable, VariantPropertyWithParams } from '../types';
 export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type): (obj?: FigmaTypes.Node | null) => obj is Extract<FigmaTypes.Document, {
     type: Type;
 }> | Extract<FigmaTypes.Canvas, {
@@ -44,7 +44,9 @@ export declare function findChildNodeWithTypeAndName<Type extends FigmaTypes.Nod
     type: Type;
 }> | null;
 export declare function getComponentNamePart(componentName: string, partKey: string): string;
-export declare const isValidVariantProperty: (variantProperty: string) => variantProperty is VariantProperty;
+export declare function extractComponentVariantProps(component: string, supportedVariantProps: VariantPropertyWithParams[], defaults: {
+    [variantProperty: string]: string;
+}): [Map<string, string>, boolean];
 export declare const isExportable: (exportable: string) => exportable is Exportable;
 export declare const isValidNodeType: (type: string) => type is "DOCUMENT" | "CANVAS" | "FRAME" | "GROUP" | "VECTOR" | "BOOLEAN_OPERATION" | "STAR" | "LINE" | "ELLIPSE" | "REGULAR_POLYGON" | "RECTANGLE" | "TEXT" | "SLICE" | "COMPONENT" | "COMPONENT_SET" | "INSTANCE";
 export declare const isValidEffectType: (effect: FigmaTypes.Effect['type']) => boolean;

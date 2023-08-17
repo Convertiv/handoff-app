@@ -4,31 +4,52 @@
   "options": {
     "exporter": {
       "search": "Radio",
-      "supportedVariantProps": [
-        "THEME",
-        "STATE",
-        "SIZE",
-        "ACTIVITY"
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "State",
+          "Activity"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
+    },
+    "transformer": {
+      "tokenNameSegments": [
+        "${Component}",
+        "${State}",
+        "${Size}",
+        "${Part}",
+        "${Theme}",
+        "${Activity}",
+        "${Property}"
       ]
     },
     "demo": {
       "tabs": {
         "overview": {
           "design": {
-            "state": [
+            "State": [
               "default",
               "disabled"
             ],
-            "activity": [
+            "Activity": [
               "off"
             ]
           }
         },
         "designTokens": {
           "design": {
-            "state": [
-              "default"
-            ]
+            "State": {
+              "default": {
+                "State": [
+                  "default",
+                  "hover",
+                  "disabled"
+                ]
+              }
+            }
           }
         }
       }

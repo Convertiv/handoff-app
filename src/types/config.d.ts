@@ -18,22 +18,19 @@ export interface Integration {
 export interface FigmaSearch {
   options: {
     shared?: {
+      roles: {
+        theme: string
+      }
       defaults: {
-        theme: string;
-        state: string;
-        type: string;
-        activity: string;
-        layout: string;
-        size: string;
+        [variantProperty: string]: string
       };
     };
     transformer?: {
+      cssRootProperty?: string,
+      tokenNameSegments?: string[],
       replace: {
-        size: {
-          [key: string]: string;
-          small: string;
-          medium: string;
-          large: string;
+        [variantProperty: string]: {
+          [source: string]: string;
         };
       };
     };

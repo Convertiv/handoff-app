@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizeNamePart = exports.isValidGradientType = exports.isShadowEffectType = exports.isValidEffectType = exports.isValidNodeType = exports.isExportable = exports.isValidVariantProperty = exports.getComponentNamePart = exports.findChildNodeWithTypeAndName = exports.findChildNodeWithType = exports.isNodeType = exports.filterByNodeType = void 0;
+exports.normalizeNamePart = exports.isValidGradientType = exports.isShadowEffectType = exports.isValidEffectType = exports.isValidNodeType = exports.isExportable = exports.extractComponentVariantProps = exports.getComponentNamePart = exports.findChildNodeWithTypeAndName = exports.findChildNodeWithType = exports.isNodeType = exports.filterByNodeType = void 0;
 function filterByNodeType(type) {
     return function (obj) { return (obj === null || obj === void 0 ? void 0 : obj.type) === type; };
 }
@@ -54,10 +54,20 @@ function getComponentNamePart(componentName, partKey) {
         .find(function (part) { return part.trim().startsWith("".concat(partKey, "=")); })) === null || _a === void 0 ? void 0 : _a.split('=')[1];
 }
 exports.getComponentNamePart = getComponentNamePart;
-var isValidVariantProperty = function (variantProperty) {
-    return ['THEME', 'TYPE', 'STATE', 'ACTIVITY', 'LAYOUT', 'SIZE'].includes(variantProperty);
-};
-exports.isValidVariantProperty = isValidVariantProperty;
+function extractComponentVariantProps(component, supportedVariantProps, defaults) {
+    var hasAnyNonDefaultVariantProperty = false;
+    var componentVariantProps = new Map();
+    var supportedVariantPropNames = supportedVariantProps.map(function (supportedVariantProp) { return supportedVariantProp.name; });
+    supportedVariantPropNames.forEach(function (supportedVariantPropName) {
+        var _a, _b;
+        var defaultValue = defaults ? (_a = defaults[supportedVariantPropName]) !== null && _a !== void 0 ? _a : '' : '';
+        var value = (0, exports.normalizeNamePart)((_b = getComponentNamePart(component, supportedVariantPropName)) !== null && _b !== void 0 ? _b : defaultValue);
+        hasAnyNonDefaultVariantProperty = hasAnyNonDefaultVariantProperty || value !== defaultValue;
+        componentVariantProps.set(supportedVariantPropName, value);
+    });
+    return [componentVariantProps, hasAnyNonDefaultVariantProperty];
+}
+exports.extractComponentVariantProps = extractComponentVariantProps;
 var isExportable = function (exportable) {
     return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
 };

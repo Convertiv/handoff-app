@@ -45,7 +45,7 @@ var transformTokens = function (tokens, tokenType, component, part, options) {
             property: property,
             part: part,
             metadata: {
-                propertyPath: (0, utils_1.getReducedTokenPropertyPath)(component, part, property, options),
+                propertyPath: (0, utils_1.getTokenNameSegments)(component, part, property, options),
                 isSupportedCssProperty: value instanceof Array ? value[1] : true
             }
         }, _b)));
