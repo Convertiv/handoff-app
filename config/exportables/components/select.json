@@ -32,7 +32,8 @@
               "default",
               "error",
               "disabled"
-            ]
+            ],
+            "Theme": "light"
           }
         },
         "designTokens": {
@@ -42,21 +43,25 @@
                 "State": [
                   "default",
                   "hover"
-                ]
+                ],
+                "Theme": "light"
               },
               "error": {
                 "State": [
                   "error",
                   "hover"
-                ]
+                ],
+                "Theme": "light"
               },
               "disabled": {
                 "State": [
                   "disabled",
                   "hover"
-                ]
+                ],
+                "Theme": "light"
               }
-            }
+            },
+            "Theme": "light"
           }
         }
       }

@@ -156,7 +156,6 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
   if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
 
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
-  const themeVariantProp = exportable?.options?.shared?.roles?.theme;
   
   const tabComponents: ComponentPreview[] = components
     .map((component) => {
@@ -164,21 +163,14 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
         return null;
       }
 
-      const variantProps = new Map(component.variantProperties);
-
-      if (component.type === 'design') {
-        if (themeVariantProp && ![undefined, "light"].includes(variantProps.get(themeVariantProp))) {
-          return null;
-        }
-      }
-
       if (tabFilters[component.type] === null) {
         return null;
       }
 
       let overrides: { states?: string[] } | undefined = undefined;
-
       const filterProps = Object.keys(tabFilters[component.type]);
+      const variantProps = new Map(component.variantProperties);
+
       for (const filterProp of filterProps) {
         if (!variantProps.get(filterProp)) {
           continue;

@@ -31,7 +31,8 @@
       "tabs": {
         "overview": {
           "design": {
-            "State": "default"
+            "State": "default",
+            "Theme": "light"
           },
           "layout": {}
         },
@@ -43,9 +44,11 @@
                   "default",
                   "hover",
                   "disabled"
-                ]
+                ],
+                "Theme": "light"
               }
-            }
+            },
+            "Theme": "light"
           }
         }
       }
