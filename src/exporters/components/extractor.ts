@@ -12,22 +12,16 @@ import { Exportable, ExportableDefinition, ExportablePart, VariantPropertyWithPa
 import { GetComponentSetComponentsResult } from '.';
 import { filterOutNull, replaceTokens } from '../../utils/index';
 
-interface BaseComponent {
+export interface Component {
   id: string;
   name: string;
   description?: string;
   type: 'design' | 'layout';
-  parts?: { [key: string]: ExportTypes.TokenSets };
-  theme?: string;
-}
-
-interface PipedComponent extends BaseComponent {
-  variantProperties: Map<string, string>;
-}
-
-export interface Component extends BaseComponent {
   variantProperties: [string, string][];
+  parts?: { [key: string]: ExportTypes.TokenSets };
 }
+
+type ExtractionPipeComponent = Omit<Component, "variantProperties"> & { variantProperties: Map<string, string> };
 
 export default function extractComponents(
   componentSetComponentsResult: GetComponentSetComponentsResult,
@@ -35,7 +29,7 @@ export default function extractComponents(
 ): Component[] {
   const sharedComponentVariants: {
     variantProperty: string,
-    component: PipedComponent,
+    component: ExtractionPipeComponent,
   }[] = [];
 
   const _themeVariantProp = definition?.options?.shared?.roles?.theme;
@@ -46,7 +40,7 @@ export default function extractComponents(
 
   const components = _.uniqBy(
     componentSetComponentsResult.components
-      .map((component): PipedComponent | null => {
+      .map((component): ExtractionPipeComponent | null => {
         // BEGIN: Get variant properties
 
         const defaults: {[variantProperty: string]: string} = definition.options?.shared?.defaults ?? {};
@@ -94,16 +88,13 @@ export default function extractComponents(
 
         // BEGIN: Initialize the resulting component
 
-        const theme = _themeVariantProp ? variantProperties.get(_themeVariantProp) : undefined;
-
-        const result: PipedComponent = {
+        const result: ExtractionPipeComponent = {
           id,
           name,
           description,
           type,
           variantProperties: variantProperties,
           parts,
-          theme
         };
 
         // END: Initialize the resulting component
@@ -169,10 +160,9 @@ export default function extractComponents(
             return false; // ignore component if it's not a design component
           }
 
-          if (sharedComponentVariant.component.theme) {
-            if (sharedComponentVariant.component.theme !== component.theme) {
-              return false;
-            }
+          const sharedComponentVariantTheme = sharedComponentVariant.component.variantProperties.get(_themeVariantProp);
+          if (sharedComponentVariantTheme && sharedComponentVariantTheme !== component.variantProperties.get(_themeVariantProp)) {
+            return false;
           }
 
           if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== definition.options?.shared?.defaults[sharedComponentVariant.variantProperty]) {
@@ -182,7 +172,7 @@ export default function extractComponents(
           return true;
         })
         .forEach((component) => {
-          const componentToPush: PipedComponent = {...sharedComponentVariant.component}
+          const componentToPush: ExtractionPipeComponent = {...sharedComponentVariant.component}
 
           const componentToPushVariantProps = new Map(component.variantProperties);
           componentToPushVariantProps.set(sharedComponentVariant.variantProperty, sharedComponentVariantProps.get(sharedComponentVariant.variantProperty));
@@ -202,7 +192,6 @@ export default function extractComponents(
     type: component. type,
     variantProperties: Array.from(component.variantProperties.entries()),
     parts: component.parts,
-    theme: component.theme
   }));
 }
 

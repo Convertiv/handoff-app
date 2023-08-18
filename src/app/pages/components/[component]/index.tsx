@@ -156,20 +156,21 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
   if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
 
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
+  const themeVariantProp = exportable?.options?.shared?.roles?.theme;
+  
   const tabComponents: ComponentPreview[] = components
-    .filter((component) => {
-      if (component.type === 'design' && component.theme !== undefined) {
-        return component.theme === 'light';
-      }
-
-      return true;
-    })
     .map((component) => {
       if (!(component.type in tabFilters)) {
         return null;
       }
 
       const variantProps = new Map(component.variantProperties);
+
+      if (component.type === 'design') {
+        if (themeVariantProp && ![undefined, "light"].includes(variantProps.get(themeVariantProp))) {
+          return null;
+        }
+      }
 
       if (tabFilters[component.type] === null) {
         return null;

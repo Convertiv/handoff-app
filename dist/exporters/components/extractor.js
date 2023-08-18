@@ -67,7 +67,6 @@ function extractComponents(componentSetComponentsResult, definition) {
         }, {});
         // END: Get component parts
         // BEGIN: Initialize the resulting component
-        var theme = _themeVariantProp ? variantProperties.get(_themeVariantProp) : undefined;
         var result = {
             id: id,
             name: name,
@@ -75,7 +74,6 @@ function extractComponents(componentSetComponentsResult, definition) {
             type: type,
             variantProperties: variantProperties,
             parts: parts,
-            theme: theme
         };
         // END: Initialize the resulting component
         // BEGIN: Store resulting component if component variant should be shared
@@ -126,10 +124,9 @@ function extractComponents(componentSetComponentsResult, definition) {
                 if (component.type !== 'design') {
                     return false; // ignore component if it's not a design component
                 }
-                if (sharedComponentVariant.component.theme) {
-                    if (sharedComponentVariant.component.theme !== component.theme) {
-                        return false;
-                    }
+                var sharedComponentVariantTheme = sharedComponentVariant.component.variantProperties.get(_themeVariantProp);
+                if (sharedComponentVariantTheme && sharedComponentVariantTheme !== component.variantProperties.get(_themeVariantProp)) {
+                    return false;
                 }
                 if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
                     return false; // ignore if the variant property value is not the default one
@@ -153,7 +150,6 @@ function extractComponents(componentSetComponentsResult, definition) {
         type: component.type,
         variantProperties: Array.from(component.variantProperties.entries()),
         parts: component.parts,
-        theme: component.theme
     }); });
 }
 exports.default = extractComponents;
