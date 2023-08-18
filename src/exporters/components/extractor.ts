@@ -21,7 +21,7 @@ export interface Component {
   parts?: { [key: string]: ExportTypes.TokenSets };
 }
 
-type ExtractionPipeComponent = Omit<Component, "variantProperties"> & { variantProperties: Map<string, string> };
+type ExportPipeComponent = Omit<Component, "variantProperties"> & { variantProperties: Map<string, string> };
 
 export default function extractComponents(
   componentSetComponentsResult: GetComponentSetComponentsResult,
@@ -29,7 +29,7 @@ export default function extractComponents(
 ): Component[] {
   const sharedComponentVariants: {
     variantProperty: string,
-    component: ExtractionPipeComponent,
+    component: ExportPipeComponent,
   }[] = [];
 
   const _themeVariantProp = definition?.options?.shared?.roles?.theme;
@@ -40,7 +40,7 @@ export default function extractComponents(
 
   const components = _.uniqBy(
     componentSetComponentsResult.components
-      .map((component): ExtractionPipeComponent | null => {
+      .map((component): ExportPipeComponent | null => {
         // BEGIN: Get variant properties
 
         const defaults: {[variantProperty: string]: string} = definition.options?.shared?.defaults ?? {};
@@ -88,7 +88,7 @@ export default function extractComponents(
 
         // BEGIN: Initialize the resulting component
 
-        const result: ExtractionPipeComponent = {
+        const result: ExportPipeComponent = {
           id,
           name,
           description,
@@ -172,7 +172,7 @@ export default function extractComponents(
           return true;
         })
         .forEach((component) => {
-          const componentToPush: ExtractionPipeComponent = {...sharedComponentVariant.component}
+          const componentToPush: ExportPipeComponent = {...sharedComponentVariant.component}
 
           const componentToPushVariantProps = new Map(component.variantProperties);
           componentToPushVariantProps.set(sharedComponentVariant.variantProperty, sharedComponentVariantProps.get(sharedComponentVariant.variantProperty));
