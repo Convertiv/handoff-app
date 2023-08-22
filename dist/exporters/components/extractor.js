@@ -27,13 +27,11 @@ var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
 function extractComponents(componentSetComponentsResult, definition) {
-    var _a, _b, _c;
     var sharedComponentVariants = [];
-    var _themeVariantProp = (_c = (_b = (_a = definition === null || definition === void 0 ? void 0 : definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.roles) === null || _c === void 0 ? void 0 : _c.theme;
     var supportedVariantProperties = getComponentSupportedVariantProperties(definition);
     var supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(function (variantProperty) { var _a; return ((_a = variantProperty.params) !== null && _a !== void 0 ? _a : []).length > 0; });
     var hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
-    var components = lodash_1.default.uniqBy(componentSetComponentsResult.components
+    var components = componentSetComponentsResult.components
         .map(function (component) {
         // BEGIN: Get variant properties
         var _a, _b, _c, _d, _e, _f;
@@ -67,7 +65,6 @@ function extractComponents(componentSetComponentsResult, definition) {
         }, {});
         // END: Get component parts
         // BEGIN: Initialize the resulting component
-        var theme = _themeVariantProp ? variantProperties.get(_themeVariantProp) : undefined;
         var result = {
             id: id,
             name: name,
@@ -75,7 +72,6 @@ function extractComponents(componentSetComponentsResult, definition) {
             type: type,
             variantProperties: variantProperties,
             parts: parts,
-            theme: theme
         };
         // END: Initialize the resulting component
         // BEGIN: Store resulting component if component variant should be shared
@@ -91,7 +87,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                     return;
                 }
                 // Check if the component is set to be shared based on the value of the variant property
-                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (val) { return val === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
+                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (param) { return param[0] === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
                 // Check if there are any matches
                 if (matchesByComponentVariantPropertyValue.length === 0) {
                     // If there aren't any matches, we bail early
@@ -104,6 +100,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                 matchesByComponentVariantPropertyValue.forEach(function (match) {
                     sharedComponentVariants.push({
                         variantProperty: variantProperty.name,
+                        groupByVariantProperty: match[1],
                         component: result
                     });
                 });
@@ -115,7 +112,7 @@ function extractComponents(componentSetComponentsResult, definition) {
         }
         return result;
     })
-        .filter(index_1.filterOutNull), 'id');
+        .filter(index_1.filterOutNull);
     if (sharedComponentVariants.length > 0) {
         sharedComponentVariants.forEach(function (sharedComponentVariant) {
             var sharedComponentVariantProps = sharedComponentVariant.component.variantProperties;
@@ -126,11 +123,18 @@ function extractComponents(componentSetComponentsResult, definition) {
                 if (component.type !== 'design') {
                     return false; // ignore component if it's not a design component
                 }
-                if (sharedComponentVariant.component.theme) {
-                    if (sharedComponentVariant.component.theme !== component.theme) {
-                        return false;
+                // check if the grouping variant property is defined
+                if (sharedComponentVariant.groupByVariantProperty) {
+                    // get the shared component grouping variant property value
+                    var sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupByVariantProperty);
+                    // check if the current component variant property value matches the group value
+                    if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupByVariantProperty)) {
+                        return false; // ignore if the value does not match
                     }
                 }
+                // applying shared variant should happen only once per design component
+                // so we pick only those design components for which the value of the
+                // shared variant property is the default one
                 if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
                     return false; // ignore if the variant property value is not the default one
                 }
@@ -146,14 +150,13 @@ function extractComponents(componentSetComponentsResult, definition) {
             });
         });
     }
-    return components.map(function (component) { return ({
+    return lodash_1.default.uniqBy(components, 'id').map(function (component) { return ({
         id: component.id,
         name: component.name,
         description: component.description,
         type: component.type,
         variantProperties: Array.from(component.variantProperties.entries()),
         parts: component.parts,
-        theme: component.theme
     }); });
 }
 exports.default = extractComponents;
@@ -247,7 +250,7 @@ function getComponentPropertyWithParams(variantProperty) {
     var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
     return {
         name: key,
-        params: value ? value.substring(1).split(':') : undefined,
+        params: value ? value.substring(1).split(':').map(function (param) { return param.split(/\/(.*)/s).slice(0, 2); }) : undefined,
     };
 }
 function getComponentSupportedVariantProperties(definition) {

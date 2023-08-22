@@ -108,7 +108,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 <div className="o-col-3@xl u-visible@lg">
                   <AnchorNav
                     groups={[
-                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj.component, exportable.options) }))]),
+                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]),
                       { guidelines: 'Component Guidelines' },
                       { classes: 'Classes' },
                     ]}
@@ -124,7 +124,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 {designTokensTabComponents.map(previewableComponent => (
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
-                    title={getComponentPreviewTitle(previewableComponent.component, exportable.options)}
+                    title={getComponentPreviewTitle(previewableComponent)}
                     previewObject={previewableComponent.component}
                     transformerOptions={exportable.options.transformer}
                     designComponents={designComponents}
@@ -146,8 +146,9 @@ export default GenericComponentPage;
 
 type ComponentPreview = {
   component: Component,
+  possiblyDistinctiveName: string,
   preview: PreviewObject | undefined,
-  overrides?: { states?: string[] | undefined }
+  overrides?: { states?: string[] | undefined },
 };
 
 type ComponentPreviews = ComponentPreview[];
@@ -156,28 +157,24 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
   if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
 
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
+  const componentTypeOrder = ["design", "layout"];
+  
   const tabComponents: ComponentPreview[] = components
-    .filter((component) => {
-      if (component.type === 'design' && component.theme !== undefined) {
-        return component.theme === 'light';
-      }
-
-      return true;
-    })
     .map((component) => {
       if (!(component.type in tabFilters)) {
         return null;
       }
 
-      const variantProps = new Map(component.variantProperties);
-
       if (tabFilters[component.type] === null) {
         return null;
       }
 
-      let overrides: { states?: string[] } | undefined = undefined;
-
       const filterProps = Object.keys(tabFilters[component.type]);
+      const variantProps = new Map(component.variantProperties);
+
+      let overrides: { states?: string[] } | undefined = undefined;
+      let possiblyDistinctiveName: string = component.variantProperties.filter(variantProp => !filterProps.includes(variantProp[0]))[0]?.[1];
+
       for (const filterProp of filterProps) {
         if (!variantProps.get(filterProp)) {
           continue;
@@ -194,6 +191,8 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
               // Since component should not be displayed we return null value
               return null;
             }
+            // Use as a default possibly distinctive name
+            possiblyDistinctiveName ??= variantProps.get(filterProp);
           } else {
             // Filter value is a object so we check if the value of the respective component property
             // is contained within the array of object keys
@@ -205,6 +204,8 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
               // Filter value object keys do contain the value of the respective component property
               // We will store the property value of the filter value object for later use
               overrides = filterValue[variantProps.get(filterProp)];
+              // Use as a default possibly distinctive name
+              possiblyDistinctiveName ??= variantProps.get(filterProp);
             }
           }
         } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
@@ -212,29 +213,30 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
         }
       }
 
+      // Check if the possibly distinctive name is set
+      if (!possiblyDistinctiveName) {
+        // Resolve to fallback value
+        possiblyDistinctiveName = component.variantProperties[0]?.[1];
+      }
+
       return {
         component: component,
+        possiblyDistinctiveName,
         preview: previews.find((item) => item.id === component.id),
-        overrides
+        overrides,
       };
     })
     .filter(filterOutNull)
-    .sort(function (a, b) {
-      const firstComponent = a.component;
-      const secondComponent = b.component;
-      const componentTypeOrder = ["design", "layout"];
+    .sort(function (first, second) {
+      sort ??= [];
 
-      if (!sort || sort.length === 0) {
-        return 0
-      };
-
-      const lStr = getDefaultVariantDiscriminator(firstComponent, exportable.options);
-      const rStr = getDefaultVariantDiscriminator(secondComponent, exportable.options);
+      const lStr = first.possiblyDistinctiveName;
+      const rStr = second.possiblyDistinctiveName;
 
       const l = sort.indexOf(lStr) >>> 0;
       const r = sort.indexOf(rStr) >>> 0;
 
-      const componentTypeCompareResult = componentTypeOrder.indexOf(a.component.type) - componentTypeOrder.indexOf(b.component.type)
+      const componentTypeCompareResult = componentTypeOrder.indexOf(first.component.type) - componentTypeOrder.indexOf(second.component.type)
       const discriminatorCompareResult = l !== r ? l - r : lStr.localeCompare(rStr);
       
       return componentTypeCompareResult || discriminatorCompareResult;
@@ -250,7 +252,7 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, option
         const component = previewableComponent.component;
         return (
           <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(component, options)}</h4>
+            <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
             <p>{component.description}</p>
             <div className="c-component-preview">
               <ComponentDisplay component={previewableComponent.preview} />
@@ -282,9 +284,9 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, option
               const component = previewableComponent.component;
               return (
                 <tr key={`classes-${component.id}`}>
-                  <td>{getComponentPreviewTitle(component, options)}</td>
+                  <td>{getComponentPreviewTitle(previewableComponent)}</td>
                   <td>
-                    <code>{component.name} {component.name}-{getDefaultVariantDiscriminator(component, options)}</code>
+                    <code>{component.name} {component.name}-{previewableComponent.possiblyDistinctiveName}</code>
                   </td>
                 </tr>
               )
@@ -319,18 +321,8 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
   );
 };
 
-export const getComponentPreviewTitle = (component: Component, options?: ExportableOptions): string => { 
-  const defaultDiscriminator = getDefaultVariantDiscriminator(component, options);
-
-  return defaultDiscriminator
-    ? `${startCase(defaultDiscriminator)} ${startCase(component.name)}`
-    : `${startCase(component.name)}`;
-}
-
-const getDefaultVariantDiscriminator = (component: Component, options?: ExportableOptions): string => {
-  const defaultDiscriminatorItem = options?.shared?.roles?.theme
-    ? component.variantProperties.filter(item => item[0] !== options.shared.roles.theme)[0]
-    : component.variantProperties[0];
-
-  return defaultDiscriminatorItem ? defaultDiscriminatorItem[1] : undefined;
+export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => { 
+  return previewableComponent.possiblyDistinctiveName
+    ? `${startCase(previewableComponent.possiblyDistinctiveName)} ${startCase(previewableComponent.component.name)}`
+    : `${startCase(previewableComponent.component.name)}`
 }

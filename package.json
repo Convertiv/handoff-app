@@ -34,6 +34,7 @@
     "start": "node ./dist/cli.js start",
     "dev": "node ./dist/cli.js dev",
     "build": "tsc",
+    "build:integration": "node ./dist/cli.js build:integration",
     "build:static": "node ./dist/cli.js build:app",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"src/app/sass/**/*.scss\"",

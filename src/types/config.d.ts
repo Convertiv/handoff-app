@@ -18,9 +18,6 @@ export interface Integration {
 export interface FigmaSearch {
   options: {
     shared?: {
-      roles: {
-        theme: string
-      }
       defaults: {
         [variantProperty: string]: string
       };

@@ -1,18 +1,14 @@
 import * as ExportTypes from './types';
 import { ExportableDefinition } from '../../types';
 import { GetComponentSetComponentsResult } from '.';
-interface BaseComponent {
+export interface Component {
     id: string;
     name: string;
     description?: string;
     type: 'design' | 'layout';
+    variantProperties: [string, string][];
     parts?: {
         [key: string]: ExportTypes.TokenSets;
     };
-    theme?: string;
-}
-export interface Component extends BaseComponent {
-    variantProperties: [string, string][];
 }
 export default function extractComponents(componentSetComponentsResult: GetComponentSetComponentsResult, definition: ExportableDefinition): Component[];
-export {};

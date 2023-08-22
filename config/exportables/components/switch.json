@@ -34,9 +34,8 @@
               "default",
               "disabled"
             ],
-            "Activity": [
-              "off"
-            ]
+            "Activity": "off",
+            "Theme": "light"
           }
         },
         "designTokens": {
@@ -47,9 +46,11 @@
                   "default",
                   "hover",
                   "disabled"
-                ]
+                ],
+                "Theme": "light"
               }
-            }
+            },
+            "Theme": "light"
           }
         }
       }

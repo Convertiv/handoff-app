@@ -43,9 +43,6 @@ export const defaultConfig: Config = {
   figma: {
     options: {
       shared: {
-        roles: {
-          theme: 'Theme',
-        },
         defaults: {
           'Theme': 'light',
           'State': 'default',
