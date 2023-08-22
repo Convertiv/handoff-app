@@ -4,31 +4,53 @@
   "options": {
     "exporter": {
       "search": "Switch",
-      "supportedVariantProps": [
-        "THEME",
-        "STATE",
-        "SIZE",
-        "ACTIVITY"
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "State",
+          "Activity"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
+    },
+    "transformer": {
+      "tokenNameSegments": [
+        "${Component}",
+        "${State}",
+        "${Size}",
+        "${Part}",
+        "${Theme}",
+        "${Activity}",
+        "${Property}"
       ]
     },
     "demo": {
       "tabs": {
         "overview": {
           "design": {
-            "state": [
+            "State": [
               "default",
               "disabled"
             ],
-            "activity": [
-              "off"
-            ]
+            "Activity": "off",
+            "Theme": "light"
           }
         },
         "designTokens": {
           "design": {
-            "state": [
-              "default"
-            ]
+            "State": {
+              "default": {
+                "State": [
+                  "default",
+                  "hover",
+                  "disabled"
+                ],
+                "Theme": "light"
+              }
+            },
+            "Theme": "light"
           }
         }
       }
@@ -65,7 +87,7 @@
       "id": "thumb",
       "tokens": [
         {
-          "from": "GROUP[name=':: switch'] > ELLIPSE[name='$activity']",
+          "from": "GROUP[name=':: switch'] > ELLIPSE[name='${Activity}']",
           "export": [
             "FILL",
             "BORDER",

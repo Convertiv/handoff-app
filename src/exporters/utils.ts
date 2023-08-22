@@ -1,5 +1,5 @@
 import * as FigmaTypes from '../figma/types';
-import { Exportable, VariantProperty } from '../types';
+import { Exportable, VariantPropertyWithParams } from '../types';
 
 export function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type) {
   return (obj?: FigmaTypes.Node | null): obj is Extract<FigmaTypes.Node, { type: Type }> => obj?.type === type;
@@ -70,8 +70,20 @@ export function getComponentNamePart(componentName: string, partKey: string) {
     ?.split('=')[1];
 }
 
-export const isValidVariantProperty = (variantProperty: string): variantProperty is VariantProperty => {
-  return ['THEME', 'TYPE', 'STATE', 'ACTIVITY', 'LAYOUT', 'SIZE'].includes(variantProperty);
+export function extractComponentVariantProps(component: string, supportedVariantProps: VariantPropertyWithParams[], defaults: { [variantProperty: string]: string }): [Map<string, string>, boolean] {
+  let hasAnyNonDefaultVariantProperty = false;
+
+  const componentVariantProps = new Map<string, string>();
+  const supportedVariantPropNames = supportedVariantProps.map(supportedVariantProp => supportedVariantProp.name);
+
+  supportedVariantPropNames.forEach(supportedVariantPropName => {
+    const defaultValue = defaults ? defaults[supportedVariantPropName] ?? '' : '';
+    const value = normalizeNamePart(getComponentNamePart(component, supportedVariantPropName) ?? defaultValue);
+    hasAnyNonDefaultVariantProperty = hasAnyNonDefaultVariantProperty || value !== defaultValue;
+    componentVariantProps.set(supportedVariantPropName, value);
+  });
+
+  return [componentVariantProps, hasAnyNonDefaultVariantProperty];
 }
 
 export const isExportable = (exportable: string): exportable is Exportable => {

@@ -1,4 +1,12 @@
 /**
+ * Replaces tokens in the given string and returns it
+ * @param str
+ * @param tokenValMap
+ * @param pipe
+ * @returns
+ */
+export declare function replaceTokens(str: string, tokenValMap: Map<string, string>, pipe?: (token: string, key: string, value: string) => string): string;
+/**
  * Generate slug from string
  * @param str
  * @returns

@@ -44,20 +44,23 @@ export const defaultConfig: Config = {
     options: {
       shared: {
         defaults: {
-          theme: 'light',
-          state: 'default',
-          type: 'default',
-          activity: '',
-          layout: '',
-          size: '',
+          'Theme': 'light',
+          'State': 'default',
+          'Type': 'default',
+          'Activity': '',
+          'Layout': '',
+          'Size': '',
         },
       },
       transformer: {
         replace: {
-          size: {
-            small: 'sm',
-            medium: 'md',
-            large: 'lg',
+          'State': {
+            'default': '',
+          },
+          'Size': {
+            'small': 'sm',
+            'medium': 'md',
+            'large': 'lg',
           },
         },
       },

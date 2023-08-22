@@ -10,11 +10,11 @@
 }
 
 // Check if variants map exists and then create modifier classes
-@if variable-exists(button-variants) and ($button-variants != null) {
-	@each $variant in $button-variants {
+@if variable-exists(button-type-map) and ($button-type-map != null) {
+	@each $variant in $button-type-map {
 		.btn-#{$variant} {
 			background: var( --button-#{$variant}-background );
-			@each $state in $button-states {
+			@each $state in $button-state-map {
 				@if $state != '' { $state: '-' + $state;}
 				--#{$prefix}btn#{$state}-color: var( --button-#{$variant}#{$state}-color );
 				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}#{$state}-font-weight );
@@ -37,7 +37,7 @@
 			}
 		}
 
-		@each $state in $button-states {
+		@each $state in $button-state-map {
 			@if $state != '' { $state: '-' + $state;}
 			@if $state == '' { $state: 'default';}
 			.btn-#{$variant}:#{$state} {
@@ -48,7 +48,7 @@
 		[data-theme="dark"] .btn-#{$variant} {
 			background: var( --button-#{$variant}-dark-background );
 
-			@each $state in $button-states {
+			@each $state in $button-state-map {
 				@if $state != '' { $state: '-' + $state;}
 				--#{$prefix}btn#{$state}-color: var( --button-#{$variant}-dark#{$state}-color );
 				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}-dark#{$state}-font-weight );
@@ -63,8 +63,8 @@
 }
 
 // Check if sizes map exists and then create modifier classes
-@if variable-exists(button-sizes) and ($button-sizes != null) {
-	@each $button-size in $button-sizes {
+@if variable-exists(button-size-map) and ($button-size-map != null) {
+	@each $button-size in $button-size-map {
 		.btn-#{$button-size} {
 			--#{$prefix}border-width: $btn-border-width-#{$button-size};
 			--#{$prefix}line-height: $btn-line-height-#{$button-size};

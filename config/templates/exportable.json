@@ -4,17 +4,19 @@
   "options": {
     "exporter": {
       "search": "",
-      "supportedVariantProps": [
-        "THEME",
-        "TYPE",
-        "STATE(:disabled)",
-        "SIZE"
-      ]
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "Type",
+          "State(:disabled)"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
     },
     "transformer": {
-      "rootCssClass": "",
-      "cssVariableTemplate": "-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}",
-      "scssVariableTemplate": "-{$type}{$size}-{$part}-{$theme}-{$state}-{$property}"
+      "cssRootClass": ""
     },
     "demo": {
       "tabs": {

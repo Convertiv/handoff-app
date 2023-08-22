@@ -4,21 +4,25 @@
   "options": {
     "exporter": {
       "search": "Modal",
-      "supportedVariantProps": [
-        "TYPE",
-        "SIZE"
-      ]
+      "supportedVariantProps": {
+        "design": [
+          "Type"
+        ],
+        "layout": [
+          "Size"
+        ]
+      }
     },
     "demo": {
       "tabs": {
         "overview": {
           "design": {
-            "type": "default"
+            "Type": "default"
           }
         },
         "designTokens": {
           "design": {
-            "type": "default"
+            "Type": "default"
           }
         }
       }

@@ -4,8 +4,8 @@ import IframeResizer from 'iframe-resizer-react';
 import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from '../../../components/util';
 import { getConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import { ExportableDefinition, PreviewObject } from '../../../../types';
-import { Component, ComponentDesign } from '../../../../exporters/components/extractor';
+import { ExportableDefinition, ExportableOptions, PreviewObject } from '../../../../types';
+import { Component } from '../../../../exporters/components/extractor';
 import Head from 'next/head';
 import Header from '../../../components/Header';
 import CustomNav from '../../../components/SideNav/Custom';
@@ -57,9 +57,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, styleDictionary, types, components, previews, config }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
-  const designComponents: ComponentDesign[] = components ? components.filter(
-    (component): component is ComponentDesign => component.componentType === 'design'
-  ) : [];
+  const designComponents = components ? components.filter(component => component.type === 'design') : [];
 
   const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
   const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)
@@ -99,18 +97,18 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {activeTab == ComponentTab.Overview && (
               <>
                 <div className="o-col-9@xl">
-                  <OverviewComponentPreview components={overviewTabComponents} />
+                  <OverviewComponentPreview components={overviewTabComponents} options={exportable.options} />
                   <div id="guidelines">
                     <OverviewComponentGuidlines content={content} />
                   </div>
                   <div id="classes">
-                    <OverviewComponentClasses components={overviewTabComponents} />
+                    <OverviewComponentClasses components={overviewTabComponents} options={exportable.options} />
                   </div>
                 </div>
                 <div className="o-col-3@xl u-visible@lg">
                   <AnchorNav
                     groups={[
-                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj.component) }))]),
+                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]),
                       { guidelines: 'Component Guidelines' },
                       { classes: 'Classes' },
                     ]}
@@ -126,7 +124,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 {designTokensTabComponents.map(previewableComponent => (
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
-                    title={getComponentPreviewTitle(previewableComponent.component)}
+                    title={getComponentPreviewTitle(previewableComponent)}
                     previewObject={previewableComponent.component}
                     transformerOptions={exportable.options.transformer}
                     designComponents={designComponents}
@@ -148,8 +146,9 @@ export default GenericComponentPage;
 
 type ComponentPreview = {
   component: Component,
+  possiblyDistinctiveName: string,
   preview: PreviewObject | undefined,
-  overrides?: { states?: string[] | undefined }
+  overrides?: { states?: string[] | undefined },
 };
 
 type ComponentPreviews = ComponentPreview[];
@@ -158,99 +157,102 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
   if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
 
   const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
+  const componentTypeOrder = ["design", "layout"];
+  
   const tabComponents: ComponentPreview[] = components
-    .filter((component) => {
-      if (component.componentType === 'design' && component.theme !== undefined) {
-        return component.theme === 'light';
-      }
-
-      return true;
-    })
     .map((component) => {
-      if (!(component.componentType in tabFilters)) {
+      if (!(component.type in tabFilters)) {
         return null;
       }
 
-      const reducedComponentModel = getReducedComponentModel(component);
-
-      if (tabFilters[component.componentType] === null) {
+      if (tabFilters[component.type] === null) {
         return null;
       }
+
+      const filterProps = Object.keys(tabFilters[component.type]);
+      const variantProps = new Map(component.variantProperties);
 
       let overrides: { states?: string[] } | undefined = undefined;
+      let possiblyDistinctiveName: string = component.variantProperties.filter(variantProp => !filterProps.includes(variantProp[0]))[0]?.[1];
 
-      const filterProps = Object.keys(tabFilters[component.componentType]);
       for (const filterProp of filterProps) {
-        if (filterProp in reducedComponentModel ) {
-          const filterValue = tabFilters[component.componentType][filterProp];
-          if (typeof filterValue === 'object' && filterValue !== null) {
-            if (Array.isArray(filterValue)) {
-              // Filter value is a array so we check if the value of the respective component property
-              // is contained in the filter value array
-              if (!filterValue.includes(reducedComponentModel[filterProp])) {
-                // Filter value array does not contain the value of the respective component property
-                // Since component should not be displayed we return null value
-                return null;
-              }
-            } else {
-              // Filter value is a object so we check if the value of the respective component property
-              // is contained within the array of object keys
-              if (!Object.keys(filterValue).includes(reducedComponentModel[filterProp])) {
-                // Filter value object keys do not contain the value of the respective component property
-                // Since component should not be displayed we return null value
-                return null;
-              } else {
-                // Filter value object keys do contain the value of the respective component property
-                // We will store the property value of the filter value object for later use
-                overrides = filterValue[reducedComponentModel[filterProp]];
-              }
-            }
-          } else if (typeof filterValue === 'string' && reducedComponentModel[filterProp] !== filterValue) {
-            return null;
-          }
+        if (!variantProps.get(filterProp)) {
+          continue;
         }
+        
+        const filterValue = tabFilters[component.type][filterProp];
+
+        if (typeof filterValue === 'object' && filterValue !== null) {
+          if (Array.isArray(filterValue)) {
+            // Filter value is a array so we check if the value of the respective component property
+            // is contained in the filter value array
+            if (!filterValue.includes(variantProps.get(filterProp))) {
+              // Filter value array does not contain the value of the respective component property
+              // Since component should not be displayed we return null value
+              return null;
+            }
+            // Use as a default possibly distinctive name
+            possiblyDistinctiveName ??= variantProps.get(filterProp);
+          } else {
+            // Filter value is a object so we check if the value of the respective component property
+            // is contained within the array of object keys
+            if (!Object.keys(filterValue).includes(variantProps.get(filterProp))) {
+              // Filter value object keys do not contain the value of the respective component property
+              // Since component should not be displayed we return null value
+              return null;
+            } else {
+              // Filter value object keys do contain the value of the respective component property
+              // We will store the property value of the filter value object for later use
+              overrides = filterValue[variantProps.get(filterProp)];
+              // Use as a default possibly distinctive name
+              possiblyDistinctiveName ??= variantProps.get(filterProp);
+            }
+          }
+        } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
+          return null;
+        }
+      }
+
+      // Check if the possibly distinctive name is set
+      if (!possiblyDistinctiveName) {
+        // Resolve to fallback value
+        possiblyDistinctiveName = component.variantProperties[0]?.[1];
       }
 
       return {
         component: component,
+        possiblyDistinctiveName,
         preview: previews.find((item) => item.id === component.id),
-        overrides
+        overrides,
       };
     })
     .filter(filterOutNull)
-    .sort(function (a, b) {
-      const firstComponent = a.component;
-      const secondComponent = b.component;
+    .sort(function (first, second) {
+      sort ??= [];
 
-      if (!sort || sort.length === 0) {
-        return 0
-      };
+      const lStr = first.possiblyDistinctiveName;
+      const rStr = second.possiblyDistinctiveName;
 
-      let lStr = firstComponent.componentType === 'design'
-        ? firstComponent.type ?? firstComponent.state ?? firstComponent.activity ?? ''
-        : firstComponent.layout ?? firstComponent.size ?? '';
+      const l = sort.indexOf(lStr) >>> 0;
+      const r = sort.indexOf(rStr) >>> 0;
 
-      let rStr = secondComponent.componentType === 'design'
-        ? secondComponent.type ?? secondComponent.state ?? secondComponent.activity ?? ''
-        : secondComponent.layout ?? secondComponent.size ?? '';
-
-      let l = sort.indexOf(lStr) >>> 0;
-      let r = sort.indexOf(rStr) >>> 0;
+      const componentTypeCompareResult = componentTypeOrder.indexOf(first.component.type) - componentTypeOrder.indexOf(second.component.type)
+      const discriminatorCompareResult = l !== r ? l - r : lStr.localeCompare(rStr);
       
-      return l !== r ? l - r : lStr.localeCompare(rStr);
+      return componentTypeCompareResult || discriminatorCompareResult;
     });
 
     return tabComponents;
 }
 
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
   return (
     <>
       {components.map(previewableComponent => {
         const component = previewableComponent.component;
         return (
           <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(component)}</h4>
+            <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
             <p>{component.description}</p>
             <div className="c-component-preview">
               <ComponentDisplay component={previewableComponent.preview} />
@@ -264,7 +266,7 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({
   );
 }
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
   return (
     <>
       <h4>Classes</h4>
@@ -282,16 +284,10 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({
               const component = previewableComponent.component;
               return (
                 <tr key={`classes-${component.id}`}>
-                  <td>{getComponentPreviewTitle(component)}</td>
-                  {component.componentType === 'design' ? (
-                    <td>
-                      <code>{component.name} {component.name}-{component.type || component.state || component.activity}</code>
-                    </td>
-                  ) : (
-                    <td>
-                      <code>{component.name} {component.name}-{component.size || component.layout}</code>
-                    </td>
-                  )}
+                  <td>{getComponentPreviewTitle(previewableComponent)}</td>
+                  <td>
+                    <code>{component.name} {component.name}-{previewableComponent.possiblyDistinctiveName}</code>
+                  </td>
                 </tr>
               )
             })}
@@ -325,15 +321,8 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
   );
 };
 
-export const getReducedComponentModel = (component: Component): { [key: string]: string } => {
-  return {
-    state: component.componentType === 'design' ? component.state ?? '' : '',
-    activity: component.componentType === 'design' ? component.activity ?? '' : '',
-  };
-}
-
-export const getComponentPreviewTitle = (component: Component): string => {
-  return component.componentType === 'design'
-    ? `${startCase(component.type || component.state || component.activity)} ${startCase(component.name)}`
-    : `${startCase(component.size || component.layout)} ${startCase(component.name)}`;
+export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => { 
+  return previewableComponent.possiblyDistinctiveName
+    ? `${startCase(previewableComponent.possiblyDistinctiveName)} ${startCase(previewableComponent.component.name)}`
+    : `${startCase(previewableComponent.component.name)}`
 }

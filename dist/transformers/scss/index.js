@@ -57,7 +57,7 @@ function scssTransformer(documentationObject, options) {
     var _loop_1 = function (componentName) {
         components[componentName] = documentationObject.components[componentName]
             .map(function (component) { return ([
-            (0, utils_1.formatComponentCodeBlockComment)(componentName, component, '//'),
+            (0, utils_1.formatComponentCodeBlockComment)(component, '//'),
             Object.entries((0, component_1.transformComponentTokensToScssVariables)(component, options === null || options === void 0 ? void 0 : options.get(componentName))).map(function (_a) {
                 var name = _a[0], token = _a[1];
                 return "".concat(name, ": ").concat(token.value, ";");

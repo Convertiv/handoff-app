@@ -82,9 +82,7 @@ var makeExportable = function (handoff, type, name) { return __awaiter(void 0, v
                 template.id = name;
                 template.group = type.slice(0, 1).toUpperCase() + type.slice(1, type.length) + 's';
                 template.options.exporter.search = name.slice(0, 1).toUpperCase() + name.slice(1, type.length);
-                template.options.transformer.rootCssClass = name;
-                template.options.transformer.cssVariableTemplate = name + template.options.transformer.cssVariableTemplate;
-                template.options.transformer.scssVariableTemplate = name + template.options.transformer.scssVariableTemplate;
+                template.options.transformer.cssRootClass = name;
                 fs_extra_1.default.writeFileSync(target, "".concat(JSON.stringify(template, null, 2)));
                 console.log(chalk_1.default.green("New exportable schema ".concat(name, ".json was created in ").concat(targetDir)));
                 return [2 /*return*/, handoff];

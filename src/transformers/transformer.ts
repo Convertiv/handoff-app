@@ -1,7 +1,7 @@
 import { Component } from '../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
 import { Token, TokenDict, TokenType } from './types';
-import { formatTokenName, getReducedTokenPropertyPath } from './utils';
+import { formatTokenName, getTokenNameSegments } from './utils';
 import { getTokenSetTokens } from './tokens';
 
 /**
@@ -36,7 +36,7 @@ const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, co
       property,
       part,
       metadata: {
-        propertyPath: getReducedTokenPropertyPath(component, part, property, options),
+        propertyPath: getTokenNameSegments(component, part, property, options),
         isSupportedCssProperty: value instanceof Array ? value[1] : true 
       }
     }

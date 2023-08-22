@@ -130,9 +130,9 @@ const buildIntegration = async (documentationObject: DocumentationObject) => {
  * Run just the preview
  * @param documentationObject
  */
-const buildPreview = async (documentationObject: DocumentationObject) => {
+const buildPreview = async (documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) => {
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].length > 0).length > 0) {
-    await Promise.all([previewTransformer(documentationObject).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 }))]);
+    await Promise.all([previewTransformer(documentationObject, options).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 }))]);
     await buildClientFiles()
       .then((value) => console.log(chalk.green(value)))
       .catch((error) => {
@@ -334,10 +334,12 @@ const figmaExtract = async (
  * @param handoff
  */
 export const buildIntegrationOnly = async (handoff: Handoff) => {
-  let documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+  const exportables = await getExportables(handoff);
+  const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
   if (documentationObject) {
     await buildIntegration(documentationObject);
-    await buildPreview(documentationObject);
+    await buildPreview(documentationObject, componentTransformerOptions);
   }
 };
 
@@ -357,7 +359,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildCustomFonts(documentationObject);
   await buildStyles(documentationObject, componentTransformerOptions);
   await buildIntegration(documentationObject);
-  await buildPreview(documentationObject);
+  await buildPreview(documentationObject, componentTransformerOptions);
   await serializeHandoff(handoff);
   if (build) {
     await buildApp(handoff);

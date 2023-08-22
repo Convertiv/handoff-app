@@ -88,7 +88,6 @@ export declare type PreviewJson = {
         [key in keyof DocumentComponentsObject]: PreviewObject[];
     };
 };
-export declare type VariantProperty = "THEME" | "TYPE" | "STATE" | "ACTIVITY" | "LAYOUT" | "SIZE";
 export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
 export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
 export interface ExportableIndex {
@@ -98,36 +97,33 @@ export interface ExportableIndex {
 export interface ExportableDefinition {
     id: string;
     group?: string;
-    options: ExportableOptions;
+    options?: ExportableOptions;
     parts: ExportableParts;
 }
 export interface ExportableOptions {
-    shared: ExportableSharedOptions;
+    shared?: ExportableSharedOptions;
     exporter: ExportableExporterOptions;
     transformer: ExportableTransformerOptions;
     demo: ExportableDemoOptions;
 }
 export interface ExportableSharedOptions {
     defaults?: {
-        theme?: string;
-        state?: string;
-        type?: string;
-        activity?: string;
-        layout?: string;
-        size?: string;
+        [variantProperty: string]: string;
     };
 }
 export interface ExportableExporterOptions {
     search: string;
-    supportedVariantProps: VariantProperty[];
+    supportedVariantProps: {
+        design: string[];
+        layout: string[];
+    };
 }
 export interface ExportableTransformerOptions {
-    rootCssClass?: string;
-    cssVariableTemplate?: string;
-    scssVariableTemplate?: string;
+    cssRootClass?: string;
+    tokenNameSegments?: string[];
     replace: {
-        [token: string]: {
-            [search: string]: string;
+        [variantProperty: string]: {
+            [source: string]: string;
         };
     };
 }
@@ -137,6 +133,10 @@ export interface ExportableDemoOptions {
             [componentType: string]: ExportableDefinitionPageFilter;
         };
     };
+}
+export interface VariantPropertyWithParams {
+    name: string;
+    params?: [string, string][];
 }
 export interface ExportablePart {
     id: string;

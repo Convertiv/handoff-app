@@ -12,10 +12,10 @@ import { transform } from '../transformer';
 export const transformComponentsToCssVariables = (componentName: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
 
-  const componentCssClass = options?.rootCssClass ?? componentName;
+  const componentCssClass = options?.cssRootClass ?? componentName;
   
   lines.push(`.${componentCssClass} {`)
-  const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(componentName, component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options))
+  const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options))
     .map(([name, token]) => `\t${name}: ${token.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';

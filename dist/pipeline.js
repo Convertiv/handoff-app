@@ -220,12 +220,12 @@ var buildIntegration = function (documentationObject) { return __awaiter(void 0,
  * Run just the preview
  * @param documentationObject
  */
-var buildPreview = function (documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+var buildPreview = function (documentationObject, options) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].length > 0; }).length > 0)) return [3 /*break*/, 3];
-                return [4 /*yield*/, Promise.all([(0, index_6.default)(documentationObject).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath, out, { spaces: 2 }); })])];
+                return [4 /*yield*/, Promise.all([(0, index_6.default)(documentationObject, options).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath, out, { spaces: 2 }); })])];
             case 1:
                 _a.sent();
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)()
@@ -447,21 +447,25 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
  * @param handoff
  */
 var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var documentationObject;
+    var exportables, componentTransformerOptions, documentationObject;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath)];
+            case 0: return [4 /*yield*/, getExportables(handoff)];
             case 1:
-                documentationObject = _a.sent();
-                if (!documentationObject) return [3 /*break*/, 4];
-                return [4 /*yield*/, buildIntegration(documentationObject)];
+                exportables = _a.sent();
+                componentTransformerOptions = formatComponentsTransformerOptions(exportables);
+                return [4 /*yield*/, readPrevJSONFile(tokensFilePath)];
             case 2:
-                _a.sent();
-                return [4 /*yield*/, buildPreview(documentationObject)];
+                documentationObject = _a.sent();
+                if (!documentationObject) return [3 /*break*/, 5];
+                return [4 /*yield*/, buildIntegration(documentationObject)];
             case 3:
                 _a.sent();
-                _a.label = 4;
-            case 4: return [2 /*return*/];
+                return [4 /*yield*/, buildPreview(documentationObject, componentTransformerOptions)];
+            case 4:
+                _a.sent();
+                _a.label = 5;
+            case 5: return [2 /*return*/];
         }
     });
 }); };
@@ -500,7 +504,7 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildIntegration(documentationObject)];
             case 7:
                 _a.sent();
-                return [4 /*yield*/, buildPreview(documentationObject)];
+                return [4 /*yield*/, buildPreview(documentationObject, componentTransformerOptions)];
             case 8:
                 _a.sent();
                 return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];

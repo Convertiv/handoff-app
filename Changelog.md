@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2023-08-22
+
+This release is focused primarily on improving the way Handoff fetches data from figma. These changes are subtle, and do not bring any major use experience change. As we used Handoff with a wider variety of Figma design systems, we noticed that the schemas couldn't quite capture all of the various component structures.
+
+In Figma, every component has a set of properties. These are used for categorizing the component and declaring use and behavior. These are things like - type, theme, state etc. Handoff's schemas allowed you to choose which of those properties would be pulled from a component, but did not allow you to rename or declare custom properties. This is because these properties often create semantic or behavioral meaning.
+
+This release allows you to name and configure these properties, and map them to the sematic or behavioral meaning. This allows designers to name things according to internal conventions, localize prop names, and declare new custom properties to ingest.
+
+### Changes
+
+- Exportable (JSON file) now has a updated syntax to share variant over multiple design components based on the variant props.
+  - `supportedVariantProps` now accepts an object rather than an array. This object has two properties `design` and `layout`. Users should declare the props that should be pulled as an array of each of these props. The props should be the name as it is in Figma, not the old key names Handoff used to require.
+  - The previous templates for css and scss token patterns have been removed in favor of `tokenNameSegments`. This a tokenized array of strings that allow you to generate token names for each component following a pattern. 
+  - In the `demo` section, under the tabs, you can now declare the default value for each property.
+  - In the `demo` section, under `designTokens` you can explicitly declare all the values of a property to show on the demo page.
+  - Previously you could do `State(:disabled)` which would automatically apply the "disabled" state to all design components, distinctive only by the theme (which means light theme would have one shared disabled state while dark theme would have a different one).
+  - The update allows you to do this `State(:disabled/Theme)` which removes the need for us to know what the theme variant property is and to allow users to distinct over any variant property they have and desire.
+  - This allows handoff to choose NOT to group/distinct by any variant property. Previously this was not possible as if there was a theme variant property present, it would be automatically used to group by it. 
+- Paths for preview templates now account for all variant properties, but, if some of them are missing in the integration templates folder for the component, it will be dismissed and we will try starting from the next one (for example, if theme is not there as a folder, we will ignore it and proceed to the next variant prop and so on). This also removes the need for us to know what the theme variant property is as we don't need to filter them out based on if it's a theme variant prop or not.
+- Component titles in the app now have a smarter way of automatically determining the title of the preview component. This is achieved by looking into the filters used to display the previews of the components and decide which variant property you probably want to use in the name of the component preview.
+
+### Bugfixes
+
+- Node Sass version has been locked at version `1.64.2`. `1.65.0` introduces a breaking change and we need to update the maps before upgrading to it.
+
+### Documentation
+
+- The repository readme has been rewritten to follow the standard npm readme format.
+
 ## [0.7.4] - 2023-07-31
 
 ### Changes
