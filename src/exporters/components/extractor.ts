@@ -198,7 +198,7 @@ export default function extractComponents(
     variantProperties: Array.from(component.variantProperties.entries()),
     parts: component.parts,
   }));
-
+}
 
 function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePart, tokens: Map<string, string>): ExportTypes.TokenSets {
   if (!part.tokens || part.tokens.length === 0) {
