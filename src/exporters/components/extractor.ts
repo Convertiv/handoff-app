@@ -37,117 +37,114 @@ export default function extractComponents(
   const supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(variantProperty => (variantProperty.params ?? []).length > 0);
   const hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
 
-  const components = _.uniqBy(
-    componentSetComponentsResult.components
-      .map((component): ExportPipeComponent | null => {
-        // BEGIN: Get variant properties
+  const components = componentSetComponentsResult.components
+    .map((component): ExportPipeComponent | null => {
+      // BEGIN: Get variant properties
 
-        const defaults: {[variantProperty: string]: string} = definition.options?.shared?.defaults ?? {};
-        const [designVariantProperties, _] = extractComponentVariantProps(component.name, supportedVariantProperties.design, defaults);
-        const [layoutVariantProperties, hasAnyNonDefaultLayoutVariantProperty] = extractComponentVariantProps(component.name, supportedVariantProperties.layout, defaults);
+      const defaults: {[variantProperty: string]: string} = definition.options?.shared?.defaults ?? {};
+      const [designVariantProperties, _] = extractComponentVariantProps(component.name, supportedVariantProperties.design, defaults);
+      const [layoutVariantProperties, hasAnyNonDefaultLayoutVariantProperty] = extractComponentVariantProps(component.name, supportedVariantProperties.layout, defaults);
 
-        // END: Get variant properties
+      // END: Get variant properties
 
-        // BEGIN: Set component type indicator
+      // BEGIN: Set component type indicator
 
-        const isLayoutComponent = hasAnyNonDefaultLayoutVariantProperty;
+      const isLayoutComponent = hasAnyNonDefaultLayoutVariantProperty;
 
-        // END: Set component type indicator
+      // END: Set component type indicator
 
-        // BEGIN: Define required component properties
+      // BEGIN: Define required component properties
 
-        const variantProperties = isLayoutComponent ? layoutVariantProperties : designVariantProperties;
-        const type = isLayoutComponent ? 'layout' : 'design';
-        const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
-        const name = definition.id ?? '';
-        const id = generateComponentId(variantProperties, isLayoutComponent);
+      const variantProperties = isLayoutComponent ? layoutVariantProperties : designVariantProperties;
+      const type = isLayoutComponent ? 'layout' : 'design';
+      const description = componentSetComponentsResult.metadata[component.id]?.description ?? '';
+      const name = definition.id ?? '';
+      const id = generateComponentId(variantProperties, isLayoutComponent);
 
-        // END: Define required component properties
+      // END: Define required component properties
 
-        // BEGIN: Get component parts
+      // BEGIN: Get component parts
 
-        const instanceNode = isLayoutComponent ? component : findChildNodeWithType(component, 'INSTANCE');
+      const instanceNode = isLayoutComponent ? component : findChildNodeWithType(component, 'INSTANCE');
 
-        if (!instanceNode) {
-          throw new Error(`No instance node found for component ${component.name}`);
-        }
+      if (!instanceNode) {
+        throw new Error(`No instance node found for component ${component.name}`);
+      }
 
-        const partsToExport = definition.parts;
+      const partsToExport = definition.parts;
 
-        if (!partsToExport) {
-          return null;
-        }
+      if (!partsToExport) {
+        return null;
+      }
 
-        const parts = partsToExport.reduce((previous, current) => {
-          const tokenSets = extractComponentPartTokenSets(instanceNode, current, variantProperties);
-          return { ...previous, ...{ [current.id]: tokenSets } };
-        }, {});
+      const parts = partsToExport.reduce((previous, current) => {
+        const tokenSets = extractComponentPartTokenSets(instanceNode, current, variantProperties);
+        return { ...previous, ...{ [current.id]: tokenSets } };
+      }, {});
 
-        // END: Get component parts
+      // END: Get component parts
 
-        // BEGIN: Initialize the resulting component
+      // BEGIN: Initialize the resulting component
 
-        const result: ExportPipeComponent = {
-          id,
-          name,
-          description,
-          type,
-          variantProperties: variantProperties,
-          parts,
-        };
+      const result: ExportPipeComponent = {
+        id,
+        name,
+        description,
+        type,
+        variantProperties: variantProperties,
+        parts,
+      };
 
-        // END: Initialize the resulting component
+      // END: Initialize the resulting component
 
-        // BEGIN: Store resulting component if component variant should be shared
+      // BEGIN: Store resulting component if component variant should be shared
 
-        let componentVariantIsBeingShared = false;
+      let componentVariantIsBeingShared = false;
 
-        if (type === 'design' && hasAnyVariantPropertiesWithSharedVariants) {
-          supportedDesignVariantPropertiesWithSharedVariants.forEach(variantProperty => {
-            // Get the variant property value of the component and validate that the value is set
-            const variantPropertyValue = variantProperties.get(variantProperty.name);
+      if (type === 'design' && hasAnyVariantPropertiesWithSharedVariants) {
+        supportedDesignVariantPropertiesWithSharedVariants.forEach(variantProperty => {
+          // Get the variant property value of the component and validate that the value is set
+          const variantPropertyValue = variantProperties.get(variantProperty.name);
 
-            // Check if the component has a value set for the variant property we are checking
-            if (!variantPropertyValue) {
-              // If the component doesn't have a value set we bail early
-              return;
-            }
-            
-            // Check if the component is set to be shared based on the value of the variant property
-            const matchesByComponentVariantPropertyValue = variantProperty.params.filter(param => param[0] === variantPropertyValue) ?? [];
+          // Check if the component has a value set for the variant property we are checking
+          if (!variantPropertyValue) {
+            // If the component doesn't have a value set we bail early
+            return;
+          }
+          
+          // Check if the component is set to be shared based on the value of the variant property
+          const matchesByComponentVariantPropertyValue = variantProperty.params.filter(param => param[0] === variantPropertyValue) ?? [];
 
-            // Check if there are any matches
-            if (matchesByComponentVariantPropertyValue.length === 0) {
-              // If there aren't any matches, we bail early
-              return;
-            }
+          // Check if there are any matches
+          if (matchesByComponentVariantPropertyValue.length === 0) {
+            // If there aren't any matches, we bail early
+            return;
+          }
 
-            // Signal that the component variant is considered to be shared
-            componentVariantIsBeingShared = true;
+          // Signal that the component variant is considered to be shared
+          componentVariantIsBeingShared = true;
 
-            // Current component is a shared component.
-            // We store the component for later when we will do the binding.
-            matchesByComponentVariantPropertyValue.forEach(match => {
-              sharedComponentVariants.push({
-                variantProperty: variantProperty.name,
-                groupByVariantProperty: match[1],
-                component: result
-              })
-            });
+          // Current component is a shared component.
+          // We store the component for later when we will do the binding.
+          matchesByComponentVariantPropertyValue.forEach(match => {
+            sharedComponentVariants.push({
+              variantProperty: variantProperty.name,
+              groupByVariantProperty: match[1],
+              component: result
+            })
           });
-        }
+        });
+      }
 
-        // END: Store resulting component if component variant should be shared
+      // END: Store resulting component if component variant should be shared
 
-        if (componentVariantIsBeingShared) {
-          return null;
-        }
+      if (componentVariantIsBeingShared) {
+        return null;
+      }
 
-        return result;
-      })
-      .filter(filterOutNull),
-    'id'
-  );
+      return result;
+    })
+    .filter(filterOutNull);
 
   if (sharedComponentVariants.length > 0) {
     sharedComponentVariants.forEach(sharedComponentVariant => {
@@ -193,15 +190,15 @@ export default function extractComponents(
     });
   }
 
-  return components.map(component => ({
+  return _.uniqBy(components, 'id').map(component => ({
     id: component.id,
     name: component.name,
     description: component.description,
-    type: component. type,
+    type: component.type,
     variantProperties: Array.from(component.variantProperties.entries()),
     parts: component.parts,
   }));
-}
+
 
 function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePart, tokens: Map<string, string>): ExportTypes.TokenSets {
   if (!part.tokens || part.tokens.length === 0) {

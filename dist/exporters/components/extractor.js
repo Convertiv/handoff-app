@@ -31,7 +31,7 @@ function extractComponents(componentSetComponentsResult, definition) {
     var supportedVariantProperties = getComponentSupportedVariantProperties(definition);
     var supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(function (variantProperty) { var _a; return ((_a = variantProperty.params) !== null && _a !== void 0 ? _a : []).length > 0; });
     var hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
-    var components = lodash_1.default.uniqBy(componentSetComponentsResult.components
+    var components = componentSetComponentsResult.components
         .map(function (component) {
         // BEGIN: Get variant properties
         var _a, _b, _c, _d, _e, _f;
@@ -112,7 +112,7 @@ function extractComponents(componentSetComponentsResult, definition) {
         }
         return result;
     })
-        .filter(index_1.filterOutNull), 'id');
+        .filter(index_1.filterOutNull);
     if (sharedComponentVariants.length > 0) {
         sharedComponentVariants.forEach(function (sharedComponentVariant) {
             var sharedComponentVariantProps = sharedComponentVariant.component.variantProperties;
@@ -150,7 +150,7 @@ function extractComponents(componentSetComponentsResult, definition) {
             });
         });
     }
-    return components.map(function (component) { return ({
+    return lodash_1.default.uniqBy(components, 'id').map(function (component) { return ({
         id: component.id,
         name: component.name,
         description: component.description,
