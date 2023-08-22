@@ -83,10 +83,10 @@ var transformComponentTokens = function (componentId, component, options) { retu
                 if (!template) {
                     return [2 /*return*/, null];
                 }
-                renderableComponent = { props: {}, parts: {} };
+                renderableComponent = { variant: {}, parts: {} };
                 component.variantProperties.forEach(function (_a) {
                     var variantProp = _a[0], value = _a[1];
-                    renderableComponent.props[variantProp] = value;
+                    renderableComponent.variant[variantProp] = value;
                 });
                 if (component.parts) {
                     Object.keys(component.parts).forEach(function (part) {

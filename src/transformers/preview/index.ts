@@ -42,10 +42,10 @@ const transformComponentTokens = async (componentId: string, component: Componen
     return null;
   }
 
-  const renderableComponent: Record<string, any> = { props: {}, parts: {} };
+  const renderableComponent: Record<string, any> = { variant: {}, parts: {} };
 
   component.variantProperties.forEach(([variantProp, value]) => {
-    renderableComponent.props[variantProp] = value;
+    renderableComponent.variant[variantProp] = value;
   });
 
   if (component.parts) {
