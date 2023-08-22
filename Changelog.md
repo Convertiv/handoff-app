@@ -16,8 +16,11 @@ This release allows you to name and configure these properties, and map them to 
 
 ### Changes
 
-- `supportedVariantProps` now accepts an object rather than an array. This object has two properties `design` and `layout`. Users should declare the props that should be pulled as an array of each of these props. The props should be the name as it is in Figma, not the old key names Handoff used to require.
 - Exportable (JSON file) now has a updated syntax to share variant over multiple design components based on the variant props.
+  - `supportedVariantProps` now accepts an object rather than an array. This object has two properties `design` and `layout`. Users should declare the props that should be pulled as an array of each of these props. The props should be the name as it is in Figma, not the old key names Handoff used to require.
+  - The previous templates for css and scss token patterns have been removed in favor of `tokenNameSegments`. This a tokenized array of strings that allow you to generate token names for each component following a pattern. 
+  - In the `demo` section, under the tabs, you can now declare the default value for each property.
+  - In the `demo` section, under `designTokens` you can explicitly declare all the values of a property to show on the demo page.
   - Previously you could do `State(:disabled)` which would automatically apply the "disabled" state to all design components, distinctive only by the theme (which means light theme would have one shared disabled state while dark theme would have a different one).
   - The update allows you to do this `State(:disabled/Theme)` which removes the need for us to know what the theme variant property is and to allow users to distinct over any variant property they have and desire.
   - This allows handoff to choose NOT to group/distinct by any variant property. Previously this was not possible as if there was a theme variant property present, it would be automatically used to group by it. This is neat in case if our figma starter had one single disabled button for both themes for example (currently it has one per theme).
