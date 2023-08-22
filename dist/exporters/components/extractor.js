@@ -87,7 +87,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                     return;
                 }
                 // Check if the component is set to be shared based on the value of the variant property
-                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (param) { return param.length === 2 && param[0] === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
+                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (param) { return param[0] === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
                 // Check if there are any matches
                 if (matchesByComponentVariantPropertyValue.length === 0) {
                     // If there aren't any matches, we bail early
@@ -100,7 +100,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                 matchesByComponentVariantPropertyValue.forEach(function (match) {
                     sharedComponentVariants.push({
                         variantProperty: variantProperty.name,
-                        groupVariantProperty: match[1],
+                        groupByVariantProperty: match[1],
                         component: result
                     });
                 });
@@ -123,10 +123,18 @@ function extractComponents(componentSetComponentsResult, definition) {
                 if (component.type !== 'design') {
                     return false; // ignore component if it's not a design component
                 }
-                var sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupVariantProperty);
-                if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupVariantProperty)) {
-                    return false;
+                // check if the grouping variant property is defined
+                if (sharedComponentVariant.groupByVariantProperty) {
+                    // get the shared component grouping variant property value
+                    var sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupByVariantProperty);
+                    // check if the current component variant property value matches the group value
+                    if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupByVariantProperty)) {
+                        return false; // ignore if the value does not match
+                    }
                 }
+                // applying shared variant should happen only once per design component
+                // so we pick only those design components for which the value of the
+                // shared variant property is the default one
                 if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
                     return false; // ignore if the variant property value is not the default one
                 }

@@ -29,7 +29,7 @@ export default function extractComponents(
 ): Component[] {
   const sharedComponentVariants: {
     variantProperty: string,
-    groupVariantProperty: string,
+    groupByVariantProperty?: string,
     component: ExportPipeComponent,
   }[] = [];
 
@@ -114,7 +114,7 @@ export default function extractComponents(
             }
             
             // Check if the component is set to be shared based on the value of the variant property
-            const matchesByComponentVariantPropertyValue = variantProperty.params.filter(param => param.length === 2 && param[0] === variantPropertyValue) ?? [];
+            const matchesByComponentVariantPropertyValue = variantProperty.params.filter(param => param[0] === variantPropertyValue) ?? [];
 
             // Check if there are any matches
             if (matchesByComponentVariantPropertyValue.length === 0) {
@@ -130,7 +130,7 @@ export default function extractComponents(
             matchesByComponentVariantPropertyValue.forEach(match => {
               sharedComponentVariants.push({
                 variantProperty: variantProperty.name,
-                groupVariantProperty: match[1],
+                groupByVariantProperty: match[1],
                 component: result
               })
             });
@@ -160,11 +160,19 @@ export default function extractComponents(
             return false; // ignore component if it's not a design component
           }
 
-          const sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupVariantProperty);
-          if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupVariantProperty)) {
-            return false;
+          // check if the grouping variant property is defined
+          if (sharedComponentVariant.groupByVariantProperty) {
+            // get the shared component grouping variant property value
+            const sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupByVariantProperty);
+            // check if the current component variant property value matches the group value
+            if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupByVariantProperty)) {
+              return false; // ignore if the value does not match
+            }
           }
 
+          // applying shared variant should happen only once per design component
+          // so we pick only those design components for which the value of the
+          // shared variant property is the default one
           if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== definition.options?.shared?.defaults[sharedComponentVariant.variantProperty]) {
             return false; // ignore if the variant property value is not the default one
           }
