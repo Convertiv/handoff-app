@@ -7,7 +7,7 @@ import fs from 'fs-extra';
  * @param parts
  * @returns
  */
-export const getComponentTemplate = async (component: string, ...parts: string[]): Promise<string | null> => {
+export const getComponentTemplate = async (component: string, parts: string[]): Promise<string | null> => {
   // [override, local]
   const sources = [path.resolve(process.cwd(), `integration/templates/${component}`), path.resolve(__dirname, `../../templates/${component}`)];
 

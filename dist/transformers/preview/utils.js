@@ -57,63 +57,57 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
  * @param parts
  * @returns
  */
-var getComponentTemplate = function (component) {
-    var parts = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        parts[_i - 1] = arguments[_i];
-    }
-    return __awaiter(void 0, void 0, void 0, function () {
-        var sources, _a, sources_1, src, cwd, srcParts, templatePath, pathToDir, pathToFile, _b, sources_2, src, templatePath;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    sources = [path_1.default.resolve(process.cwd(), "integration/templates/".concat(component)), path_1.default.resolve(__dirname, "../../templates/".concat(component))];
-                    _a = 0, sources_1 = sources;
-                    _c.label = 1;
-                case 1:
-                    if (!(_a < sources_1.length)) return [3 /*break*/, 4];
-                    src = sources_1[_a];
-                    cwd = src;
-                    srcParts = __spreadArray([], parts, true);
-                    templatePath = undefined;
-                    while (srcParts.length > 0) {
-                        pathToDir = path_1.default.resolve(cwd, srcParts[0]);
-                        pathToFile = path_1.default.resolve(cwd, "".concat(srcParts[0], ".html"));
-                        if (fs_extra_1.default.pathExistsSync(pathToFile)) {
-                            templatePath = pathToFile;
-                        }
-                        if (fs_extra_1.default.pathExistsSync(pathToDir)) {
-                            cwd = pathToDir;
-                        }
-                        else if (templatePath) {
-                            break;
-                        }
-                        srcParts.shift();
+var getComponentTemplate = function (component, parts) { return __awaiter(void 0, void 0, void 0, function () {
+    var sources, _i, sources_1, src, cwd, srcParts, templatePath, pathToDir, pathToFile, _a, sources_2, src, templatePath;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                sources = [path_1.default.resolve(process.cwd(), "integration/templates/".concat(component)), path_1.default.resolve(__dirname, "../../templates/".concat(component))];
+                _i = 0, sources_1 = sources;
+                _b.label = 1;
+            case 1:
+                if (!(_i < sources_1.length)) return [3 /*break*/, 4];
+                src = sources_1[_i];
+                cwd = src;
+                srcParts = __spreadArray([], parts, true);
+                templatePath = undefined;
+                while (srcParts.length > 0) {
+                    pathToDir = path_1.default.resolve(cwd, srcParts[0]);
+                    pathToFile = path_1.default.resolve(cwd, "".concat(srcParts[0], ".html"));
+                    if (fs_extra_1.default.pathExistsSync(pathToFile)) {
+                        templatePath = pathToFile;
                     }
-                    if (!templatePath) return [3 /*break*/, 3];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
-                case 2: return [2 /*return*/, _c.sent()];
-                case 3:
-                    _a++;
-                    return [3 /*break*/, 1];
-                case 4:
-                    _b = 0, sources_2 = sources;
-                    _c.label = 5;
-                case 5:
-                    if (!(_b < sources_2.length)) return [3 /*break*/, 9];
-                    src = sources_2[_b];
-                    templatePath = path_1.default.resolve(src, "default.html");
-                    return [4 /*yield*/, fs_extra_1.default.pathExists(templatePath)];
-                case 6:
-                    if (!_c.sent()) return [3 /*break*/, 8];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
-                case 7: return [2 /*return*/, _c.sent()];
-                case 8:
-                    _b++;
-                    return [3 /*break*/, 5];
-                case 9: return [2 /*return*/, null];
-            }
-        });
+                    if (fs_extra_1.default.pathExistsSync(pathToDir)) {
+                        cwd = pathToDir;
+                    }
+                    else if (templatePath) {
+                        break;
+                    }
+                    srcParts.shift();
+                }
+                if (!templatePath) return [3 /*break*/, 3];
+                return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
+            case 2: return [2 /*return*/, _b.sent()];
+            case 3:
+                _i++;
+                return [3 /*break*/, 1];
+            case 4:
+                _a = 0, sources_2 = sources;
+                _b.label = 5;
+            case 5:
+                if (!(_a < sources_2.length)) return [3 /*break*/, 9];
+                src = sources_2[_a];
+                templatePath = path_1.default.resolve(src, "default.html");
+                return [4 /*yield*/, fs_extra_1.default.pathExists(templatePath)];
+            case 6:
+                if (!_b.sent()) return [3 /*break*/, 8];
+                return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
+            case 7: return [2 /*return*/, _b.sent()];
+            case 8:
+                _a++;
+                return [3 /*break*/, 5];
+            case 9: return [2 /*return*/, null];
+        }
     });
-};
+}); };
 exports.getComponentTemplate = getComponentTemplate;

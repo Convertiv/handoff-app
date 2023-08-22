@@ -35,15 +35,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -72,9 +63,9 @@ var getComponentTemplateByComponentId = function (componentId, component, option
                 parts = [];
                 component.variantProperties.forEach(function (_a) {
                     var _ = _a[0], value = _a[1];
-                    parts.push(value);
+                    return parts.push(value);
                 });
-                return [4 /*yield*/, utils_1.getComponentTemplate.apply(void 0, __spreadArray([componentId], parts, false))];
+                return [4 /*yield*/, (0, utils_1.getComponentTemplate)(componentId, parts)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });

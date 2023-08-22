@@ -27,11 +27,9 @@ function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
 const getComponentTemplateByComponentId = async (componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
   const parts: string[] = [];
 
-  component.variantProperties.forEach(([_, value]) => {
-    parts.push(value);
-  });
+  component.variantProperties.forEach(([_, value]) => parts.push(value));
 
-  return await getComponentTemplate(componentId, ...parts);
+  return await getComponentTemplate(componentId, parts);
 };
 
 /**
