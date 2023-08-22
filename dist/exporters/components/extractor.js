@@ -27,9 +27,7 @@ var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
 function extractComponents(componentSetComponentsResult, definition) {
-    var _a, _b, _c;
     var sharedComponentVariants = [];
-    var _themeVariantProp = (_c = (_b = (_a = definition === null || definition === void 0 ? void 0 : definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.roles) === null || _c === void 0 ? void 0 : _c.theme;
     var supportedVariantProperties = getComponentSupportedVariantProperties(definition);
     var supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(function (variantProperty) { var _a; return ((_a = variantProperty.params) !== null && _a !== void 0 ? _a : []).length > 0; });
     var hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
@@ -89,7 +87,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                     return;
                 }
                 // Check if the component is set to be shared based on the value of the variant property
-                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (val) { return val === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
+                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (param) { return param.length === 2 && param[0] === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
                 // Check if there are any matches
                 if (matchesByComponentVariantPropertyValue.length === 0) {
                     // If there aren't any matches, we bail early
@@ -102,6 +100,7 @@ function extractComponents(componentSetComponentsResult, definition) {
                 matchesByComponentVariantPropertyValue.forEach(function (match) {
                     sharedComponentVariants.push({
                         variantProperty: variantProperty.name,
+                        groupVariantProperty: match[1],
                         component: result
                     });
                 });
@@ -124,8 +123,8 @@ function extractComponents(componentSetComponentsResult, definition) {
                 if (component.type !== 'design') {
                     return false; // ignore component if it's not a design component
                 }
-                var sharedComponentVariantTheme = sharedComponentVariant.component.variantProperties.get(_themeVariantProp);
-                if (sharedComponentVariantTheme && sharedComponentVariantTheme !== component.variantProperties.get(_themeVariantProp)) {
+                var sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupVariantProperty);
+                if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupVariantProperty)) {
                     return false;
                 }
                 if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
@@ -243,7 +242,7 @@ function getComponentPropertyWithParams(variantProperty) {
     var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
     return {
         name: key,
-        params: value ? value.substring(1).split(':') : undefined,
+        params: value ? value.substring(1).split(':').map(function (param) { return param.split(/\/(.*)/s).slice(0, 2); }) : undefined,
     };
 }
 function getComponentSupportedVariantProperties(definition) {

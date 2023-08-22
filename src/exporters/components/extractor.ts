@@ -29,10 +29,9 @@ export default function extractComponents(
 ): Component[] {
   const sharedComponentVariants: {
     variantProperty: string,
+    groupVariantProperty: string,
     component: ExportPipeComponent,
   }[] = [];
-
-  const _themeVariantProp = definition?.options?.shared?.roles?.theme;
 
   const supportedVariantProperties = getComponentSupportedVariantProperties(definition);
   const supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(variantProperty => (variantProperty.params ?? []).length > 0);
@@ -115,7 +114,7 @@ export default function extractComponents(
             }
             
             // Check if the component is set to be shared based on the value of the variant property
-            const matchesByComponentVariantPropertyValue = variantProperty.params.filter(val => val === variantPropertyValue) ?? [];
+            const matchesByComponentVariantPropertyValue = variantProperty.params.filter(param => param.length === 2 && param[0] === variantPropertyValue) ?? [];
 
             // Check if there are any matches
             if (matchesByComponentVariantPropertyValue.length === 0) {
@@ -131,6 +130,7 @@ export default function extractComponents(
             matchesByComponentVariantPropertyValue.forEach(match => {
               sharedComponentVariants.push({
                 variantProperty: variantProperty.name,
+                groupVariantProperty: match[1],
                 component: result
               })
             });
@@ -160,8 +160,8 @@ export default function extractComponents(
             return false; // ignore component if it's not a design component
           }
 
-          const sharedComponentVariantTheme = sharedComponentVariant.component.variantProperties.get(_themeVariantProp);
-          if (sharedComponentVariantTheme && sharedComponentVariantTheme !== component.variantProperties.get(_themeVariantProp)) {
+          const sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupVariantProperty);
+          if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupVariantProperty)) {
             return false;
           }
 
@@ -308,7 +308,7 @@ function getComponentPropertyWithParams(variantProperty: string): VariantPropert
 
   return {
     name: key,
-    params: value ? value.substring(1).split(':') : undefined,
+    params: value ? value.substring(1).split(':').map(param => param.split(/\/(.*)/s).slice(0, 2) as [string, string]) : undefined,
   };
 }
 

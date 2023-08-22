@@ -27,10 +27,8 @@ function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
 const getComponentTemplateByComponentId = async (componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
   const parts: string[] = [];
 
-  component.variantProperties.forEach(([variantProp, val]) => {
-    if (!options?.roles?.theme || variantProp !== options.roles.theme) {
-      parts.push(val);
-    }
+  component.variantProperties.forEach(([_, value]) => {
+    parts.push(value);
   });
 
   return await getComponentTemplate(componentId, ...parts);

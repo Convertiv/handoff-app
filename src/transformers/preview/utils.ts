@@ -1,9 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__filename);
-
 /**
  * Get the component template
  * @param component
@@ -11,26 +8,43 @@ import fs from 'fs-extra';
  * @returns
  */
 export const getComponentTemplate = async (component: string, ...parts: string[]): Promise<string | null> => {
-  const componentFallbackPath = path.resolve(__dirname, `../../templates/${component}/default.html`);
-  const componentFallbackOverridePath = path.resolve(process.cwd(), `integration/templates/${component}/default.html`);
+  // [override, local]
+  const sources = [path.resolve(process.cwd(), `integration/templates/${component}`), path.resolve(__dirname, `../../templates/${component}`)];
 
-  if (!parts.length) {
-    if (await fs.pathExists(componentFallbackOverridePath)) {
-      return await fs.readFile(componentFallbackOverridePath, 'utf8');
-    }else if (await fs.pathExists(componentFallbackPath)) {
-      return await fs.readFile(componentFallbackPath, 'utf8');
+  for (const src of sources) {
+    let cwd: string = src;
+    let srcParts = [...parts];
+    let templatePath: string = undefined;
+
+    while (srcParts.length > 0) {
+      let pathToDir = path.resolve(cwd, srcParts[0]);
+      let pathToFile = path.resolve(cwd, `${srcParts[0]}.html`);
+
+      if (fs.pathExistsSync(pathToFile)) {
+        templatePath = pathToFile;
+      }
+
+      if (fs.pathExistsSync(pathToDir)) {
+        cwd = pathToDir;
+      } else if (templatePath) {
+        break;
+      }
+
+      srcParts.shift();
     }
 
-    return null;
+    if (templatePath) {
+      return await fs.readFile(templatePath, 'utf8');
+    }
   }
 
-  const partsTemplatePath = path.resolve(__dirname, `../../templates/${component}/${parts.join('/')}.html`);
-  const partsTemplateOverridePath = path.resolve(process.cwd(), `integration/templates/${component}/${parts.join('/')}.html`);
-  if (await fs.pathExists(partsTemplateOverridePath)) {
-    return await fs.readFile(partsTemplateOverridePath, 'utf8');
-  }else if (await fs.pathExists(partsTemplatePath)) {
-    return await fs.readFile(partsTemplatePath, 'utf8');
+  for (const src of sources) {
+    const templatePath = path.resolve(src, `default.html`)
+
+    if (await fs.pathExists(templatePath)) {
+      return await fs.readFile(templatePath, 'utf8');
+    }
   }
 
-  return await getComponentTemplate(component, ...parts.slice(0, -1));
+  return null;
 };

@@ -71,11 +71,8 @@ var getComponentTemplateByComponentId = function (componentId, component, option
             case 0:
                 parts = [];
                 component.variantProperties.forEach(function (_a) {
-                    var _b;
-                    var variantProp = _a[0], val = _a[1];
-                    if (!((_b = options === null || options === void 0 ? void 0 : options.roles) === null || _b === void 0 ? void 0 : _b.theme) || variantProp !== options.roles.theme) {
-                        parts.push(val);
-                    }
+                    var _ = _a[0], value = _a[1];
+                    parts.push(value);
                 });
                 return [4 /*yield*/, utils_1.getComponentTemplate.apply(void 0, __spreadArray([componentId], parts, false))];
             case 1: return [2 /*return*/, _a.sent()];

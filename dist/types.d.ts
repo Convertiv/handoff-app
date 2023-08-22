@@ -107,9 +107,6 @@ export interface ExportableOptions {
     demo: ExportableDemoOptions;
 }
 export interface ExportableSharedOptions {
-    roles?: {
-        theme?: string;
-    };
     defaults?: {
         [variantProperty: string]: string;
     };
@@ -139,7 +136,7 @@ export interface ExportableDemoOptions {
 }
 export interface VariantPropertyWithParams {
     name: string;
-    params?: string[];
+    params?: [string, string][];
 }
 export interface ExportablePart {
     id: string;

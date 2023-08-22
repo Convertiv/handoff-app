@@ -8,7 +8,7 @@
         "design": [
           "Theme",
           "Type",
-          "State(:disabled)"
+          "State(:disabled/Theme)"
         ],
         "layout": [
           "Size"
