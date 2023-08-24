@@ -63,8 +63,8 @@ export function findChildNodeWithTypeAndName<Type extends FigmaTypes.Node['type'
   return null;
 }
 
-export function getComponentNamePart(componentName: string, partKey: string) {
-  return componentName
+export function getComponentNamePart(component: string, partKey: string) {
+  return component
     .split(',')
     .find((part) => part.trim().startsWith(`${partKey}=`))
     ?.split('=')[1];

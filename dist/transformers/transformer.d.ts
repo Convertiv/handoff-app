@@ -7,4 +7,4 @@ import { Token, TokenType } from './types';
  * @param options
  * @returns
  */
-export declare const transform: (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, Token>;
+export declare const transform: (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Token[];

@@ -108,20 +108,20 @@ var transformComponentTokens = function (componentId, component, options) { retu
  */
 function previewTransformer(documentationObject, options) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentNames, result, previews;
+        var components, componentIds, result, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     components = documentationObject.components;
-                    componentNames = Object.keys(components);
-                    return [4 /*yield*/, Promise.all(componentNames.map(function (componentName) { return __awaiter(_this, void 0, void 0, function () {
+                    componentIds = Object.keys(components);
+                    return [4 /*yield*/, Promise.all(componentIds.map(function (componentId) { return __awaiter(_this, void 0, void 0, function () {
                             var _a;
                             return __generator(this, function (_b) {
                                 switch (_b.label) {
                                     case 0:
-                                        _a = [componentName];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentName].map(function (component) { return transformComponentTokens(componentName, component, options === null || options === void 0 ? void 0 : options.get(componentName)); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
+                                        _a = [componentId];
+                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].map(function (component) { return transformComponentTokens(componentId, component, options === null || options === void 0 ? void 0 : options.get(componentId)); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
                                     case 1: return [2 /*return*/, _a.concat([_b.sent()])];
                                 }
                             });

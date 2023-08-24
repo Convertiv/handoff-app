@@ -10,8 +10,8 @@ import { getTokenSetTokens } from './tokens';
  * @param options 
  * @returns 
  */
-export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, Token> => {
-  let result = {};
+export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  let tokens: Token[] = [];
 
   for (const part in component.parts) {
     const tokenSets = component.parts[part];
@@ -20,25 +20,23 @@ export const transform = (tokenType: TokenType, component: Component, options?: 
       continue;
     }
 
-    for (const tokenSet of tokenSets) {
-      const tokens = getTokenSetTokens(tokenSet);
-      result = {...result, ...transformTokens(tokens, tokenType, component, part, options)}
-    }
+    tokenSets.forEach(tokenSet => 
+      tokens.push(...transformTokens(getTokenSetTokens(tokenSet), tokenType, component, part, options))
+    )
   }
   
-  return result;
+  return tokens;
 };
 
 const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  return tokens ? Object.entries(tokens).reduce((record, [property, value]) => ({
-    ...record, [formatTokenName(tokenType, component, part, property, options)]: {
-      value: value instanceof Array ? value[0] : value,
-      property,
+  return tokens ? Object.entries(tokens).map(([cssProperty, value]) => ({
+    name: formatTokenName(tokenType, component, part, cssProperty, options),
+    value: value instanceof Array ? value[0] : value,
+    metadata: {
       part,
-      metadata: {
-        propertyPath: getTokenNameSegments(component, part, property, options),
-        isSupportedCssProperty: value instanceof Array ? value[1] : true 
-      }
+      cssProperty,
+      isSupportedCssProperty: value instanceof Array ? value[1] : true ,
+      nameSegments: getTokenNameSegments(component, part, cssProperty, options),
     }
-  }), {} as Record<string, Token>) : {}
+  })) : [];
 };

@@ -14,8 +14,8 @@ import { ExportableTransformerOptionsMap, TransformerOutput } from '../types';
 export function scssTypesTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
   const components: Record<string, string> = {};
 
-  for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToScssTypes(componentName, documentationObject.components[componentName], options?.get(componentName));
+  for (const componentId in documentationObject.components) {
+    components[componentId] = transformComponentsToScssTypes(componentId, documentationObject.components[componentId], options?.get(componentId));
   }
 
   const design = {
@@ -35,11 +35,11 @@ export function scssTypesTransformer(documentationObject: DocumentationObject, o
 export default function scssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
   const components: Record<string, string> = {};
 
-  for (const componentName in documentationObject.components) {
-    components[componentName] = documentationObject.components[componentName]
+  for (const componentId in documentationObject.components) {
+    components[componentId] = documentationObject.components[componentId]
       .map((component) => ([
         formatComponentCodeBlockComment(component, '//'),
-        Object.entries(transformComponentTokensToScssVariables(component, options?.get(componentName))).map(([name, token]) => `${name}: ${token.value};`).join('\n')
+        transformComponentTokensToScssVariables(component, options?.get(componentId)).map(token => `${token.name}: ${token.value};`).join('\n')
       ].join('\n'))).join('\n\n');
   }
 

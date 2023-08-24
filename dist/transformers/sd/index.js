@@ -9,8 +9,8 @@ var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
 function sdTransformer(documentationObject, options) {
     var components = {};
-    for (var componentName in documentationObject.components) {
-        components[componentName] = (0, component_1.transformComponentsToStyleDictionary)(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName));
+    for (var componentId in documentationObject.components) {
+        components[componentId] = (0, component_1.transformComponentsToStyleDictionary)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
     }
     var design = {
         colors: (0, colors_1.default)(documentationObject.design.color),

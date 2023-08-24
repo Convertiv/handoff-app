@@ -8,16 +8,13 @@ var transformer_1 = require("../transformer");
  * @param alerts
  * @returns
  */
-var transformComponentsToCssVariables = function (componentName, components, options) {
+var transformComponentsToCssVariables = function (componentId, components, options) {
     var _a;
     var lines = [];
-    var componentCssClass = (_a = options === null || options === void 0 ? void 0 : options.cssRootClass) !== null && _a !== void 0 ? _a : componentName;
+    var componentCssClass = (_a = options === null || options === void 0 ? void 0 : options.cssRootClass) !== null && _a !== void 0 ? _a : componentId;
     lines.push(".".concat(componentCssClass, " {"));
-    var cssVars = components.map(function (component) { return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(component, '/**/'), "\n").concat(Object.entries((0, exports.transformComponentTokensToCssVariables)(component, options))
-        .map(function (_a) {
-        var name = _a[0], token = _a[1];
-        return "\t".concat(name, ": ").concat(token.value, ";");
-    })
+    var cssVars = components.map(function (component) { return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(component, '/**/'), "\n").concat((0, exports.transformComponentTokensToCssVariables)(component, options)
+        .map(function (token) { return "\t".concat(token.name, ": ").concat(token.value, ";"); })
         .join('\n')); });
     return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };

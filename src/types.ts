@@ -143,7 +143,7 @@ export interface ExportableExporterOptions {
 export interface ExportableTransformerOptions {
   cssRootClass?: string,
   tokenNameSegments?: string[],
-  replace: {[variantProperty: string]: {[source: string]: string}}
+  replace: { [variantProperty: string]: { [source: string]: string } }
 }
 
 export interface ExportableDemoOptions {
