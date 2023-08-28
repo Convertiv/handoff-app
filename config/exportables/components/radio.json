@@ -93,7 +93,7 @@
           "from": "TEXT[name='Radio Label']",
           "export": [
             "TYPOGRAPHY",
-            "COLOR",
+            "FILL",
             "OPACITY"
           ]
         }

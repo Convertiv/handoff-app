@@ -36,6 +36,16 @@
 
 $prefix: '';
 @import 'variables';
+@import 'maps/alert';
+@import 'maps/checkbox';
+@import 'maps/input';
+@import 'maps/button';
+@import 'maps/modal';
+@import 'maps/radio';
+@import 'maps/select';
+@import 'maps/switch';
+@import 'maps/tooltip';
+
 
 // 4. Bootstrap Variables
 //    Load Bootstrap variables
@@ -93,8 +103,9 @@ $prefix: '';
 @import 'extended/alert';
 @import 'extended/button';
 @import 'extended/checkbox';
-//@import 'extended/input';
+// @import 'extended/input';
 @import 'extended/modal';
+@import 'extended/pagination';
 @import 'extended/radio';
 @import 'extended/select';
 @import 'extended/switch';
