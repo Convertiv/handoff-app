@@ -11,11 +11,12 @@ export interface TransformerOutput {
 }
 
 export interface Token {
-  property: string;
-  value: string;
-  part: string;
+  name: string,
+  value: string,
   metadata: {
-    propertyPath: string[],
+    part: string,
+    cssProperty: string,
     isSupportedCssProperty: boolean,
-  }
+    nameSegments: string[],
+  },
 }

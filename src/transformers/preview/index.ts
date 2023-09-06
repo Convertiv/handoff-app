@@ -69,12 +69,12 @@ const transformComponentTokens = async (componentId: string, component: Componen
  */
 export default async function previewTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) {
   const { components } = documentationObject;
-  const componentNames = Object.keys(components);
+  const componentIds = Object.keys(components);
 
   const result = await Promise.all(
-    componentNames.map(async (componentName) => {
-      return [componentName, await Promise.all(
-        documentationObject.components[componentName].map((component) => transformComponentTokens(componentName, component, options?.get(componentName)))
+    componentIds.map(async (componentId) => {
+      return [componentId, await Promise.all(
+        documentationObject.components[componentId].map((component) => transformComponentTokens(componentId, component, options?.get(componentId)))
       ).then((res) => res.filter(filterOutNull))] as [string, TransformComponentTokensResult[]];
     })
   );

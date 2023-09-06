@@ -8,8 +8,8 @@ import transformTypography from './design/typography';
 export default function cssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
   const components: Record<string, string> = {};
 
-  for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToCssVariables(componentName, documentationObject.components[componentName], options?.get(componentName));
+  for (const componentId in documentationObject.components) {
+    components[componentId] = transformComponentsToCssVariables(componentId, documentationObject.components[componentId], options?.get(componentId));
   }
 
   const design = {

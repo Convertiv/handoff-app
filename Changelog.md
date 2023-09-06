@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2023-09-06
+
+### Cleanup
+
+- Updated `Token` interface so that all properties other than `property` or `value` are now moved to `metadata`.
+- Updates to reflect the changes made to the `Token` interface.
+- General improvements to code quality and consistency.
+
 ## [0.8.0] - 2023-08-22
 
 This release is focused primarily on improving the way Handoff fetches data from figma. These changes are subtle, and do not bring any major use experience change. As we used Handoff with a wider variety of Figma design systems, we noticed that the schemas couldn't quite capture all of the various component structures.
