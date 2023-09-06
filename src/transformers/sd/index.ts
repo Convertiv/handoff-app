@@ -8,8 +8,8 @@ import transformTypography from './design/typography';
 export default function sdTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
   const components: Record<string, string> = {};
 
-  for (const componentName in documentationObject.components) {
-    components[componentName] = transformComponentsToStyleDictionary(componentName, documentationObject.components[componentName], options?.get(componentName));
+  for (const componentId in documentationObject.components) {
+    components[componentId] = transformComponentsToStyleDictionary(componentId, documentationObject.components[componentId], options?.get(componentId));
   }
 
   const design = {

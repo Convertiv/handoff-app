@@ -36,8 +36,8 @@ var utils_1 = require("../utils");
  */
 function scssTypesTransformer(documentationObject, options) {
     var components = {};
-    for (var componentName in documentationObject.components) {
-        components[componentName] = (0, component_1.transformComponentsToScssTypes)(componentName, documentationObject.components[componentName], options === null || options === void 0 ? void 0 : options.get(componentName));
+    for (var componentId in documentationObject.components) {
+        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
     }
     var design = {
         colors: (0, colors_1.transformColorTypes)(documentationObject.design.color),
@@ -54,18 +54,15 @@ exports.scssTypesTransformer = scssTypesTransformer;
  */
 function scssTransformer(documentationObject, options) {
     var components = {};
-    var _loop_1 = function (componentName) {
-        components[componentName] = documentationObject.components[componentName]
+    var _loop_1 = function (componentId) {
+        components[componentId] = documentationObject.components[componentId]
             .map(function (component) { return ([
             (0, utils_1.formatComponentCodeBlockComment)(component, '//'),
-            Object.entries((0, component_1.transformComponentTokensToScssVariables)(component, options === null || options === void 0 ? void 0 : options.get(componentName))).map(function (_a) {
-                var name = _a[0], token = _a[1];
-                return "".concat(name, ": ").concat(token.value, ";");
-            }).join('\n')
+            (0, component_1.transformComponentTokensToScssVariables)(component, options === null || options === void 0 ? void 0 : options.get(componentId)).map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); }).join('\n')
         ].join('\n')); }).join('\n\n');
     };
-    for (var componentName in documentationObject.components) {
-        _loop_1(componentName);
+    for (var componentId in documentationObject.components) {
+        _loop_1(componentId);
     }
     var design = {
         colors: (0, colors_1.default)(documentationObject.design.color),

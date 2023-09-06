@@ -25,11 +25,7 @@ export interface FigmaSearch {
     transformer?: {
       cssRootProperty?: string,
       tokenNameSegments?: string[],
-      replace: {
-        [variantProperty: string]: {
-          [source: string]: string;
-        };
-      };
+      replace: { [variantProperty: string]: { [source: string]: string } }
     };
   };
   definitions: string[];

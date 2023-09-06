@@ -13,21 +13,21 @@ export const transformComponentsToStyleDictionary = (_: string, components: Comp
   components.forEach(component => {
     const tokens = transform('sd', component, options);
 
-    Object.entries(tokens).forEach(([_, token]) =>{
-      const propPath = token.metadata.propertyPath;
-      const lastIdx = propPath.length - 1;
+    tokens.forEach(token =>{
+      const tokenNameSegments = token.metadata.nameSegments;
+      const lastIdx = tokenNameSegments.length - 1;
       let ref = sd;
 
-      propPath.forEach((el, idx) => {
+      tokenNameSegments.forEach((tokenNameSegment, idx) => {
         if (idx === lastIdx) {
           return;
         }
 
-        ref[el] ??= {};
-        ref = ref[el];
+        ref[tokenNameSegment] ??= {};
+        ref = ref[tokenNameSegment];
       });
 
-      const propParts = propPath[lastIdx].split('-');
+      const propParts = tokenNameSegments[lastIdx].split('-');
 
       propParts.forEach(el => {
         ref[el] ??= {};

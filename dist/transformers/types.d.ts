@@ -10,11 +10,12 @@ export interface TransformerOutput {
     design: Record<FoundationType, string>;
 }
 export interface Token {
-    property: string;
+    name: string;
     value: string;
-    part: string;
     metadata: {
-        propertyPath: string[];
+        part: string;
+        cssProperty: string;
         isSupportedCssProperty: boolean;
+        nameSegments: string[];
     };
 }

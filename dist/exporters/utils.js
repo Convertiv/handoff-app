@@ -47,9 +47,9 @@ function findChildNodeWithTypeAndName(node, type, name) {
     return null;
 }
 exports.findChildNodeWithTypeAndName = findChildNodeWithTypeAndName;
-function getComponentNamePart(componentName, partKey) {
+function getComponentNamePart(component, partKey) {
     var _a;
-    return (_a = componentName
+    return (_a = component
         .split(',')
         .find(function (part) { return part.trim().startsWith("".concat(partKey, "=")); })) === null || _a === void 0 ? void 0 : _a.split('=')[1];
 }

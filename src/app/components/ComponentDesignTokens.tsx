@@ -84,11 +84,11 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
         // Set values for the component
         Object.entries(transformComponentTokensToScssVariables(component, transformerOptions)).forEach(([variable, token]) => {
           // Initialize part if not already initialized
-          dataTable.get(token.part) ?? dataTable.set(token.part, new Map() as DataTableRow);
+          dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
           // Initialize property for part if not already initialized
-          dataTable.get(token.part).get(token.property) ?? dataTable.get(token.part).set(token.property, { variable, values: [] });
+          dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, { variable, values: [] });
           // Append the value for the part property
-          dataTable.get(token.part).get(token.property).values.push(token.value);
+          dataTable.get(token.metadata.part).get(token.metadata.cssProperty).values.push(token.value);
         })
 
         // Increase columns count
@@ -101,11 +101,11 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
     // Set values for the component
     Object.entries(transformComponentTokensToScssVariables(previewObject, transformerOptions)).forEach(([variable, token]) => {
       // Initialize part if not already initialized
-      dataTable.get(token.part) ?? dataTable.set(token.part, new Map() as DataTableRow);
+      dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized
-      dataTable.get(token.part).get(token.property) ?? dataTable.get(token.part).set(token.property, { variable, values: [] });
+      dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, { variable, values: [] });
       // Append the value for the part property
-      dataTable.get(token.part).get(token.property).values.push(token.value);
+      dataTable.get(token.metadata.part).get(token.metadata.cssProperty).values.push(token.value);
     })
 
     // Increase columns count

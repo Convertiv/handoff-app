@@ -1,4 +1,3 @@
-/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { Exportable, VariantPropertyWithParams } from '../types';
 export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type): (obj?: FigmaTypes.Node | null) => obj is Extract<FigmaTypes.Document, {
@@ -43,7 +42,7 @@ export declare function findChildNodeWithType<Type extends FigmaTypes.Node['type
 export declare function findChildNodeWithTypeAndName<Type extends FigmaTypes.Node['type']>(node: FigmaTypes.Node, type: Type, name: string): Extract<FigmaTypes.Node, {
     type: Type;
 }> | null;
-export declare function getComponentNamePart(componentName: string, partKey: string): string;
+export declare function getComponentNamePart(component: string, partKey: string): string;
 export declare function extractComponentVariantProps(component: string, supportedVariantProps: VariantPropertyWithParams[], defaults: {
     [variantProperty: string]: string;
 }): [Map<string, string>, boolean];

@@ -1,4 +1,3 @@
-import { Token } from '../types';
 import { Component } from '../../exporters/components/extractor';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
 /**
@@ -6,10 +5,10 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../typ
  * @param alerts
  * @returns
  */
-export declare const transformComponentsToCssVariables: (componentName: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const transformComponentsToCssVariables: (componentId: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
 /**
  * Generate a list of css variables
  * @param tokens
  * @returns
  */
-export declare const transformComponentTokensToCssVariables: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, Token>;
+export declare const transformComponentTokensToCssVariables: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => import("../types").Token[];

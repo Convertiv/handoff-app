@@ -1,4 +1,3 @@
-import { Token } from '../types';
 import { Component } from '../../exporters/components/extractor';
 import { formatComponentCodeBlockComment } from '../utils';
 import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
@@ -9,14 +8,14 @@ import { transform } from '../transformer';
  * @param alerts
  * @returns
  */
-export const transformComponentsToCssVariables = (componentName: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
+export const transformComponentsToCssVariables = (componentId: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
   const lines = [];
 
-  const componentCssClass = options?.cssRootClass ?? componentName;
-  
+  const componentCssClass = options?.cssRootClass ?? componentId;
+
   lines.push(`.${componentCssClass} {`)
-  const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(component, '/**/')}\n${Object.entries(transformComponentTokensToCssVariables(component, options))
-    .map(([name, token]) => `\t${name}: ${token.value};`)
+  const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(component, '/**/')}\n${transformComponentTokensToCssVariables(component, options)
+    .map(token => `\t${token.name}: ${token.value};`)
     .join('\n')}`);
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
@@ -26,6 +25,6 @@ export const transformComponentsToCssVariables = (componentName: string, compone
  * @param tokens
  * @returns
  */
-export const transformComponentTokensToCssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Record<string, Token> => {
+export const transformComponentTokensToCssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
   return transform('css', component, options);
 };
