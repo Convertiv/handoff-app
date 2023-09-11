@@ -6,7 +6,7 @@
  * @returns 
  */
 export function replaceTokens(str: string, tokenValMap: Map<string, string>, pipe?: (token: string, key: string, value: string) => string) {
-  return str.replace(/\$\{(.*?)\}/g, token => {
+  return str.replaceAll(/\$\{(.*?)\}/g, token => {
     const key = token.substring(2, token.length - 1);
     const val = tokenValMap.get(key) ?? '';
     

@@ -10,6 +10,7 @@ import webpack from 'webpack';
 import { HookReturn } from '../../types';
 import Handoff from '../../index';
 import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
+import { postWordPressIntegration } from './wordpress';
 const defaultIntegration = 'bootstrap';
 const defaultVersion = '5.3';
 export class HandoffIntegration {
@@ -106,14 +107,17 @@ export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => 
   }
   const config = handoff.config;
   if (config.integration) {
+    const integration = new HandoffIntegration(config.integration.name, config.integration.version);
     switch (config?.integration?.name) {
+      case 'wordpress':
+        integration.postIntegration(postWordPressIntegration);
+        return integration;
       case 'tailwind':
-        const integration = new HandoffIntegration(config.integration.name, config.integration.version);
         integration.postIntegration(postTailwindIntegration);
         integration.modifyWebpackConfig(modifyWebpackConfigForTailwind);
         return integration;
       default:
-        return new HandoffIntegration(config.integration.name, config.integration.version);
+        return integration;
     }
   }
   return new HandoffIntegration(defaultIntegration, defaultVersion);

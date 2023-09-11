@@ -24,8 +24,8 @@ exports.defaultConfig = {
     client: 'Convertiv',
     google_tag_manager: null,
     integration: {
-        name: 'bootstrap',
-        version: '5.3',
+        name: 'wordpress',
+        version: '*',
     },
     favicon: '/favicon.ico',
     logo: '/logo.svg',

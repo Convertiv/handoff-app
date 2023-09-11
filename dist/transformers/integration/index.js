@@ -45,6 +45,7 @@ var path_1 = __importDefault(require("path"));
 var archiver_1 = __importDefault(require("archiver"));
 var config_1 = require("../../config");
 var tailwind_1 = require("./tailwind");
+var wordpress_1 = require("./wordpress");
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
@@ -130,14 +131,17 @@ var instantiateIntegration = function (handoff) {
     }
     var config = handoff.config;
     if (config.integration) {
+        var integration = new HandoffIntegration(config.integration.name, config.integration.version);
         switch ((_a = config === null || config === void 0 ? void 0 : config.integration) === null || _a === void 0 ? void 0 : _a.name) {
+            case 'wordpress':
+                integration.postIntegration(wordpress_1.postWordPressIntegration);
+                return integration;
             case 'tailwind':
-                var integration = new HandoffIntegration(config.integration.name, config.integration.version);
                 integration.postIntegration(tailwind_1.postTailwindIntegration);
                 integration.modifyWebpackConfig(tailwind_1.modifyWebpackConfigForTailwind);
                 return integration;
             default:
-                return new HandoffIntegration(config.integration.name, config.integration.version);
+                return integration;
         }
     }
     return new HandoffIntegration(defaultIntegration, defaultVersion);
