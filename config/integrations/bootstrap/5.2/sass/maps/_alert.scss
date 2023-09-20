@@ -1,23 +1,16 @@
-/* =============================================================================
-   ALERTS (project/_alerts.scss)
-   ========================================================================== */
+// Alerts
+//
+// Define alert colors, border radius, and padding.
 
-
-$prefix: '';
-// Load raw SCSS variables for mapping
-@import './exported/tokens/types/alert';
-@import './exported/tokens/sass/alert';
-@import './exported/tokens/css/alert';
-
+// scss-docs-start alert-variables
 $alert-padding-y:               $alert-horizontal-padding-top;
 $alert-padding-x:               $alert-horizontal-padding-right;
-$alert-margin-bottom:           1rem !default;
+$alert-margin-bottom:           1rem;
 $alert-border-radius:           $alert-horizontal-border-radius;
-/*
-$alert-link-font-weight:        $font-weight-bold !default;
-$alert-border-width:            $border-width !default;
-$alert-bg-scale:                -80% !default;
-$alert-border-scale:            -70% !default;
-$alert-color-scale:             40% !default;
-$alert-dismissible-padding-r:   $alert-padding-x * 3 !default; // 3x covers width of x plus default padding on either side
-*/
+$alert-link-font-weight:        $font-weight-bold;
+$alert-border-width:            $alert-horizontal-border-width;
+$alert-bg-scale:                -80%;
+$alert-border-scale:            -70%;
+$alert-color-scale:             40%;
+$alert-dismissible-padding-r:   $spacer * 3; // 3x covers width of x plus default padding on either side
+// scss-docs-end alert-variables

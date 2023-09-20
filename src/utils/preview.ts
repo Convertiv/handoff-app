@@ -1,6 +1,5 @@
 import webpack from 'webpack';
 import fs from 'fs-extra';
-import globImporter from 'node-sass-glob-importer';
 import path from 'path';
 import chalk from 'chalk';
 // import { pluginTransformer } from '../transformers/plugin';
@@ -49,7 +48,6 @@ export const buildClientFiles = async (): Promise<string> => {
                 loader: 'sass-loader',
                 options: {
                   sassOptions: {
-                    importer: globImporter(),
                     indentWidth: 4,
                     includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules')],
                   },

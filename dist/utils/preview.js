@@ -42,7 +42,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildClientFiles = void 0;
 var webpack_1 = __importDefault(require("webpack"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
-var node_sass_glob_importer_1 = __importDefault(require("node-sass-glob-importer"));
 var path_1 = __importDefault(require("path"));
 var chalk_1 = __importDefault(require("chalk"));
 var index_1 = require("../transformers/integration/index");
@@ -90,7 +89,6 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                                         loader: 'sass-loader',
                                         options: {
                                             sassOptions: {
-                                                importer: (0, node_sass_glob_importer_1.default)(),
                                                 indentWidth: 4,
                                                 includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules')],
                                             },

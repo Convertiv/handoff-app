@@ -183,17 +183,59 @@ export default async function integrationTransformer(documentationObject: Docume
   const integrationTemplates = path.resolve(integrationPath, 'templates');
   fs.copySync(integrationsSass, sassFolder);
   fs.copySync(integrationTemplates, templatesFolder);
+  // replace tokens with actual values
+  const mainScssFilePath = path.resolve(sassFolder, 'main.scss')
+  if (fs.existsSync(mainScssFilePath)) {
+    fs.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(
+      fs.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components), integrationName
+    ));
+  }
   // zip the tokens
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
   let data = handoff.integrationHooks.hooks.integration(documentationObject, []);
   data = handoff.hooks.integration(documentationObject, data);
-  if(data.length > 0){
+  if (data.length > 0) {
     data.map((artifact) => {
       fs.writeFileSync(path.join(sassFolder, artifact.filename), artifact.data);
     });
   }
 }
 
+const replaceHandoffImportTokens = (content: string, components: string[], integrationName: string) => {
+  getHandoffImportTokens(components, integrationName)
+    .forEach(([token, imports]) => {
+      content = content.replaceAll(`//<#${token}#>`, imports.map(path => `@import '${path}';`).join(`\r\n`))
+    });
 
+  return content;
+}
 
+const getHandoffImportTokens = (components: string[], integrationName: string) => {
+  const result: [token: string, imports: string[]][] = [];
+
+  components.forEach((component) => {
+    getHandoffImportTokensForComponent(component, integrationName)
+      .forEach(([importToken, ...searchPath], idx) => {
+        result[idx] ?? result.push([importToken, []]);
+        if (fs.existsSync(path.resolve(...searchPath))) {
+          result[idx][1].push(`${searchPath[1]}/${component}`);
+        }
+      });
+  });
+
+  return result;
+}
+
+const getHandoffImportTokensForComponent = (component: string, integrationName: string): [token: string, root: string, path: string, file: string][] => {
+  const handoffWorkingPath = getHandoff().workingPath;
+  const exportedIntegrationTokensPath = path.resolve(handoffWorkingPath, `exported/${integrationName}-tokens`);
+
+  return [
+    ['HANDOFF.TOKENS.TYPES', handoffWorkingPath, './exported/tokens/types', `${component}.scss`],
+    ['HANDOFF.TOKENS.SASS', handoffWorkingPath, './exported/tokens/sass', `${component}.scss`],
+    ['HANDOFF.TOKENS.CSS', handoffWorkingPath, './exported/tokens/css', `${component}.css`],
+    ['HANDOFF.MAPS', exportedIntegrationTokensPath, 'maps', `_${component}.scss`],
+    ['HANDOFF.EXTENSIONS', exportedIntegrationTokensPath, 'extended', `_${component}.scss`]
+  ]
+};

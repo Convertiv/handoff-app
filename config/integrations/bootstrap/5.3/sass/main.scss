@@ -26,9 +26,18 @@
 
 @import 'variables-default';
 
-@import './exported/tokens/types/*';
-@import './exported/tokens/sass/*';
-@import './exported/tokens/css/*';
+@import './exported/tokens/types/typography';
+@import './exported/tokens/types/effects';
+@import './exported/tokens/types/colors';
+//<#HANDOFF.TOKENS.TYPES#>
+@import './exported/tokens/sass/typography';
+@import './exported/tokens/sass/effects';
+@import './exported/tokens/sass/colors';
+//<#HANDOFF.TOKENS.SASS#>
+@import './exported/tokens/css/typography';
+@import './exported/tokens/css/effects';
+@import './exported/tokens/css/colors';
+//<#HANDOFF.TOKENS.CSS#>
 
 
 // 3. Project Variables
@@ -36,6 +45,7 @@
 
 $prefix: '';
 @import 'variables';
+//<#HANDOFF.MAPS#>
 
 // 4. Bootstrap Variables
 //    Load Bootstrap variables
@@ -90,12 +100,4 @@ $prefix: '';
 //    Extend default Bootstrap components by mapping all the tokens
 // ------------------------------------------------------------------
 
-@import 'extended/alert';
-@import 'extended/button';
-@import 'extended/checkbox';
-//@import 'extended/input';
-@import 'extended/modal';
-@import 'extended/radio';
-@import 'extended/select';
-@import 'extended/switch';
-@import 'extended/tooltip';
+//<#HANDOFF.EXTENSIONS#>
