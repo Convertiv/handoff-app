@@ -6,6 +6,97 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2023-09-20
+
+This release is focused on enabling Handoff users to disable any of the built in components (esentially prevent them from being exported). While this was possible in previous releases, it could cause issues when running the integration builds.
+
+This improvements was achieved by:
+
+- Moving component specific SCSS variables into respective files which can be included (imported) when tokens used in those files are considered to be present.
+- Implementing the SCSS import tokens which enables the main SCSS integration file to use import tokens in place where the import statements for component tokens, maps and extensions would usually be placed. Import tokens get replaced with actual import statements during the integration build. Following import tokens are supported with this release:
+  - `//<#HANDOFF.TOKENS.TYPES#>`
+  - `//<#HANDOFF.TOKENS.SASS#>`
+  - `//<#HANDOFF.TOKENS.CSS#>`
+  - `//<#HANDOFF.MAPS#>`
+  - `//<#HANDOFF.EXTENSIONS#>`
+
+As a side effect, the `node-sass-glob-importer` package depenedency is no longer needed as there is no longer need for "globbing" to be used when doing imports of exported component tokens since `//<#HANDOFF.TOKENS.TYPES#>`, `//<#HANDOFF.TOKENS.SASS#>` and `//<#HANDOFF.TOKENS.CSS#>` import tokens now provide basically the same functionality.
+
+Because of changes mentioned above, this release does require some modifications to the **already ejected integrations** in order for the project to be completely compatible with the new version of Handoff.
+
+Here are the steps that need to be done:
+
+### 1. Remove glob import statements and replace them with respective import tokens
+
+Replace glob import lines with the respective import tokens. Note that design foundation tokens are manually imported as the tokens only handle imports related to the exported components.
+
+*Before the new release:*
+
+```scss
+@import './exported/tokens/types/*';
+@import './exported/tokens/sass/*';
+@import './exported/tokens/css/*';
+```
+
+*With the new release:*
+
+```scss
+@import './exported/tokens/types/typography';
+@import './exported/tokens/types/effects';
+@import './exported/tokens/types/colors';
+//<#HANDOFF.TOKENS.TYPES#>
+@import './exported/tokens/sass/typography';
+@import './exported/tokens/sass/effects';
+@import './exported/tokens/sass/colors';
+//<#HANDOFF.TOKENS.SASS#>
+@import './exported/tokens/css/typography';
+@import './exported/tokens/css/effects';
+@import './exported/tokens/css/colors';
+//<#HANDOFF.TOKENS.CSS#>
+```
+
+### 2. Include the (exported) component specific variables by using HANDOFF.MAPS import token
+
+Add the `//<#HANDOFF.MAPS#>` replace token below the `@import 'variables'` statement. This will ensure that all variables related to the exported (built-in) components are correctly loaded.
+
+*Before the new release:*
+
+```scss
+$prefix: '';
+@import 'variables';
+```
+
+*With the new release:*
+
+```scss
+$prefix: '';
+@import 'variables';
+//<#HANDOFF.MAPS#>
+```
+
+### 3. Replace the imports statements used to extend default Bootstrap components with HANDOFF.EXTENSIONS import token
+
+Replace all import statements used to extend the default Bootstrap components with the new `//<#HANDOFF.EXTENSIONS#>` import token to ensure that only those files that are related to the components that are actually being exported get imported.
+
+*Before the new release:*
+
+```scss
+@import 'extended/alert';
+@import 'extended/button';
+@import 'extended/checkbox';
+...
+```
+
+*With the new release:*
+
+```scss
+//<#HANDOFF.EXTENSIONS#>
+```
+
+### 4. Eject the latest version of the integration used
+
+Due to changes made to the `variables.scss` file and most of the scss files in the `maps` directory for the the Bootstrap version 5.2 and 5.3 interations, it's recommended to do a integration eject (after updating to Handoff 0.8.2) to ensure that your project continues to work correctly. Please remember to do a backup of your current work before doing this.
+
 ## [0.8.1] - 2023-09-06
 
 ### Cleanup
