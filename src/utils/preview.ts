@@ -56,7 +56,7 @@ export const buildClientFiles = async (): Promise<string> => {
 
                     if (fs.existsSync(integrationPath)) {
                       fs.readdirSync(integrationPath).filter(file => {
-                        return path.extname(file).toLowerCase() === '.scss';
+                        return path.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
                       }).forEach(file => {
                         content = content + `\n @import "@integration/${file}";`;
                       });
