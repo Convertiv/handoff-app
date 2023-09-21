@@ -220,7 +220,7 @@ exports.zipTokens = zipTokens;
  */
 function integrationTransformer(documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var handoff, outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, stream, data;
+        var handoff, outputFolder, integrationPath, integrationName, sassFolder, templatesFolder, integrationsSass, integrationTemplates, mainScssFilePath, stream, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -234,6 +234,10 @@ function integrationTransformer(documentationObject) {
                     integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
                     fs_extra_1.default.copySync(integrationsSass, sassFolder);
                     fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
+                    mainScssFilePath = path_1.default.resolve(sassFolder, 'main.scss');
+                    if (fs_extra_1.default.existsSync(mainScssFilePath)) {
+                        fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components), integrationName));
+                    }
                     stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
                     return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
                 case 1:
@@ -251,3 +255,37 @@ function integrationTransformer(documentationObject) {
     });
 }
 exports.default = integrationTransformer;
+var replaceHandoffImportTokens = function (content, components, integrationName) {
+    getHandoffImportTokens(components, integrationName)
+        .forEach(function (_a) {
+        var token = _a[0], imports = _a[1];
+        content = content.replaceAll("//<#".concat(token, "#>"), imports.map(function (path) { return "@import '".concat(path, "';"); }).join("\r\n"));
+    });
+    return content;
+};
+var getHandoffImportTokens = function (components, integrationName) {
+    var result = [];
+    components.forEach(function (component) {
+        getHandoffImportTokensForComponent(component, integrationName)
+            .forEach(function (_a, idx) {
+            var _b;
+            var importToken = _a[0], searchPath = _a.slice(1);
+            (_b = result[idx]) !== null && _b !== void 0 ? _b : result.push([importToken, []]);
+            if (fs_extra_1.default.existsSync(path_1.default.resolve.apply(path_1.default, searchPath))) {
+                result[idx][1].push("".concat(searchPath[1], "/").concat(component));
+            }
+        });
+    });
+    return result;
+};
+var getHandoffImportTokensForComponent = function (component, integrationName) {
+    var handoffWorkingPath = (0, config_1.getHandoff)().workingPath;
+    var exportedIntegrationTokensPath = path_1.default.resolve(handoffWorkingPath, "exported/".concat(integrationName, "-tokens"));
+    return [
+        ['HANDOFF.TOKENS.TYPES', handoffWorkingPath, './exported/tokens/types', "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.SASS', handoffWorkingPath, './exported/tokens/sass', "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.CSS', handoffWorkingPath, './exported/tokens/css', "".concat(component, ".css")],
+        ['HANDOFF.MAPS', exportedIntegrationTokensPath, 'maps', "_".concat(component, ".scss")],
+        ['HANDOFF.EXTENSIONS', exportedIntegrationTokensPath, 'extended', "_".concat(component, ".scss")]
+    ];
+};

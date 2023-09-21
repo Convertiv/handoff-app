@@ -94,7 +94,6 @@
     "mustache": "^4.2.0",
     "next": "^13.4.7",
     "node-html-parser": "^6.1.4",
-    "node-sass-glob-importer": "^5.3.3",
     "postcss": "^8.4.16",
     "postcss-loader": "^7.3.0",
     "postcss-scss": "^4.0.5",

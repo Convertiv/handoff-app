@@ -1,8 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '.';
-import type { DocumentComponentsObject } from './exporters/components';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from './types';
 import { Config } from './types/config';
 
 export interface ImageStyle {

@@ -1,3 +1,3 @@
-# Bootstrap 5.2 Design Tokens
+# Bootstrap 5.3 Design Tokens
 
-These files map handoff design tokens to bootstrap 5.2.  
+These files map handoff design tokens to bootstrap 5.3.  
