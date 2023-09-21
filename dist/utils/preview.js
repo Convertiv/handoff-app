@@ -98,7 +98,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                                                     integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
                                                     if (fs_extra_1.default.existsSync(integrationPath)) {
                                                         fs_extra_1.default.readdirSync(integrationPath).filter(function (file) {
-                                                            return path_1.default.extname(file).toLowerCase() === '.scss';
+                                                            return path_1.default.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
                                                         }).forEach(function (file) {
                                                             content = content + "\n @import \"@integration/".concat(file, "\";");
                                                         });
