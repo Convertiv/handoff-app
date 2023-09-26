@@ -32,22 +32,19 @@ const nextConfig = {
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
           // Check if the client configuration specifies a theme
           // If the theme is specified, check if the theme exists in the 'themes' folder
-          if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('themes', `${clientConfig['theme']}.scss`))) {
+          if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('theme', `${clientConfig['theme']}.scss`))) {
             // Use custom theme
             foundTheme = true;
-            content = content + `\n@import 'themes/${clientConfig['theme']}';`;
+            content = content + `\n@import './theme/${clientConfig['theme']}';`;
           }
         }
       }
+
       if (!foundTheme) {
         // Use default theme
-        content = content + `\n@import 'themes/default';`;
+        content = content + `\n@import 'theme/default';`;
       }
 
-      // Check if custom CSS exists
-      if (fs.existsSync('theme/main.scss')) {
-        content = content + `\n@import "theme/main.scss";`;
-      }
       return content;
     },
   },
