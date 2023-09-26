@@ -190,6 +190,10 @@ export default async function integrationTransformer(documentationObject: Docume
       fs.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components), integrationName
     ));
   }
+  // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
+  if (process.env.EXPORT_PATH) {
+    fs.copySync(sassFolder, process.env.EXPORT_PATH);
+  }
   // zip the tokens
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
   await zipTokens('exported', stream);
