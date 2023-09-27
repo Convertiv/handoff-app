@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2023-09-27
+
+### Changes
+
+- Added support for custom export path. This allows anyone using Handoff app to specity a path into which a copy of the exported tokens should be placed simply by defining `EXPORT_PATH` within the .env file.
+
+### Improvements
+
+- Better handling of ejected themes.
+
 ## [0.8.2] - 2023-09-21
 
 ### Changes

@@ -153,32 +153,27 @@ exports.ejectPages = ejectPages;
  * @param handoff
  */
 var ejectTheme = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, workingPath, currentTheme, docsPath;
+    var workingPath, currentTheme, docsPath;
     var _a;
     return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0: return [4 /*yield*/, handoff.config];
-            case 1:
-                config = _b.sent();
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'theme', 'main.scss'));
-                if (fs_extra_1.default.existsSync(workingPath)) {
-                    if (!handoff.force) {
-                        console.log(chalk_1.default.yellow("It appears you already have custom theme.  Use the --force flag to replace you haven't customized."));
-                        return [2 /*return*/];
-                    }
-                }
-                currentTheme = (_a = handoff.config.theme) !== null && _a !== void 0 ? _a : 'default';
-                docsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "src/app/sass/themes/_".concat(currentTheme, ".scss")));
-                if (fs_extra_1.default.existsSync(docsPath)) {
-                    fs_extra_1.default.copySync(docsPath, workingPath, { overwrite: false });
-                    console.log(chalk_1.default.green("Customizable theme ejected to ".concat(workingPath)));
-                }
-                else {
-                    fs_extra_1.default.copySync(path_1.default.resolve(path_1.default.join(handoff.modulePath, "src/app/sass/themes/_default.scss")), workingPath, { overwrite: false });
-                    console.log(chalk_1.default.green("Customizable theme ejected to ".concat(workingPath)));
-                }
-                return [2 /*return*/, handoff];
+        workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'theme', 'default.scss'));
+        if (fs_extra_1.default.existsSync(workingPath)) {
+            if (!handoff.force) {
+                console.log(chalk_1.default.yellow("It appears you already have custom theme.  Use the --force flag to replace you haven't customized."));
+                return [2 /*return*/];
+            }
         }
+        currentTheme = (_a = handoff.config.theme) !== null && _a !== void 0 ? _a : 'default';
+        docsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "src/app/sass/themes/_".concat(currentTheme, ".scss")));
+        if (fs_extra_1.default.existsSync(docsPath)) {
+            fs_extra_1.default.copySync(docsPath, workingPath, { overwrite: false });
+            console.log(chalk_1.default.green("Customizable theme ejected to ".concat(workingPath)));
+        }
+        else {
+            fs_extra_1.default.copySync(path_1.default.resolve(path_1.default.join(handoff.modulePath, "src/app/sass/themes/_default.scss")), workingPath, { overwrite: false });
+            console.log(chalk_1.default.green("Customizable theme ejected to ".concat(workingPath)));
+        }
+        return [2 /*return*/, handoff];
     });
 }); };
 exports.ejectTheme = ejectTheme;
