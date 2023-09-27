@@ -42,7 +42,7 @@ const nextConfig = {
 
       if (!foundTheme) {
         // Use default theme
-        content = content + `\n@import 'theme/default';`;
+        content = content + `\n@import 'themes/default';`;
       }
 
       return content;
