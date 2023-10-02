@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2023-10-02
+
+### Bugfix
+
+- Nextjs released 13.5.x which has a type conflict with the handoff build.  This release instructs package.json to stay with 13.4.x while the conflict is resolved.
+
 ## [0.8.3] - 2023-09-27
 
 ### Changes
