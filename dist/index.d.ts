@@ -51,7 +51,6 @@ declare class Handoff {
     postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
     postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
     postBuild(callback: (documentationObject: DocumentationObject) => void): void;
-    preIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
     configureExportables(callback: (exportables: string[]) => string[]): void;

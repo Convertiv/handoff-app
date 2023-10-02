@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.8.3', 2);
+    cliError('Handoff App - 0.8.4', 2);
 };
 /**
  * Define a CLI error
@@ -169,7 +169,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
             case 11: return [2 /*return*/, handoff_1.ejectTheme()];
             case 12: return [2 /*return*/, handoff_1.ejectPages()];
             case 13:
-                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n  \n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
+                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
                 return [3 /*break*/, 18];
             case 14:
                 type = args._[1];

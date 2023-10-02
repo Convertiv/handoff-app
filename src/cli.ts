@@ -55,7 +55,7 @@ const showHelp = () => {
  * Show the help message
  */
 const showVersion = () => {
-  cliError('Handoff App - 0.8.3', 2);
+  cliError('Handoff App - 0.8.4', 2);
 };
 
 /**
@@ -151,7 +151,7 @@ Eject must have a subcommand. Did you mean:
       case 'make':
           cliError(
             `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
-  
+
   Make must have a subcommand. Did you mean:
     - make:template
     - make:exportable
