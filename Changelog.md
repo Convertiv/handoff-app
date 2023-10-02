@@ -8,10 +8,11 @@ and this project adheres to
 
 ## [0.8.4] - 2023-10-02
 
-Handoff users reported a bug in `handoff-app build:app` last week. The bug didn't manifest in regression testing. This error was traced to typings in a dependency of `next`.  
+Handoff users reported a bug in `handoff-app build:app` last week. The bug didn't manifest in regression testing. This error was traced to typings in a dependency of `next`.
+
 ### Bugfix
 
-- Nextjs released 13.5.x which has conflict with the handoff build.  This release instructs package.json to stay with 13.4.x while the conflict is resolved.
+- Nextjs released 13.5.x which has conflict with the handoff build. This release instructs package.json to stay with 13.4.x while the conflict is resolved.
 
 ## [0.8.3] - 2023-09-27
 
@@ -49,7 +50,7 @@ Here are the steps that need to be done:
 
 Replace glob import lines with the respective import tokens. Note that design foundation tokens are manually imported as the tokens only handle imports related to the exported components.
 
-*Before the new release:*
+_Before the new release:_
 
 ```scss
 @import './exported/tokens/types/*';
@@ -57,7 +58,7 @@ Replace glob import lines with the respective import tokens. Note that design fo
 @import './exported/tokens/css/*';
 ```
 
-*With the new release:*
+_With the new release:_
 
 ```scss
 @import './exported/tokens/types/typography';
@@ -78,14 +79,14 @@ Replace glob import lines with the respective import tokens. Note that design fo
 
 Add the `//<#HANDOFF.MAPS#>` replace token below the `@import 'variables'` statement. This will ensure that all variables related to the exported (built-in) components are correctly loaded.
 
-*Before the new release:*
+_Before the new release:_
 
 ```scss
 $prefix: '';
 @import 'variables';
 ```
 
-*With the new release:*
+_With the new release:_
 
 ```scss
 $prefix: '';
@@ -97,7 +98,7 @@ $prefix: '';
 
 Replace all import statements used to extend the default Bootstrap components with the new `//<#HANDOFF.EXTENSIONS#>` import token to ensure that only those files that are related to the components that are actually being exported get imported.
 
-*Before the new release:*
+_Before the new release:_
 
 ```scss
 @import 'extended/alert';
@@ -106,7 +107,7 @@ Replace all import statements used to extend the default Bootstrap components wi
 ...
 ```
 
-*With the new release:*
+_With the new release:_
 
 ```scss
 //<#HANDOFF.EXTENSIONS#>
@@ -118,7 +119,7 @@ Due to changes made to the `variables.scss` file and most of the scss files in t
 
 ### Bugfixes
 
-* Updated the preview client build to not include the main SASS integration file as a extra integration in order to prevent redundant loading of the integration which caused the client bundle size to be double the size than it really needed to be while also causing few more issues in the new release where the styles wouldn't get applied correctly.
+- Updated the preview client build to not include the main SASS integration file as a extra integration in order to prevent redundant loading of the integration which caused the client bundle size to be double the size than it really needed to be while also causing few more issues in the new release where the styles wouldn't get applied correctly.
 
 ## [0.8.1] - 2023-09-06
 
@@ -140,12 +141,12 @@ This release allows you to name and configure these properties, and map them to 
 
 - Exportable (JSON file) now has a updated syntax to share variant over multiple design components based on the variant props.
   - `supportedVariantProps` now accepts an object rather than an array. This object has two properties `design` and `layout`. Users should declare the props that should be pulled as an array of each of these props. The props should be the name as it is in Figma, not the old key names Handoff used to require.
-  - The previous templates for css and scss token patterns have been removed in favor of `tokenNameSegments`. This a tokenized array of strings that allow you to generate token names for each component following a pattern. 
+  - The previous templates for css and scss token patterns have been removed in favor of `tokenNameSegments`. This a tokenized array of strings that allow you to generate token names for each component following a pattern.
   - In the `demo` section, under the tabs, you can now declare the default value for each property.
   - In the `demo` section, under `designTokens` you can explicitly declare all the values of a property to show on the demo page.
   - Previously you could do `State(:disabled)` which would automatically apply the "disabled" state to all design components, distinctive only by the theme (which means light theme would have one shared disabled state while dark theme would have a different one).
   - The update allows you to do this `State(:disabled/Theme)` which removes the need for us to know what the theme variant property is and to allow users to distinct over any variant property they have and desire.
-  - This allows handoff to choose NOT to group/distinct by any variant property. Previously this was not possible as if there was a theme variant property present, it would be automatically used to group by it. 
+  - This allows handoff to choose NOT to group/distinct by any variant property. Previously this was not possible as if there was a theme variant property present, it would be automatically used to group by it.
 - Paths for preview templates now account for all variant properties, but, if some of them are missing in the integration templates folder for the component, it will be dismissed and we will try starting from the next one (for example, if theme is not there as a folder, we will ignore it and proceed to the next variant prop and so on). This also removes the need for us to know what the theme variant property is as we don't need to filter them out based on if it's a theme variant prop or not.
 - Component titles in the app now have a smarter way of automatically determining the title of the preview component. This is achieved by looking into the filters used to display the previews of the components and decide which variant property you probably want to use in the name of the component preview.
 
