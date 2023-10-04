@@ -32,7 +32,7 @@ export const buildClientFiles = async (): Promise<string> => {
         filename: 'bundle.js',
       },
       resolveLoader: {
-        modules: [path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
+        modules: [path.resolve(handoff?.modulePath), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
       },
       module: {
         rules: [
@@ -49,7 +49,7 @@ export const buildClientFiles = async (): Promise<string> => {
                 options: {
                   sassOptions: {
                     indentWidth: 4,
-                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules')],
+                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.modulePath)],
                   },
                   additionalData: async (content, loaderContext) => {
                     const integrationPath = path.join(handoff.workingPath, 'integration/sass');
