@@ -282,12 +282,12 @@ var getHandoffImportTokens = function (components) {
     return result;
 };
 var getHandoffImportTokensForComponent = function (component) {
-    var exportedIntegrationTokensPath = path_1.default.resolve((0, config_1.getHandoff)().workingPath, "exported/integration");
+    var integrationPath = path_1.default.resolve((0, config_1.getHandoff)().workingPath, "exported/integration");
     return [
-        ['HANDOFF.TOKENS.TYPES', exportedIntegrationTokensPath, '../tokens/types', "".concat(component, ".scss")],
-        ['HANDOFF.TOKENS.SASS', exportedIntegrationTokensPath, '../tokens/sass', "".concat(component, ".scss")],
-        ['HANDOFF.TOKENS.CSS', exportedIntegrationTokensPath, '../tokens/css', "".concat(component, ".css")],
-        ['HANDOFF.MAPS', exportedIntegrationTokensPath, 'maps', "_".concat(component, ".scss")],
-        ['HANDOFF.EXTENSIONS', exportedIntegrationTokensPath, 'extended', "_".concat(component, ".scss")]
+        ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.CSS', integrationPath, '../tokens/css', "".concat(component, ".css")],
+        ['HANDOFF.MAPS', integrationPath, 'maps', "_".concat(component, ".scss")],
+        ['HANDOFF.EXTENSIONS', integrationPath, 'extended', "_".concat(component, ".scss")]
     ];
 };

@@ -231,13 +231,13 @@ const getHandoffImportTokens = (components: string[]) => {
 }
 
 const getHandoffImportTokensForComponent = (component: string): [token: string, root: string, path: string, file: string][] => {
-  const exportedIntegrationTokensPath = path.resolve(getHandoff().workingPath, `exported/integration`);
+  const integrationPath = path.resolve(getHandoff().workingPath, `exported/integration`);
 
   return [
-    ['HANDOFF.TOKENS.TYPES', exportedIntegrationTokensPath, '../tokens/types', `${component}.scss`],
-    ['HANDOFF.TOKENS.SASS', exportedIntegrationTokensPath, '../tokens/sass', `${component}.scss`],
-    ['HANDOFF.TOKENS.CSS', exportedIntegrationTokensPath, '../tokens/css', `${component}.css`],
-    ['HANDOFF.MAPS', exportedIntegrationTokensPath, 'maps', `_${component}.scss`],
-    ['HANDOFF.EXTENSIONS', exportedIntegrationTokensPath, 'extended', `_${component}.scss`]
+    ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', `${component}.scss`],
+    ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', `${component}.scss`],
+    ['HANDOFF.TOKENS.CSS', integrationPath, '../tokens/css', `${component}.css`],
+    ['HANDOFF.MAPS', integrationPath, 'maps', `_${component}.scss`],
+    ['HANDOFF.EXTENSIONS', integrationPath, 'extended', `_${component}.scss`]
   ]
 };
