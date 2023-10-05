@@ -175,9 +175,8 @@ export default async function integrationTransformer(documentationObject: Docume
   const outputFolder = path.resolve(handoff.modulePath, 'src/app/public');
   // define the integration path
   const integrationPath = getPathToIntegration();
-  const integrationName = getIntegrationName();
   // copy the sass and templates to the exported folder
-  const sassFolder = path.resolve(handoff.workingPath, `exported/${integrationName}-tokens`);
+  const sassFolder = path.resolve(handoff.workingPath, `exported/integration`);
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
@@ -187,7 +186,8 @@ export default async function integrationTransformer(documentationObject: Docume
   const mainScssFilePath = path.resolve(sassFolder, 'main.scss')
   if (fs.existsSync(mainScssFilePath)) {
     fs.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(
-      fs.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components), integrationName
+      fs.readFileSync(mainScssFilePath, 'utf8'),
+      Object.keys(documentationObject.components)
     ));
   }
   // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
@@ -206,8 +206,8 @@ export default async function integrationTransformer(documentationObject: Docume
   }
 }
 
-const replaceHandoffImportTokens = (content: string, components: string[], integrationName: string) => {
-  getHandoffImportTokens(components, integrationName)
+const replaceHandoffImportTokens = (content: string, components: string[]) => {
+  getHandoffImportTokens(components)
     .forEach(([token, imports]) => {
       content = content.replaceAll(`//<#${token}#>`, imports.map(path => `@import '${path}';`).join(`\r\n`))
     });
@@ -215,11 +215,10 @@ const replaceHandoffImportTokens = (content: string, components: string[], integ
   return content;
 }
 
-const getHandoffImportTokens = (components: string[], integrationName: string) => {
+const getHandoffImportTokens = (components: string[]) => {
   const result: [token: string, imports: string[]][] = [];
-
   components.forEach((component) => {
-    getHandoffImportTokensForComponent(component, integrationName)
+    getHandoffImportTokensForComponent(component)
       .forEach(([importToken, ...searchPath], idx) => {
         result[idx] ?? result.push([importToken, []]);
         if (fs.existsSync(path.resolve(...searchPath))) {
@@ -231,15 +230,14 @@ const getHandoffImportTokens = (components: string[], integrationName: string) =
   return result;
 }
 
-const getHandoffImportTokensForComponent = (component: string, integrationName: string): [token: string, root: string, path: string, file: string][] => {
-  const handoffWorkingPath = getHandoff().workingPath;
-  const exportedIntegrationTokensPath = path.resolve(handoffWorkingPath, `exported/${integrationName}-tokens`);
+const getHandoffImportTokensForComponent = (component: string): [token: string, root: string, path: string, file: string][] => {
+  const integrationPath = path.resolve(getHandoff().workingPath, `exported/integration`);
 
   return [
-    ['HANDOFF.TOKENS.TYPES', handoffWorkingPath, './exported/tokens/types', `${component}.scss`],
-    ['HANDOFF.TOKENS.SASS', handoffWorkingPath, './exported/tokens/sass', `${component}.scss`],
-    ['HANDOFF.TOKENS.CSS', handoffWorkingPath, './exported/tokens/css', `${component}.css`],
-    ['HANDOFF.MAPS', exportedIntegrationTokensPath, 'maps', `_${component}.scss`],
-    ['HANDOFF.EXTENSIONS', exportedIntegrationTokensPath, 'extended', `_${component}.scss`]
+    ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', `${component}.scss`],
+    ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', `${component}.scss`],
+    ['HANDOFF.TOKENS.CSS', integrationPath, '../tokens/css', `${component}.css`],
+    ['HANDOFF.MAPS', integrationPath, 'maps', `_${component}.scss`],
+    ['HANDOFF.EXTENSIONS', integrationPath, 'extended', `_${component}.scss`]
   ]
 };

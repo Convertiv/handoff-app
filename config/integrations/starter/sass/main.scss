@@ -13,16 +13,7 @@
 $prefix: '';
 $enable-shadows: true;
 
-@import 'maps/buttons';
-@import 'maps/checkbox';
-@import 'maps/radio';
-@import 'maps/switch';
-@import 'maps/input';
-@import 'maps/select';
-@import 'maps/alerts';
-@import 'maps/modal';
-@import 'maps/pagination';
-@import 'maps/tooltips';
+//<#HANDOFF.MAPS#>
 
 /** Include any other css and styles you need**/
 
@@ -30,13 +21,4 @@ $enable-shadows: true;
 // Project Components
 // ------------------------------------------------------------------
 
-@import 'extended/buttons';
-@import 'extended/checkbox';
-@import 'extended/radio';
-@import 'extended/switch';
-@import 'extended/input';
-@import 'extended/select';
-@import 'extended/alerts';
-@import 'extended/modal';
-@import 'extended/pagination';
-@import 'extended/tooltips';
+//<#HANDOFF.EXTENSIONS#>

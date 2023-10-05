@@ -40,8 +40,7 @@ export default async function fontTransformer(documentationObject: Documentation
       // Zip the font up and put the zip in the font location
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
-      const integrationName = getIntegrationName();
-      const fontsFolder = path.resolve(handoff.workingPath, `exported/${integrationName}-tokens/fonts`);
+      const fontsFolder = path.resolve(handoff.workingPath, `exported/integration/fonts`);
       if(!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }

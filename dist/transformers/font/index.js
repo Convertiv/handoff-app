@@ -65,8 +65,6 @@ var archiver_1 = __importDefault(require("archiver"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
-//import { pluginTransformer } from '../plugin';
-var index_1 = require("../integration/index");
 var config_1 = require("../../config");
 /**
  * Detect a font present in the public dir.  If it matches a font family from
@@ -90,7 +88,7 @@ function fontTransformer(documentationObject) {
             }, {});
             customFonts = [];
             Object.keys(families).map(function (key) { return __awaiter(_this, void 0, void 0, function () {
-                var name, fontDirName, stream_1, integrationName, fontsFolder;
+                var name, fontDirName, stream_1, fontsFolder;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -102,8 +100,7 @@ function fontTransformer(documentationObject) {
                             return [4 /*yield*/, (0, exports.zipFonts)(fontDirName, stream_1)];
                         case 1:
                             _a.sent();
-                            integrationName = (0, index_1.getIntegrationName)();
-                            fontsFolder = path_1.default.resolve(handoff.workingPath, "exported/".concat(integrationName, "-tokens/fonts"));
+                            fontsFolder = path_1.default.resolve(handoff.workingPath, "exported/integration/fonts");
                             if (!fs_extra_1.default.existsSync(fontsFolder)) {
                                 fs_extra_1.default.mkdirSync(fontsFolder);
                             }
