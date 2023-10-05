@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2023-10-05
+
+Miscellaneous improvements to ejecting of integrations, integration handling and building of previews to make it easier for the exported integration to be included in a bootstrap project.
+
 ## [0.8.4] - 2023-10-02
 
 Handoff users reported a bug in `handoff-app build:app` last week. The bug didn't manifest in regression testing. This error was traced to typings in a dependency of `next`.
