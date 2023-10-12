@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.8.5', 2);
+    cliError('Handoff App - 0.8.6', 2);
 };
 /**
  * Define a CLI error

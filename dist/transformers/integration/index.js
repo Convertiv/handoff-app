@@ -231,6 +231,10 @@ function integrationTransformer(documentationObject) {
                     templatesFolder = path_1.default.resolve(__dirname, '../../templates');
                     integrationsSass = path_1.default.resolve(integrationPath, 'sass');
                     integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
+                    // clean dest
+                    fs_extra_1.default.removeSync(sassFolder);
+                    fs_extra_1.default.removeSync(templatesFolder);
+                    // copy to dest
                     fs_extra_1.default.copySync(integrationsSass, sassFolder);
                     fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
                     mainScssFilePath = path_1.default.resolve(sassFolder, 'main.scss');

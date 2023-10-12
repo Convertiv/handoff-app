@@ -43,8 +43,7 @@ export interface ComponentDesignTokensProps {
   children?: JSX.Element,
 }
 
-interface DataTableCell { variable: string, values: string[] }
-interface DataTableRow extends Map<string, DataTableCell> {}
+interface DataTableRow extends Map<string, [string, string][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
@@ -82,13 +81,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
         }
 
         // Set values for the component
-        Object.entries(transformComponentTokensToScssVariables(component, transformerOptions)).forEach(([variable, token]) => {
+        transformComponentTokensToScssVariables(component, transformerOptions).forEach(token => {
           // Initialize part if not already initialized
           dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
           // Initialize property for part if not already initialized
-          dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, { variable, values: [] });
+          dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
           // Append the value for the part property
-          dataTable.get(token.metadata.part).get(token.metadata.cssProperty).values.push(token.value);
+          dataTable.get(token.metadata.part).get(token.metadata.cssProperty).push([token.name, token.value]);
         })
 
         // Increase columns count
@@ -99,13 +98,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
       });
   } else {
     // Set values for the component
-    Object.entries(transformComponentTokensToScssVariables(previewObject, transformerOptions)).forEach(([variable, token]) => {
+    transformComponentTokensToScssVariables(previewObject, transformerOptions).forEach(token => {
       // Initialize part if not already initialized
       dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized
-      dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, { variable, values: [] });
+      dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
       // Append the value for the part property
-      dataTable.get(token.metadata.part).get(token.metadata.cssProperty).values.push(token.value);
+      dataTable.get(token.metadata.part).get(token.metadata.cssProperty).push([token.name, token.value]);
     })
 
     // Increase columns count
@@ -151,15 +150,15 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
                   </p>
                 </>
               )}
-              {Array.from(propertiesMap).sort(([lProp], [rProp]) => lProp.localeCompare(rProp)).map(([prop, cell]) => (
+              {Array.from(propertiesMap).sort(([lProp], [rProp]) => lProp.localeCompare(rProp)).map(([prop, cells]) => (
                 <div key={`${previewObject.type}-${part}-${prop}-row`} className="c-tokens-preview__row">
                   <p>{prop}</p>
-                  {cell.values.map(((value, i) => (
+                  {cells.map((([tokenName, tokenValue], i) => (
                     <PropertyStateValue
                       key={`${previewObject.type}-${part}-${prop}-${i}`}
                       property={prop}
-                      variable={cell.variable}
-                      value={value}
+                      variable={tokenName}
+                      value={tokenValue}
                     />
                   )))}
                 </div>

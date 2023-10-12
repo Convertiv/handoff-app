@@ -180,6 +180,10 @@ export default async function integrationTransformer(documentationObject: Docume
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
+  // clean dest
+  fs.removeSync(sassFolder);
+  fs.removeSync(templatesFolder);
+  // copy to dest
   fs.copySync(integrationsSass, sassFolder);
   fs.copySync(integrationTemplates, templatesFolder);
   // replace tokens with actual values
