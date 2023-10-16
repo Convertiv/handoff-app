@@ -39,14 +39,15 @@ export interface ComponentDesignTokensProps {
   previewObject: Component,
   designComponents: Component[],
   transformerOptions: ExportableTransformerOptions,
-  overrides?: { [variantProp: string]: string[] },
+  overrides?: { [variantProp: string]: string[] | string },
   children?: JSX.Element,
+  filterSelection: { [key: string]: string }
 }
 
 interface DataTableRow extends Map<string, [string, string][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, filterSelection, children }) => {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
 
   const headings: Set<string> = new Set<string>();
@@ -75,8 +76,22 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
         }
 
         for (const overrideVariantProp of overrideVariantProps) {
-          if (!overrides[overrideVariantProp].includes(componentVariantPropsMap.get(overrideVariantProp))) {
-            return null;
+          let overrideValue = overrides[overrideVariantProp];
+
+          const filterRegex = /^\$\{([^}]+)\}$/;
+          if (typeof(overrideValue) === 'string' && filterRegex.test(overrideValue as string)) {
+            const filterRegexMatch = (overrideValue as string).match(filterRegex)[1];
+            overrideValue = filterSelection[filterRegexMatch];
+          }
+          
+          if (typeof(overrideValue) === 'string') {
+            if (overrideValue !== componentVariantPropsMap.get(overrideVariantProp)) {
+              return null;
+            }
+          } else {
+            if (!overrideValue.includes(componentVariantPropsMap.get(overrideVariantProp))) {
+              return null
+            }
           }
         }
 

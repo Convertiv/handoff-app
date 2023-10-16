@@ -4,7 +4,7 @@ import IframeResizer from 'iframe-resizer-react';
 import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from '../../../components/util';
 import { getConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import { ExportableDefinition, ExportableOptions, PreviewObject } from '../../../../types';
+import { ExportableDefinition, PreviewObject } from '../../../../types';
 import { Component } from '../../../../exporters/components/extractor';
 import Head from 'next/head';
 import Header from '../../../components/Header';
@@ -56,12 +56,47 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 
 const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, styleDictionary, types, components, previews, config }: ComponentDocumentationProps) => {
-  const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
-  const designComponents = components ? components.filter(component => component.type === 'design') : [];
+  const [tab, setTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+  const [filter, setFilter] = React.useState<{ options: { [key: string]: string[] }, selection: { [key: string]: string } }>({ options: {}, selection: {} });
+  const [hasFilterOptions, setHasFilterOptions] = React.useState<boolean>(false);
+  const [componentPreviews, setComponentPreviews] = React.useState<ComponentPreview[]>([]);
+  const [designComponents, setDesignComponents] = React.useState<Component[]>([]);
+  
+  React.useEffect(() => {
+    setDesignComponents(components ? components.filter(component => component.type === 'design') : []);
+    setComponentPreviews(
+      getComponentsAsComponentPreviews(tab == ComponentTab.Overview ? 'overview' : 'designTokens', exportable, components, previews, config.component_sort)
+        .filter(componentPreview => {
+          const variantProperties = new Map(componentPreview.component.variantProperties);
+          for (const filterItem of Object.keys(filter.selection)) {
+            localStorage.setItem(`handoff.filterState.${filterItem}`, filter.selection[filterItem]);
+            if (variantProperties.has(filterItem) && variantProperties.get(filterItem) !== filter.selection[filterItem]) {
+              return false;
+            }
+          }
+          return true;
+        }));
+  }, [filter]);
 
-  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
-  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)
+  React.useEffect(() => {
+    const filterOptions = getComponentsAsComponentPreviews(tab == ComponentTab.Overview ? 'overview' : 'designTokens', exportable, components, previews, config.component_sort)
+      .map(component => component.filterOptions ?? []).reduce((acc, curr) => {
+        Object.entries(curr).forEach(([variantProp, value]) => {
+          acc[variantProp] || (acc[variantProp] = []);
+          acc[variantProp].indexOf(value) >= 0 || acc[variantProp].push(value);
+        });
+        return acc;
+      }, {} as { [filter: string]: string[] });
 
+      const initialFilterState = Object.entries(filterOptions).reduce((acc, [filter, values]) => {
+        acc[filter] = localStorage.getItem(`handoff.filterState.${filter}`) ?? values[0];
+        return acc;
+      }, {} as Record<string, string>);
+
+      setFilter({options: filterOptions, selection: initialFilterState});
+      setHasFilterOptions(Object.keys(filterOptions).length > 0);
+    }, [component, tab]);
+  
   return (
     <div className="c-page">
       <Head>
@@ -80,35 +115,43 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
               <button
-                className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.Overview)}
+                className={`c-tabs__item ${tab === ComponentTab.Overview ? 'is-selected' : ''}`}
+                onClick={() => setTab(ComponentTab.Overview)}
               >
                 Overview
               </button>
               <button
-                className={`c-tabs__item ${activeTab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.DesignTokens)}
+                className={`c-tabs__item ${tab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
+                onClick={() => setTab(ComponentTab.DesignTokens)}
               >
                 Tokens
               </button>
             </div>
           </div>
           <div className="o-row">
-            {activeTab == ComponentTab.Overview && (
+            {tab === ComponentTab.Overview && (
               <>
                 <div className="o-col-9@xl">
-                  <OverviewComponentPreview components={overviewTabComponents} options={exportable.options} />
+                  {hasFilterOptions && (
+                    <div className='u-mb-2 u-mt-4-'>
+                      <Filter filterOptions={filter.options} onFilterChange={(key, value) => {
+                        const selection = { ...filter.selection, ...{ [key]: value } };
+                        setFilter({ options: filter.options, selection: selection });
+                      } } />
+                    </div>
+                  )}
+                  <OverviewComponentPreview components={componentPreviews} />
                   <div id="guidelines">
                     <OverviewComponentGuidlines content={content} />
                   </div>
                   <div id="classes">
-                    <OverviewComponentClasses components={overviewTabComponents} options={exportable.options} />
+                    <OverviewComponentClasses components={componentPreviews} />
                   </div>
                 </div>
                 <div className="o-col-3@xl u-visible@lg">
                   <AnchorNav
                     groups={[
-                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]),
+                      Object.assign({}, ...[...componentPreviews.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]),
                       { guidelines: 'Component Guidelines' },
                       { classes: 'Classes' },
                     ]}
@@ -116,12 +159,18 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                 </div>
               </>
             )}
-            {activeTab == ComponentTab.DesignTokens && (
+            {tab === ComponentTab.DesignTokens && (
               <>
                 <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
                   <DownloadTokens componentId={component} scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
                 </div>
-                {designTokensTabComponents.map(previewableComponent => (
+                <div className="o-col-12@md u-mb-3">
+                  <Filter filterOptions={filter.options} onFilterChange={(key, value) => {
+                    const selection = { ...filter.selection, ...{ [key]: value } };
+                    setFilter({ options: filter.options, selection: selection });
+                  }} />
+                </div>
+                {componentPreviews.map(previewableComponent => (
                   <ComponentDesignTokens
                     key={previewableComponent.component.id}
                     title={getComponentPreviewTitle(previewableComponent)}
@@ -129,6 +178,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
                     transformerOptions={exportable.options.transformer}
                     designComponents={designComponents}
                     overrides={previewableComponent.overrides}
+                    filterSelection={filter.selection}
                   >
                     <ComponentDisplay component={previewableComponent.preview} />
                   </ComponentDesignTokens>
@@ -149,6 +199,7 @@ type ComponentPreview = {
   possiblyDistinctiveName: string,
   preview: PreviewObject | undefined,
   overrides?: { states?: string[] | undefined },
+  filterOptions?: { [filter: string]: string }
 };
 
 type ComponentPreviews = ComponentPreview[];
@@ -174,6 +225,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
 
       let overrides: { states?: string[] } | undefined = undefined;
       let possiblyDistinctiveName: string = component.variantProperties.filter(variantProp => !filterProps.includes(variantProp[0]))[0]?.[1];
+      let filterOptions: { [filter: string]: string } = {};
 
       for (const filterProp of filterProps) {
         if (!variantProps.get(filterProp)) {
@@ -209,7 +261,13 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
             }
           }
         } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
-          return null;
+          const regex = /^\$\{([^}]+)\}$/;
+          if (regex.test(filterValue)) {
+            const regexMatch = filterValue.match(regex)[1];
+            filterOptions[regexMatch] = variantProps.get(regexMatch);
+          } else {
+            return null;
+          }
         }
       }
 
@@ -224,6 +282,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
         possiblyDistinctiveName,
         preview: previews.find((item) => item.id === component.id),
         overrides,
+        filterOptions
       };
     })
     .filter(filterOutNull)
@@ -245,7 +304,26 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
     return tabComponents;
 }
 
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
+const Filter: React.FC<{ filterOptions: {[key: string]: string[]}, onFilterChange: (key: string, value: string) => void }> = ({ filterOptions, onFilterChange }) => {
+  return (
+    <>
+      {Object.entries(filterOptions).map(([filter, values]) => {
+        return (
+          <div className='u-flex u-justify-end u-items-baseline' key={`filter-${filter}`}>
+            <small>{startCase(filter)}</small>
+            {values.map(value => (
+              <a className='c-button c-button--outline c-button--small u-ml-1' key={`filter-${filter}-${value}`} onClick={() => {
+                onFilterChange(filter, value);
+              }}>{startCase(value)}</a>
+            ))}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       {components.map(previewableComponent => {
@@ -266,7 +344,7 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, option
   );
 }
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
+const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       <h4>Classes</h4>
