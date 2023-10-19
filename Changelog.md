@@ -6,7 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.7] - 2023-10-12
+## [0.8.8] - 2023-10-19
+
+### Bugfixes
+
+- Fixed the issue build client file issue introduced in the 0.8.7 version.
+
+### Other
+
+- Replaced the wrong date for the 0.8.7 release in the changelog with the correct one.
+
+## [0.8.7] - 2023-10-19
 
 ### Improvements
 
