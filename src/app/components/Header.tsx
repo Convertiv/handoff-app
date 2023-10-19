@@ -36,7 +36,7 @@ function Header({ menu, config }: HeaderProps) {
               <div className="c-site-title">
                 <Link href="/" className="c-site-logo c-site-logo--basic" title="" rel="home" aria-label="logo">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`${process.env.NEXT_BASE_PATH}${config?.logo}` || `${process.env.NEXT_BASE_PATH}/logo.svg`} alt={config?.title} />
+                    <img src={`${process.env.NEXT_BASE_PATH ?? ''}${config?.logo}` || `${process.env.NEXT_BASE_PATH ?? ''}/logo.svg`} alt={config?.title} />
                 </Link>
               </div>
 

@@ -11,7 +11,7 @@ export interface IconProps {
 export const Icon: React.FC<IconProps> = ({ name, className, width, height }) => {
   return (
       <Image
-        src={`${process.env.NEXT_BASE_PATH}/assets/svg/${name}.svg`}
+        src={`${process.env.NEXT_BASE_PATH ?? ''}/assets/svg/${name}.svg`}
         className={className}
         alt={`Icon for ${name}`}
         width={width ?? '100'}
