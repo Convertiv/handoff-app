@@ -14,6 +14,8 @@ export interface ImageStyle {
 export const defaultConfig: Config = {
   dev_access_token: null,
   figma_project_id: null,
+  next_base_path: '',
+  next_out_directory: 'out',
   title: 'Convertiv Design System',
   client: 'Convertiv',
   google_tag_manager: null,
@@ -85,9 +87,9 @@ export const defaultConfig: Config = {
  * @returns Promise<Config>
  */
 export const getConfig = (configOverride?: any): Config => {
-  if (global.handoff && global.handoff.config) {
-    return global.handoff.config;
-  }
+  // if (global.handoff && global.handoff.config) {
+  //   return global.handoff.config;
+  // }
   // Check to see if there is a config in the root of the project
   let config = {},
     configPath = path.resolve(process.cwd(), 'handoff.config.json');
@@ -105,13 +107,13 @@ export const getConfig = (configOverride?: any): Config => {
  * @returns Handoff
  */
 export const getHandoff = (): Handoff => {
-  if (global.handoff) {
-    return global.handoff;
-  }
+  // if (global.handoff) {
+  //   return global.handoff;
+  // }
   // check for a serialized version
   const handoff = deserializeHandoff();
   if (handoff) {
-    global.handoff = handoff;
+    // global.handoff = handoff;
     return handoff;
   }
   throw Error('Handoff not initialized');
@@ -120,10 +122,11 @@ export const getHandoff = (): Handoff => {
  * Serialize the handoff to the working directory
  */
 export const serializeHandoff = (handoff: Handoff) => {
-  if (!fs.existsSync(path.join(process.cwd(), 'exported'))) {
-    fs.mkdirSync(path.join(process.cwd(), 'exported'));
+  const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory);
+  if (!fs.existsSync(path.resolve(outputPath))) {
+    fs.mkdirSync(path.resolve(outputPath));
   }
-  const statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
+  const statePath = path.resolve(outputPath, 'handoff.state.json');
   fs.writeFileSync(statePath, JSON.stringify(handoff));
 };
 
@@ -132,7 +135,7 @@ export const serializeHandoff = (handoff: Handoff) => {
  * @returns
  */
 export const deserializeHandoff = () => {
-  const statePath = path.join(process.cwd(), 'exported', 'handoff.state.json');
+  const statePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'handoff.state.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'handoff.state.json');
   if (fs.existsSync(statePath)) {
     const stateBuffer = fs.readFileSync(statePath);
     const state = JSON.parse(stateBuffer.toString());

@@ -419,20 +419,23 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getTokens = (): ExportResult => {
-  if(!fs.existsSync('./exported/tokens.json')) return {} as ExportResult;
-  const data = fs.readFileSync('./exported/tokens.json', 'utf-8');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'tokens.json');
+  if(!fs.existsSync(exportedFilePath)) return {} as ExportResult;
+  const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
 };
 
 export const getChangelog = () => {
-  if(!fs.existsSync('./exported/changelog.json')) return [];
-  const data = fs.readFileSync('./exported/changelog.json', 'utf-8');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'changelog.json');
+  if(!fs.existsSync(exportedFilePath)) return [];
+  const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 export const getPreview = (): PreviewJson => {
-  if(!fs.existsSync('./exported/preview.json')) return {} as PreviewJson;
-  const data = fs.readFileSync('./exported/preview.json', 'utf-8');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'preview.json');
+  if(!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
+  const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
 };
 
@@ -497,20 +500,26 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
-  if (type === 'scss' && fs.existsSync(`./exported/tokens/sass/${component}.scss`)) {
-    tokens = fs.readFileSync(`./exported/tokens/sass/${component}.scss`).toString();
-  } else if (type === 'types' && fs.existsSync(`./exported/tokens/types/${component}.scss`)) {
-    tokens = fs.readFileSync(`./exported/tokens/types/${component}.scss`).toString();
+  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'tokens');
+  const scssSearchPath = path.resolve(baseSearchPath, 'sass', `${component}.scss`);
+  const typeSearchPath = path.resolve(baseSearchPath, 'types', `${component}.scss`);
+  const sdSearchPath = path.resolve(baseSearchPath, 'sd', 'tokens', `${component}.tokens.json`);
+  const sdAltSearchPath = path.resolve(baseSearchPath, 'sd', 'tokens', component, `${component}.tokens.json`);
+  const cssSearchPath = path.resolve(baseSearchPath, 'css', `${component}.css`);
+  if (type === 'scss' && fs.existsSync(scssSearchPath)) {
+    tokens = fs.readFileSync(scssSearchPath).toString();
+  } else if (type === 'types' && fs.existsSync(typeSearchPath)) {
+    tokens = fs.readFileSync(typeSearchPath).toString();
   } else if (type === 'styleDictionary') {
-    if (fs.existsSync(`./exported/tokens/sd/tokens/${component}.tokens.json`)) {
+    if (fs.existsSync(sdSearchPath)) {
       // Foundations
-      tokens = fs.readFileSync(`./exported/tokens/sd/tokens/${component}.tokens.json`).toString();
+      tokens = fs.readFileSync(sdSearchPath).toString();
     } else {
       // Components
-      tokens = fs.readFileSync(`./exported/tokens/sd/tokens/${component}/${component}.tokens.json`).toString();
+      tokens = fs.readFileSync(sdAltSearchPath).toString();
     }
-  } else if (fs.existsSync(`./exported/tokens/css/${component}.css`)) {
-    tokens = fs.readFileSync(`./exported/tokens/css/${component}.css`).toString();
+  } else if (fs.existsSync(cssSearchPath)) {
+    tokens = fs.readFileSync(cssSearchPath).toString();
   }
   return tokens;
 };

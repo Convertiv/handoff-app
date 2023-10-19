@@ -83,22 +83,32 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
  * @returns
  */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var output;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var appPath, exportPath, config, output;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
                 mergePublicDir(handoff);
-                return [4 /*yield*/, (0, next_build_1.nextBuild)([path_1.default.resolve(handoff.modulePath, 'src/app')])];
+                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
+                exportPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory);
+                config = require(path_1.default.resolve(appPath, 'next.config.js'));
+                config.distDir = handoff.config.figma_project_id ? "out/".concat(handoff.config.figma_project_id) : 'out/default';
+                config.basePath = handoff.config.next_base_path ? handoff.config.next_base_path : '';
+                config.env = config.env ? __assign(__assign({}, config.env), { HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath }) : { HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath };
+                // Build the next app
+                return [4 /*yield*/, (0, next_build_1.nextBuild)([appPath, config])];
             case 1:
-                _a.sent();
-                output = path_1.default.resolve(handoff.workingPath, 'out');
+                // Build the next app
+                _c.sent();
+                output = path_1.default.resolve(handoff.workingPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
                 if (fs_extra_1.default.existsSync(output)) {
                     fs_extra_1.default.removeSync(output);
                 }
-                fs_extra_1.default.moveSync(path_1.default.resolve(handoff.modulePath, 'src/app/out'), path_1.default.resolve(handoff.workingPath, 'out'));
+                // Copy the build files int the working path output directory
+                fs_extra_1.default.copySync(path_1.default.resolve(handoff.modulePath, 'src', 'app', config.distDir), path_1.default.resolve(handoff.workingPath, (_b = handoff.config.next_out_directory) !== null && _b !== void 0 ? _b : 'out'));
                 return [2 /*return*/];
         }
     });
@@ -109,8 +119,9 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
-    return __generator(this, function (_a) {
-        if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+    var _a;
+    return __generator(this, function (_b) {
+        if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
             throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
         }
         mergePublicDir(handoff);
@@ -129,7 +140,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             conf: config,
         });
         handle = app.getRequestHandler();
-        moduleOutput = path_1.default.resolve(appPath, 'out');
+        moduleOutput = path_1.default.resolve(appPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
         if (fs_extra_1.default.existsSync(moduleOutput)) {
             fs_extra_1.default.removeSync(moduleOutput);
         }
@@ -271,19 +282,20 @@ exports.watchApp = watchApp;
  */
 var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, moduleOutput;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
                 appPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
-                moduleOutput = path_1.default.resolve(appPath, 'out');
+                moduleOutput = path_1.default.resolve(appPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
                 if (fs_extra_1.default.existsSync(moduleOutput)) {
                     fs_extra_1.default.removeSync(moduleOutput);
                 }
                 return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
-            case 1: return [2 /*return*/, _a.sent()];
+            case 1: return [2 /*return*/, _b.sent()];
         }
     });
 }); };

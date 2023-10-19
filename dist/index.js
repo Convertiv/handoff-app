@@ -73,12 +73,16 @@ var integration_1 = require("./transformers/integration");
 var handoff = null;
 global.handoff = handoff;
 var Handoff = /** @class */ (function () {
-    function Handoff(config) {
+    function Handoff(config, workingPath) {
+        var _a;
         this.debug = false;
         this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
         this.workingPath = process.cwd();
+        this.outputDirectory = 'exported';
         this.config = null;
+        this.workingPath = workingPath !== null && workingPath !== void 0 ? workingPath : this.workingPath;
+        this.outputDirectory = (_a = process.env.OUTPUT_DIR) !== null && _a !== void 0 ? _a : this.outputDirectory;
         this.hooks = {
             init: function (config) { return config; },
             fetch: function () { },

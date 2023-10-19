@@ -1,12 +1,13 @@
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
 import { DocumentationObject, ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
-import { filterOutNull, slugify } from '../../utils/index';
+import { filterOutNull } from '../../utils/index';
 import { getComponentTemplate } from './utils';
 import { Component } from '../../exporters/components/extractor';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
 import { ExportableTransformerOptionsMap } from '../types';
+import Handoff from '../../index';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -24,19 +25,19 @@ function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
   return obj;
 }
 
-const getComponentTemplateByComponentId = async (componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
+const getComponentTemplateByComponentId = async (handoff: Handoff, componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
   const parts: string[] = [];
 
   component.variantProperties.forEach(([_, value]) => parts.push(value));
 
-  return await getComponentTemplate(componentId, parts);
+  return await getComponentTemplate(handoff, componentId, parts);
 };
 
 /**
  * Transforms the component tokens into a preview and code
  */
-const transformComponentTokens = async (componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<TransformComponentTokensResult> => {
-  const template = await getComponentTemplateByComponentId(componentId, component, options);
+const transformComponentTokens = async (handoff: Handoff, componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<TransformComponentTokensResult> => {
+  const template = await getComponentTemplateByComponentId(handoff, componentId, component, options);
 
   if (!template) {
     return null;
@@ -54,7 +55,14 @@ const transformComponentTokens = async (componentId: string, component: Componen
     });
   }
   
-  const preview = Mustache.render(template, renderableComponent);
+  let preview = Mustache.render(template, renderableComponent);
+
+  if (handoff.config.next_base_path) {
+    preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, (match, capturedGroup) => {
+      return match.replace(capturedGroup, handoff.config.next_base_path + capturedGroup);
+    });
+  }
+
   const bodyEl = parse(preview).querySelector('body');
 
   return {
@@ -67,14 +75,14 @@ const transformComponentTokens = async (componentId: string, component: Componen
 /**
  * Transforms the documentation object components into a preview and code
  */
-export default async function previewTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) {
+export default async function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) {
   const { components } = documentationObject;
   const componentIds = Object.keys(components);
 
   const result = await Promise.all(
     componentIds.map(async (componentId) => {
       return [componentId, await Promise.all(
-        documentationObject.components[componentId].map((component) => transformComponentTokens(componentId, component, options?.get(componentId)))
+        documentationObject.components[componentId].map((component) => transformComponentTokens(handoff, componentId, component, options?.get(componentId)))
       ).then((res) => res.filter(filterOutNull))] as [string, TransformComponentTokensResult[]];
     })
   );

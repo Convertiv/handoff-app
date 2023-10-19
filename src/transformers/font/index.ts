@@ -7,17 +7,15 @@ import sortedUniq from 'lodash/sortedUniq';
 import * as stream from 'node:stream';
 import { FontFamily } from './types';
 //import { pluginTransformer } from '../plugin';
-import { getIntegrationName } from '../integration/index';
-import { getHandoff } from '../../config';
+import Handoff from '../../index';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use
  */
-export default async function fontTransformer(documentationObject: DocumentationObject) {
+export default async function fontTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   const { design } = documentationObject;
   const outputFolder = 'public';
-  const handoff = getHandoff();
   const fontLocation = path.join(handoff?.workingPath, 'fonts');
   const families: FontFamily = design.typography.reduce((result, current) => {
     return {
@@ -40,7 +38,7 @@ export default async function fontTransformer(documentationObject: Documentation
       // Zip the font up and put the zip in the font location
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
-      const fontsFolder = path.resolve(handoff.workingPath, `exported/integration/fonts`);
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.outputDirectory, 'integration', 'fonts');
       if(!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }

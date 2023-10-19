@@ -55,7 +55,7 @@ function mergeTokenSets(tokenSetList) {
     });
     return obj;
 }
-var getComponentTemplateByComponentId = function (componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
+var getComponentTemplateByComponentId = function (handoff, componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
     var parts;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -65,7 +65,7 @@ var getComponentTemplateByComponentId = function (componentId, component, option
                     var _ = _a[0], value = _a[1];
                     return parts.push(value);
                 });
-                return [4 /*yield*/, (0, utils_1.getComponentTemplate)(componentId, parts)];
+                return [4 /*yield*/, (0, utils_1.getComponentTemplate)(handoff, componentId, parts)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -73,11 +73,11 @@ var getComponentTemplateByComponentId = function (componentId, component, option
 /**
  * Transforms the component tokens into a preview and code
  */
-var transformComponentTokens = function (componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
+var transformComponentTokens = function (handoff, componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
     var template, renderableComponent, preview, bodyEl;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(componentId, component, options)];
+            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component, options)];
             case 1:
                 template = _a.sent();
                 if (!template) {
@@ -94,6 +94,11 @@ var transformComponentTokens = function (componentId, component, options) { retu
                     });
                 }
                 preview = mustache_1.default.render(template, renderableComponent);
+                if (handoff.config.next_base_path) {
+                    preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, function (match, capturedGroup) {
+                        return match.replace(capturedGroup, handoff.config.next_base_path + capturedGroup);
+                    });
+                }
                 bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
                 return [2 /*return*/, {
                         id: component.id,
@@ -106,7 +111,7 @@ var transformComponentTokens = function (componentId, component, options) { retu
 /**
  * Transforms the documentation object components into a preview and code
  */
-function previewTransformer(documentationObject, options) {
+function previewTransformer(handoff, documentationObject, options) {
     return __awaiter(this, void 0, void 0, function () {
         var components, componentIds, result, previews;
         var _this = this;
@@ -121,7 +126,7 @@ function previewTransformer(documentationObject, options) {
                                 switch (_b.label) {
                                     case 0:
                                         _a = [componentId];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].map(function (component) { return transformComponentTokens(componentId, component, options === null || options === void 0 ? void 0 : options.get(componentId)); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
+                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].map(function (component) { return transformComponentTokens(handoff, componentId, component, options === null || options === void 0 ? void 0 : options.get(componentId)); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
                                     case 1: return [2 /*return*/, _a.concat([_b.sent()])];
                                 }
                             });

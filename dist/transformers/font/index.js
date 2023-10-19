@@ -65,19 +65,17 @@ var archiver_1 = __importDefault(require("archiver"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
-var config_1 = require("../../config");
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use
  */
-function fontTransformer(documentationObject) {
+function fontTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var design, outputFolder, handoff, fontLocation, families, customFonts;
+        var design, outputFolder, fontLocation, families, customFonts;
         var _this = this;
         return __generator(this, function (_a) {
             design = documentationObject.design;
             outputFolder = 'public';
-            handoff = (0, config_1.getHandoff)();
             fontLocation = path_1.default.join(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'fonts');
             families = design.typography.reduce(function (result, current) {
                 var _a;
@@ -100,7 +98,7 @@ function fontTransformer(documentationObject) {
                             return [4 /*yield*/, (0, exports.zipFonts)(fontDirName, stream_1)];
                         case 1:
                             _a.sent();
-                            fontsFolder = path_1.default.resolve(handoff.workingPath, "exported/integration/fonts");
+                            fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'integration', 'fonts');
                             if (!fs_extra_1.default.existsSync(fontsFolder)) {
                                 fs_extra_1.default.mkdirSync(fontsFolder);
                             }

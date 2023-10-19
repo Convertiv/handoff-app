@@ -4,9 +4,10 @@ import { HookReturn } from '../../types';
 import webpack from 'webpack';
 import fs from 'fs-extra';
 import { getPathToIntegration } from '.';
+import Handoff from '../../index';
 
-export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configuration): webpack.Configuration => {
-  const tailwindPath = path.resolve(path.join(getPathToIntegration(), 'templates/tailwind.config.js'));
+export const modifyWebpackConfigForTailwind = (handoff: Handoff, webpackConfig: webpack.Configuration): webpack.Configuration => {
+  const tailwindPath = path.resolve(path.join(getPathToIntegration(handoff), 'templates/tailwind.config.js'));
   let plugins: any[] = [];
   try {
     const tailwindcss = require('tailwindcss');
