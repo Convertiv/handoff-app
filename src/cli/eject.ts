@@ -42,7 +42,7 @@ export const ejectIntegration = async (handoff: Handoff) => {
     }
   }
   // perform integration ejection
-  const integrationPath = getPathToIntegration();
+  const integrationPath = getPathToIntegration(handoff);
   fs.copySync(integrationPath, workingPath, { overwrite: false });
   console.log(chalk.green(`${config?.integration?.name} ${config?.integration?.version} ejected to ${workingPath}`));
   // ensure local configuration is set up to support the ejected integration

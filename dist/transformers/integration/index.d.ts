@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
@@ -10,12 +11,12 @@ export declare class HandoffIntegration {
     version: string;
     hooks: {
         integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
-        webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
+        webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
     constructor(name: string, version: string);
     postIntegration(callback: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[]): void;
-    modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
+    modifyWebpackConfig(callback: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration): void;
     postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
 }
 /**
@@ -23,12 +24,12 @@ export declare class HandoffIntegration {
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
  * integration if desired
  */
-export declare const getPathToIntegration: () => string;
+export declare const getPathToIntegration: (handoff: Handoff) => string;
 /**
  * Get the entry point for the integration
  * @returns string
  */
-export declare const getIntegrationEntryPoint: () => string;
+export declare const getIntegrationEntryPoint: (handoff: Handoff) => string;
 /**
  * Get the name of the current integration
  * @returns string
@@ -54,4 +55,4 @@ export declare const zipTokens: (dirPath: string, destination: stream.Writable) 
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
-export default function integrationTransformer(documentationObject: DocumentationObject): Promise<void>;
+export default function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject): Promise<void>;

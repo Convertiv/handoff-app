@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
+import Handoff from '../../index';
 
 /**
  * Get the component template
@@ -7,9 +8,9 @@ import fs from 'fs-extra';
  * @param parts
  * @returns
  */
-export const getComponentTemplate = async (component: string, parts: string[]): Promise<string | null> => {
+export const getComponentTemplate = async (handoff: Handoff, component: string, parts: string[]): Promise<string | null> => {
   // [override, local]
-  const sources = [path.resolve(process.cwd(), `integration/templates/${component}`), path.resolve(__dirname, `../../templates/${component}`)];
+  const sources = [path.resolve(handoff.workingPath, `integration/templates/${component}`), path.resolve(__dirname, `../../templates/${component}`)];
 
   for (const src of sources) {
     let cwd: string = src;

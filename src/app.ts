@@ -33,16 +33,26 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   mergePublicDir(handoff);
-  await nextBuild([path.resolve(handoff.modulePath, 'src/app')]);
-  const output = path.resolve(handoff.workingPath, 'out');
+  const appPath = path.resolve(handoff.modulePath, 'src/app');
+  // Load and prepare the configuration
+  const exportPath = path.resolve(handoff.workingPath, handoff.outputDirectory);
+  const config = require(path.resolve(appPath, 'next.config.js'));
+  config.distDir = handoff.config.figma_project_id ? `out/${handoff.config.figma_project_id}`: 'out/default';
+  config.basePath = handoff.config.next_base_path ? handoff.config.next_base_path : '';
+  config.env = config.env ? { ...config.env, ...{ HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath } } : { HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath }
+  // Build the next app
+  await nextBuild([appPath, config]);
+  // Clean the working path output directory
+  const output = path.resolve(handoff.workingPath, handoff.config.next_out_directory ?? 'out');
   if (fs.existsSync(output)) {
     fs.removeSync(output);
   }
-  fs.moveSync(path.resolve(handoff.modulePath, 'src/app/out'), path.resolve(handoff.workingPath, 'out'));
+  // Copy the build files int the working path output directory
+  fs.copySync(path.resolve(handoff.modulePath, 'src', 'app', config.distDir), path.resolve(handoff.workingPath, handoff.config.next_out_directory ?? 'out'));
 };
 
 /**
@@ -50,7 +60,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
   mergePublicDir(handoff);
@@ -77,7 +87,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const handle = app.getRequestHandler();
 
   // purge out cache
-  const moduleOutput = path.resolve(appPath, 'out');
+  const moduleOutput = path.resolve(appPath, handoff.config.next_out_directory ?? 'out');
   if (fs.existsSync(moduleOutput)) {
     fs.removeSync(moduleOutput);
   }
@@ -175,13 +185,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, 'exported/tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 
   // purge out cache
   const appPath = path.resolve(handoff.modulePath, 'src', 'app');
-  const moduleOutput = path.resolve(appPath, 'out');
+  const moduleOutput = path.resolve(appPath, handoff.config.next_out_directory ?? 'out');
   if (fs.existsSync(moduleOutput)) {
     fs.removeSync(moduleOutput);
   }

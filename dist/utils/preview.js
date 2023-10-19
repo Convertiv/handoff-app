@@ -44,12 +44,12 @@ var webpack_1 = __importDefault(require("webpack"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var chalk_1 = __importDefault(require("chalk"));
+// import { pluginTransformer } from '../transformers/plugin';
 var index_1 = require("../transformers/integration/index");
-var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var entry, handoff;
+var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var entry;
     return __generator(this, function (_a) {
-        entry = (0, index_1.getIntegrationEntryPoint)();
-        handoff = global.handoff;
+        entry = (0, index_1.getIntegrationEntryPoint)(handoff);
         if (!handoff) {
             throw Error('Handoff not initialized');
         }
@@ -113,7 +113,7 @@ var buildClientFiles = function () { return __awaiter(void 0, void 0, void 0, fu
                         ],
                     },
                 };
-                config = handoff.integrationHooks.hooks.webpack(config);
+                config = handoff.integrationHooks.hooks.webpack(handoff, config);
                 config = handoff.hooks.webpack(config);
                 var compile = (0, webpack_1.default)(config);
                 compile.run(function (err, stats) {

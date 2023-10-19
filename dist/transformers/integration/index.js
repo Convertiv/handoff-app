@@ -53,7 +53,7 @@ var HandoffIntegration = /** @class */ (function () {
         this.version = version;
         this.hooks = {
             integration: function (documentationObject, artifacts) { return artifacts; },
-            webpack: function (webpackConfig) { return webpackConfig; },
+            webpack: function (handoff, webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
         };
     }
@@ -74,8 +74,7 @@ exports.HandoffIntegration = HandoffIntegration;
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
  * integration if desired
  */
-var getPathToIntegration = function () {
-    var handoff = global.handoff;
+var getPathToIntegration = function (handoff) {
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
     }
@@ -104,8 +103,8 @@ exports.getPathToIntegration = getPathToIntegration;
  * Get the entry point for the integration
  * @returns string
  */
-var getIntegrationEntryPoint = function () {
-    return path_1.default.resolve(path_1.default.join((0, exports.getPathToIntegration)(), 'templates', 'main.js'));
+var getIntegrationEntryPoint = function (handoff) {
+    return path_1.default.resolve(path_1.default.join((0, exports.getPathToIntegration)(handoff), 'templates', 'main.js'));
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
 /**
@@ -218,16 +217,16 @@ exports.zipTokens = zipTokens;
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
-function integrationTransformer(documentationObject) {
+function integrationTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var handoff, outputFolder, integrationPath, sassFolder, templatesFolder, integrationsSass, integrationTemplates, mainScssFilePath, stream, data;
+        var outputFolder, integrationPath, exportedFolder, sassFolder, templatesFolder, integrationsSass, integrationTemplates, mainScssFilePath, stream, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    handoff = (0, config_1.getHandoff)();
                     outputFolder = path_1.default.resolve(handoff.modulePath, 'src/app/public');
-                    integrationPath = (0, exports.getPathToIntegration)();
-                    sassFolder = path_1.default.resolve(handoff.workingPath, "exported/integration");
+                    integrationPath = (0, exports.getPathToIntegration)(handoff);
+                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory);
+                    sassFolder = path_1.default.resolve(handoff.workingPath, exportedFolder, "integration");
                     templatesFolder = path_1.default.resolve(__dirname, '../../templates');
                     integrationsSass = path_1.default.resolve(integrationPath, 'sass');
                     integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
@@ -239,14 +238,14 @@ function integrationTransformer(documentationObject) {
                     fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
                     mainScssFilePath = path_1.default.resolve(sassFolder, 'main.scss');
                     if (fs_extra_1.default.existsSync(mainScssFilePath)) {
-                        fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
+                        fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
                     }
                     // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
                     if (process.env.EXPORT_PATH) {
                         fs_extra_1.default.copySync(sassFolder, process.env.EXPORT_PATH);
                     }
                     stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
-                    return [4 /*yield*/, (0, exports.zipTokens)('exported', stream)];
+                    return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];
                 case 1:
                     _a.sent();
                     data = handoff.integrationHooks.hooks.integration(documentationObject, []);
@@ -262,18 +261,18 @@ function integrationTransformer(documentationObject) {
     });
 }
 exports.default = integrationTransformer;
-var replaceHandoffImportTokens = function (content, components) {
-    getHandoffImportTokens(components)
+var replaceHandoffImportTokens = function (handoff, content, components) {
+    getHandoffImportTokens(handoff, components)
         .forEach(function (_a) {
         var token = _a[0], imports = _a[1];
         content = content.replaceAll("//<#".concat(token, "#>"), imports.map(function (path) { return "@import '".concat(path, "';"); }).join("\r\n"));
     });
     return content;
 };
-var getHandoffImportTokens = function (components) {
+var getHandoffImportTokens = function (handoff, components) {
     var result = [];
     components.forEach(function (component) {
-        getHandoffImportTokensForComponent(component)
+        getHandoffImportTokensForComponent(handoff, component)
             .forEach(function (_a, idx) {
             var _b;
             var importToken = _a[0], searchPath = _a.slice(1);
@@ -285,8 +284,8 @@ var getHandoffImportTokens = function (components) {
     });
     return result;
 };
-var getHandoffImportTokensForComponent = function (component) {
-    var integrationPath = path_1.default.resolve((0, config_1.getHandoff)().workingPath, "exported/integration");
+var getHandoffImportTokensForComponent = function (handoff, component) {
+    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'integration');
     return [
         ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
         ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],

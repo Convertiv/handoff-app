@@ -24,6 +24,7 @@ class Handoff {
   force: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = process.cwd();
+  outputDirectory: string = 'exported';
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -39,8 +40,10 @@ class Handoff {
     configureExportables: (exportables: string[]) => string[];
   };
 
-  constructor(config?: Config) {
+  constructor(config?: Config, workingPath?: string) {
     this.config = null;
+    this.workingPath = workingPath ?? this.workingPath;
+    this.outputDirectory = process.env.OUTPUT_DIR ?? this.outputDirectory;
     this.hooks = {
       init: (config: Config): Config => config,
       fetch: () => {},
