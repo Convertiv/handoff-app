@@ -64,6 +64,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                         modules: [
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                            path_1.default.resolve(process.cwd(), 'node_modules'),
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
                             path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
                         ],
@@ -73,7 +74,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
-                        modules: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules')],
+                        modules: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(process.cwd(), 'node_modules')],
                     },
                     module: {
                         rules: [
@@ -90,7 +91,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                                         options: {
                                             sassOptions: {
                                                 indentWidth: 4,
-                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath)],
+                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(process.cwd(), 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath)],
                                             },
                                             additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
                                                 var integrationPath;

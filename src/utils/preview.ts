@@ -22,6 +22,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         modules: [
           path.resolve(handoff?.modulePath, 'src'),
           path.resolve(handoff?.modulePath, 'node_modules'),
+          path.resolve(process.cwd(), 'node_modules'),
           path.resolve(handoff?.workingPath, 'node_modules'),
           path.resolve(handoff?.workingPath, 'integration/sass'),
         ],
@@ -31,7 +32,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         filename: 'bundle.js',
       },
       resolveLoader: {
-        modules: [path.resolve(handoff?.modulePath), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules')],
+        modules: [path.resolve(handoff?.modulePath), path.resolve(handoff?.workingPath), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(process.cwd(), 'node_modules')],
       },
       module: {
         rules: [
@@ -48,7 +49,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
                 options: {
                   sassOptions: {
                     indentWidth: 4,
-                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.modulePath)],
+                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(process.cwd(), 'node_modules'), path.resolve(handoff?.modulePath), path.resolve(handoff?.workingPath)],
                   },
                   additionalData: async (content, loaderContext) => {
                     const integrationPath = path.join(handoff.workingPath, 'integration/sass');
