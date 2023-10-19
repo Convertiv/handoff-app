@@ -52,6 +52,8 @@ export interface ExportResult {
 export interface Config {
   dev_access_token?: string | null | undefined;
   figma_project_id?: string | null | undefined;
+  next_base_path?: string | null | undefined;
+  next_out_directory?: string | null | undefined;
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;

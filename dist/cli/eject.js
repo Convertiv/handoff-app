@@ -93,7 +93,7 @@ var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, voi
                         return [2 /*return*/];
                     }
                 }
-                integrationPath = (0, integration_1.getPathToIntegration)();
+                integrationPath = (0, integration_1.getPathToIntegration)(handoff);
                 fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
                 console.log(chalk_1.default.green("".concat((_b = config === null || config === void 0 ? void 0 : config.integration) === null || _b === void 0 ? void 0 : _b.name, " ").concat((_c = config === null || config === void 0 ? void 0 : config.integration) === null || _c === void 0 ? void 0 : _c.version, " ejected to ").concat(workingPath)));
                 localConfigPath = path_1.default.join(handoff.workingPath, 'handoff.config.json');

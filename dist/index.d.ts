@@ -15,6 +15,7 @@ declare class Handoff {
     force: boolean;
     modulePath: string;
     workingPath: string;
+    outputDirectory: string;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;
@@ -29,7 +30,7 @@ declare class Handoff {
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
         configureExportables: (exportables: string[]) => string[];
     };
-    constructor(config?: Config);
+    constructor(config?: Config, workingPath?: string);
     init(configOverride?: Config): Handoff;
     preRunner(): Handoff;
     fetch(): Promise<Handoff>;

@@ -4,7 +4,7 @@ import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
 
-import { getConfig, getHandoff } from '../../config';
+import { getConfig } from '../../config';
 import { TransformedPreviewComponents } from '../preview/types';
 import webpack from 'webpack';
 import { HookReturn } from '../../types';
@@ -17,7 +17,7 @@ export class HandoffIntegration {
   version: string;
   hooks: {
     integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
-    webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
+    webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
   constructor(name: string, version: string) {
@@ -25,14 +25,14 @@ export class HandoffIntegration {
     this.version = version;
     this.hooks = {
       integration: (documentationObject, artifacts) => artifacts,
-      webpack: (webpackConfig) => webpackConfig,
+      webpack: (handoff, webpackConfig) => webpackConfig,
       preview: (webpackConfig, preview) => preview,
     };
   }
   postIntegration(callback: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[]) {
     this.hooks.integration = callback;
   }
-  modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
+  modifyWebpackConfig(callback: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration) {
     this.hooks.webpack = callback;
   }
   postPreview(
@@ -47,8 +47,7 @@ export class HandoffIntegration {
  * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
  * integration if desired
  */
-export const getPathToIntegration = () => {
-  const handoff = global.handoff;
+export const getPathToIntegration = (handoff: Handoff) => {
   if (!handoff || !handoff?.config) {
     throw Error('Handoff not initialized');
   }
@@ -81,8 +80,8 @@ export const getPathToIntegration = () => {
  * Get the entry point for the integration
  * @returns string
  */
-export const getIntegrationEntryPoint = (): string => {
-  return path.resolve(path.join(getPathToIntegration(), 'templates', 'main.js'));
+export const getIntegrationEntryPoint = (handoff: Handoff): string => {
+  return path.resolve(path.join(getPathToIntegration(handoff), 'templates', 'main.js'));
 };
 
 /**
@@ -169,14 +168,14 @@ export const zipTokens = async (dirPath: string, destination: stream.Writable) =
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
-export default async function integrationTransformer(documentationObject: DocumentationObject) {
-  const handoff = getHandoff();
+export default async function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   // define the output folder
   const outputFolder = path.resolve(handoff.modulePath, 'src/app/public');
   // define the integration path
-  const integrationPath = getPathToIntegration();
+  const integrationPath = getPathToIntegration(handoff);
   // copy the sass and templates to the exported folder
-  const sassFolder = path.resolve(handoff.workingPath, `exported/integration`);
+  const exportedFolder = path.resolve(handoff.workingPath, handoff.outputDirectory);
+  const sassFolder = path.resolve(handoff.workingPath, exportedFolder, `integration`);
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
   const integrationTemplates = path.resolve(integrationPath, 'templates');
@@ -190,6 +189,7 @@ export default async function integrationTransformer(documentationObject: Docume
   const mainScssFilePath = path.resolve(sassFolder, 'main.scss')
   if (fs.existsSync(mainScssFilePath)) {
     fs.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(
+      handoff,
       fs.readFileSync(mainScssFilePath, 'utf8'),
       Object.keys(documentationObject.components)
     ));
@@ -200,7 +200,7 @@ export default async function integrationTransformer(documentationObject: Docume
   }
   // zip the tokens
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
-  await zipTokens('exported', stream);
+  await zipTokens(exportedFolder, stream);
   let data = handoff.integrationHooks.hooks.integration(documentationObject, []);
   data = handoff.hooks.integration(documentationObject, data);
   if (data.length > 0) {
@@ -210,8 +210,8 @@ export default async function integrationTransformer(documentationObject: Docume
   }
 }
 
-const replaceHandoffImportTokens = (content: string, components: string[]) => {
-  getHandoffImportTokens(components)
+const replaceHandoffImportTokens = (handoff: Handoff, content: string, components: string[]) => {
+  getHandoffImportTokens(handoff, components)
     .forEach(([token, imports]) => {
       content = content.replaceAll(`//<#${token}#>`, imports.map(path => `@import '${path}';`).join(`\r\n`))
     });
@@ -219,10 +219,10 @@ const replaceHandoffImportTokens = (content: string, components: string[]) => {
   return content;
 }
 
-const getHandoffImportTokens = (components: string[]) => {
+const getHandoffImportTokens = (handoff: Handoff, components: string[]) => {
   const result: [token: string, imports: string[]][] = [];
   components.forEach((component) => {
-    getHandoffImportTokensForComponent(component)
+    getHandoffImportTokensForComponent(handoff, component)
       .forEach(([importToken, ...searchPath], idx) => {
         result[idx] ?? result.push([importToken, []]);
         if (fs.existsSync(path.resolve(...searchPath))) {
@@ -234,9 +234,8 @@ const getHandoffImportTokens = (components: string[]) => {
   return result;
 }
 
-const getHandoffImportTokensForComponent = (component: string): [token: string, root: string, path: string, file: string][] => {
-  const integrationPath = path.resolve(getHandoff().workingPath, `exported/integration`);
-
+const getHandoffImportTokensForComponent = (handoff: Handoff, component: string): [token: string, root: string, path: string, file: string][] => {
+  const integrationPath = path.resolve(handoff.workingPath, handoff.outputDirectory, 'integration');
   return [
     ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', `${component}.scss`],
     ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', `${component}.scss`],

@@ -20,6 +20,8 @@ var path_1 = __importDefault(require("path"));
 exports.defaultConfig = {
     dev_access_token: null,
     figma_project_id: null,
+    next_base_path: '',
+    next_out_directory: 'out',
     title: 'Convertiv Design System',
     client: 'Convertiv',
     google_tag_manager: null,
@@ -90,9 +92,9 @@ exports.defaultConfig = {
  * @returns Promise<Config>
  */
 var getConfig = function (configOverride) {
-    if (global.handoff && global.handoff.config) {
-        return global.handoff.config;
-    }
+    // if (global.handoff && global.handoff.config) {
+    //   return global.handoff.config;
+    // }
     // Check to see if there is a config in the root of the project
     var config = {}, configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs_extra_1.default.existsSync(configPath)) {
@@ -110,13 +112,13 @@ exports.getConfig = getConfig;
  * @returns Handoff
  */
 var getHandoff = function () {
-    if (global.handoff) {
-        return global.handoff;
-    }
+    // if (global.handoff) {
+    //   return global.handoff;
+    // }
     // check for a serialized version
     var handoff = (0, exports.deserializeHandoff)();
     if (handoff) {
-        global.handoff = handoff;
+        // global.handoff = handoff;
         return handoff;
     }
     throw Error('Handoff not initialized');
@@ -126,10 +128,11 @@ exports.getHandoff = getHandoff;
  * Serialize the handoff to the working directory
  */
 var serializeHandoff = function (handoff) {
-    if (!fs_extra_1.default.existsSync(path_1.default.join(process.cwd(), 'exported'))) {
-        fs_extra_1.default.mkdirSync(path_1.default.join(process.cwd(), 'exported'));
+    var outputPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory);
+    if (!fs_extra_1.default.existsSync(path_1.default.resolve(outputPath))) {
+        fs_extra_1.default.mkdirSync(path_1.default.resolve(outputPath));
     }
-    var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
+    var statePath = path_1.default.resolve(outputPath, 'handoff.state.json');
     fs_extra_1.default.writeFileSync(statePath, JSON.stringify(handoff));
 };
 exports.serializeHandoff = serializeHandoff;
@@ -138,7 +141,8 @@ exports.serializeHandoff = serializeHandoff;
  * @returns
  */
 var deserializeHandoff = function () {
-    var statePath = path_1.default.join(process.cwd(), 'exported', 'handoff.state.json');
+    var _a;
+    var statePath = process.env.HANDOFF_EXPORT_PATH ? path_1.default.resolve(process.env.HANDOFF_EXPORT_PATH, 'handoff.state.json') : path_1.default.resolve(process.cwd(), (_a = process.env.OUTPUT_DIR) !== null && _a !== void 0 ? _a : 'exported', 'handoff.state.json');
     if (fs_extra_1.default.existsSync(statePath)) {
         var stateBuffer = fs_extra_1.default.readFileSync(statePath);
         var state = JSON.parse(stateBuffer.toString());

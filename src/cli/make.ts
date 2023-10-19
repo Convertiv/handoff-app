@@ -2,7 +2,6 @@ import path from 'path';
 import Handoff from '../index';
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { getPathToIntegration } from '../transformers/integration';
 
 /**
  * Make a new exportable component

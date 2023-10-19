@@ -1,5 +1,5 @@
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
-import { getHandoff, serializeHandoff } from './config';
+import { serializeHandoff } from './config';
 import { maskPrompt, prompt } from './utils/prompt';
 import chalk from 'chalk';
 import fs from 'fs-extra';
@@ -30,14 +30,14 @@ import Handoff from '.';
 import sdTransformer from './transformers/sd';
 
 let config;
-const outputFolder = process.env.OUTPUT_DIR || 'exported';
-const exportablesFolder = 'config/exportables';
-const tokensFilePath = path.join(outputFolder, 'tokens.json');
-const previewFilePath = path.join(outputFolder, 'preview.json');
-const changelogFilePath = path.join(outputFolder, 'changelog.json');
-const variablesFilePath = path.join(outputFolder, 'tokens');
-const iconsZipFilePath = path.join(outputFolder, 'icons.zip');
-const logosZipFilePath = path.join(outputFolder, 'logos.zip');
+const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory);
+const exportablesFolder = () =>  'config/exportables';
+const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
+const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
+const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
+const variablesFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens');
+const iconsZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'icons.zip');
+const logosZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'logos.zip');
 
 /**
  * Read Previous Json File
@@ -80,7 +80,7 @@ const getExportables = async (handoff: Handoff): Promise<ExportableDefinition[]>
 
     const exportables = definitions
       .map((def) => {
-        let defPath = path.resolve(path.join(handoff.modulePath, exportablesFolder, `${def}.json`));
+        let defPath = path.resolve(path.join(handoff.modulePath, exportablesFolder(), `${def}.json`));
         const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
         // If the project path exists, use that first as an override
         if (fs.existsSync(projectPath)) {
@@ -111,8 +111,8 @@ const getExportables = async (handoff: Handoff): Promise<ExportableDefinition[]>
  * @param documentationObject
  * @returns
  */
-const buildCustomFonts = async (documentationObject: DocumentationObject) => {
-  return await fontTransformer(documentationObject);
+const buildCustomFonts = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+  return await fontTransformer(handoff, documentationObject);
 };
 
 /**
@@ -120,9 +120,8 @@ const buildCustomFonts = async (documentationObject: DocumentationObject) => {
  * @param documentationObject
  * @returns
  */
-const buildIntegration = async (documentationObject: DocumentationObject) => {
-  const handoff = getHandoff();
-  const integration = await integrationTransformer(documentationObject);
+const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+  const integration = await integrationTransformer(handoff, documentationObject);
   return integration;
 };
 
@@ -130,10 +129,10 @@ const buildIntegration = async (documentationObject: DocumentationObject) => {
  * Run just the preview
  * @param documentationObject
  */
-const buildPreview = async (documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) => {
+const buildPreview = async (handoff: Handoff, documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) => {
+  await Promise.all([previewTransformer(handoff, documentationObject, options).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 }))]);
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].length > 0).length > 0) {
-    await Promise.all([previewTransformer(documentationObject, options).then((out) => fs.writeJSON(previewFilePath, out, { spaces: 2 }))]);
-    await buildClientFiles()
+    await buildClientFiles(handoff)
       .then((value) => console.log(chalk.green(value)))
       .catch((error) => {
         throw new Error(error);
@@ -147,8 +146,7 @@ const buildPreview = async (documentationObject: DocumentationObject, options?: 
  * Build only the styles pipeline
  * @param documentationObject
  */
-const buildStyles = async (documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap) => {
-  const handoff = getHandoff();
+const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject, options: ExportableTransformerOptionsMap) => {
   let typeFiles = scssTypesTransformer(documentationObject, options);
   typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
   let cssFiles = cssTransformer(documentationObject, options);
@@ -160,51 +158,51 @@ const buildStyles = async (documentationObject: DocumentationObject, options: Ex
 
   await Promise.all([
     fs
-      .ensureDir(variablesFilePath)
-      .then(() => fs.ensureDir(`${variablesFilePath}/types`))
-      .then(() => fs.ensureDir(`${variablesFilePath}/css`))
-      .then(() => fs.ensureDir(`${variablesFilePath}/sass`))
-      .then(() => fs.ensureDir(`${variablesFilePath}/sd/tokens`))
+      .ensureDir(variablesFilePath(handoff))
+      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/types`))
+      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/css`))
+      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sass`))
+      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens`))
       .then(() => Promise.all(
-        Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath}/sd/tokens/${name}`))
+        Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`))
       ))
 
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
+          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/types/${name}.scss`, content))
+          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content))
+          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content))
         )
       )
       .then(() =>
-        Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/css/${name}.css`, content)))
+        Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content)))
       )
       .then(() =>
         Promise.all(
-          Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sass/${name}.scss`, content))
+          Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(sdFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sd/tokens/${name}/${name}.tokens.json`, content))
+          Object.entries(scssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(sdFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath}/sd/tokens/${name}.tokens.json`, content))
+          Object.entries(sdFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(sdFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content))
         )
       ),
   ]);
@@ -241,8 +239,8 @@ interface FigmaAuthConfig {
  * @param handoff
  */
 const validateFigmaAuth = async (handoff: Handoff): Promise<FigmaAuthConfig> => {
-  let DEV_ACCESS_TOKEN = process.env.DEV_ACCESS_TOKEN;
-  let FIGMA_PROJECT_ID = process.env.FIGMA_PROJECT_ID;
+  let DEV_ACCESS_TOKEN = handoff.config.dev_access_token ?? process.env.DEV_ACCESS_TOKEN;
+  let FIGMA_PROJECT_ID = handoff.config.figma_project_id ?? process.env.FIGMA_PROJECT_ID;
   let missingEnvVars = false;
   // TODO: rename to something more meaningful
   if (!DEV_ACCESS_TOKEN) {
@@ -301,9 +299,9 @@ const figmaExtract = async (
   exportables: ExportableDefinition[]
 ): Promise<DocumentationObject> => {
   console.log(chalk.green(`Starting Figma data extraction.`));
-  let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
-  let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath)) || [];
-  await fs.emptyDir(outputFolder);
+  let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
+  let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
+  await fs.emptyDir(outputPath(handoff));
   const documentationObject = await createDocumentationObject(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
@@ -311,21 +309,21 @@ const figmaExtract = async (
   }
   handoff.hooks.build(documentationObject);
   await Promise.all([
-    fs.writeJSON(tokensFilePath, documentationObject, { spaces: 2 }),
-    fs.writeJSON(changelogFilePath, changelog, { spaces: 2 }),
+    fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
+    fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
     ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath)).then((writeStream) =>
+          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
             stream.promises.finished(writeStream)
           ),
-          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath)).then((writeStream) =>
+          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath(handoff))).then((writeStream) =>
             stream.promises.finished(writeStream)
           ),
         ]
       : []),
   ]);
-  fs.copyFileSync(iconsZipFilePath, path.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
-  fs.copyFileSync(logosZipFilePath, path.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
+  fs.copyFileSync(iconsZipFilePath(handoff), path.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
+  fs.copyFileSync(logosZipFilePath(handoff), path.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
   return documentationObject;
 };
 
@@ -336,10 +334,10 @@ const figmaExtract = async (
 export const buildIntegrationOnly = async (handoff: Handoff) => {
   const exportables = await getExportables(handoff);
   const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath);
+  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
-    await buildIntegration(documentationObject);
-    await buildPreview(documentationObject, componentTransformerOptions);
+    await buildIntegration(handoff, documentationObject);
+    await buildPreview(handoff, documentationObject, componentTransformerOptions);
   }
 };
 
@@ -356,10 +354,10 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   const exportables = await getExportables(handoff);
   const documentationObject = await figmaExtract(handoff, figmaConfig, exportables);
   const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
-  await buildCustomFonts(documentationObject);
-  await buildStyles(documentationObject, componentTransformerOptions);
-  await buildIntegration(documentationObject);
-  await buildPreview(documentationObject, componentTransformerOptions);
+  await buildCustomFonts(handoff, documentationObject);
+  await buildStyles(handoff, documentationObject, componentTransformerOptions);
+  await buildIntegration(handoff, documentationObject);
+  await buildPreview(handoff, documentationObject, componentTransformerOptions);
   await serializeHandoff(handoff);
   if (build) {
     await buildApp(handoff);

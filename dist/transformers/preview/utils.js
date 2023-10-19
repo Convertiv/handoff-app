@@ -57,12 +57,12 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
  * @param parts
  * @returns
  */
-var getComponentTemplate = function (component, parts) { return __awaiter(void 0, void 0, void 0, function () {
+var getComponentTemplate = function (handoff, component, parts) { return __awaiter(void 0, void 0, void 0, function () {
     var sources, _i, sources_1, src, cwd, srcParts, templatePath, pathToDir, pathToFile, _a, sources_2, src, templatePath;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                sources = [path_1.default.resolve(process.cwd(), "integration/templates/".concat(component)), path_1.default.resolve(__dirname, "../../templates/".concat(component))];
+                sources = [path_1.default.resolve(handoff.workingPath, "integration/templates/".concat(component)), path_1.default.resolve(__dirname, "../../templates/".concat(component))];
                 _i = 0, sources_1 = sources;
                 _b.label = 1;
             case 1:

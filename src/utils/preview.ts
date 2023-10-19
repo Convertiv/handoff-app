@@ -3,12 +3,11 @@ import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
 // import { pluginTransformer } from '../transformers/plugin';
-import { fileURLToPath } from 'url';
 import { getIntegrationEntryPoint } from '../transformers/integration/index';
+import Handoff from '../index';
 
-export const buildClientFiles = async (): Promise<string> => {
-  const entry = getIntegrationEntryPoint();
-  const handoff = global.handoff;
+export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
+  const entry = getIntegrationEntryPoint(handoff);
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
@@ -70,7 +69,7 @@ export const buildClientFiles = async (): Promise<string> => {
         ],
       },
     };
-    config = handoff.integrationHooks.hooks.webpack(config);
+    config = handoff.integrationHooks.hooks.webpack(handoff, config);
     config = handoff.hooks.webpack(config);
     const compile = webpack(config);
     compile.run((err, stats) => {
