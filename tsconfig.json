@@ -31,6 +31,7 @@
   ],
   "exclude": [
     "node_modules",
-    "src/app"
+    "src/~app-*",
+    "src/app",
   ]
 }

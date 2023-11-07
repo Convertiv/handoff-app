@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
@@ -30,11 +29,6 @@ export declare const getPathToIntegration: (handoff: Handoff) => string;
  * @returns string
  */
 export declare const getIntegrationEntryPoint: (handoff: Handoff) => string;
-/**
- * Get the name of the current integration
- * @returns string
- */
-export declare const getIntegrationName: () => string;
 export declare const instantiateIntegration: (handoff: Handoff) => HandoffIntegration;
 /**
  * A recusrive function for building a zip of the tokens

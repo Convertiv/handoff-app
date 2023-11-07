@@ -39,11 +39,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationName = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
+exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var archiver_1 = __importDefault(require("archiver"));
-var config_1 = require("../../config");
 var tailwind_1 = require("./tailwind");
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
@@ -107,21 +106,6 @@ var getIntegrationEntryPoint = function (handoff) {
     return path_1.default.resolve(path_1.default.join((0, exports.getPathToIntegration)(handoff), 'templates', 'main.js'));
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
-/**
- * Get the name of the current integration
- * @returns string
- */
-var getIntegrationName = function () {
-    var config = (0, config_1.getConfig)();
-    var defaultIntegration = 'bootstrap';
-    if (config.integration) {
-        if (config.integration.name) {
-            return config.integration.name;
-        }
-    }
-    return defaultIntegration;
-};
-exports.getIntegrationName = getIntegrationName;
 var instantiateIntegration = function (handoff) {
     var _a;
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
@@ -223,9 +207,15 @@ function integrationTransformer(handoff, documentationObject) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    outputFolder = path_1.default.resolve(handoff.modulePath, 'src/app/public');
+                    outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                    if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
+                case 1:
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
                     integrationPath = (0, exports.getPathToIntegration)(handoff);
-                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory);
+                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
                     sassFolder = path_1.default.resolve(handoff.workingPath, exportedFolder, "integration");
                     templatesFolder = path_1.default.resolve(__dirname, '../../templates');
                     integrationsSass = path_1.default.resolve(integrationPath, 'sass');
@@ -246,7 +236,7 @@ function integrationTransformer(handoff, documentationObject) {
                     }
                     stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
                     return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];
-                case 1:
+                case 3:
                     _a.sent();
                     data = handoff.integrationHooks.hooks.integration(documentationObject, []);
                     data = handoff.hooks.integration(documentationObject, data);
@@ -285,7 +275,7 @@ var getHandoffImportTokens = function (handoff, components) {
     return result;
 };
 var getHandoffImportTokensForComponent = function (handoff, component) {
-    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'integration');
+    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration');
     return [
         ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
         ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],

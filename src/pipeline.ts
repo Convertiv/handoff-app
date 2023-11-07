@@ -30,7 +30,7 @@ import Handoff from '.';
 import sdTransformer from './transformers/sd';
 
 let config;
-const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory);
+const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
 const exportablesFolder = () =>  'config/exportables';
 const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
 const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
@@ -239,8 +239,8 @@ interface FigmaAuthConfig {
  * @param handoff
  */
 const validateFigmaAuth = async (handoff: Handoff): Promise<FigmaAuthConfig> => {
-  let DEV_ACCESS_TOKEN = handoff.config.dev_access_token ?? process.env.DEV_ACCESS_TOKEN;
-  let FIGMA_PROJECT_ID = handoff.config.figma_project_id ?? process.env.FIGMA_PROJECT_ID;
+  let DEV_ACCESS_TOKEN = handoff.config.dev_access_token;
+  let FIGMA_PROJECT_ID = handoff.config.figma_project_id;
   let missingEnvVars = false;
   // TODO: rename to something more meaningful
   if (!DEV_ACCESS_TOKEN) {
@@ -322,8 +322,15 @@ const figmaExtract = async (
         ]
       : []),
   ]);
-  fs.copyFileSync(iconsZipFilePath(handoff), path.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
-  fs.copyFileSync(logosZipFilePath(handoff), path.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
+  // define the output folder
+  const outputFolder = path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public');
+  // ensure output folder exists
+  if (!fs.existsSync(outputFolder)) {
+    await fs.promises.mkdir(outputFolder, { recursive: true });
+  }
+  // copy assets to output folder
+  fs.copyFileSync(iconsZipFilePath(handoff), path.join(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'icons.zip'));
+  fs.copyFileSync(logosZipFilePath(handoff), path.join(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'logos.zip'));
   return documentationObject;
 };
 

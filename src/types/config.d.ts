@@ -49,22 +49,21 @@ export interface ExportResult {
   };
 }
 
+interface NextAppConfig {
+  base_path: string,
+  attribution: boolean,
+}
+
 export interface Config {
   dev_access_token?: string | null | undefined;
   figma_project_id?: string | null | undefined;
-  next_base_path?: string | null | undefined;
-  next_out_directory?: string | null | undefined;
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;
   integration?: Integration;
   favicon?: string;
-  poweredBy?: boolean;
+  app: NextAppConfig;
   figma: FigmaSearch;
-  /**
-   * @default "/logo.svg"
-   */
-  logo?: string;
   theme?: string;
   type_sort: string[];
   type_copy: string;

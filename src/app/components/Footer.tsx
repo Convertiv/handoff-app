@@ -10,7 +10,7 @@ function Footer() {
       <div className="o-container-fluid">
         <p>
           Copyright {config.client}, {date.getFullYear()}
-          {config.poweredBy && (
+          {config.app.attribution && (
             <>
               {' '}
               - Powered By{' '}

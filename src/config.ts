@@ -11,11 +11,9 @@ export interface ImageStyle {
   description: string;
 }
 
-export const defaultConfig: Config = {
-  dev_access_token: null,
-  figma_project_id: null,
-  next_base_path: '',
-  next_out_directory: 'out',
+export const defaultConfig = (): Config => ({
+  dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
+  figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
   title: 'Convertiv Design System',
   client: 'Convertiv',
   google_tag_manager: null,
@@ -24,9 +22,7 @@ export const defaultConfig: Config = {
     version: '5.3',
   },
   favicon: '/favicon.ico',
-  logo: '/logo.svg',
   theme: 'default',
-  poweredBy: true,
   type_sort: [
     'Heading 1',
     'Heading 2',
@@ -40,6 +36,10 @@ export const defaultConfig: Config = {
     'Input Labels',
     'Link',
   ],
+  app: {
+    base_path: '',
+    attribution: true,
+  },
   figma: {
     options: {
       shared: {
@@ -80,7 +80,7 @@ export const defaultConfig: Config = {
   type_copy: 'Almost before we knew it, we had left the ground.',
   color_sort: ['primary', 'secondary', 'extra', 'system'],
   component_sort: ['primary', 'secondary', 'transparent'],
-};
+});
 
 /**
  * Get the config, either from the root of the project or from the default config
@@ -91,16 +91,25 @@ export const getConfig = (configOverride?: any): Config => {
   //   return global.handoff.config;
   // }
   // Check to see if there is a config in the root of the project
-  let config = {},
-    configPath = path.resolve(process.cwd(), 'handoff.config.json');
+  let config = {};
+  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
+
   if (fs.existsSync(configPath)) {
     const defBuffer = fs.readFileSync(configPath);
     config = JSON.parse(defBuffer.toString()) as Config;
   }
-  if(configOverride) {
-    config = {...config, ...configOverride};
+
+  if (configOverride) {
+    config = { ...config, ...configOverride };
   }
-  return { ...defaultConfig, ...config } as unknown as Config;
+
+  const result = { ...defaultConfig(), ...config } as unknown as Config;
+
+  // Anonymize the configuration!
+  delete result.figma_project_id;
+  delete result.dev_access_token;
+
+  return result;
 };
 /**
  * Get the handoff from the global scope

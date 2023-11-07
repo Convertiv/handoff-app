@@ -15,6 +15,11 @@ const nextConfig = {
     tsconfigPath: 'tsconfig.json',
   },
   distDir: 'out',
+  basePath: '__HANDOFF.BASE_PATH__',
+  env: {
+    HANDOFF_EXPORT_PATH: '__HANDOFF.EXPORT_PATH__',
+    NEXT_BASE_PATH: '__HANDOFF.BASE_PATH__',
+  },
   serverRuntimeConfig: {
     PROJECT_ROOT: path.resolve('public'),
   },
@@ -25,14 +30,15 @@ const nextConfig = {
     additionalData: (content, loaderContext) => {
       let foundTheme = false;
       // Check if client configuration exists
-      if (fs.existsSync('handoff.config.json')) {
+      const clientConfigPath = path.resolve('__HANDOFF.WORKING_PATH__', 'handoff.config.json');
+      if (fs.existsSync(clientConfigPath)) {
         // Load client configuration
-        const clientConfig = require(path.resolve('handoff.config.json'));
+        const clientConfig = require(clientConfigPath);
         // Check if client configuration is a valid object
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
           // Check if the client configuration specifies a theme
           // If the theme is specified, check if the theme exists in the 'themes' folder
-          if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('theme', `${clientConfig['theme']}.scss`))) {
+          if (clientConfig.hasOwnProperty('theme') && fs.existsSync(path.resolve('__HANDOFF.WORKING_PATH__', 'theme', `${clientConfig['theme']}.scss`))) {
             // Use custom theme
             foundTheme = true;
             content = content + `\n@import './theme/${clientConfig['theme']}';`;
@@ -41,8 +47,14 @@ const nextConfig = {
       }
 
       if (!foundTheme) {
-        // Use default theme
-        content = content + `\n@import 'themes/default';`;
+        // Check if there is a custom version of the default theme
+        if (fs.existsSync(path.resolve('__HANDOFF.WORKING_PATH__', 'theme', `default.scss`))) {
+          // Use custom theme
+          content = content + `\n@import 'theme/default';`;
+        } else {
+          // Use default theme
+          content = content + `\n@import 'themes/default';`;
+        }
       }
 
       return content;

@@ -1,5 +1,6 @@
-import { getConfig, serializeHandoff } from './config';
+import { defaultConfig, serializeHandoff } from './config';
 import { Config } from './types/config';
+import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
 import webpack from 'webpack';
@@ -12,10 +13,13 @@ import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
+
 var handoff = null;
+
 declare global {
   var handoff: Handoff | null;
 }
+
 global.handoff = handoff;
 
 class Handoff {
@@ -62,7 +66,7 @@ class Handoff {
     global.handoff = this;
   }
   init(configOverride?: Config): Handoff {
-    const config = getConfig(configOverride ?? {});
+    const config = initConfig(configOverride ?? {});
     this.config = config;
     this.config = this.hooks.init(this.config);
     serializeHandoff(this);
@@ -190,5 +194,21 @@ class Handoff {
     this.hooks.configureExportables = callback;
   }
 }
+
+const initConfig = (configOverride?: any): Config => {
+  let config = {};
+  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
+
+  if (fs.existsSync(configPath)) {
+    const defBuffer = fs.readFileSync(configPath);
+    config = JSON.parse(defBuffer.toString()) as Config;
+  }
+
+  if (configOverride) {
+    config = { ...config, ...configOverride };
+  }
+
+  return { ...defaultConfig(), ...config } as unknown as Config;
+};
 
 export default Handoff;

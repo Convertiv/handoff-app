@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -63,6 +74,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var config_1 = require("./config");
+var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 require("dotenv/config");
 var app_1 = __importStar(require("./app"));
@@ -101,7 +113,7 @@ var Handoff = /** @class */ (function () {
         global.handoff = this;
     }
     Handoff.prototype.init = function (configOverride) {
-        var config = (0, config_1.getConfig)(configOverride !== null && configOverride !== void 0 ? configOverride : {});
+        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
         this.config = this.hooks.init(this.config);
         (0, config_1.serializeHandoff)(this);
@@ -346,4 +358,16 @@ var Handoff = /** @class */ (function () {
     };
     return Handoff;
 }());
+var initConfig = function (configOverride) {
+    var config = {};
+    var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
+    if (fs_extra_1.default.existsSync(configPath)) {
+        var defBuffer = fs_extra_1.default.readFileSync(configPath);
+        config = JSON.parse(defBuffer.toString());
+    }
+    if (configOverride) {
+        config = __assign(__assign({}, config), configOverride);
+    }
+    return __assign(__assign({}, (0, config_1.defaultConfig)()), config);
+};
 exports.default = Handoff;

@@ -4,7 +4,6 @@ import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
 
-import { getConfig } from '../../config';
 import { TransformedPreviewComponents } from '../preview/types';
 import webpack from 'webpack';
 import { HookReturn } from '../../types';
@@ -84,21 +83,6 @@ export const getIntegrationEntryPoint = (handoff: Handoff): string => {
   return path.resolve(path.join(getPathToIntegration(handoff), 'templates', 'main.js'));
 };
 
-/**
- * Get the name of the current integration
- * @returns string
- */
-export const getIntegrationName = (): string => {
-  const config = getConfig();
-  const defaultIntegration = 'bootstrap';
-  if (config.integration) {
-    if (config.integration.name) {
-      return config.integration.name;
-    }
-  }
-  return defaultIntegration;
-};
-
 export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => {
   if (!handoff || !handoff?.config) {
     throw Error('Handoff not initialized');
@@ -170,11 +154,15 @@ export const zipTokens = async (dirPath: string, destination: stream.Writable) =
  */
 export default async function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   // define the output folder
-  const outputFolder = path.resolve(handoff.modulePath, 'src/app/public');
+  const outputFolder = path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public');
+  // ensure output folder exists
+  if (!fs.existsSync(outputFolder)) {
+    await fs.promises.mkdir(outputFolder, { recursive: true });
+  }
   // define the integration path
   const integrationPath = getPathToIntegration(handoff);
   // copy the sass and templates to the exported folder
-  const exportedFolder = path.resolve(handoff.workingPath, handoff.outputDirectory);
+  const exportedFolder = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
   const sassFolder = path.resolve(handoff.workingPath, exportedFolder, `integration`);
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
@@ -235,7 +223,7 @@ const getHandoffImportTokens = (handoff: Handoff, components: string[]) => {
 }
 
 const getHandoffImportTokensForComponent = (handoff: Handoff, component: string): [token: string, root: string, path: string, file: string][] => {
-  const integrationPath = path.resolve(handoff.workingPath, handoff.outputDirectory, 'integration');
+  const integrationPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration');
   return [
     ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', `${component}.scss`],
     ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', `${component}.scss`],
