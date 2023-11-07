@@ -130,7 +130,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
  * @returns
  */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, output;
+    var appPath, outputRoot, output;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -145,13 +145,16 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             case 2:
                 // Build app
                 _a.sent();
-                output = path_1.default.resolve(handoff.workingPath, 'out');
+                outputRoot = path_1.default.resolve(handoff.workingPath, 'out');
+                if (!fs_extra_1.default.existsSync(outputRoot)) {
+                    fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
+                }
+                output = path_1.default.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id);
                 if (fs_extra_1.default.existsSync(output)) {
                     fs_extra_1.default.removeSync(output);
                 }
-                // Copy the build files int the working path output directory
-                // TODO: Verify with Brad
-                fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), path_1.default.resolve(handoff.workingPath, 'out'));
+                // Copy the build files into the project output directory
+                fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), path_1.default.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id));
                 return [2 /*return*/];
         }
     });

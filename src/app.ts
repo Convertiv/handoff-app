@@ -77,15 +77,20 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   // Build app
   await nextBuild([appPath]);
 
-  // Clean the working path output directory
-  const output = path.resolve(handoff.workingPath, 'out');
+  // Ensure output root directory exists
+  const outputRoot = path.resolve(handoff.workingPath, 'out');
+  if (!fs.existsSync(outputRoot)) {
+    fs.mkdirSync(outputRoot, { recursive: true });
+  }
+
+  // Clean the project output directory (if exists)
+  const output = path.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id);
   if (fs.existsSync(output)) {
     fs.removeSync(output);
   }
 
-  // Copy the build files int the working path output directory
-  // TODO: Verify with Brad
-  fs.copySync(path.resolve(appPath, 'out'), path.resolve(handoff.workingPath, 'out'));
+  // Copy the build files into the project output directory
+  fs.copySync(path.resolve(appPath, 'out'), path.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id));
 };
 
 /**
