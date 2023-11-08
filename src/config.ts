@@ -14,31 +14,21 @@ export interface ImageStyle {
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
-  title: 'Convertiv Design System',
-  client: 'Convertiv',
-  google_tag_manager: null,
   integration: {
     name: 'bootstrap',
     version: '5.3',
   },
-  favicon: '/favicon.ico',
-  theme: 'default',
-  type_sort: [
-    'Heading 1',
-    'Heading 2',
-    'Heading 3',
-    'Heading 4',
-    'Heading 5',
-    'Heading 6',
-    'Paragraph',
-    'Subheading',
-    'Blockquote',
-    'Input Labels',
-    'Link',
-  ],
   app: {
-    base_path: '',
+    theme: 'default',
+    title: 'Convertiv Design System',
+    client: 'Convertiv',
+    google_tag_manager: null,
     attribution: true,
+    type_copy: 'Almost before we knew it, we had left the ground.',
+    type_sort: ['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Paragraph', 'Subheading', 'Blockquote', 'Input Labels', 'Link'],
+    color_sort: ['primary', 'secondary', 'extra', 'system'],
+    component_sort: ['primary', 'secondary', 'transparent'],
+    base_path: '',
   },
   figma: {
     options: {
@@ -77,9 +67,6 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  type_copy: 'Almost before we knew it, we had left the ground.',
-  color_sort: ['primary', 'secondary', 'extra', 'system'],
-  component_sort: ['primary', 'secondary', 'transparent'],
 });
 
 /**

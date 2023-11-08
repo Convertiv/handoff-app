@@ -1,16 +1,18 @@
-import { getConfig } from '../../config';
+import { Config } from "../../types/config";
 
-const config = getConfig();
+interface FooterProps {
+  config: Config;
+}
 
-function Footer() {
+function Footer({ config }: FooterProps) {
   const date = new Date();
 
   return (
     <footer id="site-footer" className="c-site-footer">
       <div className="o-container-fluid">
         <p>
-          Copyright {config.client}, {date.getFullYear()}
-          {config.app.attribution && (
+          Copyright {config?.app?.client}, {date.getFullYear()}
+          {config?.app?.attribution && (
             <>
               {' '}
               - Powered By{' '}

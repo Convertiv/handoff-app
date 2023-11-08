@@ -50,25 +50,24 @@ export interface ExportResult {
 }
 
 interface NextAppConfig {
-  base_path: string,
-  attribution: boolean,
+  theme?: string;
+  title: string;
+  client: string;
+  google_tag_manager: string | null | undefined;
+  type_copy: string;
+  type_sort: string[];
+  color_sort: string[];
+  component_sort: string[];
+  base_path: string;
+  attribution: boolean;
 }
 
 export interface Config {
   dev_access_token?: string | null | undefined;
   figma_project_id?: string | null | undefined;
-  title: string;
-  client: string;
-  google_tag_manager: string | null | undefined;
   integration?: Integration;
-  favicon?: string;
   app: NextAppConfig;
   figma: FigmaSearch;
-  theme?: string;
-  type_sort: string[];
-  type_copy: string;
-  color_sort: string[];
-  component_sort: string[];
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */

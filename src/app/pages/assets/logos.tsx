@@ -46,15 +46,15 @@ const AssetsLogosPage = ({ content, menu, metadata, current, config }: Documenta
           </div>
           <div className="o-row u-justify-between">
             <div className="o-col-5@md">
-              <h4>{config.client} Logo</h4>
+              <h4>{config?.app?.client} Logo</h4>
             </div>
             <div className="o-col-6@md">
               <div className="c-card">
                 <Icon name="file-zip" className="c-card__icon" />
-                <h4>{config.client} Logo</h4>
-                <p>Vector files of approved {config.client} logos.</p>
+                <h4>{config?.app?.client} Logo</h4>
+                <p>Vector files of approved {config?.app?.client} logos.</p>
                 <p>
-                  <a href={config.assets_zip_links?.logos ?? '/logos.zip'}>Download Logos</a>
+                  <a href={config?.assets_zip_links?.logos ?? '/logos.zip'}>Download Logos</a>
                 </p>
               </div>
             </div>
