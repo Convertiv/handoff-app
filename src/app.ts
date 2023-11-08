@@ -84,13 +84,13 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   }
 
   // Clean the project output directory (if exists)
-  const output = path.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id);
+  const output = path.resolve(outputRoot, handoff.config.figma_project_id);
   if (fs.existsSync(output)) {
     fs.removeSync(output);
   }
 
   // Copy the build files into the project output directory
-  fs.copySync(path.resolve(appPath, 'out'), path.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id));
+  fs.copySync(path.resolve(appPath, 'out'), output);
 };
 
 /**

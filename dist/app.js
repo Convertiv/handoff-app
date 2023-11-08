@@ -149,12 +149,12 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(outputRoot)) {
                     fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
                 }
-                output = path_1.default.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id);
+                output = path_1.default.resolve(outputRoot, handoff.config.figma_project_id);
                 if (fs_extra_1.default.existsSync(output)) {
                     fs_extra_1.default.removeSync(output);
                 }
                 // Copy the build files into the project output directory
-                fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), path_1.default.resolve(handoff.workingPath, 'out', handoff.config.figma_project_id));
+                fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), output);
                 return [2 /*return*/];
         }
     });
