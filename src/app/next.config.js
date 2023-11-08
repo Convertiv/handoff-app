@@ -38,7 +38,7 @@ const nextConfig = {
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
           // Check if the client configuration specifies a theme
           // If the theme is specified, check if the theme exists in the 'themes' folder
-          if (clientConfig.hasOwnProperty('theme') && clientConfig['app'].hasOwnProperty('theme') && fs.existsSync(path.resolve('__HANDOFF.WORKING_PATH__', 'theme', `${clientConfig['app']['theme']}.scss`))) {
+          if (clientConfig.hasOwnProperty('app') && clientConfig['app'].hasOwnProperty('theme') && fs.existsSync(path.resolve('__HANDOFF.WORKING_PATH__', 'theme', `${clientConfig['app']['theme']}.scss`))) {
             // Use custom theme
             foundTheme = true;
             content = content + `\n@import './theme/${clientConfig['app']['theme']}';`;
