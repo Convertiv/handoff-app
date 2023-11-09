@@ -48,8 +48,8 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, styleDictiona
         ] as const;
       })
       .sort(function (a, b) {
-        const l = config.color_sort.indexOf(a[0]) >>> 0;
-        const r = config.color_sort.indexOf(b[0]) >>> 0;
+        const l = (config?.app?.color_sort ?? []).indexOf(a[0]) >>> 0;
+        const r = (config?.app?.color_sort ?? []).indexOf(b[0]) >>> 0;
         return l !== r ? l - r : a[0].localeCompare(b[0]);
       })
   );

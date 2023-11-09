@@ -336,7 +336,7 @@ export const fetchExportables = () => {
   try {
     const config = getConfig();
     const handoff = getHandoff();
-    const definitions = config.figma?.definitions;
+    const definitions = config?.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
       return [];
@@ -356,7 +356,7 @@ export const fetchExportables = () => {
         const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
 
         const exportableOptions = {};
-        merge(exportableOptions, config.figma?.options, exportable.options);
+        merge(exportableOptions, config?.figma?.options, exportable.options);
         exportable.options = exportableOptions as ExportableOptions;
         return exportable;
       })
@@ -394,7 +394,7 @@ export const fetchExportable = (name: string) => {
   const exportable = JSON.parse(data.toString()) as ExportableDefinition;
 
   const exportableOptions = {};
-  merge(exportableOptions, config.figma?.options, exportable.options);
+  merge(exportableOptions, config?.figma?.options, exportable.options);
   exportable.options = exportableOptions as ExportableOptions;
   return exportable;
 };
@@ -495,7 +495,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
 export const titleString = (prefix: string | null): string => {
   const config = getConfig();
   const prepend = prefix ? `${prefix} | ` : '';
-  return `${prefix}${config.client} Design System`;
+  return `${prefix}${config?.app?.client} Design System`;
 };
 
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {

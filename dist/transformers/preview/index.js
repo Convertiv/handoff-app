@@ -94,9 +94,9 @@ var transformComponentTokens = function (handoff, componentId, component, option
                     });
                 }
                 preview = mustache_1.default.render(template, renderableComponent);
-                if (handoff.config.next_base_path) {
+                if (handoff.config.app.base_path) {
                     preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, function (match, capturedGroup) {
-                        return match.replace(capturedGroup, handoff.config.next_base_path + capturedGroup);
+                        return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);
                     });
                 }
                 bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');

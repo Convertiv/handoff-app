@@ -59,8 +59,8 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
   const designComponents = components ? components.filter(component => component.type === 'design') : [];
 
-  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config.component_sort);
-  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config.component_sort)
+  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config?.app?.component_sort);
+  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config?.app?.component_sort)
 
   return (
     <div className="c-page">

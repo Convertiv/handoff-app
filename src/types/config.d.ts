@@ -49,27 +49,25 @@ export interface ExportResult {
   };
 }
 
-export interface Config {
-  dev_access_token?: string | null | undefined;
-  figma_project_id?: string | null | undefined;
-  next_base_path?: string | null | undefined;
-  next_out_directory?: string | null | undefined;
+interface NextAppConfig {
+  theme?: string;
   title: string;
   client: string;
   google_tag_manager: string | null | undefined;
-  integration?: Integration;
-  favicon?: string;
-  poweredBy?: boolean;
-  figma: FigmaSearch;
-  /**
-   * @default "/logo.svg"
-   */
-  logo?: string;
-  theme?: string;
-  type_sort: string[];
   type_copy: string;
+  type_sort: string[];
   color_sort: string[];
   component_sort: string[];
+  base_path: string;
+  attribution: boolean;
+}
+
+export interface Config {
+  dev_access_token?: string | null | undefined;
+  figma_project_id?: string | null | undefined;
+  integration?: Integration;
+  app: NextAppConfig;
+  figma: FigmaSearch;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */

@@ -64,8 +64,8 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
   const [copy, setCopy] = React.useState('Copy link to clipboard');
 
   const typography = design.typography.slice().sort((a, b) => {
-    const l = config.type_sort.indexOf(a.name) >>> 0;
-    const r = config.type_sort.indexOf(b.name) >>> 0;
+    const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
+    const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;
     return l !== r ? l - r : a.name.localeCompare(b.name);
   });
 
@@ -79,7 +79,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
     };
   }, {} as FontFamily);
 
-  const type_copy = config.type_copy ?? 'Almost before we knew it, we had left the ground.';
+  const type_copy = config?.app?.type_copy ?? 'Almost before we knew it, we had left the ground.';
 
   return (
     <div className="c-page">

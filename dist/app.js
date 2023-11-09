@@ -60,21 +60,68 @@ var next_1 = __importDefault(require("next"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
+var getWorkingPublicPath = function (handoff) {
+    var paths = [
+        path_1.default.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
+        path_1.default.resolve(handoff.workingPath, "public"),
+    ];
+    for (var _i = 0, paths_1 = paths; _i < paths_1.length; _i++) {
+        var path_2 = paths_1[_i];
+        if (fs_extra_1.default.existsSync(path_2)) {
+            return path_2;
+        }
+    }
+    return null;
+};
+var getAppPath = function (handoff) {
+    return path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id));
+};
 /**
  * Copy the public dir from the working dir to the module dir
  * @param handoff
  */
 var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var publicWorkingDir, publicModuleDir;
+    var appPath, workingPublicPath;
     return __generator(this, function (_a) {
-        publicWorkingDir = path_1.default.resolve(handoff.workingPath, 'public');
-        publicModuleDir = path_1.default.resolve(handoff.modulePath, 'src/app/public');
-        // if public dir exists in working dir
-        if (fs_extra_1.default.existsSync(publicWorkingDir)) {
-            // move public dir from working dir to module dir
-            fs_extra_1.default.copySync(publicWorkingDir, publicModuleDir, { overwrite: true });
+        appPath = getAppPath(handoff);
+        workingPublicPath = getWorkingPublicPath(handoff);
+        if (workingPublicPath) {
+            fs_extra_1.default.copySync(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
         }
         return [2 /*return*/];
+    });
+}); };
+var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var srcPath, appPath, nextConfigPath, nextConfigContent;
+    var _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
+                appPath = getAppPath(handoff);
+                // Prepare project app dir
+                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
+            case 1:
+                // Prepare project app dir
+                _b.sent();
+                return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
+            case 2:
+                _b.sent();
+                return [4 /*yield*/, mergePublicDir(handoff)];
+            case 3:
+                _b.sent();
+                nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
+                return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
+            case 4:
+                nextConfigContent = (_b.sent())
+                    .replaceAll('__HANDOFF.WORKING_PATH__', path_1.default.resolve(handoff.workingPath))
+                    .replaceAll('__HANDOFF.EXPORT_PATH__', path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id))
+                    .replaceAll('__HANDOFF.BASE_PATH__', (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '');
+                return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
+            case 5:
+                _b.sent();
+                return [2 /*return*/, appPath];
+        }
     });
 }); };
 /**
@@ -83,32 +130,31 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
  * @returns
  */
 var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, exportPath, config, output;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    var appPath, outputRoot, output;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
-                mergePublicDir(handoff);
-                appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
-                exportPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory);
-                config = require(path_1.default.resolve(appPath, 'next.config.js'));
-                config.distDir = handoff.config.figma_project_id ? "out/".concat(handoff.config.figma_project_id) : 'out/default';
-                config.basePath = handoff.config.next_base_path ? handoff.config.next_base_path : '';
-                config.env = config.env ? __assign(__assign({}, config.env), { HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath }) : { HANDOFF_EXPORT_PATH: exportPath, NEXT_BASE_PATH: config.basePath };
-                // Build the next app
-                return [4 /*yield*/, (0, next_build_1.nextBuild)([appPath, config])];
+                return [4 /*yield*/, prepareProjectApp(handoff)];
             case 1:
-                // Build the next app
-                _c.sent();
-                output = path_1.default.resolve(handoff.workingPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
+                appPath = _a.sent();
+                // Build app
+                return [4 /*yield*/, (0, next_build_1.nextBuild)([appPath])];
+            case 2:
+                // Build app
+                _a.sent();
+                outputRoot = path_1.default.resolve(handoff.workingPath, 'out');
+                if (!fs_extra_1.default.existsSync(outputRoot)) {
+                    fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
+                }
+                output = path_1.default.resolve(outputRoot, handoff.config.figma_project_id);
                 if (fs_extra_1.default.existsSync(output)) {
                     fs_extra_1.default.removeSync(output);
                 }
-                // Copy the build files int the working path output directory
-                fs_extra_1.default.copySync(path_1.default.resolve(handoff.modulePath, 'src', 'app', config.distDir), path_1.default.resolve(handoff.workingPath, (_b = handoff.config.next_out_directory) !== null && _b !== void 0 ? _b : 'out'));
+                // Copy the build files into the project output directory
+                fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), output);
                 return [2 /*return*/];
         }
     });
@@ -119,160 +165,163 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, config, tsconfigPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
-    var _a;
-    return __generator(this, function (_b) {
-        if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
-            throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-        }
-        mergePublicDir(handoff);
-        appPath = path_1.default.resolve(handoff.modulePath, 'src/app');
-        config = require(path_1.default.resolve(appPath, 'next.config.js'));
-        tsconfigPath = 'tsconfig.json';
-        config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
-        dev = true;
-        hostname = 'localhost';
-        port = 3000;
-        app = (0, next_1.default)({
-            dev: dev,
-            dir: path_1.default.resolve(handoff.modulePath, 'src/app'),
-            hostname: hostname,
-            port: port,
-            conf: config,
-        });
-        handle = app.getRequestHandler();
-        moduleOutput = path_1.default.resolve(appPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
-        if (fs_extra_1.default.existsSync(moduleOutput)) {
-            fs_extra_1.default.removeSync(moduleOutput);
-        }
-        app.prepare().then(function () {
-            (0, http_1.createServer)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-                var parsedUrl, pathname, query, err_1;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            // Be sure to pass `true` as the second argument to `url.parse`.
-                            // This tells it to parse the query portion of the URL.
-                            if (!req.url)
-                                throw new Error('No url');
-                            parsedUrl = (0, url_1.parse)(req.url, true);
-                            pathname = parsedUrl.pathname, query = parsedUrl.query;
-                            return [4 /*yield*/, handle(req, res, parsedUrl)];
-                        case 1:
-                            _a.sent();
-                            return [3 /*break*/, 3];
-                        case 2:
-                            err_1 = _a.sent();
-                            console.error('Error occurred handling', req.url, err_1);
-                            res.statusCode = 500;
-                            res.end('internal server error');
-                            return [3 /*break*/, 3];
-                        case 3: return [2 /*return*/];
-                    }
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+                    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
+                }
+                return [4 /*yield*/, prepareProjectApp(handoff)];
+            case 1:
+                appPath = _a.sent();
+                config = require(path_1.default.resolve(appPath, 'next.config.js'));
+                tsconfigPath = 'tsconfig.json';
+                config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
+                dev = true;
+                hostname = 'localhost';
+                port = 3000;
+                app = (0, next_1.default)({
+                    dev: dev,
+                    dir: appPath,
+                    hostname: hostname,
+                    port: port,
+                    conf: config,
                 });
-            }); })
-                .once('error', function (err) {
-                console.error(err);
-                process.exit(1);
-            })
-                .listen(port, function () {
-                console.log("> Ready on http://".concat(hostname, ":").concat(port));
-            });
-        });
-        chokidarConfig = {
-            ignored: /(^|[\/\\])\../,
-            persistent: true,
-            ignoreInitial: true,
-        };
-        debounce = false;
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                var _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            _a = event;
-                            switch (_a) {
-                                case 'add': return [3 /*break*/, 1];
-                                case 'change': return [3 /*break*/, 1];
-                                case 'unlink': return [3 /*break*/, 1];
+                handle = app.getRequestHandler();
+                moduleOutput = path_1.default.resolve(appPath, 'out');
+                if (fs_extra_1.default.existsSync(moduleOutput)) {
+                    fs_extra_1.default.removeSync(moduleOutput);
+                }
+                app.prepare().then(function () {
+                    (0, http_1.createServer)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+                        var parsedUrl, pathname, query, err_1;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    _a.trys.push([0, 2, , 3]);
+                                    // Be sure to pass `true` as the second argument to `url.parse`.
+                                    // This tells it to parse the query portion of the URL.
+                                    if (!req.url)
+                                        throw new Error('No url');
+                                    parsedUrl = (0, url_1.parse)(req.url, true);
+                                    pathname = parsedUrl.pathname, query = parsedUrl.query;
+                                    return [4 /*yield*/, handle(req, res, parsedUrl)];
+                                case 1:
+                                    _a.sent();
+                                    return [3 /*break*/, 3];
+                                case 2:
+                                    err_1 = _a.sent();
+                                    console.error('Error occurred handling', req.url, err_1);
+                                    res.statusCode = 500;
+                                    res.end('internal server error');
+                                    return [3 /*break*/, 3];
+                                case 3: return [2 /*return*/];
                             }
-                            return [3 /*break*/, 4];
-                        case 1:
-                            if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
-                            console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
-                            debounce = true;
-                            return [4 /*yield*/, handoff.fetch()];
-                        case 2:
-                            _b.sent();
-                            debounce = false;
-                            _b.label = 3;
-                        case 3: return [3 /*break*/, 4];
-                        case 4: return [2 /*return*/];
-                    }
+                        });
+                    }); })
+                        .once('error', function (err) {
+                        console.error(err);
+                        process.exit(1);
+                    })
+                        .listen(port, function () {
+                        console.log("> Ready on http://".concat(hostname, ":").concat(port));
+                    });
                 });
-            }); });
-        }
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (event) {
-                        case 'add':
-                        case 'change':
-                        case 'unlink':
-                            console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
-                            mergePublicDir(handoff);
-                            break;
-                    }
-                    return [2 /*return*/];
-                });
-            }); });
-        }
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                var _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            _a = event;
-                            switch (_a) {
-                                case 'add': return [3 /*break*/, 1];
-                                case 'change': return [3 /*break*/, 1];
-                                case 'unlink': return [3 /*break*/, 1];
+                chokidarConfig = {
+                    ignored: /(^|[\/\\])\../,
+                    persistent: true,
+                    ignoreInitial: true,
+                };
+                debounce = false;
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                        var _a;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _a = event;
+                                    switch (_a) {
+                                        case 'add': return [3 /*break*/, 1];
+                                        case 'change': return [3 /*break*/, 1];
+                                        case 'unlink': return [3 /*break*/, 1];
+                                    }
+                                    return [3 /*break*/, 4];
+                                case 1:
+                                    if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
+                                    console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
+                                    debounce = true;
+                                    return [4 /*yield*/, handoff.fetch()];
+                                case 2:
+                                    _b.sent();
+                                    debounce = false;
+                                    _b.label = 3;
+                                case 3: return [3 /*break*/, 4];
+                                case 4: return [2 /*return*/];
                             }
-                            return [3 /*break*/, 4];
-                        case 1:
-                            if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
-                            console.log(chalk_1.default.yellow('Integration changed. Handoff will rerender the integrations...'));
-                            debounce = true;
-                            return [4 /*yield*/, handoff.integration()];
-                        case 2:
-                            _b.sent();
-                            debounce = false;
-                            _b.label = 3;
-                        case 3: return [3 /*break*/, 4];
-                        case 4: return [2 /*return*/];
-                    }
-                });
-            }); });
+                        });
+                    }); });
+                }
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (event) {
+                                case 'add':
+                                case 'change':
+                                case 'unlink':
+                                    console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
+                                    mergePublicDir(handoff);
+                                    break;
+                            }
+                            return [2 /*return*/];
+                        });
+                    }); });
+                }
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                        var _a;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _a = event;
+                                    switch (_a) {
+                                        case 'add': return [3 /*break*/, 1];
+                                        case 'change': return [3 /*break*/, 1];
+                                        case 'unlink': return [3 /*break*/, 1];
+                                    }
+                                    return [3 /*break*/, 4];
+                                case 1:
+                                    if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
+                                    console.log(chalk_1.default.yellow('Integration changed. Handoff will rerender the integrations...'));
+                                    debounce = true;
+                                    return [4 /*yield*/, handoff.integration()];
+                                case 2:
+                                    _b.sent();
+                                    debounce = false;
+                                    _b.label = 3;
+                                case 3: return [3 /*break*/, 4];
+                                case 4: return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                }
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                            return [2 /*return*/];
+                        });
+                    }); });
+                }
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
+                            return [2 /*return*/];
+                        });
+                    }); });
+                }
+                return [2 /*return*/];
         }
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
-                    return [2 /*return*/];
-                });
-            }); });
-        }
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
-            chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
-                    return [2 /*return*/];
-                });
-            }); });
-        }
-        return [2 /*return*/];
     });
 }); };
 exports.watchApp = watchApp;
@@ -282,20 +331,23 @@ exports.watchApp = watchApp;
  */
 var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, moduleOutput;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
-                appPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
-                moduleOutput = path_1.default.resolve(appPath, (_a = handoff.config.next_out_directory) !== null && _a !== void 0 ? _a : 'out');
+                return [4 /*yield*/, prepareProjectApp(handoff)];
+            case 1:
+                appPath = _a.sent();
+                moduleOutput = path_1.default.resolve(appPath, 'out');
                 if (fs_extra_1.default.existsSync(moduleOutput)) {
                     fs_extra_1.default.removeSync(moduleOutput);
                 }
-                return [4 /*yield*/, (0, next_dev_1.nextDev)([path_1.default.resolve(handoff.modulePath, 'src/app'), '-p', '3000'])];
-            case 1: return [2 /*return*/, _b.sent()];
+                return [4 /*yield*/, (0, next_dev_1.nextDev)([appPath, '-p', '3000'])];
+            case 2: 
+            // Run
+            return [2 /*return*/, _a.sent()];
         }
     });
 }); };
