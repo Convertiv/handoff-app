@@ -179,7 +179,7 @@ var ejectTheme = function (handoff) { return __awaiter(void 0, void 0, void 0, f
                 return [2 /*return*/];
             }
         }
-        currentTheme = (_a = handoff.config.theme) !== null && _a !== void 0 ? _a : 'default';
+        currentTheme = (_a = handoff.config.app.theme) !== null && _a !== void 0 ? _a : 'default';
         docsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "src/app/sass/themes/_".concat(currentTheme, ".scss")));
         if (fs_extra_1.default.existsSync(docsPath)) {
             fs_extra_1.default.copySync(docsPath, workingPath, { overwrite: false });

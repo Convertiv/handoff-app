@@ -11,35 +11,25 @@ export interface ImageStyle {
   description: string;
 }
 
-export const defaultConfig: Config = {
-  dev_access_token: null,
-  figma_project_id: null,
-  next_base_path: '',
-  next_out_directory: 'out',
-  title: 'Convertiv Design System',
-  client: 'Convertiv',
-  google_tag_manager: null,
+export const defaultConfig = (): Config => ({
+  dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
+  figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
   integration: {
     name: 'bootstrap',
     version: '5.3',
   },
-  favicon: '/favicon.ico',
-  logo: '/logo.svg',
-  theme: 'default',
-  poweredBy: true,
-  type_sort: [
-    'Heading 1',
-    'Heading 2',
-    'Heading 3',
-    'Heading 4',
-    'Heading 5',
-    'Heading 6',
-    'Paragraph',
-    'Subheading',
-    'Blockquote',
-    'Input Labels',
-    'Link',
-  ],
+  app: {
+    theme: 'default',
+    title: 'Convertiv Design System',
+    client: 'Convertiv',
+    google_tag_manager: null,
+    attribution: true,
+    type_copy: 'Almost before we knew it, we had left the ground.',
+    type_sort: ['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Paragraph', 'Subheading', 'Blockquote', 'Input Labels', 'Link'],
+    color_sort: ['primary', 'secondary', 'extra', 'system'],
+    component_sort: ['primary', 'secondary', 'transparent'],
+    base_path: '',
+  },
   figma: {
     options: {
       shared: {
@@ -77,10 +67,7 @@ export const defaultConfig: Config = {
       'components/switch',
     ],
   },
-  type_copy: 'Almost before we knew it, we had left the ground.',
-  color_sort: ['primary', 'secondary', 'extra', 'system'],
-  component_sort: ['primary', 'secondary', 'transparent'],
-};
+});
 
 /**
  * Get the config, either from the root of the project or from the default config
@@ -91,16 +78,25 @@ export const getConfig = (configOverride?: any): Config => {
   //   return global.handoff.config;
   // }
   // Check to see if there is a config in the root of the project
-  let config = {},
-    configPath = path.resolve(process.cwd(), 'handoff.config.json');
+  let config = {};
+  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
+
   if (fs.existsSync(configPath)) {
     const defBuffer = fs.readFileSync(configPath);
     config = JSON.parse(defBuffer.toString()) as Config;
   }
-  if(configOverride) {
-    config = {...config, ...configOverride};
+
+  if (configOverride) {
+    config = { ...config, ...configOverride };
   }
-  return { ...defaultConfig, ...config } as unknown as Config;
+
+  const result = { ...defaultConfig(), ...config } as unknown as Config;
+
+  // Anonymize the configuration!
+  delete result.figma_project_id;
+  delete result.dev_access_token;
+
+  return result;
 };
 /**
  * Get the handoff from the global scope
@@ -122,9 +118,9 @@ export const getHandoff = (): Handoff => {
  * Serialize the handoff to the working directory
  */
 export const serializeHandoff = (handoff: Handoff) => {
-  const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory);
-  if (!fs.existsSync(path.resolve(outputPath))) {
-    fs.mkdirSync(path.resolve(outputPath));
+  const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+  if (!fs.existsSync(outputPath)) {
+    fs.mkdirSync(path.resolve(outputPath), { recursive: true });
   }
   const statePath = path.resolve(outputPath, 'handoff.state.json');
   fs.writeFileSync(statePath, JSON.stringify(handoff));

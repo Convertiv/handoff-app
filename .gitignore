@@ -9,7 +9,6 @@
 /coverage
 
 # next.js
-/src/app/.next
 /out
 
 # production
@@ -36,23 +35,10 @@ yarn-error.log*
 *.tsbuildinfo
 
 # assets
-/public/assets
-
-# figma exporter
-/figma-exporter/node_modules
+/public
+/public-*
 
 # figma exported
-/exported
-/public
-
-/src/app/out
-/src/app/public/components
 /dist/templates
-/next-env.d.ts
-/.next
-
-/src/app/public/icons.zip
-/src/app/public/icons
-/src/app/public/logos.zip
-/src/app/public/logos
-/src/app/public/tokens.zip
+/src/~app-*
+/exported

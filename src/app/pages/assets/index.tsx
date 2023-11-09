@@ -61,7 +61,7 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
               <div className="c-card">
                 <Icon name="file-zip" className="c-card__icon" />
                 <h4>Fonts</h4>
-                <p>Font family and weights for all {config.client} visuals.</p>
+                <p>Font family and weights for all {config?.app?.client} visuals.</p>
                 <p>
                   <NavLink href="/assets/fonts">View Fonts</NavLink>
                 </p>

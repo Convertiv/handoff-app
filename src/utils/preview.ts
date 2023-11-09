@@ -17,6 +17,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
       entry,
       resolve: {
         alias: {
+          '@exported': path.join(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration'),
           '@integration': path.join(handoff.workingPath, 'integration/sass'),
         },
         modules: [
@@ -28,7 +29,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         ],
       },
       output: {
-        path: path.resolve(handoff?.modulePath, 'src/app/public/components'),
+        path: path.resolve(handoff?.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'components'),
         filename: 'bundle.js',
       },
       resolveLoader: {

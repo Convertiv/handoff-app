@@ -23,7 +23,7 @@ import path from 'path';
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   const handoff = getHandoff();
-  const fonts = fs.readdirSync(path.resolve(handoff.modulePath, 'src/app/public/fonts'));
+  const fonts = fs.readdirSync(path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'fonts'));
   const customFonts: string[] = [];
 
   fonts.map((font) => {

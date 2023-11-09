@@ -98,7 +98,7 @@ function fontTransformer(handoff, documentationObject) {
                             return [4 /*yield*/, (0, exports.zipFonts)(fontDirName, stream_1)];
                         case 1:
                             _a.sent();
-                            fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, 'integration', 'fonts');
+                            fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration', 'fonts');
                             if (!fs_extra_1.default.existsSync(fontsFolder)) {
                                 fs_extra_1.default.mkdirSync(fontsFolder);
                             }

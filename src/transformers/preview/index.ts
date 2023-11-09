@@ -57,9 +57,9 @@ const transformComponentTokens = async (handoff: Handoff, componentId: string, c
   
   let preview = Mustache.render(template, renderableComponent);
 
-  if (handoff.config.next_base_path) {
+  if (handoff.config.app.base_path) {
     preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, (match, capturedGroup) => {
-      return match.replace(capturedGroup, handoff.config.next_base_path + capturedGroup);
+      return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);
     });
   }
 

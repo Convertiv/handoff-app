@@ -54,7 +54,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
           <div className="o-col-10">
             <div className="u-pt-6 u-pr-9@xlg u-pl-9@xl u-pb-4 u-mb-2 u-mb-5@lg u-mt-2 u-mt-5@lg u-text-center">
               <h1 className="c-title--extra-large u-animation-fadein">
-                <strong>{config.client} Design System</strong> for building better user experiences.
+                <strong>{config?.app?.client} Design System</strong> for building better user experiences.
               </h1>
             </div>
             <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
@@ -67,7 +67,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 <strong>Components</strong>
               </h3>
               <hr className="u-mt-2 u-mb-2"></hr>
-              <h3 className="u-mb-4">Building blocks for all digital {config.client} experiences.</h3>
+              <h3 className="u-mb-4">Building blocks for all digital {config?.app?.client} experiences.</h3>
               <Link href="/components" className="c-button c-button--primary u-pl-5 u-mb-5 u-pr-5">
                 View Components
               </Link>

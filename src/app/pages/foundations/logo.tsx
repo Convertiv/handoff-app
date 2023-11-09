@@ -81,7 +81,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
             <div className="o-col-10@md">
               <div>
                 <h4>Logo Variations</h4>
-                <p>There is one main {config.client} logo that supports two variations.</p>
+                <p>There is one main {config?.app?.client} logo that supports two variations.</p>
               </div>
             </div>
           </div>
@@ -89,7 +89,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
             <div className="o-col-12@md">
               <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
                 {assets.logos.map((logo) => (
-                  <DisplayLogo logo={logo} content={config.client} key={logo.path} />
+                  <DisplayLogo logo={logo} content={config?.app?.client} key={logo.path} />
                 ))}
               </div>
             </div>
@@ -108,11 +108,11 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
               <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
                 <div className="u-mb-4 u-mb-0@md">
                   <Icon name="motiv-logo-example" className="c-logo-preview u-mb-2" />
-                  <small>{config.client} logo spacing on light background.</small>
+                  <small>{config?.app?.client} logo spacing on light background.</small>
                 </div>
                 <div>
                   <Icon name="motiv-logo-dark-example" className="c-logo-preview u-mb-2" />
-                  <small>{config.client} logo spacing on dark background.</small>
+                  <small>{config?.app?.client} logo spacing on dark background.</small>
                 </div>
               </div>
             </div>

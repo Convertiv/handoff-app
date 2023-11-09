@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2023-11-09
+
+This release focuses heavily on better support for environments on which multiple projects are being exported and built. All of the changes introduced in this release should provide better experience when working on such environments as well as resolve some of the issues which would occur when different projects would use same working directories.
+
+### Changes
+
+* Handoff exports and builds are now updated to support export and build of multiple projects. Each respective output is now located in the subdirectory that matches the exported project id (e.g. /exports/{figmaProjectId}). This change prevents issues where one project would override handoff output of another project in environments where multiple Figma projects are being handled.
+* Due to the change in the output directory structure, Bootstrap integration has been updated with a @exported alias which is set to point to export directory of the current project for which the integration is being built.
+* Alongside existing support for customized app assets via the `public` directory, it’s now also possible to create a `public-{figmaProjectId}` directory which gets used only when the project with the respective Figma project id is being built. If the `public` directory is used, assets located in that directory will be applied to all projects.
+* Handoff state file now always includes the Figma project id.
+* Initial anonymization of the config file that gets loaded into the app to prevent secrets from being exposed on the client side.
+* Improvements to path resolving for custom app theme(s).
+* Restructure and improvements of the configuration:
+    * `poweredBy` option is now called `attribution` and has been moved into `app` config key.
+    * `next_base_path` option is now called `base_path` and has been moved into the `app` config key.
+    * Following options have also been moved into the `app` config key: `theme`, `title`, `client`, `google_tag_manager`, `type_copy`, `type_sort`, `color_sort`, `component_sort`
+    * `logo` and `favicon` options have been removed (it’s still possible to use custom assets but their name must match the default names).
+* Misc.
+
+### Bugfixes
+
+* Resolved the wrong favicon path issue when app base path was set/used.
+
+### Migrate to a New Version
+
+* Due to the restructure of the configuration, any local configuration (if exists) needs to be updated to match the new structure. Recommended way is to create a backup of the current local configuration(s) and to re-eject of the handoff configuration. Use the backup of the local configuration to update the up-to-date configuration ejected earlier. This process will ensure all the configuration options are defined correctly.
+* Since the export and app output directory structures have been updated, any custom script that relies on the old output path(s) should be updated to support new structure that includes the project id subdirectory.
+
 ## [0.8.8] - 2023-10-19
 
 ### Bugfixes

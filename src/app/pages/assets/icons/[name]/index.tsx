@@ -89,9 +89,9 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
     <div className="c-page">
       <Head>
         {!icon ? (
-          <title>{`Icon Not Found | ${config?.client} Design System`}</title>
+          <title>{`Icon Not Found | ${config?.app?.client} Design System`}</title>
         ) : (
-          <title>{`${icon.name} Icon | ${config?.client} Design System`}</title>
+          <title>{`${icon.name} Icon | ${config?.app?.client} Design System`}</title>
         )}
       </Head>
       <Header menu={menu} config={config} />

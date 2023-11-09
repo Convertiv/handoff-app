@@ -105,7 +105,7 @@ var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
 var config;
-var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory); };
+var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
 var exportablesFolder = function () { return 'config/exportables'; };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
 var previewFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'preview.json'); };
@@ -350,34 +350,36 @@ var validateHandoffRequirements = function (handoff) { return __awaiter(void 0, 
  */
 var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var DEV_ACCESS_TOKEN, FIGMA_PROJECT_ID, missingEnvVars, writeEnvFile, envFile;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                DEV_ACCESS_TOKEN = (_a = handoff.config.dev_access_token) !== null && _a !== void 0 ? _a : process.env.DEV_ACCESS_TOKEN;
-                FIGMA_PROJECT_ID = (_b = handoff.config.figma_project_id) !== null && _b !== void 0 ? _b : process.env.FIGMA_PROJECT_ID;
+                DEV_ACCESS_TOKEN = handoff.config.dev_access_token;
+                FIGMA_PROJECT_ID = handoff.config.figma_project_id;
+                if (DEV_ACCESS_TOKEN && FIGMA_PROJECT_ID) {
+                    return [2 /*return*/];
+                }
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
                 console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '))];
             case 1:
-                DEV_ACCESS_TOKEN = _c.sent();
-                _c.label = 2;
+                DEV_ACCESS_TOKEN = _a.sent();
+                _a.label = 2;
             case 2:
                 if (!!FIGMA_PROJECT_ID) return [3 /*break*/, 4];
                 missingEnvVars = true;
                 console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '))];
             case 3:
-                FIGMA_PROJECT_ID = _c.sent();
-                _c.label = 4;
+                FIGMA_PROJECT_ID = _a.sent();
+                _a.label = 4;
             case 4:
                 if (!missingEnvVars) return [3 /*break*/, 8];
                 console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
                 return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
-                writeEnvFile = _c.sent();
+                writeEnvFile = _a.sent();
                 if (!(writeEnvFile !== 'y')) return [3 /*break*/, 6];
                 console.log(chalk_1.default.green("Skipping .env file creation. You will need to supply these variables in the future.\n"));
                 return [3 /*break*/, 8];
@@ -385,18 +387,18 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 envFile = "\nDEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nFIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
                 return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(handoff.workingPath, '.env'), envFile)];
             case 7:
-                _c.sent();
+                _a.sent();
                 console.log(chalk_1.default.green("\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n"));
-                _c.label = 8;
-            case 8: return [2 /*return*/, {
-                    dev_access_token: DEV_ACCESS_TOKEN,
-                    figma_project_id: FIGMA_PROJECT_ID,
-                }];
+                _a.label = 8;
+            case 8:
+                handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
+                handoff.config.figma_project_id = FIGMA_PROJECT_ID;
+                return [2 /*return*/];
         }
     });
 }); };
-var figmaExtract = function (handoff, figmaConfig, exportables) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, documentationObject, changelogRecord;
+var figmaExtract = function (handoff, exportables) { return __awaiter(void 0, void 0, void 0, function () {
+    var prevDocumentationObject, changelog, documentationObject, changelogRecord, outputFolder;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -410,7 +412,7 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables)];
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, exportables)];
             case 4:
                 documentationObject = _a.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
@@ -433,8 +435,16 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
                         : []), true))];
             case 5:
                 _a.sent();
-                fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src/app/public', 'icons.zip'));
-                fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src/app/public', 'logos.zip'));
+                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 7];
+                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
+            case 6:
+                _a.sent();
+                _a.label = 7;
+            case 7:
+                // copy assets to output folder
+                fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
+                fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
                 return [2 /*return*/, documentationObject];
         }
     });
@@ -471,7 +481,7 @@ exports.buildIntegrationOnly = buildIntegrationOnly;
  * Run the entire pipeline
  */
 var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void 0, function () {
-    var figmaConfig, exportables, documentationObject, componentTransformerOptions;
+    var exportables, documentationObject, componentTransformerOptions;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -484,11 +494,11 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 _a.sent();
                 return [4 /*yield*/, validateFigmaAuth(handoff)];
             case 2:
-                figmaConfig = _a.sent();
+                _a.sent();
                 return [4 /*yield*/, getExportables(handoff)];
             case 3:
                 exportables = _a.sent();
-                return [4 /*yield*/, figmaExtract(handoff, figmaConfig, exportables)];
+                return [4 /*yield*/, figmaExtract(handoff, exportables)];
             case 4:
                 documentationObject = _a.sent();
                 componentTransformerOptions = formatComponentsTransformerOptions(exportables);
@@ -504,15 +514,13 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
+                (0, config_1.serializeHandoff)(handoff);
+                if (!build) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
                 _a.sent();
-                if (!build) return [3 /*break*/, 11];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                _a.label = 10;
             case 10:
-                _a.sent();
-                _a.label = 11;
-            case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

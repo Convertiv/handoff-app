@@ -62,7 +62,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
             <div className="o-col-6@md">
               <div className="c-card">
                 <h4>Logos</h4>
-                <p>{config.client} logo used for all digital and offline materials.</p>
+                <p>{config?.app?.client} logo used for all digital and offline materials.</p>
                 <p>
                   <Link href="/foundations/logo">Explore Logos</Link>
                 </p>

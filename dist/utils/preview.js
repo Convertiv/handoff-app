@@ -59,6 +59,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                     entry: entry,
                     resolve: {
                         alias: {
+                            '@exported': path_1.default.join(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration'),
                             '@integration': path_1.default.join(handoff.workingPath, 'integration/sass'),
                         },
                         modules: [
@@ -70,7 +71,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                         ],
                     },
                     output: {
-                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src/app/public/components'),
+                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'components'),
                         filename: 'bundle.js',
                     },
                     resolveLoader: {

@@ -114,7 +114,7 @@ export const ejectTheme = async (handoff: Handoff) => {
     }
   }
 
-  const currentTheme = handoff.config.theme ?? 'default';
+  const currentTheme = handoff.config.app.theme ?? 'default';
   const docsPath = path.resolve(path.join(handoff.modulePath, `src/app/sass/themes/_${currentTheme}.scss`));
 
   if (fs.existsSync(docsPath)) {

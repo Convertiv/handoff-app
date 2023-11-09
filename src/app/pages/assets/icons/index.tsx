@@ -90,7 +90,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                   <h1>{metadata.title}</h1>
                   <p>{metadata.description}</p>
                   <p>
-                    <a href={config.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
+                    <a href={config?.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
                   </p>
                 </div>
               </div>

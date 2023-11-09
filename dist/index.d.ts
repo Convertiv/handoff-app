@@ -30,7 +30,7 @@ declare class Handoff {
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
         configureExportables: (exportables: string[]) => string[];
     };
-    constructor(config?: Config, workingPath?: string);
+    constructor(config?: Config);
     init(configOverride?: Config): Handoff;
     preRunner(): Handoff;
     fetch(): Promise<Handoff>;
