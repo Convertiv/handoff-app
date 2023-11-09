@@ -355,6 +355,9 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
             case 0:
                 DEV_ACCESS_TOKEN = handoff.config.dev_access_token;
                 FIGMA_PROJECT_ID = handoff.config.figma_project_id;
+                if (DEV_ACCESS_TOKEN && FIGMA_PROJECT_ID) {
+                    return [2 /*return*/];
+                }
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
@@ -387,14 +390,14 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 _a.sent();
                 console.log(chalk_1.default.green("\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n"));
                 _a.label = 8;
-            case 8: return [2 /*return*/, {
-                    dev_access_token: DEV_ACCESS_TOKEN,
-                    figma_project_id: FIGMA_PROJECT_ID,
-                }];
+            case 8:
+                handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
+                handoff.config.figma_project_id = FIGMA_PROJECT_ID;
+                return [2 /*return*/];
         }
     });
 }); };
-var figmaExtract = function (handoff, figmaConfig, exportables) { return __awaiter(void 0, void 0, void 0, function () {
+var figmaExtract = function (handoff, exportables) { return __awaiter(void 0, void 0, void 0, function () {
     var prevDocumentationObject, changelog, documentationObject, changelogRecord, outputFolder;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -409,7 +412,7 @@ var figmaExtract = function (handoff, figmaConfig, exportables) { return __await
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables)];
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, exportables)];
             case 4:
                 documentationObject = _a.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
@@ -478,7 +481,7 @@ exports.buildIntegrationOnly = buildIntegrationOnly;
  * Run the entire pipeline
  */
 var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void 0, function () {
-    var figmaConfig, exportables, documentationObject, componentTransformerOptions;
+    var exportables, documentationObject, componentTransformerOptions;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -491,11 +494,11 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 _a.sent();
                 return [4 /*yield*/, validateFigmaAuth(handoff)];
             case 2:
-                figmaConfig = _a.sent();
+                _a.sent();
                 return [4 /*yield*/, getExportables(handoff)];
             case 3:
                 exportables = _a.sent();
-                return [4 /*yield*/, figmaExtract(handoff, figmaConfig, exportables)];
+                return [4 /*yield*/, figmaExtract(handoff, exportables)];
             case 4:
                 documentationObject = _a.sent();
                 componentTransformerOptions = formatComponentsTransformerOptions(exportables);
@@ -511,15 +514,13 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
+                (0, config_1.serializeHandoff)(handoff);
+                if (!build) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
                 _a.sent();
-                if (!build) return [3 /*break*/, 11];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                _a.label = 10;
             case 10:
-                _a.sent();
-                _a.label = 11;
-            case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

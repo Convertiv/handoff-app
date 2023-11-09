@@ -115,7 +115,6 @@ var Handoff = /** @class */ (function () {
         var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
         this.config = this.hooks.init(this.config);
-        (0, config_1.serializeHandoff)(this);
         return this;
     };
     Handoff.prototype.preRunner = function () {

@@ -1,4 +1,4 @@
-import { defaultConfig, serializeHandoff } from './config';
+import { defaultConfig } from './config';
 import { Config } from './types/config';
 import fs from 'fs-extra';
 import path from 'path';
@@ -68,7 +68,6 @@ class Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
     this.config = this.hooks.init(this.config);
-    serializeHandoff(this);
     return this;
   }
   preRunner(): Handoff {

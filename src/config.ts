@@ -119,7 +119,7 @@ export const getHandoff = (): Handoff => {
  */
 export const serializeHandoff = (handoff: Handoff) => {
   const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
-  if (!fs.existsSync(path.resolve(outputPath))) {
+  if (!fs.existsSync(outputPath)) {
     fs.mkdirSync(path.resolve(outputPath), { recursive: true });
   }
   const statePath = path.resolve(outputPath, 'handoff.state.json');

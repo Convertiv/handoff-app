@@ -229,20 +229,20 @@ const validateHandoffRequirements = async (handoff: Handoff) => {
   }
 };
 
-interface FigmaAuthConfig {
-  dev_access_token: string;
-  figma_project_id: string;
-}
-
 /**
  * Validate the figma auth tokens
  * @param handoff
  */
-const validateFigmaAuth = async (handoff: Handoff): Promise<FigmaAuthConfig> => {
+const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
   let DEV_ACCESS_TOKEN = handoff.config.dev_access_token;
   let FIGMA_PROJECT_ID = handoff.config.figma_project_id;
+
+  if (DEV_ACCESS_TOKEN && FIGMA_PROJECT_ID) {
+    return;
+  }
+  
   let missingEnvVars = false;
-  // TODO: rename to something more meaningful
+
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
     console.log(
@@ -254,7 +254,6 @@ Use these instructions to generate them ${chalk.blue(
     DEV_ACCESS_TOKEN = await maskPrompt(chalk.green('Figma Developer Key: '));
   }
 
-  // TODO: rename to something more meaningful
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
     console.log(
@@ -266,6 +265,7 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
     );
     FIGMA_PROJECT_ID = await maskPrompt(chalk.green('Figma Project Id: '));
   }
+
   if (missingEnvVars) {
     console.log(
       chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env 
@@ -287,22 +287,20 @@ FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
       );
     }
   }
-  return {
-    dev_access_token: DEV_ACCESS_TOKEN,
-    figma_project_id: FIGMA_PROJECT_ID,
-  };
+
+  handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
+  handoff.config.figma_project_id = FIGMA_PROJECT_ID;
 };
 
 const figmaExtract = async (
   handoff: Handoff,
-  figmaConfig: FigmaAuthConfig,
   exportables: ExportableDefinition[]
 ): Promise<DocumentationObject> => {
   console.log(chalk.green(`Starting Figma data extraction.`));
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
-  const documentationObject = await createDocumentationObject(figmaConfig.figma_project_id, figmaConfig.dev_access_token, exportables);
+  const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token, exportables);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
@@ -357,9 +355,9 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   }
   console.log(chalk.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
   await validateHandoffRequirements(handoff);
-  const figmaConfig = await validateFigmaAuth(handoff);
+  await validateFigmaAuth(handoff);
   const exportables = await getExportables(handoff);
-  const documentationObject = await figmaExtract(handoff, figmaConfig, exportables);
+  const documentationObject = await figmaExtract(handoff, exportables);
   const componentTransformerOptions = formatComponentsTransformerOptions(exportables);
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject, componentTransformerOptions);

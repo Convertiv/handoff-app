@@ -125,7 +125,7 @@ exports.getHandoff = getHandoff;
  */
 var serializeHandoff = function (handoff) {
     var outputPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
-    if (!fs_extra_1.default.existsSync(path_1.default.resolve(outputPath))) {
+    if (!fs_extra_1.default.existsSync(outputPath)) {
         fs_extra_1.default.mkdirSync(path_1.default.resolve(outputPath), { recursive: true });
     }
     var statePath = path_1.default.resolve(outputPath, 'handoff.state.json');
