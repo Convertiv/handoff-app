@@ -56,7 +56,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const nextConfigPath = path.resolve(appPath, 'next.config.js');
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffBasePath}'`)
-    .replace(/HANDOFF_BASE_PATH:\s+\'\'/g, `HANDOFF_BASE_PATH: '${handoffBasePath}'`)
+    .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
     ;

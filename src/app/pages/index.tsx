@@ -72,7 +72,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 View Components
               </Link>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${process.env.HANDOFF_BASE_PATH ?? ''}/assets/images/components.png`} width={1528} height={1250} alt="Components" />
+              <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.png`} width={1528} height={1250} alt="Components" />
             </div>
           </div>
           <div className="o-col-6@lg u-animation-fadein">
