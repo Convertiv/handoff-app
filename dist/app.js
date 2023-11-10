@@ -92,7 +92,7 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
     });
 }); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var srcPath, appPath, nextConfigPath, nextConfigContent;
+    var srcPath, appPath, handoffBasePath, handoffWorkingPath, handoffExportPath, nextConfigPath, nextConfigContent;
     var _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -110,13 +110,17 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
                 _b.sent();
+                handoffBasePath = (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '';
+                handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
+                handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 4:
                 nextConfigContent = (_b.sent())
-                    .replaceAll('__HANDOFF.WORKING_PATH__', path_1.default.resolve(handoff.workingPath))
-                    .replaceAll('__HANDOFF.EXPORT_PATH__', path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id))
-                    .replaceAll('__HANDOFF.BASE_PATH__', (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '');
+                    .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffBasePath, "'"))
+                    .replace(/HANDOFF_BASE_PATH:\s+\'\'/g, "HANDOFF_BASE_PATH: '".concat(handoffBasePath, "'"))
+                    .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, "HANDOFF_WORKING_PATH: '".concat(handoffWorkingPath, "'"))
+                    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"));
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
             case 5:
                 _b.sent();
