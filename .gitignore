@@ -40,5 +40,6 @@ yarn-error.log*
 
 # figma exported
 /dist/templates
+/src/app/out
 /src/~app-*
 /exported
