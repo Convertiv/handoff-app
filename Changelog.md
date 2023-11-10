@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - 2023-11-09
+## [0.9.0] - 2023-11-10
 
 This release focuses heavily on better support for environments on which multiple projects are being exported and built. All of the changes introduced in this release should provide better experience when working on such environments as well as resolve some of the issues which would occur when different projects would use same working directories.
 
