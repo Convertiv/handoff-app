@@ -58,8 +58,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
-    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-    ;
+    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
   return appPath;
