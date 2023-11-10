@@ -514,13 +514,15 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
             case 8:
                 _a.sent();
-                (0, config_1.serializeHandoff)(handoff);
-                if (!build) return [3 /*break*/, 10];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
             case 9:
                 _a.sent();
-                _a.label = 10;
+                if (!build) return [3 /*break*/, 11];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 10:
+                _a.sent();
+                _a.label = 11;
+            case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];
