@@ -50,19 +50,5 @@ yarn-error.log*
 # git
 .git
 
-# include figma exporter dist
-!/figma-exporter/dist
-!/figma-exporter/api/dist
-
-# assets
-!/public/assets
-
-# exported files
-/exported
-/public/icons.zip
-/public/logos.zip
-
-# env
-.env*
-!.env.example
+# github
 .github
