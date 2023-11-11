@@ -47,6 +47,9 @@ yarn-error.log*
 
 ### END .gitignore ###
 
+# git
+.git
+
 # include figma exporter dist
 !/figma-exporter/dist
 !/figma-exporter/api/dist
