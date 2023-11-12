@@ -7,6 +7,7 @@ import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from 
 import Header from '../components/Header';
 import CustomNav from '../components/SideNav/Custom';
 import { getConfig } from '../../config';
+import Footer from '../components/Footer';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {
@@ -221,6 +222,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
           </div>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

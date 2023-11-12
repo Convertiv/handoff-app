@@ -15,6 +15,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
+import Footer from '../../components/Footer';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -123,6 +124,7 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, styleDictiona
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
+      <Footer config={config} />
     </div>
   );
 };

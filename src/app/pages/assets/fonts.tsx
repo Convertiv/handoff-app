@@ -12,6 +12,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { getHandoff } from '../../../config';
 import path from 'path';
+import Footer from '../../components/Footer';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -98,6 +99,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
           </ReactMarkdown>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

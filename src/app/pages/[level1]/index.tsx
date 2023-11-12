@@ -7,6 +7,7 @@ import Head from 'next/head';
 import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { getConfig } from '../../../config';
+import Footer from '../../components/Footer';
 
 /**
  * Render all index pages
@@ -66,6 +67,7 @@ export default function DocPage({ content, menu, metadata, current, config }: Do
             </ReactMarkdown>
           </div>
         </section>
+        <Footer config={config} />
       </div>
     );
   } else {
