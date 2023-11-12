@@ -1,7 +1,7 @@
 import { DocumentationObject, ExportableSharedOptions, ExportableTransformerOptions } from "../types";
 export declare type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;
 export declare type FoundationType = 'colors' | 'typography' | 'effects';
-export declare type TokenType = 'css' | 'scss' | 'sd';
+export declare type TokenType = 'css' | 'scss' | 'sd' | 'map';
 export declare type TokenDict = {
     [property: string]: string | [value: string, isSupportedCssProperty: boolean];
 };
