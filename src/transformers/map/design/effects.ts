@@ -1,6 +1,6 @@
 import { EffectObject } from "../../../types";
 
-export default function transformEffects(effects: EffectObject[]): string {
+export default function transformEffects(effects: EffectObject[]) {
   const result: Record<string, string> = {};
 
   const validEffects = effects?.filter(effect => effect.effects && effect.effects.length > 0);
@@ -11,5 +11,5 @@ export default function transformEffects(effects: EffectObject[]): string {
     })
   }
 
-  return JSON.stringify(result, null, 2);
+  return result;
 }

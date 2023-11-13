@@ -1,7 +1,7 @@
 import { getTypeName } from "../../utils";
 import { TypographyObject } from "../../../types";
 
-export default function transformTypography(typography: TypographyObject[]): string {
+export default function transformTypography(typography: TypographyObject[]) {
   const result: Record<string, string> = {};
 
   typography.forEach(type => {
@@ -13,5 +13,5 @@ export default function transformTypography(typography: TypographyObject[]): str
     result[`typography-${getTypeName(type)}-paragraph-spacing`] = `${type.values.paragraphSpacing | 20}px`;
   });
   
-  return JSON.stringify(result, null, 2);
+  return result;
 }

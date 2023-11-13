@@ -6,25 +6,30 @@ import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
 export default function mapTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
-  const components: Record<string, string> = {};
+  let flatMap: Record<string, string> = {};
 
+  const components: Record<string, string> = {};
   for (const componentId in documentationObject.components) {
-    components[componentId] = transformComponentsToMap(componentId, documentationObject.components[componentId], options?.get(componentId));
+    const map = transformComponentsToMap(componentId, documentationObject.components[componentId], options?.get(componentId));
+    components[componentId] = JSON.stringify(map, null, 2);
+    flatMap = { ...flatMap, ...map }
   }
 
-  // Create a single file containing all components with their respective tokens
-  components['_tokens-map'] = JSON.stringify(Object.values(components).reduce((res, val) => {
-    return { ...res, ...JSON.parse(val) };
-  }, {}), null, 2);
+  const colors = transformColors(documentationObject.design.color);
+  const typography = transformTypography(documentationObject.design.typography);
+  const effects = transformEffects(documentationObject.design.effect);
 
-  const design = {
-    colors: transformColors(documentationObject.design.color),
-    typography: transformTypography(documentationObject.design.typography),
-    effects: transformEffects(documentationObject.design.effect),
-  };
+  flatMap = { ...flatMap, ...colors, ...typography, ...effects };
 
   return {
     components,
-    design,
+    design: {
+      colors: JSON.stringify(colors, null, 2),
+      typography: JSON.stringify(typography, null, 2),
+      effects: JSON.stringify(effects, null, 2),
+    },
+    attachments: {
+      "tokens-map": JSON.stringify(flatMap, null, 2),
+    }
   };
 }

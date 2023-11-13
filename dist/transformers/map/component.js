@@ -15,6 +15,6 @@ var transformComponentsToMap = function (_, components, options) {
             map[token.name] = token.value;
         });
     });
-    return JSON.stringify(map, null, 2);
+    return map;
 };
 exports.transformComponentsToMap = transformComponentsToMap;

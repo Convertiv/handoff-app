@@ -321,27 +321,21 @@ var buildStyles = function (handoff, documentationObject, options) { return __aw
                             }));
                         })
                             .then(function () {
-                            return Promise.all(Object.entries(mapFiles.components).filter(function (_a) {
-                                var name = _a[0], _ = _a[1];
-                                return !name.startsWith('_');
-                            }).map(function (_a) {
+                            return Promise.all(Object.entries(mapFiles.components).map(function (_a) {
                                 var name = _a[0], content = _a[1];
                                 return fs_extra_1.default.writeFile("".concat(variablesFilePath(handoff), "/maps/").concat(name, ".json"), content);
-                            }));
-                        })
-                            .then(function () {
-                            return Promise.all(Object.entries(mapFiles.components).filter(function (_a) {
-                                var name = _a[0], _ = _a[1];
-                                return name.startsWith('_');
-                            }).map(function (_a) {
-                                var name = _a[0], content = _a[1];
-                                return fs_extra_1.default.writeFile("".concat(outputPath(handoff), "/").concat(name.substring(1), ".json"), content);
                             }));
                         })
                             .then(function () {
                             return Promise.all(Object.entries(mapFiles.design).map(function (_a) {
                                 var name = _a[0], content = _a[1];
                                 return fs_extra_1.default.writeFile("".concat(variablesFilePath(handoff), "/maps/").concat(name, ".json"), content);
+                            }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(mapFiles.attachments).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(outputPath(handoff), "/").concat(name, ".json"), content);
                             }));
                         }),
                     ])];

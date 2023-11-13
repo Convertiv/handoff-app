@@ -19,22 +19,27 @@ var colors_1 = __importDefault(require("./design/colors"));
 var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
 function mapTransformer(documentationObject, options) {
+    var flatMap = {};
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
+        var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
+        components[componentId] = JSON.stringify(map, null, 2);
+        flatMap = __assign(__assign({}, flatMap), map);
     }
-    // Create a single file containing all components with their respective tokens
-    components['_tokens-map'] = JSON.stringify(Object.values(components).reduce(function (res, val) {
-        return __assign(__assign({}, res), JSON.parse(val));
-    }, {}), null, 2);
-    var design = {
-        colors: (0, colors_1.default)(documentationObject.design.color),
-        typography: (0, typography_1.default)(documentationObject.design.typography),
-        effects: (0, effects_1.default)(documentationObject.design.effect),
-    };
+    var colors = (0, colors_1.default)(documentationObject.design.color);
+    var typography = (0, typography_1.default)(documentationObject.design.typography);
+    var effects = (0, effects_1.default)(documentationObject.design.effect);
+    flatMap = __assign(__assign(__assign(__assign({}, flatMap), colors), typography), effects);
     return {
         components: components,
-        design: design,
+        design: {
+            colors: JSON.stringify(colors, null, 2),
+            typography: JSON.stringify(typography, null, 2),
+            effects: JSON.stringify(effects, null, 2),
+        },
+        attachments: {
+            "tokens-map": JSON.stringify(flatMap, null, 2),
+        }
     };
 }
 exports.default = mapTransformer;

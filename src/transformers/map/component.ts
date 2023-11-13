@@ -7,8 +7,8 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../typ
  * @param alerts
  * @returns
  */
-export const transformComponentsToMap = (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
-  const map = {} as any;
+export const transformComponentsToMap = (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+  const map = {} as Record<string, string>;
 
   components.forEach(component => {
     const tokens = transform('map', component, options);
@@ -18,5 +18,5 @@ export const transformComponentsToMap = (_: string, components: Component[], opt
     });
   })
 
-  return JSON.stringify(map, null, 2);
+  return map;
 };

@@ -11,6 +11,6 @@ function transformTypography(typography) {
         result["typography-".concat((0, utils_1.getTypeName)(type), "-letter-spacing")] = "".concat(type.values.letterSpacing, "px");
         result["typography-".concat((0, utils_1.getTypeName)(type), "-paragraph-spacing")] = "".concat(type.values.paragraphSpacing | 20, "px");
     });
-    return JSON.stringify(result, null, 2);
+    return result;
 }
 exports.default = transformTypography;

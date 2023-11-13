@@ -5,4 +5,4 @@ import { ExportableSharedOptions, ExportableTransformerOptions } from '../../typ
  * @param alerts
  * @returns
  */
-export declare const transformComponentsToMap: (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const transformComponentsToMap: (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, string>;

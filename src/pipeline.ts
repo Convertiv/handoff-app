@@ -211,17 +211,17 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       )
       .then(() =>
         Promise.all(
-          Object.entries(mapFiles.components).filter(([name, _]) => !name.startsWith('_')).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.components).filter(([name, _]) => name.startsWith('_')).map(([name, content]) => fs.writeFile(`${outputPath(handoff)}/${name.substring(1)}.json`, content))
+          Object.entries(mapFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${outputPath(handoff)}/${name}.json`, content))
         )
       ),
   ]);

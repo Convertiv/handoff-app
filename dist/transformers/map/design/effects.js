@@ -8,6 +8,6 @@ function transformEffects(effects) {
             result["effect-".concat(effect.group, "-").concat(effect.machineName)] = "".concat(effect.effects.map(function (effect) { return effect.value; }).join(', ') || 'none');
         });
     }
-    return JSON.stringify(result, null, 2);
+    return result;
 }
 exports.default = transformEffects;

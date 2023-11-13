@@ -5,6 +5,6 @@ function transformColors(colors) {
     colors.forEach(function (color) {
         result["color-".concat(color.group, "-").concat(color.machineName)] = "".concat(color.value);
     });
-    return JSON.stringify(result, null, 2);
+    return result;
 }
 exports.default = transformColors;
