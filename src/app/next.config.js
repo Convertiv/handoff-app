@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
+const chalk = require('chalk');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -51,7 +52,8 @@ const nextConfig = {
           if (clientConfig.hasOwnProperty('app') && clientConfig['app'].hasOwnProperty('theme') && fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `${clientConfig['app']['theme']}.scss`))) {
             // Use custom theme
             foundTheme = true;
-            content = content + `\n@import './theme/${clientConfig['app']['theme']}';`;
+            content = content + `\n@import '${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}';`;
+            console.log(`- ${chalk.cyan('info')} Using custom app theme (name: ${clientConfig['app']['theme']}, path: ${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}.scss)`)
           }
         }
       }
@@ -61,9 +63,11 @@ const nextConfig = {
         if (fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`))) {
           // Use custom theme
           content = content + `\n@import 'theme/default';`;
+          console.log(`- ${chalk.cyan('info')} Using default app theme override (path: ${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`)})`)
         } else {
           // Use default theme
           content = content + `\n@import 'themes/default';`;
+          console.log(`- ${chalk.cyan('info')} Using default app theme`)
         }
       }
 

@@ -5,13 +5,11 @@
 /node_modules
 /.pnp
 .pnp.js
-.git
 
 # testing
 /coverage
 
 # next.js
-/.next
 /out
 
 # production
@@ -38,35 +36,19 @@ yarn-error.log*
 *.tsbuildinfo
 
 # assets
-/public/assets
+/public
+/public-*
 
 # figma exported
+/dist/templates
+/src/app/out
+/src/~app-*
 /exported
-/public/icons.zip
-/public/icons
-/public/logos.zip
-/public/logos
-/src/app/public/icons.zip
-/src/app/public/icons
-/src/app/public/logos.zip
-/src/app/public/logos
-/src/app/public/tokens.zip
 
 ### END .gitignore ###
 
-# include figma exporter dist
-!/figma-exporter/dist
-!/figma-exporter/api/dist
+# git
+.git
 
-# assets
-!/public/assets
-
-# exported files
-/exported
-/public/icons.zip
-/public/logos.zip
-
-# env
-.env*
-!.env.example
+# github
 .github

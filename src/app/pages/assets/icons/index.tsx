@@ -11,6 +11,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import Footer from '../../../components/Footer';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -127,6 +128,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
           </div>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

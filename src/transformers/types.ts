@@ -2,12 +2,13 @@ import { DocumentationObject, ExportableSharedOptions, ExportableTransformerOpti
 
 export type ExportableTransformerOptionsMap = ReadonlyMap<string, ExportableTransformerOptions & ExportableSharedOptions>;
 export type FoundationType = 'colors' | 'typography' | 'effects';
-export type TokenType = 'css' | 'scss' | 'sd';
+export type TokenType = 'css' | 'scss' | 'sd' | 'map';
 export type TokenDict = { [property: string]: string | [value: string, isSupportedCssProperty: boolean] }
 
 export interface TransformerOutput {
-  components: Record<keyof DocumentationObject['components'], string>;
+  components: Record<string, string>;
   design: Record<FoundationType, string>;
+  attachments?: Record<string, string>
 }
 
 export interface Token {

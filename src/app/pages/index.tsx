@@ -12,6 +12,7 @@ import Header from '../components/Header';
 import { fetchDocPageMarkdown, getChangelog, ChangelogDocumentationProps } from '../components/util';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import Footer from '../components/Footer';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {
@@ -277,6 +278,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
           </div>
         </div>
       </div>
+      <Footer config={config} />
     </div>
   );
 };

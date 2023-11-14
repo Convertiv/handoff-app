@@ -11,6 +11,7 @@ import CustomNav from '../../components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import Footer from '../../components/Footer';
 
 const DisplayLogo: React.FC<{ logo: AssetObject, content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {
@@ -167,6 +168,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
+      <Footer config={config} />
     </div>
   );
 };

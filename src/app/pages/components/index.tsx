@@ -16,6 +16,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
 import { getConfig } from '../../../config';
+import Footer from '../../components/Footer';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -101,6 +102,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
           </ReactMarkdown>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

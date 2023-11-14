@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2023-11-14
+
+### Changes
+
+* Footer component has been brought back into the app and is now visible on all pages.
+* Introduced token maps export feature which exports generated tokens alongside their respective values in form in JSON files (key/value object). Tokens for individual components/foundations are exported into the `tokens/maps` directory of the designated export directory as individual files while the `tokens-map` file, which contains all available tokens, gets exported into the designated export directory root.
+
+### Improvements
+* Added additional logging into the app's `next.config.js` file alongside improved path resolving for custom themes.
+
+### Maintenance
+
+* Updated the `.npmignore` file to reflect latest `.gitignore` changes made in the last release.
+
 ## [0.9.0] - 2023-11-10
 
 This release focuses heavily on better support for environments on which multiple projects are being exported and built. All of the changes introduced in this release should provide better experience when working on such environments as well as resolve some of the issues which would occur when different projects would use same working directories.

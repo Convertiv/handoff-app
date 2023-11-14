@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
+import Footer from '../../components/Footer';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -83,6 +84,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
+      <Footer config={config} />
     </div>
   );
 };

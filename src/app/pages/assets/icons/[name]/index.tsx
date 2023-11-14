@@ -9,6 +9,7 @@ import Head from 'next/head';
 import Header from '../../../../components/Header';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';
 import CustomNav from '../../../../components/SideNav/Custom';
+import Footer from '../../../../components/Footer';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -201,6 +202,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
           </div>
         )}
       </section>
+      <Footer config={config} />
     </div>
   );
 }

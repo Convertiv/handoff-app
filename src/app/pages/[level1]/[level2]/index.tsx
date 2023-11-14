@@ -7,6 +7,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { getConfig } from '../../../../config';
+import Footer from '../../../components/Footer';
 
 export interface SubPageType {
   params: {
@@ -75,6 +76,7 @@ export default function DocSubPage({ content, menu, metadata, current, config }:
             </ReactMarkdown>
           </div>
         </section>
+        <Footer config={config} />
       </div>
     );
   } else {

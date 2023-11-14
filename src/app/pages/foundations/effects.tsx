@@ -17,6 +17,7 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
 import { getConfig } from '../../../config';
+import Footer from '../../components/Footer';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -131,6 +132,7 @@ const ColorsPage = ({ content, menu, metadata, current, css, scss, styleDictiona
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
+      <Footer config={config} />
     </div>
   );
 };
