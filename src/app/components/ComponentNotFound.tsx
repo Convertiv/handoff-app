@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Header from './Header';
 import Icon from './Icon';
 import CustomNav from './SideNav/Custom';
+import Footer from './Footer';
 export interface ComponentNotFoundProps extends util.DocumentationProps {
   children?: JSX.Element;
 }
@@ -33,6 +34,7 @@ export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, 
           </div>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

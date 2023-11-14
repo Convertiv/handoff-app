@@ -19,6 +19,7 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import { filterOutNull } from '../../../../utils';
+import Footer from '../../../components/Footer';
 
 /**
  * Render all index pages
@@ -138,6 +139,7 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
           </div>
         </div>
       </section>
+      <Footer config={config} />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
+import Footer from '../../components/Footer';
 
 const pluckStyle = (type: TypographyObject) => {
   return {
@@ -193,6 +194,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
+      <Footer config={config} />
     </div>
   );
 };
