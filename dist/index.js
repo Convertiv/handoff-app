@@ -103,6 +103,7 @@ var Handoff = /** @class */ (function () {
             cssTransformer: function (documentationObject, css) { return css; },
             scssTransformer: function (documentationObject, scss) { return scss; },
             styleDictionaryTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
+            mapTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
             webpack: function (webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
             configureExportables: function (exportables) { return exportables; },

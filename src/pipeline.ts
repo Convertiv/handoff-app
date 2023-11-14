@@ -28,6 +28,7 @@ import { buildClientFiles } from './utils/preview';
 import buildApp from './app';
 import Handoff from '.';
 import sdTransformer from './transformers/sd';
+import mapTransformer from './transformers/map';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
@@ -155,6 +156,8 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
   let sdFiles = sdTransformer(documentationObject, options);
   sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
+  let mapFiles = mapTransformer(documentationObject, options);
+  mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
 
   await Promise.all([
     fs
@@ -163,6 +166,7 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/css`))
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sass`))
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens`))
+      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/maps`))
       .then(() => Promise.all(
         Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`))
       ))
@@ -203,6 +207,21 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       .then(() =>
         Promise.all(
           Object.entries(sdFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(mapFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${outputPath(handoff)}/${name}.json`, content))
         )
       ),
   ]);

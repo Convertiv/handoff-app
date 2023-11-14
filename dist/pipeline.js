@@ -104,6 +104,7 @@ var index_6 = __importDefault(require("./transformers/preview/index"));
 var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
+var map_1 = __importDefault(require("./transformers/map"));
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
 var exportablesFolder = function () { return 'config/exportables'; };
@@ -245,7 +246,7 @@ var buildPreview = function (handoff, documentationObject, options) { return __a
  * @param documentationObject
  */
 var buildStyles = function (handoff, documentationObject, options) { return __awaiter(void 0, void 0, void 0, function () {
-    var typeFiles, cssFiles, scssFiles, sdFiles;
+    var typeFiles, cssFiles, scssFiles, sdFiles, mapFiles;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -257,6 +258,8 @@ var buildStyles = function (handoff, documentationObject, options) { return __aw
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
                 sdFiles = (0, sd_1.default)(documentationObject, options);
                 sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
+                mapFiles = (0, map_1.default)(documentationObject, options);
+                mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
                             .ensureDir(variablesFilePath(handoff))
@@ -264,6 +267,7 @@ var buildStyles = function (handoff, documentationObject, options) { return __aw
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath(handoff), "/css")); })
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath(handoff), "/sass")); })
                             .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath(handoff), "/sd/tokens")); })
+                            .then(function () { return fs_extra_1.default.ensureDir("".concat(variablesFilePath(handoff), "/maps")); })
                             .then(function () { return Promise.all(Object.entries(sdFiles.components).map(function (_a) {
                             var name = _a[0], _ = _a[1];
                             return fs_extra_1.default.ensureDir("".concat(variablesFilePath(handoff), "/sd/tokens/").concat(name));
@@ -314,6 +318,24 @@ var buildStyles = function (handoff, documentationObject, options) { return __aw
                             return Promise.all(Object.entries(sdFiles.design).map(function (_a) {
                                 var name = _a[0], content = _a[1];
                                 return fs_extra_1.default.writeFile("".concat(variablesFilePath(handoff), "/sd/tokens/").concat(name, ".tokens.json"), content);
+                            }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(mapFiles.components).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath(handoff), "/maps/").concat(name, ".json"), content);
+                            }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(mapFiles.design).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(variablesFilePath(handoff), "/maps/").concat(name, ".json"), content);
+                            }));
+                        })
+                            .then(function () {
+                            return Promise.all(Object.entries(mapFiles.attachments).map(function (_a) {
+                                var name = _a[0], content = _a[1];
+                                return fs_extra_1.default.writeFile("".concat(outputPath(handoff), "/").concat(name, ".json"), content);
                             }));
                         }),
                     ])];
