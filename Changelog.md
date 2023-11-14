@@ -13,6 +13,9 @@ and this project adheres to
 * Footer component has been brought back into the app and is now visible on all pages.
 * Introduced token maps export feature which exports generated tokens alongside their respective values in form in JSON files (key/value object). Tokens for individual components/foundations are exported into the `tokens/maps` directory of the designated export directory as individual files while the `tokens-map` file, which contains all available tokens, gets exported into the designated export directory root.
 
+### Improvements
+* Added additional logging into the app's `next.config.js` file alongside improved path resolving for custom themes.
+
 ### Maintenance
 
 * Updated the `.npmignore` file to reflect latest `.gitignore` changes made in the last release.
