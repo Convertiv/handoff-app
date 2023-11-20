@@ -79,5 +79,5 @@ var getRequestCount = function () { return counter; };
 exports.getRequestCount = getRequestCount;
 exports.default = figmaRestApi;
 var getFigmaAuthHeaders = function (accessToken) {
-    return accessToken.startsWith('bearer\\') ? { Authorization: "Bearer ".concat(accessToken.substring(7)) } : { 'X-Figma-Token': accessToken };
+    return accessToken.startsWith('Bearer ') ? { 'Authorization': accessToken } : { 'X-Figma-Token': accessToken };
 };

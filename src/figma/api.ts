@@ -79,4 +79,4 @@ export const getRequestCount = () => counter;
 export default figmaRestApi;
 
 const getFigmaAuthHeaders = (accessToken: string): { [header: string]: string } =>
-  accessToken.startsWith('bearer\\') ? { Authorization: `Bearer ${accessToken.substring(7)}` } : { 'X-Figma-Token': accessToken };
+  accessToken.startsWith('Bearer ') ? { 'Authorization': accessToken } : { 'X-Figma-Token': accessToken };
