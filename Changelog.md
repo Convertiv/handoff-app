@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2023-11-21
+
+### Improvements
+
+* Handoff now supports both **personal access** and **OAuth2 bearer** tokens. If Handoff detects that a access token used starts with "Bearer " it will use the `Authorization` header to send the token as part of any Figma API request. In any other case, `X-Figma-Token` header will be used.
+
 ## [0.9.1] - 2023-11-14
 
 ### Changes
