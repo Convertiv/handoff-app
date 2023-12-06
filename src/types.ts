@@ -157,7 +157,8 @@ export interface VariantPropertyWithParams {
 
 export interface ExportablePart {
   id: string,
-  tokens: { from: string, export: Exportable[] }[]
+  tokens: { from: string, export: Exportable[] }[],
+  condition?: string[][],
 };
 
 export type ExportableParts = ExportablePart[];
