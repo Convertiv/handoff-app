@@ -30,18 +30,21 @@ const getComponentSetComponents = (
   const componentSetMetadata = metadata.find((metadata) => metadata.node_id === componentSet.id);
 
   const baseComponentSetMetadata = componentSetMetadata
-    ? metadata.find(
+    ? metadata.filter(
         (metadata) =>
           metadata.node_id !== componentSetMetadata.node_id &&
           metadata.containing_frame.nodeId === componentSetMetadata.containing_frame.nodeId
       )
     : undefined;
 
-  const baseComponentSet = baseComponentSetMetadata
-    ? componentSets.find((componentSet) => componentSet.id === baseComponentSetMetadata.node_id)
-    : undefined;
+  const nodeIds = baseComponentSetMetadata.map(meta => meta.node_id);
 
-  const components = [...componentSet.children, ...(baseComponentSet?.children || [])];
+  const children = componentSets
+    .filter((componentSet) => nodeIds.includes(componentSet.id))
+    .map(c => c.children)
+    .reduce((acc, el) => acc.concat(el), []);
+
+  const components = [...componentSet.children, ...(children || [])];
 
   const componentsMetadata = Object.fromEntries(
     Array.from(componentMetadata.entries()).filter(([key]) => components.map((child) => child.id).includes(key))
