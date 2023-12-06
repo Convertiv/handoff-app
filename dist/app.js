@@ -179,6 +179,31 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             case 1:
                 appPath = _a.sent();
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
+                // Include any changes made within the app source during watch
+                chokidar_1.default.watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
+                    ignored: /(^|[\/\\])\../,
+                    persistent: true,
+                    ignoreInitial: true,
+                }).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    var _a;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                _a = event;
+                                switch (_a) {
+                                    case 'add': return [3 /*break*/, 1];
+                                    case 'change': return [3 /*break*/, 1];
+                                    case 'unlink': return [3 /*break*/, 1];
+                                }
+                                return [3 /*break*/, 3];
+                            case 1: return [4 /*yield*/, prepareProjectApp(handoff)];
+                            case 2:
+                                _b.sent();
+                                return [3 /*break*/, 3];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                }); });
                 tsconfigPath = 'tsconfig.json';
                 config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
                 dev = true;
