@@ -215,15 +215,9 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
         }
       }
 
-      // Check if the possibly distinctive name is set
-      if (!possiblyDistinctiveName) {
-        // Resolve to fallback value
-        possiblyDistinctiveName = component.variantProperties[0]?.[1];
-      }
-
       return {
         component: component,
-        possiblyDistinctiveName,
+        possiblyDistinctiveName: possiblyDistinctiveName ?? '',
         preview: previews.find((item) => item.id === component.id),
         overrides,
       };
@@ -232,8 +226,8 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
     .sort(function (first, second) {
       sort ??= [];
 
-      const lStr = first.possiblyDistinctiveName;
-      const rStr = second.possiblyDistinctiveName;
+      const lStr = first.possiblyDistinctiveName ?? '';
+      const rStr = second.possiblyDistinctiveName ?? '';
 
       const l = sort.indexOf(lStr) >>> 0;
       const r = sort.indexOf(rStr) >>> 0;
