@@ -72,15 +72,17 @@ var getComponentSetComponents = function (metadata, componentSets, componentMeta
     }
     var componentSetMetadata = metadata.find(function (metadata) { return metadata.node_id === componentSet.id; });
     var baseComponentSetMetadata = componentSetMetadata
-        ? metadata.find(function (metadata) {
+        ? metadata.filter(function (metadata) {
             return metadata.node_id !== componentSetMetadata.node_id &&
                 metadata.containing_frame.nodeId === componentSetMetadata.containing_frame.nodeId;
         })
         : undefined;
-    var baseComponentSet = baseComponentSetMetadata
-        ? componentSets.find(function (componentSet) { return componentSet.id === baseComponentSetMetadata.node_id; })
-        : undefined;
-    var components = __spreadArray(__spreadArray([], componentSet.children, true), ((baseComponentSet === null || baseComponentSet === void 0 ? void 0 : baseComponentSet.children) || []), true);
+    var nodeIds = baseComponentSetMetadata.map(function (meta) { return meta.node_id; });
+    var children = componentSets
+        .filter(function (componentSet) { return nodeIds.includes(componentSet.id); })
+        .map(function (c) { return c.children; })
+        .reduce(function (acc, el) { return acc.concat(el); }, []);
+    var components = __spreadArray(__spreadArray([], componentSet.children, true), (children || []), true);
     var componentsMetadata = Object.fromEntries(Array.from(componentMetadata.entries()).filter(function (_a) {
         var key = _a[0];
         return components.map(function (child) { return child.id; }).includes(key);
