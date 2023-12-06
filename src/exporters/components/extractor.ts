@@ -78,8 +78,9 @@ export default function extractComponents(
       }
 
       const parts = partsToExport.reduce((previous, current) => {
-        const tokenSets = extractComponentPartTokenSets(instanceNode, current, variantProperties);
-        return { ...previous, ...{ [current.id]: tokenSets } };
+        return conditionIsMet(current, variantProperties)
+          ? { ...previous, ...{ [current.id]: extractComponentPartTokenSets(instanceNode, current, variantProperties) } }
+          : previous;
       }, {});
 
       // END: Get component parts
@@ -198,6 +199,45 @@ export default function extractComponents(
     variantProperties: Array.from(component.variantProperties.entries()),
     parts: component.parts,
   }));
+}
+
+function conditionIsMet(part: ExportablePart, tokens: Map<string, string>) {
+  if (!part.condition) {
+    return true;
+  }
+
+  for (const condition of part.condition) {
+    if (condition.length < 2) {
+      continue; // invalid condition, skip condition
+    }
+
+    const operator = condition[1];
+
+    if (!['eq', 'ne', 'defined', 'undefined'].includes(operator)) {
+      continue; // invalid operator, skip condition
+    }
+
+    const l = replaceTokens(condition[0] ?? '', tokens);
+    const r = replaceTokens(condition[2] ?? '', tokens);
+
+    if (operator === 'eq' && l != r) {
+      return false;
+    }
+
+    if (operator === 'ne' && l == r) {
+      return false;
+    }
+
+    if (operator === 'defined' && l == '') {
+      return false;
+    }
+
+    if (operator === 'undefined' && l != '') {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ExportablePart, tokens: Map<string, string>): ExportTypes.TokenSets {
