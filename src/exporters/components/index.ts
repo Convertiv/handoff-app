@@ -4,6 +4,7 @@ import { getComponentSetNodes, getComponentSets } from '../../figma/api';
 import { filterByNodeType } from '../utils';
 import { ExportableDefinition } from '../../types';
 import extractComponents, { Component } from './extractor';
+import { AxiosResponse } from 'axios';
 
 export interface DocumentComponentsObject {
   [key: string]: Component[];
@@ -56,7 +57,7 @@ const getComponentSetComponents = (
 }
 
 const getFileComponentTokens = async (fileId: string, accessToken: string, exportables: ExportableDefinition[]): Promise<DocumentComponentsObject> => {
-  let fileComponentSetsRes;
+  let fileComponentSetsRes: AxiosResponse<FigmaTypes.FileComponentSetsResponse, any>;
 
   try {
     fileComponentSetsRes = await getComponentSets(fileId, accessToken);
