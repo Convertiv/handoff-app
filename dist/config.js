@@ -73,6 +73,7 @@ var defaultConfig = function () {
                 'components/radio',
                 'components/select',
                 'components/switch',
+                'components/tab',
             ],
         },
     });

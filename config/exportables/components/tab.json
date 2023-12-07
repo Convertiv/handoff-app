@@ -1,0 +1,98 @@
+{
+  "id": "tab",
+  "group": "Components",
+  "options": {
+    "exporter": {
+      "search": "Tabs",
+      "supportedVariantProps": {
+        "design": [
+          "Theme",
+          "State"
+        ],
+        "layout": [
+          "Layout",
+          "Size"
+        ]
+      }
+    },
+    "transformer": {
+      "cssRootClass": "btn",
+      "tokenNameSegments": [
+        "${Component}",
+        "${Layout}${Size}",
+        "${Part}",
+        "${Theme}",
+        "${State}",
+        "${Property}"
+      ]
+    },
+    "demo": {
+      "tabs": {
+        "overview": {
+          "design": {
+            "State": [],
+            "Theme": []
+          },
+          "layout": {
+            "Layout": ["horizontal", "vertical"],
+            "Size": []
+          }
+        },
+        "designTokens": {
+          "design": {
+            "State": ["default", "active"],
+            "Theme": "light"
+          },
+          "layout": {
+            "Layout": ["horizontal", "vertical"],
+            "Size": []
+          }
+        }
+      }
+    }
+  },
+  "parts": [
+    {
+      "id": "$",
+      "tokens": [
+        {
+          "from": "$",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        }
+      ],
+      "condition": [
+        ["${Layout}", "ne", ""]
+      ]
+    },
+    {
+      "id": "item",
+      "tokens": [
+        {
+          "from": "INSTANCE",
+          "export": [
+            "BACKGROUND",
+            "BORDER",
+            "SPACING",
+            "EFFECT"
+          ]
+        },
+        {
+          "from": "TEXT[name='Text']",
+          "export": [
+            "TYPOGRAPHY",
+            "FILL"
+          ]
+        }
+      ],
+      "condition": [
+        ["${Layout}", "eq", ""],
+        ["${Size}", "eq", ""]
+      ]
+    }
+  ]
+}

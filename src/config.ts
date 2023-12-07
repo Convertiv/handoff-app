@@ -65,6 +65,7 @@ export const defaultConfig = (): Config => ({
       'components/radio',
       'components/select',
       'components/switch',
+      'components/tab',
     ],
   },
 });

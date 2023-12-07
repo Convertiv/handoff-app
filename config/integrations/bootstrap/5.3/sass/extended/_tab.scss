@@ -1,0 +1,33 @@
+.nav {
+  background-color: $tab-horizontal-background;
+  padding: $tab-horizontal-padding-y $tab-horizontal-padding-x;
+  border-radius: $tab-horizontal-border-radius;
+  gap: $tab-horizontal-spacing;
+
+  &.flex-column {
+    background-color: $tab-vertical-background;
+  }
+}
+
+.nav-link {
+  &.active {
+    color: $tab-item-active-color;
+  }
+
+  &:not(.active) {
+    &:hover {
+      color: $tab-item-hover-color;
+    }
+  }
+}
+
+.nav-pills {
+  .nav-link {
+    &:not(.active) {
+      &:hover {
+        color: $tab-item-hover-color;
+        background-color: $tab-item-hover-background;
+      }
+    }
+  }
+}
