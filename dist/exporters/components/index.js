@@ -63,37 +63,43 @@ var chalk_1 = __importDefault(require("chalk"));
 var api_1 = require("../../figma/api");
 var utils_1 = require("../utils");
 var extractor_1 = __importDefault(require("./extractor"));
-var getComponentSetComponents = function (metadata, componentSets, componentMetadata, name) {
-    var componentSet = componentSets.find(function (componentSet) { return componentSet.name === name; });
-    if (!componentSet) {
-        // TODO: remove this when all component sets are implemented
-        return { components: [], metadata: {} };
+var getComponentSetComponents = function (componentSets, componentSetsMetadata, componentsMetadata, name) {
+    // Retrieve the component set with the given name (search)
+    var primaryComponentSet = componentSets.find(function (componentSet) { return componentSet.name === name; });
+    // Check if the component set exists
+    if (!primaryComponentSet) {
         throw new Error("No component set found for ".concat(name));
     }
-    var componentSetMetadata = metadata.find(function (metadata) { return metadata.node_id === componentSet.id; });
-    var baseComponentSetMetadata = componentSetMetadata
-        ? metadata.filter(function (metadata) {
-            return metadata.node_id !== componentSetMetadata.node_id &&
-                metadata.containing_frame.nodeId === componentSetMetadata.containing_frame.nodeId;
+    // Locate component set metadata
+    var primaryComponentSetMetadata = componentSetsMetadata.find(function (metadata) { return metadata.node_id === primaryComponentSet.id; });
+    // Find ids of all other component sets located within the same containing frame of the found component set
+    var relevantComponentSetsIds = primaryComponentSetMetadata
+        ? componentSetsMetadata
+            .filter(function (metadata) {
+            return metadata.node_id !== primaryComponentSetMetadata.node_id &&
+                metadata.containing_frame.nodeId === primaryComponentSetMetadata.containing_frame.nodeId;
         })
-        : undefined;
-    var nodeIds = baseComponentSetMetadata.map(function (meta) { return meta.node_id; });
-    var children = componentSets
-        .filter(function (componentSet) { return nodeIds.includes(componentSet.id); })
-        .map(function (c) { return c.children; })
-        .reduce(function (acc, el) { return acc.concat(el); }, []);
-    var components = __spreadArray(__spreadArray([], componentSet.children, true), (children || []), true);
-    var componentsMetadata = Object.fromEntries(Array.from(componentMetadata.entries()).filter(function (_a) {
-        var key = _a[0];
-        return components.map(function (child) { return child.id; }).includes(key);
+            .map(function (meta) { return meta.node_id; })
+        : [];
+    // Reduce array of component sets to a array of components (component set children) based on the array of relevant component sets ids
+    var relevantComponents = componentSets.reduce(function (res, componentSet) {
+        return relevantComponentSetsIds.includes(componentSet.id) ? res.concat(componentSet.children) : res;
+    }, []);
+    // Define final list of components 
+    var components = __spreadArray(__spreadArray([], primaryComponentSet.children, true), (relevantComponents || []), true);
+    // Define final list of metadata (of all final components)
+    var metadata = Object.fromEntries(Array.from(componentsMetadata.entries()).filter(function (_a) {
+        var componentId = _a[0];
+        return components.map(function (child) { return child.id; }).includes(componentId);
     }));
+    // Return the result
     return {
         components: components,
-        metadata: componentsMetadata,
+        metadata: metadata,
     };
 };
 var getFileComponentTokens = function (fileId, accessToken, exportables) { return __awaiter(void 0, void 0, void 0, function () {
-    var fileComponentSetsRes, err_1, componentSetsNodesRes, componentSets, componentMetadata, componentTokens, _i, exportables_1, exportable;
+    var fileComponentSetsRes, err_1, componentSetsNodesRes, componentSets, componentSetsMetadata, componentsMetadata, componentTokens, _i, exportables_1, exportable;
     var _a, _b;
     return __generator(this, function (_c) {
         switch (_c.label) {
@@ -118,7 +124,8 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                 componentSets = Object.values(componentSetsNodesRes.data.nodes)
                     .map(function (node) { return node === null || node === void 0 ? void 0 : node.document; })
                     .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'));
-                componentMetadata = new Map(Object.entries((_a = Object.values(componentSetsNodesRes.data.nodes)
+                componentSetsMetadata = fileComponentSetsRes.data.meta.component_sets;
+                componentsMetadata = new Map(Object.entries((_a = Object.values(componentSetsNodesRes.data.nodes)
                     .map(function (node) {
                     return node === null || node === void 0 ? void 0 : node.components;
                 })
@@ -136,7 +143,7 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                         console.error(chalk_1.default.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
                         continue;
                     }
-                    componentTokens[(_b = exportable.id) !== null && _b !== void 0 ? _b : ''] = (0, extractor_1.default)(getComponentSetComponents(fileComponentSetsRes.data.meta.component_sets, componentSets, componentMetadata, exportable.options.exporter.search), exportable);
+                    componentTokens[(_b = exportable.id) !== null && _b !== void 0 ? _b : ''] = (0, extractor_1.default)(getComponentSetComponents(componentSets, componentSetsMetadata, componentsMetadata, exportable.options.exporter.search), exportable);
                 }
                 return [2 /*return*/, componentTokens];
         }
