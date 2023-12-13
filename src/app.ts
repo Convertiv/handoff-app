@@ -108,6 +108,21 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
 
   const appPath = await prepareProjectApp(handoff);
   const config = require(path.resolve(appPath, 'next.config.js'));
+
+  // Include any changes made within the app source during watch
+  chokidar.watch(path.resolve(handoff.modulePath, 'src', 'app'), {
+    ignored: /(^|[\/\\])\../, // ignore dotfiles
+    persistent: true,
+    ignoreInitial: true,
+  }).on('all', async (event, path) => {
+    switch (event) {
+      case 'add':
+      case 'change':
+      case 'unlink':
+        await prepareProjectApp(handoff);
+        break;
+    }
+  });
   
   // does a ts config exist?
   let tsconfigPath = 'tsconfig.json';

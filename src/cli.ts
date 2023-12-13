@@ -55,7 +55,7 @@ const showHelp = () => {
  * Show the help message
  */
 const showVersion = () => {
-  cliError('Handoff App - 0.9.2', 2);
+  cliError('Handoff App - 0.9.3', 2);
 };
 
 /**

@@ -60,8 +60,8 @@ function extractComponents(componentSetComponentsResult, definition) {
         }
         var parts = partsToExport.reduce(function (previous, current) {
             var _a;
-            var tokenSets = extractComponentPartTokenSets(instanceNode, current, variantProperties);
-            return __assign(__assign({}, previous), (_a = {}, _a[current.id] = tokenSets, _a));
+            return conditionIsMet(current, variantProperties)
+                ? __assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(instanceNode, current, variantProperties), _a)) : previous;
         }, {});
         // END: Get component parts
         // BEGIN: Initialize the resulting component
@@ -160,6 +160,37 @@ function extractComponents(componentSetComponentsResult, definition) {
     }); });
 }
 exports.default = extractComponents;
+function conditionIsMet(part, tokens) {
+    var _a, _b;
+    if (!part.condition) {
+        return true;
+    }
+    for (var _i = 0, _c = part.condition; _i < _c.length; _i++) {
+        var condition = _c[_i];
+        if (condition.length < 2) {
+            continue; // invalid condition, skip condition
+        }
+        var operator = condition[1];
+        if (!['eq', 'ne', 'defined', 'undefined'].includes(operator)) {
+            continue; // invalid operator, skip condition
+        }
+        var l = (0, index_1.replaceTokens)((_a = condition[0]) !== null && _a !== void 0 ? _a : '', tokens);
+        var r = (0, index_1.replaceTokens)((_b = condition[2]) !== null && _b !== void 0 ? _b : '', tokens);
+        if (operator === 'eq' && l != r) {
+            return false;
+        }
+        if (operator === 'ne' && l == r) {
+            return false;
+        }
+        if (operator === 'defined' && l == '') {
+            return false;
+        }
+        if (operator === 'undefined' && l != '') {
+            return false;
+        }
+    }
+    return true;
+}
 function extractComponentPartTokenSets(root, part, tokens) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
