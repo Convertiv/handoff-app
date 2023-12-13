@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2023-11-23
+
+### Improvements
+
+* It's now possible to declare conditions for exportable component parts. Condition dictates should the part be built based on provided condition (e.g. does a specific variant property have a certain value etc.).
+* Handoff will now process all component sets found within the frame in which the component set that matches the search is found. Previously it was limited to process only one (first) extra component set while others were ignored.
+
+### Changes
+
+* Component preview title will no longer default to the value of the first variant property if no distinctive value is found. Empty value is now used instead.
+
+### Bugfixes
+
+* Update of the app source will now update the watched app without having to restart the watch process (issue introduced in version 0.9.0).
+
+
 ## [0.9.2] - 2023-11-21
 
 ### Improvements
