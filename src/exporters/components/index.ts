@@ -4,6 +4,7 @@ import { getComponentSetNodes, getComponentSets } from '../../figma/api';
 import { filterByNodeType } from '../utils';
 import { ExportableDefinition } from '../../types';
 import extractComponents, { Component } from './extractor';
+import { AxiosResponse } from 'axios';
 
 export interface DocumentComponentsObject {
   [key: string]: Component[];
@@ -15,46 +16,48 @@ export interface GetComponentSetComponentsResult {
 }
 
 const getComponentSetComponents = (
-  metadata: ReadonlyArray<FigmaTypes.FullComponentMetadata>,
   componentSets: ReadonlyArray<FigmaTypes.ComponentSet>,
-  componentMetadata: ReadonlyMap<string, FigmaTypes.ComponentMetadata>,
+  componentSetsMetadata: ReadonlyArray<FigmaTypes.FullComponentMetadata>,
+  componentsMetadata: ReadonlyMap<string, FigmaTypes.ComponentMetadata>,
   name: string
 ): GetComponentSetComponentsResult => {
-  const componentSet = componentSets.find((componentSet) => componentSet.name === name);
-  if (!componentSet) {
-    // TODO: remove this when all component sets are implemented
-    return { components: [], metadata: {} };
+  // Retrieve the component set with the given name (search)
+  const primaryComponentSet = componentSets.find((componentSet) => componentSet.name === name);
+  // Check if the component set exists
+  if (!primaryComponentSet) {
     throw new Error(`No component set found for ${name}`);
   }
-
-  const componentSetMetadata = metadata.find((metadata) => metadata.node_id === componentSet.id);
-
-  const baseComponentSetMetadata = componentSetMetadata
-    ? metadata.find(
-        (metadata) =>
-          metadata.node_id !== componentSetMetadata.node_id &&
-          metadata.containing_frame.nodeId === componentSetMetadata.containing_frame.nodeId
-      )
-    : undefined;
-
-  const baseComponentSet = baseComponentSetMetadata
-    ? componentSets.find((componentSet) => componentSet.id === baseComponentSetMetadata.node_id)
-    : undefined;
-
-  const components = [...componentSet.children, ...(baseComponentSet?.children || [])];
-
-  const componentsMetadata = Object.fromEntries(
-    Array.from(componentMetadata.entries()).filter(([key]) => components.map((child) => child.id).includes(key))
+  // Locate component set metadata
+  const primaryComponentSetMetadata = componentSetsMetadata.find((metadata) => metadata.node_id === primaryComponentSet.id);
+  // Find ids of all other component sets located within the same containing frame of the found component set
+  const relevantComponentSetsIds = primaryComponentSetMetadata
+    ? componentSetsMetadata
+        .filter(
+          (metadata) =>
+            metadata.node_id !== primaryComponentSetMetadata.node_id &&
+            metadata.containing_frame.nodeId === primaryComponentSetMetadata.containing_frame.nodeId
+        )
+        .map((meta) => meta.node_id)
+    : [];
+  // Reduce array of component sets to a array of components (component set children) based on the array of relevant component sets ids
+  const relevantComponents = componentSets.reduce((res, componentSet) => {
+    return relevantComponentSetsIds.includes(componentSet.id) ? res.concat(componentSet.children) : res;
+  }, [] as FigmaTypes.Component[]);
+  // Define final list of components 
+  const components = [...primaryComponentSet.children, ...(relevantComponents || [])];
+  // Define final list of metadata (of all final components)
+  const metadata = Object.fromEntries(
+    Array.from(componentsMetadata.entries()).filter(([componentId]) => components.map((child) => child.id).includes(componentId))
   );
-
+  // Return the result
   return {
-    components: components,
-    metadata: componentsMetadata,
+    components,
+    metadata,
   };
 }
 
 const getFileComponentTokens = async (fileId: string, accessToken: string, exportables: ExportableDefinition[]): Promise<DocumentComponentsObject> => {
-  let fileComponentSetsRes;
+  let fileComponentSetsRes: AxiosResponse<FigmaTypes.FileComponentSetsResponse, any>;
 
   try {
     fileComponentSetsRes = await getComponentSets(fileId, accessToken);
@@ -86,7 +89,9 @@ const getFileComponentTokens = async (fileId: string, accessToken: string, expor
     .map((node) => node?.document)
     .filter(filterByNodeType('COMPONENT_SET'));
 
-  const componentMetadata = new Map(
+  const componentSetsMetadata = fileComponentSetsRes.data.meta.component_sets;
+
+  const componentsMetadata = new Map(
     Object.entries(
       Object.values(componentSetsNodesRes.data.nodes)
         .map((node) => {
@@ -122,9 +127,9 @@ const getFileComponentTokens = async (fileId: string, accessToken: string, expor
 
     componentTokens[exportable.id ?? ''] = extractComponents(
       getComponentSetComponents(
-        fileComponentSetsRes.data.meta.component_sets,
         componentSets,
-        componentMetadata,
+        componentSetsMetadata,
+        componentsMetadata,
         exportable.options.exporter.search,
       ), exportable
     )
