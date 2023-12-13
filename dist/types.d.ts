@@ -144,6 +144,7 @@ export interface ExportablePart {
         from: string;
         export: Exportable[];
     }[];
+    condition?: string[][];
 }
 export declare type ExportableParts = ExportablePart[];
 interface ExportableDefinitionPageFilter {
