@@ -1,6 +1,6 @@
-import { Component } from '../../exporters/components/extractor';
+import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
 import { formatComponentCodeBlockComment } from '../utils';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { ComponentDefinitionOptions } from '../../types';
 import { transform } from '../transformer';
 
 /**
@@ -8,15 +8,22 @@ import { transform } from '../transformer';
  * @param alerts
  * @returns
  */
-export const transformComponentsToCssVariables = (componentId: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
+export const transformComponentsToCssVariables = (componentId: string, component: FileComponentObject): string => {
   const lines = [];
 
-  const componentCssClass = options?.cssRootClass ?? componentId;
+  const options = Object.values(component.definitions)[0]?.options;
+  const componentCssClass = options?.transformer.cssRootClass ?? componentId;
 
-  lines.push(`.${componentCssClass} {`)
-  const cssVars = components.map((component) => `\t${formatComponentCodeBlockComment(component, '/**/')}\n${transformComponentTokensToCssVariables(component, options)
-    .map(token => `\t${token.name}: ${token.value};`)
-    .join('\n')}`);
+  lines.push(`.${componentCssClass} {`);
+  const cssVars = component.instances.map(
+    (instance) =>
+      `\t${formatComponentCodeBlockComment(instance, '/**/')}\n${transformComponentTokensToCssVariables(
+        instance,
+        component.definitions[instance.definitionId].options
+      )
+        .map((token) => `\t${token.name}: ${token.value};`)
+        .join('\n')}`
+  );
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 
@@ -25,6 +32,6 @@ export const transformComponentsToCssVariables = (componentId: string, component
  * @param tokens
  * @returns
  */
-export const transformComponentTokensToCssVariables = (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+export const transformComponentTokensToCssVariables = (component: ComponentInstance, options?: ComponentDefinitionOptions) => {
   return transform('css', component, options);
 };

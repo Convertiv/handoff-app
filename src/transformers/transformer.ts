@@ -1,5 +1,5 @@
-import { Component } from '../exporters/components/extractor';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
+import { ComponentInstance } from '../exporters/components/types';
+import { ComponentDefinitionOptions } from '../types';
 import { Token, TokenDict, TokenType } from './types';
 import { formatTokenName, getTokenNameSegments } from './utils';
 import { getTokenSetTokens } from './tokens';
@@ -10,7 +10,7 @@ import { getTokenSetTokens } from './tokens';
  * @param options 
  * @returns 
  */
-export const transform = (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+export const transform = (tokenType: TokenType, component: ComponentInstance, options?: ComponentDefinitionOptions) => {
   let tokens: Token[] = [];
 
   for (const part in component.parts) {
@@ -28,7 +28,7 @@ export const transform = (tokenType: TokenType, component: Component, options?: 
   return tokens;
 };
 
-const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, component: Component, part: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, component: ComponentInstance, part: string, options?: ComponentDefinitionOptions) => {
   return tokens ? Object.entries(tokens).map(([cssProperty, value]) => ({
     name: formatTokenName(tokenType, component, part, cssProperty, options),
     value: value instanceof Array ? value[0] : value,

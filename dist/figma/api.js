@@ -70,7 +70,7 @@ var getComponentSets = function (fileId, accessToken) {
 exports.getComponentSets = getComponentSets;
 var getComponentSetNodes = function (fileId, ids, accessToken) {
     counter++;
-    return figmaRestApi.get('files/' + fileId + '/nodes?ids=' + ids.join(','), {
+    return figmaRestApi.get('files/' + fileId + '/nodes?ids=' + ids.join(',') + '&plugin_data=shared', {
         headers: __assign({}, getFigmaAuthHeaders(accessToken)),
     });
 };

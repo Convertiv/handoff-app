@@ -7,10 +7,11 @@ var transformer_1 = require("../transformer");
  * @param alerts
  * @returns
  */
-var transformComponentsToMap = function (_, components, options) {
+var transformComponentsToMap = function (_, component) {
     var map = {};
-    components.forEach(function (component) {
-        var tokens = (0, transformer_1.transform)('map', component, options);
+    component.instances.forEach(function (instance) {
+        var options = component.definitions[instance.definitionId].options;
+        var tokens = (0, transformer_1.transform)('map', instance, options);
         tokens.forEach(function (token) {
             map[token.name] = token.value;
         });

@@ -2,61 +2,88 @@ import chalk from 'chalk';
 import * as FigmaTypes from '../../figma/types';
 import { getComponentSetNodes, getComponentSets } from '../../figma/api';
 import { filterByNodeType } from '../utils';
-import { ExportableDefinition } from '../../types';
-import extractComponents, { Component } from './extractor';
+import { ComponentDefinition } from '../../types';
+import extractComponentInstances from './extractor';
 import { AxiosResponse } from 'axios';
+import { slugify } from '../../utils';
+import { IComponentSetMetadata } from '../../types/plugin';
+import { FileComponentsObject } from './types';
 
-export interface DocumentComponentsObject {
-  [key: string]: Component[];
+const groupReplaceRules = (tupleList: [string, string, string][]): { [key: string]: { [key: string]: string } } => {
+  const res: { [key: string]: { [key: string]: string } } = {};
+
+  tupleList.forEach(tuple => {
+    const variantProp = tuple[0];
+    const find = slugify(tuple[1]);
+    const replace = tuple[2];
+
+    if (!res[variantProp]) {
+      res[variantProp] = {};
+    }
+
+    res[variantProp][find] = replace;
+  });
+
+  return res;
 }
 
-export interface GetComponentSetComponentsResult {
-  components: FigmaTypes.Component[];
-  metadata: { [k: string]: FigmaTypes.ComponentMetadata };
-}
+const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSet): ComponentDefinition => {
+  const metadata = JSON.parse(
+    componentSet.sharedPluginData[`convertiv_handoff_app`][`node_${componentSet.id}_settings`]
+  ) as IComponentSetMetadata;
 
-const getComponentSetComponents = (
-  componentSets: ReadonlyArray<FigmaTypes.ComponentSet>,
-  componentSetsMetadata: ReadonlyArray<FigmaTypes.FullComponentMetadata>,
-  componentsMetadata: ReadonlyMap<string, FigmaTypes.ComponentMetadata>,
-  name: string
-): GetComponentSetComponentsResult => {
-  // Retrieve the component set with the given name (search)
-  const primaryComponentSet = componentSets.find((componentSet) => componentSet.name === name);
-  // Check if the component set exists
-  if (!primaryComponentSet) {
-    throw new Error(`No component set found for ${name}`);
-  }
-  // Locate component set metadata
-  const primaryComponentSetMetadata = componentSetsMetadata.find((metadata) => metadata.node_id === primaryComponentSet.id);
-  // Find ids of all other component sets located within the same containing frame of the found component set
-  const relevantComponentSetsIds = primaryComponentSetMetadata
-    ? componentSetsMetadata
-        .filter(
-          (metadata) =>
-            metadata.node_id !== primaryComponentSetMetadata.node_id &&
-            metadata.containing_frame.nodeId === primaryComponentSetMetadata.containing_frame.nodeId
-        )
-        .map((meta) => meta.node_id)
-    : [];
-  // Reduce array of component sets to a array of components (component set children) based on the array of relevant component sets ids
-  const relevantComponents = componentSets.reduce((res, componentSet) => {
-    return relevantComponentSetsIds.includes(componentSet.id) ? res.concat(componentSet.children) : res;
-  }, [] as FigmaTypes.Component[]);
-  // Define final list of components 
-  const components = [...primaryComponentSet.children, ...(relevantComponents || [])];
-  // Define final list of metadata (of all final components)
-  const metadata = Object.fromEntries(
-    Array.from(componentsMetadata.entries()).filter(([componentId]) => components.map((child) => child.id).includes(componentId))
-  );
-  // Return the result
+  const id = componentSet.id;
+  const name = slugify(metadata.name);
+
+  const variantProperties = Object.entries(componentSet.componentPropertyDefinitions)
+    .map(([variantPropertyName, variantPropertyDefinition]) => {
+      return {
+        name: variantPropertyName,
+        type: variantPropertyDefinition.type,
+        default: variantPropertyDefinition.defaultValue,
+        options: variantPropertyDefinition.variantOptions ?? [],
+      };
+    })
+    .filter((variantProperty) => variantProperty.type === 'VARIANT');
+
   return {
-    components,
-    metadata,
+    id,
+    name,
+    group: 'Component', // TODO
+    options: {
+      shared: {
+        defaults: variantProperties.reduce((map, current) => {
+          return { ...map, [current.name]: slugify(current.default.toString()) };
+        }, {} as Record<string, string>),
+      },
+      exporter: {
+        variantProperties: variantProperties.map((variantProp) => variantProp.name),
+        sharedComponentVariants: metadata.sharedVariants,
+      },
+      transformer: {
+        cssRootClass: name === 'button' ? 'btn' : name, // TODO
+        tokenNameSegments: metadata.tokenNameSegments,
+        replace: groupReplaceRules(metadata.replacements),
+      },
+    },
+    parts: metadata.parts.map((part) => ({
+      id: slugify(part.name),
+      tokens: part.definitions,
+    })),
   };
-}
+};
 
-const getFileComponentTokens = async (fileId: string, accessToken: string, exportables: ExportableDefinition[]): Promise<DocumentComponentsObject> => {
+const getComponentNodesWithMetadata = (
+  componentSet: FigmaTypes.ComponentSet,
+  componentsMetadata: ReadonlyMap<string, FigmaTypes.ComponentMetadata>
+) => {
+  return componentSet.children.map((component) => ({
+    node: component,
+    metadata: componentsMetadata.get(component.id),
+  }));
+};
+
+export const getFigmaFileComponents = async (fileId: string, accessToken: string): Promise<FileComponentsObject> => {
   let fileComponentSetsRes: AxiosResponse<FigmaTypes.FileComponentSetsResponse, any>;
 
   try {
@@ -79,21 +106,32 @@ const getFileComponentTokens = async (fileId: string, accessToken: string, expor
     return {};
   }
 
-  const componentSetsNodesRes = await getComponentSetNodes(
+  const componentSetNodesResult = await getComponentSetNodes(
     fileId,
     fileComponentSetsRes.data.meta.component_sets.map((item) => item.node_id),
     accessToken
   );
 
-  const componentSets = Object.values(componentSetsNodesRes.data.nodes)
+  const componentSets = Object.values(componentSetNodesResult.data.nodes)
     .map((node) => node?.document)
-    .filter(filterByNodeType('COMPONENT_SET'));
-
-  const componentSetsMetadata = fileComponentSetsRes.data.meta.component_sets;
+    .filter(filterByNodeType('COMPONENT_SET'))
+    .filter((componentSet) => {
+      try {
+        if (!componentSet.sharedPluginData || !componentSet.sharedPluginData[`convertiv_handoff_app`]) {
+          return false;
+        }
+        const settings = JSON.parse(
+          componentSet.sharedPluginData[`convertiv_handoff_app`][`node_${componentSet.id}_settings`]
+        ) as IComponentSetMetadata;
+        return settings.exposed;
+      } catch {
+        return false;
+      }
+    });
 
   const componentsMetadata = new Map(
     Object.entries(
-      Object.values(componentSetsNodesRes.data.nodes)
+      Object.values(componentSetNodesResult.data.nodes)
         .map((node) => {
           return node?.components;
         })
@@ -103,39 +141,27 @@ const getFileComponentTokens = async (fileId: string, accessToken: string, expor
     )
   );
 
-  const componentTokens: DocumentComponentsObject = {}
+  const componentTokens: FileComponentsObject = {};
 
-  for (const exportable of exportables) {
-    if (!exportable.id) {
-      console.error(
-        chalk.red(
-          'Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'
-        )
-      );
-      continue;
+  for (const componentSet of componentSets) {
+    const definition = getComponentSetComponentDefinition(componentSet);
+
+    if (!componentTokens[definition.name]) {
+      componentTokens[definition.name] = {
+        instances: [],
+        definitions: {},
+      };
     }
 
-    if (!exportable.options.exporter.search) {
-      console.error(
-        chalk.red(
-          'Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'
-        )
-      );
+    const components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
 
-      continue;
-    }
+    componentTokens[definition.name].instances = [
+      ...componentTokens[definition.name].instances,
+      ...extractComponentInstances(components, definition),
+    ];
 
-    componentTokens[exportable.id ?? ''] = extractComponents(
-      getComponentSetComponents(
-        componentSets,
-        componentSetsMetadata,
-        componentsMetadata,
-        exportable.options.exporter.search,
-      ), exportable
-    )
+    componentTokens[definition.name].definitions[componentSet.id] = definition;
   }
 
   return componentTokens;
 };
-
-export default getFileComponentTokens;

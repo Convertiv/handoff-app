@@ -1,5 +1,5 @@
-import { Component } from "../exporters/components/extractor";
-import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
+import { ComponentInstance } from '../exporters/components/types';
+import { ComponentDefinitionOptions, TypographyObject } from "../types";
 import { TokenType } from "./types";
 import { replaceTokens } from "../utils/index";
 import { capitalize } from "lodash";
@@ -19,7 +19,7 @@ export const getTypeName = (type: TypographyObject) => type.group
  * @param component
  * @returns
  */
-export const formatComponentCodeBlockComment = (component: Component, format: "/**/" | "//"): string => {
+export const formatComponentCodeBlockComment = (component: ComponentInstance, format: "/**/" | "//"): string => {
   const parts = [capitalize(component.name)];
 
   component.variantProperties.forEach(([variantProp, val]) => {
@@ -40,7 +40,7 @@ export const formatComponentCodeBlockComment = (component: Component, format: "/
  * @param options 
  * @returns 
  */
-export const formatTokenName = (tokenType: TokenType, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions): string => {
+export const formatTokenName = (tokenType: TokenType, component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions): string => {
   const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
   const tokenNameParts = getTokenNameSegments(component, part, property, options);
 
@@ -53,13 +53,37 @@ export const formatTokenName = (tokenType: TokenType, component: Component, part
  * @param options 
  * @returns 
  */
-export const getTokenNameSegments = (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => {
-  if (options?.tokenNameSegments) {
-    return options.tokenNameSegments.map(tokenNamePart => {
-      tokenNamePart = replaceTokens(tokenNamePart, new Map([['Component', component.name], ['Part', normalizeComponentPartName(part)], ['Property', property]]), (token, _, value) => value === '' ? token : value);
-      tokenNamePart = replaceTokens(tokenNamePart, new Map(component.variantProperties), (_, variantProp, value) => normalizeTokenNamePartValue(variantProp, value, options));
-      return tokenNamePart;
-    }).filter(part => part !== '');
+export const getTokenNameSegments = (component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => {
+  if (options?.transformer.tokenNameSegments) {
+    return options.transformer.tokenNameSegments
+      .map((tokenNamePart) => {
+        const initialValue = tokenNamePart;
+        tokenNamePart = replaceTokens(
+          tokenNamePart,
+          new Map([
+            ['Component', component.name],
+            ['Part', normalizeComponentPartName(part)],
+            ['Property', property],
+          ]),
+          (token, _, value) => (value === '' ? token : value)
+        );
+        
+        tokenNamePart = replaceTokens(
+          tokenNamePart,
+          new Map(component.variantProperties.map(([k, v]) => ['Variant.' + k, v])),
+          (_, variantProp, value) => normalizeTokenNamePartValue(variantProp.replace('Variant.', ''), value, options)
+        );
+
+        // Backward compatibility (remove before 1.0 release)
+        if (tokenNamePart === '') {
+          tokenNamePart = replaceTokens(initialValue, new Map(component.variantProperties), (_, variantProp, value) =>
+            normalizeTokenNamePartValue(variantProp, value, options)
+          );
+        }
+
+        return tokenNamePart;
+      })
+      .filter((part) => part !== '');
   }
 
   const parts: string[] = [
@@ -78,25 +102,25 @@ export const getTokenNameSegments = (component: Component, part: string, propert
 
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
- * with some other value based replace rules defined in the transformer options of the exportable
+ * with some other value based replace rules defined in the transformer options of the component
  * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options (assuming keepDefaults is set to false).
+ * defined in the component shared options (assuming keepDefaults is set to false).
  * @param variable
  * @param value 
  * @param options 
  * @returns 
  */
-export const normalizeTokenNamePartValue = (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions, keepDefaults: boolean = false) => {
-  const replace = options?.replace ?? {};
-  const defaults = options?.defaults ?? {};
+export const normalizeTokenNamePartValue = (variable: string, value?: string, options?: ComponentDefinitionOptions, keepDefaults: boolean = false) => {
+  const replace = options?.transformer.replace ?? {};
+  const defaults = options?.shared.defaults ?? {};
 
   if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
     return replace[variable][value] ?? '';
   }
 
-  if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
-    return '';
-  }
+  // if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+  //   return '';
+  // }
 
   return value;
 }

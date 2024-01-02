@@ -1,0 +1,24 @@
+{
+  "views": {
+    "landing": {
+      "condition": {
+        "State": ["default"],
+        "Theme": ["light"]
+      },
+      "sort": ["Type", "Size"]
+    },
+    "tokens": {
+      "condition": {
+        "State": {
+          "default": {
+            "State": ["default", "hover", "disabled"],
+            "Theme": ["light"]
+          }
+        },
+        "Theme": ["light"],
+        "Size": [""]
+      },
+      "sort": ["Type", "Size"]
+    }
+  }
+}

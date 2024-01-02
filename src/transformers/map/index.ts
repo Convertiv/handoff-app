@@ -1,16 +1,16 @@
 import { DocumentationObject } from '../../types';
-import { ExportableTransformerOptionsMap, TransformerOutput } from '../types';
+import { TransformerOutput } from '../types';
 import { transformComponentsToMap } from './component';
 import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
-export default function mapTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
+export default function mapTransformer(documentationObject: DocumentationObject): TransformerOutput {
   let flatMap: Record<string, string> = {};
 
   const components: Record<string, string> = {};
   for (const componentId in documentationObject.components) {
-    const map = transformComponentsToMap(componentId, documentationObject.components[componentId], options?.get(componentId));
+    const map = transformComponentsToMap(componentId, documentationObject.components[componentId]);
     components[componentId] = JSON.stringify(map, null, 2);
     flatMap = { ...flatMap, ...map }
   }

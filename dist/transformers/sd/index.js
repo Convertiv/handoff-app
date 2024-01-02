@@ -7,10 +7,10 @@ var component_1 = require("./component");
 var colors_1 = __importDefault(require("./design/colors"));
 var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
-function sdTransformer(documentationObject, options) {
+function sdTransformer(documentationObject) {
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToStyleDictionary)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
+        components[componentId] = (0, component_1.transformComponentsToStyleDictionary)(componentId, documentationObject.components[componentId]);
     }
     var design = {
         colors: (0, colors_1.default)(documentationObject.design.color),

@@ -50,6 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFigmaFileDesignTokens = void 0;
 var chalk_1 = __importDefault(require("chalk"));
 var api_1 = require("../figma/api");
 var convertColor_1 = require("../utils/convertColor");
@@ -81,7 +82,7 @@ var fieldData = function (name) {
 var isArray = function (input) {
     return Array.isArray(input);
 };
-var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
+var getFigmaFileDesignTokens = function (fileId, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
     var apiResponse, file, styles, nodeMeta, nodeIds, childrenApiResponse, tokens, colorsArray_1, effectsArray_1, typographyArray_1, data, err_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -177,4 +178,4 @@ var getFileDesignTokens = function (fileId, accessToken) { return __awaiter(void
         }
     });
 }); };
-exports.default = getFileDesignTokens;
+exports.getFigmaFileDesignTokens = getFigmaFileDesignTokens;

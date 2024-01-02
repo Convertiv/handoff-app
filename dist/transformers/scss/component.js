@@ -4,24 +4,27 @@ exports.transformComponentTokensToScssVariables = exports.transformComponentsToS
 var utils_1 = require("../utils");
 var transformer_1 = require("../transformer");
 var utils_2 = require("../../utils");
-var transformComponentsToScssTypes = function (name, components, options) {
+var transformComponentsToScssTypes = function (name, component) {
     var result = {};
-    components.forEach(function (component) {
-        component.variantProperties.forEach(function (_a) {
+    component.instances.forEach(function (instance) {
+        instance.variantProperties.forEach(function (_a) {
             var _b;
             var variantProp = _a[0], value = _a[1];
             if (value) {
+                var options = component.definitions[instance.definitionId].options;
                 (_b = result[variantProp]) !== null && _b !== void 0 ? _b : (result[variantProp] = new Set());
-                result[variantProp].add(component.type === 'design'
-                    ? (0, utils_1.normalizeTokenNamePartValue)(variantProp, value, options, true)
-                    : (0, utils_1.normalizeTokenNamePartValue)(variantProp, value, options, true));
+                result[variantProp].add((0, utils_1.normalizeTokenNamePartValue)(variantProp, value, options, true));
             }
         });
     });
-    return Object.keys(result).map(function (variantProp) {
-        var mapValsStr = Array.from(result[variantProp]).map(function (val) { return "\"".concat(val, "\""); }).join(', ');
+    return (Object.keys(result)
+        .map(function (variantProp) {
+        var mapValsStr = Array.from(result[variantProp])
+            .map(function (val) { return "\"".concat(val, "\""); })
+            .join(', ');
         return "$".concat(name, "-").concat((0, utils_2.slugify)(variantProp), "-map: ( ").concat(mapValsStr, " );");
-    }).join('\n\n') + '\n';
+    })
+        .join('\n\n') + '\n');
 };
 exports.transformComponentsToScssTypes = transformComponentsToScssTypes;
 var transformComponentTokensToScssVariables = function (component, options) {

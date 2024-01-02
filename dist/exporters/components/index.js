@@ -59,58 +59,87 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFigmaFileComponents = void 0;
 var chalk_1 = __importDefault(require("chalk"));
 var api_1 = require("../../figma/api");
 var utils_1 = require("../utils");
 var extractor_1 = __importDefault(require("./extractor"));
-var getComponentSetComponents = function (componentSets, componentSetsMetadata, componentsMetadata, name) {
-    // Retrieve the component set with the given name (search)
-    var primaryComponentSet = componentSets.find(function (componentSet) { return componentSet.name === name; });
-    // Check if the component set exists
-    if (!primaryComponentSet) {
-        throw new Error("No component set found for ".concat(name));
-    }
-    // Locate component set metadata
-    var primaryComponentSetMetadata = componentSetsMetadata.find(function (metadata) { return metadata.node_id === primaryComponentSet.id; });
-    // Find ids of all other component sets located within the same containing frame of the found component set
-    var relevantComponentSetsIds = primaryComponentSetMetadata
-        ? componentSetsMetadata
-            .filter(function (metadata) {
-            return metadata.node_id !== primaryComponentSetMetadata.node_id &&
-                metadata.containing_frame.nodeId === primaryComponentSetMetadata.containing_frame.nodeId;
-        })
-            .map(function (meta) { return meta.node_id; })
-        : [];
-    // Reduce array of component sets to a array of components (component set children) based on the array of relevant component sets ids
-    var relevantComponents = componentSets.reduce(function (res, componentSet) {
-        return relevantComponentSetsIds.includes(componentSet.id) ? res.concat(componentSet.children) : res;
-    }, []);
-    // Define final list of components 
-    var components = __spreadArray(__spreadArray([], primaryComponentSet.children, true), (relevantComponents || []), true);
-    // Define final list of metadata (of all final components)
-    var metadata = Object.fromEntries(Array.from(componentsMetadata.entries()).filter(function (_a) {
-        var componentId = _a[0];
-        return components.map(function (child) { return child.id; }).includes(componentId);
-    }));
-    // Return the result
+var utils_2 = require("../../utils");
+var groupReplaceRules = function (tupleList) {
+    var res = {};
+    tupleList.forEach(function (tuple) {
+        var variantProp = tuple[0];
+        var find = (0, utils_2.slugify)(tuple[1]);
+        var replace = tuple[2];
+        if (!res[variantProp]) {
+            res[variantProp] = {};
+        }
+        res[variantProp][find] = replace;
+    });
+    return res;
+};
+var getComponentSetComponentDefinition = function (componentSet) {
+    var metadata = JSON.parse(componentSet.sharedPluginData["convertiv_handoff_app"]["node_".concat(componentSet.id, "_settings")]);
+    var id = componentSet.id;
+    var name = (0, utils_2.slugify)(metadata.name);
+    var variantProperties = Object.entries(componentSet.componentPropertyDefinitions)
+        .map(function (_a) {
+        var _b;
+        var variantPropertyName = _a[0], variantPropertyDefinition = _a[1];
+        return {
+            name: variantPropertyName,
+            type: variantPropertyDefinition.type,
+            default: variantPropertyDefinition.defaultValue,
+            options: (_b = variantPropertyDefinition.variantOptions) !== null && _b !== void 0 ? _b : [],
+        };
+    })
+        .filter(function (variantProperty) { return variantProperty.type === 'VARIANT'; });
     return {
-        components: components,
-        metadata: metadata,
+        id: id,
+        name: name,
+        group: 'Component',
+        options: {
+            shared: {
+                defaults: variantProperties.reduce(function (map, current) {
+                    var _a;
+                    return __assign(__assign({}, map), (_a = {}, _a[current.name] = (0, utils_2.slugify)(current.default.toString()), _a));
+                }, {}),
+            },
+            exporter: {
+                variantProperties: variantProperties.map(function (variantProp) { return variantProp.name; }),
+                sharedComponentVariants: metadata.sharedVariants,
+            },
+            transformer: {
+                cssRootClass: name === 'button' ? 'btn' : name,
+                tokenNameSegments: metadata.tokenNameSegments,
+                replace: groupReplaceRules(metadata.replacements),
+            },
+        },
+        parts: metadata.parts.map(function (part) { return ({
+            id: (0, utils_2.slugify)(part.name),
+            tokens: part.definitions,
+        }); }),
     };
 };
-var getFileComponentTokens = function (fileId, accessToken, exportables) { return __awaiter(void 0, void 0, void 0, function () {
-    var fileComponentSetsRes, err_1, componentSetsNodesRes, componentSets, componentSetsMetadata, componentsMetadata, componentTokens, _i, exportables_1, exportable;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+var getComponentNodesWithMetadata = function (componentSet, componentsMetadata) {
+    return componentSet.children.map(function (component) { return ({
+        node: component,
+        metadata: componentsMetadata.get(component.id),
+    }); });
+};
+var getFigmaFileComponents = function (fileId, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
+    var fileComponentSetsRes, err_1, componentSetNodesResult, componentSets, componentsMetadata, componentTokens, _i, componentSets_1, componentSet, definition, components;
+    var _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
-                _c.trys.push([0, 2, , 3]);
+                _b.trys.push([0, 2, , 3]);
                 return [4 /*yield*/, (0, api_1.getComponentSets)(fileId, accessToken)];
             case 1:
-                fileComponentSetsRes = _c.sent();
+                fileComponentSetsRes = _b.sent();
                 return [3 /*break*/, 3];
             case 2:
-                err_1 = _c.sent();
+                err_1 = _b.sent();
                 throw new Error('Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide');
             case 3:
                 if (fileComponentSetsRes.data.meta.component_sets.length === 0) {
@@ -120,12 +149,23 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                 }
                 return [4 /*yield*/, (0, api_1.getComponentSetNodes)(fileId, fileComponentSetsRes.data.meta.component_sets.map(function (item) { return item.node_id; }), accessToken)];
             case 4:
-                componentSetsNodesRes = _c.sent();
-                componentSets = Object.values(componentSetsNodesRes.data.nodes)
+                componentSetNodesResult = _b.sent();
+                componentSets = Object.values(componentSetNodesResult.data.nodes)
                     .map(function (node) { return node === null || node === void 0 ? void 0 : node.document; })
-                    .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'));
-                componentSetsMetadata = fileComponentSetsRes.data.meta.component_sets;
-                componentsMetadata = new Map(Object.entries((_a = Object.values(componentSetsNodesRes.data.nodes)
+                    .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'))
+                    .filter(function (componentSet) {
+                    try {
+                        if (!componentSet.sharedPluginData || !componentSet.sharedPluginData["convertiv_handoff_app"]) {
+                            return false;
+                        }
+                        var settings = JSON.parse(componentSet.sharedPluginData["convertiv_handoff_app"]["node_".concat(componentSet.id, "_settings")]);
+                        return settings.exposed;
+                    }
+                    catch (_a) {
+                        return false;
+                    }
+                });
+                componentsMetadata = new Map(Object.entries((_a = Object.values(componentSetNodesResult.data.nodes)
                     .map(function (node) {
                     return node === null || node === void 0 ? void 0 : node.components;
                 })
@@ -133,20 +173,21 @@ var getFileComponentTokens = function (fileId, accessToken, exportables) { retur
                     return __assign(__assign({}, acc), cur);
                 })) !== null && _a !== void 0 ? _a : {}));
                 componentTokens = {};
-                for (_i = 0, exportables_1 = exportables; _i < exportables_1.length; _i++) {
-                    exportable = exportables_1[_i];
-                    if (!exportable.id) {
-                        console.error(chalk_1.default.red('Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'));
-                        continue;
+                for (_i = 0, componentSets_1 = componentSets; _i < componentSets_1.length; _i++) {
+                    componentSet = componentSets_1[_i];
+                    definition = getComponentSetComponentDefinition(componentSet);
+                    if (!componentTokens[definition.name]) {
+                        componentTokens[definition.name] = {
+                            instances: [],
+                            definitions: {},
+                        };
                     }
-                    if (!exportable.options.exporter.search) {
-                        console.error(chalk_1.default.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
-                        continue;
-                    }
-                    componentTokens[(_b = exportable.id) !== null && _b !== void 0 ? _b : ''] = (0, extractor_1.default)(getComponentSetComponents(componentSets, componentSetsMetadata, componentsMetadata, exportable.options.exporter.search), exportable);
+                    components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
+                    componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition), true);
+                    componentTokens[definition.name].definitions[componentSet.id] = definition;
                 }
                 return [2 /*return*/, componentTokens];
         }
     });
 }); };
-exports.default = getFileComponentTokens;
+exports.getFigmaFileComponents = getFigmaFileComponents;

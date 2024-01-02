@@ -26,171 +26,91 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
-function extractComponents(componentSetComponentsResult, definition) {
-    var sharedComponentVariants = [];
-    var supportedVariantProperties = getComponentSupportedVariantProperties(definition);
-    var supportedDesignVariantPropertiesWithSharedVariants = supportedVariantProperties.design.filter(function (variantProperty) { var _a; return ((_a = variantProperty.params) !== null && _a !== void 0 ? _a : []).length > 0; });
-    var hasAnyVariantPropertiesWithSharedVariants = supportedDesignVariantPropertiesWithSharedVariants.length > 0;
-    var components = componentSetComponentsResult.components
-        .map(function (component) {
-        // BEGIN: Get variant properties
-        var _a, _b, _c, _d, _e, _f;
-        var defaults = (_c = (_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults) !== null && _c !== void 0 ? _c : {};
-        var _g = (0, utils_1.extractComponentVariantProps)(component.name, supportedVariantProperties.design, defaults), designVariantProperties = _g[0], _ = _g[1];
-        var _h = (0, utils_1.extractComponentVariantProps)(component.name, supportedVariantProperties.layout, defaults), layoutVariantProperties = _h[0], hasAnyNonDefaultLayoutVariantProperty = _h[1];
-        // END: Get variant properties
-        // BEGIN: Set component type indicator
-        var isLayoutComponent = hasAnyNonDefaultLayoutVariantProperty;
-        // END: Set component type indicator
-        // BEGIN: Define required component properties
-        var variantProperties = isLayoutComponent ? layoutVariantProperties : designVariantProperties;
-        var type = isLayoutComponent ? 'layout' : 'design';
-        var description = (_e = (_d = componentSetComponentsResult.metadata[component.id]) === null || _d === void 0 ? void 0 : _d.description) !== null && _e !== void 0 ? _e : '';
-        var name = (_f = definition.id) !== null && _f !== void 0 ? _f : '';
-        var id = generateComponentId(variantProperties, isLayoutComponent);
-        // END: Define required component properties
-        // BEGIN: Get component parts
-        var instanceNode = isLayoutComponent ? component : (0, utils_1.findChildNodeWithType)(component, 'INSTANCE');
-        if (!instanceNode) {
-            throw new Error("No instance node found for component ".concat(component.name));
+function extractComponentInstances(components, definition) {
+    var _a;
+    var options = definition.options;
+    var sharedComponentVariantIds = (_a = options.exporter.sharedComponentVariants) !== null && _a !== void 0 ? _a : [];
+    var sharedInstances = [];
+    var componentInstances = components.map(function (component) {
+        var _a, _b, _c;
+        var variantProperties = (0, utils_1.extractComponentInstanceVariantProps)(component.node.name, options.exporter.variantProperties);
+        var id = generateComponentId(variantProperties);
+        var name = (0, index_1.slugify)(definition.name);
+        var description = (_b = (_a = component.metadata[component.node.id]) === null || _a === void 0 ? void 0 : _a.description) !== null && _b !== void 0 ? _b : '';
+        if (!definition.parts || definition.parts.length === 0) {
+            return [];
         }
-        var partsToExport = definition.parts;
-        if (!partsToExport) {
-            return null;
-        }
-        var parts = partsToExport.reduce(function (previous, current) {
+        var parts = definition.parts.reduce(function (previous, current) {
             var _a;
-            return conditionIsMet(current, variantProperties)
-                ? __assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(instanceNode, current, variantProperties), _a)) : previous;
+            return (__assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(component.node, current, variantProperties), _a)));
         }, {});
-        // END: Get component parts
-        // BEGIN: Initialize the resulting component
-        var result = {
+        var instance = {
             id: id,
             name: name,
             description: description,
-            type: type,
             variantProperties: variantProperties,
             parts: parts,
+            definitionId: definition.id,
         };
-        // END: Initialize the resulting component
-        // BEGIN: Store resulting component if component variant should be shared
-        var componentVariantIsBeingShared = false;
-        if (type === 'design' && hasAnyVariantPropertiesWithSharedVariants) {
-            supportedDesignVariantPropertiesWithSharedVariants.forEach(function (variantProperty) {
-                var _a;
-                // Get the variant property value of the component and validate that the value is set
-                var variantPropertyValue = variantProperties.get(variantProperty.name);
-                // Check if the component has a value set for the variant property we are checking
-                if (!variantPropertyValue) {
-                    // If the component doesn't have a value set we bail early
-                    return;
-                }
-                // Check if the component is set to be shared based on the value of the variant property
-                var matchesByComponentVariantPropertyValue = (_a = variantProperty.params.filter(function (param) { return param[0] === variantPropertyValue; })) !== null && _a !== void 0 ? _a : [];
-                // Check if there are any matches
-                if (matchesByComponentVariantPropertyValue.length === 0) {
-                    // If there aren't any matches, we bail early
-                    return;
-                }
-                // Signal that the component variant is considered to be shared
-                componentVariantIsBeingShared = true;
-                // Current component is a shared component.
-                // We store the component for later when we will do the binding.
-                matchesByComponentVariantPropertyValue.forEach(function (match) {
-                    sharedComponentVariants.push({
-                        variantProperty: variantProperty.name,
-                        groupByVariantProperty: match[1],
-                        component: result
-                    });
-                });
-            });
+        var isSharedComponentVariant = ((_c = sharedComponentVariantIds.findIndex(function (s) { return s.componentId === component.node.id; })) !== null && _c !== void 0 ? _c : -1) > -1;
+        if (isSharedComponentVariant) {
+            sharedInstances.push(__assign(__assign({}, instance), { componentId: component.node.id }));
+            return [];
         }
-        // END: Store resulting component if component variant should be shared
-        if (componentVariantIsBeingShared) {
-            return null;
-        }
-        return result;
-    })
-        .filter(index_1.filterOutNull);
-    if (sharedComponentVariants.length > 0) {
-        sharedComponentVariants.forEach(function (sharedComponentVariant) {
-            var sharedComponentVariantProps = sharedComponentVariant.component.variantProperties;
-            components
-                .filter(function (component) {
-                var _a, _b;
-                // check if the component is a design component
-                if (component.type !== 'design') {
-                    return false; // ignore component if it's not a design component
-                }
-                // check if the grouping variant property is defined
-                if (sharedComponentVariant.groupByVariantProperty) {
-                    // get the shared component grouping variant property value
-                    var sharedComponentGroupVariantPropertyValue = sharedComponentVariant.component.variantProperties.get(sharedComponentVariant.groupByVariantProperty);
-                    // check if the current component variant property value matches the group value
-                    if (sharedComponentGroupVariantPropertyValue && sharedComponentGroupVariantPropertyValue !== component.variantProperties.get(sharedComponentVariant.groupByVariantProperty)) {
-                        return false; // ignore if the value does not match
+        var result = [instance];
+        sharedInstances
+            .filter(function (sharedInstance) {
+            var _a;
+            var sharedInstanceDefinition = options.exporter.sharedComponentVariants.find(function (item) { return item.componentId === sharedInstance.componentId; });
+            if (!sharedInstanceDefinition) {
+                return false;
+            }
+            if (instance.variantProperties.get(sharedInstanceDefinition.sharedVariantProperty) !==
+                options.shared.defaults[sharedInstanceDefinition.sharedVariantProperty]) {
+                return false;
+            }
+            if (((_a = sharedInstanceDefinition.distinctiveVariantProperties) !== null && _a !== void 0 ? _a : []).length > 0) {
+                for (var _i = 0, _b = sharedInstanceDefinition.distinctiveVariantProperties; _i < _b.length; _i++) {
+                    var distinctiveVariantProperty = _b[_i];
+                    if (instance.variantProperties.get(distinctiveVariantProperty) !==
+                        sharedInstance.variantProperties.get(distinctiveVariantProperty)) {
+                        return false;
                     }
                 }
-                // applying shared variant should happen only once per design component
-                // so we pick only those design components for which the value of the
-                // shared variant property is the default one
-                if (component.variantProperties.get(sharedComponentVariant.variantProperty) !== ((_b = (_a = definition.options) === null || _a === void 0 ? void 0 : _a.shared) === null || _b === void 0 ? void 0 : _b.defaults[sharedComponentVariant.variantProperty])) {
-                    return false; // ignore if the variant property value is not the default one
-                }
-                return true;
-            })
-                .forEach(function (component) {
-                var componentToPush = __assign({}, sharedComponentVariant.component);
-                var componentToPushVariantProps = new Map(component.variantProperties);
-                componentToPushVariantProps.set(sharedComponentVariant.variantProperty, sharedComponentVariantProps.get(sharedComponentVariant.variantProperty));
-                componentToPush.id = generateComponentId(componentToPushVariantProps, false);
-                componentToPush.variantProperties = componentToPushVariantProps;
-                components.push(componentToPush);
+            }
+            return true;
+        })
+            .forEach(function (sharedInstance) {
+            var sharedInstanceDefinition = options.exporter.sharedComponentVariants.find(function (item) { return item.componentId === sharedInstance.componentId; });
+            var additionalInstance = __assign({}, sharedInstance);
+            var additionalInstanceVariantProps = new Map(instance.variantProperties);
+            additionalInstanceVariantProps.set(sharedInstanceDefinition.sharedVariantProperty, sharedInstance.variantProperties.get(sharedInstanceDefinition.sharedVariantProperty));
+            additionalInstance.id = generateComponentId(additionalInstanceVariantProps);
+            additionalInstance.variantProperties = additionalInstanceVariantProps;
+            result.push({
+                id: additionalInstance.id,
+                name: additionalInstance.name,
+                description: additionalInstance.description,
+                variantProperties: additionalInstanceVariantProps,
+                parts: additionalInstance.parts,
+                definitionId: additionalInstance.definitionId,
             });
         });
-    }
-    return lodash_1.default.uniqBy(components, 'id').map(function (component) { return ({
-        id: component.id,
-        name: component.name,
-        description: component.description,
-        type: component.type,
-        variantProperties: Array.from(component.variantProperties.entries()),
-        parts: component.parts,
-    }); });
+        return result;
+    });
+    var instances = componentInstances.reduce(function (result, current) {
+        return __spreadArray(__spreadArray([], result, true), current.map(function (component) { return ({
+            id: component.id,
+            name: component.name,
+            description: component.description,
+            variantProperties: Array.from(component.variantProperties.entries()),
+            parts: component.parts,
+            definitionId: component.definitionId,
+        }); }), true);
+    }, []);
+    return lodash_1.default.uniqBy(instances, 'id');
 }
-exports.default = extractComponents;
-function conditionIsMet(part, tokens) {
-    var _a, _b;
-    if (!part.condition) {
-        return true;
-    }
-    for (var _i = 0, _c = part.condition; _i < _c.length; _i++) {
-        var condition = _c[_i];
-        if (condition.length < 2) {
-            continue; // invalid condition, skip condition
-        }
-        var operator = condition[1];
-        if (!['eq', 'ne', 'defined', 'undefined'].includes(operator)) {
-            continue; // invalid operator, skip condition
-        }
-        var l = (0, index_1.replaceTokens)((_a = condition[0]) !== null && _a !== void 0 ? _a : '', tokens);
-        var r = (0, index_1.replaceTokens)((_b = condition[2]) !== null && _b !== void 0 ? _b : '', tokens);
-        if (operator === 'eq' && l != r) {
-            return false;
-        }
-        if (operator === 'ne' && l == r) {
-            return false;
-        }
-        if (operator === 'defined' && l == '') {
-            return false;
-        }
-        if (operator === 'undefined' && l != '') {
-            return false;
-        }
-    }
-    return true;
-}
+exports.default = extractComponentInstances;
 function extractComponentPartTokenSets(root, part, tokens) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
@@ -270,29 +190,8 @@ function parsePathNodeParams(path) {
 function mergeTokenSets(first, second) {
     return lodash_1.default.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
 }
-function getComponentPropertyWithParams(variantProperty) {
-    var _a;
-    var regex = /^([^:]+)(?:\(([^)]+)\))?$/;
-    var matches = variantProperty.match(regex);
-    if (!matches || matches.length !== 3) {
-        return null; // ignore if format is invalid
-    }
-    var key = matches[1].trim();
-    var value = (_a = matches[2]) === null || _a === void 0 ? void 0 : _a.trim();
-    return {
-        name: key,
-        params: value ? value.substring(1).split(':').map(function (param) { return param.split(/\/(.*)/s).slice(0, 2); }) : undefined,
-    };
-}
-function getComponentSupportedVariantProperties(definition) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    return {
-        design: ((_d = (_c = (_b = (_a = definition === null || definition === void 0 ? void 0 : definition.options) === null || _a === void 0 ? void 0 : _a.exporter) === null || _b === void 0 ? void 0 : _b.supportedVariantProps) === null || _c === void 0 ? void 0 : _c.design) !== null && _d !== void 0 ? _d : []).map(function (variantProperty) { return getComponentPropertyWithParams(variantProperty); }),
-        layout: ((_h = (_g = (_f = (_e = definition === null || definition === void 0 ? void 0 : definition.options) === null || _e === void 0 ? void 0 : _e.exporter) === null || _f === void 0 ? void 0 : _f.supportedVariantProps) === null || _g === void 0 ? void 0 : _g.layout) !== null && _h !== void 0 ? _h : []).map(function (variantProperty) { return getComponentPropertyWithParams(variantProperty); }),
-    };
-}
-function generateComponentId(variantProperties, isLayoutComponent) {
-    var parts = isLayoutComponent ? [] : ['design'];
+function generateComponentId(variantProperties) {
+    var parts = [];
     variantProperties.forEach(function (val, variantProp) {
         parts.push("".concat(variantProp, "-").concat(val));
     });

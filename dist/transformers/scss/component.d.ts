@@ -1,4 +1,4 @@
-import { Component } from '../../exporters/components/extractor';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
-export declare const transformComponentsToScssTypes: (name: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
-export declare const transformComponentTokensToScssVariables: (component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => import("../types").Token[];
+import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
+import { ComponentDefinitionOptions } from '../../types';
+export declare const transformComponentsToScssTypes: (name: string, component: FileComponentObject) => string;
+export declare const transformComponentTokensToScssVariables: (component: ComponentInstance, options?: ComponentDefinitionOptions) => import("../types").Token[];
