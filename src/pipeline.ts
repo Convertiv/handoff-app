@@ -259,7 +259,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
-  const legacyDefinitions = await getLegacyDefinitions(handoff);
+  const legacyDefinitions = handoff.config.use_legacy_definitions ? await getLegacyDefinitions(handoff) : null;
   const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {

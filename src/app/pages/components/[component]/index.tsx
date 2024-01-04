@@ -52,7 +52,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       id: component,
       component: componentObject,
-      legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : undefined,
+      legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : null,
       previews: componentPreviews,
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
       config,

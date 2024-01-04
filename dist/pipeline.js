@@ -357,26 +357,33 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
     });
 }); };
 var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, legacyDefinitions, documentationObject, changelogRecord, outputFolder;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var prevDocumentationObject, changelog, legacyDefinitions, _a, documentationObject, changelogRecord, outputFolder;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
                 console.log(chalk_1.default.green("Starting Figma data extraction."));
                 return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
-                prevDocumentationObject = _a.sent();
+                prevDocumentationObject = _b.sent();
                 return [4 /*yield*/, readPrevJSONFile(changelogFilePath(handoff))];
             case 2:
-                changelog = (_a.sent()) || [];
+                changelog = (_b.sent()) || [];
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
-                _a.sent();
+                _b.sent();
+                if (!handoff.config.use_legacy_definitions) return [3 /*break*/, 5];
                 return [4 /*yield*/, getLegacyDefinitions(handoff)];
             case 4:
-                legacyDefinitions = _a.sent();
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
+                _a = _b.sent();
+                return [3 /*break*/, 6];
             case 5:
-                documentationObject = _a.sent();
+                _a = undefined;
+                _b.label = 6;
+            case 6:
+                legacyDefinitions = _a;
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
+            case 7:
+                documentationObject = _b.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
                     changelog = __spreadArray([changelogRecord], changelog, true);
@@ -395,15 +402,15 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                             }),
                         ]
                         : []), true))];
-            case 6:
-                _a.sent();
-                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
-                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 8];
-                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
-            case 7:
-                _a.sent();
-                _a.label = 8;
             case 8:
+                _b.sent();
+                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 10];
+                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
+            case 9:
+                _b.sent();
+                _b.label = 10;
+            case 10:
                 // copy assets to output folder
                 fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
                 fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
