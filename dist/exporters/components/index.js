@@ -164,6 +164,7 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
 exports.getFigmaFileComponents = getFigmaFileComponents;
 var processFigmaNodes = function (fileNodesResponse) {
     var _a;
+    console.warn(chalk_1.default.redBright('!!! Using Handoff Figma Plugin fetch flow !!!'));
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
         .map(function (node) {
@@ -208,7 +209,6 @@ var processFigmaNodes = function (fileNodesResponse) {
  */
 var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullComponentMetadataArray, legacyDefinitions) {
     var _a;
-    console.warn(chalk_1.default.redBright('!!! Using legacy Handoff fetch flow !!!'));
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
         .map(function (node) {

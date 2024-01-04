@@ -124,6 +124,12 @@ export const getFigmaFileComponents = async (fileId: string, accessToken: string
 };
 
 const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
+  console.warn(
+    chalk.redBright(
+      '!!! Using Handoff Figma Plugin fetch flow !!!'
+    )
+  );
+
   const componentTokens: FileComponentsObject = {};
 
   const componentsMetadata = new Map(
@@ -183,12 +189,6 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
  * @deprecated Will be removed before 1.0.0 release.
  */
 const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.FileNodesResponse, fullComponentMetadataArray: readonly FigmaTypes.FullComponentMetadata[], legacyDefinitions: LegacyComponentDefinition[]) => {
-  console.warn(
-    chalk.redBright(
-      '!!! Using legacy Handoff fetch flow !!!'
-    )
-  );
-
   const componentTokens: FileComponentsObject = {};
 
   const componentsMetadata = new Map(
