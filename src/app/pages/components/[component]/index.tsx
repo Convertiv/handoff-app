@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchComponents, getPreview, getTokens } from '../../../components/util';
+import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchComponents, getLegacyDefinition, getPreview, getTokens } from '../../../components/util';
 import { getClientConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import { ComponentDocumentationOptions, PreviewObject } from '../../../../types';
+import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '../../../../types';
 import { ComponentInstance, FileComponentObject } from '../../../../exporters/components/types';
 import Head from 'next/head';
 import Header from '../../../components/Header';
@@ -41,6 +41,7 @@ export async function getStaticPaths() {
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
+  const config = getClientConfig();
   const { component } = context.params as IParams;
 
   const componentSlug = reduceSlugToString(component);
@@ -51,12 +52,32 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       id: component,
       component: componentObject,
+      legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : undefined,
       previews: componentPreviews,
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
-      config: getClientConfig(),
+      config,
     },
   };
 };
+
+const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions["demo"] | undefined) => {
+  return docViews ? {
+    views: {
+      overview: docViews["overview"] ? {
+        condition: {
+          ...(docViews["overview"]["design"] ?? {}),
+          ...(docViews["overview"]["layout"] ?? {}),
+        }
+      } : undefined,
+      tokens: docViews["designTokens"] ? {
+        condition: {
+          ...(docViews["designTokens"]["design"] ?? {}),
+          ...(docViews["designTokens"]["layout"] ?? {}),
+        }
+      } : undefined,
+    }
+  } : undefined
+}
 
 const GenericComponentPage = ({
   content,
@@ -70,13 +91,17 @@ const GenericComponentPage = ({
   styleDictionary,
   types,
   component,
+  legacyDefinition,
   previews,
   config,
 }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
-  const overviewTabComponents = getComponentPreviews('landing', component, options, previews);
-  const designTokensTabComponents = getComponentPreviews('tokens', component, options, previews);
+  // Support legacy component definitions (loads the doc page options from the definition)
+  const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
+
+  const overviewTabComponents = getComponentPreviews('overview', component, componentDocumentationOptions, previews);
+  const tokensTabComponents = getComponentPreviews('tokens', component, componentDocumentationOptions, previews);
 
   return (
     <div className="c-page">
@@ -140,7 +165,7 @@ const GenericComponentPage = ({
                 <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
                   <DownloadTokens componentId={id} scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
                 </div>
-                {designTokensTabComponents.map((previewComponent) => {
+                {tokensTabComponents.map((previewComponent) => {
                   return (
                     <ComponentDesignTokens
                       key={previewComponent.component.id}
@@ -176,7 +201,7 @@ type ComponentPreview = {
 type ComponentPreviews = ComponentPreview[];
 
 const getComponentPreviews = (
-  tab: 'landing' | 'tokens',
+  tab: 'overview' | 'tokens',
   component: FileComponentObject,
   options: ComponentDocumentationOptions,
   previews: PreviewObject[]

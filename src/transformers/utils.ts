@@ -1,7 +1,7 @@
 import { ComponentInstance } from '../exporters/components/types';
 import { ComponentDefinitionOptions, TypographyObject } from "../types";
 import { TokenType } from "./types";
-import { replaceTokens } from "../utils/index";
+import { replaceTokens, slugify } from "../utils/index";
 import { capitalize } from "lodash";
 
 /**
@@ -118,9 +118,9 @@ export const normalizeTokenNamePartValue = (variable: string, value?: string, op
     return replace[variable][value] ?? '';
   }
 
-  // if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
-  //   return '';
-  // }
+  if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+    return '';
+  }
 
   return value;
 }

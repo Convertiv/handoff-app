@@ -91,6 +91,8 @@ var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
+var lodash_1 = require("lodash");
+var utils_1 = require("./utils");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
@@ -355,7 +357,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
     });
 }); };
 var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, documentationObject, changelogRecord, outputFolder;
+    var prevDocumentationObject, changelog, legacyDefinitions, documentationObject, changelogRecord, outputFolder;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -369,8 +371,11 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token)];
+                return [4 /*yield*/, getLegacyDefinitions(handoff)];
             case 4:
+                legacyDefinitions = _a.sent();
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
+            case 5:
                 documentationObject = _a.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
@@ -390,15 +395,15 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                             }),
                         ]
                         : []), true))];
-            case 5:
-                _a.sent();
-                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
-                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 7];
-                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
             case 6:
                 _a.sent();
-                _a.label = 7;
+                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 8];
+                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
             case 7:
+                _a.sent();
+                _a.label = 8;
+            case 8:
                 // copy assets to output folder
                 fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
                 fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
@@ -476,3 +481,48 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
     });
 }); };
 exports.default = pipeline;
+/**
+ * Returns configured legacy component definitions in array form.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var config_1, definitions, exportables;
+    var _a;
+    return __generator(this, function (_b) {
+        try {
+            if (!handoff.config) {
+                throw new Error('Handoff config not found');
+            }
+            config_1 = handoff.config;
+            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
+            if (!definitions || definitions.length === 0) {
+                return [2 /*return*/, []];
+            }
+            exportables = definitions
+                .map(function (def) {
+                var _a;
+                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
+                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
+                // If the project path exists, use that first as an override	
+                if (fs_extra_1.default.existsSync(projectPath)) {
+                    defPath = projectPath;
+                }
+                else if (!fs_extra_1.default.existsSync(defPath)) {
+                    return null;
+                }
+                var defBuffer = fs_extra_1.default.readFileSync(defPath);
+                var exportable = JSON.parse(defBuffer.toString());
+                var exportableOptions = {};
+                (0, lodash_1.merge)(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                exportable.options = exportableOptions;
+                return exportable;
+            })
+                .filter(utils_1.filterOutNull);
+            return [2 /*return*/, exportables ? exportables : []];
+        }
+        catch (e) {
+            return [2 /*return*/, []];
+        }
+        return [2 /*return*/];
+    });
+}); };

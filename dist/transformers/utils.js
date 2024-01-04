@@ -96,16 +96,16 @@ exports.getTokenNameSegments = getTokenNameSegments;
  * @returns
  */
 var normalizeTokenNamePartValue = function (variable, value, options, keepDefaults) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     if (keepDefaults === void 0) { keepDefaults = false; }
     var replace = (_a = options === null || options === void 0 ? void 0 : options.transformer.replace) !== null && _a !== void 0 ? _a : {};
     var defaults = (_b = options === null || options === void 0 ? void 0 : options.shared.defaults) !== null && _b !== void 0 ? _b : {};
     if (variable in (replace !== null && replace !== void 0 ? replace : {}) && value && value in ((_c = replace[variable]) !== null && _c !== void 0 ? _c : {})) {
         return (_d = replace[variable][value]) !== null && _d !== void 0 ? _d : '';
     }
-    // if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
-    //   return '';
-    // }
+    if (!keepDefaults && variable in (defaults !== null && defaults !== void 0 ? defaults : {}) && value === ((_e = defaults[variable]) !== null && _e !== void 0 ? _e : '')) {
+        return '';
+    }
     return value;
 };
 exports.normalizeTokenNamePartValue = normalizeTokenNamePartValue;

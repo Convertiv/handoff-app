@@ -8,7 +8,7 @@ import {
   isExportable,
   isValidNodeType,
 } from '../utils';
-import { Exportable, ComponentDefinition, ComponentPart } from '../../types';
+import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types';
 import { replaceTokens, slugify } from '../../utils/index';
 
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
@@ -16,7 +16,8 @@ type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: 
 
 export default function extractComponentInstances(
   components: { node: FigmaTypes.Component; metadata: FigmaTypes.ComponentMetadata }[],
-  definition: ComponentDefinition
+  definition: ComponentDefinition,
+  legacyDefinition?: LegacyComponentDefinition,
 ): ExportTypes.ComponentInstance[] {
   const options = definition.options;
   const sharedComponentVariantIds = options.exporter.sharedComponentVariants ?? [];
@@ -28,6 +29,28 @@ export default function extractComponentInstances(
     const name = slugify(definition.name);
     const description = component.metadata[component.node.id]?.description ?? '';
 
+    let rootNode: FigmaTypes.Component | FigmaTypes.Instance = component.node;
+
+    if (legacyDefinition) {
+      let isLayoutComponent = false;
+
+      if (!!legacyDefinition?.options?.exporter?.supportedVariantProps?.layout) {
+        legacyDefinition.options.exporter.supportedVariantProps.layout.forEach((layoutVariantProp) => {
+          if (!isLayoutComponent && variantProperties.get(layoutVariantProp) !== undefined) {
+            isLayoutComponent = true;
+          }
+        });
+  
+        if (!isLayoutComponent) {
+          rootNode = findChildNodeWithType(component.node, 'INSTANCE');
+        }
+  
+        if (!rootNode) {
+          throw new Error(`No instance node found for component ${component.node.name}`);
+        }
+      }
+    }
+
     if (!definition.parts || definition.parts.length === 0) {
       return [];
     }
@@ -35,7 +58,7 @@ export default function extractComponentInstances(
     const parts = definition.parts.reduce(
       (previous, current) => ({
         ...previous,
-        ...{ [current.id]: extractComponentPartTokenSets(component.node, current, variantProperties) },
+        ...{ [current.id]: extractComponentPartTokenSets(rootNode, current, variantProperties) },
       }),
       {}
     );

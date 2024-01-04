@@ -45,11 +45,11 @@ var index_1 = require("./exporters/components/index");
 var design_1 = require("./exporters/design");
 var startCase_1 = __importDefault(require("lodash/startCase"));
 var chalk_1 = __importDefault(require("chalk"));
-var createDocumentationObject = function (figmaFileKey, figmaAccessToken) { return __awaiter(void 0, void 0, void 0, function () {
+var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var components, design, icons, logos;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(figmaFileKey, figmaAccessToken)];
+            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(figmaFileKey, figmaAccessToken, legacyDefinitions)];
             case 1:
                 components = _a.sent();
                 // Log out components

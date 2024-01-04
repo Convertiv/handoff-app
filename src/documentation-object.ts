@@ -1,12 +1,12 @@
 import assetsExporter from './exporters/assets';
 import { getFigmaFileComponents } from './exporters/components/index';
 import { getFigmaFileDesignTokens } from './exporters/design';
-import { DocumentationObject } from './types';
+import { DocumentationObject, LegacyComponentDefinition } from './types';
 import startCase from 'lodash/startCase';
 import chalk from 'chalk';
 
-export const createDocumentationObject = async (figmaFileKey: string, figmaAccessToken: string): Promise<DocumentationObject> => {
-  const components = await getFigmaFileComponents(figmaFileKey, figmaAccessToken);
+export const createDocumentationObject = async (figmaFileKey: string, figmaAccessToken: string, legacyDefinitions?: LegacyComponentDefinition[]): Promise<DocumentationObject> => {
+  const components = await getFigmaFileComponents(figmaFileKey, figmaAccessToken, legacyDefinitions);
 
   // Log out components
   Object.keys(components).map((component: string) => {

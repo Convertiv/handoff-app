@@ -8,6 +8,8 @@ import * as stream from 'node:stream';
 import { getRequestCount } from './figma/api';
 import {
   DocumentationObject,
+  LegacyComponentDefinition,
+  LegacyComponentDefinitionOptions,
 } from './types';
 import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './api';
@@ -21,6 +23,8 @@ import buildApp from './app';
 import Handoff from '.';
 import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
+import { merge } from 'lodash';
+import { filterOutNull } from './utils';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
@@ -255,7 +259,8 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
-  const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token);
+  const legacyDefinitions = await getLegacyDefinitions(handoff);
+  const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
@@ -327,3 +332,46 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 export default pipeline;
+
+/**
+ * Returns configured legacy component definitions in array form.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[]> => {	
+  try {	
+    if (!handoff.config) {	
+      throw new Error('Handoff config not found');	
+    }	
+    const config = handoff.config;	
+    const definitions = config?.figma?.definitions;	
+    if (!definitions || definitions.length === 0) {	
+      return [];	
+    }	
+
+    const exportables = definitions	
+      .map((def) => {	
+        let defPath = path.resolve(path.join(handoff.modulePath, 'config/exportables', `${def}.json`));	
+        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));	
+        // If the project path exists, use that first as an override	
+        if (fs.existsSync(projectPath)) {	
+          defPath = projectPath;	
+        } else if (!fs.existsSync(defPath)) {	
+          return null;	
+        }	
+
+        const defBuffer = fs.readFileSync(defPath);	
+        const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;	
+
+        const exportableOptions = {};	
+        merge(exportableOptions, config?.figma?.options, exportable.options);	
+        exportable.options = exportableOptions as LegacyComponentDefinitionOptions;	
+
+        return exportable;	
+      })	
+      .filter(filterOutNull);	
+
+    return exportables ? exportables : [];	
+  } catch (e) {	
+    return [];	
+  }	
+};

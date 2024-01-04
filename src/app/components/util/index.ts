@@ -2,10 +2,10 @@ import { getClientConfig } from '../../../config';
 import { ChangelogRecord } from '../../../changelog';
 import { ExportResult, ClientConfig } from '../../../types/config';
 import { DocumentComponentDefinitions, FileComponentObject } from '../../../exporters/components/types';
-import { ComponentDocumentationOptions, PreviewJson, PreviewObject } from '../../../types';
+import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '../../../types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy, uniq } from 'lodash';
+import { groupBy, merge, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -71,7 +71,8 @@ export interface AssetDocumentationProps extends DocumentationProps {
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
   component: FileComponentObject;
-  definitions: DocumentComponentDefinitions;
+  legacyDefinition: LegacyComponentDefinition;
+  // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
 }
 
@@ -333,14 +334,49 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
 export const fetchComponents = () => {
   try {
     return (
-      Object.keys(getTokens().components).map((id) => ({
+      Object.entries(getTokens().components).map(([id, obj]) => ({
         id,
-        group: '',
+        group: Object.values(obj.definitions)[0]?.group ?? '',
       })) ?? []
     );
   } catch (e) {
     return [];
   }
+};
+
+/**
+ * Returns the legacy component definition for component with the given name.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export const getLegacyDefinition = (name: string) => {
+  const config = getConfig();
+  const handoff = getHandoff();
+  const def = config?.figma?.definitions.filter((def) => {
+    return def.split('/').pop() === name;
+  });
+  if (!def || def.length === 0) {
+    return null;
+  }
+
+  let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+  // If the project path exists, use that first as an override
+  if (fs.existsSync(projectPath)) {
+    defPath = projectPath;
+  } else if (!fs.existsSync(defPath)) {
+    return null;
+  }
+  if (!fs.existsSync(defPath)) {
+    return null;
+  }
+
+  const data = fs.readFileSync(defPath, 'utf-8');
+  const exportable = JSON.parse(data.toString()) as LegacyComponentDefinition;
+
+  const exportableOptions = {};
+  merge(exportableOptions, config?.figma?.options, exportable.options);
+  exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
+  return exportable;
 };
 
 /**

@@ -67,6 +67,7 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
+  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() !== "true"
 });
 
 /**

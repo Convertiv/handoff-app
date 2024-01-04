@@ -26,23 +26,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
-function extractComponentInstances(components, definition) {
+function extractComponentInstances(components, definition, legacyDefinition) {
     var _a;
     var options = definition.options;
     var sharedComponentVariantIds = (_a = options.exporter.sharedComponentVariants) !== null && _a !== void 0 ? _a : [];
     var sharedInstances = [];
     var componentInstances = components.map(function (component) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f;
         var variantProperties = (0, utils_1.extractComponentInstanceVariantProps)(component.node.name, options.exporter.variantProperties);
         var id = generateComponentId(variantProperties);
         var name = (0, index_1.slugify)(definition.name);
         var description = (_b = (_a = component.metadata[component.node.id]) === null || _a === void 0 ? void 0 : _a.description) !== null && _b !== void 0 ? _b : '';
+        var rootNode = component.node;
+        if (legacyDefinition) {
+            var isLayoutComponent_1 = false;
+            if (!!((_e = (_d = (_c = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _c === void 0 ? void 0 : _c.exporter) === null || _d === void 0 ? void 0 : _d.supportedVariantProps) === null || _e === void 0 ? void 0 : _e.layout)) {
+                legacyDefinition.options.exporter.supportedVariantProps.layout.forEach(function (layoutVariantProp) {
+                    if (!isLayoutComponent_1 && variantProperties.get(layoutVariantProp) !== undefined) {
+                        isLayoutComponent_1 = true;
+                    }
+                });
+                if (!isLayoutComponent_1) {
+                    rootNode = (0, utils_1.findChildNodeWithType)(component.node, 'INSTANCE');
+                }
+                if (!rootNode) {
+                    throw new Error("No instance node found for component ".concat(component.node.name));
+                }
+            }
+        }
         if (!definition.parts || definition.parts.length === 0) {
             return [];
         }
         var parts = definition.parts.reduce(function (previous, current) {
             var _a;
-            return (__assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(component.node, current, variantProperties), _a)));
+            return (__assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(rootNode, current, variantProperties), _a)));
         }, {});
         var instance = {
             id: id,
@@ -52,7 +69,7 @@ function extractComponentInstances(components, definition) {
             parts: parts,
             definitionId: definition.id,
         };
-        var isSharedComponentVariant = ((_c = sharedComponentVariantIds.findIndex(function (s) { return s.componentId === component.node.id; })) !== null && _c !== void 0 ? _c : -1) > -1;
+        var isSharedComponentVariant = ((_f = sharedComponentVariantIds.findIndex(function (s) { return s.componentId === component.node.id; })) !== null && _f !== void 0 ? _f : -1) > -1;
         if (isSharedComponentVariant) {
             sharedInstances.push(__assign(__assign({}, instance), { componentId: component.node.id }));
             return [];

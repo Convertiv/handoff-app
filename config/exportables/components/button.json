@@ -33,8 +33,7 @@
           "design": {
             "State": "default",
             "Theme": "light"
-          },
-          "layout": {}
+          }
         },
         "designTokens": {
           "design": {
@@ -49,6 +48,9 @@
               }
             },
             "Theme": "light"
+          },
+          "layout": {
+            "Size": ""
           }
         }
       }

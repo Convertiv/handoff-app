@@ -150,3 +150,49 @@ export interface ComponentDocumentationOptions {
 export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
 export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
 type ComponentViewFilterValue = string  | string[] | {[value: string]: {[prop: string]: string}}
+
+/**
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export interface LegacyComponentDefinition {
+  id: string;
+  group?: string;
+  options?: LegacyComponentDefinitionOptions;
+  parts: ComponentPart[];
+}
+
+/**
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export interface LegacyComponentDefinitionOptions {
+  shared?: {
+    defaults?: {
+        [variantProperty: string]: string;
+    };
+  };
+  exporter?: {
+    search: string;
+    supportedVariantProps: {
+        design: string[];
+        layout: string[];
+    };
+  };
+  transformer?: {
+    cssRootClass?: string;
+    tokenNameSegments?: string[];
+    replace: {
+        [variantProperty: string]: {
+            [source: string]: string;
+        };
+    };
+  };
+  demo?: {
+    tabs?: {
+        [tab: string]: {
+            [componentType: string]: {
+              [property: string]: ComponentViewFilterValue
+            };
+        };
+    };
+  };
+}

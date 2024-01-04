@@ -1,6 +1,6 @@
 {
   "views": {
-    "landing": {
+    "overview": {
       "condition": {
         "State": ["default"],
         "Theme": ["light"]
