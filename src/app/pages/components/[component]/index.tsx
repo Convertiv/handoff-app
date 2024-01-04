@@ -60,6 +60,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
+/**
+ * Transforms the legacy definition doc page options to new doc page options.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
 const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions["demo"] | undefined) => {
   return docViews ? {
     views: {
@@ -97,9 +101,7 @@ const GenericComponentPage = ({
 }: ComponentDocumentationProps) => {
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
 
-  // Support legacy component definitions (loads the doc page options from the definition)
   const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
-
   const overviewTabComponents = getComponentPreviews('overview', component, componentDocumentationOptions, previews);
   const tokensTabComponents = getComponentPreviews('tokens', component, componentDocumentationOptions, previews);
 

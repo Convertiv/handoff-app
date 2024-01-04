@@ -377,7 +377,7 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 _a = _b.sent();
                 return [3 /*break*/, 6];
             case 5:
-                _a = undefined;
+                _a = null;
                 _b.label = 6;
             case 6:
                 legacyDefinitions = _a;
