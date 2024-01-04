@@ -5,6 +5,9 @@ export interface IComponentSetMetadata {
     name: string;
     parts: IComponentPart[];
     tokenNameSegments: string[];
+    defaults: {
+        [variantProperty: string]: string;
+    };
     replacements: IVariantPropValueReplacement[];
     sharedVariants: ISharedComponentVariant[];
 }

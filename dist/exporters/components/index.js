@@ -100,9 +100,10 @@ var getComponentSetComponentDefinition = function (componentSet) {
         group: '',
         options: {
             shared: {
-                defaults: variantProperties.reduce(function (map, current) {
-                    var _a;
-                    return __assign(__assign({}, map), (_a = {}, _a[current.name] = (0, utils_2.slugify)(current.default.toString()), _a));
+                defaults: Object.entries(metadata.defaults).reduce(function (res, _a) {
+                    var _b;
+                    var variantProperty = _a[0], defaultValue = _a[1];
+                    return __assign(__assign({}, res), (_b = {}, _b[variantProperty] = (0, utils_2.slugify)(defaultValue), _b));
                 }, {}),
             },
             exporter: {
@@ -269,7 +270,7 @@ var getComponentPropertyWithParams = function (variantProperty) {
  * @deprecated Will be removed before 1.0.0 release.
  */
 var getComponentDefinitionForLegacyComponentDefinition = function (componentSet, legacyDefinition) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     var supportedVariantProps = __spreadArray(__spreadArray([], (_d = (_c = (_b = (_a = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _a === void 0 ? void 0 : _a.exporter) === null || _b === void 0 ? void 0 : _b.supportedVariantProps) === null || _c === void 0 ? void 0 : _c.design) !== null && _d !== void 0 ? _d : [], true), (_h = (_g = (_f = (_e = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _e === void 0 ? void 0 : _e.exporter) === null || _f === void 0 ? void 0 : _f.supportedVariantProps) === null || _g === void 0 ? void 0 : _g.layout) !== null && _h !== void 0 ? _h : [], true);
     var definitionSupportedVariantProperties = supportedVariantProps.map(function (variantProp) { return variantProp.replace(/ *\([^)]*\) */g, ''); });
     var definitionSupportedVariantPropertiesWithShareParams = supportedVariantProps.filter(function (variantProperty) { return variantProperty.match((/ *\([^)]*\) */g)); });
@@ -306,7 +307,6 @@ var getComponentDefinitionForLegacyComponentDefinition = function (componentSet,
             });
         });
     }
-    var docViews = (_k = (_j = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _j === void 0 ? void 0 : _j.demo) === null || _k === void 0 ? void 0 : _k.tabs;
     return {
         id: componentSet.id,
         name: legacyDefinition.id,

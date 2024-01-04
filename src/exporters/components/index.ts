@@ -52,9 +52,9 @@ const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSe
     group: '', // TODO
     options: {
       shared: {
-        defaults: variantProperties.reduce((map, current) => {
-          return { ...map, [current.name]: slugify(current.default.toString()) };
-        }, {} as Record<string, string>),
+        defaults: Object.entries(metadata.defaults).reduce((res, [variantProperty, defaultValue]) => {
+          return { ...res, ...{ [variantProperty]: slugify(defaultValue) }}
+        }, {}),
       },
       exporter: {
         variantProperties: variantProperties.map((variantProp) => variantProp.name),
@@ -317,8 +317,6 @@ const getComponentDefinitionForLegacyComponentDefinition = (componentSet: FigmaT
       });
     });
   }
-
-  const docViews = legacyDefinition?.options?.demo?.tabs;
     
   return {
     id: componentSet.id,
