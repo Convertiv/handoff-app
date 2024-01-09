@@ -82,6 +82,9 @@ var getComponentSetComponentDefinition = function (componentSet) {
     var metadata = JSON.parse(componentSet.sharedPluginData["convertiv_handoff_app"]["node_".concat(componentSet.id, "_settings")]);
     var id = componentSet.id;
     var name = (0, utils_2.slugify)(metadata.name);
+    if (!componentSet.componentPropertyDefinitions) {
+        return null;
+    }
     var variantProperties = Object.entries(componentSet.componentPropertyDefinitions)
         .map(function (_a) {
         var _b;
@@ -191,6 +194,9 @@ var processFigmaNodes = function (fileNodesResponse) {
     for (var _i = 0, componentSets_1 = componentSets; _i < componentSets_1.length; _i++) {
         var componentSet = componentSets_1[_i];
         var definition = getComponentSetComponentDefinition(componentSet);
+        if (!definition) {
+            continue;
+        }
         if (!componentTokens[definition.name]) {
             componentTokens[definition.name] = {
                 instances: [],

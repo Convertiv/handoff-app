@@ -27,13 +27,17 @@ const groupReplaceRules = (tupleList: [string, string, string][]): { [key: strin
   return res;
 }
 
-const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSet): ComponentDefinition => {
+const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSet): ComponentDefinition | null => {
   const metadata = JSON.parse(
     componentSet.sharedPluginData[`convertiv_handoff_app`][`node_${componentSet.id}_settings`]
   ) as IComponentSetMetadata;
 
   const id = componentSet.id;
   const name = slugify(metadata.name);
+
+  if (!componentSet.componentPropertyDefinitions) {
+    return null;
+  }
 
   const variantProperties = Object.entries(componentSet.componentPropertyDefinitions)
     .map(([variantPropertyName, variantPropertyDefinition]) => {
@@ -163,6 +167,10 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
 
   for (const componentSet of componentSets) {
     const definition = getComponentSetComponentDefinition(componentSet);
+
+    if (!definition) {
+      continue;
+    }
 
     if (!componentTokens[definition.name]) {
       componentTokens[definition.name] = {
