@@ -95,24 +95,3 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
   };
 };
-
-/**
- * Serializes and saves the current handoff state to the working directory
- * @param handoff Handoff
- */
-export const saveHandoffState = (handoff: Handoff) => {
-  const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
-  if (!fs.existsSync(outputPath)) {
-    fs.mkdirSync(path.resolve(outputPath), { recursive: true });
-  }
-  const statePath = path.resolve(outputPath, 'handoff.state.json');
-  handoff.config = sanitizeConfigiration(handoff.config);
-  fs.writeFileSync(statePath, JSON.stringify(handoff));
-};
-
-const sanitizeConfigiration = (config: Config) => {
-  delete config.figma_project_id;
-  delete config.dev_access_token;
-
-  return config;
-}

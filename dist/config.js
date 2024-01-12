@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveHandoffState = exports.getClientConfig = exports.defaultConfig = void 0;
+exports.getClientConfig = exports.defaultConfig = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
@@ -101,22 +101,3 @@ var getClientConfig = function (configOverride) {
     };
 };
 exports.getClientConfig = getClientConfig;
-/**
- * Serializes and saves the current handoff state to the working directory
- * @param handoff Handoff
- */
-var saveHandoffState = function (handoff) {
-    var outputPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
-    if (!fs_extra_1.default.existsSync(outputPath)) {
-        fs_extra_1.default.mkdirSync(path_1.default.resolve(outputPath), { recursive: true });
-    }
-    var statePath = path_1.default.resolve(outputPath, 'handoff.state.json');
-    handoff.config = sanitizeConfigiration(handoff.config);
-    fs_extra_1.default.writeFileSync(statePath, JSON.stringify(handoff));
-};
-exports.saveHandoffState = saveHandoffState;
-var sanitizeConfigiration = function (config) {
-    delete config.figma_project_id;
-    delete config.dev_access_token;
-    return config;
-};
