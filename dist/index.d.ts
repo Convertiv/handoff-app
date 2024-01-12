@@ -6,9 +6,6 @@ import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import { HandoffIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
-declare global {
-    var handoff: Handoff | null;
-}
 declare class Handoff {
     config: Config | null;
     debug: boolean;

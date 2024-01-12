@@ -2,7 +2,7 @@ import * as React from 'react';
 import type * as next from 'next';
 import sortedUniq from 'lodash/sortedUniq';
 import type { TypographyObject } from '../../../types';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';
 import { FontFamily } from '../../../types/font';
@@ -55,7 +55,7 @@ export const getStaticProps: next.GetStaticProps = async () => {
   return {
     props: {
       ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       design: getTokens().design,
     },
   }

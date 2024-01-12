@@ -1,6 +1,6 @@
-import { getConfig, getHandoff } from '../../../config';
+import { getClientConfig } from '../../../config';
 import { ChangelogRecord } from '../../../changelog';
-import { ExportResult, Config } from '../../../types/config';
+import { ExportResult, ClientConfig } from '../../../types/config';
 import { Component } from '../../../exporters/components/extractor';
 import { ExportableDefinition, ExportableOptions, PreviewJson, PreviewObject } from '../../../types';
 import { filterOutNull } from '../../../utils';
@@ -45,7 +45,7 @@ export interface DocumentationProps {
   content: string;
   menu: SectionLink[];
   current: SectionLink;
-  config: Config;
+  config: ClientConfig;
 }
 
 export interface DocumentationWithTokensProps extends DocumentationProps {
@@ -132,10 +132,9 @@ export const pluralizeComponent = (singular: string): string => {
  * @returns
  */
 export const buildL1StaticPaths = () => {
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let list = files;
   if(fs.existsSync(pageRoot)){
     const pages = fs.readdirSync(pageRoot);
@@ -166,10 +165,9 @@ export const buildL1StaticPaths = () => {
  * @returns SubPathType[]
  */
 export const buildL2StaticPaths = () => {
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let list = files;
   if(fs.existsSync(pageRoot)){
     const pages = fs.readdirSync(pageRoot);
@@ -212,11 +210,10 @@ export const buildL2StaticPaths = () => {
  */
 export const staticBuildMenu = () => {
   // Contents of docs
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
   let list = files;
-  const workingPages = path.resolve(handoff.workingPath, 'pages');
+  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let pages: string[] = [];
   if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
@@ -334,8 +331,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  */
 export const fetchExportables = () => {
   try {
-    const config = getConfig();
-    const handoff = getHandoff();
+    const config = getClientConfig();
     const definitions = config?.figma?.definitions;
 
     if (!definitions || definitions.length === 0) {
@@ -344,8 +340,8 @@ export const fetchExportables = () => {
 
     const exportables = definitions
       .map((def) => {
-        let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+        let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', 'exportables', `${def}.json`);
+        const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? "", 'exportables', `${def}.json`));
         // If the project path exists, use that first as an override
         if (fs.existsSync(projectPath)) {
           defPath = projectPath;
@@ -369,8 +365,7 @@ export const fetchExportables = () => {
 };
 
 export const fetchExportable = (name: string) => {
-  const config = getConfig();
-  const handoff = getHandoff();
+  const config = getClientConfig();
   const def = config?.figma?.definitions.filter((def) => {
     return def.split('/').pop() === name;
   });
@@ -378,8 +373,8 @@ export const fetchExportable = (name: string) => {
     return null;
   }
 
-  let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-  const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+  let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? "", 'exportables', `${def}.json`));
   // If the project path exists, use that first as an override
   if (fs.existsSync(projectPath)) {
     defPath = projectPath;
@@ -464,10 +459,9 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @returns
  */
 export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
-  const handoff = getHandoff();
-  const filepath = path.resolve(handoff.modulePath, 'config', `${localPath}${slug}.md`);
+  const filepath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', `${localPath}${slug}.md`);
   const pagePath = localPath.replace('docs/', 'pages/');
-  const workingPath = path.resolve(handoff.workingPath, `${pagePath}${slug}.md`);
+  const workingPath = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", `${pagePath}${slug}.md`);
   let currentContents = '';
   
   if (fs.existsSync(workingPath)) {
@@ -493,7 +487,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
  * @returns
  */
 export const titleString = (prefix: string | null): string => {
-  const config = getConfig();
+  const config = getClientConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config?.app?.client} Design System`;
 };

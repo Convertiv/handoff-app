@@ -16,7 +16,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import Footer from '../../components/Footer';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
@@ -38,7 +38,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
-      config: getConfig(),
+      config: getClientConfig(),
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
       design: getTokens().design,
     },

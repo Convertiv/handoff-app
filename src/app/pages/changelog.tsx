@@ -6,7 +6,7 @@ import Head from 'next/head';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 import Header from '../components/Header';
 import CustomNav from '../components/SideNav/Custom';
-import { getConfig } from '../../config';
+import { getClientConfig } from '../../config';
 import Footer from '../components/Footer';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
@@ -29,7 +29,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'changelog', `/changelog`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       changelog: getChangelog(),
     },
   };

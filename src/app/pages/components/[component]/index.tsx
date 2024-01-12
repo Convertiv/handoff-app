@@ -2,7 +2,7 @@ import * as React from 'react';
 import { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
 import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from '../../../components/util';
-import { getConfig } from '../../../../config';
+import { getClientConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
 import { ExportableDefinition, ExportableOptions, PreviewObject } from '../../../../types';
 import { Component } from '../../../../exporters/components/extractor';
@@ -47,7 +47,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       exportable: fetchExportable(componentSlug!),
       components: getTokens().components[componentSlug!],
       previews: getPreview().components[componentSlug!],

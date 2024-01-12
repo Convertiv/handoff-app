@@ -10,7 +10,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import { getHandoff } from '../../../config';
+import { getClientConfig } from '../../../config';
 import path from 'path';
 import Footer from '../../components/Footer';
 
@@ -23,8 +23,7 @@ import Footer from '../../components/Footer';
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  const handoff = getHandoff();
-  const fonts = fs.readdirSync(path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'fonts'));
+  const fonts = fs.readdirSync(path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'src', `~app-${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts'));
   const customFonts: string[] = [];
 
   fonts.map((font) => {
@@ -39,7 +38,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
       design: getTokens().design,
-      config: handoff.config,
+      config: getClientConfig(),
       customFonts,
     },
   };

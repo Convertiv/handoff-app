@@ -18,8 +18,10 @@ const nextConfig = {
   distDir: 'out',
   basePath: '',
   env: {
+    HANDOFF_PROJECT_ID: '',
     HANDOFF_APP_BASE_PATH: '',
     HANDOFF_WORKING_PATH: '',
+    HANDOFF_MODULE_PATH: '',
     HANDOFF_EXPORT_PATH: '',
   },
   serverRuntimeConfig: {
@@ -35,8 +37,10 @@ const nextConfig = {
 
       // Local environment
       const env = {
+        HANDOFF_PROJECT_ID: '',
         HANDOFF_APP_BASE_PATH: '',
         HANDOFF_WORKING_PATH: '',
+        HANDOFF_MODULE_PATH: '',
         HANDOFF_EXPORT_PATH: '',
       };
       

@@ -83,6 +83,8 @@ export interface Config {
   };
 }
 
+export type ClientConfig = Pick<Config, "app" | "figma" | "assets_zip_links">;
+
 declare const config: Config;
 
 export default config;

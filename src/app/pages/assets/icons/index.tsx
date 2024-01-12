@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import type { AssetObject } from '../../../../types';
-import { getConfig } from '../../../../config';
+import { getClientConfig } from '../../../../config';
 import Icon from '../../../components/Icon';
 import Head from 'next/head';
 import Header from '../../../components/Header';
@@ -55,7 +55,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       assets: getTokens().assets,
     },
   };

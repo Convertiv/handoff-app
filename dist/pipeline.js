@@ -84,7 +84,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildIntegrationOnly = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
-var config_1 = require("./config");
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
@@ -146,15 +145,15 @@ var formatComponentsTransformerOptions = function (exportables) {
  * @returns Promise<ExportableDefinition[]>
  */
 var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config_2, definitions, exportables;
+    var config_1, definitions, exportables;
     var _a;
     return __generator(this, function (_b) {
         try {
             if (!handoff.config) {
                 throw new Error('Handoff config not found');
             }
-            config_2 = handoff.config;
-            definitions = (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.definitions;
+            config_1 = handoff.config;
+            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
             if (!definitions || definitions.length === 0) {
                 return [2 /*return*/, []];
             }
@@ -173,7 +172,7 @@ var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 
                 var defBuffer = fs_extra_1.default.readFileSync(defPath);
                 var exportable = JSON.parse(defBuffer.toString());
                 var exportableOptions = {};
-                (0, merge_1.default)(exportableOptions, (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                (0, merge_1.default)(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
                 exportable.options = exportableOptions;
                 return exportable;
             })
@@ -536,15 +535,12 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
+                if (!build) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
                 _a.sent();
-                if (!build) return [3 /*break*/, 11];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                _a.label = 10;
             case 10:
-                _a.sent();
-                _a.label = 11;
-            case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

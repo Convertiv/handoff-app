@@ -1,5 +1,5 @@
 import Handoff from '.';
-import { Config } from './types/config';
+import { ClientConfig, Config } from './types/config';
 export interface ImageStyle {
     name: string;
     style: string;
@@ -9,21 +9,12 @@ export interface ImageStyle {
 }
 export declare const defaultConfig: () => Config;
 /**
- * Get the config, either from the root of the project or from the default config
+ * Get the configuration formatted for the client, either from the root of the project or from the default config.
  * @returns Promise<Config>
  */
-export declare const getConfig: (configOverride?: any) => Config;
+export declare const getClientConfig: (configOverride?: any) => ClientConfig;
 /**
- * Get the handoff from the global scope
- * @returns Handoff
+ * Serializes and saves the current handoff state to the working directory
+ * @param handoff Handoff
  */
-export declare const getHandoff: () => Handoff;
-/**
- * Serialize the handoff to the working directory
- */
-export declare const serializeHandoff: (handoff: Handoff) => void;
-/**
- * Deserialize the handoff from the working directory
- * @returns
- */
-export declare const deserializeHandoff: () => any;
+export declare const saveHandoffState: (handoff: Handoff) => void;
