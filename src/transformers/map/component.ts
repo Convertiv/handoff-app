@@ -1,22 +1,22 @@
-import { Component } from '../../exporters/components/extractor';
 import { transform } from '../transformer';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { FileComponentObject } from '../../exporters/components/types';
 
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
  * @returns
  */
-export const transformComponentsToMap = (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => {
+export const transformComponentsToMap = (_: string, component: FileComponentObject) => {
   const map = {} as Record<string, string>;
 
-  components.forEach(component => {
-    const tokens = transform('map', component, options);
+  component.instances.forEach((instance) => {
+    const options = component.definitions[instance.definitionId].options;
+    const tokens = transform('map', instance, options);
 
-    tokens.forEach(token =>{
+    tokens.forEach((token) => {
       map[token.name] = token.value;
     });
-  })
+  });
 
   return map;
 };

@@ -1,8 +1,7 @@
-import { Component } from '../../exporters/components/extractor';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { FileComponentObject } from '../../exporters/components/types';
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
  * @returns
  */
-export declare const transformComponentsToMap: (_: string, components: Component[], options?: ExportableTransformerOptions & ExportableSharedOptions) => Record<string, string>;
+export declare const transformComponentsToMap: (_: string, component: FileComponentObject) => Record<string, string>;

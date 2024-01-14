@@ -18,7 +18,7 @@ exports.getClientConfig = exports.defaultConfig = void 0;
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
-    var _a, _b;
+    var _a, _b, _c;
     return ({
         dev_access_token: (_a = process.env.DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
         figma_project_id: (_b = process.env.FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
@@ -75,6 +75,7 @@ var defaultConfig = function () {
                 'components/switch',
             ],
         },
+        use_legacy_definitions: ((_c = process.env.USE_HANDOFF_PLUGIN) !== null && _c !== void 0 ? _c : "").toLowerCase() !== "true"
     });
 };
 exports.defaultConfig = defaultConfig;
@@ -93,11 +94,12 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, assets_zip_links = _a.assets_zip_links;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, assets_zip_links = _a.assets_zip_links, use_legacy_definitions = _a.use_legacy_definitions;
     return {
         app: app,
         figma: figma,
         assets_zip_links: assets_zip_links !== null && assets_zip_links !== void 0 ? assets_zip_links : { icons: null, logos: null },
+        use_legacy_definitions: use_legacy_definitions
     };
 };
 exports.getClientConfig = getClientConfig;

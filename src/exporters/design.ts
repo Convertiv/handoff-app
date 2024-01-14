@@ -39,7 +39,7 @@ const isArray = (input: any): input is any[] | readonly any[] => {
   return Array.isArray(input);
 };
 
-const getFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
+export const getFigmaFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
   color: ColorObject[];
   typography: TypographyObject[];
   effect: EffectObject[];
@@ -139,5 +139,3 @@ const getFileDesignTokens = async (fileId: string, accessToken: string): Promise
     return { color: [], typography: [], effect: [] };
   }
 };
-
-export default getFileDesignTokens;

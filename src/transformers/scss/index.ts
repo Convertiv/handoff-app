@@ -4,18 +4,18 @@ import transformEffects, { transformEffectTypes } from './design/effects';
 import transformTypography, { transformTypographyTypes } from './design/typography';
 import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component';
 import { formatComponentCodeBlockComment } from '../utils';
-import { ExportableTransformerOptionsMap, TransformerOutput } from '../types';
+import { TransformerOutput } from '../types';
 
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
  * @returns
  */
-export function scssTypesTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
+export function scssTypesTransformer(documentationObject: DocumentationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
-    components[componentId] = transformComponentsToScssTypes(componentId, documentationObject.components[componentId], options?.get(componentId));
+    components[componentId] = transformComponentsToScssTypes(componentId, documentationObject.components[componentId]);
   }
 
   const design = {
@@ -32,15 +32,22 @@ export function scssTypesTransformer(documentationObject: DocumentationObject, o
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap): TransformerOutput {
+export default function scssTransformer(documentationObject: DocumentationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
-    components[componentId] = documentationObject.components[componentId]
-      .map((component) => ([
-        formatComponentCodeBlockComment(component, '//'),
-        transformComponentTokensToScssVariables(component, options?.get(componentId)).map(token => `${token.name}: ${token.value};`).join('\n')
-      ].join('\n'))).join('\n\n');
+    const definitions = documentationObject.components[componentId].definitions;
+    components[componentId] = documentationObject.components[componentId].instances
+      .map((instance) => {
+        const options = definitions[instance.definitionId].options;
+        return [
+          formatComponentCodeBlockComment(instance, '//'),
+          transformComponentTokensToScssVariables(instance, options)
+            .map((token) => `${token.name}: ${token.value};`)
+            .join('\n'),
+        ].join('\n');
+      })
+      .join('\n\n');
   }
 
   const design = {

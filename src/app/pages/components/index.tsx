@@ -6,7 +6,7 @@ import {
   DocumentationProps,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
-  fetchExportables,
+  fetchComponents,
   Metadata,
 } from '../../components/util';
 import Header from '../../components/Header';
@@ -32,7 +32,7 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchExportables().map(exportable => exportable.id);
+  const components = fetchComponents().map(c => c.id);
   const config = getClientConfig();
   return {
     ...{

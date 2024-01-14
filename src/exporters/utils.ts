@@ -1,5 +1,5 @@
 import * as FigmaTypes from '../figma/types';
-import { Exportable, VariantPropertyWithParams } from '../types';
+import { Exportable } from '../types';
 
 export function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type) {
   return (obj?: FigmaTypes.Node | null): obj is Extract<FigmaTypes.Node, { type: Type }> => obj?.type === type;
@@ -63,48 +63,63 @@ export function findChildNodeWithTypeAndName<Type extends FigmaTypes.Node['type'
   return null;
 }
 
-export function getComponentNamePart(component: string, partKey: string) {
-  return component
+export function getComponentInstanceNamePart(componentInstanceName: string, partKey: string) {
+  return componentInstanceName
     .split(',')
     .find((part) => part.trim().startsWith(`${partKey}=`))
     ?.split('=')[1];
 }
 
-export function extractComponentVariantProps(component: string, supportedVariantProps: VariantPropertyWithParams[], defaults: { [variantProperty: string]: string }): [Map<string, string>, boolean] {
-  let hasAnyNonDefaultVariantProperty = false;
-
+export function extractComponentInstanceVariantProps(componentInstanceName: string, supportedVariantProps: string[]): Map<string, string> {
   const componentVariantProps = new Map<string, string>();
-  const supportedVariantPropNames = supportedVariantProps.map(supportedVariantProp => supportedVariantProp.name);
+  const supportedVariantPropNames = supportedVariantProps;
 
-  supportedVariantPropNames.forEach(supportedVariantPropName => {
-    const defaultValue = defaults ? defaults[supportedVariantPropName] ?? '' : '';
-    const value = normalizeNamePart(getComponentNamePart(component, supportedVariantPropName) ?? defaultValue);
-    hasAnyNonDefaultVariantProperty = hasAnyNonDefaultVariantProperty || value !== defaultValue;
-    componentVariantProps.set(supportedVariantPropName, value);
+  supportedVariantPropNames.forEach((supportedVariantPropName) => {
+    componentVariantProps.set(
+      supportedVariantPropName,
+      normalizeNamePart(getComponentInstanceNamePart(componentInstanceName, supportedVariantPropName))
+    );
   });
 
-  return [componentVariantProps, hasAnyNonDefaultVariantProperty];
+  return componentVariantProps;
 }
 
 export const isExportable = (exportable: string): exportable is Exportable => {
   return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
-}
+};
 
 export const isValidNodeType = (type: string): type is FigmaTypes.Node['type'] => {
-  return ['DOCUMENT', 'CANVAS', 'FRAME', 'GROUP', 'VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'LINE', 'ELLIPSE', 'REGULAR_POLYGON', 'RECTANGLE', 'TEXT', 'SLICE', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(type);
-}
+  return [
+    'DOCUMENT',
+    'CANVAS',
+    'FRAME',
+    'GROUP',
+    'VECTOR',
+    'BOOLEAN_OPERATION',
+    'STAR',
+    'LINE',
+    'ELLIPSE',
+    'REGULAR_POLYGON',
+    'RECTANGLE',
+    'TEXT',
+    'SLICE',
+    'COMPONENT',
+    'COMPONENT_SET',
+    'INSTANCE',
+  ].includes(type);
+};
 
 export const isValidEffectType = (effect: FigmaTypes.Effect['type']): boolean => {
   return isShadowEffectType(effect);
-}
+};
 
 export const isShadowEffectType = (effect: FigmaTypes.Effect['type']): boolean => {
   return ['DROP_SHADOW', 'INNER_SHADOW'].includes(effect);
-}
+};
 
 export const isValidGradientType = (gradientType: FigmaTypes.PaintType): boolean => {
   return ['GRADIENT_LINEAR', 'GRADIENT_RADIAL'].includes(gradientType);
-}
+};
 
 export const normalizeNamePart = (namePart: string) => {
   return namePart

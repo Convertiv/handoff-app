@@ -1,5 +1,5 @@
-import { Component } from '../exporters/components/extractor';
-import { ExportableSharedOptions, ExportableTransformerOptions } from '../types';
+import { ComponentInstance } from '../exporters/components/types';
+import { ComponentDefinitionOptions } from '../types';
 import { Token, TokenType } from './types';
 /**
  * Performs the transformation of the component tokens.
@@ -7,4 +7,4 @@ import { Token, TokenType } from './types';
  * @param options
  * @returns
  */
-export declare const transform: (tokenType: TokenType, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions) => Token[];
+export declare const transform: (tokenType: TokenType, component: ComponentInstance, options?: ComponentDefinitionOptions) => Token[];

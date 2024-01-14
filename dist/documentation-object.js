@@ -41,29 +41,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createDocumentationObject = void 0;
 var assets_1 = __importDefault(require("./exporters/assets"));
-var index_1 = __importDefault(require("./exporters/components/index"));
-var design_1 = __importDefault(require("./exporters/design"));
+var index_1 = require("./exporters/components/index");
+var design_1 = require("./exporters/design");
 var startCase_1 = __importDefault(require("lodash/startCase"));
 var chalk_1 = __importDefault(require("chalk"));
-var createDocumentationObject = function (figmaFileKey, figmaAccessToken, exportables) { return __awaiter(void 0, void 0, void 0, function () {
+var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var components, design, icons, logos;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.default)(figmaFileKey, figmaAccessToken, exportables)];
+            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(figmaFileKey, figmaAccessToken, legacyDefinitions)];
             case 1:
                 components = _a.sent();
                 // Log out components
-                if (Object.keys(components).filter(function (component) { return components[component].length > 0; }).length > 0) {
-                    Object.keys(components).map(function (component) {
-                        if (components[component].length === 0) {
-                            console.error(chalk_1.default.grey("".concat((0, startCase_1.default)(component), " could not be located in the figma file")));
-                        }
-                        else {
-                            console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].length);
-                        }
-                    });
-                }
-                return [4 /*yield*/, (0, design_1.default)(figmaFileKey, figmaAccessToken)];
+                Object.keys(components).map(function (component) {
+                    if (components[component].instances.length === 0) {
+                        console.error(chalk_1.default.grey("Skipping \"".concat((0, startCase_1.default)(component), "\". Reason: No matching component instances were found.")));
+                    }
+                    else {
+                        console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].instances.length);
+                    }
+                });
+                return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(figmaFileKey, figmaAccessToken)];
             case 2:
                 design = _a.sent();
                 return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Icons')];

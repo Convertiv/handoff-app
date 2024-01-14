@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizeNamePart = exports.isValidGradientType = exports.isShadowEffectType = exports.isValidEffectType = exports.isValidNodeType = exports.isExportable = exports.extractComponentVariantProps = exports.getComponentNamePart = exports.findChildNodeWithTypeAndName = exports.findChildNodeWithType = exports.isNodeType = exports.filterByNodeType = void 0;
+exports.normalizeNamePart = exports.isValidGradientType = exports.isShadowEffectType = exports.isValidEffectType = exports.isValidNodeType = exports.isExportable = exports.extractComponentInstanceVariantProps = exports.getComponentInstanceNamePart = exports.findChildNodeWithTypeAndName = exports.findChildNodeWithType = exports.isNodeType = exports.filterByNodeType = void 0;
 function filterByNodeType(type) {
     return function (obj) { return (obj === null || obj === void 0 ? void 0 : obj.type) === type; };
 }
@@ -47,33 +47,45 @@ function findChildNodeWithTypeAndName(node, type, name) {
     return null;
 }
 exports.findChildNodeWithTypeAndName = findChildNodeWithTypeAndName;
-function getComponentNamePart(component, partKey) {
+function getComponentInstanceNamePart(componentInstanceName, partKey) {
     var _a;
-    return (_a = component
+    return (_a = componentInstanceName
         .split(',')
         .find(function (part) { return part.trim().startsWith("".concat(partKey, "=")); })) === null || _a === void 0 ? void 0 : _a.split('=')[1];
 }
-exports.getComponentNamePart = getComponentNamePart;
-function extractComponentVariantProps(component, supportedVariantProps, defaults) {
-    var hasAnyNonDefaultVariantProperty = false;
+exports.getComponentInstanceNamePart = getComponentInstanceNamePart;
+function extractComponentInstanceVariantProps(componentInstanceName, supportedVariantProps) {
     var componentVariantProps = new Map();
-    var supportedVariantPropNames = supportedVariantProps.map(function (supportedVariantProp) { return supportedVariantProp.name; });
+    var supportedVariantPropNames = supportedVariantProps;
     supportedVariantPropNames.forEach(function (supportedVariantPropName) {
-        var _a, _b;
-        var defaultValue = defaults ? (_a = defaults[supportedVariantPropName]) !== null && _a !== void 0 ? _a : '' : '';
-        var value = (0, exports.normalizeNamePart)((_b = getComponentNamePart(component, supportedVariantPropName)) !== null && _b !== void 0 ? _b : defaultValue);
-        hasAnyNonDefaultVariantProperty = hasAnyNonDefaultVariantProperty || value !== defaultValue;
-        componentVariantProps.set(supportedVariantPropName, value);
+        componentVariantProps.set(supportedVariantPropName, (0, exports.normalizeNamePart)(getComponentInstanceNamePart(componentInstanceName, supportedVariantPropName)));
     });
-    return [componentVariantProps, hasAnyNonDefaultVariantProperty];
+    return componentVariantProps;
 }
-exports.extractComponentVariantProps = extractComponentVariantProps;
+exports.extractComponentInstanceVariantProps = extractComponentInstanceVariantProps;
 var isExportable = function (exportable) {
     return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
 };
 exports.isExportable = isExportable;
 var isValidNodeType = function (type) {
-    return ['DOCUMENT', 'CANVAS', 'FRAME', 'GROUP', 'VECTOR', 'BOOLEAN_OPERATION', 'STAR', 'LINE', 'ELLIPSE', 'REGULAR_POLYGON', 'RECTANGLE', 'TEXT', 'SLICE', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(type);
+    return [
+        'DOCUMENT',
+        'CANVAS',
+        'FRAME',
+        'GROUP',
+        'VECTOR',
+        'BOOLEAN_OPERATION',
+        'STAR',
+        'LINE',
+        'ELLIPSE',
+        'REGULAR_POLYGON',
+        'RECTANGLE',
+        'TEXT',
+        'SLICE',
+        'COMPONENT',
+        'COMPONENT_SET',
+        'INSTANCE',
+    ].includes(type);
 };
 exports.isValidNodeType = isValidNodeType;
 var isValidEffectType = function (effect) {

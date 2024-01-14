@@ -1,12 +1,11 @@
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
-import { DocumentationObject, ExportableSharedOptions, ExportableTransformerOptions } from '../../types';
+import { DocumentationObject, ComponentDefinitionOptions } from '../../types';
 import { filterOutNull } from '../../utils/index';
 import { getComponentTemplate } from './utils';
-import { Component } from '../../exporters/components/extractor';
+import { ComponentInstance } from '../../exporters/components/types';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
-import { ExportableTransformerOptionsMap } from '../types';
 import Handoff from '../../index';
 
 type GetComponentTemplateByComponentIdResult = string | null;
@@ -25,7 +24,11 @@ function mergeTokenSets(tokenSetList: TokenSets): { [key: string]: any } {
   return obj;
 }
 
-const getComponentTemplateByComponentId = async (handoff: Handoff, componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<GetComponentTemplateByComponentIdResult> => {
+const getComponentTemplateByComponentId = async (
+  handoff: Handoff,
+  componentId: string,
+  component: ComponentInstance
+): Promise<GetComponentTemplateByComponentIdResult> => {
   const parts: string[] = [];
 
   component.variantProperties.forEach(([_, value]) => parts.push(value));
@@ -36,8 +39,12 @@ const getComponentTemplateByComponentId = async (handoff: Handoff, componentId: 
 /**
  * Transforms the component tokens into a preview and code
  */
-const transformComponentTokens = async (handoff: Handoff, componentId: string, component: Component, options?: ExportableTransformerOptions & ExportableSharedOptions): Promise<TransformComponentTokensResult> => {
-  const template = await getComponentTemplateByComponentId(handoff, componentId, component, options);
+const transformComponentTokens = async (
+  handoff: Handoff,
+  componentId: string,
+  component: ComponentInstance
+): Promise<TransformComponentTokensResult> => {
+  const template = await getComponentTemplateByComponentId(handoff, componentId, component);
 
   if (!template) {
     return null;
@@ -54,7 +61,7 @@ const transformComponentTokens = async (handoff: Handoff, componentId: string, c
       renderableComponent.parts[part] = mergeTokenSets(component.parts![part]);
     });
   }
-  
+
   let preview = Mustache.render(template, renderableComponent);
 
   if (handoff.config.app.base_path) {
@@ -75,24 +82,27 @@ const transformComponentTokens = async (handoff: Handoff, componentId: string, c
 /**
  * Transforms the documentation object components into a preview and code
  */
-export default async function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject, options?: ExportableTransformerOptionsMap) {
+export default async function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   const { components } = documentationObject;
   const componentIds = Object.keys(components);
 
   const result = await Promise.all(
     componentIds.map(async (componentId) => {
-      return [componentId, await Promise.all(
-        documentationObject.components[componentId].map((component) => transformComponentTokens(handoff, componentId, component, options?.get(componentId)))
-      ).then((res) => res.filter(filterOutNull))] as [string, TransformComponentTokensResult[]];
+      return [
+        componentId,
+        await Promise.all(
+          documentationObject.components[componentId].instances.map((instance) => {
+            return transformComponentTokens(handoff, componentId, instance);
+          })
+        ).then((res) => res.filter(filterOutNull)),
+      ] as [string, TransformComponentTokensResult[]];
     })
   );
 
-  let previews = result.reduce(
-    (obj, el) => {
-      obj[el[0]] = el[1];
-      return obj;
-    }, {} as { [key: string]: TransformComponentTokensResult[] }
-  );
+  let previews = result.reduce((obj, el) => {
+    obj[el[0]] = el[1];
+    return obj;
+  }, {} as { [key: string]: TransformComponentTokensResult[] });
 
   return {
     components: previews,
