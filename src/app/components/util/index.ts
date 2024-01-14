@@ -349,8 +349,7 @@ export const fetchComponents = () => {
  * @deprecated Will be removed before 1.0.0 release.
  */
 export const getLegacyDefinition = (name: string) => {
-  const config = getConfig();
-  const handoff = getHandoff();
+  const config = getClientConfig();
   const def = config?.figma?.definitions.filter((def) => {
     return def.split('/').pop() === name;
   });
@@ -358,8 +357,8 @@ export const getLegacyDefinition = (name: string) => {
     return null;
   }
 
-  let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-  const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+  let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? "", 'exportables', `${def}.json`));
   // If the project path exists, use that first as an override
   if (fs.existsSync(projectPath)) {
     defPath = projectPath;

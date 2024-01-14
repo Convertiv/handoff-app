@@ -94,11 +94,12 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, assets_zip_links = _a.assets_zip_links;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, assets_zip_links = _a.assets_zip_links, use_legacy_definitions = _a.use_legacy_definitions;
     return {
         app: app,
         figma: figma,
         assets_zip_links: assets_zip_links !== null && assets_zip_links !== void 0 ? assets_zip_links : { icons: null, logos: null },
+        use_legacy_definitions: use_legacy_definitions
     };
 };
 exports.getClientConfig = getClientConfig;

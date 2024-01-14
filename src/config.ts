@@ -88,11 +88,12 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, figma, assets_zip_links } = { ...defaultConfig(), ...config } as unknown as Config;
+  const { app, figma, assets_zip_links, use_legacy_definitions } = { ...defaultConfig(), ...config } as unknown as Config;
 
   return {
     app,
     figma,
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
+    use_legacy_definitions
   };
 };
