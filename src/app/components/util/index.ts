@@ -5,7 +5,7 @@ import { DocumentComponentDefinitions, FileComponentObject } from '../../../expo
 import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '../../../types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy, merge, uniq } from 'lodash';
+import { groupBy, merge, startCase, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -249,7 +249,7 @@ export const staticBuildMenu = () => {
             subSections.push({ path: '', title: group });
             groupedComponents[group].forEach((component) => {
               const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-              subSections.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? component.id });
+              subSections.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
             });
           });
         }
