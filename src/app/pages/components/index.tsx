@@ -17,6 +17,7 @@ import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
 import { getClientConfig } from '../../../config';
 import Footer from '../../components/Footer';
+import { startCase } from 'lodash';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -87,7 +88,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
                       <ComponentsPageCard
                         key={`component-${componentId}`}
                         component={componentId}
-                        title={component.title ?? componentId}
+                        title={component.title ?? startCase(componentId)}
                         description={component.description}
                         icon={component.image}
                       />

@@ -130,7 +130,7 @@ const GenericComponentPage = ({
   return (
     <div className="c-page">
       <Head>
-        <title>{metadata.metaTitle}</title>
+        <title>{metadata.metaTitle ?? startCase(id)}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
@@ -139,7 +139,7 @@ const GenericComponentPage = ({
         <div className="o-container-fluid">
           <div className="c-hero">
             <div>
-              <h1>{metadata.title ?? id}</h1>
+              <h1>{metadata.title ?? startCase(id)}</h1>
               <p>{metadata.description}</p>
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
