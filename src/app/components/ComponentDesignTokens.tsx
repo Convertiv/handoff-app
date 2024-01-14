@@ -40,12 +40,13 @@ export interface ComponentDesignTokensProps {
   componentInstances: ComponentInstance[],
   overrides?: { [variantProp: string]: string[] },
   children?: JSX.Element,
+  renderPreviews : boolean,
 }
 
 interface DataTableRow extends Map<string, [string, string][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ title, componentInstances, previewObject, previewObjectOptions, overrides, children }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ title, componentInstances, previewObject, previewObjectOptions, overrides, children, renderPreviews }) => {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
 
   const headings: Set<string> = new Set<string>();
@@ -117,7 +118,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
     return <></>;
   }
 
-  const layoutLeftColWidth = numberOfColumns >= 7 ? 11 : 4 + numberOfColumns;
+  const layoutLeftColWidth = renderPreviews ? (numberOfColumns >= 7 ? 11 : 4 + numberOfColumns) : 12;
   const layoutRightColWidth = 12 - layoutLeftColWidth;
 
   return (
@@ -165,11 +166,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
             </React.Fragment>
           ))}
         </div>
-        <div className={`o-col-${layoutRightColWidth}@md`}>
-          <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
-            <div className="c-component-preview">{children}</div>
+        {renderPreviews && (
+          <div className={`o-col-${layoutRightColWidth}@md`}>
+            <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
+              <div className="c-component-preview">{children}</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
