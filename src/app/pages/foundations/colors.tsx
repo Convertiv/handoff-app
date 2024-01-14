@@ -3,7 +3,7 @@ import type { GetStaticProps } from 'next';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import Icon from '../../components/Icon';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import { lowerCase } from 'lodash';
 import Head from 'next/head';
 import * as util from '../../components/util';
@@ -29,7 +29,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       design: getTokens().design,
     },
   };

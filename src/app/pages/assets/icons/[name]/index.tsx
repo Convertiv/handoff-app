@@ -3,7 +3,7 @@ import { GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
 import HtmlReactParser from 'html-react-parser';
 import { AssetObject } from '../../../../../types';
-import { getConfig } from '../../../../../config';
+import { getClientConfig } from '../../../../../config';
 import Icon from '../../../../components/Icon';
 import Head from 'next/head';
 import Header from '../../../../components/Header';
@@ -62,7 +62,7 @@ export const getStaticProps: GetStaticProps = (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       assets: getTokens().assets,
     },
   };

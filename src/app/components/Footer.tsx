@@ -1,7 +1,7 @@
-import { Config } from "../../types/config";
+import { ClientConfig } from "../../types/config";
 
 interface FooterProps {
-  config: Config;
+  config: ClientConfig;
 }
 
 function Footer({ config }: FooterProps) {

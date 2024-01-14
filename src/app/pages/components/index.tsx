@@ -15,7 +15,7 @@ import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import Footer from '../../components/Footer';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
@@ -33,7 +33,7 @@ type ComponentPageDocumentationProps = DocumentationProps & {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const components = fetchExportables().map(exportable => exportable.id);
-  const config = getConfig();
+  const config = getClientConfig();
   return {
     ...{
       props: {

@@ -1,5 +1,4 @@
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
-import { serializeHandoff } from './config';
 import { maskPrompt, prompt } from './utils/prompt';
 import chalk from 'chalk';
 import fs from 'fs-extra';
@@ -382,7 +381,6 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildStyles(handoff, documentationObject, componentTransformerOptions);
   await buildIntegration(handoff, documentationObject);
   await buildPreview(handoff, documentationObject, componentTransformerOptions);
-  await serializeHandoff(handoff);
   if (build) {
     await buildApp(handoff);
   }
