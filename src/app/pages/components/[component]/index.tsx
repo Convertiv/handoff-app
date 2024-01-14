@@ -99,7 +99,29 @@ const GenericComponentPage = ({
   previews,
   config,
 }: ComponentDocumentationProps) => {
+  const [loading, setLoading] = React.useState<boolean>(true);
   const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+  const [hasPreviews, setHasPreviews] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    const componentHasPreviews = previews.length > 0;
+    setHasPreviews(componentHasPreviews)
+    setActiveTab(componentHasPreviews ? ComponentTab.Overview : ComponentTab.DesignTokens);
+    setLoading(false);
+  }, [component, previews]);
+
+  if (loading) {
+    return (
+      <div className="c-page">
+        <Head>
+          <title>{metadata.metaTitle}</title>
+          <meta name="description" content={metadata.metaDescription} />
+        </Head>
+        <Header menu={menu} config={config} />
+        <Footer config={config} />
+      </div>
+    )
+  }
 
   const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
   const overviewTabComponents = getComponentPreviews('overview', component, componentDocumentationOptions, previews);
@@ -122,12 +144,14 @@ const GenericComponentPage = ({
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
-              <button
-                className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.Overview)}
-              >
-                Overview
-              </button>
+              {hasPreviews && (
+                <button
+                  className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
+                  onClick={() => setActiveTab(ComponentTab.Overview)}
+                >
+                  Overview
+                </button>
+              )}
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
                 onClick={() => setActiveTab(ComponentTab.DesignTokens)}
@@ -176,6 +200,7 @@ const GenericComponentPage = ({
                       previewObjectOptions={component.definitions[previewComponent.component.definitionId].options}
                       componentInstances={component?.instances}
                       overrides={previewComponent.overrides}
+                      renderPreviews={hasPreviews}
                     >
                       <ComponentDisplay component={previewComponent.preview} />
                     </ComponentDesignTokens>
@@ -195,7 +220,7 @@ export default GenericComponentPage;
 
 type ComponentPreview = {
   component: ComponentInstance;
-  possiblyDistinctiveName: string;
+  name: string;
   preview: PreviewObject | undefined;
   overrides?: { states?: string[] | undefined };
 };
@@ -208,6 +233,7 @@ const getComponentPreviews = (
   options: ComponentDocumentationOptions,
   previews: PreviewObject[]
 ) => {
+  const hasPreviews = previews.length > 0;
   const instances = component.instances;
   const view = (options?.views ?? {})[tab] ?? {};
   const viewFilters = view.condition ?? {};
@@ -219,9 +245,9 @@ const getComponentPreviews = (
       const variantProps = new Map(componentInstance.variantProperties);
 
       let overrides: { states?: string[] } | undefined = undefined;
-      let possiblyDistinctiveName: string = componentInstance.variantProperties.filter(
-        (variantProp) => !filterProps.includes(variantProp[0])
-      )[0]?.[1];
+      let name: string = hasPreviews
+        ? componentInstance.variantProperties.filter((variantProp) => !filterProps.includes(variantProp[0]))[0]?.[1]
+        : componentInstance.variantProperties.map(([variantProp, value]) => `${variantProp}: ${startCase(value)}`).join(', ');
 
       for (const filterProp of filterProps) {
         if (!variantProps.get(filterProp)) {
@@ -240,7 +266,7 @@ const getComponentPreviews = (
               return null;
             }
             // Use as a default possibly distinctive name
-            possiblyDistinctiveName ??= variantProps.get(filterProp);
+            name ??= variantProps.get(filterProp);
           } else {
             // Filter value is a object so we check if the value of the respective component property
             // is contained within the array of object keys
@@ -253,7 +279,7 @@ const getComponentPreviews = (
               // We will store the property value of the filter value object for later use
               overrides = filterValue[variantProps.get(filterProp)];
               // Use as a default possibly distinctive name
-              possiblyDistinctiveName ??= variantProps.get(filterProp);
+              name ??= variantProps.get(filterProp);
             }
           }
         } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
@@ -263,7 +289,7 @@ const getComponentPreviews = (
 
       return {
         component: componentInstance,
-        possiblyDistinctiveName: possiblyDistinctiveName ?? '',
+        name: (hasPreviews ? `${startCase(name)} ${startCase(componentInstance.name)}` : name) ?? '',
         preview: previews.find((item) => item.id === componentInstance.id),
         overrides,
       };
@@ -319,7 +345,7 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({
                   <td>{getComponentPreviewTitle(previewableComponent)}</td>
                   <td>
                     <code>
-                      {component.name} {component.name}-{previewableComponent.possiblyDistinctiveName}
+                      {component.name} {component.name}-{previewableComponent.name}
                     </code>
                   </td>
                 </tr>
@@ -356,8 +382,8 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
 };
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
-  return previewableComponent.possiblyDistinctiveName
-    ? `${startCase(previewableComponent.possiblyDistinctiveName)} ${startCase(previewableComponent.component.name)}`
+  return previewableComponent.name
+    ? `${previewableComponent.name}`
     : `${startCase(previewableComponent.component.name)}`;
 };
 

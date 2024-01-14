@@ -124,7 +124,9 @@ const ComponentsPageCard = ({
     <Link href={available ? `/components/${component}` : '#'}>
       <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
         <div className="c-component-card__img">
-          <Icon name={icon} />
+          {icon && (
+            <Icon name={icon} />
+          )}
         </div>
         <h6>{title}</h6>
         <p>{descripton}</p>

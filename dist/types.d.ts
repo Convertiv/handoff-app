@@ -135,6 +135,7 @@ export interface ComponentDocumentationOptions {
                 [property: string]: ComponentViewFilterValue;
             };
             sort?: string[];
+            title?: string;
         };
     };
 }
