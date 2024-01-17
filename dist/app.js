@@ -92,10 +92,10 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
     });
 }); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var srcPath, appPath, handoffAppBasePath, handoffWorkingPath, handoffExportPath, nextConfigPath, nextConfigContent;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
@@ -103,27 +103,31 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
             case 1:
                 // Prepare project app dir
-                _b.sent();
+                _c.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
             case 2:
-                _b.sent();
+                _c.sent();
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
-                _b.sent();
-                handoffAppBasePath = (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '';
+                _c.sent();
+                handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
+                handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
+                handoffModulePath = path_1.default.resolve(handoff.modulePath);
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 4:
-                nextConfigContent = (_b.sent())
+                nextConfigContent = (_c.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
+                    .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
                     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, "HANDOFF_APP_BASE_PATH: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, "HANDOFF_WORKING_PATH: '".concat(handoffWorkingPath, "'"))
+                    .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, "HANDOFF_MODULE_PATH: '".concat(handoffModulePath, "'"))
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"));
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
             case 5:
-                _b.sent();
+                _c.sent();
                 return [2 /*return*/, appPath];
         }
     });

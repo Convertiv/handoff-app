@@ -1,5 +1,22 @@
 import * as FigmaTypes from '../../figma/types';
-import { Exportable, Side } from "../../types";
+import { Exportable, ComponentDefinition, Side } from "../../types";
+export interface FileComponentObject {
+    instances: ComponentInstance[];
+    definitions: DocumentComponentDefinitions;
+}
+export interface FileComponentsObject {
+    [key: string]: FileComponentObject;
+}
+export interface ComponentInstance {
+    id: string;
+    name: string;
+    description?: string;
+    variantProperties: [string, string][];
+    parts?: {
+        [key: string]: TokenSets;
+    };
+    definitionId: string;
+}
 export interface BaseTokenSet {
     name: Exportable;
 }
@@ -50,5 +67,8 @@ export interface SizeTokenSet extends BaseTokenSet {
     width: number;
     height: number;
 }
+export declare type DocumentComponentDefinitions = {
+    [id: string]: ComponentDefinition;
+};
 export declare type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
 export declare type TokenSets = TokenSet[];

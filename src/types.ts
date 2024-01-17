@@ -1,4 +1,4 @@
-import type { DocumentComponentsObject } from './exporters/components';
+import type { FileComponentsObject } from './exporters/components/types';
 import { BlendMode } from './figma/types';
 import { Effect } from './figma/types';
 
@@ -58,8 +58,6 @@ export interface GradientObject {
   stops: StopObject[];
 }
 
-
-
 export interface OffsetObject {
   x: number;
   y: number;
@@ -82,7 +80,7 @@ export interface DocumentationObject {
     typography: TypographyObject[];
     effect: EffectObject[];
   };
-  components: DocumentComponentsObject;
+  components: FileComponentsObject;
   assets: {
     icons: AssetObject[];
     logos: AssetObject[];
@@ -102,67 +100,100 @@ export interface PreviewObject {
 
 export type PreviewJson = {
   components: {
-    [key in keyof DocumentComponentsObject]: PreviewObject[];
+    [key in keyof FileComponentsObject]: PreviewObject[];
   };
 };
 
-export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
-
-export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
-
-export interface ExportableIndex {
-  options: ExportableOptions,
-  definitions: string[],
-}
-
-export interface ExportableDefinition {
+export interface ComponentDefinition {
   id: string,
-  group?: string,
-  options?: ExportableOptions,
-  parts: ExportableParts,
-}
-
-export interface ExportableOptions {
-  shared?: ExportableSharedOptions,
-  exporter: ExportableExporterOptions,
-  transformer: ExportableTransformerOptions,
-  demo: ExportableDemoOptions,
-}
-
-export interface ExportableSharedOptions {
-  defaults?: {
-    [variantProperty: string]: string
-  }
-}
-
-export interface ExportableExporterOptions {
-  search: string,
-  supportedVariantProps: { design: string[], layout: string[] },
-}
-
-export interface ExportableTransformerOptions {
-  cssRootClass?: string,
-  tokenNameSegments?: string[],
-  replace: { [variantProperty: string]: { [source: string]: string } }
-}
-
-export interface ExportableDemoOptions {
-  tabs: { [tab: string]: { [componentType: string]: ExportableDefinitionPageFilter } }
-}
-
-export interface VariantPropertyWithParams {
   name: string,
-  params?: [string, string][]
+  group?: string,
+  parts: ComponentPart[],
+  options?: ComponentDefinitionOptions,
 }
 
-export interface ExportablePart {
+export interface ComponentPart {
   id: string,
   tokens: { from: string, export: Exportable[] }[],
   condition?: string[][],
 };
 
-export type ExportableParts = ExportablePart[];
+export interface ComponentDefinitionOptions {
+  shared?: {
+    defaults?: {
+      [variantProperty: string]: string;
+    };
+  };
+  exporter?: {
+    variantProperties: string[];
+    sharedComponentVariants?: { componentId: string; sharedVariantProperty?: string; distinctiveVariantProperties?: string[] }[];
+  };
+  transformer?: {
+    cssRootClass?: string;
+    tokenNameSegments?: string[];
+    replace: { [variantProperty: string]: { [source: string]: string } };
+  };
+  demo?: ComponentDocumentationOptions;
+}
 
-interface ExportableDefinitionPageFilter { [property: string]: ExportableDefinitionPageFilterValue }
+export interface ComponentDocumentationOptions {
+  views?: {
+    [view: string]: {
+      condition?: {
+        [property: string]: ComponentViewFilterValue;
+      },
+      sort?: string[]
+      title?: string,
+    }
+  }
+}
 
-type ExportableDefinitionPageFilterValue = string  | string[] | {[value: string]: {[prop: string]: string}}
+export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
+export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
+type ComponentViewFilterValue = string  | string[] | {[value: string]: {[prop: string]: string}}
+
+/**
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export interface LegacyComponentDefinition {
+  id: string;
+  group?: string;
+  options?: LegacyComponentDefinitionOptions;
+  parts: ComponentPart[];
+}
+
+/**
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export interface LegacyComponentDefinitionOptions {
+  shared?: {
+    defaults?: {
+        [variantProperty: string]: string;
+    };
+  };
+  exporter?: {
+    search: string;
+    supportedVariantProps: {
+        design: string[];
+        layout: string[];
+    };
+  };
+  transformer?: {
+    cssRootClass?: string;
+    tokenNameSegments?: string[];
+    replace: {
+        [variantProperty: string]: {
+            [source: string]: string;
+        };
+    };
+  };
+  demo?: {
+    tabs?: {
+        [tab: string]: {
+            [componentType: string]: {
+              [property: string]: ComponentViewFilterValue
+            };
+        };
+    };
+  };
+}

@@ -2,9 +2,9 @@ import startCase from 'lodash/startCase';
 import round from 'lodash/round';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
-import { ExportableTransformerOptions } from '../../types';
+import { ComponentDefinitionOptions } from '../../types';
 import { transformComponentTokensToScssVariables } from '../../transformers/scss/component';
-import { Component } from '../../exporters/components/extractor';
+import { ComponentInstance } from '../../exporters/components/types';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -32,21 +32,21 @@ const NormalizeValue = (value: string): string => {
   return value.replaceAll(/\d*\.\d+/g, (match) => round(Number(match), 2).toFixed(2));
 };
 
-const state_sort = ['default', 'hover', 'focus', 'active', 'disabled'];
 
 export interface ComponentDesignTokensProps {
   title: string,
-  previewObject: Component,
-  designComponents: Component[],
-  transformerOptions: ExportableTransformerOptions,
+  previewObject: ComponentInstance,
+  previewObjectOptions: ComponentDefinitionOptions,
+  componentInstances: ComponentInstance[],
   overrides?: { [variantProp: string]: string[] },
   children?: JSX.Element,
+  renderPreviews : boolean,
 }
 
 interface DataTableRow extends Map<string, [string, string][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ transformerOptions, title, designComponents, previewObject, overrides, children }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ title, componentInstances, previewObject, previewObjectOptions, overrides, children, renderPreviews }) => {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
 
   const headings: Set<string> = new Set<string>();
@@ -58,13 +58,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
     const overrideVariantProps = Object.keys(overrides) ?? [];
     const masterOverride = overrideVariantProps[0];
 
-    designComponents
-      .sort((l, r) => {
-        const lVal = l.variantProperties.find(val => val[0] === masterOverride)[1];
-        const rVal = r.variantProperties.find(val => val[0] === masterOverride)[1];
+    componentInstances
+      // .sort((l, r) => {
+      //   const lVal = l.variantProperties.find(val => val[0] === masterOverride)[1];
+      //   const rVal = r.variantProperties.find(val => val[0] === masterOverride)[1];
 
-        return state_sort.indexOf(lVal) - state_sort.indexOf(rVal);
-      })
+      //   return state_sort.indexOf(lVal) - state_sort.indexOf(rVal);
+      // })
       .forEach(component => {
         const componentVariantPropsMap = new Map(component.variantProperties);
 
@@ -81,7 +81,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
         }
 
         // Set values for the component
-        transformComponentTokensToScssVariables(component, transformerOptions).forEach(token => {
+        transformComponentTokensToScssVariables(component, previewObjectOptions).forEach(token => {
           // Initialize part if not already initialized
           dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
           // Initialize property for part if not already initialized
@@ -98,7 +98,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
       });
   } else {
     // Set values for the component
-    transformComponentTokensToScssVariables(previewObject, transformerOptions).forEach(token => {
+    transformComponentTokensToScssVariables(previewObject, previewObjectOptions).forEach(token => {
       // Initialize part if not already initialized
       dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized
@@ -114,15 +114,15 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
     headings.add('Value');
   }
 
-  if (!designComponents || designComponents.length === 0) {
+  if (!componentInstances || componentInstances.length === 0) {
     return <></>;
   }
 
-  const layoutLeftColWidth = numberOfColumns >= 7 ? 11 : 4 + numberOfColumns;
+  const layoutLeftColWidth = renderPreviews ? (numberOfColumns >= 7 ? 11 : 4 + numberOfColumns) : 12;
   const layoutRightColWidth = 12 - layoutLeftColWidth;
 
   return (
-    <div key={`${previewObject.type}`} className="o-col-12@md c-tokens-preview u-mb-5">
+    <div key={`${previewObject.id}`} className="o-col-12@md c-tokens-preview u-mb-5">
       <div key={`${previewObject.id}__title`} id={previewObject.id}>
         <h4>{title}</h4>
       </div>
@@ -134,14 +134,14 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
               <strong>Property</strong>
             </p>
             {Array.from(headings).map((heading) => (
-              <p key={`${previewObject.type}-*-*-${heading}__title`}>
+              <p key={`${previewObject.id}-*-*-${heading}__title`}>
                 <strong>{startCase(heading)}</strong>
               </p>
             ))}
           </div>
 
           {Array.from(dataTable).map(([part, propertiesMap], rowIdx) => (
-            <React.Fragment key={`${previewObject.type}-${part}`}>
+            <React.Fragment key={`${previewObject.id}-${part}`}>
               {rowIdx > 0 && (
                 <>
                   <br />
@@ -151,11 +151,11 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
                 </>
               )}
               {Array.from(propertiesMap).sort(([lProp], [rProp]) => lProp.localeCompare(rProp)).map(([prop, cells]) => (
-                <div key={`${previewObject.type}-${part}-${prop}-row`} className="c-tokens-preview__row">
+                <div key={`${previewObject.id}-${part}-${prop}-row`} className="c-tokens-preview__row">
                   <p>{prop}</p>
                   {cells.map((([tokenName, tokenValue], i) => (
                     <PropertyStateValue
-                      key={`${previewObject.type}-${part}-${prop}-${i}`}
+                      key={`${previewObject.id}-${part}-${prop}-${i}`}
                       property={prop}
                       variable={tokenName}
                       value={tokenValue}
@@ -166,11 +166,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ tr
             </React.Fragment>
           ))}
         </div>
-        <div className={`o-col-${layoutRightColWidth}@md`}>
-          <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
-            <div className="c-component-preview">{children}</div>
+        {renderPreviews && (
+          <div className={`o-col-${layoutRightColWidth}@md`}>
+            <div key={`${previewObject.id}`} id={previewObject.id} className="c-component-preview--sticky">
+              <div className="c-component-preview">{children}</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

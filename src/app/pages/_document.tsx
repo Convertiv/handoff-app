@@ -1,8 +1,8 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
-import { getConfig } from '../../config';
+import { getClientConfig } from '../../config';
 import Script from 'next/script';
 
-const config = getConfig();
+const config = getClientConfig();
 
 class MyDocument extends Document {
   render() {

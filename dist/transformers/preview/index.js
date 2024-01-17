@@ -55,7 +55,7 @@ function mergeTokenSets(tokenSetList) {
     });
     return obj;
 }
-var getComponentTemplateByComponentId = function (handoff, componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
+var getComponentTemplateByComponentId = function (handoff, componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
     var parts;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -73,11 +73,11 @@ var getComponentTemplateByComponentId = function (handoff, componentId, componen
 /**
  * Transforms the component tokens into a preview and code
  */
-var transformComponentTokens = function (handoff, componentId, component, options) { return __awaiter(void 0, void 0, void 0, function () {
+var transformComponentTokens = function (handoff, componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
     var template, renderableComponent, preview, bodyEl;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component, options)];
+            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component)];
             case 1:
                 template = _a.sent();
                 if (!template) {
@@ -111,7 +111,7 @@ var transformComponentTokens = function (handoff, componentId, component, option
 /**
  * Transforms the documentation object components into a preview and code
  */
-function previewTransformer(handoff, documentationObject, options) {
+function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var components, componentIds, result, previews;
         var _this = this;
@@ -126,8 +126,12 @@ function previewTransformer(handoff, documentationObject, options) {
                                 switch (_b.label) {
                                     case 0:
                                         _a = [componentId];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].map(function (component) { return transformComponentTokens(handoff, componentId, component, options === null || options === void 0 ? void 0 : options.get(componentId)); })).then(function (res) { return res.filter(index_1.filterOutNull); })];
-                                    case 1: return [2 /*return*/, _a.concat([_b.sent()])];
+                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].instances.map(function (instance) {
+                                                return transformComponentTokens(handoff, componentId, instance);
+                                            })).then(function (res) { return res.filter(index_1.filterOutNull); })];
+                                    case 1: return [2 /*return*/, _a.concat([
+                                            _b.sent()
+                                        ])];
                                 }
                             });
                         }); }))];

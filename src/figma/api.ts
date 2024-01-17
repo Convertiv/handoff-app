@@ -68,7 +68,7 @@ export const getComponentSets = (fileId: string, accessToken: string) => {
 
 export const getComponentSetNodes = (fileId: string, ids: string[], accessToken: string) => {
   counter++;
-  return figmaRestApi.get<FileNodesResponse>('files/' + fileId + '/nodes?ids=' + ids.join(','), {
+  return figmaRestApi.get<FileNodesResponse>('files/' + fileId + '/nodes?ids=' + ids.join(',') + '&plugin_data=shared', {
     headers: {
       ...getFigmaAuthHeaders(accessToken)
     },

@@ -1,5 +1,5 @@
 import type { GetStaticProps } from 'next';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import Icon from '../../components/Icon';
 import Head from 'next/head';
 import { DocumentationProps, fetchDocPageMarkdown, SectionLink, staticBuildMenu } from '../../components/util';
@@ -22,7 +22,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'logos', `/assets`).props,
-      config: getConfig(),
+      config: getClientConfig(),
     }
   }
 };

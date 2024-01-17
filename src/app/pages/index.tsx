@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import classNames from 'classnames';
-import { getConfig } from '../../config';
+import { getClientConfig } from '../../config';
 import Icon from '../components/Icon';
 import Head from 'next/head';
 import Header from '../components/Header';
@@ -34,7 +34,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
-      config: getConfig(),
+      config: getClientConfig(),
       changelog: getChangelog(),
     },
   };

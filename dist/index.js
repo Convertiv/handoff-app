@@ -82,8 +82,6 @@ var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./cli/eject");
 var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
-var handoff = null;
-global.handoff = handoff;
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         var _a;

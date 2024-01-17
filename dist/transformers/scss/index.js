@@ -34,10 +34,10 @@ var utils_1 = require("../utils");
  * @param documentationObject
  * @returns
  */
-function scssTypesTransformer(documentationObject, options) {
+function scssTypesTransformer(documentationObject) {
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], options === null || options === void 0 ? void 0 : options.get(componentId));
+        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId]);
     }
     var design = {
         colors: (0, colors_1.transformColorTypes)(documentationObject.design.color),
@@ -52,14 +52,21 @@ exports.scssTypesTransformer = scssTypesTransformer;
  * @param documentationObject
  * @returns
  */
-function scssTransformer(documentationObject, options) {
+function scssTransformer(documentationObject) {
     var components = {};
     var _loop_1 = function (componentId) {
-        components[componentId] = documentationObject.components[componentId]
-            .map(function (component) { return ([
-            (0, utils_1.formatComponentCodeBlockComment)(component, '//'),
-            (0, component_1.transformComponentTokensToScssVariables)(component, options === null || options === void 0 ? void 0 : options.get(componentId)).map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); }).join('\n')
-        ].join('\n')); }).join('\n\n');
+        var definitions = documentationObject.components[componentId].definitions;
+        components[componentId] = documentationObject.components[componentId].instances
+            .map(function (instance) {
+            var options = definitions[instance.definitionId].options;
+            return [
+                (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
+                (0, component_1.transformComponentTokensToScssVariables)(instance, options)
+                    .map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); })
+                    .join('\n'),
+            ].join('\n');
+        })
+            .join('\n\n');
     };
     for (var componentId in documentationObject.components) {
         _loop_1(componentId);

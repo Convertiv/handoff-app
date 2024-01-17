@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.9.3', 2);
+    cliError('Handoff App - 0.10.0', 2);
 };
 /**
  * Define a CLI error
@@ -96,7 +96,7 @@ var cliError = function (msg, exitCode) {
 };
 var watching = false;
 var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, void 0, function () {
-    var args, handoff_1, _a, type, name_1, templateComponent, templateState, pageName, pageParent, e_1;
+    var args, handoff, _a, type, name_1, templateComponent, templateState, pageName, pageParent, e_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -122,12 +122,12 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (args['--version']) {
                     return [2 /*return*/, showVersion()];
                 }
-                handoff_1 = new _1.default();
+                handoff = new _1.default();
                 if (args['--debug']) {
-                    handoff_1.debug = true;
+                    handoff.debug = true;
                 }
                 if (args['--force']) {
-                    handoff_1.force = true;
+                    handoff.force = true;
                 }
                 _a = args._[0];
                 switch (_a) {
@@ -148,26 +148,26 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'make:page': return [3 /*break*/, 16];
                 }
                 return [3 /*break*/, 17];
-            case 1: return [2 /*return*/, handoff_1.fetch()];
-            case 2: return [4 /*yield*/, handoff_1.build()];
+            case 1: return [2 /*return*/, handoff.fetch()];
+            case 2: return [4 /*yield*/, handoff.build()];
             case 3:
                 _b.sent();
-                return [2 /*return*/, handoff_1];
+                return [2 /*return*/, handoff];
             case 4:
                 watching = true;
-                return [2 /*return*/, handoff_1.start()];
+                return [2 /*return*/, handoff.start()];
             case 5:
                 watching = true;
-                return [2 /*return*/, handoff_1.dev()];
-            case 6: return [2 /*return*/, handoff_1.integration()];
+                return [2 /*return*/, handoff.dev()];
+            case 6: return [2 /*return*/, handoff.integration()];
             case 7:
                 cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables\n  - eject:integration\n  - eject:docs\n  - eject:theme.", 2);
                 return [3 /*break*/, 18];
-            case 8: return [2 /*return*/, handoff_1.ejectConfig()];
-            case 9: return [2 /*return*/, handoff_1.ejectIntegration()];
-            case 10: return [2 /*return*/, handoff_1.ejectExportables()];
-            case 11: return [2 /*return*/, handoff_1.ejectTheme()];
-            case 12: return [2 /*return*/, handoff_1.ejectPages()];
+            case 8: return [2 /*return*/, handoff.ejectConfig()];
+            case 9: return [2 /*return*/, handoff.ejectIntegration()];
+            case 10: return [2 /*return*/, handoff.ejectExportables()];
+            case 11: return [2 /*return*/, handoff.ejectTheme()];
+            case 12: return [2 /*return*/, handoff.ejectPages()];
             case 13:
                 cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
                 return [3 /*break*/, 18];
@@ -183,7 +183,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (!/^[a-z0-9]+$/i.test(name_1)) {
                     cliError("Exportable name must be alphanumeric and may contain dashes or underscores", 2);
                 }
-                return [2 /*return*/, handoff_1.makeExportable(type, name_1)];
+                return [2 /*return*/, handoff.makeExportable(type, name_1)];
             case 15:
                 templateComponent = args._[1];
                 if (!templateComponent) {
@@ -196,7 +196,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (templateState && !/^[a-z0-9]+$/i.test(templateComponent)) {
                     cliError("Template state must be alphanumeric and may contain dashes or underscores", 2);
                 }
-                return [2 /*return*/, handoff_1.makeTemplate(templateComponent, templateState)];
+                return [2 /*return*/, handoff.makeTemplate(templateComponent, templateState)];
             case 16:
                 pageName = args._[1];
                 if (!pageName) {
@@ -209,7 +209,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
                     cliError("Page parent must be alphanumeric and may contain dashes or underscores", 2);
                 }
-                return [2 /*return*/, handoff_1.makePage(pageName, pageParent)];
+                return [2 /*return*/, handoff.makePage(pageName, pageParent)];
             case 17: return [2 /*return*/, showHelp()];
             case 18: return [3 /*break*/, 20];
             case 19:

@@ -1,5 +1,5 @@
-import { Component } from "../exporters/components/extractor";
-import { ExportableSharedOptions, ExportableTransformerOptions, TypographyObject } from "../types";
+import { ComponentInstance } from '../exporters/components/types';
+import { ComponentDefinitionOptions, TypographyObject } from "../types";
 import { TokenType } from "./types";
 /**
  * Returns normalized type name
@@ -13,7 +13,7 @@ export declare const getTypeName: (type: TypographyObject) => string;
  * @param component
  * @returns
  */
-export declare const formatComponentCodeBlockComment: (component: Component, format: "/**/" | "//") => string;
+export declare const formatComponentCodeBlockComment: (component: ComponentInstance, format: "/**/" | "//") => string;
 /**
  * Formats the component token name for the given token type
  * @param tokenType
@@ -23,22 +23,22 @@ export declare const formatComponentCodeBlockComment: (component: Component, for
  * @param options
  * @returns
  */
-export declare const formatTokenName: (tokenType: TokenType, component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string;
+export declare const formatTokenName: (tokenType: TokenType, component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => string;
 /**
  * Returns the token name segments
  * @param component
  * @param options
  * @returns
  */
-export declare const getTokenNameSegments: (component: Component, part: string, property: string, options?: ExportableTransformerOptions & ExportableSharedOptions) => string[];
+export declare const getTokenNameSegments: (component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => string[];
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
- * with some other value based replace rules defined in the transformer options of the exportable
+ * with some other value based replace rules defined in the transformer options of the component
  * or removed entirely (replaced with empty string) if the value matches the default value
- * defined in the exportable shared options (assuming keepDefaults is set to false).
+ * defined in the component shared options (assuming keepDefaults is set to false).
  * @param variable
  * @param value
  * @param options
  * @returns
  */
-export declare const normalizeTokenNamePartValue: (variable: string, value?: string, options?: ExportableTransformerOptions & ExportableSharedOptions, keepDefaults?: boolean) => string;
+export declare const normalizeTokenNamePartValue: (variable: string, value?: string, options?: ComponentDefinitionOptions, keepDefaults?: boolean) => string;

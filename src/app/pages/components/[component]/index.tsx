@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
 import IframeResizer from 'iframe-resizer-react';
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchExportable, fetchExportables, getPreview, getTokens } from '../../../components/util';
-import { getConfig } from '../../../../config';
+import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchComponents, getLegacyDefinition, getPreview, getTokens } from '../../../components/util';
+import { getClientConfig } from '../../../../config';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import { ExportableDefinition, ExportableOptions, PreviewObject } from '../../../../types';
-import { Component } from '../../../../exporters/components/extractor';
+import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '../../../../types';
+import { ComponentInstance, FileComponentObject } from '../../../../exporters/components/types';
 import Head from 'next/head';
 import Header from '../../../components/Header';
 import CustomNav from '../../../components/SideNav/Custom';
@@ -27,9 +27,9 @@ import Footer from '../../../components/Footer';
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchExportables().map(exportable => ({ params: { component: exportable.id } })),
+    paths: fetchComponents().map((exportable) => ({ params: { component: exportable.id } })),
     fallback: false, // can also be true or 'blocking'
-  }
+  };
 }
 
 /**
@@ -41,51 +41,117 @@ export async function getStaticPaths() {
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
+  const config = getClientConfig();
   const { component } = context.params as IParams;
+
   const componentSlug = reduceSlugToString(component);
-  
+  const componentObject = getTokens().components[componentSlug!];
+  const componentPreviews = getPreview().components[componentSlug!];
+
   return {
     props: {
+      id: component,
+      component: componentObject,
+      legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : null,
+      previews: componentPreviews,
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
-      config: getConfig(),
-      exportable: fetchExportable(componentSlug!),
-      components: getTokens().components[componentSlug!],
-      previews: getPreview().components[componentSlug!],
-      component,
-    }
+      config,
+    },
   };
 };
 
-const GenericComponentPage = ({ content, menu, metadata, current, component, exportable, scss, css, styleDictionary, types, components, previews, config }: ComponentDocumentationProps) => {
-  const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
-  const designComponents = components ? components.filter(component => component.type === 'design') : [];
+/**
+ * Transforms the legacy definition doc page options to new doc page options.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions["demo"] | undefined) => {
+  return docViews ? {
+    views: {
+      overview: docViews["overview"] ? {
+        condition: {
+          ...(docViews["overview"]["design"] ?? {}),
+          ...(docViews["overview"]["layout"] ?? {}),
+        }
+      } : undefined,
+      tokens: docViews["designTokens"] ? {
+        condition: {
+          ...(docViews["designTokens"]["design"] ?? {}),
+          ...(docViews["designTokens"]["layout"] ?? {}),
+        }
+      } : undefined,
+    }
+  } : undefined
+}
 
-  const overviewTabComponents = getComponentsAsComponentPreviews('overview', exportable, components, previews, config?.app?.component_sort);
-  const designTokensTabComponents = getComponentsAsComponentPreviews('designTokens', exportable, components, previews, config?.app?.component_sort)
+const GenericComponentPage = ({
+  content,
+  menu,
+  metadata,
+  options,
+  current,
+  id,
+  scss,
+  css,
+  styleDictionary,
+  types,
+  component,
+  legacyDefinition,
+  previews,
+  config,
+}: ComponentDocumentationProps) => {
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [activeTab, setActiveTab] = React.useState<ComponentTab>(ComponentTab.Overview);
+  const [hasPreviews, setHasPreviews] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    const componentHasPreviews = previews.length > 0;
+    setHasPreviews(componentHasPreviews)
+    setActiveTab(componentHasPreviews ? ComponentTab.Overview : ComponentTab.DesignTokens);
+    setLoading(false);
+  }, [component, previews]);
+
+  if (loading) {
+    return (
+      <div className="c-page">
+        <Head>
+          <title>{metadata.metaTitle}</title>
+          <meta name="description" content={metadata.metaDescription} />
+        </Head>
+        <Header menu={menu} config={config} />
+        <Footer config={config} />
+      </div>
+    )
+  }
+
+  const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
+  const overviewTabComponents = getComponentPreviews('overview', component, componentDocumentationOptions, previews);
+  const tokensTabComponents = getComponentPreviews('tokens', component, componentDocumentationOptions, previews);
 
   return (
     <div className="c-page">
       <Head>
-        <title>{metadata.metaTitle}</title>
+        <title>{metadata.metaTitle ?? startCase(id)}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} config={config}/>
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">
             <div>
-              <h1>{metadata.title ?? component}</h1>
+              <h1>{metadata.title ?? startCase(id)}</h1>
               <p>{metadata.description}</p>
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
-              <button
-                className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.Overview)}
-              >
-                Overview
-              </button>
+              {hasPreviews && (
+                <button
+                  className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
+                  onClick={() => setActiveTab(ComponentTab.Overview)}
+                >
+                  Overview
+                </button>
+              )}
               <button
                 className={`c-tabs__item ${activeTab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
                 onClick={() => setActiveTab(ComponentTab.DesignTokens)}
@@ -98,18 +164,21 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {activeTab == ComponentTab.Overview && (
               <>
                 <div className="o-col-9@xl">
-                  <OverviewComponentPreview components={overviewTabComponents} options={exportable.options} />
+                  <OverviewComponentPreview components={overviewTabComponents} />
                   <div id="guidelines">
                     <OverviewComponentGuidlines content={content} />
                   </div>
                   <div id="classes">
-                    <OverviewComponentClasses components={overviewTabComponents} options={exportable.options} />
+                    <OverviewComponentClasses components={overviewTabComponents} />
                   </div>
                 </div>
                 <div className="o-col-3@xl u-visible@lg">
                   <AnchorNav
                     groups={[
-                      Object.assign({}, ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]),
+                      Object.assign(
+                        {},
+                        ...[...overviewTabComponents.map((obj) => ({ [obj.component.id]: getComponentPreviewTitle(obj) }))]
+                      ),
                       { guidelines: 'Component Guidelines' },
                       { classes: 'Classes' },
                     ]}
@@ -120,20 +189,23 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
             {activeTab == ComponentTab.DesignTokens && (
               <>
                 <div className="o-col-12@md u-mb-3 u-mt-4- u-flex u-justify-end ">
-                  <DownloadTokens componentId={component} scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
+                  <DownloadTokens componentId={id} scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
                 </div>
-                {designTokensTabComponents.map(previewableComponent => (
-                  <ComponentDesignTokens
-                    key={previewableComponent.component.id}
-                    title={getComponentPreviewTitle(previewableComponent)}
-                    previewObject={previewableComponent.component}
-                    transformerOptions={exportable.options.transformer}
-                    designComponents={designComponents}
-                    overrides={previewableComponent.overrides}
-                  >
-                    <ComponentDisplay component={previewableComponent.preview} />
-                  </ComponentDesignTokens>
-                ))}
+                {tokensTabComponents.map((previewComponent) => {
+                  return (
+                    <ComponentDesignTokens
+                      key={previewComponent.component.id}
+                      title={getComponentPreviewTitle(previewComponent)}
+                      previewObject={previewComponent.component}
+                      previewObjectOptions={component.definitions[previewComponent.component.definitionId].options}
+                      componentInstances={component?.instances}
+                      overrides={previewComponent.overrides}
+                      renderPreviews={hasPreviews}
+                    >
+                      <ComponentDisplay component={previewComponent.preview} />
+                    </ComponentDesignTokens>
+                  );
+                })}
               </>
             )}
           </div>
@@ -147,42 +219,42 @@ const GenericComponentPage = ({ content, menu, metadata, current, component, exp
 export default GenericComponentPage;
 
 type ComponentPreview = {
-  component: Component,
-  possiblyDistinctiveName: string,
-  preview: PreviewObject | undefined,
-  overrides?: { states?: string[] | undefined },
+  component: ComponentInstance;
+  name: string;
+  preview: PreviewObject | undefined;
+  overrides?: { states?: string[] | undefined };
 };
 
 type ComponentPreviews = ComponentPreview[];
 
-const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', exportable: ExportableDefinition, components: Component[], previews: PreviewObject[], sort: string[]) => {
-  if (!(tab in (exportable.options.demo.tabs ?? {}))) return [];
+const getComponentPreviews = (
+  tab: 'overview' | 'tokens',
+  component: FileComponentObject,
+  options: ComponentDocumentationOptions,
+  previews: PreviewObject[]
+) => {
+  const hasPreviews = previews.length > 0;
+  const instances = component.instances;
+  const view = (options?.views ?? {})[tab] ?? {};
+  const viewFilters = view.condition ?? {};
+  const viewSort = view.sort ?? [];
 
-  const tabFilters = (exportable.options.demo.tabs[tab] ?? {});
-  const componentTypeOrder = ["design", "layout"];
-  
-  const tabComponents: ComponentPreview[] = components
-    .map((component) => {
-      if (!(component.type in tabFilters)) {
-        return null;
-      }
-
-      if (tabFilters[component.type] === null) {
-        return null;
-      }
-
-      const filterProps = Object.keys(tabFilters[component.type]);
-      const variantProps = new Map(component.variantProperties);
+  let tabComponents: ComponentPreview[] = instances
+    .map((componentInstance) => {
+      const filterProps = Object.keys(viewFilters);
+      const variantProps = new Map(componentInstance.variantProperties);
 
       let overrides: { states?: string[] } | undefined = undefined;
-      let possiblyDistinctiveName: string = component.variantProperties.filter(variantProp => !filterProps.includes(variantProp[0]))[0]?.[1];
+      let name: string = hasPreviews
+        ? componentInstance.variantProperties.filter((variantProp) => !filterProps.includes(variantProp[0]))[0]?.[1]
+        : componentInstance.variantProperties.map(([variantProp, value]) => `${variantProp}: ${startCase(value)}`).join(', ');
 
       for (const filterProp of filterProps) {
         if (!variantProps.get(filterProp)) {
           continue;
         }
-        
-        const filterValue = tabFilters[component.type][filterProp];
+
+        const filterValue = viewFilters[filterProp];
 
         if (typeof filterValue === 'object' && filterValue !== null) {
           if (Array.isArray(filterValue)) {
@@ -194,7 +266,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
               return null;
             }
             // Use as a default possibly distinctive name
-            possiblyDistinctiveName ??= variantProps.get(filterProp);
+            name ??= variantProps.get(filterProp);
           } else {
             // Filter value is a object so we check if the value of the respective component property
             // is contained within the array of object keys
@@ -207,7 +279,7 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
               // We will store the property value of the filter value object for later use
               overrides = filterValue[variantProps.get(filterProp)];
               // Use as a default possibly distinctive name
-              possiblyDistinctiveName ??= variantProps.get(filterProp);
+              name ??= variantProps.get(filterProp);
             }
           }
         } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
@@ -216,35 +288,25 @@ const getComponentsAsComponentPreviews = (tab: 'overview' | 'designTokens', expo
       }
 
       return {
-        component: component,
-        possiblyDistinctiveName: possiblyDistinctiveName ?? '',
-        preview: previews.find((item) => item.id === component.id),
+        component: componentInstance,
+        name: (hasPreviews ? `${startCase(name)} ${startCase(componentInstance.name)}` : name) ?? '',
+        preview: previews.find((item) => item.id === componentInstance.id),
         overrides,
       };
     })
-    .filter(filterOutNull)
-    .sort(function (first, second) {
-      sort ??= [];
+    .filter(filterOutNull);
 
-      const lStr = first.possiblyDistinctiveName ?? '';
-      const rStr = second.possiblyDistinctiveName ?? '';
+  if (viewSort.length > 0) {
+    tabComponents = multiPropSort(viewSort, tabComponents);
+  }
 
-      const l = sort.indexOf(lStr) >>> 0;
-      const r = sort.indexOf(rStr) >>> 0;
+  return tabComponents;
+};
 
-      const componentTypeCompareResult = componentTypeOrder.indexOf(first.component.type) - componentTypeOrder.indexOf(second.component.type)
-      const discriminatorCompareResult = l !== r ? l - r : lStr.localeCompare(rStr);
-      
-      return componentTypeCompareResult || discriminatorCompareResult;
-    });
-
-    return tabComponents;
-}
-
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
+const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
-      {components.map(previewableComponent => {
+      {components.map((previewableComponent) => {
         const component = previewableComponent.component;
         return (
           <div key={`${component.id}`} id={component.id}>
@@ -256,13 +318,13 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews, option
             <CodeHighlight data={previewableComponent.preview} />
             <hr />
           </div>
-        )
+        );
       })}
     </>
   );
-}
+};
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, options?: ExportableOptions }> = ({ components, options }) => {
+const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       <h4>Classes</h4>
@@ -276,30 +338,32 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews, option
         </thead>
         <tbody>
           <>
-            {components.map(previewableComponent => {
+            {components.map((previewableComponent) => {
               const component = previewableComponent.component;
               return (
                 <tr key={`classes-${component.id}`}>
                   <td>{getComponentPreviewTitle(previewableComponent)}</td>
                   <td>
-                    <code>{component.name} {component.name}-{previewableComponent.possiblyDistinctiveName}</code>
+                    <code>
+                      {component.name} {component.name}-{previewableComponent.name}
+                    </code>
                   </td>
                 </tr>
-              )
+              );
             })}
           </>
         </tbody>
-      </table>   
+      </table>
     </>
-  )
-}
+  );
+};
 
 const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
   return (
     <>
       <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
     </>
-  )
+  );
 };
 
 const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
@@ -317,8 +381,30 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
   );
 };
 
-export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => { 
-  return previewableComponent.possiblyDistinctiveName
-    ? `${startCase(previewableComponent.possiblyDistinctiveName)} ${startCase(previewableComponent.component.name)}`
-    : `${startCase(previewableComponent.component.name)}`
+export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
+  return previewableComponent.name
+    ? `${previewableComponent.name}`
+    : `${startCase(previewableComponent.component.name)}`;
+};
+
+function multiPropSort(properties: string[], array: ComponentPreview[]) {
+  return array.sort((l, r) => {
+    for (const prop of properties) {
+      const lVal = new Map(l.component.variantProperties).get(prop);
+      const rVal = new Map(r.component.variantProperties).get(prop);
+
+      if (!lVal || lVal === '') {
+        return 1; // Move items with undefined or empty string values to the last
+      } else if (!rVal || rVal === '') {
+        return -1; // Move items with undefined or empty string values to the last
+      }
+
+      if (lVal < rVal) {
+        return -1;
+      } else if (lVal > rVal) {
+        return 1;
+      }
+    }
+    return 0; // Objects are considered equal if all properties are equal
+  });
 }

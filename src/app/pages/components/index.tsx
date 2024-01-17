@@ -6,7 +6,7 @@ import {
   DocumentationProps,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
-  fetchExportables,
+  fetchComponents,
   Metadata,
 } from '../../components/util';
 import Header from '../../components/Header';
@@ -15,8 +15,9 @@ import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
-import { getConfig } from '../../../config';
+import { getClientConfig } from '../../../config';
 import Footer from '../../components/Footer';
+import { startCase } from 'lodash';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -32,8 +33,8 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchExportables().map(exportable => exportable.id);
-  const config = getConfig();
+  const components = fetchComponents().map(c => c.id);
+  const config = getClientConfig();
   return {
     ...{
       props: {
@@ -87,7 +88,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
                       <ComponentsPageCard
                         key={`component-${componentId}`}
                         component={componentId}
-                        title={component.title ?? componentId}
+                        title={component.title ?? startCase(componentId)}
                         description={component.description}
                         icon={component.image}
                       />
@@ -124,7 +125,9 @@ const ComponentsPageCard = ({
     <Link href={available ? `/components/${component}` : '#'}>
       <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
         <div className="c-component-card__img">
-          <Icon name={icon} />
+          {icon && (
+            <Icon name={icon} />
+          )}
         </div>
         <h6>{title}</h6>
         <p>{descripton}</p>

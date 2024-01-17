@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '.';
-import { Config } from './types/config';
+import { ClientConfig, Config } from './types/config';
 
 export interface ImageStyle {
   name: string;
@@ -67,16 +67,14 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
+  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() !== "true"
 });
 
 /**
- * Get the config, either from the root of the project or from the default config
+ * Get the configuration formatted for the client, either from the root of the project or from the default config.
  * @returns Promise<Config>
  */
-export const getConfig = (configOverride?: any): Config => {
-  // if (global.handoff && global.handoff.config) {
-  //   return global.handoff.config;
-  // }
+export const getClientConfig = (configOverride?: any): ClientConfig => {
   // Check to see if there is a config in the root of the project
   let config = {};
   let configPath = path.resolve(process.cwd(), 'handoff.config.json');
@@ -90,52 +88,12 @@ export const getConfig = (configOverride?: any): Config => {
     config = { ...config, ...configOverride };
   }
 
-  const result = { ...defaultConfig(), ...config } as unknown as Config;
+  const { app, figma, assets_zip_links, use_legacy_definitions } = { ...defaultConfig(), ...config } as unknown as Config;
 
-  // Anonymize the configuration!
-  delete result.figma_project_id;
-  delete result.dev_access_token;
-
-  return result;
-};
-/**
- * Get the handoff from the global scope
- * @returns Handoff
- */
-export const getHandoff = (): Handoff => {
-  // if (global.handoff) {
-  //   return global.handoff;
-  // }
-  // check for a serialized version
-  const handoff = deserializeHandoff();
-  if (handoff) {
-    // global.handoff = handoff;
-    return handoff;
-  }
-  throw Error('Handoff not initialized');
-};
-/**
- * Serialize the handoff to the working directory
- */
-export const serializeHandoff = (handoff: Handoff) => {
-  const outputPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
-  if (!fs.existsSync(outputPath)) {
-    fs.mkdirSync(path.resolve(outputPath), { recursive: true });
-  }
-  const statePath = path.resolve(outputPath, 'handoff.state.json');
-  fs.writeFileSync(statePath, JSON.stringify(handoff));
-};
-
-/**
- * Deserialize the handoff from the working directory
- * @returns
- */
-export const deserializeHandoff = () => {
-  const statePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'handoff.state.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'handoff.state.json');
-  if (fs.existsSync(statePath)) {
-    const stateBuffer = fs.readFileSync(statePath);
-    const state = JSON.parse(stateBuffer.toString());
-    return state;
-  }
-  throw Error('Handoff cannot be deserialized');
+  return {
+    app,
+    figma,
+    assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
+    use_legacy_definitions
+  };
 };

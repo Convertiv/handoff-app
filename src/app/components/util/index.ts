@@ -1,12 +1,11 @@
-import { getConfig, getHandoff } from '../../../config';
+import { getClientConfig } from '../../../config';
 import { ChangelogRecord } from '../../../changelog';
-import { ExportResult, Config } from '../../../types/config';
-import { Component } from '../../../exporters/components/extractor';
-import { ExportableDefinition, ExportableOptions, PreviewJson, PreviewObject } from '../../../types';
-import { filterOutNull } from '../../../utils';
+import { ExportResult, ClientConfig } from '../../../types/config';
+import { DocumentComponentDefinitions, FileComponentObject } from '../../../exporters/components/types';
+import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '../../../types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy, merge, uniq } from 'lodash';
+import { groupBy, merge, startCase, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -43,9 +42,10 @@ export interface SectionLink {
 export interface DocumentationProps {
   metadata: Metadata;
   content: string;
+  options?: ComponentDocumentationOptions;
   menu: SectionLink[];
   current: SectionLink;
-  config: Config;
+  config: ClientConfig;
 }
 
 export interface DocumentationWithTokensProps extends DocumentationProps {
@@ -69,10 +69,11 @@ export interface AssetDocumentationProps extends DocumentationProps {
 }
 
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
-  exportable: ExportableDefinition;
-  components: Component[];
+  id: string;
+  component: FileComponentObject;
+  legacyDefinition: LegacyComponentDefinition;
+  // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
-  component: string;
 }
 
 export interface FoundationDocumentationProps extends DocumentationWithTokensProps {
@@ -132,10 +133,9 @@ export const pluralizeComponent = (singular: string): string => {
  * @returns
  */
 export const buildL1StaticPaths = () => {
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let list = files;
   if(fs.existsSync(pageRoot)){
     const pages = fs.readdirSync(pageRoot);
@@ -166,10 +166,9 @@ export const buildL1StaticPaths = () => {
  * @returns SubPathType[]
  */
 export const buildL2StaticPaths = () => {
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(handoff.workingPath, 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let list = files;
   if(fs.existsSync(pageRoot)){
     const pages = fs.readdirSync(pageRoot);
@@ -212,11 +211,10 @@ export const buildL2StaticPaths = () => {
  */
 export const staticBuildMenu = () => {
   // Contents of docs
-  const handoff = getHandoff();
-  const docRoot = path.resolve(handoff.modulePath, 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
   let list = files;
-  const workingPages = path.resolve(handoff.workingPath, 'pages');
+  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
   let pages: string[] = [];
   if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
@@ -244,14 +242,14 @@ export const staticBuildMenu = () => {
         let subSections = [];
 
         if (path === '/components') {
-          const exportables = fetchExportables();
+          const components = fetchComponents();
           // Build the submenu of exportables (components)
-          const groupedExportables = groupBy(exportables, (e) => e.group ?? '');
-          Object.keys(groupedExportables).forEach((group) => {
+          const groupedComponents = groupBy(components, (e) => e.group ?? '');
+          Object.keys(groupedComponents).forEach((group) => {
             subSections.push({ path: '', title: group });
-            groupedExportables[group].forEach((exportable) => {
-              const exportableDocs = fetchDocPageMetadataAndContent('docs/components/', exportable.id);
-              subSections.push({ path: `components/${exportable.id}`, title: exportableDocs.metadata.title ?? exportable.id });
+            groupedComponents[group].forEach((component) => {
+              const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+              subSections.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
             });
           });
         }
@@ -297,12 +295,13 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  */
 export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
   const menu = staticBuildMenu();
-  const { metadata, content } = fetchDocPageMetadataAndContent(path, slug);
+  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
   return {
     props: {
       metadata,
       content,
+      options,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
     },
@@ -332,45 +331,25 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * Fetch exportables id's from the JSON files in the exportables directory
  * @returns {string[]}
  */
-export const fetchExportables = () => {
+export const fetchComponents = () => {
   try {
-    const config = getConfig();
-    const handoff = getHandoff();
-    const definitions = config?.figma?.definitions;
-
-    if (!definitions || definitions.length === 0) {
-      return [];
-    }
-
-    const exportables = definitions
-      .map((def) => {
-        let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
-        // If the project path exists, use that first as an override
-        if (fs.existsSync(projectPath)) {
-          defPath = projectPath;
-        } else if (!fs.existsSync(defPath)) {
-          return null;
-        }
-        const defBuffer = fs.readFileSync(defPath);
-        const exportable = JSON.parse(defBuffer.toString()) as ExportableDefinition;
-
-        const exportableOptions = {};
-        merge(exportableOptions, config?.figma?.options, exportable.options);
-        exportable.options = exportableOptions as ExportableOptions;
-        return exportable;
-      })
-      .filter(filterOutNull);
-
-    return exportables ? exportables : [];
+    return (
+      Object.entries(getTokens().components).map(([id, obj]) => ({
+        id,
+        group: Object.values(obj.definitions)[0]?.group ?? '',
+      })) ?? []
+    );
   } catch (e) {
     return [];
   }
 };
 
-export const fetchExportable = (name: string) => {
-  const config = getConfig();
-  const handoff = getHandoff();
+/**
+ * Returns the legacy component definition for component with the given name.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+export const getLegacyDefinition = (name: string) => {
+  const config = getClientConfig();
   const def = config?.figma?.definitions.filter((def) => {
     return def.split('/').pop() === name;
   });
@@ -378,8 +357,8 @@ export const fetchExportable = (name: string) => {
     return null;
   }
 
-  let defPath = path.resolve(handoff.modulePath, 'config', 'exportables', `${def}.json`);
-  const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+  let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? "", 'exportables', `${def}.json`));
   // If the project path exists, use that first as an override
   if (fs.existsSync(projectPath)) {
     defPath = projectPath;
@@ -391,11 +370,11 @@ export const fetchExportable = (name: string) => {
   }
 
   const data = fs.readFileSync(defPath, 'utf-8');
-  const exportable = JSON.parse(data.toString()) as ExportableDefinition;
+  const exportable = JSON.parse(data.toString()) as LegacyComponentDefinition;
 
   const exportableOptions = {};
   merge(exportableOptions, config?.figma?.options, exportable.options);
-  exportable.options = exportableOptions as ExportableOptions;
+  exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
   return exportable;
 };
 
@@ -464,22 +443,37 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @returns
  */
 export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
-  const handoff = getHandoff();
-  const filepath = path.resolve(handoff.modulePath, 'config', `${localPath}${slug}.md`);
   const pagePath = localPath.replace('docs/', 'pages/');
-  const workingPath = path.resolve(handoff.workingPath, `${pagePath}${slug}.md`);
+  const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? "";
+  const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? "";
+
   let currentContents = '';
+  let options = {} as ComponentDocumentationOptions;
+
+  const contentModuleFilePath = path.resolve(handoffModulePath, 'config', `${localPath}${slug}.md`);
+  const contentWorkingFilePath = path.resolve(handoffWorkingPath, `${pagePath}${slug}.md`);
   
-  if (fs.existsSync(workingPath)) {
-    currentContents = fs.readFileSync(workingPath, 'utf-8');
-  } else if (!fs.existsSync(filepath)) {
-    return { metadata: {}, content: currentContents };
+  if (fs.existsSync(contentWorkingFilePath)) {
+    currentContents = fs.readFileSync(contentWorkingFilePath, 'utf-8');
+  } else if (!fs.existsSync(contentModuleFilePath)) {
+    return { metadata: {}, content: currentContents, options: {} };
   } else {
-    currentContents = fs.readFileSync(filepath, 'utf-8');
+    currentContents = fs.readFileSync(contentModuleFilePath, 'utf-8');
   }
   const { data: metadata, content } = matter(currentContents);
-  return { metadata, content };
+
+  const designModuleFilePath = path.resolve(handoffModulePath, 'config', `${localPath}${slug}.design.json`);
+  const designModuleWorkingPath = path.resolve(handoffWorkingPath, `${pagePath}${slug}.design.json`);
+
+  if (fs.existsSync(designModuleWorkingPath)) {
+    options = JSON.parse(fs.readFileSync(designModuleWorkingPath, 'utf-8').toString()) as ComponentDocumentationOptions;
+  } else if (fs.existsSync(designModuleFilePath)) {
+    options = JSON.parse(fs.readFileSync(designModuleFilePath, 'utf-8').toString()) as ComponentDocumentationOptions;
+  }
+
+  return { metadata, content, options };
 };
+
 /**
  * Filter out undefined elements
  * @param value
@@ -493,7 +487,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
  * @returns
  */
 export const titleString = (prefix: string | null): string => {
-  const config = getConfig();
+  const config = getClientConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config?.app?.client} Design System`;
 };

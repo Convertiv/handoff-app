@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -84,30 +73,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildIntegrationOnly = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
-var config_1 = require("./config");
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
-var index_1 = require("./utils/index");
 require("dotenv/config");
 var stream = __importStar(require("node:stream"));
 var api_1 = require("./figma/api");
-var merge_1 = __importDefault(require("lodash/merge"));
 var documentation_object_1 = require("./documentation-object");
 var api_2 = require("./api");
-var index_2 = __importStar(require("./transformers/scss/index"));
-var index_3 = __importDefault(require("./transformers/css/index"));
-var index_4 = __importDefault(require("./transformers/integration/index"));
-var index_5 = __importDefault(require("./transformers/font/index"));
-var index_6 = __importDefault(require("./transformers/preview/index"));
+var index_1 = __importStar(require("./transformers/scss/index"));
+var index_2 = __importDefault(require("./transformers/css/index"));
+var index_3 = __importDefault(require("./transformers/integration/index"));
+var index_4 = __importDefault(require("./transformers/font/index"));
+var index_5 = __importDefault(require("./transformers/preview/index"));
 var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
+var lodash_1 = require("lodash");
+var utils_1 = require("./utils");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
-var exportablesFolder = function () { return 'config/exportables'; };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
 var previewFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'preview.json'); };
 var changelogFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'changelog.json'); };
@@ -134,58 +121,6 @@ var readPrevJSONFile = function (path) { return __awaiter(void 0, void 0, void 0
         }
     });
 }); };
-var formatComponentsTransformerOptions = function (exportables) {
-    return new Map(Object.entries(exportables.reduce(function (res, exportable) {
-        var _a;
-        return __assign(__assign({}, res), (_a = {}, _a[exportable.id] = __assign(__assign({}, exportable.options.transformer), exportable.options.shared), _a));
-    }, {})));
-};
-/**
- * Get the exportables from the config
- * @param handoff
- * @returns Promise<ExportableDefinition[]>
- */
-var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config_2, definitions, exportables;
-    var _a;
-    return __generator(this, function (_b) {
-        try {
-            if (!handoff.config) {
-                throw new Error('Handoff config not found');
-            }
-            config_2 = handoff.config;
-            definitions = (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.definitions;
-            if (!definitions || definitions.length === 0) {
-                return [2 /*return*/, []];
-            }
-            exportables = definitions
-                .map(function (def) {
-                var _a;
-                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, exportablesFolder(), "".concat(def, ".json")));
-                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
-                // If the project path exists, use that first as an override
-                if (fs_extra_1.default.existsSync(projectPath)) {
-                    defPath = projectPath;
-                }
-                else if (!fs_extra_1.default.existsSync(defPath)) {
-                    return null;
-                }
-                var defBuffer = fs_extra_1.default.readFileSync(defPath);
-                var exportable = JSON.parse(defBuffer.toString());
-                var exportableOptions = {};
-                (0, merge_1.default)(exportableOptions, (_a = config_2 === null || config_2 === void 0 ? void 0 : config_2.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
-                exportable.options = exportableOptions;
-                return exportable;
-            })
-                .filter(index_1.filterOutNull);
-            return [2 /*return*/, exportables ? exportables : []];
-        }
-        catch (e) {
-            return [2 /*return*/, []];
-        }
-        return [2 /*return*/];
-    });
-}); };
 /**
  * Build just the custom fonts
  * @param documentationObject
@@ -194,7 +129,7 @@ var getExportables = function (handoff) { return __awaiter(void 0, void 0, void 
 var buildCustomFonts = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_5.default)(handoff, documentationObject)];
+            case 0: return [4 /*yield*/, (0, index_4.default)(handoff, documentationObject)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -208,7 +143,7 @@ var buildIntegration = function (handoff, documentationObject) { return __awaite
     var integration;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_4.default)(handoff, documentationObject)];
+            case 0: return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
             case 1:
                 integration = _a.sent();
                 return [2 /*return*/, integration];
@@ -218,14 +153,16 @@ var buildIntegration = function (handoff, documentationObject) { return __awaite
 /**
  * Run just the preview
  * @param documentationObject
- */
-var buildPreview = function (handoff, documentationObject, options) { return __awaiter(void 0, void 0, void 0, function () {
+*/
+var buildPreview = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, Promise.all([(0, index_6.default)(handoff, documentationObject, options).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath(handoff), out, { spaces: 2 }); })])];
+            case 0: return [4 /*yield*/, Promise.all([
+                    (0, index_5.default)(handoff, documentationObject).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath(handoff), out, { spaces: 2 }); }),
+                ])];
             case 1:
                 _a.sent();
-                if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].length > 0; }).length > 0)) return [3 /*break*/, 3];
+                if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].instances.length > 0; }).length > 0)) return [3 /*break*/, 3];
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
                         .then(function (value) { return console.log(chalk_1.default.green(value)); })
                         .catch(function (error) {
@@ -245,20 +182,20 @@ var buildPreview = function (handoff, documentationObject, options) { return __a
  * Build only the styles pipeline
  * @param documentationObject
  */
-var buildStyles = function (handoff, documentationObject, options) { return __awaiter(void 0, void 0, void 0, function () {
+var buildStyles = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     var typeFiles, cssFiles, scssFiles, sdFiles, mapFiles;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                typeFiles = (0, index_2.scssTypesTransformer)(documentationObject, options);
+                typeFiles = (0, index_1.scssTypesTransformer)(documentationObject);
                 typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-                cssFiles = (0, index_3.default)(documentationObject, options);
+                cssFiles = (0, index_2.default)(documentationObject);
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-                scssFiles = (0, index_2.default)(documentationObject, options);
+                scssFiles = (0, index_1.default)(documentationObject);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-                sdFiles = (0, sd_1.default)(documentationObject, options);
+                sdFiles = (0, sd_1.default)(documentationObject);
                 sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-                mapFiles = (0, map_1.default)(documentationObject, options);
+                mapFiles = (0, map_1.default)(documentationObject);
                 mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
@@ -419,24 +356,34 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
         }
     });
 }); };
-var figmaExtract = function (handoff, exportables) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, documentationObject, changelogRecord, outputFolder;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var prevDocumentationObject, changelog, legacyDefinitions, _a, documentationObject, changelogRecord, outputFolder;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
                 console.log(chalk_1.default.green("Starting Figma data extraction."));
                 return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
-                prevDocumentationObject = _a.sent();
+                prevDocumentationObject = _b.sent();
                 return [4 /*yield*/, readPrevJSONFile(changelogFilePath(handoff))];
             case 2:
-                changelog = (_a.sent()) || [];
+                changelog = (_b.sent()) || [];
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
-                _a.sent();
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, exportables)];
+                _b.sent();
+                if (!handoff.config.use_legacy_definitions) return [3 /*break*/, 5];
+                return [4 /*yield*/, getLegacyDefinitions(handoff)];
             case 4:
-                documentationObject = _a.sent();
+                _a = _b.sent();
+                return [3 /*break*/, 6];
+            case 5:
+                _a = null;
+                _b.label = 6;
+            case 6:
+                legacyDefinitions = _a;
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
+            case 7:
+                documentationObject = _b.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
                     changelog = __spreadArray([changelogRecord], changelog, true);
@@ -455,15 +402,15 @@ var figmaExtract = function (handoff, exportables) { return __awaiter(void 0, vo
                             }),
                         ]
                         : []), true))];
-            case 5:
-                _a.sent();
+            case 8:
+                _b.sent();
                 outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
-                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 7];
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 10];
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
-            case 6:
-                _a.sent();
-                _a.label = 7;
-            case 7:
+            case 9:
+                _b.sent();
+                _b.label = 10;
+            case 10:
                 // copy assets to output folder
                 fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
                 fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
@@ -476,25 +423,21 @@ var figmaExtract = function (handoff, exportables) { return __awaiter(void 0, vo
  * @param handoff
  */
 var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var exportables, componentTransformerOptions, documentationObject;
+    var documentationObject;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, getExportables(handoff)];
+            case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
-                exportables = _a.sent();
-                componentTransformerOptions = formatComponentsTransformerOptions(exportables);
-                return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
-            case 2:
                 documentationObject = _a.sent();
-                if (!documentationObject) return [3 /*break*/, 5];
+                if (!documentationObject) return [3 /*break*/, 4];
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, buildPreview(handoff, documentationObject)];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
-            case 4:
-                _a.sent();
-                _a.label = 5;
-            case 5: return [2 /*return*/];
+                _a.label = 4;
+            case 4: return [2 /*return*/];
         }
     });
 }); };
@@ -503,7 +446,7 @@ exports.buildIntegrationOnly = buildIntegrationOnly;
  * Run the entire pipeline
  */
 var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void 0, function () {
-    var exportables, documentationObject, componentTransformerOptions;
+    var documentationObject;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -517,34 +460,27 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, validateFigmaAuth(handoff)];
             case 2:
                 _a.sent();
-                return [4 /*yield*/, getExportables(handoff)];
+                return [4 /*yield*/, figmaExtract(handoff)];
             case 3:
-                exportables = _a.sent();
-                return [4 /*yield*/, figmaExtract(handoff, exportables)];
-            case 4:
                 documentationObject = _a.sent();
-                componentTransformerOptions = formatComponentsTransformerOptions(exportables);
                 return [4 /*yield*/, buildCustomFonts(handoff, documentationObject)];
+            case 4:
+                _a.sent();
+                return [4 /*yield*/, buildStyles(handoff, documentationObject)];
             case 5:
                 _a.sent();
-                return [4 /*yield*/, buildStyles(handoff, documentationObject, componentTransformerOptions)];
+                return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 6:
                 _a.sent();
-                return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
+                return [4 /*yield*/, buildPreview(handoff, documentationObject)];
             case 7:
                 _a.sent();
-                return [4 /*yield*/, buildPreview(handoff, documentationObject, componentTransformerOptions)];
+                if (!build) return [3 /*break*/, 9];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 8:
                 _a.sent();
-                return [4 /*yield*/, (0, config_1.serializeHandoff)(handoff)];
+                _a.label = 9;
             case 9:
-                _a.sent();
-                if (!build) return [3 /*break*/, 11];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
-            case 10:
-                _a.sent();
-                _a.label = 11;
-            case 11:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];
@@ -552,3 +488,48 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
     });
 }); };
 exports.default = pipeline;
+/**
+ * Returns configured legacy component definitions in array form.
+ * @deprecated Will be removed before 1.0.0 release.
+ */
+var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var config_1, definitions, exportables;
+    var _a;
+    return __generator(this, function (_b) {
+        try {
+            if (!handoff.config) {
+                throw new Error('Handoff config not found');
+            }
+            config_1 = handoff.config;
+            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
+            if (!definitions || definitions.length === 0) {
+                return [2 /*return*/, []];
+            }
+            exportables = definitions
+                .map(function (def) {
+                var _a;
+                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
+                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
+                // If the project path exists, use that first as an override	
+                if (fs_extra_1.default.existsSync(projectPath)) {
+                    defPath = projectPath;
+                }
+                else if (!fs_extra_1.default.existsSync(defPath)) {
+                    return null;
+                }
+                var defBuffer = fs_extra_1.default.readFileSync(defPath);
+                var exportable = JSON.parse(defBuffer.toString());
+                var exportableOptions = {};
+                (0, lodash_1.merge)(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                exportable.options = exportableOptions;
+                return exportable;
+            })
+                .filter(utils_1.filterOutNull);
+            return [2 /*return*/, exportables ? exportables : []];
+        }
+        catch (e) {
+            return [2 /*return*/, []];
+        }
+        return [2 /*return*/];
+    });
+}); };

@@ -1,6 +1,6 @@
 export default config;
-import { DocumentComponentsObject } from 'figma-exporter/src/exporters/components';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from './figma-exporter/src/types';
+import { FileComponentsObject } from '../exporters/components/types';
+import type { ColorObject, TypographyObject, AssetObject, EffectObject } from '../types';
 
 export interface ImageStyle {
   name: string;
@@ -42,7 +42,7 @@ export interface ExportResult {
     effect: EffectObject[];
     typography: TypographyObject[];
   };
-  components: DocumentComponentsObject;
+  components: FileComponentsObject;
   assets: {
     icons: AssetObject[];
     logos: AssetObject[];
@@ -81,7 +81,10 @@ export interface Config {
      */
     logos?: string;
   };
+  use_legacy_definitions?: boolean | null | undefined;
 }
+
+export type ClientConfig = Pick<Config, "app" | "figma" | "assets_zip_links", "use_legacy_definitions">;
 
 declare const config: Config;
 

@@ -34,6 +34,9 @@
               "disabled"
             ],
             "Theme": "light"
+          },
+          "layout": {
+            "Size": ""
           }
         },
         "designTokens": {
@@ -64,6 +67,9 @@
               }
             },
             "Theme": "light"
+          },
+          "layout": {
+            "Size": ""
           }
         }
       }

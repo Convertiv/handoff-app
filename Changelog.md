@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2024-01-16
+
+### Improvements
+
+* Docs App:
+  * Updated docs app to present components without associated content and assets more elegantly.
+  * Improved the component pages by showing only the "Tokens" tab when no previews are detected; the "Overview" tab is hidden in such cases.
+* Configuration Handling:
+  * Eliminated the need for `handoff.state.json` file.
+  * All required parameters are now passed to the docs app through environment variables (`process.env`), defined in the project's respective `next.config.js` file.
+  * Replaced `getConfig` with the more secure `getClientConfig` function.
+  * New function returns only configurations that can be safely exposed on the client side.
+
+### Changes
+
+* Handoff Figma Plugin Support:
+  * Introduced initial support for the Handoff Figma Plugin.
+  * Currently an opt-in feature as development is ongoing.
+  * Can be enabled by setting `USE_HANDOFF_PLUGIN="TRUE"` in your `.env` file.
+  * This functionality allows Handoff to extract metadata directly from the Figma file. Local JSON definitions are completely ignored in this case.
+  * Will become the default behavior in the 1.0.0 release!
+* Deprecation Notice:
+  * Deprecated local exportable component JSON definitions.
+  * Still usable, but will be completely removed and ignored before the 1.0.0 release.
+  * Components, parts, and related definitions should be defined with the Handoff Figma Plugin prior to the 1.0.0 release.
+
 ## [0.9.3] - 2023-11-23
 
 ### Improvements

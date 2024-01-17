@@ -14,14 +14,6 @@ import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 
-var handoff = null;
-
-declare global {
-  var handoff: Handoff | null;
-}
-
-global.handoff = handoff;
-
 class Handoff {
   config: Config | null;
   debug: boolean = false;
