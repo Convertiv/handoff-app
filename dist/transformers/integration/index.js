@@ -207,7 +207,7 @@ function integrationTransformer(handoff, documentationObject) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                    outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
                     if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
                     return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
                 case 1:

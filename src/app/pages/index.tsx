@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
-import classNames from 'classnames';
-import { getClientConfig } from '../../config';
+import { getClientConfig } from '@handoff/config';
 import Icon from '../components/Icon';
 import Head from 'next/head';
 import Header from '../components/Header';
@@ -73,7 +72,12 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 View Components
               </Link>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.png`} width={1528} height={1250} alt="Components" />
+              <img
+                src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.png`}
+                width={1528}
+                height={1250}
+                alt="Components"
+              />
             </div>
           </div>
           <div className="o-col-6@lg u-animation-fadein">
@@ -82,21 +86,18 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
               <p>Sets of recommendations on how to apply design principles to provide a positive user experience.</p>
               <ul className="c-list--boxed u-pt-2">
                 <li>
-                  <Link
-                    href="/foundations/typography"
-                    className={classNames({ 'is-selected': router.asPath === '/foundations/typography' })}
-                  >
+                  <Link href="/foundations/typography" className={router.asPath === '/foundations/typography' ? 'is-selected' : ''}>
                     Explore Typography <Icon name="arrow-right" className="o-icon" />
                   </Link>
                 </li>
                 <li>
-                  <Link href="/foundations/colors" className={classNames({ 'is-selected': router.asPath === '/foundations/colors' })}>
+                  <Link href="/foundations/colors" className={router.asPath === '/foundations/colors' ? 'is-selected' : ''}>
                     Explore Colors <Icon name="arrow-right" className="o-icon" />
                   </Link>
                 </li>
                 <li>
-                  <Link href="/foundations/logo" className={classNames({ 'is-selected': router.asPath === '/foundations/logo' })}>
-                      Explore Logos <Icon name="arrow-right" className="o-icon" />
+                  <Link href="/foundations/logo" className={router.asPath === '/foundations/logo' ? 'is-selected' : ''}>
+                    Explore Logos <Icon name="arrow-right" className="o-icon" />
                   </Link>
                 </li>
                 <li>

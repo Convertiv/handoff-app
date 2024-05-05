@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import HtmlReactParser from 'html-react-parser';
-import { AssetObject } from '../../../../../types';
-import { getClientConfig } from '../../../../../config';
+import { AssetObject } from '@handoff/types';
+import { getClientConfig } from '@handoff/config';
 import Icon from '../../../../components/Icon';
-import Head from 'next/head';
 import Header from '../../../../components/Header';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';
 import CustomNav from '../../../../components/SideNav/Custom';
 import Footer from '../../../../components/Footer';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {

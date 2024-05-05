@@ -74,7 +74,7 @@ var getWorkingPublicPath = function (handoff) {
     return null;
 };
 var getAppPath = function (handoff) {
-    return path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id));
+    return path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id));
 };
 /**
  * Copy the public dir from the working dir to the module dir

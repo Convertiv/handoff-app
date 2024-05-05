@@ -75,7 +75,7 @@ var defaultConfig = function () {
                 'components/switch',
             ],
         },
-        use_legacy_definitions: ((_c = process.env.USE_HANDOFF_PLUGIN) !== null && _c !== void 0 ? _c : "").toLowerCase() !== "true"
+        use_legacy_definitions: ((_c = process.env.USE_HANDOFF_PLUGIN) !== null && _c !== void 0 ? _c : "").toLowerCase() === "false"
     });
 };
 exports.defaultConfig = defaultConfig;

@@ -39,6 +39,7 @@ yarn-error.log*
 /public-*
 
 # figma exported
+.handoff
 /dist/templates
 /src/app/out
 /src/~app-*

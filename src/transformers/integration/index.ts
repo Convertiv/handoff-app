@@ -154,7 +154,7 @@ export const zipTokens = async (dirPath: string, destination: stream.Writable) =
  */
 export default async function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   // define the output folder
-  const outputFolder = path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public');
+  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
     await fs.promises.mkdir(outputFolder, { recursive: true });

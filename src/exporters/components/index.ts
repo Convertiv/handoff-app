@@ -128,11 +128,11 @@ export const getFigmaFileComponents = async (fileId: string, accessToken: string
 };
 
 const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
-  console.warn(
-    chalk.redBright(
-      '!!! Using Handoff Figma Plugin fetch flow !!!'
-    )
-  );
+  // console.warn(
+  //   chalk.redBright(
+  //     '!!! Using Handoff Figma Plugin fetch flow !!!'
+  //   )
+  // );
 
   const componentTokens: FileComponentsObject = {};
 
@@ -147,7 +147,7 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
         }) ?? {}
     )
   );
-  
+
   const componentSets = Object.values(fileNodesResponse.nodes)
     .map((node) => node?.document)
     .filter(filterByNodeType('COMPONENT_SET'))
@@ -197,6 +197,12 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
  * @deprecated Will be removed before 1.0.0 release.
  */
 const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.FileNodesResponse, fullComponentMetadataArray: readonly FigmaTypes.FullComponentMetadata[], legacyDefinitions: LegacyComponentDefinition[]) => {
+  console.warn(
+    chalk.redBright(
+      '!!! Using legacy fetch flow !!!'
+    )
+  );
+
   const componentTokens: FileComponentsObject = {};
 
   const componentsMetadata = new Map(
@@ -238,21 +244,21 @@ const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.Fil
 
     for (const componentSet of componentSets) {
       const definition = getComponentDefinitionForLegacyComponentDefinition(componentSet, legacyDefinition);
-  
+
       if (!componentTokens[definition.name]) {
         componentTokens[definition.name] = {
           instances: [],
           definitions: {},
         };
       }
-  
+
       const components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
-  
+
       componentTokens[definition.name].instances = [
         ...componentTokens[definition.name].instances,
         ...extractComponentInstances(components, definition, legacyDefinition),
       ];
-  
+
       componentTokens[definition.name].definitions[componentSet.id] = definition;
     }
   }
@@ -293,7 +299,7 @@ const getComponentDefinitionForLegacyComponentDefinition = (componentSet: FigmaT
 
   const definitionSupportedVariantProperties = supportedVariantProps.map((variantProp) => variantProp.replace(/ *\([^)]*\) */g, ''));
   const definitionSupportedVariantPropertiesWithShareParams = supportedVariantProps.filter(variantProperty => variantProperty.match((/ *\([^)]*\) */g)));
-  
+
   const variantProperties = Object.entries(componentSet.componentPropertyDefinitions)
     .map(([variantPropertyName, variantPropertyDefinition]) => {
       return {
@@ -325,7 +331,7 @@ const getComponentDefinitionForLegacyComponentDefinition = (componentSet: FigmaT
       });
     });
   }
-    
+
   return {
     id: componentSet.id,
     name: legacyDefinition.id,

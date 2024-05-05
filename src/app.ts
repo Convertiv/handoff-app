@@ -25,12 +25,12 @@ const getWorkingPublicPath = (handoff: Handoff): string|null => {
 }
 
 const getAppPath = (handoff: Handoff): string => {
-  return path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`);
+  return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 }
 
 /**
  * Copy the public dir from the working dir to the module dir
- * @param handoff 
+ * @param handoff
  */
 const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
@@ -127,7 +127,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         break;
     }
   });
-  
+
   // does a ts config exist?
   let tsconfigPath = 'tsconfig.json';
 

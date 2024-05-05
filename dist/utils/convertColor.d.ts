@@ -1,9 +1,8 @@
-/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { GradientObject } from '../types';
 /**
  * Generate a CSS gradient from a color gradient object
- 
+
  * @todo Support other kinds of gradients
  * @param color
  * @returns

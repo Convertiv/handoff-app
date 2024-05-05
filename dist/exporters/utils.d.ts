@@ -1,4 +1,3 @@
-/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { Exportable } from '../types';
 export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type): (obj?: FigmaTypes.Node | null) => obj is Extract<FigmaTypes.Document, {

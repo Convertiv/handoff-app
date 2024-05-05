@@ -29,7 +29,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         ],
       },
       output: {
-        path: path.resolve(handoff?.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'components'),
+        path: path.resolve(handoff?.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'components'),
         filename: 'bundle.js',
       },
       resolveLoader: {

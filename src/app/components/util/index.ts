@@ -1,8 +1,8 @@
-import { getClientConfig } from '../../../config';
-import { ChangelogRecord } from '../../../changelog';
-import { ExportResult, ClientConfig } from '../../../types/config';
-import { DocumentComponentDefinitions, FileComponentObject } from '../../../exporters/components/types';
-import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '../../../types';
+import { getClientConfig } from '@handoff/config';
+import { ChangelogRecord } from '@handoff/changelog';
+import { ExportResult, ClientConfig } from '@handoff/types/config';
+import { DocumentComponentDefinitions, FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
@@ -452,7 +452,7 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
 
   const contentModuleFilePath = path.resolve(handoffModulePath, 'config', `${localPath}${slug}.md`);
   const contentWorkingFilePath = path.resolve(handoffWorkingPath, `${pagePath}${slug}.md`);
-  
+
   if (fs.existsSync(contentWorkingFilePath)) {
     currentContents = fs.readFileSync(contentWorkingFilePath, 'utf-8');
   } else if (!fs.existsSync(contentModuleFilePath)) {

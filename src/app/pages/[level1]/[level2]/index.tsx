@@ -1,13 +1,13 @@
-import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../../components/util';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import Header from '../../../components/Header';
-import CustomNav from '../../../components/SideNav/Custom';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '../../../../config';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { getClientConfig } from '@handoff/config';
+import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
+import CustomNav from '../../../components/SideNav/Custom';
+import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../../components/util';
 
 export interface SubPageType {
   params: {
