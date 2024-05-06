@@ -43,7 +43,7 @@ const nextConfig = {
         HANDOFF_MODULE_PATH: '',
         HANDOFF_EXPORT_PATH: '',
       };
-      
+
       // Check if client configuration exists
       const clientConfigPath = path.resolve(env.HANDOFF_WORKING_PATH, 'handoff.config.json');
       if (fs.existsSync(clientConfigPath)) {
@@ -80,6 +80,7 @@ const nextConfig = {
   },
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
+    config.resolve.alias["@handoff"] = path.resolve('%HANDOFF_MODULE_PATH%/src');
     config.resolve.modules.push(path.resolve('dist/app'));
     config.resolve.modules.push(path.resolve('node_modules'));
     config.resolveLoader.modules.push(path.resolve('node_modules'));

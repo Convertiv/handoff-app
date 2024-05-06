@@ -124,7 +124,8 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, "HANDOFF_APP_BASE_PATH: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, "HANDOFF_WORKING_PATH: '".concat(handoffWorkingPath, "'"))
                     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, "HANDOFF_MODULE_PATH: '".concat(handoffModulePath, "'"))
-                    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"));
+                    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
+                    .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
             case 5:
                 _c.sent();
