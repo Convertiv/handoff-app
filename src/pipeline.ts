@@ -27,7 +27,7 @@ import { merge } from 'lodash';
 import { filterOutNull } from './utils';
 
 let config;
-const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
 const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
 const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
 const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');

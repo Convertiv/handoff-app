@@ -162,7 +162,7 @@ export default async function integrationTransformer(handoff: Handoff, documenta
   // define the integration path
   const integrationPath = getPathToIntegration(handoff);
   // copy the sass and templates to the exported folder
-  const exportedFolder = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+  const exportedFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const sassFolder = path.resolve(handoff.workingPath, exportedFolder, `integration`);
   const templatesFolder = path.resolve(__dirname, '../../templates');
   const integrationsSass = path.resolve(integrationPath, 'sass');
@@ -223,7 +223,7 @@ const getHandoffImportTokens = (handoff: Handoff, components: string[]) => {
 }
 
 const getHandoffImportTokensForComponent = (handoff: Handoff, component: string): [token: string, root: string, path: string, file: string][] => {
-  const integrationPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration');
+  const integrationPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
   return [
     ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', `${component}.scss`],
     ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', `${component}.scss`],

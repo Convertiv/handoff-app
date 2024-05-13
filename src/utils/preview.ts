@@ -17,7 +17,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
       entry,
       resolve: {
         alias: {
-          '@exported': path.join(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration'),
+          '@exported': path.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
           '@integration': path.join(handoff.workingPath, 'integration/sass'),
         },
         modules: [

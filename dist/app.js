@@ -114,7 +114,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
                 handoffModulePath = path_1.default.resolve(handoff.modulePath);
-                handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+                handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 4:
@@ -143,7 +143,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
                 return [4 /*yield*/, prepareProjectApp(handoff)];
@@ -154,7 +154,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             case 2:
                 // Build app
                 _a.sent();
-                outputRoot = path_1.default.resolve(handoff.workingPath, 'out');
+                outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
                 if (!fs_extra_1.default.existsSync(outputRoot)) {
                     fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
                 }
@@ -177,7 +177,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
                 return [4 /*yield*/, prepareProjectApp(handoff)];
@@ -368,7 +368,7 @@ var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, funct
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+                if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
                 return [4 /*yield*/, prepareProjectApp(handoff)];

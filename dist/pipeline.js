@@ -94,7 +94,7 @@ var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
 var config;
-var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
+var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
 var previewFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'preview.json'); };
 var changelogFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'changelog.json'); };

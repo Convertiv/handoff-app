@@ -3,13 +3,14 @@ import Handoff from '../index';
 import fs from 'fs-extra';
 import chalk from 'chalk';
 import { getPathToIntegration } from '../transformers/integration';
+import { getClientConfig } from '../config';
 
 /**
  * Eject the config to the working directory
  * @param handoff
  */
 export const ejectConfig = async (handoff: Handoff) => {
-  const config = await handoff.config;
+  const config = getClientConfig(handoff.config);
   const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.json'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
