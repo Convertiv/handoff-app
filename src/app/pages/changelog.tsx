@@ -185,7 +185,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {deleted.typography.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="zap" /> Removed{' '}
+                          <Icon name="zap"  className="o-icon" /> Removed{' '}
                           <strong>
                             {deleted.typography.length} {getCountLabel(deleted.typography.length, 'typography', 'typographies')}
                           </strong>

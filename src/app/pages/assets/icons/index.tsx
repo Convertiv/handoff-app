@@ -119,7 +119,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                   icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
                 ) : (
                   <div className="c-search-results">
-                    <Icon name="search-laptop" />
+                    <Icon name="search-laptop"  className="o-icon" />
                     <h4>No icons found.</h4>
                   </div>
                 )}
