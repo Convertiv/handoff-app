@@ -14,8 +14,8 @@ export interface ImageStyle {
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
-  exportsOutputDirectory: process.env.OUTPUT_DIR ?? "exported", // better name? assets output? something else?
-  sitesOutputDirectory: process.env.SITES_DIR ?? "out", // better name? assets output? something else?
+  exportsOutputDirectory: process.env.OUTPUT_DIR ?? "exported",
+  sitesOutputDirectory: process.env.SITES_DIR ?? "out",
   integration: {
     name: 'bootstrap',
     version: '5.3',
