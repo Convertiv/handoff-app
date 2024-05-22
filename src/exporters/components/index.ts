@@ -367,7 +367,7 @@ const getComponentSetsForLegacyComponentDefinition = (
   const primaryComponentSet = componentSets.find((componentSet) => componentSet.name === legacyDefinition.options.exporter.search);
   // Check if the component set exists
   if (!primaryComponentSet) {
-    throw new Error(`No component set found for ${name}`);
+    throw new Error(`No component set found for ${legacyDefinition.options.exporter.search}`);
   }
   // Locate component set metadata
   const primaryComponentSetMetadata = componentSetsMetadata.find((metadata) => metadata.node_id === primaryComponentSet.id);
