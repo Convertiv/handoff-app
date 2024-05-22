@@ -110,7 +110,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                   <p>Primary font used, related assets can be found in the assets page.</p>
                   <p>
                     <NavLink href="/assets/fonts">
-                      Download Fonts <Icon name="arrow-right" />
+                      Download Fonts <Icon name="arrow-right"  className="o-icon" />
                     </NavLink>
                   </p>
                 </div>
@@ -171,7 +171,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                         }}
                       >
                         <span>
-                          <Icon name="link" />
+                          <Icon name="link"  className="o-icon" />
                         </span>
                       </a>
                     </h6>
