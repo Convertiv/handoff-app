@@ -27,7 +27,7 @@ import { merge } from 'lodash';
 import { filterOutNull } from './utils';
 
 let config;
-const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
 const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
 const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
 const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
@@ -202,7 +202,7 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
   if (DEV_ACCESS_TOKEN && FIGMA_PROJECT_ID) {
     return;
   }
-  
+
   let missingEnvVars = false;
 
   if (!DEV_ACCESS_TOKEN) {
@@ -230,7 +230,7 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
 
   if (missingEnvVars) {
     console.log(
-      chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env 
+      chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env
 file for you to make it easier to run the pipeline in the future.\n`)
     );
     const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
@@ -281,7 +281,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
       : []),
   ]);
   // define the output folder
-  const outputFolder = path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public');
+  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
     await fs.promises.mkdir(outputFolder, { recursive: true });
@@ -289,11 +289,11 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   // copy assets to output folder
   fs.copyFileSync(
     iconsZipFilePath(handoff),
-    path.join(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'icons.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
   );
   fs.copyFileSync(
     logosZipFilePath(handoff),
-    path.join(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`, 'public', 'logos.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
   );
   return documentationObject;
 };
@@ -319,7 +319,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   }
   console.log(chalk.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
   await validateHandoffRequirements(handoff);
-  await validateFigmaAuth(handoff);  
+  await validateFigmaAuth(handoff);
   const documentationObject = await figmaExtract(handoff);
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject);
@@ -337,41 +337,41 @@ export default pipeline;
  * Returns configured legacy component definitions in array form.
  * @deprecated Will be removed before 1.0.0 release.
  */
-const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[]> => {	
-  try {	
-    if (!handoff.config) {	
-      throw new Error('Handoff config not found');	
-    }	
-    const config = handoff.config;	
-    const definitions = config?.figma?.definitions;	
-    if (!definitions || definitions.length === 0) {	
-      return [];	
-    }	
+const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[]> => {
+  try {
+    if (!handoff.config) {
+      throw new Error('Handoff config not found');
+    }
+    const config = handoff.config;
+    const definitions = config?.figma?.definitions;
+    if (!definitions || definitions.length === 0) {
+      return [];
+    }
 
-    const exportables = definitions	
-      .map((def) => {	
-        let defPath = path.resolve(path.join(handoff.modulePath, 'config/exportables', `${def}.json`));	
-        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));	
-        // If the project path exists, use that first as an override	
-        if (fs.existsSync(projectPath)) {	
-          defPath = projectPath;	
-        } else if (!fs.existsSync(defPath)) {	
-          return null;	
-        }	
+    const exportables = definitions
+      .map((def) => {
+        let defPath = path.resolve(path.join(handoff.modulePath, 'config/exportables', `${def}.json`));
+        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
+        // If the project path exists, use that first as an override
+        if (fs.existsSync(projectPath)) {
+          defPath = projectPath;
+        } else if (!fs.existsSync(defPath)) {
+          return null;
+        }
 
-        const defBuffer = fs.readFileSync(defPath);	
-        const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;	
+        const defBuffer = fs.readFileSync(defPath);
+        const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
 
-        const exportableOptions = {};	
-        merge(exportableOptions, config?.figma?.options, exportable.options);	
-        exportable.options = exportableOptions as LegacyComponentDefinitionOptions;	
+        const exportableOptions = {};
+        merge(exportableOptions, config?.figma?.options, exportable.options);
+        exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
 
-        return exportable;	
-      })	
-      .filter(filterOutNull);	
+        return exportable;
+      })
+      .filter(filterOutNull);
 
-    return exportables ? exportables : [];	
-  } catch (e) {	
-    return [];	
-  }	
+    return exportables ? exportables : [];
+  } catch (e) {
+    return [];
+  }
 };

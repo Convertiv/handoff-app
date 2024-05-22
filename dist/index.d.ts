@@ -12,7 +12,8 @@ declare class Handoff {
     force: boolean;
     modulePath: string;
     workingPath: string;
-    outputDirectory: string;
+    exportsDirectory: string;
+    sitesDirectory: string;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;

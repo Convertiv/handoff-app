@@ -1,4 +1,4 @@
-import { ClientConfig } from "../../types/config";
+import { ClientConfig } from "@handoff/types/config";
 
 interface FooterProps {
   config: ClientConfig;

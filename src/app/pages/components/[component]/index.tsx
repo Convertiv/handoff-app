@@ -1,24 +1,31 @@
 import * as React from 'react';
 import { GetStaticProps } from 'next';
-import IframeResizer from 'iframe-resizer-react';
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchComponents, getLegacyDefinition, getPreview, getTokens } from '../../../components/util';
-import { getClientConfig } from '../../../../config';
-import { IParams, reduceSlugToString } from '../../../components/util';
-import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '../../../../types';
-import { ComponentInstance, FileComponentObject } from '../../../../exporters/components/types';
 import Head from 'next/head';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import rehypeRaw from 'rehype-raw';
+import startCase from 'lodash/startCase';
+import IframeResizer from 'iframe-resizer-react';
+import {
+  ComponentDocumentationProps,
+  fetchCompDocPageMarkdown,
+  fetchComponents,
+  getLegacyDefinition,
+  getPreview,
+  getTokens,
+} from '../../../components/util';
+import { getClientConfig } from '@handoff/config';
+import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types';
+import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
+import { filterOutNull } from '@handoff/utils';
+import { ComponentTab } from '@handoff/types/tabs';
+import { IParams, reduceSlugToString } from '../../../components/util';
 import Header from '../../../components/Header';
 import CustomNav from '../../../components/SideNav/Custom';
 import AnchorNav from '../../../components/AnchorNav';
 import Icon from '../../../components/Icon';
-import { ComponentTab } from '../../../../types/tabs';
-import startCase from 'lodash/startCase';
 import { CodeHighlight } from '../../../components/Markdown/CodeHighlight';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
-import { filterOutNull } from '../../../../utils';
 import Footer from '../../../components/Footer';
 
 /**
@@ -64,24 +71,30 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * Transforms the legacy definition doc page options to new doc page options.
  * @deprecated Will be removed before 1.0.0 release.
  */
-const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions["demo"] | undefined) => {
-  return docViews ? {
-    views: {
-      overview: docViews["overview"] ? {
-        condition: {
-          ...(docViews["overview"]["design"] ?? {}),
-          ...(docViews["overview"]["layout"] ?? {}),
-        }
-      } : undefined,
-      tokens: docViews["designTokens"] ? {
-        condition: {
-          ...(docViews["designTokens"]["design"] ?? {}),
-          ...(docViews["designTokens"]["layout"] ?? {}),
-        }
-      } : undefined,
-    }
-  } : undefined
-}
+const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions['demo'] | undefined) => {
+  return docViews
+    ? {
+        views: {
+          overview: docViews['overview']
+            ? {
+                condition: {
+                  ...(docViews['overview']['design'] ?? {}),
+                  ...(docViews['overview']['layout'] ?? {}),
+                },
+              }
+            : undefined,
+          tokens: docViews['designTokens']
+            ? {
+                condition: {
+                  ...(docViews['designTokens']['design'] ?? {}),
+                  ...(docViews['designTokens']['layout'] ?? {}),
+                },
+              }
+            : undefined,
+        },
+      }
+    : undefined;
+};
 
 const GenericComponentPage = ({
   content,
@@ -105,7 +118,7 @@ const GenericComponentPage = ({
 
   React.useEffect(() => {
     const componentHasPreviews = previews.length > 0;
-    setHasPreviews(componentHasPreviews)
+    setHasPreviews(componentHasPreviews);
     setActiveTab(componentHasPreviews ? ComponentTab.Overview : ComponentTab.DesignTokens);
     setLoading(false);
   }, [component, previews]);
@@ -120,7 +133,7 @@ const GenericComponentPage = ({
         <Header menu={menu} config={config} />
         <Footer config={config} />
       </div>
-    )
+    );
   }
 
   const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
@@ -382,9 +395,7 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
 };
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
-  return previewableComponent.name
-    ? `${previewableComponent.name}`
-    : `${startCase(previewableComponent.component.name)}`;
+  return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
 };
 
 function multiPropSort(properties: string[], array: ComponentPreview[]) {

@@ -1,18 +1,18 @@
 import * as React from 'react';
-import type { GetStaticProps, NextPage } from 'next';
+import type { GetStaticProps } from 'next';
+import Head from 'next/head';
+import rehypeRaw from 'rehype-raw';
+import path from 'path';
+import { getClientConfig } from '@handoff/config';
 import uniq from 'lodash/uniq';
 import * as fs from 'fs-extra';
 import Icon from '../../components/Icon';
-import Head from 'next/head';
-import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
 import Header from '../../components/Header';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import CustomNav from '../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
-import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '../../../config';
-import path from 'path';
 import Footer from '../../components/Footer';
+import CustomNav from '../../components/SideNav/Custom';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -23,7 +23,7 @@ import Footer from '../../components/Footer';
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  const fonts = fs.readdirSync(path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'src', `~app-${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts'));
+  const fonts = fs.readdirSync(path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts'));
   const customFonts: string[] = [];
 
   fonts.map((font) => {

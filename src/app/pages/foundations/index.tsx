@@ -1,6 +1,6 @@
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-import { getClientConfig } from '../../../config';
+import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import Head from 'next/head';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';

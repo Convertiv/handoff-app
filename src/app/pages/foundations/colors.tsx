@@ -3,7 +3,7 @@ import type { GetStaticProps } from 'next';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import Icon from '../../components/Icon';
-import { getClientConfig } from '../../../config';
+import { getClientConfig } from '@handoff/config';
 import { lowerCase } from 'lodash';
 import Head from 'next/head';
 import * as util from '../../components/util';

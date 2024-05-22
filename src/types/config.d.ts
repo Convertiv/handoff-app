@@ -65,6 +65,8 @@ interface NextAppConfig {
 export interface Config {
   dev_access_token?: string | null | undefined;
   figma_project_id?: string | null | undefined;
+  exportsOutputDirectory?: string;
+  sitesOutputDirectory?: string;
   integration?: Integration;
   app: NextAppConfig;
   figma: FigmaSearch;

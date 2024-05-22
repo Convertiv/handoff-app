@@ -2,9 +2,9 @@ import startCase from 'lodash/startCase';
 import round from 'lodash/round';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
-import { ComponentDefinitionOptions } from '../../types';
-import { transformComponentTokensToScssVariables } from '../../transformers/scss/component';
-import { ComponentInstance } from '../../exporters/components/types';
+import { ComponentDefinitionOptions } from '@handoff/types';
+import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
+import { ComponentInstance } from '@handoff/exporters/components/types';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -92,7 +92,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
 
         // Increase columns count
         numberOfColumns++;
-        
+
         // Append heading to the list of headings
         headings.add(componentVariantPropsMap.get(masterOverride));
       });

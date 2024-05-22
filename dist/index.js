@@ -84,14 +84,13 @@ var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
-        var _a;
         this.debug = false;
         this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
         this.workingPath = process.cwd();
-        this.outputDirectory = 'exported';
+        this.exportsDirectory = 'exported';
+        this.sitesDirectory = 'out';
         this.config = null;
-        this.outputDirectory = (_a = process.env.OUTPUT_DIR) !== null && _a !== void 0 ? _a : this.outputDirectory;
         this.hooks = {
             init: function (config) { return config; },
             fetch: function () { },
@@ -111,9 +110,12 @@ var Handoff = /** @class */ (function () {
         global.handoff = this;
     }
     Handoff.prototype.init = function (configOverride) {
+        var _a, _b;
         var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
         this.config = this.hooks.init(this.config);
+        this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
+        this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
         return this;
     };
     Handoff.prototype.preRunner = function () {

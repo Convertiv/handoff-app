@@ -94,7 +94,7 @@ var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
 var config;
-var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id); };
+var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
 var previewFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'preview.json'); };
 var changelogFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'changelog.json'); };
@@ -335,7 +335,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 _a.label = 4;
             case 4:
                 if (!missingEnvVars) return [3 /*break*/, 8];
-                console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env \nfile for you to make it easier to run the pipeline in the future.\n"));
+                console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env\nfile for you to make it easier to run the pipeline in the future.\n"));
                 return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
                 writeEnvFile = _a.sent();
@@ -404,7 +404,7 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                         : []), true))];
             case 8:
                 _b.sent();
-                outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
                 if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 10];
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
             case 9:
@@ -412,8 +412,8 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 _b.label = 10;
             case 10:
                 // copy assets to output folder
-                fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
-                fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
+                fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
+                fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
                 return [2 /*return*/, documentationObject];
         }
     });
@@ -510,7 +510,7 @@ var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0,
                 var _a;
                 var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
                 var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
-                // If the project path exists, use that first as an override	
+                // If the project path exists, use that first as an override
                 if (fs_extra_1.default.existsSync(projectPath)) {
                     defPath = projectPath;
                 }

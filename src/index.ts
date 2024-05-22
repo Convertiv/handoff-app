@@ -20,7 +20,8 @@ class Handoff {
   force: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = process.cwd();
-  outputDirectory: string = 'exported';
+  exportsDirectory: string = 'exported';
+  sitesDirectory: string = 'out';
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -39,7 +40,6 @@ class Handoff {
 
   constructor(config?: Config) {
     this.config = null;
-    this.outputDirectory = process.env.OUTPUT_DIR ?? this.outputDirectory;
     this.hooks = {
       init: (config: Config): Config => config,
       fetch: () => {},
@@ -62,6 +62,8 @@ class Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
     this.config = this.hooks.init(this.config);
+    this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
+    this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     return this;
   }
   preRunner(): Handoff {

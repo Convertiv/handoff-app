@@ -5,7 +5,7 @@ import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromG
 
 /**
  * Generate a CSS gradient from a color gradient object
- 
+
  * @todo Support other kinds of gradients
  * @param color
  * @returns
@@ -60,10 +60,10 @@ export function transformFigmaPaintToGradient(paint: FigmaTypes.Paint): Gradient
 
 /**
  * Converts figma color to a hex (string) value.
- * 
- * @param {FigmaTypes.Color} color 
+ *
+ * @param {FigmaTypes.Color} color
  * @returns {string}
- * 
+ *
  * @example
  * // returns #001aff
  * figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
@@ -113,12 +113,13 @@ export const transformFigmaFillsToCssColor = (fills: ReadonlyArray<FigmaTypes.Pa
   const count = fills?.length ?? 0;
   const hasLayers = count > 0;
   const hasMultipleLayers = count > 1;
+  const shouldForceHexOrRgbaValue = forceHexOrRgbaValue && fills.filter((f) => f.type !== 'SOLID').length === 0;
 
   let colorValue: string = 'transparent';
   let blendValue: string = 'normal';
 
   if (hasLayers) {
-    if (forceHexOrRgbaValue && hasMultipleLayers) {
+    if (shouldForceHexOrRgbaValue && hasMultipleLayers) {
       colorValue = transformFigmaColorToCssColor(blendFigmaColors(fills.map(fill => ({
         r: fill.color.r,
         g: fill.color.g,
@@ -131,7 +132,7 @@ export const transformFigmaFillsToCssColor = (fills: ReadonlyArray<FigmaTypes.Pa
       blendValue = fills.map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).filter(Boolean).join(', ');
     }
   }
-  
+
   return {
     color: colorValue,
     blend: blendValue
@@ -188,10 +189,10 @@ export const transformFigmaEffectToCssBoxShadow = (effect: FigmaTypes.Effect): s
 
 /**
  * Converts figma color to a RGB(A) in form of a array.
- * 
- * @param {FigmaTypes.Color} color 
+ *
+ * @param {FigmaTypes.Color} color
  * @returns {string}
- * 
+ *
  * @example
  * // returns [226, 18, 17]
  * figmaRGBToWebRGB({r: 0.887499988079071, g: 0.07058823853731155, b: 0.0665624737739563, a: 1})
@@ -206,10 +207,10 @@ export function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA {
 
 /**
  * Blends multiple Figma colors into a single Figma color.
- * Based on the JordanDelcros's JavaScript implementation https://gist.github.com/JordanDelcros/518396da1c13f75ee057 
- * 
+ * Based on the JordanDelcros's JavaScript implementation https://gist.github.com/JordanDelcros/518396da1c13f75ee057
+ *
  * @param {FigmaTypes.Color[]} figmaColors
- * @returns 
+ * @returns
  */
 function blendFigmaColors(figmaColors: FigmaTypes.Color[]) : FigmaTypes.Color {
   let base: webRGBA = [0, 0, 0, 0];

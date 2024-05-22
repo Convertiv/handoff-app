@@ -7,8 +7,8 @@ import { lowerCase } from 'lodash';
 import Head from 'next/head';
 import * as util from '../../components/util';
 import Header from '../../components/Header';
-import { EffectParametersObject } from '../../../types';
-import { isShadowEffectType } from '../../../exporters/utils';
+import { EffectParametersObject } from '@handoff/types';
+import { isShadowEffectType } from '@handoff/exporters/utils';
 import CustomNav from '../../components/SideNav/Custom';
 import AnchorNav from '../../components/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
@@ -16,7 +16,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
-import { getClientConfig } from '../../../config';
+import { getClientConfig } from '@handoff/config';
 import Footer from '../../components/Footer';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
