@@ -348,7 +348,7 @@ var getComponentSetsForLegacyComponentDefinition = function (componentSets, comp
     var primaryComponentSet = componentSets.find(function (componentSet) { return componentSet.name === legacyDefinition.options.exporter.search; });
     // Check if the component set exists
     if (!primaryComponentSet) {
-        throw new Error("No component set found for ".concat(name));
+        throw new Error("No component set found for ".concat(legacyDefinition.options.exporter.search));
     }
     // Locate component set metadata
     var primaryComponentSetMetadata = componentSetsMetadata.find(function (metadata) { return metadata.node_id === primaryComponentSet.id; });
