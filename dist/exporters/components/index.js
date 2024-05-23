@@ -166,8 +166,12 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
 }); };
 exports.getFigmaFileComponents = getFigmaFileComponents;
 var processFigmaNodes = function (fileNodesResponse) {
+    // console.warn(
+    //   chalk.redBright(
+    //     '!!! Using Handoff Figma Plugin fetch flow !!!'
+    //   )
+    // );
     var _a;
-    console.warn(chalk_1.default.redBright('!!! Using Handoff Figma Plugin fetch flow !!!'));
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
         .map(function (node) {
@@ -215,6 +219,7 @@ var processFigmaNodes = function (fileNodesResponse) {
  */
 var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullComponentMetadataArray, legacyDefinitions) {
     var _a;
+    console.warn(chalk_1.default.redBright('!!! Using legacy fetch flow !!!'));
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
         .map(function (node) {
@@ -343,7 +348,7 @@ var getComponentSetsForLegacyComponentDefinition = function (componentSets, comp
     var primaryComponentSet = componentSets.find(function (componentSet) { return componentSet.name === legacyDefinition.options.exporter.search; });
     // Check if the component set exists
     if (!primaryComponentSet) {
-        throw new Error("No component set found for ".concat(name));
+        throw new Error("No component set found for ".concat(legacyDefinition.options.exporter.search));
     }
     // Locate component set metadata
     var primaryComponentSetMetadata = componentSetsMetadata.find(function (metadata) { return metadata.node_id === primaryComponentSet.id; });

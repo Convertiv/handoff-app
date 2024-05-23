@@ -44,6 +44,7 @@ var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
 var integration_1 = require("../transformers/integration");
+var config_1 = require("../config");
 /**
  * Eject the config to the working directory
  * @param handoff
@@ -51,20 +52,16 @@ var integration_1 = require("../transformers/integration");
 var ejectConfig = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var config, configPath;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, handoff.config];
-            case 1:
-                config = _a.sent();
-                configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
-                if (fs_extra_1.default.existsSync(configPath)) {
-                    if (!handoff.force) {
-                        console.log(chalk_1.default.red("A config already exists in the working directory.  Use the --force flag to overwrite."));
-                    }
-                }
-                fs_extra_1.default.writeFileSync(configPath, "".concat(JSON.stringify(config, null, 2)));
-                console.log(chalk_1.default.green("Config ejected to ".concat(configPath)));
-                return [2 /*return*/, handoff];
+        config = (0, config_1.getClientConfig)(handoff.config);
+        configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
+        if (fs_extra_1.default.existsSync(configPath)) {
+            if (!handoff.force) {
+                console.log(chalk_1.default.red("A config already exists in the working directory.  Use the --force flag to overwrite."));
+            }
         }
+        fs_extra_1.default.writeFileSync(configPath, "".concat(JSON.stringify(config, null, 2)));
+        console.log(chalk_1.default.green("Config ejected to ".concat(configPath)));
+        return [2 /*return*/, handoff];
     });
 }); };
 exports.ejectConfig = ejectConfig;

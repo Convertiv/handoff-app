@@ -1,13 +1,13 @@
-import Header from '../../components/Header';
-import CustomNav from '../../components/SideNav/Custom';
-import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../components/util';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { getClientConfig } from '../../../config';
+import { getClientConfig } from '@handoff/config';
+import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import CustomNav from '../../components/SideNav/Custom';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../components/util';
 
 /**
  * Render all index pages

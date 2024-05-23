@@ -1,6 +1,5 @@
 import React from 'react';
 import Icon from './Icon';
-import * as fs from 'fs-extra';
 
 interface DownloadTokensProps {
   componentId: string;

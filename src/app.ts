@@ -25,12 +25,12 @@ const getWorkingPublicPath = (handoff: Handoff): string|null => {
 }
 
 const getAppPath = (handoff: Handoff): string => {
-  return path.resolve(handoff.modulePath, 'src', `~app-${handoff.config.figma_project_id}`);
+  return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 }
 
 /**
  * Copy the public dir from the working dir to the module dir
- * @param handoff 
+ * @param handoff
  */
 const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
@@ -54,7 +54,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
-  const handoffExportPath = path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.js');
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
@@ -62,7 +62,8 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
-    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`);
+    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
+    .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
   return appPath;
@@ -75,7 +76,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 
@@ -86,7 +87,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   await nextBuild([appPath]);
 
   // Ensure output root directory exists
-  const outputRoot = path.resolve(handoff.workingPath, 'out');
+  const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
   if (!fs.existsSync(outputRoot)) {
     fs.mkdirSync(outputRoot, { recursive: true });
   }
@@ -106,7 +107,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 
@@ -127,7 +128,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         break;
     }
   });
-  
+
   // does a ts config exist?
   let tsconfigPath = 'tsconfig.json';
 
@@ -247,7 +248,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 

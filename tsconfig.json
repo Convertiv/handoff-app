@@ -20,6 +20,9 @@
     "declaration": true,
     "baseUrl": ".",
     "outDir": "dist",
+    "paths": {
+      "handoff/*": ["./src/*"],
+    },
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@figma"

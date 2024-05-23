@@ -1,4 +1,3 @@
-import bootstrap from 'bootstrap';
 import * as React from 'react';
 import Icon from './Icon';
 

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-import type { AssetObject } from '../../../types';
-import { getClientConfig } from '../../../config';
+import type { AssetObject } from '@handoff/types';
+import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import Head from 'next/head';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../components/util';

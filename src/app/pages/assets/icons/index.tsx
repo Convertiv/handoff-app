@@ -1,17 +1,17 @@
 import * as React from 'react';
 import type { GetStaticProps } from 'next';
-import Link from 'next/link';
-import type { AssetObject } from '../../../../types';
-import { getClientConfig } from '../../../../config';
-import Icon from '../../../components/Icon';
 import Head from 'next/head';
-import Header from '../../../components/Header';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
+import Link from 'next/link';
+import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import type { AssetObject } from '@handoff/types';
+import { getClientConfig } from '@handoff/config';
+import Icon from '../../../components/Icon';
+import Header from '../../../components/Header';
+import Footer from '../../../components/Footer';
 import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import rehypeRaw from 'rehype-raw';
-import Footer from '../../../components/Footer';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -119,7 +119,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                   icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
                 ) : (
                   <div className="c-search-results">
-                    <Icon name="search-laptop" />
+                    <Icon name="search-laptop"  className="o-icon" />
                     <h4>No icons found.</h4>
                   </div>
                 )}

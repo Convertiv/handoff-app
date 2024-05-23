@@ -207,7 +207,7 @@ function integrationTransformer(handoff, documentationObject) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    outputFolder = path_1.default.resolve(handoff.modulePath, 'src', "~app-".concat(handoff.config.figma_project_id), 'public');
+                    outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
                     if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
                     return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
                 case 1:
@@ -215,7 +215,7 @@ function integrationTransformer(handoff, documentationObject) {
                     _a.label = 2;
                 case 2:
                     integrationPath = (0, exports.getPathToIntegration)(handoff);
-                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id);
+                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                     sassFolder = path_1.default.resolve(handoff.workingPath, exportedFolder, "integration");
                     templatesFolder = path_1.default.resolve(__dirname, '../../templates');
                     integrationsSass = path_1.default.resolve(integrationPath, 'sass');
@@ -275,7 +275,7 @@ var getHandoffImportTokens = function (handoff, components) {
     return result;
 };
 var getHandoffImportTokensForComponent = function (handoff, component) {
-    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.outputDirectory, handoff.config.figma_project_id, 'integration');
+    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
     return [
         ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
         ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],

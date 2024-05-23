@@ -1,11 +1,11 @@
 import * as React from 'react';
 import type * as next from 'next';
 import sortedUniq from 'lodash/sortedUniq';
-import type { TypographyObject } from '../../../types';
-import { getClientConfig } from '../../../config';
+import type { TypographyObject } from '@handoff/types';
+import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';
-import { FontFamily } from '../../../types/font';
+import { FontFamily } from '@handoff/types/font';
 import Head from 'next/head';
 import Header from '../../components/Header';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
@@ -110,7 +110,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                   <p>Primary font used, related assets can be found in the assets page.</p>
                   <p>
                     <NavLink href="/assets/fonts">
-                      Download Fonts <Icon name="arrow-right" />
+                      Download Fonts <Icon name="arrow-right"  className="o-icon" />
                     </NavLink>
                   </p>
                 </div>
@@ -171,7 +171,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                         }}
                       >
                         <span>
-                          <Icon name="link" />
+                          <Icon name="link"  className="o-icon" />
                         </span>
                       </a>
                     </h6>

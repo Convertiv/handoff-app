@@ -25,7 +25,7 @@ var utils_1 = require("../exporters/utils");
 var gradients_1 = require("./gradients");
 /**
  * Generate a CSS gradient from a color gradient object
- 
+
  * @todo Support other kinds of gradients
  * @param color
  * @returns
@@ -130,10 +130,11 @@ var transformFigmaFillsToCssColor = function (fills, forceHexOrRgbaValue) {
     var count = (_a = fills === null || fills === void 0 ? void 0 : fills.length) !== null && _a !== void 0 ? _a : 0;
     var hasLayers = count > 0;
     var hasMultipleLayers = count > 1;
+    var shouldForceHexOrRgbaValue = forceHexOrRgbaValue && fills.filter(function (f) { return f.type !== 'SOLID'; }).length === 0;
     var colorValue = 'transparent';
     var blendValue = 'normal';
     if (hasLayers) {
-        if (forceHexOrRgbaValue && hasMultipleLayers) {
+        if (shouldForceHexOrRgbaValue && hasMultipleLayers) {
             colorValue = (0, exports.transformFigmaColorToCssColor)(blendFigmaColors(fills.map(function (fill) {
                 var _a;
                 return ({

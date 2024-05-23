@@ -14,6 +14,8 @@ export interface ImageStyle {
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
+  exportsOutputDirectory: process.env.OUTPUT_DIR ?? "exported",
+  sitesOutputDirectory: process.env.SITES_DIR ?? "out",
   integration: {
     name: 'bootstrap',
     version: '5.3',
@@ -67,7 +69,7 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() !== "true"
+  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() === "false"
 });
 
 /**
@@ -88,11 +90,16 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, figma, assets_zip_links, use_legacy_definitions } = { ...defaultConfig(), ...config } as unknown as Config;
+  const { app, figma, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links, use_legacy_definitions } = {
+    ...defaultConfig(),
+    ...config,
+  } as unknown as Config;
 
   return {
     app,
     figma,
+    exportsOutputDirectory,
+    sitesOutputDirectory,
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
     use_legacy_definitions
   };

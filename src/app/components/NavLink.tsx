@@ -1,7 +1,6 @@
 import * as React from 'react';
 import Link, { LinkProps } from 'next/link';
 import { useRouter } from 'next/router';
-import classNames from 'classnames';
 
 const NavLink = React.forwardRef<
   HTMLAnchorElement,
@@ -14,7 +13,7 @@ const NavLink = React.forwardRef<
   const router = useRouter();
 
   return (
-    <Link {...props} ref={ref} className={classNames(className, { [activeClassName]: router.asPath.startsWith(props.href.toString()) })}>
+    <Link {...props} ref={ref} className={`${className} ${router.asPath.startsWith(props.href.toString() ? activeClassName : '')}`}>
       {children}
     </Link>
   );
