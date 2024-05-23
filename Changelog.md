@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2024-05-23
+
+### Bugfixes
+
+* Issue that was causing the `handoff-app start` command to malfunction has been fixed.
+* The `Reference error: name is not defined` issue that occurred when a component specified in the schema was missing from the Figma file has been resolved. The `name` reference has been replaced with a correct identifier.
+* Icon sizes have been corrected.
+
+### Changes
+
+* **Integration with Handoff Figma Plugin**: This release now seamlessly integrates with the Handoff Figma Plugin by default.
+  * As a result, the local schema will not be used by default.
+  * If you prefer to continue using local schemas, set `USE_HANDOFF_PLUGIN="FALSE"` in your `.env` file.
+* Internal module working directory has been relocated from `./src` to `./.handoff`
+
 ## [0.10.0] - 2024-01-16
 
 ### Improvements
