@@ -230,23 +230,46 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
 
   if (missingEnvVars) {
     console.log(
-      chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env
-file for you to make it easier to run the pipeline in the future.\n`)
+      chalk.yellow(
+        `\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`
+      )
     );
+
     const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
+
     if (writeEnvFile !== 'y') {
       console.log(chalk.green(`Skipping .env file creation. You will need to supply these variables in the future.\n`));
     } else {
-      const envFile = `
+      const envFilePath = path.resolve(handoff.workingPath, '.env');
+      const envFileContent = `
 DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
 FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 `;
-      await fs.writeFile(path.resolve(handoff.workingPath, '.env'), envFile);
-      console.log(
-        chalk.green(
-          `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
-        )
-      );
+
+      try {
+        const fileExists = await fs
+          .access(envFilePath)
+          .then(() => true)
+          .catch(() => false);
+
+        if (fileExists) {
+          await fs.appendFile(envFilePath, envFileContent);
+          console.log(
+            chalk.green(
+              `\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`
+            )
+          );
+        } else {
+          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, "") );
+          console.log(
+            chalk.green(
+              `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
+            )
+          );
+        }
+      } catch (error) {
+        console.error(chalk.red('Error handling the .env file:', error));
+      }
     }
   }
 
