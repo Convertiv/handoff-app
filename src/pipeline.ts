@@ -63,8 +63,9 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
  * @returns
  */
 const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  const integration = await integrationTransformer(handoff, documentationObject);
-  return integration;
+  if (!!handoff.config.integration) {
+    await integrationTransformer(handoff, documentationObject);
+  }
 };
 
 /**
@@ -75,9 +76,10 @@ const buildPreview = async (handoff: Handoff, documentationObject: Documentation
   await Promise.all([
     previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
+
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
     await buildClientFiles(handoff)
-      .then((value) => console.log(chalk.green(value)))
+      .then((value) => !!value && console.log(chalk.green(value)))
       .catch((error) => {
         throw new Error(error);
       });

@@ -14,12 +14,8 @@ export interface ImageStyle {
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
-  exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? "exported",
-  sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? "out",
-  integration: {
-    name: 'bootstrap',
-    version: '5.3',
-  },
+  exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
+  sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
   app: {
     theme: 'default',
     title: 'Convertiv Design System',
@@ -27,7 +23,19 @@ export const defaultConfig = (): Config => ({
     google_tag_manager: null,
     attribution: true,
     type_copy: 'Almost before we knew it, we had left the ground.',
-    type_sort: ['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Paragraph', 'Subheading', 'Blockquote', 'Input Labels', 'Link'],
+    type_sort: [
+      'Heading 1',
+      'Heading 2',
+      'Heading 3',
+      'Heading 4',
+      'Heading 5',
+      'Heading 6',
+      'Paragraph',
+      'Subheading',
+      'Blockquote',
+      'Input Labels',
+      'Link',
+    ],
     color_sort: ['primary', 'secondary', 'extra', 'system'],
     component_sort: ['primary', 'secondary', 'transparent'],
     base_path: '',
@@ -36,23 +44,23 @@ export const defaultConfig = (): Config => ({
     options: {
       shared: {
         defaults: {
-          'Theme': 'light',
-          'State': 'default',
-          'Type': 'default',
-          'Activity': '',
-          'Layout': '',
-          'Size': '',
+          Theme: 'light',
+          State: 'default',
+          Type: 'default',
+          Activity: '',
+          Layout: '',
+          Size: '',
         },
       },
       transformer: {
         replace: {
-          'State': {
-            'default': '',
+          State: {
+            default: '',
           },
-          'Size': {
-            'small': 'sm',
-            'medium': 'md',
-            'large': 'lg',
+          Size: {
+            small: 'sm',
+            medium: 'md',
+            large: 'lg',
           },
         },
       },
@@ -69,7 +77,7 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  use_legacy_definitions: (process.env.HANDOFF_USE_FIGMA_PLUGIN ?? "").toLowerCase() === "false"
+  use_legacy_definitions: (process.env.HANDOFF_USE_FIGMA_PLUGIN ?? '').toLowerCase() === 'false',
 });
 
 /**
