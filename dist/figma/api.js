@@ -17,7 +17,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRequestCount = exports.getComponentSetNodes = exports.getComponentSets = exports.getFileStyles = exports.getAssetURL = exports.getFileNodes = exports.getFileComponent = exports.getFile = void 0;
 var axios_1 = __importDefault(require("axios"));
 var figmaRestApi = axios_1.default.create({
-    baseURL: process.env.FIGMA_BASE_URL || 'https://api.figma.com/v1/',
+    baseURL: process.env.HANDOFF_FIGMA_BASE_URL || 'https://api.figma.com/v1/',
 });
 var counter = 0;
 var getFile = function (fileId, accessToken) {

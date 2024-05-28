@@ -20,10 +20,10 @@ var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
     var _a, _b, _c, _d, _e;
     return ({
-        dev_access_token: (_a = process.env.DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
-        figma_project_id: (_b = process.env.FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
-        exportsOutputDirectory: (_c = process.env.OUTPUT_DIR) !== null && _c !== void 0 ? _c : "exported",
-        sitesOutputDirectory: (_d = process.env.SITES_DIR) !== null && _d !== void 0 ? _d : "out",
+        dev_access_token: (_a = process.env.HANDOFF_DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
+        figma_project_id: (_b = process.env.HANDOFF_FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
+        exportsOutputDirectory: (_c = process.env.HANDOFF_OUTPUT_DIR) !== null && _c !== void 0 ? _c : "exported",
+        sitesOutputDirectory: (_d = process.env.HANDOFF_SITES_DIR) !== null && _d !== void 0 ? _d : "out",
         integration: {
             name: 'bootstrap',
             version: '5.3',
@@ -77,7 +77,7 @@ var defaultConfig = function () {
                 'components/switch',
             ],
         },
-        use_legacy_definitions: ((_e = process.env.USE_HANDOFF_PLUGIN) !== null && _e !== void 0 ? _e : "").toLowerCase() === "false"
+        use_legacy_definitions: ((_e = process.env.HANDOFF_USE_FIGMA_PLUGIN) !== null && _e !== void 0 ? _e : "").toLowerCase() === "false"
     });
 };
 exports.defaultConfig = defaultConfig;

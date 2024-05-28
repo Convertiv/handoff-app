@@ -320,7 +320,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
+                console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '))];
             case 1:
                 DEV_ACCESS_TOKEN = _a.sent();
@@ -328,7 +328,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
             case 2:
                 if (!!FIGMA_PROJECT_ID) return [3 /*break*/, 4];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
+                console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '))];
             case 3:
                 FIGMA_PROJECT_ID = _a.sent();
@@ -344,7 +344,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [3 /*break*/, 14];
             case 6:
                 envFilePath = path_1.default.resolve(handoff.workingPath, '.env');
-                envFileContent = "\nDEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nFIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
+                envFileContent = "\nHANDOFF_DEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nHANDOFF_FIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
                 _a.label = 7;
             case 7:
                 _a.trys.push([7, 13, , 14]);
@@ -413,7 +413,7 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 return [4 /*yield*/, Promise.all(__spreadArray([
                         fs_extra_1.default.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
                         fs_extra_1.default.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 })
-                    ], (!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
+                    ], (!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
                         ? [
                             (0, api_2.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(iconsZipFilePath(handoff))).then(function (writeStream) {
                                 return stream.promises.finished(writeStream);

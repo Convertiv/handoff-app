@@ -231,8 +231,8 @@ function integrationTransformer(handoff, documentationObject) {
                         fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
                     }
                     // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
-                    if (process.env.EXPORT_PATH) {
-                        fs_extra_1.default.copySync(sassFolder, process.env.EXPORT_PATH);
+                    if (process.env.HANDOFF_EXPORT_PATH) {
+                        fs_extra_1.default.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
                     }
                     stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
                     return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];

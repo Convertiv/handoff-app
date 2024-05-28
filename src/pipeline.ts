@@ -208,7 +208,7 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.
+      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
 Use these instructions to generate them ${chalk.blue(
         `https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
       )}\n`)
@@ -219,7 +219,7 @@ Use these instructions to generate them ${chalk.blue(
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.
+      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
 You can find this by looking at the url of your Figma file. If the url is ${chalk.blue(
         `https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`
       )}
@@ -242,8 +242,8 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
     } else {
       const envFilePath = path.resolve(handoff.workingPath, '.env');
       const envFileContent = `
-DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
-FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
+HANDOFF_DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
+HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 `;
 
       try {
@@ -292,7 +292,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   await Promise.all([
     fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
     fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
-    ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
+    ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
           zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
             stream.promises.finished(writeStream)
