@@ -2,15 +2,20 @@ import webpack from 'webpack';
 import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
-// import { pluginTransformer } from '../transformers/plugin';
 import { getIntegrationEntryPoint } from '../transformers/integration/index';
 import Handoff from '../index';
 
 export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
-  const entry = getIntegrationEntryPoint(handoff);
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
+
+  const entry = getIntegrationEntryPoint(handoff);
+
+  if (!entry) {
+    return Promise.resolve('');
+  }
+
   return new Promise((resolve, reject) => {
     let config: webpack.Configuration = {
       mode: 'production',
@@ -33,7 +38,13 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         filename: 'bundle.js',
       },
       resolveLoader: {
-        modules: [path.resolve(handoff?.modulePath), path.resolve(handoff?.workingPath), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(process.cwd(), 'node_modules')],
+        modules: [
+          path.resolve(handoff?.modulePath),
+          path.resolve(handoff?.workingPath),
+          path.resolve(handoff?.modulePath, 'node_modules'),
+          path.resolve(handoff?.workingPath, 'node_modules'),
+          path.resolve(process.cwd(), 'node_modules'),
+        ],
       },
       module: {
         rules: [
@@ -50,17 +61,25 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
                 options: {
                   sassOptions: {
                     indentWidth: 4,
-                    includePaths: [path.resolve(handoff?.workingPath, 'node_modules'), path.resolve(handoff?.modulePath, 'node_modules'), path.resolve(process.cwd(), 'node_modules'), path.resolve(handoff?.modulePath), path.resolve(handoff?.workingPath)],
+                    includePaths: [
+                      path.resolve(handoff?.workingPath, 'node_modules'),
+                      path.resolve(handoff?.modulePath, 'node_modules'),
+                      path.resolve(process.cwd(), 'node_modules'),
+                      path.resolve(handoff?.modulePath),
+                      path.resolve(handoff?.workingPath),
+                    ],
                   },
                   additionalData: async (content, loaderContext) => {
                     const integrationPath = path.join(handoff.workingPath, 'integration/sass');
 
                     if (fs.existsSync(integrationPath)) {
-                      fs.readdirSync(integrationPath).filter(file => {
-                        return path.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
-                      }).forEach(file => {
-                        content = content + `\n @import "@integration/${file}";`;
-                      });
+                      fs.readdirSync(integrationPath)
+                        .filter((file) => {
+                          return path.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
+                        })
+                        .forEach((file) => {
+                          content = content + `\n @import "@integration/${file}";`;
+                        });
                     }
                     return content;
                   },

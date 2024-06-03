@@ -43,44 +43,52 @@ export class HandoffIntegration {
 
 /**
  * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
+ * and version.  Allow users to define custom integration if desired.
  */
-export const getPathToIntegration = (handoff: Handoff) => {
+export const getPathToIntegration = (handoff: Handoff): string | null => {
   if (!handoff || !handoff?.config) {
     throw Error('Handoff not initialized');
   }
   const integrationFolder = 'config/integrations';
 
-  const defaultPath = path.resolve(path.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
-
   const config = handoff.config;
-  if (config.integration) {
-    if (config.integration.name === 'custom') {
-      // Look for a custom integration
-      const customPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-      if (!fs.existsSync(customPath)) {
-        throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
-      }
-      return customPath;
-    }
-    const searchPath = path.resolve(path.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
-    if (!fs.existsSync(searchPath)) {
-      throw Error(
-        `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
-      );
-    }
-    return searchPath;
+
+  if (!config.integration) {
+    return null;
   }
-  return defaultPath;
+
+  if (config.integration.name === 'custom') {
+    // Look for a custom integration
+    const customPath = path.resolve(path.join(handoff.workingPath, 'integration'));
+
+    if (!fs.existsSync(customPath)) {
+      throw Error(`The config is set to use a custom integration but no custom integration found at integrations/custom`);
+    }
+
+    return customPath;
+  }
+
+  const searchPath = path.resolve(path.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
+
+  if (!fs.existsSync(searchPath)) {
+    throw Error(
+      `The requested integration was ${config.integration.name} version ${config.integration.version} but no integration plugin with that name was found`
+    );
+  }
+
+  return searchPath;
 };
 
 /**
  * Get the entry point for the integration
  * @returns string
  */
-export const getIntegrationEntryPoint = (handoff: Handoff): string => {
-  return path.resolve(path.join(getPathToIntegration(handoff), 'templates', 'main.js'));
+export const getIntegrationEntryPoint = (handoff: Handoff): string | null => {
+  const integrationPath = getPathToIntegration(handoff);
+
+  return integrationPath
+    ? path.resolve(path.join(integrationPath, 'templates', 'main.js'))
+    : null;
 };
 
 export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => {

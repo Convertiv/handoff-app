@@ -27,13 +27,20 @@ export const ejectConfig = async (handoff: Handoff) => {
  * @param handoff
  */
 export const ejectIntegration = async (handoff: Handoff) => {
-  const config = await handoff.config;
+  const config = handoff.config;
+
+  if (!config.integration) {
+    console.log(chalk.red(`Unable to eject integration as it is not defined.`));
+  }
+
   const integration = config.integration.name;
+
   // is the custom integration already being used?
   if (integration === 'custom') {
     console.log(chalk.red(`Custom integration cannot be ejected as it's destination matches the source.`));
     return;
   }
+
   // does an local integration exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'integration'));
   if (fs.existsSync(workingPath)) {
@@ -42,15 +49,18 @@ export const ejectIntegration = async (handoff: Handoff) => {
       return;
     }
   }
+
   // perform integration ejection
   const integrationPath = getPathToIntegration(handoff);
   fs.copySync(integrationPath, workingPath, { overwrite: false });
   console.log(chalk.green(`${config?.integration?.name} ${config?.integration?.version} ejected to ${workingPath}`));
+
   // ensure local configuration is set up to support the ejected integration
   const localConfigPath = path.join(handoff.workingPath, 'handoff.config.json');
-  !fs.existsSync(localConfigPath) && await ejectConfig(handoff);
+  !fs.existsSync(localConfigPath) && (await ejectConfig(handoff));
   config.integration = { name: 'custom', version: '' };
   fs.writeFileSync(localConfigPath, `${JSON.stringify(config, null, 2)}`);
+
   return handoff;
 };
 

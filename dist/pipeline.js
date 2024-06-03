@@ -140,13 +140,15 @@ var buildCustomFonts = function (handoff, documentationObject) { return __awaite
  * @returns
  */
 var buildIntegration = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
-    var integration;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
+            case 0:
+                if (!!!handoff.config.integration) return [3 /*break*/, 2];
+                return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
             case 1:
-                integration = _a.sent();
-                return [2 /*return*/, integration];
+                _a.sent();
+                _a.label = 2;
+            case 2: return [2 /*return*/];
         }
     });
 }); };
@@ -164,7 +166,7 @@ var buildPreview = function (handoff, documentationObject) { return __awaiter(vo
                 _a.sent();
                 if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].instances.length > 0; }).length > 0)) return [3 /*break*/, 3];
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
-                        .then(function (value) { return console.log(chalk_1.default.green(value)); })
+                        .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
                         .catch(function (error) {
                         throw new Error(error);
                     })];
