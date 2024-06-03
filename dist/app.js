@@ -150,7 +150,14 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             case 1:
                 appPath = _a.sent();
                 // Build app
-                return [4 /*yield*/, (0, next_build_1.nextBuild)([appPath])];
+                return [4 /*yield*/, (0, next_build_1.nextBuild)({
+                        lint: true,
+                        mangling: true,
+                        experimentalDebugMemoryUsage: false,
+                        experimentalAppOnly: false,
+                        experimentalTurbo: false,
+                        experimentalBuildMode: 'default',
+                    }, appPath)];
             case 2:
                 // Build app
                 _a.sent();
@@ -185,11 +192,13 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 appPath = _a.sent();
                 config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 // Include any changes made within the app source during watch
-                chokidar_1.default.watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
+                chokidar_1.default
+                    .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
                     ignored: /(^|[\/\\])\../,
                     persistent: true,
                     ignoreInitial: true,
-                }).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                })
+                    .on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                     var _a;
                     return __generator(this, function (_b) {
                         switch (_b.label) {
@@ -378,7 +387,7 @@ var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, funct
                 if (fs_extra_1.default.existsSync(moduleOutput)) {
                     fs_extra_1.default.removeSync(moduleOutput);
                 }
-                return [4 /*yield*/, (0, next_dev_1.nextDev)([appPath, '-p', '3000'])];
+                return [4 /*yield*/, (0, next_dev_1.nextDev)({ port: 3000 }, 'cli', appPath)];
             case 2: 
             // Run
             return [2 /*return*/, _a.sent()];
