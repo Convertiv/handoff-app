@@ -1,6 +1,5 @@
 // bootstrap
-import { Tooltip, Modal } from 'bootstrap';
-import 'iframe-resizer/js/iframeResizer.contentWindow';
+import { Tooltip } from 'bootstrap';
 // bootstrap css
 import './main.scss';
 

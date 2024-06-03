@@ -83,7 +83,7 @@ a use case that isn't quite met.
 ## Requirements
 
 - A paid Figma account is required to publish the Figma file library
-- Node 16+
+- Node 18.17+
 - NPM 8+
 
 ## Get Started
