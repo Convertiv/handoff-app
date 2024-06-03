@@ -87,7 +87,6 @@
     "fs-extra": "^10.1.0",
     "gray-matter": "^4.0.3",
     "html-react-parser": "^3.0.4",
-    "iframe-resizer-react": "^1.1.0",
     "jquery": "^3.6.1",
     "lodash": "^4.17.21",
     "mustache": "^4.2.0",
