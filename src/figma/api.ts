@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { FileResponse, FileNodesResponse, FileImageResponse, FileStylesResponse, FileComponentSetsResponse, FileComponentsResponse } from './types';
 
 const figmaRestApi: AxiosInstance = axios.create({
-  baseURL: process.env.FIGMA_BASE_URL || 'https://api.figma.com/v1/',
+  baseURL: process.env.HANDOFF_FIGMA_BASE_URL || 'https://api.figma.com/v1/',
 });
 
 let counter = 0;

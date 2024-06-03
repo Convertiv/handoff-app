@@ -308,7 +308,7 @@ var validateHandoffRequirements = function (handoff) { return __awaiter(void 0, 
  * @param handoff
  */
 var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var DEV_ACCESS_TOKEN, FIGMA_PROJECT_ID, missingEnvVars, writeEnvFile, envFile;
+    var DEV_ACCESS_TOKEN, FIGMA_PROJECT_ID, missingEnvVars, writeEnvFile, envFilePath, envFileContent, fileExists, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -320,7 +320,7 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
                 missingEnvVars = false;
                 if (!!DEV_ACCESS_TOKEN) return [3 /*break*/, 2];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
+                console.log(chalk_1.default.yellow("Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\nUse these instructions to generate them ".concat(chalk_1.default.blue("https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens"), "\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '))];
             case 1:
                 DEV_ACCESS_TOKEN = _a.sent();
@@ -328,28 +328,49 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
             case 2:
                 if (!!FIGMA_PROJECT_ID) return [3 /*break*/, 4];
                 missingEnvVars = true;
-                console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
+                console.log(chalk_1.default.yellow("\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.\nYou can find this by looking at the url of your Figma file. If the url is ".concat(chalk_1.default.blue("https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D"), "\nyour id would be IGYfyraLDa0BpVXkxHY2tE\n")));
                 return [4 /*yield*/, (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '))];
             case 3:
                 FIGMA_PROJECT_ID = _a.sent();
                 _a.label = 4;
             case 4:
-                if (!missingEnvVars) return [3 /*break*/, 8];
-                console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env\nfile for you to make it easier to run the pipeline in the future.\n"));
+                if (!missingEnvVars) return [3 /*break*/, 14];
+                console.log(chalk_1.default.yellow("\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n"));
                 return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '))];
             case 5:
                 writeEnvFile = _a.sent();
                 if (!(writeEnvFile !== 'y')) return [3 /*break*/, 6];
                 console.log(chalk_1.default.green("Skipping .env file creation. You will need to supply these variables in the future.\n"));
-                return [3 /*break*/, 8];
+                return [3 /*break*/, 14];
             case 6:
-                envFile = "\nDEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nFIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
-                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(handoff.workingPath, '.env'), envFile)];
+                envFilePath = path_1.default.resolve(handoff.workingPath, '.env');
+                envFileContent = "\nHANDOFF_DEV_ACCESS_TOKEN=\"".concat(DEV_ACCESS_TOKEN, "\"\nHANDOFF_FIGMA_PROJECT_ID=\"").concat(FIGMA_PROJECT_ID, "\"\n");
+                _a.label = 7;
             case 7:
+                _a.trys.push([7, 13, , 14]);
+                return [4 /*yield*/, fs_extra_1.default
+                        .access(envFilePath)
+                        .then(function () { return true; })
+                        .catch(function () { return false; })];
+            case 8:
+                fileExists = _a.sent();
+                if (!fileExists) return [3 /*break*/, 10];
+                return [4 /*yield*/, fs_extra_1.default.appendFile(envFilePath, envFileContent)];
+            case 9:
+                _a.sent();
+                console.log(chalk_1.default.green("\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n"));
+                return [3 /*break*/, 12];
+            case 10: return [4 /*yield*/, fs_extra_1.default.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ""))];
+            case 11:
                 _a.sent();
                 console.log(chalk_1.default.green("\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n"));
-                _a.label = 8;
-            case 8:
+                _a.label = 12;
+            case 12: return [3 /*break*/, 14];
+            case 13:
+                error_1 = _a.sent();
+                console.error(chalk_1.default.red('Error handling the .env file:', error_1));
+                return [3 /*break*/, 14];
+            case 14:
                 handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
                 handoff.config.figma_project_id = FIGMA_PROJECT_ID;
                 return [2 /*return*/];
@@ -392,7 +413,7 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 return [4 /*yield*/, Promise.all(__spreadArray([
                         fs_extra_1.default.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
                         fs_extra_1.default.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 })
-                    ], (!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
+                    ], (!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
                         ? [
                             (0, api_2.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(iconsZipFilePath(handoff))).then(function (writeStream) {
                                 return stream.promises.finished(writeStream);

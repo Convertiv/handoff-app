@@ -12,10 +12,10 @@ export interface ImageStyle {
 }
 
 export const defaultConfig = (): Config => ({
-  dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
-  figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
-  exportsOutputDirectory: process.env.OUTPUT_DIR ?? "exported",
-  sitesOutputDirectory: process.env.SITES_DIR ?? "out",
+  dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
+  figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
+  exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? "exported",
+  sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? "out",
   integration: {
     name: 'bootstrap',
     version: '5.3',
@@ -69,7 +69,7 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() === "false"
+  use_legacy_definitions: (process.env.HANDOFF_USE_FIGMA_PLUGIN ?? "").toLowerCase() === "false"
 });
 
 /**

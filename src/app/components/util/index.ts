@@ -398,21 +398,21 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getTokens = (): ExportResult => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'tokens.json');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
   if(!fs.existsSync(exportedFilePath)) return {} as ExportResult;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
 };
 
 export const getChangelog = () => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'changelog.json');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
   if(!fs.existsSync(exportedFilePath)) return [];
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 export const getPreview = (): PreviewJson => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'preview.json');
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
   if(!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
@@ -494,7 +494,7 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
-  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens') : path.resolve(process.cwd(), process.env.OUTPUT_DIR ?? 'exported', 'tokens');
+  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens');
   const scssSearchPath = path.resolve(baseSearchPath, 'sass', `${component}.scss`);
   const typeSearchPath = path.resolve(baseSearchPath, 'types', `${component}.scss`);
   const sdSearchPath = path.resolve(baseSearchPath, 'sd', 'tokens', `${component}.tokens.json`);

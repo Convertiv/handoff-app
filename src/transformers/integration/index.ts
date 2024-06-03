@@ -183,8 +183,8 @@ export default async function integrationTransformer(handoff: Handoff, documenta
     ));
   }
   // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
-  if (process.env.EXPORT_PATH) {
-    fs.copySync(sassFolder, process.env.EXPORT_PATH);
+  if (process.env.HANDOFF_EXPORT_PATH) {
+    fs.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
   }
   // zip the tokens
   const stream = fs.createWriteStream(path.join(outputFolder, `tokens.zip`));
