@@ -20,7 +20,6 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | undefined }> = ({ d
     return (
       <div className="c-code-block">
         <SyntaxHighlighter
-          // @ts-ignore
           style={oneLight}
           language="html"
           PreTag="div"
