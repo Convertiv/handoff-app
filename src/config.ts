@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
 import path from 'path';
-import Handoff from '.';
 import { ClientConfig, Config } from './types/config';
 
 export interface ImageStyle {
@@ -41,30 +40,7 @@ export const defaultConfig = (): Config => ({
     base_path: '',
   },
   figma: {
-    options: {
-      shared: {
-        defaults: {
-          Theme: 'light',
-          State: 'default',
-          Type: 'default',
-          Activity: '',
-          Layout: '',
-          Size: '',
-        },
-      },
-      transformer: {
-        replace: {
-          State: {
-            default: '',
-          },
-          Size: {
-            small: 'sm',
-            medium: 'md',
-            large: 'lg',
-          },
-        },
-      },
-    },
+    options: {},
     definitions: [
       'components/alert',
       'components/button',
