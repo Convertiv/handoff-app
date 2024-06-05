@@ -2,6 +2,7 @@ import * as FigmaTypes from '../figma/types';
 import { GradientObject, PositionObject, StopObject } from '../types';
 import { isShadowEffectType, isValidGradientType } from '../exporters/utils';
 import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
+import { normalizeCssNumber } from './numbers';
 
 /**
  * Generate a CSS gradient from a color gradient object
@@ -17,20 +18,37 @@ export function transformGradientToCss(color: GradientObject, paintType: FigmaTy
 
   if (paintType === 'SOLID') {
     params = getLinearGradientParamsFromGradientObject(color);
-    colors = color.stops.map((stop) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')})`);
+    colors = color.stops.map(
+      (stop) =>
+        `rgba(${figmaColorToWebRGB(stop.color)
+          .map((val) => normalizeCssNumber(val))
+          .join(', ')})`
+    );
     return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
   }
 
   if (paintType === 'GRADIENT_LINEAR') {
     params = getLinearGradientParamsFromGradientObject(color);
-    colors = color.stops.map((stop, i) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${params[i + 1]}%`);
+    colors = color.stops.map(
+      (stop, i) =>
+        `rgba(${figmaColorToWebRGB(stop.color)
+          .map((val) => normalizeCssNumber(val))
+          .join(', ')}) ${params[i + 1]}%`
+    );
     return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
   }
 
   if (paintType === 'GRADIENT_RADIAL') {
     const params = getRadialGradientParamsFromGradientObject(color);
-    colors = color.stops.map((stop) => `rgba(${figmaColorToWebRGB(stop.color).join(', ')}) ${(Number(Number((stop.position ?? 0).toFixed(4)) * 100).toFixed(2))}%`);
-    return `radial-gradient(${params[0]}% ${params[1]}% at ${params[2]}% ${params[3]}%, ${colors.join(', ')})`;
+    colors = color.stops.map(
+      (stop) =>
+        `rgba(${figmaColorToWebRGB(stop.color)
+          .map((val) => normalizeCssNumber(val))
+          .join(', ')}) ${normalizeCssNumber(Number(Number((stop.position ?? 0).toFixed(4)) * 100))}%`
+    );
+    return `radial-gradient(${normalizeCssNumber(params[0])}% ${normalizeCssNumber(params[1])}% at ${normalizeCssNumber(
+      params[2]
+    )}% ${normalizeCssNumber(params[3])}%, ${colors.join(', ')})`;
   }
 
   return ``;
@@ -92,7 +110,7 @@ export const transformFigmaColorToCssColor = (color: FigmaTypes.Color): string =
     return transformFigmaColorToHex(color);
   }
 
-  return `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${parseFloat(a.toFixed(3))})`;
+  return `rgba(${normalizeCssNumber(r * 255)}, ${normalizeCssNumber(g * 255)}, ${normalizeCssNumber(b * 255)}, ${normalizeCssNumber(a)})`;
 };
 
 export function transformFigmaPaintToCssColor(paint: FigmaTypes.Paint, asLinearGradient: boolean = false): string | null {
