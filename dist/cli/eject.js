@@ -70,7 +70,7 @@ exports.ejectConfig = ejectConfig;
  * @param handoff
  */
 var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, integration, workingPath, integrationPath, localConfigPath, _a;
+    var config, integration, workingPath, integrationPath, localConfigPath, _a, localConfigBuffer, localConfig;
     var _b, _c;
     return __generator(this, function (_d) {
         switch (_d.label) {
@@ -78,6 +78,7 @@ var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, voi
                 config = handoff.config;
                 if (!config.integration) {
                     console.log(chalk_1.default.red("Unable to eject integration as it is not defined."));
+                    return [2 /*return*/, handoff];
                 }
                 integration = config.integration.name;
                 // is the custom integration already being used?
@@ -104,8 +105,10 @@ var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, voi
                 _d.label = 2;
             case 2:
                 _a;
-                config.integration = { name: 'custom', version: '' };
-                fs_extra_1.default.writeFileSync(localConfigPath, "".concat(JSON.stringify(config, null, 2)));
+                localConfigBuffer = fs_extra_1.default.readFileSync(localConfigPath);
+                localConfig = JSON.parse(localConfigBuffer.toString());
+                localConfig.integration = { name: 'custom', version: '' };
+                fs_extra_1.default.writeFileSync(localConfigPath, "".concat(JSON.stringify(localConfig, null, 2)));
                 return [2 /*return*/, handoff];
         }
     });
