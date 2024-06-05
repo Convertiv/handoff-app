@@ -16,7 +16,6 @@
       }
     },
     "transformer": {
-      "cssRootClass": "btn",
       "tokenNameSegments": [
         "${Component}",
         "${Type}",

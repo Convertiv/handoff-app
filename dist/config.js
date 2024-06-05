@@ -49,30 +49,7 @@ var defaultConfig = function () {
             base_path: '',
         },
         figma: {
-            options: {
-                shared: {
-                    defaults: {
-                        Theme: 'light',
-                        State: 'default',
-                        Type: 'default',
-                        Activity: '',
-                        Layout: '',
-                        Size: '',
-                    },
-                },
-                transformer: {
-                    replace: {
-                        State: {
-                            default: '',
-                        },
-                        Size: {
-                            small: 'sm',
-                            medium: 'md',
-                            large: 'lg',
-                        },
-                    },
-                },
-            },
+            options: {},
             definitions: [
                 'components/alert',
                 'components/button',
