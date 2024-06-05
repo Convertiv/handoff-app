@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import { getPathToIntegration } from '../transformers/integration';
 import { getClientConfig } from '../config';
+import { ClientConfig } from 'handoff/types/config';
 
 /**
  * Eject the config to the working directory
@@ -31,6 +32,7 @@ export const ejectIntegration = async (handoff: Handoff) => {
 
   if (!config.integration) {
     console.log(chalk.red(`Unable to eject integration as it is not defined.`));
+    return handoff;
   }
 
   const integration = config.integration.name;
@@ -58,8 +60,12 @@ export const ejectIntegration = async (handoff: Handoff) => {
   // ensure local configuration is set up to support the ejected integration
   const localConfigPath = path.join(handoff.workingPath, 'handoff.config.json');
   !fs.existsSync(localConfigPath) && (await ejectConfig(handoff));
-  config.integration = { name: 'custom', version: '' };
-  fs.writeFileSync(localConfigPath, `${JSON.stringify(config, null, 2)}`);
+
+  // update (and re-write) the ejected configuration with custom integration
+  const localConfigBuffer = fs.readFileSync(localConfigPath);
+  const localConfig = JSON.parse(localConfigBuffer.toString()) as ClientConfig;
+  localConfig.integration = { name: 'custom', version: '' };
+  fs.writeFileSync(localConfigPath, `${JSON.stringify(localConfig, null, 2)}`);
 
   return handoff;
 };
