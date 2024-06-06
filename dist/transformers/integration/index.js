@@ -70,32 +70,30 @@ var HandoffIntegration = /** @class */ (function () {
 exports.HandoffIntegration = HandoffIntegration;
 /**
  * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
+ * and version.  Allow users to define custom integration if desired.
  */
 var getPathToIntegration = function (handoff) {
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
     }
     var integrationFolder = 'config/integrations';
-    var defaultPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, defaultIntegration, defaultVersion));
     var config = handoff.config;
-    if (config.integration) {
-        if (config.integration.name === 'custom') {
-            // Look for a custom integration
-            var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-            if (!fs_extra_1.default.existsSync(customPath)) {
-                throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
-            }
-            return customPath;
-        }
-        var searchPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
-        if (!fs_extra_1.default.existsSync(searchPath)) {
-            throw Error("The requested integration was ".concat(config.integration.name, " version ").concat(config.integration.version, " but no integration plugin with that name was found"));
-        }
-        return searchPath;
+    if (!config.integration) {
+        return null;
     }
-    return defaultPath;
+    if (config.integration.name === 'custom') {
+        // Look for a custom integration
+        var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+        if (!fs_extra_1.default.existsSync(customPath)) {
+            throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
+        }
+        return customPath;
+    }
+    var searchPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
+    if (!fs_extra_1.default.existsSync(searchPath)) {
+        throw Error("The requested integration was ".concat(config.integration.name, " version ").concat(config.integration.version, " but no integration plugin with that name was found"));
+    }
+    return searchPath;
 };
 exports.getPathToIntegration = getPathToIntegration;
 /**
@@ -103,7 +101,10 @@ exports.getPathToIntegration = getPathToIntegration;
  * @returns string
  */
 var getIntegrationEntryPoint = function (handoff) {
-    return path_1.default.resolve(path_1.default.join((0, exports.getPathToIntegration)(handoff), 'templates', 'main.js'));
+    var integrationPath = (0, exports.getPathToIntegration)(handoff);
+    return integrationPath
+        ? path_1.default.resolve(path_1.default.join(integrationPath, 'templates', 'main.js'))
+        : null;
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
 var instantiateIntegration = function (handoff) {
@@ -231,8 +232,8 @@ function integrationTransformer(handoff, documentationObject) {
                         fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
                     }
                     // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
-                    if (process.env.EXPORT_PATH) {
-                        fs_extra_1.default.copySync(sassFolder, process.env.EXPORT_PATH);
+                    if (process.env.HANDOFF_EXPORT_PATH) {
+                        fs_extra_1.default.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
                     }
                     stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
                     return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];

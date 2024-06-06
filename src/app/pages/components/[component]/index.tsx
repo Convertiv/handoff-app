@@ -4,7 +4,6 @@ import Head from 'next/head';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import startCase from 'lodash/startCase';
-import IframeResizer from 'iframe-resizer-react';
 import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,

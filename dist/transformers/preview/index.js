@@ -77,7 +77,14 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
     var template, renderableComponent, preview, bodyEl;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component)];
+            case 0:
+                if (!handoff) {
+                    throw Error('Handoff not initialized');
+                }
+                if (!handoff.config.integration) {
+                    return [2 /*return*/, null];
+                }
+                return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component)];
             case 1:
                 template = _a.sent();
                 if (!template) {
