@@ -367,6 +367,11 @@ var initConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    return __assign(__assign({}, (0, config_1.defaultConfig)()), config);
+    var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
+    if (!returnConfig.figma_project_id && process.env.FIGMA_PROJECT_ID) {
+        // check to see if we can get this from the env
+        returnConfig.figma_project_id = process.env.FIGMA_PROJECT_ID;
+    }
+    return returnConfig;
 };
 exports.default = Handoff;

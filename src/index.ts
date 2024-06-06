@@ -201,8 +201,12 @@ const initConfig = (configOverride?: any): Config => {
   if (configOverride) {
     config = { ...config, ...configOverride };
   }
-
-  return { ...defaultConfig(), ...config } as unknown as Config;
+  const returnConfig = { ...defaultConfig(), ...config } as unknown as Config;
+  if (!returnConfig.figma_project_id && process.env.FIGMA_PROJECT_ID) {
+    // check to see if we can get this from the env
+    returnConfig.figma_project_id = process.env.FIGMA_PROJECT_ID;
+  }
+  return returnConfig;
 };
 
 export default Handoff;

@@ -377,12 +377,15 @@ var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, funct
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                console.log('handoff', handoff);
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                console.log(handoff);
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 1:
                 appPath = _a.sent();
+                console.log(appPath);
                 moduleOutput = path_1.default.resolve(appPath, 'out');
                 if (fs_extra_1.default.existsSync(moduleOutput)) {
                     fs_extra_1.default.removeSync(moduleOutput);
