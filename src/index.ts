@@ -59,8 +59,8 @@ class Handoff {
     this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
-  init(configOverride?: Config, skipValidation?: boolean): Handoff {
-    const config = initConfig(configOverride ?? {}, skipValidation);
+  init(configOverride?: Config): Handoff {
+    const config = initConfig(configOverride ?? {});
     this.config = config;
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
@@ -193,7 +193,7 @@ class Handoff {
   }
 }
 
-const initConfig = (configOverride?: any, skipValidation?: boolean): Config => {
+const initConfig = (configOverride?: any): Config => {
   let config = {};
   let configPath = path.resolve(process.cwd(), 'handoff.config.json');
 
