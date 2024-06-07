@@ -110,9 +110,9 @@ var Handoff = /** @class */ (function () {
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
-    Handoff.prototype.init = function (configOverride, skipValidation) {
+    Handoff.prototype.init = function (configOverride) {
         var _a, _b;
-        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {}, skipValidation);
+        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
@@ -361,7 +361,7 @@ var Handoff = /** @class */ (function () {
     };
     return Handoff;
 }());
-var initConfig = function (configOverride, skipValidation) {
+var initConfig = function (configOverride) {
     var config = {};
     var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs_extra_1.default.existsSync(configPath)) {
