@@ -13,6 +13,7 @@ import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
+import chalk from 'chalk';
 
 class Handoff {
   config: Config | null;
@@ -58,17 +59,20 @@ class Handoff {
     this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
-  init(configOverride?: Config): Handoff {
-    const config = initConfig(configOverride ?? {});
+  init(configOverride?: Config, skipValidation?: boolean): Handoff {
+    const config = initConfig(configOverride ?? {}, skipValidation);
     this.config = config;
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     return this;
   }
-  preRunner(): Handoff {
+  preRunner(validate?: boolean): Handoff {
     if (!this.config) {
       throw Error('Handoff not initialized');
+    }
+    if (validate) {
+      this.config = validateConfig(this.config);
     }
     this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
     return this;
@@ -89,7 +93,7 @@ class Handoff {
     return this;
   }
   async build(): Promise<Handoff> {
-    this.preRunner();
+    this.preRunner(true);
     if (this.config) {
       await buildApp(this);
     }
@@ -146,14 +150,14 @@ class Handoff {
   }
   async start(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner();
+      this.preRunner(true);
       await watchApp(this);
     }
     return this;
   }
   async dev(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner();
+      this.preRunner(true);
       await devApp(this);
     }
     return this;
@@ -189,7 +193,7 @@ class Handoff {
   }
 }
 
-const initConfig = (configOverride?: any): Config => {
+const initConfig = (configOverride?: any, skipValidation?: boolean): Config => {
   let config = {};
   let configPath = path.resolve(process.cwd(), 'handoff.config.json');
 
@@ -202,11 +206,21 @@ const initConfig = (configOverride?: any): Config => {
     config = { ...config, ...configOverride };
   }
   const returnConfig = { ...defaultConfig(), ...config } as unknown as Config;
-  if (!returnConfig.figma_project_id && process.env.FIGMA_PROJECT_ID) {
-    // check to see if we can get this from the env
-    returnConfig.figma_project_id = process.env.FIGMA_PROJECT_ID;
-  }
   return returnConfig;
 };
 
+
+const validateConfig = (config: Config): Config => {
+  if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
+    // check to see if we can get this from the env
+    console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+    throw new Error('Cannot initialize configuration');
+  }
+  if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
+    // check to see if we can get this from the env
+    console.error(chalk.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+    throw new Error('Cannot initialize configuration');
+  }
+  return config;
+};
 export default Handoff;

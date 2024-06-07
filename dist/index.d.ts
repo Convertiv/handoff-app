@@ -30,8 +30,8 @@ declare class Handoff {
         configureExportables: (exportables: string[]) => string[];
     };
     constructor(config?: Config);
-    init(configOverride?: Config): Handoff;
-    preRunner(): Handoff;
+    init(configOverride?: Config, skipValidation?: boolean): Handoff;
+    preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;

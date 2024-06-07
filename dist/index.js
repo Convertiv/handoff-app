@@ -82,6 +82,7 @@ var pipeline_1 = __importStar(require("./pipeline"));
 var eject_1 = require("./cli/eject");
 var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
+var chalk_1 = __importDefault(require("chalk"));
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
@@ -109,19 +110,22 @@ var Handoff = /** @class */ (function () {
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
-    Handoff.prototype.init = function (configOverride) {
+    Handoff.prototype.init = function (configOverride, skipValidation) {
         var _a, _b;
-        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
+        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {}, skipValidation);
         this.config = config;
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
         return this;
     };
-    Handoff.prototype.preRunner = function () {
+    Handoff.prototype.preRunner = function (validate) {
         var _a;
         if (!this.config) {
             throw Error('Handoff not initialized');
+        }
+        if (validate) {
+            this.config = validateConfig(this.config);
         }
         this.config.figma.definitions = this.hooks.configureExportables(((_a = this.config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         return this;
@@ -164,7 +168,7 @@ var Handoff = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        this.preRunner();
+                        this.preRunner(true);
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, app_1.default)(this)];
                     case 1:
@@ -302,7 +306,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        this.preRunner();
+                        this.preRunner(true);
                         return [4 /*yield*/, (0, app_1.watchApp)(this)];
                     case 1:
                         _a.sent();
@@ -318,7 +322,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        this.preRunner();
+                        this.preRunner(true);
                         return [4 /*yield*/, (0, app_1.devApp)(this)];
                     case 1:
                         _a.sent();
@@ -357,7 +361,7 @@ var Handoff = /** @class */ (function () {
     };
     return Handoff;
 }());
-var initConfig = function (configOverride) {
+var initConfig = function (configOverride, skipValidation) {
     var config = {};
     var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs_extra_1.default.existsSync(configPath)) {
@@ -368,10 +372,19 @@ var initConfig = function (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
     var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
-    if (!returnConfig.figma_project_id && process.env.FIGMA_PROJECT_ID) {
-        // check to see if we can get this from the env
-        returnConfig.figma_project_id = process.env.FIGMA_PROJECT_ID;
-    }
     return returnConfig;
+};
+var validateConfig = function (config) {
+    if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
+        // check to see if we can get this from the env
+        console.error(chalk_1.default.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+        throw new Error('Cannot initialize configuration');
+    }
+    if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
+        // check to see if we can get this from the env
+        console.error(chalk_1.default.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+        throw new Error('Cannot initialize configuration');
+    }
+    return config;
 };
 exports.default = Handoff;
