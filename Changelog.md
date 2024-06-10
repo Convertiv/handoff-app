@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2024-06-11
+
+### Changes
+
+* All environment variables now contain the `HANDOFF_` prefix.
+  * After updating to version 0.12.0, all environment variables need to be updated to reflect the new variable names:
+    * `FIGMA_BASE_URL` -> `HANDOFF_FIGMA_BASE_URL`
+    * `DEV_ACCESS_TOKEN` -> `HANDOFF_DEV_ACCESS_TOKEN`
+    * `FIGMA_PROJECT_ID` -> `HANDOFF_FIGMA_PROJECT_ID`
+    * `OUTPUT_DIR` -> `HANDOFF_OUTPUT_DIR`
+    * `SITES_DIR` -> `HANDOFF_SITES_DIR`
+    * `USE_HANDOFF_PLUGIN` -> `HANDOFF_USE_HANDOFF_PLUGIN`
+    * `CREATE_ASSETS_ZIP_FILES` -> `HANDOFF_CREATE_ASSETS_ZIP_FILES`
+* The default integration is no longer pre-defined.
+  * Bootstrap 5.3 is no longer set as the default integration.
+  * To continue using the Bootstrap 5.3 integration in your project, ensure the configuration is ejected (`handoff-app eject:config`) and update it by setting the `integration` property to `{name: 'bootstrap', version: '5.3'}`.
+* All default options specified in the configuration that are used by the exporter and transformer have been removed.
+  * To continue using the defaults present before the 0.12.0 release, ensure the configuration is ejected (`handoff-app eject:config`) and update the `figma.options` property to the [previous default value](https://github.com/Convertiv/handoff-app/blob/2a396145e7366732ae6a0e15cdf2226641d40a12/src/config.ts#L36-L59).
+* The logo placeholder copy showing spacing and orientation has been removed allowing users to add custom content via Markdown.
+
+### Improvements
+
+* Handoff now appends to existing `.env` files instead of overriding them if the file already exists.
+* Introduced normalization of numeric values in `.css` and `.scss` files, along with correct indentations. This ensures that the generated files are valid for any local linting tools your project might use.
+* Configuration ejected by the `handoff-app eject:integration` command is now the same as the one ejected by the `handoff-app eject:config` command.
+* Handoff no longer uses the `iframe-resizer` package.
+* Resolved potential security issues by updating to newer versions of the `axios` and `next` packages.
+
 ## [0.11.0] - 2024-05-23
 
 ### Bugfixes
