@@ -31,7 +31,7 @@ declare class Handoff {
     };
     constructor(config?: Config);
     init(configOverride?: Config): Handoff;
-    preRunner(): Handoff;
+    preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;

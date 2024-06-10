@@ -9,7 +9,7 @@ import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
 
-const getWorkingPublicPath = (handoff: Handoff): string|null => {
+const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
     path.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
     path.resolve(handoff.workingPath, `public`),
@@ -22,11 +22,11 @@ const getWorkingPublicPath = (handoff: Handoff): string|null => {
   }
 
   return null;
-}
+};
 
 const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
-}
+};
 
 /**
  * Copy the public dir from the working dir to the module dir
@@ -38,7 +38,7 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   if (workingPublicPath) {
     fs.copySync(workingPublicPath, path.resolve(appPath, 'public'), { overwrite: true });
   }
-}
+};
 
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
@@ -67,8 +67,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
   return appPath;
-}
-
+};
 
 /**
  * Build the next js application
@@ -84,7 +83,17 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   const appPath = await prepareProjectApp(handoff);
 
   // Build app
-  await nextBuild([appPath]);
+  await nextBuild(
+    {
+      lint: true,
+      mangling: true,
+      experimentalDebugMemoryUsage: false,
+      experimentalAppOnly: false,
+      experimentalTurbo: false,
+      experimentalBuildMode: 'default',
+    },
+    appPath
+  );
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -115,19 +124,21 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const config = require(path.resolve(appPath, 'next.config.js'));
 
   // Include any changes made within the app source during watch
-  chokidar.watch(path.resolve(handoff.modulePath, 'src', 'app'), {
-    ignored: /(^|[\/\\])\../, // ignore dotfiles
-    persistent: true,
-    ignoreInitial: true,
-  }).on('all', async (event, path) => {
-    switch (event) {
-      case 'add':
-      case 'change':
-      case 'unlink':
-        await prepareProjectApp(handoff);
-        break;
-    }
-  });
+  chokidar
+    .watch(path.resolve(handoff.modulePath, 'src', 'app'), {
+      ignored: /(^|[\/\\])\../, // ignore dotfiles
+      persistent: true,
+      ignoreInitial: true,
+    })
+    .on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          await prepareProjectApp(handoff);
+          break;
+      }
+    });
 
   // does a ts config exist?
   let tsconfigPath = 'tsconfig.json';
@@ -184,7 +195,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
     persistent: true,
     ignoreInitial: true,
-  }
+  };
   let debounce = false;
   if (fs.existsSync(path.resolve(handoff.workingPath, 'exportables'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', async (event, path) => {
@@ -192,7 +203,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'add':
         case 'change':
         case 'unlink':
-          if(path.includes('json') && !debounce){
+          if (path.includes('json') && !debounce) {
             console.log(chalk.yellow('Exportables changed. Handoff will fetch new tokens...'));
             debounce = true;
             await handoff.fetch();
@@ -221,7 +232,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'add':
         case 'change':
         case 'unlink':
-          if(path.includes('json') && !debounce){
+          if (path.includes('json') && !debounce) {
             console.log(chalk.yellow('Integration changed. Handoff will rerender the integrations...'));
             debounce = true;
             await handoff.integration();
@@ -251,10 +262,8 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
-
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
-
   // Purge app cache
   const moduleOutput = path.resolve(appPath, 'out');
   if (fs.existsSync(moduleOutput)) {
@@ -262,7 +271,7 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   }
 
   // Run
-  return await nextDev([appPath, '-p', '3000']);
+  return await nextDev({ port: 3000 }, 'cli', appPath);
 };
 
 export default buildApp;

@@ -114,7 +114,7 @@ var getComponentSetComponentDefinition = function (componentSet) {
                 sharedComponentVariants: metadata.sharedVariants,
             },
             transformer: {
-                cssRootClass: name === 'button' ? 'btn' : name,
+                cssRootClass: name,
                 tokenNameSegments: metadata.tokenNameSegments,
                 replace: groupReplaceRules(metadata.replacements),
             },
@@ -281,7 +281,7 @@ var getComponentPropertyWithParams = function (variantProperty) {
  * @deprecated Will be removed before 1.0.0 release.
  */
 var getComponentDefinitionForLegacyComponentDefinition = function (componentSet, legacyDefinition) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
     var supportedVariantProps = __spreadArray(__spreadArray([], (_d = (_c = (_b = (_a = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _a === void 0 ? void 0 : _a.exporter) === null || _b === void 0 ? void 0 : _b.supportedVariantProps) === null || _c === void 0 ? void 0 : _c.design) !== null && _d !== void 0 ? _d : [], true), (_h = (_g = (_f = (_e = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _e === void 0 ? void 0 : _e.exporter) === null || _f === void 0 ? void 0 : _f.supportedVariantProps) === null || _g === void 0 ? void 0 : _g.layout) !== null && _h !== void 0 ? _h : [], true);
     var definitionSupportedVariantProperties = supportedVariantProps.map(function (variantProp) { return variantProp.replace(/ *\([^)]*\) */g, ''); });
     var definitionSupportedVariantPropertiesWithShareParams = supportedVariantProps.filter(function (variantProperty) { return variantProperty.match((/ *\([^)]*\) */g)); });
@@ -324,16 +324,16 @@ var getComponentDefinitionForLegacyComponentDefinition = function (componentSet,
         group: legacyDefinition.group,
         options: {
             shared: {
-                defaults: legacyDefinition.options.shared.defaults,
+                defaults: (_k = (_j = legacyDefinition.options.shared) === null || _j === void 0 ? void 0 : _j.defaults) !== null && _k !== void 0 ? _k : {},
             },
             exporter: {
                 variantProperties: variantProperties.map(function (variantProp) { return variantProp.name; }),
                 sharedComponentVariants: sharedComponentVariants,
             },
             transformer: {
-                cssRootClass: legacyDefinition.options.transformer.cssRootClass,
-                tokenNameSegments: legacyDefinition.options.transformer.tokenNameSegments,
-                replace: legacyDefinition.options.transformer.replace,
+                cssRootClass: (_m = (_l = legacyDefinition.options.transformer) === null || _l === void 0 ? void 0 : _l.cssRootClass) !== null && _m !== void 0 ? _m : legacyDefinition.id,
+                tokenNameSegments: (_o = legacyDefinition.options.transformer) === null || _o === void 0 ? void 0 : _o.tokenNameSegments,
+                replace: (_p = legacyDefinition.options.transformer) === null || _p === void 0 ? void 0 : _p.replace,
             },
         },
         parts: legacyDefinition.parts,

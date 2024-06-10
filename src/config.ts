@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
 import path from 'path';
-import Handoff from '.';
 import { ClientConfig, Config } from './types/config';
 
 export interface ImageStyle {
@@ -12,14 +11,11 @@ export interface ImageStyle {
 }
 
 export const defaultConfig = (): Config => ({
-  dev_access_token: process.env.DEV_ACCESS_TOKEN ?? null,
-  figma_project_id: process.env.FIGMA_PROJECT_ID ?? null,
-  exportsOutputDirectory: process.env.OUTPUT_DIR ?? "exported",
-  sitesOutputDirectory: process.env.SITES_DIR ?? "out",
-  integration: {
-    name: 'bootstrap',
-    version: '5.3',
-  },
+  dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
+  figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
+  exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
+  sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
+  integration: null,
   app: {
     theme: 'default',
     title: 'Convertiv Design System',
@@ -27,36 +23,25 @@ export const defaultConfig = (): Config => ({
     google_tag_manager: null,
     attribution: true,
     type_copy: 'Almost before we knew it, we had left the ground.',
-    type_sort: ['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Paragraph', 'Subheading', 'Blockquote', 'Input Labels', 'Link'],
+    type_sort: [
+      'Heading 1',
+      'Heading 2',
+      'Heading 3',
+      'Heading 4',
+      'Heading 5',
+      'Heading 6',
+      'Paragraph',
+      'Subheading',
+      'Blockquote',
+      'Input Labels',
+      'Link',
+    ],
     color_sort: ['primary', 'secondary', 'extra', 'system'],
     component_sort: ['primary', 'secondary', 'transparent'],
     base_path: '',
   },
   figma: {
-    options: {
-      shared: {
-        defaults: {
-          'Theme': 'light',
-          'State': 'default',
-          'Type': 'default',
-          'Activity': '',
-          'Layout': '',
-          'Size': '',
-        },
-      },
-      transformer: {
-        replace: {
-          'State': {
-            'default': '',
-          },
-          'Size': {
-            'small': 'sm',
-            'medium': 'md',
-            'large': 'lg',
-          },
-        },
-      },
-    },
+    options: {},
     definitions: [
       'components/alert',
       'components/button',
@@ -69,7 +54,7 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  use_legacy_definitions: (process.env.USE_HANDOFF_PLUGIN ?? "").toLowerCase() === "false"
+  use_legacy_definitions: (process.env.HANDOFF_USE_FIGMA_PLUGIN ?? '').toLowerCase() === 'false',
 });
 
 /**
@@ -90,7 +75,7 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, figma, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links, use_legacy_definitions } = {
+  const { app, figma, integration, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links, use_legacy_definitions } = {
     ...defaultConfig(),
     ...config,
   } as unknown as Config;
@@ -98,9 +83,10 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
   return {
     app,
     figma,
+    integration,
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
-    use_legacy_definitions
+    use_legacy_definitions,
   };
 };

@@ -20,14 +20,11 @@ var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
     var _a, _b, _c, _d, _e;
     return ({
-        dev_access_token: (_a = process.env.DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
-        figma_project_id: (_b = process.env.FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
-        exportsOutputDirectory: (_c = process.env.OUTPUT_DIR) !== null && _c !== void 0 ? _c : "exported",
-        sitesOutputDirectory: (_d = process.env.SITES_DIR) !== null && _d !== void 0 ? _d : "out",
-        integration: {
-            name: 'bootstrap',
-            version: '5.3',
-        },
+        dev_access_token: (_a = process.env.HANDOFF_DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
+        figma_project_id: (_b = process.env.HANDOFF_FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
+        exportsOutputDirectory: (_c = process.env.HANDOFF_OUTPUT_DIR) !== null && _c !== void 0 ? _c : 'exported',
+        sitesOutputDirectory: (_d = process.env.HANDOFF_SITES_DIR) !== null && _d !== void 0 ? _d : 'out',
+        integration: null,
         app: {
             theme: 'default',
             title: 'Convertiv Design System',
@@ -35,36 +32,25 @@ var defaultConfig = function () {
             google_tag_manager: null,
             attribution: true,
             type_copy: 'Almost before we knew it, we had left the ground.',
-            type_sort: ['Heading 1', 'Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6', 'Paragraph', 'Subheading', 'Blockquote', 'Input Labels', 'Link'],
+            type_sort: [
+                'Heading 1',
+                'Heading 2',
+                'Heading 3',
+                'Heading 4',
+                'Heading 5',
+                'Heading 6',
+                'Paragraph',
+                'Subheading',
+                'Blockquote',
+                'Input Labels',
+                'Link',
+            ],
             color_sort: ['primary', 'secondary', 'extra', 'system'],
             component_sort: ['primary', 'secondary', 'transparent'],
             base_path: '',
         },
         figma: {
-            options: {
-                shared: {
-                    defaults: {
-                        'Theme': 'light',
-                        'State': 'default',
-                        'Type': 'default',
-                        'Activity': '',
-                        'Layout': '',
-                        'Size': '',
-                    },
-                },
-                transformer: {
-                    replace: {
-                        'State': {
-                            'default': '',
-                        },
-                        'Size': {
-                            'small': 'sm',
-                            'medium': 'md',
-                            'large': 'lg',
-                        },
-                    },
-                },
-            },
+            options: {},
             definitions: [
                 'components/alert',
                 'components/button',
@@ -77,7 +63,7 @@ var defaultConfig = function () {
                 'components/switch',
             ],
         },
-        use_legacy_definitions: ((_e = process.env.USE_HANDOFF_PLUGIN) !== null && _e !== void 0 ? _e : "").toLowerCase() === "false"
+        use_legacy_definitions: ((_e = process.env.HANDOFF_USE_FIGMA_PLUGIN) !== null && _e !== void 0 ? _e : '').toLowerCase() === 'false',
     });
 };
 exports.defaultConfig = defaultConfig;
@@ -96,14 +82,15 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links, use_legacy_definitions = _a.use_legacy_definitions;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, integration = _a.integration, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links, use_legacy_definitions = _a.use_legacy_definitions;
     return {
         app: app,
         figma: figma,
+        integration: integration,
         exportsOutputDirectory: exportsOutputDirectory,
         sitesOutputDirectory: sitesOutputDirectory,
         assets_zip_links: assets_zip_links !== null && assets_zip_links !== void 0 ? assets_zip_links : { icons: null, logos: null },
-        use_legacy_definitions: use_legacy_definitions
+        use_legacy_definitions: use_legacy_definitions,
     };
 };
 exports.getClientConfig = getClientConfig;

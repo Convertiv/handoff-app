@@ -63,8 +63,9 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
  * @returns
  */
 const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  const integration = await integrationTransformer(handoff, documentationObject);
-  return integration;
+  if (!!handoff.config.integration) {
+    await integrationTransformer(handoff, documentationObject);
+  }
 };
 
 /**
@@ -75,9 +76,10 @@ const buildPreview = async (handoff: Handoff, documentationObject: Documentation
   await Promise.all([
     previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
+
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
     await buildClientFiles(handoff)
-      .then((value) => console.log(chalk.green(value)))
+      .then((value) => !!value && console.log(chalk.green(value)))
       .catch((error) => {
         throw new Error(error);
       });
@@ -208,7 +210,7 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at DEV_ACCESS_TOKEN.
+      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
 Use these instructions to generate them ${chalk.blue(
         `https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
       )}\n`)
@@ -219,7 +221,7 @@ Use these instructions to generate them ${chalk.blue(
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
     console.log(
-      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at FIGMA_PROJECT_ID.
+      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
 You can find this by looking at the url of your Figma file. If the url is ${chalk.blue(
         `https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`
       )}
@@ -230,23 +232,46 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
 
   if (missingEnvVars) {
     console.log(
-      chalk.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env
-file for you to make it easier to run the pipeline in the future.\n`)
+      chalk.yellow(
+        `\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`
+      )
     );
+
     const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
+
     if (writeEnvFile !== 'y') {
       console.log(chalk.green(`Skipping .env file creation. You will need to supply these variables in the future.\n`));
     } else {
-      const envFile = `
-DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
-FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
+      const envFilePath = path.resolve(handoff.workingPath, '.env');
+      const envFileContent = `
+HANDOFF_DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
+HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 `;
-      await fs.writeFile(path.resolve(handoff.workingPath, '.env'), envFile);
-      console.log(
-        chalk.green(
-          `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
-        )
-      );
+
+      try {
+        const fileExists = await fs
+          .access(envFilePath)
+          .then(() => true)
+          .catch(() => false);
+
+        if (fileExists) {
+          await fs.appendFile(envFilePath, envFileContent);
+          console.log(
+            chalk.green(
+              `\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`
+            )
+          );
+        } else {
+          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, "") );
+          console.log(
+            chalk.green(
+              `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
+            )
+          );
+        }
+      } catch (error) {
+        console.error(chalk.red('Error handling the .env file:', error));
+      }
     }
   }
 
@@ -269,7 +294,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   await Promise.all([
     fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
     fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
-    ...(!process.env.CREATE_ASSETS_ZIP_FILES || process.env.CREATE_ASSETS_ZIP_FILES !== 'false'
+    ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
           zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
             stream.promises.finished(writeStream)

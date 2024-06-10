@@ -86,7 +86,10 @@ export interface Config {
   use_legacy_definitions?: boolean | null | undefined;
 }
 
-export type ClientConfig = Pick<Config, "app" | "figma" | "assets_zip_links", "use_legacy_definitions">;
+export type ClientConfig = Pick<
+  Config,
+  'app' | 'figma' | 'integration' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'use_legacy_definitions'
+>;
 
 declare const config: Config;
 

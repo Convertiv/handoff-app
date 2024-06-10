@@ -65,7 +65,7 @@ const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSe
         sharedComponentVariants: metadata.sharedVariants,
       },
       transformer: {
-        cssRootClass: name === 'button' ? 'btn' : name, // TODO
+        cssRootClass: name,
         tokenNameSegments: metadata.tokenNameSegments,
         replace: groupReplaceRules(metadata.replacements),
       },
@@ -338,16 +338,16 @@ const getComponentDefinitionForLegacyComponentDefinition = (componentSet: FigmaT
     group: legacyDefinition.group,
     options: {
       shared: {
-        defaults: legacyDefinition.options.shared.defaults,
+        defaults: legacyDefinition.options.shared?.defaults ?? {},
       },
       exporter: {
         variantProperties: variantProperties.map((variantProp) => variantProp.name),
         sharedComponentVariants,
       },
       transformer: {
-        cssRootClass: legacyDefinition.options.transformer.cssRootClass,
-        tokenNameSegments: legacyDefinition.options.transformer.tokenNameSegments,
-        replace: legacyDefinition.options.transformer.replace,
+        cssRootClass: legacyDefinition.options.transformer?.cssRootClass ?? legacyDefinition.id,
+        tokenNameSegments: legacyDefinition.options.transformer?.tokenNameSegments,
+        replace: legacyDefinition.options.transformer?.replace,
       },
     },
     parts: legacyDefinition.parts,

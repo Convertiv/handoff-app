@@ -44,14 +44,16 @@ var webpack_1 = __importDefault(require("webpack"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var chalk_1 = __importDefault(require("chalk"));
-// import { pluginTransformer } from '../transformers/plugin';
 var index_1 = require("../transformers/integration/index");
 var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var entry;
     return __generator(this, function (_a) {
-        entry = (0, index_1.getIntegrationEntryPoint)(handoff);
         if (!handoff) {
             throw Error('Handoff not initialized');
+        }
+        entry = (0, index_1.getIntegrationEntryPoint)(handoff);
+        if (!entry) {
+            return [2 /*return*/, Promise.resolve('')];
         }
         return [2 /*return*/, new Promise(function (resolve, reject) {
                 var config = {
@@ -75,7 +77,13 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
-                        modules: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(process.cwd(), 'node_modules')],
+                        modules: [
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                            path_1.default.resolve(process.cwd(), 'node_modules'),
+                        ],
                     },
                     module: {
                         rules: [
@@ -92,16 +100,24 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                                         options: {
                                             sassOptions: {
                                                 indentWidth: 4,
-                                                includePaths: [path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'), path_1.default.resolve(process.cwd(), 'node_modules'), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath), path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath)],
+                                                includePaths: [
+                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                                                    path_1.default.resolve(process.cwd(), 'node_modules'),
+                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                                                ],
                                             },
                                             additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
                                                 var integrationPath;
                                                 return __generator(this, function (_a) {
                                                     integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
                                                     if (fs_extra_1.default.existsSync(integrationPath)) {
-                                                        fs_extra_1.default.readdirSync(integrationPath).filter(function (file) {
+                                                        fs_extra_1.default.readdirSync(integrationPath)
+                                                            .filter(function (file) {
                                                             return path_1.default.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
-                                                        }).forEach(function (file) {
+                                                        })
+                                                            .forEach(function (file) {
                                                             content = content + "\n @import \"@integration/".concat(file, "\";");
                                                         });
                                                     }

@@ -4,7 +4,6 @@ import Head from 'next/head';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import startCase from 'lodash/startCase';
-import IframeResizer from 'iframe-resizer-react';
 import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
@@ -380,16 +379,28 @@ const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) 
 };
 
 const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
+  const ref = React.useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = React.useState('0px');
+  const onLoad = () => {
+    if (ref.current) {
+      setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
+    }
+  };
+  React.useEffect(() => {
+    onLoad();
+  }, []);
   return (
-    <IframeResizer
+
+    <iframe
+      onLoad={onLoad}
+      ref={ref}
+      height={height}
       style={{
         width: '1px',
         minWidth: '100%',
+        height: height,
       }}
-      heightCalculationMethod="bodyOffset"
       srcDoc={component?.preview}
-      scrolling={false}
-      checkOrigin={false}
     />
   );
 };

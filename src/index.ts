@@ -13,6 +13,7 @@ import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
+import chalk from 'chalk';
 
 class Handoff {
   config: Config | null;
@@ -66,9 +67,12 @@ class Handoff {
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     return this;
   }
-  preRunner(): Handoff {
+  preRunner(validate?: boolean): Handoff {
     if (!this.config) {
       throw Error('Handoff not initialized');
+    }
+    if (validate) {
+      this.config = validateConfig(this.config);
     }
     this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
     return this;
@@ -89,7 +93,7 @@ class Handoff {
     return this;
   }
   async build(): Promise<Handoff> {
-    this.preRunner();
+    this.preRunner(true);
     if (this.config) {
       await buildApp(this);
     }
@@ -146,14 +150,14 @@ class Handoff {
   }
   async start(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner();
+      this.preRunner(true);
       await watchApp(this);
     }
     return this;
   }
   async dev(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner();
+      this.preRunner(true);
       await devApp(this);
     }
     return this;
@@ -201,8 +205,22 @@ const initConfig = (configOverride?: any): Config => {
   if (configOverride) {
     config = { ...config, ...configOverride };
   }
-
-  return { ...defaultConfig(), ...config } as unknown as Config;
+  const returnConfig = { ...defaultConfig(), ...config } as unknown as Config;
+  return returnConfig;
 };
 
+
+const validateConfig = (config: Config): Config => {
+  if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
+    // check to see if we can get this from the env
+    console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+    throw new Error('Cannot initialize configuration');
+  }
+  if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
+    // check to see if we can get this from the env
+    console.error(chalk.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+    throw new Error('Cannot initialize configuration');
+  }
+  return config;
+};
 export default Handoff;

@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
@@ -20,15 +21,14 @@ export declare class HandoffIntegration {
 }
 /**
  * Derive the path to the integration. Use the config to find the integration
- * and version.  Fall over to bootstrap 5.2.  Allow users to define custom
- * integration if desired
+ * and version.  Allow users to define custom integration if desired.
  */
-export declare const getPathToIntegration: (handoff: Handoff) => string;
+export declare const getPathToIntegration: (handoff: Handoff) => string | null;
 /**
  * Get the entry point for the integration
  * @returns string
  */
-export declare const getIntegrationEntryPoint: (handoff: Handoff) => string;
+export declare const getIntegrationEntryPoint: (handoff: Handoff) => string | null;
 export declare const instantiateIntegration: (handoff: Handoff) => HandoffIntegration;
 /**
  * A recusrive function for building a zip of the tokens

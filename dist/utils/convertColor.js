@@ -23,6 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.figmaColorToWebRGB = exports.transformFigmaEffectToCssBoxShadow = exports.transformFigmaTextCaseToCssTextTransform = exports.transformFigmaTextDecorationToCss = exports.transformFigmaTextAlignToCss = exports.transformFigmaFillsToCssColor = exports.transformFigmaPaintToCssColor = exports.transformFigmaColorToCssColor = exports.transformFigmaColorToHex = exports.transformFigmaPaintToGradient = exports.transformGradientToCss = void 0;
 var utils_1 = require("../exporters/utils");
 var gradients_1 = require("./gradients");
+var numbers_1 = require("./numbers");
 /**
  * Generate a CSS gradient from a color gradient object
 
@@ -37,18 +38,31 @@ function transformGradientToCss(color, paintType) {
     var colors = [];
     if (paintType === 'SOLID') {
         params = (0, gradients_1.getLinearGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop) { return "rgba(".concat(figmaColorToWebRGB(stop.color).join(', '), ")"); });
+        colors = color.stops.map(function (stop) {
+            return "rgba(".concat(figmaColorToWebRGB(stop.color)
+                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
+                .join(', '), ")");
+        });
         return "linear-gradient(".concat(params[0], "deg, ").concat(colors.join(', '), ")");
     }
     if (paintType === 'GRADIENT_LINEAR') {
         params = (0, gradients_1.getLinearGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop, i) { return "rgba(".concat(figmaColorToWebRGB(stop.color).join(', '), ") ").concat(params[i + 1], "%"); });
+        colors = color.stops.map(function (stop, i) {
+            return "rgba(".concat(figmaColorToWebRGB(stop.color)
+                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
+                .join(', '), ") ").concat(params[i + 1], "%");
+        });
         return "linear-gradient(".concat(params[0], "deg, ").concat(colors.join(', '), ")");
     }
     if (paintType === 'GRADIENT_RADIAL') {
         var params_1 = (0, gradients_1.getRadialGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop) { var _a; return "rgba(".concat(figmaColorToWebRGB(stop.color).join(', '), ") ").concat((Number(Number(((_a = stop.position) !== null && _a !== void 0 ? _a : 0).toFixed(4)) * 100).toFixed(2)), "%"); });
-        return "radial-gradient(".concat(params_1[0], "% ").concat(params_1[1], "% at ").concat(params_1[2], "% ").concat(params_1[3], "%, ").concat(colors.join(', '), ")");
+        colors = color.stops.map(function (stop) {
+            var _a;
+            return "rgba(".concat(figmaColorToWebRGB(stop.color)
+                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
+                .join(', '), ") ").concat((0, numbers_1.normalizeCssNumber)(Number(Number(((_a = stop.position) !== null && _a !== void 0 ? _a : 0).toFixed(4)) * 100)), "%");
+        });
+        return "radial-gradient(".concat((0, numbers_1.normalizeCssNumber)(params_1[0]), "% ").concat((0, numbers_1.normalizeCssNumber)(params_1[1]), "% at ").concat((0, numbers_1.normalizeCssNumber)(params_1[2]), "% ").concat((0, numbers_1.normalizeCssNumber)(params_1[3]), "%, ").concat(colors.join(', '), ")");
     }
     return "";
 }
@@ -107,7 +121,7 @@ var transformFigmaColorToCssColor = function (color) {
         // transform to hex
         return transformFigmaColorToHex(color);
     }
-    return "rgba(".concat(r * 255, ", ").concat(g * 255, ", ").concat(b * 255, ", ").concat(parseFloat(a.toFixed(3)), ")");
+    return "rgba(".concat((0, numbers_1.normalizeCssNumber)(r * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(g * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(b * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(a), ")");
 };
 exports.transformFigmaColorToCssColor = transformFigmaColorToCssColor;
 function transformFigmaPaintToCssColor(paint, asLinearGradient) {
