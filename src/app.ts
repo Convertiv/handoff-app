@@ -83,14 +83,17 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   const appPath = await prepareProjectApp(handoff);
 
   // Build app
-  await nextBuild({
-    lint: true,
-    mangling: true,
-    experimentalDebugMemoryUsage: false,
-    experimentalAppOnly: false,
-    experimentalTurbo: false,
-    experimentalBuildMode: 'default',
-  }, appPath);
+  await nextBuild(
+    {
+      lint: true,
+      mangling: true,
+      experimentalDebugMemoryUsage: false,
+      experimentalAppOnly: false,
+      experimentalTurbo: false,
+      experimentalBuildMode: 'default',
+    },
+    appPath
+  );
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -259,10 +262,8 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
-
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
-
   // Purge app cache
   const moduleOutput = path.resolve(appPath, 'out');
   if (fs.existsSync(moduleOutput)) {

@@ -96,56 +96,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
             </div>
           </div>
           <hr />
-          <div className="o-row">
-            <div className="o-col-10@md">
-              <div>
-                <h4>Logo Spacing</h4>
-                <p>Preserve the logo integrity by maintaining clear space around the logo.</p>
-              </div>
-            </div>
-          </div>
-          <div className="o-row">
-            <div className="o-col-12@md">
-              <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
-                <div className="u-mb-4 u-mb-0@md">
-                  <Icon name="motiv-logo-example" className="c-logo-preview u-mb-2" />
-                  <small>{config?.app?.client} logo spacing on light background.</small>
-                </div>
-                <div>
-                  <Icon name="motiv-logo-dark-example" className="c-logo-preview u-mb-2" />
-                  <small>{config?.app?.client} logo spacing on dark background.</small>
-                </div>
-              </div>
-            </div>
-          </div>
-          <hr />
-          <div className="o-row">
-            <div className="o-col-10@md">
-              <div>
-                <h4>Logo Misuse</h4>
-                <p>Keep the appearance of the logo conistent. Do not modify it or alter the orientation.</p>
-              </div>
-            </div>
-          </div>
-          <div className="o-row">
-            <div className="o-col-12@md">
-              <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
-                <div className="u-mb-4 u-mb-0@md">
-                  <Icon name="motiv-logo-example" className="c-logo-preview u-mb-2" />
-                  <small>
-                    <strong>Do not</strong> change the logo color.
-                  </small>
-                </div>
-                <div>
-                  <Icon name="motiv-logo-dark-example" className="c-logo-preview u-mb-2" />
-                  <small>
-                    <strong>Do not</strong> rotate the logo.
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div>
-          <hr />
+
           <div className="o-row u-justify-between">
             <div className="o-col-5@md">
               <h4>Download Assets</h4>
