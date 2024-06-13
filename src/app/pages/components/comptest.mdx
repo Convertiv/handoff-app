@@ -1,6 +1,7 @@
 import Icon from '../../components/Icon';
 
 
+
 ### Accessibility
 
 Make it clear what this button does for the user.
@@ -27,45 +28,3 @@ Make it clear what this button does for the user.
 </div>
 
 ---
-export default function Page() {
-  return <div className="c-page">
-      <Head>
-        <title>{metadata.metaTitle}</title>
-        <meta name="description" content={metadata.metaDescription} />
-      </Head>
-      <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content">
-        <div className="o-container-fluid">
-          <div className="c-hero">
-            <div>
-              <h1>{metadata.title ?? startCase(id)}</h1>
-              <p>{metadata.description}</p>
-            </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
-            <div className="c-tabs">
-              {hasPreviews && (
-                <button
-                  className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
-                  onClick={() => setActiveTab(ComponentTab.Overview)}
-                >
-                  Overview
-                </button>
-              )}
-              <button
-                className={`c-tabs__item ${activeTab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.DesignTokens)}
-              >
-                Tokens
-              </button>
-            </div>
-          </div>
-          <div className="o-row">
-          </div>
-        </div>
-      </section>
-      <Footer />
-    </div>;
-    
-
-}

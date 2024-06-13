@@ -56,6 +56,8 @@
     "@mdx-js/react": "^3.0.1",
     "@next/mdx": "^14.2.4",
     "@popperjs/core": "^2.11.6",
+    "@storybook/react": "^8.1.9",
+    "@storybook/test": "^8.1.9",
     "@types/archiver": "^5.3.1",
     "@types/bootstrap": "^5.2.6",
     "@types/cross-spawn": "^6.0.2",

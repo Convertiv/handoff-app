@@ -26,6 +26,7 @@ import { CodeHighlight } from '../../../components/Markdown/CodeHighlight';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import Footer from '../../../components/Footer';
+import { ComponentDisplay } from '../../../components/Preview';
 
 /**
  * Render all index pages
@@ -378,32 +379,7 @@ const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) 
   );
 };
 
-const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
-  const ref = React.useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = React.useState('0px');
-  const onLoad = () => {
-    if (ref.current) {
-      setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
-    }
-  };
-  React.useEffect(() => {
-    onLoad();
-  }, []);
-  return (
 
-    <iframe
-      onLoad={onLoad}
-      ref={ref}
-      height={height}
-      style={{
-        width: '1px',
-        minWidth: '100%',
-        height: height,
-      }}
-      srcDoc={component?.preview}
-    />
-  );
-};
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
   return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
