@@ -4,46 +4,60 @@ import Icon from './Icon';
 import CustomNav from './SideNav/Custom';
 import startCase from 'lodash/startCase';
 import Head from 'next/head';
-export default function MarkdownLayout(metadata, menu, config, current, id, hasPreviews, activeTab, setActiveTab, ComponentTab, children) {
+import { SectionLink } from './util';
+import { ClientConfig } from '../../types/config';
+
+export default function MarkdownLayout({
+  metadata,
+  children,
+}: {
+  metadata: {
+    metaTitle: string;
+    metaDescription: string;
+    title: string;
+    description: string;
+    image?: string;
+    menu: SectionLink[];
+    config: ClientConfig;
+current: SectionLink;
+  };
+  children: React.ReactNode;
+}) {
   return (
     <div className="c-page">
       <Head>
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
+      <Header menu={metadata.menu} config={metadata.config} />
+      {metadata.current && metadata.current.subSections.length > 0 && <CustomNav menu={metadata.current} />}
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">
             <div>
-              <h1>{metadata.title ?? startCase(id)}</h1>
+              <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
             {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
             <div className="c-tabs">
-              {hasPreviews && (
+
                 <button
-                  className={`c-tabs__item ${activeTab === ComponentTab.Overview ? 'is-selected' : ''}`}
-                  onClick={() => setActiveTab(ComponentTab.Overview)}
+                  className={`c-tabs__item`}
                 >
                   Overview
                 </button>
-              )}
+
               <button
-                className={`c-tabs__item ${activeTab === ComponentTab.DesignTokens ? 'is-selected' : ''}`}
-                onClick={() => setActiveTab(ComponentTab.DesignTokens)}
+                className={`c-tabs__item`}
               >
                 Tokens
               </button>
             </div>
           </div>
-                  <div className="o-row">
-                      {children}
-          </div>
+          <div className="o-row">{children}</div>
         </div>
       </section>
-      <Footer config={config} />
+      <Footer config={metadata.config} />
     </div>
   );
 }
