@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
+const withMDX = require('@next/mdx')()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -11,6 +12,7 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
   transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
@@ -95,4 +97,4 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = nextConfig;
+module.exports = withMDX(nextConfig)
