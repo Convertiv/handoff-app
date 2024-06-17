@@ -22,6 +22,7 @@ Commands:
   build - Using the current tokens, build various outputs
     build:app [opts] - Builds the design system static application
     build:integration [opts] - Builds current selected integration, styles and previews
+    build:preview [opts] - Builds the design system previews
 
   start [opts] - Starts the design system in development mode
 
@@ -116,6 +117,9 @@ const run = async (
         return handoff.fetch();
       case 'build:app':
         await handoff.build();
+        return handoff;
+      case 'build:preview':
+        await handoff.preview();
         return handoff;
       case 'start':
         watching = true;

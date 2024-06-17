@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,51 +58,43 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createDocumentationObject = void 0;
-var assets_1 = __importDefault(require("./exporters/assets"));
-var index_1 = require("./exporters/components/index");
-var design_1 = require("./exporters/design");
-var startCase_1 = __importDefault(require("lodash/startCase"));
-var chalk_1 = __importDefault(require("chalk"));
-var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
-    var components, design, icons, logos;
+var stories = __importStar(require("../../stories/Button.stories"));
+var react_1 = require("@storybook/react");
+// Iterate over Storybook components and generate HTML
+var generateHTML = function (source) { return __awaiter(void 0, void 0, void 0, function () {
+    var stories, html;
+    return __generator(this, function (_a) {
+        stories = (0, react_1.composeStories)(source);
+        html = '';
+        Object.keys(stories).forEach(function (key) {
+            var story = stories[key];
+            console.log(stories);
+            //     const { args, component } = story;
+            //     const Component = component;
+            //     const componentHTML = renderToStaticMarkup(
+            //         <Component {...args} />
+            //     );
+            //     html += componentHTML;
+            // }
+            // return html;
+        });
+        return [2 /*return*/];
+    });
+}); };
+// Usage
+// const StorybookHTML = () => {
+//     const html = generateHTML();
+//     return (
+//         <div dangerouslySetInnerHTML={{ __html: html }} />
+//     );
+// };
+var storybookPreviewTransformer = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(figmaFileKey, figmaAccessToken, legacyDefinitions)];
-            case 1:
-                components = _a.sent();
-                // Log out components
-                Object.keys(components).map(function (component) {
-                    if (components[component].instances.length === 0) {
-                        console.error(chalk_1.default.grey("Skipping \"".concat((0, startCase_1.default)(component), "\". Reason: No matching component instances were found.")));
-                    }
-                    else {
-                        console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].instances.length);
-                    }
-                });
-                return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(figmaFileKey, figmaAccessToken)];
-            case 2:
-                design = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Icons')];
-            case 3:
-                icons = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Logo')];
-            case 4:
-                logos = _a.sent();
-                return [2 /*return*/, {
-                        timestamp: new Date().toISOString(),
-                        design: design,
-                        components: components,
-                        assets: {
-                            icons: icons,
-                            logos: logos,
-                        },
-                    }];
+            case 0: return [4 /*yield*/, generateHTML(stories)];
+            case 1: return [2 /*return*/, _a.sent()];
         }
     });
 }); };
-exports.createDocumentationObject = createDocumentationObject;
+exports.default = storybookPreviewTransformer;

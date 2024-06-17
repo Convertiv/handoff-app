@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -128,35 +128,33 @@ var assetsExporter = function (fileId, accessToken, component) { return __awaite
                     }), defaultExtension, accessToken)];
             case 2:
                 assetsUrlsRes = _a.sent();
-                return [4 /*yield*/, Promise.all(Object.entries(assetsUrlsRes.data.images).map(function (_a) {
-                        var assetId = _a[0], assetUrl = _a[1];
-                        return __awaiter(void 0, void 0, void 0, function () {
-                            var componentData, svgData, assetName, filename;
-                            var _b;
-                            return __generator(this, function (_c) {
-                                switch (_c.label) {
-                                    case 0:
-                                        componentData = parent_response_1.data.meta.components.filter(function (value) { return value.node_id === assetId; }).shift();
-                                        if (!componentData) return [3 /*break*/, 2];
-                                        return [4 /*yield*/, axios_1.default.get(assetUrl)];
-                                    case 1:
-                                        svgData = _c.sent();
-                                        assetName = Utils.slugify((_b = componentData.name) !== null && _b !== void 0 ? _b : '');
-                                        filename = assetName + '.' + defaultExtension;
-                                        return [2 /*return*/, {
-                                                path: filename,
-                                                name: assetName,
-                                                icon: assetName,
-                                                description: componentData.description,
-                                                index: assetName.toLowerCase().replace(/[\W_]+/g, ' '),
-                                                size: svgData.data.length,
-                                                data: svgData.data.replace(/(\r\n|\n|\r)/gm, ''),
-                                            }];
-                                    case 2: return [2 /*return*/, null];
-                                }
-                            });
+                return [4 /*yield*/, Promise.all(Object.entries(assetsUrlsRes.data.images).map(function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
+                        var componentData, svgData, assetName, filename;
+                        var _c;
+                        var assetId = _b[0], assetUrl = _b[1];
+                        return __generator(this, function (_d) {
+                            switch (_d.label) {
+                                case 0:
+                                    componentData = parent_response_1.data.meta.components.filter(function (value) { return value.node_id === assetId; }).shift();
+                                    if (!componentData) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, axios_1.default.get(assetUrl)];
+                                case 1:
+                                    svgData = _d.sent();
+                                    assetName = Utils.slugify((_c = componentData.name) !== null && _c !== void 0 ? _c : '');
+                                    filename = assetName + '.' + defaultExtension;
+                                    return [2 /*return*/, {
+                                            path: filename,
+                                            name: assetName,
+                                            icon: assetName,
+                                            description: componentData.description,
+                                            index: assetName.toLowerCase().replace(/[\W_]+/g, ' '),
+                                            size: svgData.data.length,
+                                            data: svgData.data.replace(/(\r\n|\n|\r)/gm, ''),
+                                        }];
+                                case 2: return [2 /*return*/, null];
+                            }
                         });
-                    }))];
+                    }); }))];
             case 3:
                 assetsList = _a.sent();
                 return [2 /*return*/, assetsList.filter(Utils.filterOutNull)];

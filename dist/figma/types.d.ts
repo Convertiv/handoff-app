@@ -17,24 +17,24 @@ export interface Global {
 /**
  * Styles can be one of the following types
  */
-export declare type StyleType = 'FILL' | 'TEXT' | 'EFFECT' | 'GRID';
+export type StyleType = 'FILL' | 'TEXT' | 'EFFECT' | 'GRID';
 /**
  * the above styles can be used in the following ways
  */
-export declare type StyleKeyType = 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
-export declare type StylesObject = {
+export type StyleKeyType = 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
+export type StylesObject = {
     [key in StyleKeyType]: Record<key, string>;
 }[StyleKeyType];
-export declare type ScaleMode = 'FILL' | 'FIT' | 'TILE' | 'STRETCH';
-export declare type PaintTypeSolid = 'SOLID';
-export declare type PaintTypeGradient = 'GRADIENT_LINEAR' | 'GRADIENT_RADIAL' | 'GRADIENT_ANGULAR' | 'GRADIENT_DIAMOND';
-export declare type PaintTypeImage = 'IMAGE' | 'EMOJI';
-export declare type TextType = 'TEXT';
-export declare type PaintType = PaintTypeSolid | PaintTypeGradient | PaintTypeImage;
+export type ScaleMode = 'FILL' | 'FIT' | 'TILE' | 'STRETCH';
+export type PaintTypeSolid = 'SOLID';
+export type PaintTypeGradient = 'GRADIENT_LINEAR' | 'GRADIENT_RADIAL' | 'GRADIENT_ANGULAR' | 'GRADIENT_DIAMOND';
+export type PaintTypeImage = 'IMAGE' | 'EMOJI';
+export type TextType = 'TEXT';
+export type PaintType = PaintTypeSolid | PaintTypeGradient | PaintTypeImage;
 /**
  * how the layer blends with layers below
  */
-export declare type BlendMode = 'PASS_THROUGH' /** (Only applicable to objects with children) */ | 'NORMAL'
+export type BlendMode = 'PASS_THROUGH' /** (Only applicable to objects with children) */ | 'NORMAL'
 /** Darken: */
  | 'DARKEN' | 'MULTIPLY' | 'LINEAR_BURN' | 'COLOR_BURN'
 /** Lighten: */
@@ -45,10 +45,10 @@ export declare type BlendMode = 'PASS_THROUGH' /** (Only applicable to objects w
  | 'DIFFERENCE' | 'EXCLUSION'
 /** Component: */
  | 'HUE' | 'SATURATION' | 'COLOR' | 'LUMINOSITY';
-export declare type EasingType = 'EASE_IN' /** Ease in with an animation curve similar to CSS ease-in */ | 'EASE_OUT' /** Ease out with an animation curve similar to CSS ease-out */ | 'EASE_IN_AND_OUT'; /** Ease in and then out with an animation curve similar to CSS ease-in-out */
-export declare type RoleType = 'viewer' | 'editor' | 'owner';
-export declare type NodeType = 'DOCUMENT' | 'CANVAS' | 'FRAME' | 'GROUP' | 'VECTOR' | 'BOOLEAN_OPERATION' | 'STAR' | 'LINE' | 'ELLIPSE' | 'REGULAR_POLYGON' | 'RECTANGLE' | 'TEXT' | 'SLICE' | 'COMPONENT' | 'COMPONENT_SET' | 'INSTANCE';
-export declare type Node = Document | Canvas | Frame | Group | Vector | BooleanOperation | Star | Line | Ellipse | RegularPolygon | Rectangle | Text | Slice | Component | ComponentSet | Instance;
+export type EasingType = 'EASE_IN' /** Ease in with an animation curve similar to CSS ease-in */ | 'EASE_OUT' /** Ease out with an animation curve similar to CSS ease-out */ | 'EASE_IN_AND_OUT'; /** Ease in and then out with an animation curve similar to CSS ease-in-out */
+export type RoleType = 'viewer' | 'editor' | 'owner';
+export type NodeType = 'DOCUMENT' | 'CANVAS' | 'FRAME' | 'GROUP' | 'VECTOR' | 'BOOLEAN_OPERATION' | 'STAR' | 'LINE' | 'ELLIPSE' | 'REGULAR_POLYGON' | 'RECTANGLE' | 'TEXT' | 'SLICE' | 'COMPONENT' | 'COMPONENT_SET' | 'INSTANCE';
+export type Node = Document | Canvas | Frame | Group | Vector | BooleanOperation | Star | Line | Ellipse | RegularPolygon | Rectangle | Text | Slice | Component | ComponentSet | Instance;
 /** Node Properties */
 /** The root node */
 export interface Document extends Global {
@@ -784,7 +784,7 @@ export interface Path {
     /** Winding rule for the path */
     readonly windingRule: 'EVENODD' | 'NONZERO';
 }
-export declare type Transform = ReadonlyArray<ReadonlyArray<number>>;
+export type Transform = ReadonlyArray<ReadonlyArray<number>>;
 /** A 2d vector */
 export interface Vector2 {
     /** X coordinate of the vector */
@@ -942,7 +942,7 @@ export interface ComponentProperty {
     /** List of user-defined preferred values for this property. Only exists on INSTANCE_SWAP properties */
     readonly preferredValues?: ReadonlyArray<InstanceSwapPreferredValue>;
 }
-export declare type ComponentPropertyType = 'BOOLEAN' | 'INSTANCE_SWAP' | 'TEXT' | 'VARIANT';
+export type ComponentPropertyType = 'BOOLEAN' | 'INSTANCE_SWAP' | 'TEXT' | 'VARIANT';
 export interface InstanceSwapPreferredValue {
     /** Type of node for this preferred value */
     readonly type: 'COMPONENT' | 'COMPONENT_SET';

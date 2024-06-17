@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -71,7 +71,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = void 0;
+exports.buildPreviewOnly = exports.buildIntegrationOnly = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
@@ -86,7 +86,8 @@ var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
 var index_3 = __importDefault(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
-var index_5 = __importDefault(require("./transformers/preview/index"));
+// import previewTransformer from './transformers/preview/index';
+var index_5 = __importDefault(require("./transformers/storybook/index"));
 var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
@@ -465,6 +466,27 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
     });
 }); };
 exports.buildIntegrationOnly = buildIntegrationOnly;
+/**
+ * Build only integrations and previews
+ * @param handoff
+ */
+var buildPreviewOnly = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var documentationObject;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
+            case 1:
+                documentationObject = _a.sent();
+                if (!documentationObject) return [3 /*break*/, 3];
+                return [4 /*yield*/, buildPreview(handoff, documentationObject)];
+            case 2:
+                _a.sent();
+                _a.label = 3;
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.buildPreviewOnly = buildPreviewOnly;
 /**
  * Run the entire pipeline
  */

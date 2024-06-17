@@ -17,7 +17,8 @@ import scssTransformer, { scssTypesTransformer } from './transformers/scss/index
 import cssTransformer from './transformers/css/index';
 import integrationTransformer from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
-import previewTransformer from './transformers/preview/index';
+// import previewTransformer from './transformers/preview/index';
+import storybookPreviewTransformer from './transformers/storybook/index';
 import { buildClientFiles } from './utils/preview';
 import buildApp from './app';
 import Handoff from '.';
@@ -57,6 +58,8 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
   return await fontTransformer(handoff, documentationObject);
 };
 
+
+
 /**
  * Build just the custom fonts
  * @param documentationObject
@@ -74,7 +77,7 @@ const buildIntegration = async (handoff: Handoff, documentationObject: Documenta
 */
 const buildPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
-    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+    storybookPreviewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
 
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
@@ -262,7 +265,7 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
             )
           );
         } else {
-          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, "") );
+          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ""));
           console.log(
             chalk.green(
               `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
@@ -296,13 +299,13 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
     fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath(handoff))).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-        ]
+        zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+        zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath(handoff))).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+      ]
       : []),
   ]);
   // define the output folder
@@ -331,6 +334,17 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
     await buildIntegration(handoff, documentationObject);
+    await buildPreview(handoff, documentationObject);
+  }
+};
+
+/**
+ * Build only integrations and previews
+ * @param handoff
+ */
+export const buildPreviewOnly = async (handoff: Handoff) => {
+  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
+  if (documentationObject) {
     await buildPreview(handoff, documentationObject);
   }
 };

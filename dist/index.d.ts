@@ -35,6 +35,7 @@ declare class Handoff {
     fetch(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
+    preview(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
     ejectIntegration(): Promise<Handoff>;
     ejectExportables(): Promise<Handoff>;
