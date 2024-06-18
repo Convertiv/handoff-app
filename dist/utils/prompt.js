@@ -1,12 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.maskPrompt = exports.prompt = void 0;
-var readline_1 = __importDefault(require("readline"));
-var prompt = function (query) { return new Promise(function (resolve) {
-    var rl = readline_1.default.createInterface({
+import readline from 'readline';
+export var prompt = function (query) { return new Promise(function (resolve) {
+    var rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
     });
@@ -15,15 +9,14 @@ var prompt = function (query) { return new Promise(function (resolve) {
         return resolve(answer);
     });
 }); };
-exports.prompt = prompt;
 /**
  * Hide the Prompt
  * @param {string} query
  * @returns
  */
-var maskPrompt = function (query, showAnswer) {
+export var maskPrompt = function (query, showAnswer) {
     return new Promise(function (resolve) {
-        var rl = readline_1.default.createInterface({
+        var rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
         });
@@ -55,4 +48,3 @@ var maskPrompt = function (query, showAnswer) {
         });
     });
 };
-exports.maskPrompt = maskPrompt;

@@ -5,10 +5,6 @@ import Handoff from '../../index';
  */
 export default function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject): Promise<{
     components: {
-        [key: string]: {
-            id: string;
-            preview: string;
-            code: string;
-        }[];
+        [key: string]: TransformComponentTokensResult[];
     };
 }>;

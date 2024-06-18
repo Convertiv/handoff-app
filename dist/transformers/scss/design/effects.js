@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.transformEffectTypes = void 0;
-function transformEffectTypes(effects) {
+export function transformEffectTypes(effects) {
     var stringBuilder = [];
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -10,8 +7,7 @@ function transformEffectTypes(effects) {
     }
     return stringBuilder.join('\n');
 }
-exports.transformEffectTypes = transformEffectTypes;
-function transformEffects(effects) {
+export default function transformEffects(effects) {
     var stringBuilder = [];
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -21,4 +17,3 @@ function transformEffects(effects) {
     }
     return stringBuilder.join('\n');
 }
-exports.default = transformEffects;

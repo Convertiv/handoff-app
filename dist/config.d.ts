@@ -1,4 +1,3 @@
-import { ClientConfig, Config } from './types/config';
 export interface ImageStyle {
     name: string;
     style: string;

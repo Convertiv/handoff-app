@@ -1,4 +1,3 @@
-import Handoff from '../../index';
 /**
  * Get the component template
  * @param component

@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,14 +34,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var mustache_1 = __importDefault(require("mustache"));
-var node_html_parser_1 = require("node-html-parser");
-var index_1 = require("../../utils/index");
-var utils_1 = require("./utils");
+import Mustache from 'mustache';
+import { parse } from 'node-html-parser';
+import { filterOutNull } from '../../utils/index';
+import { getComponentTemplate } from './utils';
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {
@@ -65,7 +60,7 @@ var getComponentTemplateByComponentId = function (handoff, componentId, componen
                     var _ = _a[0], value = _a[1];
                     return parts.push(value);
                 });
-                return [4 /*yield*/, (0, utils_1.getComponentTemplate)(handoff, componentId, parts)];
+                return [4 /*yield*/, getComponentTemplate(handoff, componentId, parts)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -100,13 +95,13 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
                         renderableComponent.parts[part] = mergeTokenSets(component.parts[part]);
                     });
                 }
-                preview = mustache_1.default.render(template, renderableComponent);
+                preview = Mustache.render(template, renderableComponent);
                 if (handoff.config.app.base_path) {
                     preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, function (match, capturedGroup) {
                         return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);
                     });
                 }
-                bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+                bodyEl = parse(preview).querySelector('body');
                 return [2 /*return*/, {
                         id: component.id,
                         preview: preview,
@@ -118,7 +113,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
 /**
  * Transforms the documentation object components into a preview and code
  */
-function previewTransformer(handoff, documentationObject) {
+export default function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var components, componentIds, result, previews;
         var _this = this;
@@ -135,7 +130,7 @@ function previewTransformer(handoff, documentationObject) {
                                         _a = [componentId];
                                         return [4 /*yield*/, Promise.all(documentationObject.components[componentId].instances.map(function (instance) {
                                                 return transformComponentTokens(handoff, componentId, instance);
-                                            })).then(function (res) { return res.filter(index_1.filterOutNull); })];
+                                            })).then(function (res) { return res.filter(filterOutNull); })];
                                     case 1: return [2 /*return*/, _a.concat([
                                             _b.sent()
                                         ])];
@@ -155,4 +150,3 @@ function previewTransformer(handoff, documentationObject) {
         });
     });
 }
-exports.default = previewTransformer;

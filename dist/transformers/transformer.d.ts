@@ -1,6 +1,3 @@
-import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions } from '../types';
-import { Token, TokenType } from './types';
 /**
  * Performs the transformation of the component tokens.
  * @param component

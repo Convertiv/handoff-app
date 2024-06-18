@@ -1,5 +1,5 @@
 import path from 'path';
-import Handoff from '../index';
+import Handoff from "../index.js";
 import fs from 'fs-extra';
 import chalk from 'chalk';
 

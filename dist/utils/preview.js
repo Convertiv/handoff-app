@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,23 +34,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildClientFiles = void 0;
-var webpack_1 = __importDefault(require("webpack"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
-var chalk_1 = __importDefault(require("chalk"));
-var index_1 = require("../transformers/integration/index");
-var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+import webpack from 'webpack';
+import fs from 'fs-extra';
+import path from 'path';
+import chalk from 'chalk';
+import { getIntegrationEntryPoint } from '../transformers/integration/index';
+export var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var entry;
     return __generator(this, function (_a) {
         if (!handoff) {
             throw Error('Handoff not initialized');
         }
-        entry = (0, index_1.getIntegrationEntryPoint)(handoff);
+        entry = getIntegrationEntryPoint(handoff);
         if (!entry) {
             return [2 /*return*/, Promise.resolve('')];
         }
@@ -61,28 +55,28 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                     entry: entry,
                     resolve: {
                         alias: {
-                            '@exported': path_1.default.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
-                            '@integration': path_1.default.join(handoff.workingPath, 'integration/sass'),
+                            '@exported': path.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
+                            '@integration': path.join(handoff.workingPath, 'integration/sass'),
                         },
                         modules: [
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path_1.default.resolve(process.cwd(), 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                            path.resolve(process.cwd(), 'node_modules'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
                         ],
                     },
                     output: {
-                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
+                        path: path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
                         filename: 'bundle.js',
                     },
                     resolveLoader: {
                         modules: [
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                            path_1.default.resolve(process.cwd(), 'node_modules'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                            path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                            path.resolve(process.cwd(), 'node_modules'),
                         ],
                     },
                     module: {
@@ -101,21 +95,21 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                                             sassOptions: {
                                                 indentWidth: 4,
                                                 includePaths: [
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                                                    path_1.default.resolve(process.cwd(), 'node_modules'),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                                                    path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                                                    path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                                                    path.resolve(process.cwd(), 'node_modules'),
+                                                    path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                                                    path.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
                                                 ],
                                             },
                                             additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
                                                 var integrationPath;
                                                 return __generator(this, function (_a) {
-                                                    integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
-                                                    if (fs_extra_1.default.existsSync(integrationPath)) {
-                                                        fs_extra_1.default.readdirSync(integrationPath)
+                                                    integrationPath = path.join(handoff.workingPath, 'integration/sass');
+                                                    if (fs.existsSync(integrationPath)) {
+                                                        fs.readdirSync(integrationPath)
                                                             .filter(function (file) {
-                                                            return path_1.default.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
+                                                            return path.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
                                                         })
                                                             .forEach(function (file) {
                                                             content = content + "\n @import \"@integration/".concat(file, "\";");
@@ -133,7 +127,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                 };
                 config = handoff.integrationHooks.hooks.webpack(handoff, config);
                 config = handoff.hooks.webpack(config);
-                var compile = (0, webpack_1.default)(config);
+                var compile = webpack(config);
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {
@@ -157,7 +151,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                             var error = 'Warnings encountered when building preview styles.\n';
                             if (handoff.debug) {
                                 error += buildWarnings;
-                                console.error(chalk_1.default.yellow(error));
+                                console.error(chalk.yellow(error));
                             }
                         }
                     }
@@ -166,4 +160,3 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
             })];
     });
 }); };
-exports.buildClientFiles = buildClientFiles;

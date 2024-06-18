@@ -1,14 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.postTailwindIntegration = exports.modifyWebpackConfigForTailwind = void 0;
-var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var _1 = require(".");
-var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
-    var tailwindPath = path_1.default.resolve(path_1.default.join((0, _1.getPathToIntegration)(handoff), 'templates/tailwind.config.js'));
+import path from 'path';
+import fs from 'fs-extra';
+import { getPathToIntegration } from '.';
+export var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
+    var tailwindPath = path.resolve(path.join(getPathToIntegration(handoff), 'templates/tailwind.config.js'));
     var plugins = [];
     try {
         var tailwindcss = require('tailwindcss');
@@ -19,7 +13,7 @@ var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
         console.log('Tailwind not installed.  Please run `npm install tailwindcss autoprefixer`', e);
         return webpackConfig;
     }
-    if (!fs_extra_1.default.existsSync(tailwindPath)) {
+    if (!fs.existsSync(tailwindPath)) {
         console.log("Tailwind config not found at ".concat(tailwindPath, "."));
     }
     if (!webpackConfig.module) {
@@ -28,7 +22,7 @@ var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
     webpackConfig.module.rules = [
         {
             test: /\.js$/i,
-            include: path_1.default.resolve(__dirname, 'templates'),
+            include: path.resolve(__dirname, 'templates'),
             use: {
                 loader: 'babel-loader',
                 options: {
@@ -54,8 +48,7 @@ var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
     ];
     return webpackConfig;
 };
-exports.modifyWebpackConfigForTailwind = modifyWebpackConfigForTailwind;
-var postTailwindIntegration = function (documentationObject, artifacts) {
+export var postTailwindIntegration = function (documentationObject, artifacts) {
     var extend = {
         colors: {},
         fontSize: {},
@@ -92,7 +85,6 @@ var postTailwindIntegration = function (documentationObject, artifacts) {
         //     },
     ];
 };
-exports.postTailwindIntegration = postTailwindIntegration;
 // /**
 //  * Transform Buton components into Css vars
 //  * @param tokens

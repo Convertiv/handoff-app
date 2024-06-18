@@ -1,5 +1,4 @@
 import { AxiosInstance } from 'axios';
-import { FileResponse, FileNodesResponse, FileImageResponse, FileStylesResponse, FileComponentSetsResponse, FileComponentsResponse } from './types';
 declare const figmaRestApi: AxiosInstance;
 export declare const getFile: (fileId: string, accessToken: string) => Promise<import("axios").AxiosResponse<FileResponse, any>>;
 /**

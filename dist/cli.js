@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -51,12 +50,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var arg_1 = __importDefault(require("arg"));
-var _1 = __importDefault(require("."));
+import arg from 'arg';
+import Handoff from '.';
 var HandoffCliError = /** @class */ (function (_super) {
     __extends(HandoffCliError, _super);
     function HandoffCliError(message) {
@@ -100,7 +95,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
         switch (_b.label) {
             case 0:
                 _b.trys.push([0, 21, , 22]);
-                args = (0, arg_1.default)({
+                args = arg({
                     '--help': Boolean,
                     '-h': '--help',
                     '--version': Boolean,
@@ -121,7 +116,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                 if (args['--version']) {
                     return [2 /*return*/, showVersion()];
                 }
-                handoff = new _1.default();
+                handoff = new Handoff();
                 if (args['--debug']) {
                     handoff.debug = true;
                 }

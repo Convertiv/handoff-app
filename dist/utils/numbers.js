@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizeCssNumber = void 0;
-var normalizeCssNumber = function (input) {
+export var normalizeCssNumber = function (input) {
     if (input % 1 === 0) {
         return input.toString();
     }
@@ -17,4 +14,3 @@ var normalizeCssNumber = function (input) {
     }
     return roundedStr;
 };
-exports.normalizeCssNumber = normalizeCssNumber;

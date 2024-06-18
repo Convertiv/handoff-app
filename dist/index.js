@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -9,29 +8,6 @@ var __assign = (this && this.__assign) || function () {
         return t;
     };
     return __assign.apply(this, arguments);
-};
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
 };
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -69,25 +45,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var config_1 = require("./config");
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
-require("dotenv/config");
-var app_1 = __importStar(require("./app"));
-var pipeline_1 = __importStar(require("./pipeline"));
-var eject_1 = require("./cli/eject");
-var make_1 = require("./cli/make");
-var integration_1 = require("./transformers/integration");
-var chalk_1 = __importDefault(require("chalk"));
+import { defaultConfig } from './config';
+import fs from 'fs-extra';
+import path from 'path';
+import 'dotenv/config';
+import buildApp, { devApp, watchApp } from './app';
+import pipeline, { buildIntegrationOnly, buildPreviewOnly } from './pipeline';
+import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
+import { makeExportable, makePage, makeTemplate } from './cli/make';
+import { instantiateIntegration } from './transformers/integration';
+import chalk from 'chalk';
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
         this.force = false;
-        this.modulePath = path_1.default.resolve(__filename, '../..');
+        this.modulePath = path.resolve(__filename, '../..');
         this.workingPath = process.cwd();
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
@@ -107,7 +79,7 @@ var Handoff = /** @class */ (function () {
             configureExportables: function (exportables) { return exportables; },
         };
         this.init(config);
-        this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
+        this.integrationHooks = instantiateIntegration(this);
         global.handoff = this;
     }
     Handoff.prototype.init = function (configOverride) {
@@ -137,7 +109,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         this.preRunner();
-                        return [4 /*yield*/, (0, pipeline_1.default)(this)];
+                        return [4 /*yield*/, pipeline(this)];
                     case 1:
                         _a.sent();
                         this.hooks.fetch();
@@ -154,7 +126,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         this.preRunner();
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(this)];
+                        return [4 /*yield*/, buildIntegrationOnly(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -170,7 +142,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         this.preRunner(true);
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.default)(this)];
+                        return [4 /*yield*/, buildApp(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -186,7 +158,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         this.preRunner(true);
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, pipeline_1.buildPreviewOnly)(this)];
+                        return [4 /*yield*/, buildPreviewOnly(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -202,7 +174,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         this.preRunner();
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectConfig)(this)];
+                        return [4 /*yield*/, ejectConfig(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -217,7 +189,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectIntegration)(this)];
+                        return [4 /*yield*/, ejectIntegration(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -232,7 +204,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectExportables)(this)];
+                        return [4 /*yield*/, ejectExportables(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -247,7 +219,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectPages)(this)];
+                        return [4 /*yield*/, ejectPages(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -262,7 +234,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectTheme)(this)];
+                        return [4 /*yield*/, ejectTheme(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -277,7 +249,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makeExportable)(this, type, name)];
+                        return [4 /*yield*/, makeExportable(this, type, name)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -292,7 +264,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makeTemplate)(this, component, state)];
+                        return [4 /*yield*/, makeTemplate(this, component, state)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -307,7 +279,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makePage)(this, name, parent)];
+                        return [4 /*yield*/, makePage(this, name, parent)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -323,7 +295,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         this.preRunner(true);
-                        return [4 /*yield*/, (0, app_1.watchApp)(this)];
+                        return [4 /*yield*/, watchApp(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -339,7 +311,7 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         this.preRunner(true);
-                        return [4 /*yield*/, (0, app_1.devApp)(this)];
+                        return [4 /*yield*/, devApp(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -379,28 +351,28 @@ var Handoff = /** @class */ (function () {
 }());
 var initConfig = function (configOverride) {
     var config = {};
-    var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
-    if (fs_extra_1.default.existsSync(configPath)) {
-        var defBuffer = fs_extra_1.default.readFileSync(configPath);
+    var configPath = path.resolve(process.cwd(), 'handoff.config.json');
+    if (fs.existsSync(configPath)) {
+        var defBuffer = fs.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
     }
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
+    var returnConfig = __assign(__assign({}, defaultConfig()), config);
     return returnConfig;
 };
 var validateConfig = function (config) {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env
-        console.error(chalk_1.default.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+        console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
         throw new Error('Cannot initialize configuration');
     }
     if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
         // check to see if we can get this from the env
-        console.error(chalk_1.default.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+        console.error(chalk.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
         throw new Error('Cannot initialize configuration');
     }
     return config;
 };
-exports.default = Handoff;
+export default Handoff;

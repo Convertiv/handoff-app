@@ -1,4 +1,4 @@
-import { GradientObject, PositionObject } from "../types";
+import { GradientObject, PositionObject } from "../types.js";
 /**
  * Returns the angle of the gradient
  *

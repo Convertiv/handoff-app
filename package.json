@@ -6,6 +6,8 @@
     "name": "Convertiv",
     "email": "handoff@convertiv.com"
   },
+  
+  "type": "module",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Convertiv/handoff-app/issues"
@@ -27,8 +29,8 @@
     "handoff-app": "./dist/cli.js"
   },
   "engines": {
-    "npm": ">=8.0.0",
-    "node": ">=16.0.0"
+    "npm": ">=10.0.0",
+    "node": ">=18.0.0"
   },
   "scripts": {
     "start": "node ./dist/cli.js start",
@@ -36,6 +38,7 @@
     "build": "tsc",
     "build:integration": "node ./dist/cli.js build:integration",
     "build:static": "node ./dist/cli.js build:app",
+    "build:preview": "node ./dist/cli.js build:preview",
     "fetch": "node ./dist/cli.js fetch",
     "lint:sass": "stylelint \"src/app/sass/**/*.scss\"",
     "lint": "npm run lint:sass && cd src/app && npx next lint",
@@ -56,6 +59,7 @@
     "@mdx-js/react": "^3.0.1",
     "@next/mdx": "^14.2.4",
     "@popperjs/core": "^2.11.6",
+    "@storybook/core-server": "^8.1.10",
     "@storybook/react": "^8.1.9",
     "@storybook/test": "^8.1.9",
     "@types/archiver": "^5.3.1",
@@ -107,6 +111,7 @@
     "react-markdown": "^8.0.3",
     "react-scroll": "^1.8.9",
     "react-syntax-highlighter": "^15.5.0",
+    "read-package-up": "^11.0.0",
     "rehype-raw": "^6.1.1",
     "sass": "1.64.2",
     "sass-loader": "^13.2.0",

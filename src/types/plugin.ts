@@ -1,4 +1,4 @@
-import { Exportable } from "../types";
+import { Exportable } from "../types.js";
 
 export type IVariantPropValueReplacement = [variantProperty: string, find: string, replace: string];
 

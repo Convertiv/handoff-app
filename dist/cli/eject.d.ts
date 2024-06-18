@@ -1,4 +1,4 @@
-import Handoff from '../index';
+import Handoff from "../index.js";
 /**
  * Eject the config to the working directory
  * @param handoff

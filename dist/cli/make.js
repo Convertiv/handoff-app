@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,19 +34,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
-var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var chalk_1 = __importDefault(require("chalk"));
+import path from 'path';
+import fs from 'fs-extra';
+import chalk from 'chalk';
 /**
  * Make a new exportable component
  * @param handoff
  */
-var makeExportable = function (handoff, type, name) { return __awaiter(void 0, void 0, void 0, function () {
+export var makeExportable = function (handoff, type, name) { return __awaiter(void 0, void 0, void 0, function () {
     var config, workingPath, targetDir, target, templatePath, template;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -55,46 +49,45 @@ var makeExportable = function (handoff, type, name) { return __awaiter(void 0, v
             case 1:
                 config = _a.sent();
                 if (type !== 'component' && type !== 'foundation') {
-                    console.log(chalk_1.default.red("Exportable type must be either 'component' or 'foundation'"));
+                    console.log(chalk.red("Exportable type must be either 'component' or 'foundation'"));
                     return [2 /*return*/];
                 }
                 if (!/^[a-z0-9]+$/i.test(name)) {
-                    console.log(chalk_1.default.red("Exportable name must be alphanumeric and may contain dashes or underscores"));
+                    console.log(chalk.red("Exportable name must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables'));
-                if (!fs_extra_1.default.existsSync(workingPath)) {
-                    fs_extra_1.default.mkdirSync(workingPath);
+                workingPath = path.resolve(path.join(handoff.workingPath, 'exportables'));
+                if (!fs.existsSync(workingPath)) {
+                    fs.mkdirSync(workingPath);
                 }
-                targetDir = path_1.default.resolve(workingPath, "".concat(type, "s"));
-                if (!fs_extra_1.default.existsSync(targetDir)) {
-                    fs_extra_1.default.mkdirSync(targetDir);
+                targetDir = path.resolve(workingPath, "".concat(type, "s"));
+                if (!fs.existsSync(targetDir)) {
+                    fs.mkdirSync(targetDir);
                 }
-                target = path_1.default.resolve(targetDir, "".concat(name, ".json"));
-                if (fs_extra_1.default.existsSync(target)) {
+                target = path.resolve(targetDir, "".concat(name, ".json"));
+                if (fs.existsSync(target)) {
                     if (!handoff.force) {
-                        console.log(chalk_1.default.yellow("'".concat(name, "' already exists as an exportable.  Use the --force flag revert it to default.")));
+                        console.log(chalk.yellow("'".concat(name, "' already exists as an exportable.  Use the --force flag revert it to default.")));
                         return [2 /*return*/];
                     }
                 }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'exportable.json'));
-                template = JSON.parse(fs_extra_1.default.readFileSync(templatePath, 'utf8'));
+                templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'exportable.json'));
+                template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
                 template.id = name;
                 template.group = type.slice(0, 1).toUpperCase() + type.slice(1, type.length) + 's';
                 template.options.exporter.search = name.slice(0, 1).toUpperCase() + name.slice(1, type.length);
                 template.options.transformer.cssRootClass = name;
-                fs_extra_1.default.writeFileSync(target, "".concat(JSON.stringify(template, null, 2)));
-                console.log(chalk_1.default.green("New exportable schema ".concat(name, ".json was created in ").concat(targetDir)));
+                fs.writeFileSync(target, "".concat(JSON.stringify(template, null, 2)));
+                console.log(chalk.green("New exportable schema ".concat(name, ".json was created in ").concat(targetDir)));
                 return [2 /*return*/, handoff];
         }
     });
 }); };
-exports.makeExportable = makeExportable;
 /**
  * Make a new exportable component
  * @param handoff
  */
-var makeTemplate = function (handoff, component, state) { return __awaiter(void 0, void 0, void 0, function () {
+export var makeTemplate = function (handoff, component, state) { return __awaiter(void 0, void 0, void 0, function () {
     var config, workingPath, target, templatePath, template;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -102,45 +95,44 @@ var makeTemplate = function (handoff, component, state) { return __awaiter(void 
             case 1:
                 config = _a.sent();
                 if (!component) {
-                    console.log(chalk_1.default.red("Template component must be set"));
+                    console.log(chalk.red("Template component must be set"));
                     return [2 /*return*/];
                 }
                 if (!state) {
                     state = 'default';
                 }
                 if (!/^[a-z0-9]+$/i.test(component)) {
-                    console.log(chalk_1.default.red("Template component must be alphanumeric and may contain dashes or underscores"));
+                    console.log(chalk.red("Template component must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
                 if (!/^[a-z0-9]+$/i.test(state)) {
-                    console.log(chalk_1.default.red("Template state must be alphanumeric and may contain dashes or underscores"));
+                    console.log(chalk.red("Template state must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/templates/".concat(component)));
-                if (!fs_extra_1.default.existsSync(workingPath)) {
-                    fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
+                workingPath = path.resolve(path.join(handoff.workingPath, "integration/templates/".concat(component)));
+                if (!fs.existsSync(workingPath)) {
+                    fs.mkdirSync(workingPath, { recursive: true });
                 }
-                target = path_1.default.resolve(workingPath, "".concat(state, ".html"));
-                if (fs_extra_1.default.existsSync(target)) {
+                target = path.resolve(workingPath, "".concat(state, ".html"));
+                if (fs.existsSync(target)) {
                     if (!handoff.force) {
-                        console.log(chalk_1.default.yellow("'".concat(state, "' already exists as custom template.  Use the --force flag revert it to default.")));
+                        console.log(chalk.yellow("'".concat(state, "' already exists as custom template.  Use the --force flag revert it to default.")));
                         return [2 /*return*/];
                     }
                 }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'template.html'));
-                template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
-                fs_extra_1.default.writeFileSync(target, template);
-                console.log(chalk_1.default.green("New template ".concat(state, ".html was created in ").concat(workingPath)));
+                templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'template.html'));
+                template = fs.readFileSync(templatePath, 'utf8');
+                fs.writeFileSync(target, template);
+                console.log(chalk.green("New template ".concat(state, ".html was created in ").concat(workingPath)));
                 return [2 /*return*/, handoff];
         }
     });
 }); };
-exports.makeTemplate = makeTemplate;
 /**
  * Make a new docs page
  * @param handoff
  */
-var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 0, void 0, function () {
+export var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 0, void 0, function () {
     var config, workingPath, sourcePath, templatePath, target, template;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -148,44 +140,43 @@ var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 
             case 1:
                 config = _a.sent();
                 if (!name) {
-                    console.log(chalk_1.default.red("Page name must be set"));
+                    console.log(chalk.red("Page name must be set"));
                     return [2 /*return*/];
                 }
                 if (!/^[a-z0-9]+$/i.test(name)) {
-                    console.log(chalk_1.default.red("Page name must be alphanumeric and may contain dashes or underscores"));
+                    console.log(chalk.red("Page name must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
                 if (parent) {
                     if (!/^[a-z0-9]+$/i.test(parent)) {
-                        console.log(chalk_1.default.red("Parent name must be alphanumeric and may contain dashes or underscores"));
+                        console.log(chalk.red("Parent name must be alphanumeric and may contain dashes or underscores"));
                         return [2 /*return*/];
                     }
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs", parent));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".md")));
+                    workingPath = path.resolve(path.join(handoff.workingPath, "docs", parent));
+                    sourcePath = path.resolve(path.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".md")));
                 }
                 else {
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs"));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", "".concat(name, ".md")));
+                    workingPath = path.resolve(path.join(handoff.workingPath, "docs"));
+                    sourcePath = path.resolve(path.join(handoff.modulePath, "config/docs", "".concat(name, ".md")));
                 }
-                if (!fs_extra_1.default.existsSync(workingPath)) {
-                    fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
+                if (!fs.existsSync(workingPath)) {
+                    fs.mkdirSync(workingPath, { recursive: true });
                 }
-                target = path_1.default.resolve(workingPath, "".concat(name, ".md"));
-                if (fs_extra_1.default.existsSync(target)) {
+                target = path.resolve(workingPath, "".concat(name, ".md"));
+                if (fs.existsSync(target)) {
                     if (!handoff.force) {
-                        console.log(chalk_1.default.yellow("'".concat(name, "' already exists as custom page.  Use the --force flag revert it to default.")));
+                        console.log(chalk.yellow("'".concat(name, "' already exists as custom page.  Use the --force flag revert it to default.")));
                         return [2 /*return*/];
                     }
                 }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'page.md'));
-                if (fs_extra_1.default.existsSync(sourcePath)) {
+                templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'page.md'));
+                if (fs.existsSync(sourcePath)) {
                     templatePath = sourcePath;
                 }
-                template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
-                fs_extra_1.default.writeFileSync(target, template);
-                console.log(chalk_1.default.green("New template ".concat(name, ".md was created in ").concat(workingPath)));
+                template = fs.readFileSync(templatePath, 'utf8');
+                fs.writeFileSync(target, template);
+                console.log(chalk.green("New template ".concat(name, ".md was created in ").concat(workingPath)));
                 return [2 /*return*/, handoff];
         }
     });
 }); };
-exports.makePage = makePage;

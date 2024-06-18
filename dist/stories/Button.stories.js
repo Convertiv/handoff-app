@@ -4,7 +4,7 @@ exports.Small = exports.Large = exports.Secondary = exports.Primary = void 0;
 var test_1 = require("@storybook/test");
 var Button_1 = require("./Button");
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories#default-export
-var meta = {
+var buttonMeta = {
     title: 'Example/Button',
     component: Button_1.Button,
     parameters: {
@@ -20,7 +20,7 @@ var meta = {
     // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
     args: { onClick: (0, test_1.fn)() },
 };
-exports.default = meta;
+exports.default = buttonMeta;
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 exports.Primary = {
     args: {

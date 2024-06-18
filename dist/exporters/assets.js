@@ -1,27 +1,3 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -58,16 +34,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipAssets = void 0;
-var axios_1 = __importDefault(require("axios"));
-var archiver_1 = __importDefault(require("archiver"));
-var api_1 = require("../figma/api");
-var Utils = __importStar(require("../utils/index"));
-var chalk_1 = __importDefault(require("chalk"));
+import axios from 'axios';
+import archiver from 'archiver';
+import { getAssetURL, getFileComponent } from '../figma/api';
+import * as Utils from '../utils/index';
+import chalk from 'chalk';
 var defaultExtension = 'svg';
 var assetsExporter = function (fileId, accessToken, component) { return __awaiter(void 0, void 0, void 0, function () {
     var parent_response_1, asset_components, numOfAssets, assetsUrlsRes, assetsList, err_1;
@@ -75,7 +46,7 @@ var assetsExporter = function (fileId, accessToken, component) { return __awaite
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 4, , 5]);
-                return [4 /*yield*/, (0, api_1.getFileComponent)(fileId, accessToken)];
+                return [4 /*yield*/, getFileComponent(fileId, accessToken)];
             case 1:
                 parent_response_1 = _a.sent();
                 asset_components = Object.entries(parent_response_1.data.meta.components)
@@ -94,11 +65,11 @@ var assetsExporter = function (fileId, accessToken, component) { return __awaite
                     };
                 });
                 numOfAssets = asset_components.length;
-                console.log(chalk_1.default.green("".concat(component, " exported:")), numOfAssets);
+                console.log(chalk.green("".concat(component, " exported:")), numOfAssets);
                 if (!numOfAssets) {
                     return [2 /*return*/, []];
                 }
-                return [4 /*yield*/, (0, api_1.getAssetURL)(fileId, Object.entries(parent_response_1.data.meta.components)
+                return [4 /*yield*/, getAssetURL(fileId, Object.entries(parent_response_1.data.meta.components)
                         .filter(function (_a) {
                         var _b;
                         var _ = _a[0], value = _a[1];
@@ -137,7 +108,7 @@ var assetsExporter = function (fileId, accessToken, component) { return __awaite
                                 case 0:
                                     componentData = parent_response_1.data.meta.components.filter(function (value) { return value.node_id === assetId; }).shift();
                                     if (!componentData) return [3 /*break*/, 2];
-                                    return [4 /*yield*/, axios_1.default.get(assetUrl)];
+                                    return [4 /*yield*/, axios.get(assetUrl)];
                                 case 1:
                                     svgData = _d.sent();
                                     assetName = Utils.slugify((_c = componentData.name) !== null && _c !== void 0 ? _c : '');
@@ -166,12 +137,12 @@ var assetsExporter = function (fileId, accessToken, component) { return __awaite
         }
     });
 }); };
-var zipAssets = function (assets, destination) { return __awaiter(void 0, void 0, void 0, function () {
+export var zipAssets = function (assets, destination) { return __awaiter(void 0, void 0, void 0, function () {
     var archive;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                archive = (0, archiver_1.default)('zip', {
+                archive = archiver('zip', {
                     zlib: { level: 9 }, // Sets the compression level.
                 });
                 // good practice to catch this error explicitly
@@ -189,5 +160,4 @@ var zipAssets = function (assets, destination) { return __awaiter(void 0, void 0
         }
     });
 }); };
-exports.zipAssets = zipAssets;
-exports.default = assetsExporter;
+export default assetsExporter;

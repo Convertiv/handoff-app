@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
 import { getIntegrationEntryPoint } from '../transformers/integration/index';
-import Handoff from '../index';
+import Handoff from "../index.js";
 
 export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
   if (!handoff) {

@@ -1,4 +1,4 @@
-import Handoff from '../index';
+import Handoff from "../index.js";
 /**
  * Make a new exportable component
  * @param handoff

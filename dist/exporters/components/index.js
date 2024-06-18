@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -55,21 +54,16 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFigmaFileComponents = void 0;
-var chalk_1 = __importDefault(require("chalk"));
-var api_1 = require("../../figma/api");
-var utils_1 = require("../utils");
-var extractor_1 = __importDefault(require("./extractor"));
-var utils_2 = require("../../utils");
+import chalk from 'chalk';
+import { getComponentSetNodes, getComponentSets } from '../../figma/api';
+import { filterByNodeType, getComponentInstanceNamePart } from '../utils';
+import extractComponentInstances from './extractor';
+import { slugify } from '../../utils';
 var groupReplaceRules = function (tupleList) {
     var res = {};
     tupleList.forEach(function (tuple) {
         var variantProp = tuple[0];
-        var find = (0, utils_2.slugify)(tuple[1]);
+        var find = slugify(tuple[1]);
         var replace = tuple[2];
         if (!res[variantProp]) {
             res[variantProp] = {};
@@ -81,7 +75,7 @@ var groupReplaceRules = function (tupleList) {
 var getComponentSetComponentDefinition = function (componentSet) {
     var metadata = JSON.parse(componentSet.sharedPluginData["convertiv_handoff_app"]["node_".concat(componentSet.id, "_settings")]);
     var id = componentSet.id;
-    var name = (0, utils_2.slugify)(metadata.name);
+    var name = slugify(metadata.name);
     if (!componentSet.componentPropertyDefinitions) {
         return null;
     }
@@ -106,7 +100,7 @@ var getComponentSetComponentDefinition = function (componentSet) {
                 defaults: Object.entries(metadata.defaults).reduce(function (res, _a) {
                     var _b;
                     var variantProperty = _a[0], defaultValue = _a[1];
-                    return __assign(__assign({}, res), (_b = {}, _b[variantProperty] = (0, utils_2.slugify)(defaultValue), _b));
+                    return __assign(__assign({}, res), (_b = {}, _b[variantProperty] = slugify(defaultValue), _b));
                 }, {}),
             },
             exporter: {
@@ -120,7 +114,7 @@ var getComponentSetComponentDefinition = function (componentSet) {
             },
         },
         parts: metadata.parts.map(function (part) { return ({
-            id: (0, utils_2.slugify)(part.name),
+            id: slugify(part.name),
             tokens: part.definitions,
         }); }),
     };
@@ -131,7 +125,7 @@ var getComponentNodesWithMetadata = function (componentSet, componentsMetadata) 
         metadata: componentsMetadata.get(component.id),
     }); });
 };
-var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
+export var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var useLegacyFetchFlow, fileComponentSetsRes, err_1, fullComponentMetadataArray, componentSetNodesResult;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -140,7 +134,7 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, (0, api_1.getComponentSets)(fileId, accessToken)];
+                return [4 /*yield*/, getComponentSets(fileId, accessToken)];
             case 2:
                 fileComponentSetsRes = _a.sent();
                 return [3 /*break*/, 4];
@@ -150,11 +144,11 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
             case 4:
                 fullComponentMetadataArray = fileComponentSetsRes.data.meta.component_sets;
                 if (fullComponentMetadataArray.length === 0) {
-                    console.error(chalk_1.default.red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
-                    console.log(chalk_1.default.blue('Continuing fetch with only colors and typography design foundations'));
+                    console.error(chalk.red('Handoff could not find any published components.\n  - If you expected components, please check to make sure you published them.\n  - You must have a paid license to publish components.\n - For more information, see https://www.handoff.com/docs/guide'));
+                    console.log(chalk.blue('Continuing fetch with only colors and typography design foundations'));
                     return [2 /*return*/, {}];
                 }
-                return [4 /*yield*/, (0, api_1.getComponentSetNodes)(fileId, fullComponentMetadataArray.map(function (item) { return item.node_id; }), accessToken)];
+                return [4 /*yield*/, getComponentSetNodes(fileId, fullComponentMetadataArray.map(function (item) { return item.node_id; }), accessToken)];
             case 5:
                 componentSetNodesResult = _a.sent();
                 if (useLegacyFetchFlow) {
@@ -164,7 +158,6 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
         }
     });
 }); };
-exports.getFigmaFileComponents = getFigmaFileComponents;
 var processFigmaNodes = function (fileNodesResponse) {
     // console.warn(
     //   chalk.redBright(
@@ -182,7 +175,7 @@ var processFigmaNodes = function (fileNodesResponse) {
     })) !== null && _a !== void 0 ? _a : {}));
     var componentSets = Object.values(fileNodesResponse.nodes)
         .map(function (node) { return node === null || node === void 0 ? void 0 : node.document; })
-        .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'))
+        .filter(filterByNodeType('COMPONENT_SET'))
         .filter(function (componentSet) {
         try {
             if (!componentSet.sharedPluginData || !componentSet.sharedPluginData["convertiv_handoff_app"]) {
@@ -208,7 +201,7 @@ var processFigmaNodes = function (fileNodesResponse) {
             };
         }
         var components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
-        componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition), true);
+        componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), extractComponentInstances(components, definition), true);
         componentTokens[definition.name].definitions[componentSet.id] = definition;
     }
     return componentTokens;
@@ -219,7 +212,7 @@ var processFigmaNodes = function (fileNodesResponse) {
  */
 var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullComponentMetadataArray, legacyDefinitions) {
     var _a;
-    console.warn(chalk_1.default.redBright('!!! Using legacy fetch flow !!!'));
+    console.warn(chalk.redBright('!!! Using legacy fetch flow !!!'));
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
         .map(function (node) {
@@ -230,15 +223,15 @@ var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullCom
     })) !== null && _a !== void 0 ? _a : {}));
     var figmaComponentSetNodes = Object.values(fileNodesResponse.nodes)
         .map(function (node) { return node === null || node === void 0 ? void 0 : node.document; })
-        .filter((0, utils_1.filterByNodeType)('COMPONENT_SET'));
+        .filter(filterByNodeType('COMPONENT_SET'));
     for (var _i = 0, legacyDefinitions_1 = legacyDefinitions; _i < legacyDefinitions_1.length; _i++) {
         var legacyDefinition = legacyDefinitions_1[_i];
         if (!legacyDefinition.id) {
-            console.error(chalk_1.default.red('Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'));
+            console.error(chalk.red('Handoff could not process exportable component without a id.\n  - Please update the exportable definition to include the name of the component.\n - For more information, see https://www.handoff.com/docs/guide'));
             continue;
         }
         if (!legacyDefinition.options.exporter.search) {
-            console.error(chalk_1.default.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
+            console.error(chalk.red('Handoff could not process exportable component without search.\n  - Please update the exportable definition to include the search property.\n - For more information, see https://www.handoff.com/docs/guide'));
             continue;
         }
         var componentSets = getComponentSetsForLegacyComponentDefinition(figmaComponentSetNodes, fullComponentMetadataArray, legacyDefinition);
@@ -252,7 +245,7 @@ var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullCom
                 };
             }
             var components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
-            componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition, legacyDefinition), true);
+            componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), extractComponentInstances(components, definition, legacyDefinition), true);
             componentTokens[definition.name].definitions[componentSet.id] = definition;
         }
     }
@@ -306,7 +299,7 @@ var getComponentDefinitionForLegacyComponentDefinition = function (componentSet,
                 componentSet.children
                     .filter(function (component) {
                     var _a;
-                    return (0, utils_2.slugify)((_a = (0, utils_1.getComponentInstanceNamePart)(component.name, shareDefinition.variantProperty)) !== null && _a !== void 0 ? _a : '') === (0, utils_2.slugify)(searchValue);
+                    return slugify((_a = getComponentInstanceNamePart(component.name, shareDefinition.variantProperty)) !== null && _a !== void 0 ? _a : '') === slugify(searchValue);
                 })
                     .forEach(function (component) {
                     return sharedComponentVariants.push({

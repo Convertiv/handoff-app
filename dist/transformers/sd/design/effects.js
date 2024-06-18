@@ -1,11 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Build effects style dictionary
  * @param effects
  * @returns
  */
-function transformEffects(effects) {
+export default function transformEffects(effects) {
     var sd = {};
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -20,4 +18,3 @@ function transformEffects(effects) {
     }
     return JSON.stringify({ 'effect': sd }, null, 2);
 }
-exports.default = transformEffects;

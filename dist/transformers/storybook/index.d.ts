@@ -1,4 +1,3 @@
-import { DocumentationObject } from '../../types';
-import Handoff from '../../index';
-declare const storybookPreviewTransformer: (handoff: Handoff, documentationObject: DocumentationObject) => Promise<void>;
+export declare const buildStorybookPreview: (handoff: Handoff) => Promise<void>;
+declare const storybookPreviewTransformer: (handoff: Handoff, documentation: DocumentationObject) => Promise<void>;
 export default storybookPreviewTransformer;

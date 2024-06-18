@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,15 +34,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
-var archiver_1 = __importDefault(require("archiver"));
-var tailwind_1 = require("./tailwind");
+import fs from 'fs-extra';
+import path from 'path';
+import archiver from 'archiver';
+import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
@@ -67,12 +61,12 @@ var HandoffIntegration = /** @class */ (function () {
     };
     return HandoffIntegration;
 }());
-exports.HandoffIntegration = HandoffIntegration;
+export { HandoffIntegration };
 /**
  * Derive the path to the integration. Use the config to find the integration
  * and version.  Allow users to define custom integration if desired.
  */
-var getPathToIntegration = function (handoff) {
+export var getPathToIntegration = function (handoff) {
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
     }
@@ -83,31 +77,29 @@ var getPathToIntegration = function (handoff) {
     }
     if (config.integration.name === 'custom') {
         // Look for a custom integration
-        var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-        if (!fs_extra_1.default.existsSync(customPath)) {
+        var customPath = path.resolve(path.join(handoff.workingPath, 'integration'));
+        if (!fs.existsSync(customPath)) {
             throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
         }
         return customPath;
     }
-    var searchPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
-    if (!fs_extra_1.default.existsSync(searchPath)) {
+    var searchPath = path.resolve(path.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
+    if (!fs.existsSync(searchPath)) {
         throw Error("The requested integration was ".concat(config.integration.name, " version ").concat(config.integration.version, " but no integration plugin with that name was found"));
     }
     return searchPath;
 };
-exports.getPathToIntegration = getPathToIntegration;
 /**
  * Get the entry point for the integration
  * @returns string
  */
-var getIntegrationEntryPoint = function (handoff) {
-    var integrationPath = (0, exports.getPathToIntegration)(handoff);
+export var getIntegrationEntryPoint = function (handoff) {
+    var integrationPath = getPathToIntegration(handoff);
     return integrationPath
-        ? path_1.default.resolve(path_1.default.join(integrationPath, 'templates', 'main.js'))
+        ? path.resolve(path.join(integrationPath, 'templates', 'main.js'))
         : null;
 };
-exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
-var instantiateIntegration = function (handoff) {
+export var instantiateIntegration = function (handoff) {
     var _a;
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
@@ -117,8 +109,8 @@ var instantiateIntegration = function (handoff) {
         switch ((_a = config === null || config === void 0 ? void 0 : config.integration) === null || _a === void 0 ? void 0 : _a.name) {
             case 'tailwind':
                 var integration = new HandoffIntegration(config.integration.name, config.integration.version);
-                integration.postIntegration(tailwind_1.postTailwindIntegration);
-                integration.modifyWebpackConfig(tailwind_1.modifyWebpackConfigForTailwind);
+                integration.postIntegration(postTailwindIntegration);
+                integration.modifyWebpackConfig(modifyWebpackConfigForTailwind);
                 return integration;
             default:
                 return new HandoffIntegration(config.integration.name, config.integration.version);
@@ -126,7 +118,6 @@ var instantiateIntegration = function (handoff) {
     }
     return new HandoffIntegration(defaultIntegration, defaultVersion);
 };
-exports.instantiateIntegration = instantiateIntegration;
 /**
  * A recusrive function for building a zip of the tokens
  * @param directory
@@ -134,7 +125,7 @@ exports.instantiateIntegration = instantiateIntegration;
  * @param archive
  * @returns
  */
-var addFileToZip = function (directory, dirPath, archive) { return __awaiter(void 0, void 0, void 0, function () {
+export var addFileToZip = function (directory, dirPath, archive) { return __awaiter(void 0, void 0, void 0, function () {
     var _i, directory_1, file, pathFile, recurse, data;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -144,17 +135,17 @@ var addFileToZip = function (directory, dirPath, archive) { return __awaiter(voi
             case 1:
                 if (!(_i < directory_1.length)) return [3 /*break*/, 6];
                 file = directory_1[_i];
-                pathFile = path_1.default.join(dirPath, file);
-                if (!fs_extra_1.default.lstatSync(pathFile).isDirectory()) return [3 /*break*/, 4];
-                return [4 /*yield*/, fs_extra_1.default.readdir(pathFile)];
+                pathFile = path.join(dirPath, file);
+                if (!fs.lstatSync(pathFile).isDirectory()) return [3 /*break*/, 4];
+                return [4 /*yield*/, fs.readdir(pathFile)];
             case 2:
                 recurse = _a.sent();
-                return [4 /*yield*/, (0, exports.addFileToZip)(recurse, pathFile, archive)];
+                return [4 /*yield*/, addFileToZip(recurse, pathFile, archive)];
             case 3:
                 archive = _a.sent();
                 return [3 /*break*/, 5];
             case 4:
-                data = fs_extra_1.default.readFileSync(pathFile, 'utf-8');
+                data = fs.readFileSync(pathFile, 'utf-8');
                 archive.append(data, { name: pathFile });
                 _a.label = 5;
             case 5:
@@ -164,19 +155,18 @@ var addFileToZip = function (directory, dirPath, archive) { return __awaiter(voi
         }
     });
 }); };
-exports.addFileToZip = addFileToZip;
 /**
  * Zip the fonts for download
  * @param dirPath
  * @param destination
  * @returns
  */
-var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
+export var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 0, void 0, function () {
     var archive, directory;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                archive = (0, archiver_1.default)('zip', {
+                archive = archiver('zip', {
                     zlib: { level: 9 }, // Sets the compression level.
                 });
                 // good practice to catch this error explicitly
@@ -184,10 +174,10 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
                     throw err;
                 });
                 archive.pipe(destination);
-                return [4 /*yield*/, fs_extra_1.default.readdir(dirPath)];
+                return [4 /*yield*/, fs.readdir(dirPath)];
             case 1:
                 directory = _a.sent();
-                return [4 /*yield*/, (0, exports.addFileToZip)(directory, dirPath, archive)];
+                return [4 /*yield*/, addFileToZip(directory, dirPath, archive)];
             case 2:
                 archive = _a.sent();
                 return [4 /*yield*/, archive.finalize()];
@@ -197,53 +187,52 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
         }
     });
 }); };
-exports.zipTokens = zipTokens;
 /**
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
-function integrationTransformer(handoff, documentationObject) {
+export default function integrationTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
         var outputFolder, integrationPath, exportedFolder, sassFolder, templatesFolder, integrationsSass, integrationTemplates, mainScssFilePath, stream, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
-                    if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
-                    return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
+                    outputFolder = path.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
+                    if (!!fs.existsSync(outputFolder)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, fs.promises.mkdir(outputFolder, { recursive: true })];
                 case 1:
                     _a.sent();
                     _a.label = 2;
                 case 2:
-                    integrationPath = (0, exports.getPathToIntegration)(handoff);
-                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-                    sassFolder = path_1.default.resolve(handoff.workingPath, exportedFolder, "integration");
-                    templatesFolder = path_1.default.resolve(__dirname, '../../templates');
-                    integrationsSass = path_1.default.resolve(integrationPath, 'sass');
-                    integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
+                    integrationPath = getPathToIntegration(handoff);
+                    exportedFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
+                    sassFolder = path.resolve(handoff.workingPath, exportedFolder, "integration");
+                    templatesFolder = path.resolve(__dirname, '../../templates');
+                    integrationsSass = path.resolve(integrationPath, 'sass');
+                    integrationTemplates = path.resolve(integrationPath, 'templates');
                     // clean dest
-                    fs_extra_1.default.removeSync(sassFolder);
-                    fs_extra_1.default.removeSync(templatesFolder);
+                    fs.removeSync(sassFolder);
+                    fs.removeSync(templatesFolder);
                     // copy to dest
-                    fs_extra_1.default.copySync(integrationsSass, sassFolder);
-                    fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
-                    mainScssFilePath = path_1.default.resolve(sassFolder, 'main.scss');
-                    if (fs_extra_1.default.existsSync(mainScssFilePath)) {
-                        fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
+                    fs.copySync(integrationsSass, sassFolder);
+                    fs.copySync(integrationTemplates, templatesFolder);
+                    mainScssFilePath = path.resolve(sassFolder, 'main.scss');
+                    if (fs.existsSync(mainScssFilePath)) {
+                        fs.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
                     }
                     // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
                     if (process.env.HANDOFF_EXPORT_PATH) {
-                        fs_extra_1.default.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
+                        fs.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
                     }
-                    stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
-                    return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];
+                    stream = fs.createWriteStream(path.join(outputFolder, "tokens.zip"));
+                    return [4 /*yield*/, zipTokens(exportedFolder, stream)];
                 case 3:
                     _a.sent();
                     data = handoff.integrationHooks.hooks.integration(documentationObject, []);
                     data = handoff.hooks.integration(documentationObject, data);
                     if (data.length > 0) {
                         data.map(function (artifact) {
-                            fs_extra_1.default.writeFileSync(path_1.default.join(sassFolder, artifact.filename), artifact.data);
+                            fs.writeFileSync(path.join(sassFolder, artifact.filename), artifact.data);
                         });
                     }
                     return [2 /*return*/];
@@ -251,7 +240,6 @@ function integrationTransformer(handoff, documentationObject) {
         });
     });
 }
-exports.default = integrationTransformer;
 var replaceHandoffImportTokens = function (handoff, content, components) {
     getHandoffImportTokens(handoff, components)
         .forEach(function (_a) {
@@ -268,7 +256,7 @@ var getHandoffImportTokens = function (handoff, components) {
             var _b;
             var importToken = _a[0], searchPath = _a.slice(1);
             (_b = result[idx]) !== null && _b !== void 0 ? _b : result.push([importToken, []]);
-            if (fs_extra_1.default.existsSync(path_1.default.resolve.apply(path_1.default, searchPath))) {
+            if (fs.existsSync(path.resolve.apply(path, searchPath))) {
                 result[idx][1].push("".concat(searchPath[1], "/").concat(component));
             }
         });
@@ -276,7 +264,7 @@ var getHandoffImportTokens = function (handoff, components) {
     return result;
 };
 var getHandoffImportTokensForComponent = function (handoff, component) {
-    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
+    var integrationPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
     return [
         ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
         ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],

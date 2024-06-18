@@ -1,4 +1,4 @@
-import { PositionObject } from "../types";
+import { PositionObject } from "../types.js";
 
 /**
  * Returns a position object where 2 lines (represented by 4 position objects) intersect.

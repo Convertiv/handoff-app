@@ -1,11 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Build colors style dictionary
  * @param effects
  * @returns
  */
-function transformColors(colors) {
+export default function transformColors(colors) {
     var sd = {};
     colors.forEach(function (color) {
         var _a;
@@ -17,4 +15,3 @@ function transformColors(colors) {
     });
     return JSON.stringify({ 'color': sd }, null, 2);
 }
-exports.default = transformColors;

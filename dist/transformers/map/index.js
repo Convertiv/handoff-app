@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10,25 +9,21 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var component_1 = require("./component");
-var colors_1 = __importDefault(require("./design/colors"));
-var effects_1 = __importDefault(require("./design/effects"));
-var typography_1 = __importDefault(require("./design/typography"));
-function mapTransformer(documentationObject) {
+import { transformComponentsToMap } from './component';
+import transformColors from './design/colors';
+import transformEffects from './design/effects';
+import transformTypography from './design/typography';
+export default function mapTransformer(documentationObject) {
     var flatMap = {};
     var components = {};
     for (var componentId in documentationObject.components) {
-        var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId]);
+        var map = transformComponentsToMap(componentId, documentationObject.components[componentId]);
         components[componentId] = JSON.stringify(map, null, 2);
         flatMap = __assign(__assign({}, flatMap), map);
     }
-    var colors = (0, colors_1.default)(documentationObject.design.color);
-    var typography = (0, typography_1.default)(documentationObject.design.typography);
-    var effects = (0, effects_1.default)(documentationObject.design.effect);
+    var colors = transformColors(documentationObject.design.color);
+    var typography = transformTypography(documentationObject.design.typography);
+    var effects = transformEffects(documentationObject.design.effect);
     flatMap = __assign(__assign(__assign(__assign({}, flatMap), colors), typography), effects);
     return {
         components: components,
@@ -42,4 +37,3 @@ function mapTransformer(documentationObject) {
         }
     };
 }
-exports.default = mapTransformer;

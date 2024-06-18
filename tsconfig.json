@@ -1,16 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "useDefineForClassFields": true,
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "declaration": true,
     "baseUrl": ".",
@@ -26,7 +31,7 @@
   "include": [
     "src/**/*.ts",
     ".next/types/**/*.ts"
-  ],
+, "stories/Button.stories.js"  ],
   "exclude": [
     "node_modules",
     "src/~app-*",

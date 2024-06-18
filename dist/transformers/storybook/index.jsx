@@ -59,7 +59,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var stories = __importStar(require("../../stories/Button.stories"));
+var stories = __importStar(require("../../stories/ButtonStory"));
 var react_1 = require("@storybook/react");
 // Iterate over Storybook components and generate HTML
 var generateHTML = function (source) { return __awaiter(void 0, void 0, void 0, function () {

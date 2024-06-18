@@ -1,5 +1,5 @@
-import * as FigmaTypes from '../../figma/types';
-import { Exportable, ComponentDefinition, Side } from "../../types";
+import * as FigmaTypes from 'handoff/figma/types.js';
+import { Exportable, ComponentDefinition, Side } from "../../types.js";
 
 export interface FileComponentObject {
   instances: ComponentInstance[];

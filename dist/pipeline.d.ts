@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import Handoff from '.';
+import Handoff from 'handoff/index.js';
 /**
  * Build only integrations and previews
  * @param handoff

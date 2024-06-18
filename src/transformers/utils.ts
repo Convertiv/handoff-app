@@ -1,5 +1,5 @@
 import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions, TypographyObject } from "../types";
+import { ComponentDefinitionOptions, TypographyObject } from "../types.js";
 import { TokenType } from "./types";
 import { replaceTokens, slugify } from "../utils/index";
 import { capitalize } from "lodash";

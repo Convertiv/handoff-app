@@ -1,4 +1,3 @@
-import Handoff from '.';
 /**
  * Build the next js application
  * @param handoff

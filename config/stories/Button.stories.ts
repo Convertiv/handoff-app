@@ -3,7 +3,7 @@ import { fn } from '@storybook/test';
 import { Button } from './Button';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories#default-export
-const meta = {
+const buttonMeta = {
   title: 'Example/Button',
   component: Button,
   parameters: {
@@ -20,8 +20,8 @@ const meta = {
   args: { onClick: fn() },
 } satisfies Meta<typeof Button>;
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default buttonMeta;
+type Story = StoryObj<typeof buttonMeta>;
 
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 export const Primary: Story = {

@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-function transformEffects(effects) {
+export default function transformEffects(effects) {
     var result = {};
     var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
     if (validEffects) {
@@ -10,4 +8,3 @@ function transformEffects(effects) {
     }
     return result;
 }
-exports.default = transformEffects;

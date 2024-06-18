@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -19,23 +18,19 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = __importDefault(require("lodash"));
-var utils_1 = require("../utils");
-var index_1 = require("../../utils/index");
-function extractComponentInstances(components, definition, legacyDefinition) {
+import _ from 'lodash';
+import { extractComponentInstanceVariantProps, findChildNodeWithType, findChildNodeWithTypeAndName, isExportable, isValidNodeType, } from '../utils';
+import { replaceTokens, slugify } from '../../utils/index';
+export default function extractComponentInstances(components, definition, legacyDefinition) {
     var _a;
     var options = definition.options;
     var sharedComponentVariantIds = (_a = options.exporter.sharedComponentVariants) !== null && _a !== void 0 ? _a : [];
     var sharedInstances = [];
     var componentInstances = components.map(function (component) {
         var _a, _b, _c, _d, _e, _f;
-        var variantProperties = (0, utils_1.extractComponentInstanceVariantProps)(component.node.name, options.exporter.variantProperties);
+        var variantProperties = extractComponentInstanceVariantProps(component.node.name, options.exporter.variantProperties);
         var id = generateComponentId(variantProperties);
-        var name = (0, index_1.slugify)(definition.name);
+        var name = slugify(definition.name);
         var description = (_b = (_a = component.metadata[component.node.id]) === null || _a === void 0 ? void 0 : _a.description) !== null && _b !== void 0 ? _b : '';
         var rootNode = component.node;
         if (legacyDefinition) {
@@ -47,7 +42,7 @@ function extractComponentInstances(components, definition, legacyDefinition) {
                     }
                 });
                 if (!isLayoutComponent_1) {
-                    rootNode = (0, utils_1.findChildNodeWithType)(component.node, 'INSTANCE');
+                    rootNode = findChildNodeWithType(component.node, 'INSTANCE');
                 }
                 if (!rootNode) {
                     throw new Error("No instance node found for component ".concat(component.node.name));
@@ -125,9 +120,8 @@ function extractComponentInstances(components, definition, legacyDefinition) {
             definitionId: component.definitionId,
         }); }), true);
     }, []);
-    return lodash_1.default.uniqBy(instances, 'id');
+    return _.uniqBy(instances, 'id');
 }
-exports.default = extractComponentInstances;
 function extractComponentPartTokenSets(root, part, tokens) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
@@ -144,7 +138,7 @@ function extractComponentPartTokenSets(root, part, tokens) {
         }
         for (var _b = 0, _c = def.export; _b < _c.length; _b++) {
             var exportable = _c[_b];
-            if (!(0, utils_1.isExportable)(exportable)) {
+            if (!isExportable(exportable)) {
                 continue;
             }
             var tokenSet = extractNodeExportable(node, exportable);
@@ -175,11 +169,11 @@ function resolveNodeFromPath(root, path, tokens) {
             continue;
         }
         if (nodeDef.name) {
-            nodeDef.name = (0, index_1.replaceTokens)(nodeDef.name, tokens);
+            nodeDef.name = replaceTokens(nodeDef.name, tokens);
         }
         currentNode = nodeDef.name
-            ? (0, utils_1.findChildNodeWithTypeAndName)(currentNode, nodeDef.type, nodeDef.name)
-            : (0, utils_1.findChildNodeWithType)(currentNode, nodeDef.type);
+            ? findChildNodeWithTypeAndName(currentNode, nodeDef.type, nodeDef.name)
+            : findChildNodeWithType(currentNode, nodeDef.type);
         if (!currentNode) {
             return null;
         }
@@ -200,12 +194,12 @@ function parsePathNodeParams(path) {
         });
     }
     return {
-        type: (0, utils_1.isValidNodeType)(type) ? type : undefined,
+        type: isValidNodeType(type) ? type : undefined,
         name: selectors.get('name'),
     };
 }
 function mergeTokenSets(first, second) {
-    return lodash_1.default.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
+    return _.mergeWith({}, first, second, function (a, b) { return (b === null ? a : undefined); });
 }
 function generateComponentId(variantProperties) {
     var parts = [];

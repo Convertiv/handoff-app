@@ -1,17 +1,14 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.transformComponentsToStyleDictionary = void 0;
-var transformer_1 = require("../transformer");
+import { transform } from '../transformer';
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
  * @returns
  */
-var transformComponentsToStyleDictionary = function (_, component) {
+export var transformComponentsToStyleDictionary = function (_, component) {
     var sd = {};
     component.instances.forEach(function (instance) {
         var options = component.definitions[instance.definitionId].options;
-        var tokens = (0, transformer_1.transform)('sd', instance, options);
+        var tokens = transform('sd', instance, options);
         tokens.forEach(function (token) {
             var tokenNameSegments = token.metadata.nameSegments;
             var lastIdx = tokenNameSegments.length - 1;
@@ -35,4 +32,3 @@ var transformComponentsToStyleDictionary = function (_, component) {
     });
     return JSON.stringify(sd, null, 2);
 };
-exports.transformComponentsToStyleDictionary = transformComponentsToStyleDictionary;

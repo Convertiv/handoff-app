@@ -1,31 +1,31 @@
-import generateChangelogRecord, { ChangelogRecord } from './changelog';
-import { maskPrompt, prompt } from './utils/prompt';
+import generateChangelogRecord, { ChangelogRecord } from './changelog.js';
+import { maskPrompt, prompt } from './utils/prompt.js';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
 import * as stream from 'node:stream';
-import { getRequestCount } from './figma/api';
+import { getRequestCount } from './figma/api.js';
 import {
   DocumentationObject,
   LegacyComponentDefinition,
   LegacyComponentDefinitionOptions,
-} from './types';
-import { createDocumentationObject } from './documentation-object';
-import { zipAssets } from './api';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
-import cssTransformer from './transformers/css/index';
-import integrationTransformer from './transformers/integration/index';
-import fontTransformer from './transformers/font/index';
-// import previewTransformer from './transformers/preview/index';
-import storybookPreviewTransformer from './transformers/storybook/index';
-import { buildClientFiles } from './utils/preview';
-import buildApp from './app';
-import Handoff from '.';
-import sdTransformer from './transformers/sd';
-import mapTransformer from './transformers/map';
+} from './types.js';
+import { createDocumentationObject } from './documentation-object.js';
+import { zipAssets } from './api.js';
+import scssTransformer, { scssTypesTransformer } from './transformers/scss/index.js';
+import cssTransformer from './transformers/css/index.js';
+import integrationTransformer from './transformers/integration/index.js';
+import fontTransformer from './transformers/font/index.js';
+import previewTransformer from './transformers/preview/index.js';
+import storybookPreviewTransformer from './transformers/storybook/index.js';
+import { buildClientFiles } from './utils/preview.js';
+import buildApp from './app.js';
+import Handoff from 'handoff/index.js';
+import sdTransformer from './transformers/sd/index.js';
+import mapTransformer from './transformers/map/index.js';
 import { merge } from 'lodash';
-import { filterOutNull } from './utils';
+import { filterOutNull } from './utils/index.js';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -76,6 +76,26 @@ const buildIntegration = async (handoff: Handoff, documentationObject: Documenta
  * @param documentationObject
 */
 const buildPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+  await Promise.all([
+    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+  ]);
+
+  if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
+    await buildClientFiles(handoff)
+      .then((value) => !!value && console.log(chalk.green(value)))
+      .catch((error) => {
+        throw new Error(error);
+      });
+  } else {
+    console.log(chalk.red('Skipping preview generation'));
+  }
+};
+
+/**
+ * Run just the preview
+ * @param documentationObject
+*/
+const buildStorybookPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
     storybookPreviewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
@@ -345,7 +365,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
 export const buildPreviewOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
-    await buildPreview(handoff, documentationObject);
+    await buildStorybookPreview(handoff, documentationObject);
   }
 };
 

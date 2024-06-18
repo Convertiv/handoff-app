@@ -1,4 +1,4 @@
-import { GradientObject, PositionObject } from "../types";
+import { GradientObject, PositionObject } from "../types.js";
 import { getIntersection, rotate, rotateElipse } from "./math";
 
 /**
