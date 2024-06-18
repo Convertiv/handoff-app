@@ -40,11 +40,11 @@ export default function extractComponentInstances(
             isLayoutComponent = true;
           }
         });
-  
+
         if (!isLayoutComponent) {
           rootNode = findChildNodeWithType(component.node, 'INSTANCE');
         }
-  
+
         if (!rootNode) {
           throw new Error(`No instance node found for component ${component.node.name}`);
         }
@@ -55,13 +55,12 @@ export default function extractComponentInstances(
       return [];
     }
 
-    const parts = definition.parts.reduce(
-      (previous, current) => ({
+    const parts = definition.parts.reduce((previous, current) => {
+      return {
         ...previous,
-        ...{ [current.id]: extractComponentPartTokenSets(rootNode, current, variantProperties) },
-      }),
-      {}
-    );
+        ...{ [current.id || '$']: extractComponentPartTokenSets(rootNode, current, variantProperties) },
+      };
+    }, {});
 
     const instance = {
       id,

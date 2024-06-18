@@ -10,6 +10,7 @@ export interface IComponentSetMetadata {
     };
     replacements: IVariantPropValueReplacement[];
     sharedVariants: ISharedComponentVariant[];
+    cssRootClass?: string;
 }
 export interface IComponentPart {
     name: string;
