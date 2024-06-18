@@ -3,7 +3,7 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import HtmlReactParser from 'html-react-parser';
-import { AssetObject } from '@handoff/types';
+import { AssetObject } from '@handoff/types.js';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../../../components/Icon';
 import Header from '../../../../components/Header';

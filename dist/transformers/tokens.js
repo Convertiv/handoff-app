@@ -1,5 +1,5 @@
-import { transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor, transformFigmaTextAlignToCss, transformFigmaTextCaseToCssTextTransform, transformFigmaTextDecorationToCss } from '../utils/convertColor';
-import { normalizeCssNumber } from '../utils/numbers';
+import { transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor, transformFigmaTextAlignToCss, transformFigmaTextCaseToCssTextTransform, transformFigmaTextDecorationToCss } from '../utils/convertColor.js';
+import { normalizeCssNumber } from '../utils/numbers.js';
 export var getTokenSetTokens = function (tokenSet) {
     switch (tokenSet.name) {
         case 'BACKGROUND':

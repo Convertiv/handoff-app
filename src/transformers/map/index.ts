@@ -1,9 +1,9 @@
-import { DocumentationObject } from '../../types';
-import { TransformerOutput } from '../types';
-import { transformComponentsToMap } from './component';
-import transformColors from './design/colors';
-import transformEffects from './design/effects';
-import transformTypography from './design/typography';
+import { DocumentationObject } from '../../types.js';
+import { TransformerOutput } from '../types.js';
+import { transformComponentsToMap } from './component.js';
+import transformColors from './design/colors.js';
+import transformEffects from './design/effects.js';
+import transformTypography from './design/typography.js';
 
 export default function mapTransformer(documentationObject: DocumentationObject): TransformerOutput {
   let flatMap: Record<string, string> = {};

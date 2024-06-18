@@ -1,5 +1,5 @@
-import { DocumentationObject } from '../../types';
-import { TransformerOutput } from '../types';
+import { DocumentationObject } from '../../types.js';
+import { TransformerOutput } from '../types.js';
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject

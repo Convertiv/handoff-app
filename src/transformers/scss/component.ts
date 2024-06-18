@@ -1,8 +1,8 @@
-import { normalizeTokenNamePartValue } from '../utils';
-import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
-import { ComponentDefinitionOptions } from '../../types';
-import { transform } from '../transformer';
-import { slugify } from '../../utils';
+import { normalizeTokenNamePartValue } from '../utils.js';
+import { ComponentInstance, FileComponentObject } from '../../exporters/components/types.js';
+import { ComponentDefinitionOptions } from '../../types.js';
+import { transform } from '../transformer.js';
+import { slugify } from '../../utils/index.js';
 
 export const transformComponentsToScssTypes = (name: string, component: FileComponentObject): string => {
   const result: { [variantProp: string]: Set<string> } = {};

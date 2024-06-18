@@ -1,5 +1,5 @@
-import { transform } from '../transformer';
-import { FileComponentObject } from '../../exporters/components/types';
+import { transform } from '../transformer.js';
+import { FileComponentObject } from '../../exporters/components/types.js';
 
 /**
  * Transforms the component tokens into a style dictionary

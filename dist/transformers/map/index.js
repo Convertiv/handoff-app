@@ -9,10 +9,10 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import { transformComponentsToMap } from './component';
-import transformColors from './design/colors';
-import transformEffects from './design/effects';
-import transformTypography from './design/typography';
+import { transformComponentsToMap } from './component.js';
+import transformColors from './design/colors.js';
+import transformEffects from './design/effects.js';
+import transformTypography from './design/typography.js';
 export default function mapTransformer(documentationObject) {
     var flatMap = {};
     var components = {};

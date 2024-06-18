@@ -36,8 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
-import { filterOutNull } from '../../utils/index';
-import { getComponentTemplate } from './utils';
+import { filterOutNull } from '../../utils/index.js';
+import { getComponentTemplate } from './utils.js';
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {

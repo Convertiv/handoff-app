@@ -1,5 +1,5 @@
-import { getTypeName } from "../../utils";
-import { TypographyObject } from "../../../types";
+import { getTypeName } from "../../utils.js";
+import { TypographyObject } from "../../../types.js";
 
 export default function transformTypography(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];

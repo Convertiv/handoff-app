@@ -1,4 +1,4 @@
-import { EffectObject } from "../../../types";
+import { EffectObject } from "../../../types.js";
 export function transformEffectTypes(effects: EffectObject[]): string {
   const stringBuilder: Array<string> = [];
 

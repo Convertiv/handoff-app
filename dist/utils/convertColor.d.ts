@@ -1,6 +1,6 @@
 /// <reference types="plugin-typings" resolution-mode="require"/>
-import * as FigmaTypes from '../figma/types';
-import { GradientObject } from '../types';
+import * as FigmaTypes from '../figma/types.js';
+import { GradientObject } from '../types.js';
 /**
  * Generate a CSS gradient from a color gradient object
 
@@ -27,9 +27,9 @@ export declare const transformFigmaFillsToCssColor: (fills: ReadonlyArray<FigmaT
     color: string;
     blend: string;
 };
-export declare const transformFigmaTextAlignToCss: (textAlign: FigmaTypes.TypeStyle) => string;
-export declare const transformFigmaTextDecorationToCss: (textDecoration: FigmaTypes.TypeStyle) => string;
-export declare const transformFigmaTextCaseToCssTextTransform: (textCase: FigmaTypes.TypeStyle) => string;
+export declare const transformFigmaTextAlignToCss: (textAlign: FigmaTypes.TypeStyle['textAlignHorizontal']) => string;
+export declare const transformFigmaTextDecorationToCss: (textDecoration: FigmaTypes.TypeStyle['textDecoration']) => string;
+export declare const transformFigmaTextCaseToCssTextTransform: (textCase: FigmaTypes.TypeStyle['textCase']) => string;
 export declare const transformFigmaEffectToCssBoxShadow: (effect: FigmaTypes.Effect) => string;
 /**
  * Converts figma color to a RGB(A) in form of a array.

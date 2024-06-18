@@ -34,10 +34,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import assetsExporter from './exporters/assets';
-import { getFigmaFileComponents } from './exporters/components/index';
-import { getFigmaFileDesignTokens } from './exporters/design';
-import startCase from 'lodash/startCase';
+import assetsExporter from './exporters/assets.js';
+import { getFigmaFileComponents } from './exporters/components/index.js';
+import { getFigmaFileDesignTokens } from './exporters/design.js';
+import startCase from 'lodash/startCase.js';
 import chalk from 'chalk';
 export var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var components, design, icons, logos;

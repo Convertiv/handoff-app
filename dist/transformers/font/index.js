@@ -58,7 +58,7 @@ import chalk from 'chalk';
 import archiver from 'archiver';
 import fs from 'fs-extra';
 import path from 'path';
-import sortedUniq from 'lodash/sortedUniq';
+import sortedUniq from 'lodash/sortedUniq.js';
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use

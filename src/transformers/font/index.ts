@@ -1,13 +1,13 @@
 import chalk from 'chalk';
-import { DocumentationObject } from '../../types';
+import { DocumentationObject } from '../../types.js';
 import archiver from 'archiver';
 import fs from 'fs-extra';
 import path from 'path';
-import sortedUniq from 'lodash/sortedUniq';
+import sortedUniq from 'lodash/sortedUniq.js';
 import * as stream from 'node:stream';
-import { FontFamily } from './types';
+import { FontFamily } from './types.js';
 //import { pluginTransformer } from '../plugin';
-import Handoff from '../../index';
+import Handoff from '../../index.js';
 
 /**
  * Detect a font present in the public dir.  If it matches a font family from

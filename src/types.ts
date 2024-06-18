@@ -1,6 +1,6 @@
-import type { FileComponentsObject } from './exporters/components/types';
-import { BlendMode } from './figma/types';
-import { Effect } from './figma/types';
+import type { FileComponentsObject } from './exporters/components/types.js';
+import { BlendMode } from './figma/types.js';
+import { Effect } from './figma/types.js';
 
 export interface ColorGroup {
   group: string;

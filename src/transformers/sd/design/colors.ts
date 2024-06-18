@@ -1,9 +1,9 @@
-import { ColorObject } from "../../../types";
+import { ColorObject } from "../../../types.js";
 
 /**
  * Build colors style dictionary
- * @param effects 
- * @returns 
+ * @param effects
+ * @returns
  */
 export default function transformColors(colors: ColorObject[]): string {
   const sd = {} as any;

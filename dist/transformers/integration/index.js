@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import fs from 'fs-extra';
 import path from 'path';
 import archiver from 'archiver';
-import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
+import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind.js';
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {

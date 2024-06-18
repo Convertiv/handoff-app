@@ -1,12 +1,12 @@
 import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
-import { DocumentationObject, ComponentDefinitionOptions } from '../../types';
-import { filterOutNull } from '../../utils/index';
-import { getComponentTemplate } from './utils';
-import { ComponentInstance } from '../../exporters/components/types';
-import { TokenSets } from '../../exporters/components/types';
-import { TransformComponentTokensResult } from './types';
-import Handoff from '../../index';
+import { DocumentationObject, ComponentDefinitionOptions } from '../../types.js';
+import { filterOutNull } from '../../utils/index.js';
+import { getComponentTemplate } from './utils.js';
+import { ComponentInstance } from '../../exporters/components/types.js';
+import { TokenSets } from '../../exporters/components/types.js';
+import { TransformComponentTokensResult } from './types.js';
+import Handoff from '../../index.js';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 

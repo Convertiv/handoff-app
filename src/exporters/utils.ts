@@ -1,5 +1,5 @@
-import * as FigmaTypes from '../figma/types';
-import { Exportable } from '../types';
+import * as FigmaTypes from '../figma/types.js';
+import { Exportable } from '../types.js';
 
 export function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type) {
   return (obj?: FigmaTypes.Node | null): obj is Extract<FigmaTypes.Node, { type: Type }> => obj?.type === type;

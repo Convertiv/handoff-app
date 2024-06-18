@@ -1,7 +1,7 @@
-import { TokenDict } from './types';
-import { BackgroundTokenSet, BorderTokenSet, EffectTokenSet, FillTokenSet, OpacityTokenSet, SizeTokenSet, SpacingTokenSet, TokenSet, TypographyTokenSet } from '../exporters/components/types';
-import { transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor, transformFigmaTextAlignToCss, transformFigmaTextCaseToCssTextTransform, transformFigmaTextDecorationToCss } from '../utils/convertColor';
-import { normalizeCssNumber } from '../utils/numbers';
+import { TokenDict } from './types.js';
+import { BackgroundTokenSet, BorderTokenSet, EffectTokenSet, FillTokenSet, OpacityTokenSet, SizeTokenSet, SpacingTokenSet, TokenSet, TypographyTokenSet } from '../exporters/components/types.js';
+import { transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor, transformFigmaTextAlignToCss, transformFigmaTextCaseToCssTextTransform, transformFigmaTextDecorationToCss } from '../utils/convertColor.js';
+import { normalizeCssNumber } from '../utils/numbers.js';
 
 export const getTokenSetTokens = (tokenSet: TokenSet): TokenDict | undefined => {
   switch (tokenSet.name) {

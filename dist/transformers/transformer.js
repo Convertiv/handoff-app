@@ -1,5 +1,5 @@
-import { formatTokenName, getTokenNameSegments } from './utils';
-import { getTokenSetTokens } from './tokens';
+import { formatTokenName, getTokenNameSegments } from './utils.js';
+import { getTokenSetTokens } from './tokens.js';
 /**
  * Performs the transformation of the component tokens.
  * @param component

@@ -2,13 +2,13 @@ import fs from 'fs-extra';
 import path from 'path';
 import archiver from 'archiver';
 import * as stream from 'node:stream';
-import { DocumentationObject } from '../../types';
+import { DocumentationObject } from '../../types.js';
 
-import { TransformedPreviewComponents } from '../preview/types';
+import { TransformedPreviewComponents } from '../preview/types.js';
 import webpack from 'webpack';
-import { HookReturn } from '../../types';
-import Handoff from '../../index';
-import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
+import { HookReturn } from '../../types.js';
+import Handoff from '../../index.js';
+import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind.js';
 const defaultIntegration = 'bootstrap';
 const defaultVersion = '5.3';
 export class HandoffIntegration {

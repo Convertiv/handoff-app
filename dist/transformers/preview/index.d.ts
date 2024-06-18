@@ -1,10 +1,14 @@
-import { DocumentationObject } from '../../types';
-import Handoff from '../../index';
+import { DocumentationObject } from '../../types.js';
+import Handoff from '../../index.js';
 /**
  * Transforms the documentation object components into a preview and code
  */
 export default function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject): Promise<{
     components: {
-        [key: string]: TransformComponentTokensResult[];
+        [key: string]: {
+            id: string;
+            preview: string;
+            code: string;
+        }[];
     };
 }>;

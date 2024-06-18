@@ -24,7 +24,7 @@ import buildApp from './app.js';
 import Handoff from 'handoff/index.js';
 import sdTransformer from './transformers/sd/index.js';
 import mapTransformer from './transformers/map/index.js';
-import { merge } from 'lodash';
+import { merge } from 'lodash-es';
 import { filterOutNull } from './utils/index.js';
 
 let config;

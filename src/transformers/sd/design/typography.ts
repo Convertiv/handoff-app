@@ -1,10 +1,10 @@
-import { getTypeName } from "../../utils";
-import { TypographyObject } from "../../../types";
+import { getTypeName } from "../../utils.js";
+import { TypographyObject } from "../../../types.js";
 
 /**
  * Build typography style dictionary
- * @param effects 
- * @returns 
+ * @param effects
+ * @returns
  */
 export default function transformTypography(typography: TypographyObject[]): string {
   return JSON.stringify({

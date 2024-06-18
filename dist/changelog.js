@@ -7,7 +7,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash/isEqual.js';
 var generateChangelogObjectArr = function (prevArr, newArr, discriminator) {
     return __spreadArray(__spreadArray(__spreadArray([], newArr
         .filter(function (newItem) { return !prevArr.find(function (prevItem) { return prevItem[discriminator] === newItem[discriminator]; }); })

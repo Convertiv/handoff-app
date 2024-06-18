@@ -1,15 +1,15 @@
-import _ from 'lodash';
-import * as ExportTypes from './types';
-import * as FigmaTypes from '../../figma/types';
+import _ from 'lodash-es';
+import * as ExportTypes from './types.js';
+import * as FigmaTypes from '../../figma/types.js';
 import {
   extractComponentInstanceVariantProps,
   findChildNodeWithType,
   findChildNodeWithTypeAndName,
   isExportable,
   isValidNodeType,
-} from '../utils';
-import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types';
-import { replaceTokens, slugify } from '../../utils/index';
+} from '../utils.js';
+import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types.js';
+import { replaceTokens, slugify } from '../../utils/index.js';
 
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
 type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: string };
@@ -40,11 +40,11 @@ export default function extractComponentInstances(
             isLayoutComponent = true;
           }
         });
-  
+
         if (!isLayoutComponent) {
           rootNode = findChildNodeWithType(component.node, 'INSTANCE');
         }
-  
+
         if (!rootNode) {
           throw new Error(`No instance node found for component ${component.node.name}`);
         }

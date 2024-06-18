@@ -1,5 +1,5 @@
-import isEqual from 'lodash/isEqual';
-import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types';
+import isEqual from 'lodash/isEqual.js';
+import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types.js';
 
 export interface ChangelogRecord {
   timestamp: string;

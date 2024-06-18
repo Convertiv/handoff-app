@@ -2,9 +2,9 @@ import path from 'path';
 import Handoff from "../index.js";
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { getPathToIntegration } from '../transformers/integration';
-import { getClientConfig } from '../config';
-import { ClientConfig } from 'handoff/types/config';
+import { getPathToIntegration } from '../transformers/integration/index.js';
+import { getClientConfig } from '../config.js';
+import { ClientConfig } from 'handoff/types/config.js';
 
 /**
  * Eject the config to the working directory

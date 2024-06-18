@@ -1,8 +1,8 @@
-import * as FigmaTypes from '../figma/types';
-import { GradientObject, PositionObject, StopObject } from '../types';
-import { isShadowEffectType, isValidGradientType } from '../exporters/utils';
-import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
-import { normalizeCssNumber } from './numbers';
+import * as FigmaTypes from '../figma/types.js';
+import { GradientObject, PositionObject, StopObject } from '../types.js';
+import { isShadowEffectType, isValidGradientType } from '../exporters/utils.js';
+import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients.js';
+import { normalizeCssNumber } from './numbers.js';
 
 /**
  * Generate a CSS gradient from a color gradient object

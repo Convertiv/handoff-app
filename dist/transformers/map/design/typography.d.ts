@@ -1,2 +1,2 @@
-import { TypographyObject } from "../../../types";
+import { TypographyObject } from "../../../types.js";
 export default function transformTypography(typography: TypographyObject[]): Record<string, string>;

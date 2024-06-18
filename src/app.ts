@@ -1,6 +1,6 @@
-import { nextBuild } from 'next/dist/cli/next-build';
-import { nextDev } from 'next/dist/cli/next-dev';
-import Handoff from '.';
+import { nextBuild } from 'next/dist/cli/next-build.js';
+import { nextDev } from 'next/dist/cli/next-dev.js';
+import Handoff from './index.js';
 import path from 'path';
 import { createServer } from 'http';
 import { parse } from 'url';
@@ -151,14 +151,11 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const hostname = 'localhost';
   const port = 3000;
   // when using middleware `hostname` and `port` must be provided below
-  const app = next({
-    dev,
-    dir: appPath,
-    hostname,
-    port,
-    conf: config,
-  });
-  const handle = app.getRequestHandler();
+
+  // Run
+  const app = await nextDev(config, 'cli', appPath);
+
+  // const handle = app.getRequestHandler();
 
   // purge out cache
   const moduleOutput = path.resolve(appPath, 'out');
@@ -166,30 +163,30 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     fs.removeSync(moduleOutput);
   }
 
-  app.prepare().then(() => {
-    createServer(async (req, res) => {
-      try {
-        // Be sure to pass `true` as the second argument to `url.parse`.
-        // This tells it to parse the query portion of the URL.
-        if (!req.url) throw new Error('No url');
-        const parsedUrl = parse(req.url, true);
-        const { pathname, query } = parsedUrl;
+  // app.prepare().then(() => {
+  //   createServer(async (req, res) => {
+  //     try {
+  //       // Be sure to pass `true` as the second argument to `url.parse`.
+  //       // This tells it to parse the query portion of the URL.
+  //       if (!req.url) throw new Error('No url');
+  //       const parsedUrl = parse(req.url, true);
+  //       const { pathname, query } = parsedUrl;
 
-        await handle(req, res, parsedUrl);
-      } catch (err) {
-        console.error('Error occurred handling', req.url, err);
-        res.statusCode = 500;
-        res.end('internal server error');
-      }
-    })
-      .once('error', (err: string) => {
-        console.error(err);
-        process.exit(1);
-      })
-      .listen(port, () => {
-        console.log(`> Ready on http://${hostname}:${port}`);
-      });
-  });
+  //       await handle(req, res, parsedUrl);
+  //     } catch (err) {
+  //       console.error('Error occurred handling', req.url, err);
+  //       res.statusCode = 500;
+  //       res.end('internal server error');
+  //     }
+  //   })
+  //     .once('error', (err: string) => {
+  //       console.error(err);
+  //       process.exit(1);
+  //     })
+  //     .listen(port, () => {
+  //       console.log(`> Ready on http://${hostname}:${port}`);
+  //     });
+  // });
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles

@@ -1,5 +1,5 @@
-import { replaceTokens } from "../utils/index";
-import { capitalize } from "lodash";
+import { replaceTokens } from "../utils/index.js";
+import { capitalize } from "lodash-es";
 /**
  * Returns normalized type name
  * @param type

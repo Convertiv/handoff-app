@@ -46,9 +46,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import chalk from 'chalk';
-import { getFileNodes, getFileStyles } from '../figma/api';
-import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor';
-import { isShadowEffectType, isValidEffectType, isValidGradientType } from './utils';
+import { getFileNodes, getFileStyles } from '../figma/api.js';
+import { transformFigmaColorToHex, transformFigmaEffectToCssBoxShadow, transformFigmaFillsToCssColor } from '../utils/convertColor.js';
+import { isShadowEffectType, isValidEffectType, isValidGradientType } from './utils.js';
 var toMachineName = function (name) {
     return name
         .toLowerCase()

@@ -37,8 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import path from 'path';
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { getPathToIntegration } from '../transformers/integration';
-import { getClientConfig } from '../config';
+import { getPathToIntegration } from '../transformers/integration/index.js';
+import { getClientConfig } from '../config.js';
 /**
  * Eject the config to the working directory
  * @param handoff

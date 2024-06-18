@@ -2,7 +2,7 @@ import webpack from 'webpack';
 import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
-import { getIntegrationEntryPoint } from '../transformers/integration/index';
+import { getIntegrationEntryPoint } from '../transformers/integration/index.js';
 import Handoff from "../index.js";
 
 export const buildClientFiles = async (handoff: Handoff): Promise<string> => {

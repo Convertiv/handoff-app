@@ -1,3 +1,5 @@
+import { ComponentInstance, FileComponentObject } from '../../exporters/components/types.js';
+import { ComponentDefinitionOptions } from '../../types.js';
 /**
  * Map down to a variable object
  * @param alerts
@@ -9,4 +11,4 @@ export declare const transformComponentsToCssVariables: (componentId: string, co
  * @param tokens
  * @returns
  */
-export declare const transformComponentTokensToCssVariables: (component: ComponentInstance, options?: ComponentDefinitionOptions) => any;
+export declare const transformComponentTokensToCssVariables: (component: ComponentInstance, options?: ComponentDefinitionOptions) => import("../types.js").Token[];

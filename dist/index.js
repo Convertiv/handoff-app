@@ -45,15 +45,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { defaultConfig } from './config';
+import { defaultConfig } from './config.js';
 import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
-import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildPreviewOnly } from './pipeline';
-import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeTemplate } from './cli/make';
-import { instantiateIntegration } from './transformers/integration';
+import buildApp, { devApp, watchApp } from './app.js';
+import pipeline, { buildIntegrationOnly, buildPreviewOnly } from './pipeline.js';
+import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject.js';
+import { makeExportable, makePage, makeTemplate } from './cli/make.js';
+import { instantiateIntegration } from './transformers/integration/index.js';
 import chalk from 'chalk';
 var Handoff = /** @class */ (function () {
     function Handoff(config) {

@@ -55,10 +55,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 import chalk from 'chalk';
-import { getComponentSetNodes, getComponentSets } from '../../figma/api';
-import { filterByNodeType, getComponentInstanceNamePart } from '../utils';
-import extractComponentInstances from './extractor';
-import { slugify } from '../../utils';
+import { getComponentSetNodes, getComponentSets } from '../../figma/api.js';
+import { filterByNodeType, getComponentInstanceNamePart } from '../utils.js';
+import extractComponentInstances from './extractor.js';
+import { slugify } from '../../utils/index.js';
 var groupReplaceRules = function (tupleList) {
     var res = {};
     tupleList.forEach(function (tuple) {

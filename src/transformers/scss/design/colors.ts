@@ -1,4 +1,4 @@
-import { ColorObject } from "../../../types";
+import { ColorObject } from "../../../types.js";
 
 export function transformColorTypes(colors: ColorObject[]): string {
   const stringBuilder: Array<string> = [];

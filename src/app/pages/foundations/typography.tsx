@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type * as next from 'next';
 import sortedUniq from 'lodash/sortedUniq';
-import type { TypographyObject } from '@handoff/types';
+import type { TypographyObject } from '@handoff/types.js';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';

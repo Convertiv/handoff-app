@@ -1,3 +1,4 @@
+import Handoff from './index.js';
 /**
  * Build the next js application
  * @param handoff

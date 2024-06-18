@@ -1,5 +1,5 @@
-import { getTypeName } from "../../utils";
-import { TypographyObject } from "../../../types";
+import { getTypeName } from "../../utils.js";
+import { TypographyObject } from "../../../types.js";
 
 export function transformTypographyTypes(typography: TypographyObject[]): string {
   const stringBuilder: Array<string> = [];
@@ -22,6 +22,6 @@ export default function transformTypography(typography: TypographyObject[]): str
       `$typography-${getTypeName(type)}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
     ].join('\n'))
   })
-  
+
   return stringBuilder.join('\n');
 }

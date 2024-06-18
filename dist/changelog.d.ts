@@ -1,4 +1,4 @@
-import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types';
+import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types.js';
 export interface ChangelogRecord {
     timestamp: string;
     design?: {

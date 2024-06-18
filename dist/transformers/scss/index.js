@@ -1,8 +1,8 @@
-import transformColors, { transformColorTypes } from './design/colors';
-import transformEffects, { transformEffectTypes } from './design/effects';
-import transformTypography, { transformTypographyTypes } from './design/typography';
-import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component';
-import { formatComponentCodeBlockComment } from '../utils';
+import transformColors, { transformColorTypes } from './design/colors.js';
+import transformEffects, { transformEffectTypes } from './design/effects.js';
+import transformTypography, { transformTypographyTypes } from './design/typography.js';
+import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component.js';
+import { formatComponentCodeBlockComment } from '../utils.js';
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject

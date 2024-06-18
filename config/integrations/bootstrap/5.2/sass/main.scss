@@ -26,17 +26,17 @@
 
 @import 'variables-default';
 
-@import '../tokens/types/typography';
-@import '../tokens/types/effects';
-@import '../tokens/types/colors';
+@import '../tokens/types/typography.js';
+@import '../tokens/types/effects.js';
+@import '../tokens/types/colors.js';
 //<#HANDOFF.TOKENS.TYPES#>
-@import '../tokens/sass/typography';
-@import '../tokens/sass/effects';
-@import '../tokens/sass/colors';
+@import '../tokens/sass/typography.js';
+@import '../tokens/sass/effects.js';
+@import '../tokens/sass/colors.js';
 //<#HANDOFF.TOKENS.SASS#>
-@import '../tokens/css/typography';
-@import '../tokens/css/effects';
-@import '../tokens/css/colors';
+@import '../tokens/css/typography.js';
+@import '../tokens/css/effects.js';
+@import '../tokens/css/colors.js';
 //<#HANDOFF.TOKENS.CSS#>
 
 // 3. Project Variables

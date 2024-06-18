@@ -1,4 +1,4 @@
-import { EffectObject } from "../../../types";
+import { EffectObject } from "../../../types.js";
 
 export default function transformEffects(effects: EffectObject[]) {
   const result: Record<string, string> = {};

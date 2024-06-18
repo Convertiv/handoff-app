@@ -1,4 +1,4 @@
-import { getTypeName } from "../../utils";
+import { getTypeName } from "../../utils.js";
 export function transformTypographyTypes(typography) {
     var stringBuilder = [];
     stringBuilder.push("$type-sizes: ( ".concat(typography.map(function (type) { return "\"".concat(getTypeName(type), "\""); }).join(', '), " );"));

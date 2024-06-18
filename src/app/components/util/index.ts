@@ -1,11 +1,11 @@
 import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
 import { ExportResult, ClientConfig } from '@handoff/types/config';
-import { DocumentComponentDefinitions, FileComponentObject } from '@handoff/exporters/components/types';
-import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
+import { DocumentComponentDefinitions, FileComponentObject } from '@handoff/exporters/components/types.js';
+import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types.js';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
-import { groupBy, merge, startCase, uniq } from 'lodash';
+import { groupBy, merge, startCase, uniq } from 'lodash-es';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';

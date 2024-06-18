@@ -1,4 +1,4 @@
-import { getTypeName } from "../../utils";
+import { getTypeName } from "../../utils.js";
 export default function transformTypography(typography) {
     var stringBuilder = [];
     typography.forEach(function (type) {

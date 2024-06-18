@@ -1,15 +1,15 @@
-import { ComponentInstance } from '../exporters/components/types';
+import { ComponentInstance } from '../exporters/components/types.js';
 import { ComponentDefinitionOptions, TypographyObject } from "../types.js";
-import { TokenType } from "./types";
-import { replaceTokens, slugify } from "../utils/index";
-import { capitalize } from "lodash";
+import { TokenType } from "./types.js";
+import { replaceTokens, slugify } from "../utils/index.js";
+import { capitalize } from "lodash-es";
 
 /**
  * Returns normalized type name
- * @param type 
- * @returns 
+ * @param type
+ * @returns
  */
-export const getTypeName = (type: TypographyObject) => type.group 
+export const getTypeName = (type: TypographyObject) => type.group
   ? `${type.group}-${type.machine_name}`
   : `${type.machine_name}`;
 
@@ -25,7 +25,7 @@ export const formatComponentCodeBlockComment = (component: ComponentInstance, fo
   component.variantProperties.forEach(([variantProp, val]) => {
     parts.push(`${variantProp.toLowerCase()}: ${val}`);
   });
-  
+
   const str = parts.join(', ');
 
   return format === "/**/" ? `/* ${str} */` : `// ${str}`
@@ -33,12 +33,12 @@ export const formatComponentCodeBlockComment = (component: ComponentInstance, fo
 
 /**
  * Formats the component token name for the given token type
- * @param tokenType 
- * @param component 
- * @param part 
- * @param property 
- * @param options 
- * @returns 
+ * @param tokenType
+ * @param component
+ * @param part
+ * @param property
+ * @param options
+ * @returns
  */
 export const formatTokenName = (tokenType: TokenType, component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions): string => {
   const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
@@ -49,9 +49,9 @@ export const formatTokenName = (tokenType: TokenType, component: ComponentInstan
 
 /**
  * Returns the token name segments
- * @param component 
- * @param options 
- * @returns 
+ * @param component
+ * @param options
+ * @returns
  */
 export const getTokenNameSegments = (component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => {
   if (options?.transformer.tokenNameSegments) {
@@ -67,7 +67,7 @@ export const getTokenNameSegments = (component: ComponentInstance, part: string,
           ]),
           (token, _, value) => (value === '' ? token : value)
         );
-        
+
         tokenNamePart = replaceTokens(
           tokenNamePart,
           new Map(component.variantProperties.map(([k, v]) => ['Variant.' + k, v])),
@@ -106,9 +106,9 @@ export const getTokenNameSegments = (component: ComponentInstance, part: string,
  * or removed entirely (replaced with empty string) if the value matches the default value
  * defined in the component shared options (assuming keepDefaults is set to false).
  * @param variable
- * @param value 
- * @param options 
- * @returns 
+ * @param value
+ * @param options
+ * @returns
  */
 export const normalizeTokenNamePartValue = (variable: string, value?: string, options?: ComponentDefinitionOptions, keepDefaults: boolean = false) => {
   const replace = options?.transformer.replace ?? {};
@@ -127,8 +127,8 @@ export const normalizeTokenNamePartValue = (variable: string, value?: string, op
 
 /**
  * Returns the normalized part name.
- * @param part 
- * @returns 
+ * @param part
+ * @returns
  */
 const normalizeComponentPartName = (part: string) => {
   return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());

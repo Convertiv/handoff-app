@@ -1,3 +1,4 @@
+import Handoff from '../../index.js';
 /**
  * Get the component template
  * @param component

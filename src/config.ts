@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { ClientConfig, Config } from './types/config';
+import { ClientConfig, Config } from './types/config.js';
 
 export interface ImageStyle {
   name: string;

@@ -1,5 +1,5 @@
-import { TransformerOutput } from 'figma-exporter/src/transformers/types';
-import type {  DocumentationObject } from './figma-exporter/src/types';
+import { TransformerOutput } from './figma-exporter/src/transformers/types.js';
+import type {  DocumentationObject } from './figma-exporter/src/types.js';
 //import { HookReturn } from 'figma-exporter/src/transformers/plugin';
 import { webpack } from 'webpack';
 

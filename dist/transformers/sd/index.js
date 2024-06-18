@@ -1,7 +1,7 @@
-import { transformComponentsToStyleDictionary } from './component';
-import transformColors from './design/colors';
-import transformEffects from './design/effects';
-import transformTypography from './design/typography';
+import { transformComponentsToStyleDictionary } from './component.js';
+import transformColors from './design/colors.js';
+import transformEffects from './design/effects.js';
+import transformTypography from './design/typography.js';
 export default function sdTransformer(documentationObject) {
     var components = {};
     for (var componentId in documentationObject.components) {

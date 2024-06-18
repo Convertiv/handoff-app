@@ -1,4 +1,4 @@
-import { TypographyObject } from "../../../types";
+import { TypographyObject } from "../../../types.js";
 /**
  * Build typography style dictionary
  * @param effects

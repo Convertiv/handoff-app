@@ -1,4 +1,6 @@
+import { ComponentInstance } from '../exporters/components/types.js';
 import { ComponentDefinitionOptions, TypographyObject } from "../types.js";
+import { TokenType } from "./types.js";
 /**
  * Returns normalized type name
  * @param type

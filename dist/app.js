@@ -45,12 +45,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { nextBuild } from 'next/dist/cli/next-build';
-import { nextDev } from 'next/dist/cli/next-dev';
+import { nextBuild } from 'next/dist/cli/next-build.js';
+import { nextDev } from 'next/dist/cli/next-dev.js';
 import path from 'path';
-import { createServer } from 'http';
-import { parse } from 'url';
-import next from 'next';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
@@ -174,7 +171,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
+    var appPath, config, tsconfigPath, dev, hostname, port, app, moduleOutput, chokidarConfig, debounce;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -217,53 +214,13 @@ export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void
                 dev = true;
                 hostname = 'localhost';
                 port = 3000;
-                app = next({
-                    dev: dev,
-                    dir: appPath,
-                    hostname: hostname,
-                    port: port,
-                    conf: config,
-                });
-                handle = app.getRequestHandler();
+                return [4 /*yield*/, nextDev(config, 'cli', appPath)];
+            case 2:
+                app = _a.sent();
                 moduleOutput = path.resolve(appPath, 'out');
                 if (fs.existsSync(moduleOutput)) {
                     fs.removeSync(moduleOutput);
                 }
-                app.prepare().then(function () {
-                    createServer(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-                        var parsedUrl, pathname, query, err_1;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    _a.trys.push([0, 2, , 3]);
-                                    // Be sure to pass `true` as the second argument to `url.parse`.
-                                    // This tells it to parse the query portion of the URL.
-                                    if (!req.url)
-                                        throw new Error('No url');
-                                    parsedUrl = parse(req.url, true);
-                                    pathname = parsedUrl.pathname, query = parsedUrl.query;
-                                    return [4 /*yield*/, handle(req, res, parsedUrl)];
-                                case 1:
-                                    _a.sent();
-                                    return [3 /*break*/, 3];
-                                case 2:
-                                    err_1 = _a.sent();
-                                    console.error('Error occurred handling', req.url, err_1);
-                                    res.statusCode = 500;
-                                    res.end('internal server error');
-                                    return [3 /*break*/, 3];
-                                case 3: return [2 /*return*/];
-                            }
-                        });
-                    }); })
-                        .once('error', function (err) {
-                        console.error(err);
-                        process.exit(1);
-                    })
-                        .listen(port, function () {
-                        console.log("> Ready on http://".concat(hostname, ":").concat(port));
-                    });
-                });
                 chokidarConfig = {
                     ignored: /(^|[\/\\])\../, // ignore dotfiles
                     persistent: true,

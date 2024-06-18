@@ -1,5 +1,5 @@
 import React from "react";
-import { PreviewObject } from "../../types";
+import { PreviewObject } from "../../types.js";
 
 export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);

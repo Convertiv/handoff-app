@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import type { AssetObject } from '@handoff/types';
+import type { AssetObject } from '@handoff/types.js';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../../components/Icon';
 import Header from '../../../components/Header';

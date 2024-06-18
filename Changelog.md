@@ -224,17 +224,17 @@ _Before the new release:_
 _With the new release:_
 
 ```scss
-@import './exported/tokens/types/typography';
-@import './exported/tokens/types/effects';
-@import './exported/tokens/types/colors';
+@import './exported/tokens/types/typography.js';
+@import './exported/tokens/types/effects.js';
+@import './exported/tokens/types/colors.js';
 //<#HANDOFF.TOKENS.TYPES#>
-@import './exported/tokens/sass/typography';
-@import './exported/tokens/sass/effects';
-@import './exported/tokens/sass/colors';
+@import './exported/tokens/sass/typography.js';
+@import './exported/tokens/sass/effects.js';
+@import './exported/tokens/sass/colors.js';
 //<#HANDOFF.TOKENS.SASS#>
-@import './exported/tokens/css/typography';
-@import './exported/tokens/css/effects';
-@import './exported/tokens/css/colors';
+@import './exported/tokens/css/typography.js';
+@import './exported/tokens/css/effects.js';
+@import './exported/tokens/css/colors.js';
 //<#HANDOFF.TOKENS.CSS#>
 ```
 

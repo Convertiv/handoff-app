@@ -1,10 +1,10 @@
 import path from 'path';
-import { DocumentationObject } from '../../types';
-import { HookReturn } from '../../types';
+import { DocumentationObject } from '../../types.js';
+import { HookReturn } from '../../types.js';
 import webpack from 'webpack';
 import fs from 'fs-extra';
-import { getPathToIntegration } from '.';
-import Handoff from '../../index';
+import { getPathToIntegration } from './index.js';
+import Handoff from '../../index.js';
 
 export const modifyWebpackConfigForTailwind = (handoff: Handoff, webpackConfig: webpack.Configuration): webpack.Configuration => {
   const tailwindPath = path.resolve(path.join(getPathToIntegration(handoff), 'templates/tailwind.config.js'));

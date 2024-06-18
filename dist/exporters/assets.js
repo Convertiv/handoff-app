@@ -36,8 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import axios from 'axios';
 import archiver from 'archiver';
-import { getAssetURL, getFileComponent } from '../figma/api';
-import * as Utils from '../utils/index';
+import { getAssetURL, getFileComponent } from '../figma/api.js';
+import * as Utils from '../utils/index.js';
 import chalk from 'chalk';
 var defaultExtension = 'svg';
 var assetsExporter = function (fileId, accessToken, component) { return __awaiter(void 0, void 0, void 0, function () {

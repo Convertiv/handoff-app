@@ -13,8 +13,8 @@ import {
   getTokens,
 } from '../../../components/util';
 import { getClientConfig } from '@handoff/config';
-import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types';
-import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types.js';
+import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types.js';
 import { filterOutNull } from '@handoff/utils';
 import { ComponentTab } from '@handoff/types/tabs';
 import { IParams, reduceSlugToString } from '../../../components/util';

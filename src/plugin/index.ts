@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 const plugin = '';
 // import { NodeVM } from 'vm2';
-// import { DocumentationObject } from '../../types';
+// import { DocumentationObject } from '../../types.js';
 // import { CssTransformerOutput } from '../css';
 // import { getPathToIntegration } from '../integration';
 // import webpack from 'webpack';

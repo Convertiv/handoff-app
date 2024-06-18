@@ -1,5 +1,5 @@
-import { getTypeName } from "../../utils";
-import { TypographyObject } from "../../../types";
+import { getTypeName } from "../../utils.js";
+import { TypographyObject } from "../../../types.js";
 
 export default function transformTypography(typography: TypographyObject[]) {
   const result: Record<string, string> = {};
@@ -12,6 +12,6 @@ export default function transformTypography(typography: TypographyObject[]) {
     result[`typography-${getTypeName(type)}-letter-spacing`] = `${type.values.letterSpacing}px`;
     result[`typography-${getTypeName(type)}-paragraph-spacing`] = `${type.values.paragraphSpacing | 20}px`;
   });
-  
+
   return result;
 }

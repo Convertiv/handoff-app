@@ -1,18 +1,18 @@
-import { defaultConfig } from './config';
-import { Config } from './types/config';
+import { defaultConfig } from './config.js';
+import { Config } from './types/config.js';
 import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
 import webpack from 'webpack';
-import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { HookReturn } from './types';
-import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildPreviewOnly } from './pipeline';
-import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeTemplate } from './cli/make';
-import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
-import { TransformerOutput } from './transformers/types';
+import { DocumentationObject } from './types.js';
+import { TransformedPreviewComponents } from './transformers/preview/types.js';
+import { HookReturn } from './types.js';
+import buildApp, { devApp, watchApp } from './app.js';
+import pipeline, { buildIntegrationOnly, buildPreviewOnly } from './pipeline.js';
+import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject.js';
+import { makeExportable, makePage, makeTemplate } from './cli/make.js';
+import { HandoffIntegration, instantiateIntegration } from './transformers/integration/index.js';
+import { TransformerOutput } from './transformers/types.js';
 import chalk from 'chalk';
 
 class Handoff {

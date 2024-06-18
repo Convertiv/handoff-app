@@ -38,7 +38,7 @@ import webpack from 'webpack';
 import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
-import { getIntegrationEntryPoint } from '../transformers/integration/index';
+import { getIntegrationEntryPoint } from '../transformers/integration/index.js';
 export var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var entry;
     return __generator(this, function (_a) {

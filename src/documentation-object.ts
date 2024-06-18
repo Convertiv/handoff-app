@@ -1,8 +1,8 @@
-import assetsExporter from './exporters/assets';
-import { getFigmaFileComponents } from './exporters/components/index';
-import { getFigmaFileDesignTokens } from './exporters/design';
-import { DocumentationObject, LegacyComponentDefinition } from './types';
-import startCase from 'lodash/startCase';
+import assetsExporter from './exporters/assets.js';
+import { getFigmaFileComponents } from './exporters/components/index.js';
+import { getFigmaFileDesignTokens } from './exporters/design.js';
+import { DocumentationObject, LegacyComponentDefinition } from './types.js';
+import startCase from 'lodash/startCase.js';
 import chalk from 'chalk';
 
 export const createDocumentationObject = async (figmaFileKey: string, figmaAccessToken: string, legacyDefinitions?: LegacyComponentDefinition[]): Promise<DocumentationObject> => {

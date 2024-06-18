@@ -9,7 +9,7 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-import { getTypeName } from "../../utils";
+import { getTypeName } from "../../utils.js";
 /**
  * Build typography style dictionary
  * @param effects

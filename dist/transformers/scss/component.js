@@ -1,6 +1,6 @@
-import { normalizeTokenNamePartValue } from '../utils';
-import { transform } from '../transformer';
-import { slugify } from '../../utils';
+import { normalizeTokenNamePartValue } from '../utils.js';
+import { transform } from '../transformer.js';
+import { slugify } from '../../utils/index.js';
 export var transformComponentsToScssTypes = function (name, component) {
     var result = {};
     component.instances.forEach(function (instance) {

@@ -1,13 +1,13 @@
 import chalk from 'chalk';
-import * as FigmaTypes from '../../figma/types';
-import { getComponentSetNodes, getComponentSets } from '../../figma/api';
-import { filterByNodeType, getComponentInstanceNamePart } from '../utils';
-import { ComponentDefinition, ComponentDefinitionOptions, LegacyComponentDefinition } from '../../types';
-import extractComponentInstances from './extractor';
+import * as FigmaTypes from '../../figma/types.js';
+import { getComponentSetNodes, getComponentSets } from '../../figma/api.js';
+import { filterByNodeType, getComponentInstanceNamePart } from '../utils.js';
+import { ComponentDefinition, ComponentDefinitionOptions, LegacyComponentDefinition } from '../../types.js';
+import extractComponentInstances from './extractor.js';
 import { AxiosResponse } from 'axios';
-import { slugify } from '../../utils';
-import { IComponentSetMetadata } from '../../types/plugin';
-import { FileComponentsObject } from './types';
+import { slugify } from '../../utils/index.js';
+import { IComponentSetMetadata } from '../../types/plugin.js';
+import { FileComponentsObject } from './types.js';
 
 const groupReplaceRules = (tupleList: [string, string, string][]): { [key: string]: { [key: string]: string } } => {
   const res: { [key: string]: { [key: string]: string } } = {};

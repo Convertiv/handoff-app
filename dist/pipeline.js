@@ -63,7 +63,7 @@ import { buildClientFiles } from './utils/preview.js';
 import buildApp from './app.js';
 import sdTransformer from './transformers/sd/index.js';
 import mapTransformer from './transformers/map/index.js';
-import { merge } from 'lodash';
+import { merge } from 'lodash-es';
 import { filterOutNull } from './utils/index.js';
 var config;
 var outputPath = function (handoff) { return path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };

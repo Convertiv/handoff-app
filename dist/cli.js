@@ -51,7 +51,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import arg from 'arg';
-import Handoff from '.';
+import Handoff from './index.js';
 var HandoffCliError = /** @class */ (function (_super) {
     __extends(HandoffCliError, _super);
     function HandoffCliError(message) {

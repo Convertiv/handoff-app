@@ -1,4 +1,4 @@
-import { EffectObject } from "../../../types";
+import { EffectObject } from "../../../types.js";
 /**
  * Build effects CSS var list
  * @param effects

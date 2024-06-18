@@ -1,3 +1,4 @@
+import { ClientConfig, Config } from './types/config.js';
 export interface ImageStyle {
     name: string;
     style: string;

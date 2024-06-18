@@ -2,9 +2,9 @@ import startCase from 'lodash/startCase';
 import round from 'lodash/round';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
-import { ComponentDefinitionOptions } from '@handoff/types';
+import { ComponentDefinitionOptions } from '@handoff/types.js';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
-import { ComponentInstance } from '@handoff/exporters/components/types';
+import { ComponentInstance } from '@handoff/exporters/components/types.js';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',

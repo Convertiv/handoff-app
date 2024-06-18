@@ -1,6 +1,6 @@
 export default config;
-import { FileComponentsObject } from '../exporters/components/types';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from '../types';
+import { FileComponentsObject } from '../exporters/components/types.js';
+import type { ColorObject, TypographyObject, AssetObject, EffectObject } from '../types.js';
 
 export interface ImageStyle {
   name: string;

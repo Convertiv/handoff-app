@@ -7,7 +7,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import { getIntersection, rotate, rotateElipse } from "./math";
+import { getIntersection, rotate, rotateElipse } from "./math.js";
 /**
  * Returns the angle of the gradient
  *
@@ -26,7 +26,7 @@ export function getGradientAngle(handles) {
     if ((normalizedDirectionGuidePoint.x - pivotPoint.x > 0 && normalizedAngleGuidePoint.y - pivotPoint.y > 0) ||
         (normalizedDirectionGuidePoint.x - pivotPoint.x < 0 && normalizedAngleGuidePoint.y - pivotPoint.y < 0)) {
         // Since Figma allows the angle guide point to move to the either side
-        // of the direction axis (defined by the pivot point and direction guide point) 
+        // of the direction axis (defined by the pivot point and direction guide point)
         // we will swap angle guide point and the pivot point to compensate for the fact
         // that the direction of the angle guide point is on the opposite side of the direction axis
         pivotPoint = handles[2];
@@ -65,7 +65,7 @@ export function getLinearGradientParamsFromGradientObject(gradient) {
     // calculating gradient line size (scalar) and change in x, y direction (coords)
     var lineChangeCoords = [(gradient.handles[1].x - gradient.handles[0].x), ((1 - gradient.handles[1].y) - (1 - gradient.handles[0].y))];
     var currentLineSize = Math.sqrt((Math.pow(lineChangeCoords[0], 2)) + (Math.pow(lineChangeCoords[1], 2)));
-    // creating arbitrary gradient line 
+    // creating arbitrary gradient line
     var desiredLength = 1;
     var scaleFactor = ((desiredLength - currentLineSize) / 2) / currentLineSize;
     var scaleCoords = {
@@ -76,7 +76,7 @@ export function getLinearGradientParamsFromGradientObject(gradient) {
         { x: gradient.handles[0].x - scaleCoords.x, y: gradient.handles[0].y + scaleCoords.y },
         { x: gradient.handles[1].x + scaleCoords.x, y: gradient.handles[1].y - scaleCoords.y }
     ];
-    // getting relevant corners     
+    // getting relevant corners
     var topCenter = gradientAngle > 90 && gradientAngle <= 180 || gradientAngle > 270 && gradientAngle <= 360 ? { x: 0, y: 0 } : { x: 1, y: 0 };
     var bottomCenter = gradientAngle >= 0 && gradientAngle <= 90 || gradientAngle > 180 && gradientAngle <= 270 ? { x: 0, y: 1 } : { x: 1, y: 1 };
     var topLine = [

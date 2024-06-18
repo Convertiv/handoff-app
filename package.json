@@ -6,7 +6,6 @@
     "name": "Convertiv",
     "email": "handoff@convertiv.com"
   },
-  
   "type": "module",
   "license": "MIT",
   "bugs": {
@@ -98,7 +97,7 @@
     "gray-matter": "^4.0.3",
     "html-react-parser": "^3.0.4",
     "jquery": "^3.6.1",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "mustache": "^4.2.0",
     "next": "^14.2.3",
     "node-html-parser": "^6.1.4",

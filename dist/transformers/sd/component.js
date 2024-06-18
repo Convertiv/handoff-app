@@ -1,4 +1,4 @@
-import { transform } from '../transformer';
+import { transform } from '../transformer.js';
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts

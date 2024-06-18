@@ -1,2 +1,2 @@
-import { ColorObject } from "../../../types";
+import { ColorObject } from "../../../types.js";
 export default function transformColors(colors: ColorObject[]): string;

@@ -18,9 +18,9 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import { isShadowEffectType, isValidGradientType } from '../exporters/utils';
-import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients';
-import { normalizeCssNumber } from './numbers';
+import { isShadowEffectType, isValidGradientType } from '../exporters/utils.js';
+import { getLinearGradientParamsFromGradientObject, getRadialGradientParamsFromGradientObject } from './gradients.js';
+import { normalizeCssNumber } from './numbers.js';
 /**
  * Generate a CSS gradient from a color gradient object
 

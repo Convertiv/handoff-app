@@ -1,4 +1,4 @@
-import { ColorObject } from "../../../types";
+import { ColorObject } from "../../../types.js";
 /**
  * Build colors style dictionary
  * @param effects

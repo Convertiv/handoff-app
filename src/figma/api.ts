@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { FileResponse, FileNodesResponse, FileImageResponse, FileStylesResponse, FileComponentSetsResponse, FileComponentsResponse } from './types';
+import { FileResponse, FileNodesResponse, FileImageResponse, FileStylesResponse, FileComponentSetsResponse, FileComponentsResponse } from './types.js';
 
 const figmaRestApi: AxiosInstance = axios.create({
   baseURL: process.env.HANDOFF_FIGMA_BASE_URL || 'https://api.figma.com/v1/',

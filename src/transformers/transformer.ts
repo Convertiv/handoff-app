@@ -1,14 +1,14 @@
-import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions } from '../types';
-import { Token, TokenDict, TokenType } from './types';
-import { formatTokenName, getTokenNameSegments } from './utils';
-import { getTokenSetTokens } from './tokens';
+import { ComponentInstance } from '../exporters/components/types.js';
+import { ComponentDefinitionOptions } from '../types.js';
+import { Token, TokenDict, TokenType } from './types.js';
+import { formatTokenName, getTokenNameSegments } from './utils.js';
+import { getTokenSetTokens } from './tokens.js';
 
 /**
  * Performs the transformation of the component tokens.
- * @param component 
- * @param options 
- * @returns 
+ * @param component
+ * @param options
+ * @returns
  */
 export const transform = (tokenType: TokenType, component: ComponentInstance, options?: ComponentDefinitionOptions) => {
   let tokens: Token[] = [];
@@ -20,11 +20,11 @@ export const transform = (tokenType: TokenType, component: ComponentInstance, op
       continue;
     }
 
-    tokenSets.forEach(tokenSet => 
+    tokenSets.forEach(tokenSet =>
       tokens.push(...transformTokens(getTokenSetTokens(tokenSet), tokenType, component, part, options))
     )
   }
-  
+
   return tokens;
 };
 

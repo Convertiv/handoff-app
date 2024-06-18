@@ -1,3 +1,6 @@
+import { ComponentInstance } from '../exporters/components/types.js';
+import { ComponentDefinitionOptions } from '../types.js';
+import { Token, TokenType } from './types.js';
 /**
  * Performs the transformation of the component tokens.
  * @param component

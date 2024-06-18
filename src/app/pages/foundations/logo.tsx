@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-import type { AssetObject } from '@handoff/types';
+import type { AssetObject } from '@handoff/types.js';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import Head from 'next/head';

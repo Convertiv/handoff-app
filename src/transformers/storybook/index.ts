@@ -1,9 +1,9 @@
-import Handoff from 'handoff/index';
+import Handoff from 'handoff/index.js';
 
 import { BuildStaticStandaloneOptions, buildStaticStandalone } from '@storybook/core-server';
 import { cache } from '@storybook/core-common';
 import { readPackageUp } from 'read-package-up';
-import { DocumentationObject } from 'handoff/types';
+import { DocumentationObject } from 'handoff/types.js';
 
 export const buildStorybookPreview = async (handoff: Handoff) => {
   if (!handoff) {

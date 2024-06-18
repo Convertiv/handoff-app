@@ -1,7 +1,7 @@
-import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
-import { formatComponentCodeBlockComment } from '../utils';
-import { ComponentDefinitionOptions } from '../../types';
-import { transform } from '../transformer';
+import { ComponentInstance, FileComponentObject } from '../../exporters/components/types.js';
+import { formatComponentCodeBlockComment } from '../utils.js';
+import { ComponentDefinitionOptions } from '../../types.js';
+import { transform } from '../transformer.js';
 
 /**
  * Map down to a variable object

@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import Head from 'next/head';
-import { startCase } from 'lodash';
+import { startCase } from 'lodash-es';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { getClientConfig } from '@handoff/config';

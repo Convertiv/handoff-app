@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
-import { getPathToIntegration } from '.';
+import { getPathToIntegration } from './index.js';
 export var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
     var tailwindPath = path.resolve(path.join(getPathToIntegration(handoff), 'templates/tailwind.config.js'));
     var plugins = [];

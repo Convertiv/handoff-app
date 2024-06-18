@@ -1,5 +1,5 @@
-import { formatComponentCodeBlockComment } from '../utils';
-import { transform } from '../transformer';
+import { formatComponentCodeBlockComment } from '../utils.js';
+import { transform } from '../transformer.js';
 /**
  * Map down to a variable object
  * @param alerts
