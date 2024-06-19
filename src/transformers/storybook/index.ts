@@ -1,5 +1,4 @@
 import Handoff from 'handoff/index.js';
-
 import { BuildStaticStandaloneOptions, buildStaticStandalone } from '@storybook/core-server';
 import { cache } from '@storybook/core-common';
 import { readPackageUp } from 'read-package-up';
@@ -17,10 +16,15 @@ export const buildStorybookPreview = async (handoff: Handoff) => {
     configType: 'PRODUCTION',
     cache,
     packageJson: readUpResult,
+    
   };
-
-  buildStaticStandalone(options);
+  try {
+    await buildStaticStandalone(options);
+  } catch (err) {
+    console.log(err);
+  }
 };
+
 
 const storybookPreviewTransformer = async (handoff: Handoff, documentation: DocumentationObject) => {
   if (!handoff) {

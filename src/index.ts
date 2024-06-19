@@ -14,6 +14,7 @@ import { makeExportable, makePage, makeTemplate } from './cli/make.js';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration/index.js';
 import { TransformerOutput } from './transformers/types.js';
 import chalk from 'chalk';
+const __filename = new URL('', import.meta.url).pathname;
 
 class Handoff {
   config: Config | null;

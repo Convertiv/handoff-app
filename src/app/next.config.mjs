@@ -1,7 +1,11 @@
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
-const withMDX = require('@next/mdx')()
+import fs from 'fs-extra';
+import path from 'path';
+import chalk from 'chalk';
+import withMDX from '@next/mdx';
+// const fs = require('fs-extra');
+// const path = require('path');
+// const chalk = require('chalk');
+// const withMDX = require('@next/mdx')()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -97,4 +101,4 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = withMDX(nextConfig)
+export default withMDX(nextConfig)

@@ -1,4 +1,4 @@
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import * as ExportTypes from './types.js';
 import * as FigmaTypes from '../../figma/types.js';
 import {

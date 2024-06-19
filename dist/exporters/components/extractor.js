@@ -18,7 +18,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import { extractComponentInstanceVariantProps, findChildNodeWithType, findChildNodeWithTypeAndName, isExportable, isValidNodeType, } from '../utils.js';
 import { replaceTokens, slugify } from '../../utils/index.js';
 export default function extractComponentInstances(components, definition, legacyDefinition) {

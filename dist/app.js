@@ -1,14 +1,3 @@
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -51,6 +40,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+import withMDX from '@next/mdx';
 var getWorkingPublicPath = function (handoff) {
     var paths = [
         path.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
@@ -106,7 +96,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffWorkingPath = path.resolve(handoff.workingPath);
                 handoffModulePath = path.resolve(handoff.modulePath);
                 handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-                nextConfigPath = path.resolve(appPath, 'next.config.js');
+                nextConfigPath = path.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs.readFile(nextConfigPath, 'utf-8')];
             case 4:
                 nextConfigContent = (_c.sent())
@@ -171,7 +161,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath, dev, hostname, port, app, moduleOutput, chokidarConfig, debounce;
+    var appPath, config, dev, hostname, port, mdxConfig, app, moduleOutput, chokidarConfig, debounce;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -181,7 +171,10 @@ export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 1:
                 appPath = _a.sent();
-                config = require(path.resolve(appPath, 'next.config.js'));
+                return [4 /*yield*/, import(path.resolve(appPath, 'next.config.mjs'))];
+            case 2:
+                config = _a.sent();
+                console.log(config);
                 // Include any changes made within the app source during watch
                 chokidar
                     .watch(path.resolve(handoff.modulePath, 'src', 'app'), {
@@ -209,13 +202,14 @@ export var watchApp = function (handoff) { return __awaiter(void 0, void 0, void
                         }
                     });
                 }); });
-                tsconfigPath = 'tsconfig.json';
-                config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
                 dev = true;
                 hostname = 'localhost';
                 port = 3000;
+                return [4 /*yield*/, withMDX(config)];
+            case 3:
+                mdxConfig = _a.sent();
                 return [4 /*yield*/, nextDev(config, 'cli', appPath)];
-            case 2:
+            case 4:
                 app = _a.sent();
                 moduleOutput = path.resolve(appPath, 'out');
                 if (fs.existsSync(moduleOutput)) {

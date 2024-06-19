@@ -8,6 +8,8 @@ import next from 'next';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+import withMDX from '@next/mdx';
+
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -55,7 +57,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-  const nextConfigPath = path.resolve(appPath, 'next.config.js');
+  const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -121,8 +123,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
 
   const appPath = await prepareProjectApp(handoff);
-  const config = require(path.resolve(appPath, 'next.config.js'));
-
+  let config = await import(path.resolve(appPath, 'next.config.mjs'));
+  console.log(config);
   // Include any changes made within the app source during watch
   chokidar
     .watch(path.resolve(handoff.modulePath, 'src', 'app'), {
@@ -140,18 +142,12 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     });
 
-  // does a ts config exist?
-  let tsconfigPath = 'tsconfig.json';
 
-  config.typescript = {
-    ...config.typescript,
-    tsconfigPath,
-  };
   const dev = true;
   const hostname = 'localhost';
   const port = 3000;
   // when using middleware `hostname` and `port` must be provided below
-
+  const mdxConfig = await withMDX(config);
   // Run
   const app = await nextDev(config, 'cli', appPath);
 

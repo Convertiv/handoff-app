@@ -97,7 +97,7 @@ const buildPreview = async (handoff: Handoff, documentationObject: Documentation
 */
 const buildStorybookPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
-    storybookPreviewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+    storybookPreviewTransformer(handoff, documentationObject),
   ]);
 
   if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {

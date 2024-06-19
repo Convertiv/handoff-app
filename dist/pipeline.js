@@ -160,7 +160,7 @@ var buildStorybookPreview = function (handoff, documentationObject) { return __a
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, Promise.all([
-                    storybookPreviewTransformer(handoff, documentationObject).then(function (out) { return fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 }); }),
+                    storybookPreviewTransformer(handoff, documentationObject),
                 ])];
             case 1:
                 _a.sent();

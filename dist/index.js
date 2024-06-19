@@ -55,6 +55,7 @@ import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme
 import { makeExportable, makePage, makeTemplate } from './cli/make.js';
 import { instantiateIntegration } from './transformers/integration/index.js';
 import chalk from 'chalk';
+var __filename = new URL('', import.meta.url).pathname;
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
