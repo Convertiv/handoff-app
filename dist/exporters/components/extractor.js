@@ -59,7 +59,7 @@ function extractComponentInstances(components, definition, legacyDefinition) {
         }
         var parts = definition.parts.reduce(function (previous, current) {
             var _a;
-            return (__assign(__assign({}, previous), (_a = {}, _a[current.id] = extractComponentPartTokenSets(rootNode, current, variantProperties), _a)));
+            return __assign(__assign({}, previous), (_a = {}, _a[current.id || '$'] = extractComponentPartTokenSets(rootNode, current, variantProperties), _a));
         }, {});
         var instance = {
             id: id,

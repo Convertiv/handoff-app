@@ -65,7 +65,7 @@ const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSe
         sharedComponentVariants: metadata.sharedVariants,
       },
       transformer: {
-        cssRootClass: name,
+        cssRootClass: metadata.cssRootClass || name,
         tokenNameSegments: metadata.tokenNameSegments,
         replace: groupReplaceRules(metadata.replacements),
       },
