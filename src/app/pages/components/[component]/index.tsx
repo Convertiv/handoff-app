@@ -70,7 +70,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * Transforms the legacy definition doc page options to new doc page options.
  * @deprecated Will be removed before 1.0.0 release.
  */
-const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions['demo'] | undefined) => {
+export const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions['demo'] | undefined) => {
   return docViews
     ? {
         views: {
@@ -230,16 +230,16 @@ const GenericComponentPage = ({
 
 export default GenericComponentPage;
 
-type ComponentPreview = {
+export type ComponentPreview = {
   component: ComponentInstance;
   name: string;
   preview: PreviewObject | undefined;
   overrides?: { states?: string[] | undefined };
 };
 
-type ComponentPreviews = ComponentPreview[];
+export type ComponentPreviews = ComponentPreview[];
 
-const getComponentPreviews = (
+export const getComponentPreviews = (
   tab: 'overview' | 'tokens',
   component: FileComponentObject,
   options: ComponentDocumentationOptions,
@@ -315,7 +315,7 @@ const getComponentPreviews = (
   return tabComponents;
 };
 
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       {components.map((previewableComponent) => {
@@ -336,7 +336,7 @@ const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({
   );
 };
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+export const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       <h4>Classes</h4>
@@ -370,7 +370,7 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({
   );
 };
 
-const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
+export const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
   return (
     <>
       <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
@@ -378,7 +378,7 @@ const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) 
   );
 };
 
-const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
+export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('0px');
   const onLoad = () => {

@@ -1,11 +1,14 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
+const withMDX = require('@next/mdx')();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
   reactStrictMode: true,
+  // Configure `pageExtensions` to include MDX files
+  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
   swcMinify: true,
   trailingSlash: true,
   experimental: {
@@ -53,11 +56,21 @@ const nextConfig = {
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
           // Check if the client configuration specifies a theme
           // If the theme is specified, check if the theme exists in the 'themes' folder
-          if (clientConfig.hasOwnProperty('app') && clientConfig['app'].hasOwnProperty('theme') && fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `${clientConfig['app']['theme']}.scss`))) {
+          if (
+            clientConfig.hasOwnProperty('app') &&
+            clientConfig['app'].hasOwnProperty('theme') &&
+            fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `${clientConfig['app']['theme']}.scss`))
+          ) {
             // Use custom theme
             foundTheme = true;
             content = content + `\n@import '${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}';`;
-            console.log(`- ${chalk.cyan('info')} Using custom app theme (name: ${clientConfig['app']['theme']}, path: ${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}.scss)`)
+            console.log(
+              `- ${chalk.cyan('info')} Using custom app theme (name: ${clientConfig['app']['theme']}, path: ${path.resolve(
+                env.HANDOFF_WORKING_PATH,
+                'theme',
+                clientConfig['app']['theme']
+              )}.scss)`
+            );
           }
         }
       }
@@ -67,11 +80,17 @@ const nextConfig = {
         if (fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`))) {
           // Use custom theme
           content = content + `\n@import 'theme/default';`;
-          console.log(`- ${chalk.cyan('info')} Using default app theme override (path: ${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`)})`)
+          console.log(
+            `- ${chalk.cyan('info')} Using default app theme override (path: ${path.resolve(
+              env.HANDOFF_WORKING_PATH,
+              'theme',
+              `default.scss`
+            )})`
+          );
         } else {
           // Use default theme
           content = content + `\n@import 'themes/default';`;
-          console.log(`- ${chalk.cyan('info')} Using default app theme`)
+          console.log(`- ${chalk.cyan('info')} Using default app theme`);
         }
       }
 
@@ -80,7 +99,7 @@ const nextConfig = {
   },
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
-    config.resolve.alias["@handoff"] = path.resolve('%HANDOFF_MODULE_PATH%/src');
+    config.resolve.alias['@handoff'] = path.resolve('%HANDOFF_MODULE_PATH%/src');
     config.resolve.modules.push(path.resolve('dist/app'));
     config.resolve.modules.push(path.resolve('node_modules'));
     config.resolveLoader.modules.push(path.resolve('node_modules'));
