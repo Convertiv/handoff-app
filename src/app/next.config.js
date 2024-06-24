@@ -114,4 +114,6 @@ const nextConfig = {
     return config;
   },
 };
-module.exports = nextConfig;
+
+// Wrap MDX and Next.js config with each other
+module.exports = withMDX(nextConfig);

@@ -10,12 +10,35 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClientConfig = exports.defaultConfig = void 0;
-var fs_extra_1 = __importDefault(require("fs-extra"));
+var fs = __importStar(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
     var _a, _b, _c, _d, _e;
@@ -72,11 +95,12 @@ exports.defaultConfig = defaultConfig;
  * @returns Promise<Config>
  */
 var getClientConfig = function (configOverride) {
+    console.log(fs);
     // Check to see if there is a config in the root of the project
     var config = {};
     var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
-    if (fs_extra_1.default.existsSync(configPath)) {
-        var defBuffer = fs_extra_1.default.readFileSync(configPath);
+    if (fs.existsSync(configPath)) {
+        var defBuffer = fs.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
     }
     if (configOverride) {

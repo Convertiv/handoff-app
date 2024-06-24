@@ -1,9 +1,10 @@
 import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
 import { ExportResult, ClientConfig } from '@handoff/types/config';
-import { DocumentComponentDefinitions, FileComponentObject } from '@handoff/exporters/components/types';
+import { FileComponentObject } from '@handoff/exporters/components/types';
 import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
-import * as fs from 'fs-extra';
+//import * as fs from 'fs-extra';
+import * as fs from 'fs';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
@@ -210,8 +211,8 @@ export const buildL2StaticPaths = () => {
  * @returns SectionLink[]
  */
 export const staticBuildMenu = () => {
-  // Contents of docs
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  // // Contents of docs
+  const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
   const files = fs.readdirSync(docRoot);
   let list = files;
   const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
@@ -304,6 +305,17 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       options,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
+    },
+  };
+};
+
+export const fetchMdxPageMarkdown = () => {
+  //const menu = staticBuildMenu();
+  // Return props
+  return {
+    props: {
+      menu: [],
+      current: [],
     },
   };
 };

@@ -1,15 +1,18 @@
-import { ComponentDocumentationProps, fetchCompDocPageMarkdown, fetchComponents, getLegacyDefinition, getPreview, getTokens } from './util';
+import { ComponentDocumentationProps, SectionLink, fetchComponents, fetchDocPageMetadataAndContent, filterOutUndefined, staticBuildMenu } from './util';
 import * as React from 'react';
 import Head from 'next/head';
 import startCase from 'lodash/startCase';
 import Header from './Header';
 import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
-
-
+import { groupBy, uniq } from 'lodash';
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
 }
+
 const MdxLayout = ({
   menu,
   metadata,
@@ -18,21 +21,9 @@ const MdxLayout = ({
   config,
   children,
 }: MarkdownLayoutProps) => {
-  const [loading, setLoading] = React.useState<boolean>(true);
 
-  if (loading) {
-    return (
-      <div className="c-page">
-        <Head>
-          <title>{metadata.metaTitle}</title>
-          <meta name="description" content={metadata.metaDescription} />
-        </Head>
-        <Header menu={menu} config={config} />
-        <Footer config={config} />
-      </div>
-    );
-  }
-
+  if(!menu) menu = [];
+  menu = MarkdownMenuBuilder();
   return (
     <div className="c-page">
       <Head>
@@ -51,7 +42,12 @@ const MdxLayout = ({
   );
 };
 
-export const MarkdownComponentLayout = 
+export const MarkdownMenuBuilder = () => {
+  // TODO: Handle static mdx menu builder
+  return [];
+};
+
+// export const MarkdownComponentLayout = 
 
 
 export default MdxLayout;

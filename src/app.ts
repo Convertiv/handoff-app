@@ -40,6 +40,25 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   }
 };
 
+/**
+ * Copy the public dir from the working dir to the module dir
+ * @param handoff
+ */
+const mergeMDX = async (handoff: Handoff): Promise<void> => {
+  const appPath = getAppPath(handoff);
+  const mdxFiles = getWorkingPublicPath(handoff);
+  const pages = path.resolve(handoff.workingPath, `pages`);
+  if (fs.existsSync(pages)) {
+    // Find all mdx files in path
+    const files = fs.readdirSync(pages);
+    for (const file of files) {
+      if (file.endsWith('.mdx')) {
+        fs.copySync(path.resolve(pages, file), path.resolve(appPath, 'pages', file), { overwrite: true });
+      }
+    }
+  }
+};
+
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
@@ -48,6 +67,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   await fs.promises.mkdir(appPath, { recursive: true });
   await fs.copy(srcPath, appPath, { overwrite: true });
   await mergePublicDir(handoff);
+  await mergeMDX(handoff);
 
   // Prepare project app configuration
   const handoffProjectId = handoff.config.figma_project_id ?? '';
