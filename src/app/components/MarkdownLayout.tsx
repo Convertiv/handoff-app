@@ -1,14 +1,11 @@
-import { ComponentDocumentationProps, SectionLink, fetchComponents, fetchDocPageMetadataAndContent, filterOutUndefined, staticBuildMenu } from './util';
+import { ComponentDocumentationProps } from './util';
 import * as React from 'react';
 import Head from 'next/head';
 import startCase from 'lodash/startCase';
 import Header from './Header';
 import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
-import { groupBy, uniq } from 'lodash';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
 }

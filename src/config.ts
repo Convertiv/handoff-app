@@ -62,7 +62,6 @@ export const defaultConfig = (): Config => ({
  * @returns Promise<Config>
  */
 export const getClientConfig = (configOverride?: any): ClientConfig => {
-  console.log(fs);
   // Check to see if there is a config in the root of the project
   let config = {};
   let configPath = path.resolve(process.cwd(), 'handoff.config.json');

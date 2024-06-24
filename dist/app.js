@@ -91,6 +91,29 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
         return [2 /*return*/];
     });
 }); };
+/**
+ * Copy the public dir from the working dir to the module dir
+ * @param handoff
+ */
+var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath, pages, files, _i, files_1, file;
+    return __generator(this, function (_a) {
+        appPath = getAppPath(handoff);
+        pages = path_1.default.resolve(handoff.workingPath, "pages");
+        console.log("Copying MDX files from ".concat(pages, " to ").concat(appPath));
+        if (fs_extra_1.default.existsSync(pages)) {
+            files = fs_extra_1.default.readdirSync(pages);
+            for (_i = 0, files_1 = files; _i < files_1.length; _i++) {
+                file = files_1[_i];
+                if (file.endsWith('.mdx')) {
+                    console.log("Copying ".concat(file));
+                    fs_extra_1.default.copySync(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), { overwrite: true });
+                }
+            }
+        }
+        return [2 /*return*/];
+    });
+}); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
     var _a, _b;
@@ -110,6 +133,9 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
                 _c.sent();
+                return [4 /*yield*/, mergeMDX(handoff)];
+            case 4:
+                _c.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
@@ -117,7 +143,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
-            case 4:
+            case 5:
                 nextConfigContent = (_c.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
@@ -127,7 +153,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
-            case 5:
+            case 6:
                 _c.sent();
                 return [2 /*return*/, appPath];
         }

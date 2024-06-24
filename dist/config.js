@@ -95,7 +95,6 @@ exports.defaultConfig = defaultConfig;
  * @returns Promise<Config>
  */
 var getClientConfig = function (configOverride) {
-    console.log(fs);
     // Check to see if there is a config in the root of the project
     var config = {};
     var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
