@@ -149,16 +149,16 @@ Eject must have a subcommand. Did you mean:
       case 'eject:pages':
         return handoff.ejectPages();
       case 'make':
-          cliError(
-            `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
+        cliError(
+          `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
 
   Make must have a subcommand. Did you mean:
     - make:template
     - make:exportable
     - make:page`,
-            2
-          );
-          break;
+          2
+        );
+        break;
       case 'make:exportable':
         const type = args._[1];
         if (!type) {

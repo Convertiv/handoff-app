@@ -7,6 +7,8 @@ import { ComponentInstance } from '../../exporters/components/types';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
 import Handoff from '../../index';
+import path from 'path';
+import fs from 'fs-extra';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -106,6 +108,21 @@ export default async function previewTransformer(handoff: Handoff, documentation
       ] as [string, TransformComponentTokensResult[]];
     })
   );
+
+  // Allow a user to create custom previews by putting templates in a custom folder
+  // Iterate over the html files in that folder and render them as a preview
+  const custom = path.resolve(handoff.workingPath, `integration/templates/custom`);
+  if(fs.existsSync(custom)) {
+    const files = fs.readdirSync(custom);
+    for (const file of files) {
+      if (file.endsWith('.html')) {
+        const template = await fs.readFile(path.resolve(custom, file), 'utf8');
+        const preview = Mustache.render(template, {});
+        result.push([file.replace('.html', ''), [{ id: file, preview, code: preview }]]);
+      }
+    }
+  }
+
 
   let previews = result.reduce((obj, el) => {
     obj[el[0]] = el[1];

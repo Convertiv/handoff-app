@@ -2,7 +2,13 @@ import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
 import { ExportResult, ClientConfig } from '@handoff/types/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
-import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
+import {
+  ComponentDocumentationOptions,
+  LegacyComponentDefinition,
+  LegacyComponentDefinitionOptions,
+  PreviewJson,
+  PreviewObject,
+} from '@handoff/types';
 //import * as fs from 'fs-extra';
 import * as fs from 'fs';
 import matter from 'gray-matter';
@@ -134,18 +140,18 @@ export const pluralizeComponent = (singular: string): string => {
  * @returns
  */
 export const buildL1StaticPaths = () => {
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let list = files;
-  if(fs.existsSync(pageRoot)){
+  if (fs.existsSync(pageRoot)) {
     const pages = fs.readdirSync(pageRoot);
     list = files.concat(pages);
   }
   const paths = list
     .filter((fileName) => {
-      if(fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
-      if(fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
+      if (fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
+      if (fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
       return false;
     })
     .map((fileName) => {
@@ -167,22 +173,22 @@ export const buildL1StaticPaths = () => {
  * @returns SubPathType[]
  */
 export const buildL2StaticPaths = () => {
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let list = files;
-  if(fs.existsSync(pageRoot)){
+  if (fs.existsSync(pageRoot)) {
     const pages = fs.readdirSync(pageRoot);
     list = files.concat(pages);
   }
   const paths: SubPageType[] = list
     .flatMap((fileName) => {
       let calculatePath;
-      if(fs.existsSync(path.join(pageRoot, fileName))){
+      if (fs.existsSync(path.join(pageRoot, fileName))) {
         calculatePath = path.join(pageRoot, fileName);
-      }else if(fs.existsSync(path.join(docRoot, fileName))){
+      } else if (fs.existsSync(path.join(docRoot, fileName))) {
         calculatePath = path.join(docRoot, fileName);
-      }else{
+      } else {
         return undefined;
       }
       if (fs.lstatSync(calculatePath).isDirectory()) {
@@ -212,10 +218,11 @@ export const buildL2StaticPaths = () => {
  */
 export const staticBuildMenu = () => {
   // // Contents of docs
-  const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
+  // Get the file list
   const files = fs.readdirSync(docRoot);
   let list = files;
-  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let pages: string[] = [];
   if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
@@ -231,15 +238,28 @@ export const staticBuildMenu = () => {
       } else {
         search = path.resolve(docRoot, fileName);
       }
-      if (!fs.lstatSync(search).isDirectory() && search !== path.resolve(docRoot, 'index.md') && fileName.endsWith('md')) {
+      if (
+        !fs.lstatSync(search).isDirectory() &&
+        search !== path.resolve(docRoot, 'index.md') &&
+        (fileName.endsWith('md') || fileName.endsWith('mdx'))
+      ) {
+        // check if its an mdx or an md file
+        // let contents, metadata;
+        // check if its an mdx or an md file
+        /*if(fileName.endsWith('mdx')){
+          
+        }else{
+          contents = fs.readFileSync(search, 'utf-8');
+          const front = matter(contents);
+          metadata = front.data as Metadata;
+        }*/
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
-
         if (metadata.enabled === false) {
           return undefined;
         }
 
-        const path = `/${fileName.replace('.md', '')}`;
+        const path = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
         let subSections = [];
 
         if (path === '/components') {
@@ -369,8 +389,8 @@ export const getLegacyDefinition = (name: string) => {
     return null;
   }
 
-  let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config', 'exportables', `${def}.json`);
-  const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? "", 'exportables', `${def}.json`));
+  let defPath = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'exportables', `${def}.json`);
+  const projectPath = path.resolve(path.join(process.env.HANDOFF_WORKING_PATH ?? '', 'exportables', `${def}.json`));
   // If the project path exists, use that first as an override
   if (fs.existsSync(projectPath)) {
     defPath = projectPath;
@@ -410,22 +430,28 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getTokens = (): ExportResult => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if(!fs.existsSync(exportedFilePath)) return {} as ExportResult;
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
+  if (!fs.existsSync(exportedFilePath)) return {} as ExportResult;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
 };
 
 export const getChangelog = () => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
-  if(!fs.existsSync(exportedFilePath)) return [];
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
+  if (!fs.existsSync(exportedFilePath)) return [];
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 export const getPreview = (): PreviewJson => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
-  if(!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
+  if (!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
 };
@@ -456,8 +482,8 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  */
 export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
   const pagePath = localPath.replace('docs/', 'pages/');
-  const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? "";
-  const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? "";
+  const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? '';
+  const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? '';
 
   let currentContents = '';
   let options = {} as ComponentDocumentationOptions;
@@ -506,7 +532,9 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
-  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens');
+  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens');
   const scssSearchPath = path.resolve(baseSearchPath, 'sass', `${component}.scss`);
   const typeSearchPath = path.resolve(baseSearchPath, 'types', `${component}.scss`);
   const sdSearchPath = path.resolve(baseSearchPath, 'sd', 'tokens', `${component}.tokens.json`);

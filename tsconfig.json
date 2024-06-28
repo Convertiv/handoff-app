@@ -31,7 +31,7 @@
   "include": [
     "src/**/*.ts",
     ".next/types/**/*.ts"
-  ],
+, "src/app/frontmatter.js"  ],
   "exclude": [
     "node_modules",
     "src/~app-*",

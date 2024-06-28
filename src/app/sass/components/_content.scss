@@ -17,6 +17,10 @@
 	:target {
 		scroll-margin-top: rem( 70px );
 	}
+	&__wide {
+		max-width: rem( 1200px );
+		margin: 0 auto;
+	}
 }
 
 .c-component-card {

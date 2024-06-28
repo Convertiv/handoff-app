@@ -20,7 +20,6 @@ const MdxLayout = ({
 }: MarkdownLayoutProps) => {
 
   if(!menu) menu = [];
-  menu = MarkdownMenuBuilder();
   return (
     <div className="c-page">
       <Head>
@@ -28,8 +27,8 @@ const MdxLayout = ({
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content">
+      {current.subSections && current.subSections.length > 0 && <CustomNav menu={current} />}
+      <section className="c-content c-content__wide">
         <div className="o-container-fluid">
           {children}
         </div>
@@ -38,13 +37,5 @@ const MdxLayout = ({
     </div>
   );
 };
-
-export const MarkdownMenuBuilder = () => {
-  // TODO: Handle static mdx menu builder
-  return [];
-};
-
-// export const MarkdownComponentLayout = 
-
 
 export default MdxLayout;

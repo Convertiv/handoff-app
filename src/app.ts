@@ -8,6 +8,7 @@ import next from 'next';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+import matter from 'gray-matter';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -41,7 +42,7 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
 };
 
 /**
- * Copy the public dir from the working dir to the module dir
+ * Copy the mdx files from the working dir to the module dir
  * @param handoff
  */
 const mergeMDX = async (handoff: Handoff): Promise<void> => {
@@ -53,12 +54,82 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
     const files = fs.readdirSync(pages);
     for (const file of files) {
       if (file.endsWith('.mdx')) {
-        console.log(`Copying ${file}`);
-        fs.copySync(path.resolve(pages, file), path.resolve(appPath, 'pages', file), { overwrite: true });
+        // transform the file
+        transformMdx(path.resolve(pages, file), path.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
+      }else if(fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+        const subFiles = fs.readdirSync(path.resolve(pages, file));
+        for (const subFile of subFiles) {
+          if (subFile.endsWith('.mdx')) {
+            // transform the file
+            const target = path.resolve(appPath, 'pages', file);
+            if (!fs.existsSync(target)) {
+              fs.mkdirSync(target, { recursive: true });
+            }
+            transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
+          }
+        }
       }
     }
   }
 };
+
+/**
+ * Remove the frontmatter from the mdx file, convert it to an import, and
+ * add the metadata to the export.  Then write the file to the destination.
+ * @param src 
+ * @param dest 
+ * @param id 
+ */
+const transformMdx = (src: string, dest: string, id: string) => {
+  const content = fs.readFileSync(src);
+  const { data, content: body } = matter(content);
+  let mdx = body;
+  const title = data.title ?? '';
+  const menu = data.menu ?? '';
+  const metaDescription = data.metaDescription ?? '';
+  const metaTitle = data.metaTitle ?? '';
+  const weight = data.weight ?? 0;
+  const image = data.image ?? '';
+  const menuTitle = data.menuTitle ?? '';
+  const enabled = data.enabled ?? true;
+  // 
+  mdx += `\n\n 
+import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
+export const getStaticProps = async () => {
+  // get previews for components on this page
+  const previews = getPreview();
+  const menu = staticBuildMenu();
+  return {
+    props: {
+      previews,
+      menu,
+      current: getCurrentSection(menu, "/${id}") ?? [],
+    },
+  };
+};
+import MarkdownLayout from "handoff-app/src/app/components/MarkdownLayout";
+export default function Layout(props) {
+  return (
+    <MarkdownLayout
+      menu={props.menu}
+      metadata={{
+        metaDescription: "${metaDescription}",
+        metaTitle: "${metaTitle}",
+        title: "${title}",
+        weight: ${weight},
+        image: "${image}",
+        menuTitle: "${menuTitle}",
+        enabled: ${enabled},
+      }}
+      current={props.current}
+    >
+      {props.children}
+    </MarkdownLayout>
+  );
+
+}`;
+  fs.writeFileSync(dest, mdx, 'utf-8');
+}
 
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
@@ -265,6 +336,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'pages')).on('all', async (event, path) => {
+      if (path.endsWith('.mdx')) {
+        mergeMDX(handoff);
+      }
       console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
     });
   }

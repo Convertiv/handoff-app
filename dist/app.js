@@ -60,6 +60,7 @@ var next_1 = __importDefault(require("next"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
+var gray_matter_1 = __importDefault(require("gray-matter"));
 var getWorkingPublicPath = function (handoff) {
     var paths = [
         path_1.default.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
@@ -96,8 +97,8 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
  * @param handoff
  */
 var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, pages, files, _i, files_1, file;
-    return __generator(this, function (_a) {
+    var appPath, pages, files, _i, files_1, file, subFiles, _a, subFiles_1, subFile, target;
+    return __generator(this, function (_b) {
         appPath = getAppPath(handoff);
         pages = path_1.default.resolve(handoff.workingPath, "pages");
         console.log("Copying MDX files from ".concat(pages, " to ").concat(appPath));
@@ -106,14 +107,44 @@ var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             for (_i = 0, files_1 = files; _i < files_1.length; _i++) {
                 file = files_1[_i];
                 if (file.endsWith('.mdx')) {
-                    console.log("Copying ".concat(file));
-                    fs_extra_1.default.copySync(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), { overwrite: true });
+                    // transform the file
+                    transformMdx(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
+                }
+                else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file)).isDirectory()) {
+                    subFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file));
+                    for (_a = 0, subFiles_1 = subFiles; _a < subFiles_1.length; _a++) {
+                        subFile = subFiles_1[_a];
+                        if (subFile.endsWith('.mdx')) {
+                            target = path_1.default.resolve(appPath, 'pages', file);
+                            if (!fs_extra_1.default.existsSync(target)) {
+                                fs_extra_1.default.mkdirSync(target, { recursive: true });
+                            }
+                            transformMdx(path_1.default.resolve(pages, file, subFile), path_1.default.resolve(appPath, 'pages', file, subFile), file);
+                        }
+                    }
                 }
             }
         }
         return [2 /*return*/];
     });
 }); };
+var transformMdx = function (src, dest, id) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var content = fs_extra_1.default.readFileSync(src);
+    var _j = (0, gray_matter_1.default)(content), data = _j.data, body = _j.content;
+    var mdx = body;
+    var title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
+    var menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
+    var metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
+    var metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
+    var weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
+    var image = (_f = data.image) !== null && _f !== void 0 ? _f : '';
+    var menuTitle = (_g = data.menuTitle) !== null && _g !== void 0 ? _g : '';
+    var enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
+    // 
+    mdx += "\n\n \nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  return {\n    props: {\n      previews,\n      menu,\n      current: getCurrentSection(menu, \"/".concat(id, "\") ?? [],\n    },\n  };\n};\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
+    fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
+};
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
     var _a, _b;
@@ -376,6 +407,9 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
                     chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
+                            if (path.endsWith('.mdx')) {
+                                mergeMDX(handoff);
+                            }
                             console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
                             return [2 /*return*/];
                         });
