@@ -93,7 +93,7 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
     });
 }); };
 /**
- * Copy the public dir from the working dir to the module dir
+ * Copy the mdx files from the working dir to the module dir
  * @param handoff
  */
 var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
@@ -128,6 +128,13 @@ var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
         return [2 /*return*/];
     });
 }); };
+/**
+ * Remove the frontmatter from the mdx file, convert it to an import, and
+ * add the metadata to the export.  Then write the file to the destination.
+ * @param src
+ * @param dest
+ * @param id
+ */
 var transformMdx = function (src, dest, id) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     var content = fs_extra_1.default.readFileSync(src);

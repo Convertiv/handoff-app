@@ -1,8 +1,9 @@
 import React from 'react';
 import { CodeHighlight } from './Markdown/CodeHighlight';
-import { PreviewObject } from '../../types';
-import { ComponentInstance } from '../../exporters/components/types';
+
+import { ComponentInstance } from '@handoff/exporters/components/types';
 import { startCase } from 'lodash';
+import { PreviewObject } from '@handoff/types';
 
 export type ComponentPreview = {
   component: ComponentInstance;

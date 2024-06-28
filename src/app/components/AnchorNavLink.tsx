@@ -14,6 +14,7 @@ export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, children }) =>
   }, [])
 
   return (
+    // @ts-ignore
     <Link href="#" activeClass='is-selected' smooth spy to={to} offset={offset * -1.5} onClick={() => {
       history.pushState ? history.pushState(null, '', `#${to}`) : location.hash = `#${to}`;
     }}>
