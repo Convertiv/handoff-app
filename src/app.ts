@@ -95,14 +95,18 @@ const transformMdx = (src: string, dest: string, id: string) => {
   // 
   mdx += `\n\n 
 import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
+import { getClientConfig } from '@handoff/config';
+
 export const getStaticProps = async () => {
   // get previews for components on this page
   const previews = getPreview();
   const menu = staticBuildMenu();
+  const config = getClientConfig();
   return {
     props: {
       previews,
       menu,
+      config,
       current: getCurrentSection(menu, "/${id}") ?? [],
     },
   };
