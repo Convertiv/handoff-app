@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
@@ -21,20 +17,10 @@
     "baseUrl": ".",
     "outDir": "dist",
     "paths": {
-      "handoff/*": ["./src/*"],
+      "handoff/*": ["./src/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/@figma"
-    ]
+    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"]
   },
-  "include": [
-    "src/**/*.ts",
-    ".next/types/**/*.ts"
-, "src/app/frontmatter.js"  ],
-  "exclude": [
-    "node_modules",
-    "src/~app-*",
-    "src/app",
-  ]
+  "include": ["src/**/*.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "src/~app-*", "src/app"]
 }

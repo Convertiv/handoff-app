@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
-const remarkMdxFrontmatter = require('./frontmatter.js')
 const withMDX = require('@next/mdx')();
 
 /** @type {import('next').NextConfig} */
