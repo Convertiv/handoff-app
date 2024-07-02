@@ -4,7 +4,11 @@ import Link from 'next/link';
 import Icon from '../components/Icon';
 import Image from 'next/image';
 
-export const ComponentList = ({ components }: { components: { [id: string]: Metadata } }) => {
+interface ComponentMetadata extends Metadata {
+  path?: string;
+}
+
+export const ComponentList = ({ components }: { components: { [id: string]: ComponentMetadata } }) => {
   return (
     <div className="o-row">
       <div className="o-col-12@md">
@@ -20,6 +24,7 @@ export const ComponentList = ({ components }: { components: { [id: string]: Meta
                   title={component.title ?? startCase(componentId)}
                   description={component.description}
                   image={component.image}
+                  path={component.path}
                 />
               );
             })}
@@ -36,6 +41,7 @@ export const ComponentsPageCard = ({
   description: descripton,
   icon,
   image,
+  path,
   available = true,
 }: {
   component: string;
@@ -43,18 +49,23 @@ export const ComponentsPageCard = ({
   description: string;
   icon?: string;
   image?: string;
+  path?: string;
   available?: boolean;
-}) => (
-  <div key={`component-${component}`}>
-    <Link href={available ? `/components/${component}` : '#'}>
-      <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
-        <div className="c-component-card__img">
-          {icon && <Icon name={icon} />}
-          {image && <Image src={image} alt={title} width={170} height={135} />}
+}) => {
+  if (!path) path = 'components';
+  console.log('path', path);
+  return (
+    <div key={`component-${component}`}>
+      <Link href={available ? `/${path}/${component}` : '#'}>
+        <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
+          <div className="c-component-card__img">
+            {icon && <Icon name={icon} />}
+            {image && <Image src={image} alt={title} width={170} height={135} />}
+          </div>
+          <h6>{title}</h6>
+          <p>{descripton}</p>
         </div>
-        <h6>{title}</h6>
-        <p>{descripton}</p>
-      </div>
-    </Link>
-  </div>
-);
+      </Link>
+    </div>
+  );
+};
