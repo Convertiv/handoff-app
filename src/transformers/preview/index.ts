@@ -112,17 +112,35 @@ export default async function previewTransformer(handoff: Handoff, documentation
   // Allow a user to create custom previews by putting templates in a custom folder
   // Iterate over the html files in that folder and render them as a preview
   const custom = path.resolve(handoff.workingPath, `integration/templates/custom`);
-  if(fs.existsSync(custom)) {
+  if (fs.existsSync(custom)) {
     const files = fs.readdirSync(custom);
     for (const file of files) {
       if (file.endsWith('.html')) {
         const template = await fs.readFile(path.resolve(custom, file), 'utf8');
         const preview = Mustache.render(template, {});
-        result.push([file.replace('.html', ''), [{ id: file, preview, code: preview }]]);
+        const bodyEl = parse(preview).querySelector('body');
+        const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+        let data: TransformComponentTokensResult[] = [{ id: file, preview, code }];
+        // Is there a JS file with the same name?
+        const jsFile = file.replace('.html', '.js');
+        if (fs.existsSync(path.resolve(custom, jsFile))) {
+          const js = await fs.readFile(path.resolve(custom, jsFile), 'utf8');
+          if(js) {
+            data = [{ id: file, preview, code, js }];
+          }
+        }
+        // Is there a css file with the same name?
+        const cssFile = file.replace('.html', '.css');
+        if (fs.existsSync(path.resolve(custom, cssFile))) {
+          const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
+          if(css) {
+            data = [{ id: file, preview, code, css }];
+          }
+        }
+        result.push([file.replace('.html', ''), data]);
       }
     }
   }
-
 
   let previews = result.reduce((obj, el) => {
     obj[el[0]] = el[1];

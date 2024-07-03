@@ -82,6 +82,8 @@ export interface PreviewObject {
     id: string;
     preview: string;
     code: string;
+    js?: string;
+    css?: string;
 }
 export declare type PreviewJson = {
     components: {

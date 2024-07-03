@@ -122,7 +122,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
  */
 function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentIds, result, custom, files, _i, files_1, file, template, preview, previews;
+        var components, componentIds, result, custom, files, _i, files_1, file, template, preview, bodyEl, code, data, jsFile, js, cssFile, css, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -147,24 +147,47 @@ function previewTransformer(handoff, documentationObject) {
                 case 1:
                     result = _a.sent();
                     custom = path_1.default.resolve(handoff.workingPath, "integration/templates/custom");
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 5];
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 9];
                     files = fs_extra_1.default.readdirSync(custom);
                     _i = 0, files_1 = files;
                     _a.label = 2;
                 case 2:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 5];
+                    if (!(_i < files_1.length)) return [3 /*break*/, 9];
                     file = files_1[_i];
-                    if (!file.endsWith('.html')) return [3 /*break*/, 4];
+                    if (!file.endsWith('.html')) return [3 /*break*/, 8];
                     return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 3:
                     template = _a.sent();
                     preview = mustache_1.default.render(template, {});
-                    result.push([file.replace('.html', ''), [{ id: file, preview: preview, code: preview }]]);
-                    _a.label = 4;
+                    bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+                    code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+                    data = [{ id: file, preview: preview, code: code }];
+                    jsFile = file.replace('.html', '.js');
+                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 5];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, jsFile), 'utf8')];
                 case 4:
+                    js = _a.sent();
+                    if (js) {
+                        data = [{ id: file, preview: preview, code: code, js: js }];
+                    }
+                    _a.label = 5;
+                case 5:
+                    cssFile = file.replace('.html', '.css');
+                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, cssFile))) return [3 /*break*/, 7];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
+                case 6:
+                    css = _a.sent();
+                    if (css) {
+                        data = [{ id: file, preview: preview, code: code, css: css }];
+                    }
+                    _a.label = 7;
+                case 7:
+                    result.push([file.replace('.html', ''), data]);
+                    _a.label = 8;
+                case 8:
                     _i++;
                     return [3 /*break*/, 2];
-                case 5:
+                case 9:
                     previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;
