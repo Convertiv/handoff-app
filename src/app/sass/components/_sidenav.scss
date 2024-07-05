@@ -11,14 +11,17 @@
 	padding: rem( 24px ) rem( 18px ) 0 rem( 18px );
 	padding: var( --sidenav-padding-top ) var( --sidenav-padding-right ) var( --sidenav-padding-bottom ) var( --sidenav-padding-left );
 	float: left;
+	position: relative;
 
 	@include media-breakpoint-down( md ) {
 		display: none;
 	}
-
+	 
 	ul {
 		list-style: none;
 		padding-left: 0;
+		position: sticky;
+		top: 90px;
 	}
 
 	li {

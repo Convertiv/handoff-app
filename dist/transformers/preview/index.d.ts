@@ -11,6 +11,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             code: string;
             js?: string;
             css?: string;
+            sass?: string;
         }[];
     };
 }>;

@@ -9,6 +9,7 @@ import { TransformComponentTokensResult } from './types';
 import Handoff from '../../index';
 import path from 'path';
 import fs from 'fs-extra';
+import sass from 'sass';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -120,24 +121,43 @@ export default async function previewTransformer(handoff: Handoff, documentation
         const preview = Mustache.render(template, {});
         const bodyEl = parse(preview).querySelector('body');
         const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-        let data: TransformComponentTokensResult[] = [{ id: file, preview, code }];
+        let data: TransformComponentTokensResult = { id: file, preview, code };
         // Is there a JS file with the same name?
         const jsFile = file.replace('.html', '.js');
         if (fs.existsSync(path.resolve(custom, jsFile))) {
           const js = await fs.readFile(path.resolve(custom, jsFile), 'utf8');
-          if(js) {
-            data = [{ id: file, preview, code, js }];
+          if (js) {
+            data['js'] = js;
+          }
+        }
+        // Is there a css file with the same name?
+        const scssFile = file.replace('.html', '.scss');
+        const scssPath = path.resolve(custom, scssFile);
+        if (fs.existsSync(scssPath)) {
+          // TODO: Think about what to compile to be useful here
+          // Don't want to pull all the sass dependencies in here
+          // const result = await sass.compileAsync(scssPath, { loadPaths: [
+          //   path.resolve(handoff.workingPath, 'integration/sass'),
+          //   path.resolve(handoff.workingPath, 'node_modules'),
+          //   path.resolve(handoff.workingPath),
+          // ] });
+          // if (result.css) {
+          //   data['css'] = result.css;
+          // }
+          const scss = await fs.readFile(scssPath, 'utf8');
+          if (scss) {
+            data['sass'] = scss;
           }
         }
         // Is there a css file with the same name?
         const cssFile = file.replace('.html', '.css');
         if (fs.existsSync(path.resolve(custom, cssFile))) {
           const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
-          if(css) {
-            data = [{ id: file, preview, code, css }];
+          if (css) {
+            data['css'] = css;
           }
         }
-        result.push([file.replace('.html', ''), data]);
+        result.push([file.replace('.html', ''), [data]]);
       }
     }
   }

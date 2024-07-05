@@ -1,14 +1,16 @@
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 import html from 'refractor/lang/xml-doc';
+import sass from 'refractor/lang/sass';
 import { PreviewObject } from '@handoff/types';
 import CopyCode from '../CopyCode';
 // @ts-ignore
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import { act, useState } from 'react';
+import { useState } from 'react';
 const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
+SyntaxHighlighter.registerLanguage('sass', sass);
 
 /**
  * Highlight code for preview elements
@@ -45,7 +47,7 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | undefined; collapsi
         >
           {states.map((state) => (
             <option key={state} value={state}>
-              {state === 'code' ? 'HTML' : state === 'css' ? 'CSS' : state === 'js' ? 'Javascript' : state}
+              {state === 'code' ? 'HTML' : state === 'css' ? 'CSS' : state === 'js' ? 'Javascript' : state === 'sass' ? 'SASS' : state}
             </option>
           ))}
         </select>
