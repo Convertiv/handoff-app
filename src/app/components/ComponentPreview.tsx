@@ -4,7 +4,7 @@ import { CodeHighlight } from './Markdown/CodeHighlight';
 import { ComponentInstance } from '@handoff/exporters/components/types';
 import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
-import { Breakpoints } from '../../types/config';
+import { Breakpoints } from '@handoff/types/config';
 
 export type ComponentPreview = {
   component: ComponentInstance;
