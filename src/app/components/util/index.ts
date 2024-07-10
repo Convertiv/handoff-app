@@ -43,6 +43,11 @@ export interface SectionLink {
     title: string;
     path: string;
     image: string;
+    menu?: {
+      title: string;
+      path: string;
+      image: string;
+    }[];
   }[];
 }
 // Documentation Page Properties
@@ -249,10 +254,10 @@ export const staticBuildMenu = () => {
           return undefined;
         }
 
-        const path = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
+        const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
         let subSections = [];
 
-        if (path === '/components') {
+        if (filepath === '/components') {
           const components = fetchComponents();
           // Build the submenu of exportables (components)
           const groupedComponents = groupBy(components, (e) => e.group ?? '');
@@ -273,9 +278,6 @@ export const staticBuildMenu = () => {
               if (sub.enabled !== false) {
                 return sub;
               }
-              console.log(sub);
-
-              // Read the subfile if possible and get any menu items
             })
             .filter(filterOutUndefined);
         }
@@ -283,7 +285,7 @@ export const staticBuildMenu = () => {
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
-          path,
+          path: filepath,
           subSections,
         };
       }

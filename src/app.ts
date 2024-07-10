@@ -66,6 +66,8 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
               fs.mkdirSync(target, { recursive: true });
             }
             transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
+          } else if(fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+
           }
         }
       }

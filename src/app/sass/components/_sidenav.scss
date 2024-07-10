@@ -27,6 +27,20 @@
 	li {
 		margin-bottom: rem( 1px );
 
+		ul {
+			li & {
+				padding-bottom: 0;
+				border: 1px solid black;
+			}
+			padding-left: rem( 10px );
+			margin-bottom: rem( 0 );
+			li {
+				a {
+					padding: 0 var( --sidenav-item-padding-right ) 0 var( --sidenav-item-padding-left );;
+				}
+			}
+		}
+
 		a {
 			background-color: var( --sidenav-item-background-color );
 			border-radius: var( --sidenav-item-border-radius );
@@ -40,7 +54,7 @@
 			border: 1px solid transparent;
 			position: relative;
 			margin-bottom: rem( 4px );
-
+			
 			&.is-selected {
 				background-color: var( --sidenav-item-active-background-color );
 				border-radius: var( --sidenav-item-active-border-radius );
@@ -83,6 +97,10 @@
 					transition: .2s all ease-in-out;
 				}
 			}
+		}
+
+		&.has_children a {
+			padding-bottom: rem( 0 );
 		}
 
 		small {

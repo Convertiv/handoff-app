@@ -8,14 +8,27 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
     <nav className="c-sidenav">
       <ul>
         {menu.subSections.map((item) => (
-          <li className="u-animation-fadein" key={`${item.path}-${item.title}`}>
+          <li className={`u-animation-fadein ${item.menu && ' has_children'}`} key={`${item.path}-${item.title}`}>
             {!item.path ? (
               <small>{item.title}</small>
             ) : (
-              <NavLink href={`/${item.path}`}>
-                {item.image && <Icon name={item.image} height={20} width={20} className="o-icon" />}
-                {item.title}
-              </NavLink>
+              <>
+                <NavLink href={`/${item.path}`}>
+                  {item.image && <Icon name={item.image} height={20} width={20} className="o-icon" />}
+                  {item.title}
+                </NavLink>
+                {item.menu && (
+                  <ul className="c-sidenav__sub">
+                    {item.menu.map((subItem) => (
+                      <li>
+                        <NavLink key={subItem.path} href={`/${item.path}/${subItem.path}`} className="c-sidenav__sub-item">
+                          {subItem.title}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </li>
         ))}
