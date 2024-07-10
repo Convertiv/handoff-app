@@ -44,9 +44,8 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
   component,
   breakpoints,
 }) => {
-  
   const ref = React.useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = React.useState('0px');
+  const [height, setHeight] = React.useState('100px');
   const [width, setWidth] = React.useState('100%');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
   const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];

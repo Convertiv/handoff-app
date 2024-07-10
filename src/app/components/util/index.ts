@@ -243,16 +243,6 @@ export const staticBuildMenu = () => {
         search !== path.resolve(docRoot, 'index.md') &&
         (fileName.endsWith('md') || fileName.endsWith('mdx'))
       ) {
-        // check if its an mdx or an md file
-        // let contents, metadata;
-        // check if its an mdx or an md file
-        /*if(fileName.endsWith('mdx')){
-          
-        }else{
-          contents = fs.readFileSync(search, 'utf-8');
-          const front = matter(contents);
-          metadata = front.data as Metadata;
-        }*/
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
         if (metadata.enabled === false) {
@@ -283,6 +273,9 @@ export const staticBuildMenu = () => {
               if (sub.enabled !== false) {
                 return sub;
               }
+              console.log(sub);
+
+              // Read the subfile if possible and get any menu items
             })
             .filter(filterOutUndefined);
         }

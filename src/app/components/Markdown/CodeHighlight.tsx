@@ -24,6 +24,8 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | undefined; collapsi
     const states = Object.keys(data).filter((key) => ['id', 'preview'].indexOf(key) === -1);
     const [activeState, setActiveState] = useState<string>(states[0]);
     const [code, setCode] = useState<string>(data.code);
+    oneLight['pre[class*="language-"]'].overflow = 'auto';
+    oneLight['pre[class*="language-"]'].maxHeight = '450px';
     return (
       <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
         <SyntaxHighlighter

@@ -68,7 +68,6 @@
 		color: #adadad;
 	}
 	transition: max-height 1s ease;
-
 	&.collapsed {
 		overflow: hidden;
 		max-height: rem( 150px );
