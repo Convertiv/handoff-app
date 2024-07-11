@@ -82,10 +82,8 @@ export interface PreviewObject {
     id: string;
     preview: string;
     code: string;
-    js?: string;
-    css?: string;
 }
-export declare type PreviewJson = {
+export type PreviewJson = {
     components: {
         [key in keyof FileComponentsObject]: PreviewObject[];
     };
@@ -141,9 +139,9 @@ export interface ComponentDocumentationOptions {
         };
     };
 }
-export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
-export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
-declare type ComponentViewFilterValue = string | string[] | {
+export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
+export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
+type ComponentViewFilterValue = string | string[] | {
     [value: string]: {
         [prop: string]: string;
     };

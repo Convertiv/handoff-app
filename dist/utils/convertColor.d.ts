@@ -42,6 +42,6 @@ export declare const transformFigmaEffectToCssBoxShadow: (effect: FigmaTypes.Eff
  * figmaRGBToWebRGB({r: 0.887499988079071, g: 0.07058823853731155, b: 0.0665624737739563, a: 1})
  */
 export declare function figmaColorToWebRGB(color: FigmaTypes.Color): webRGB | webRGBA;
-declare type webRGB = [number, number, number];
-declare type webRGBA = [number, number, number, number];
+type webRGB = [number, number, number];
+type webRGBA = [number, number, number, number];
 export {};

@@ -41,6 +41,8 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   }
 };
 
+
+
 /**
  * Copy the mdx files from the working dir to the module dir
  * @param handoff
@@ -56,7 +58,8 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
       if (file.endsWith('.mdx')) {
         // transform the file
         transformMdx(path.resolve(pages, file), path.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
-      }else if(fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+      } else if (fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+        // Recursion - find all mdx files in sub directories
         const subFiles = fs.readdirSync(path.resolve(pages, file));
         for (const subFile of subFiles) {
           if (subFile.endsWith('.mdx')) {
@@ -66,8 +69,17 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
               fs.mkdirSync(target, { recursive: true });
             }
             transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
-          } else if(fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
-
+          } else if (fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+            const thirdFiles = fs.readdirSync(path.resolve(pages, file));
+            for (const thirdFile of thirdFiles) {
+              if (thirdFile.endsWith('.mdx')) {
+                const target = path.resolve(appPath, 'pages', file, subFile);
+                if (!fs.existsSync(target)) {
+                  fs.mkdirSync(target, { recursive: true });
+                }
+                transformMdx(path.resolve(pages, file, subFile, thirdFile), path.resolve(appPath, 'pages', file, subFile, thirdFile), file);
+              }
+            }
           }
         }
       }
@@ -78,9 +90,9 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
 /**
  * Remove the frontmatter from the mdx file, convert it to an import, and
  * add the metadata to the export.  Then write the file to the destination.
- * @param src 
- * @param dest 
- * @param id 
+ * @param src
+ * @param dest
+ * @param id
  */
 const transformMdx = (src: string, dest: string, id: string) => {
   const content = fs.readFileSync(src);
@@ -94,8 +106,8 @@ const transformMdx = (src: string, dest: string, id: string) => {
   const image = data.image ?? '';
   const menuTitle = data.menuTitle ?? '';
   const enabled = data.enabled ?? true;
-  // 
-  mdx += `\n\n 
+  //
+  mdx += `\n\n
 import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
 import { getClientConfig } from '@handoff/config';
 

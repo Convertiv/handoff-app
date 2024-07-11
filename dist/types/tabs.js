@@ -5,4 +5,4 @@ var ComponentTab;
 (function (ComponentTab) {
     ComponentTab[ComponentTab["Overview"] = 0] = "Overview";
     ComponentTab[ComponentTab["DesignTokens"] = 1] = "DesignTokens";
-})(ComponentTab = exports.ComponentTab || (exports.ComponentTab = {}));
+})(ComponentTab || (exports.ComponentTab = ComponentTab = {}));
