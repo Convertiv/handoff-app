@@ -2,13 +2,15 @@ import * as React from 'react';
 import NavLink from '../NavLink';
 import { SectionLink } from '../util';
 import Icon from '../Icon';
+import { usePathname } from 'next/navigation';
 
 const CustomNav = ({ menu }: { menu: SectionLink }) => {
+  const pathname = usePathname();
   return (
     <nav className="c-sidenav">
       <ul>
         {menu.subSections.map((item) => (
-          <li className={`u-animation-fadein ${item.menu && ' has_children'}`} key={`${item.path}-${item.title}`}>
+          <li className={`u-animation-fadein ${item.menu ? ' has_children' : ''}`} key={`${item.path}-${item.title}`}>
             {!item.path ? (
               <small>{item.title}</small>
             ) : (
@@ -18,7 +20,7 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
                   {item.title}
                 </NavLink>
                 {item.menu && (
-                  <ul className="c-sidenav__sub">
+                  <ul className={`c-sidenav__sub${pathname.includes(item.path) ? ' is-active' : ''}`}>
                     {item.menu.map((subItem) => (
                       <li>
                         <NavLink key={subItem.path} href={`/${subItem.path}`} className="c-sidenav__sub-item">
