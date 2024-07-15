@@ -36,7 +36,7 @@
 			margin-bottom: rem( 0 );
 			li {
 				a {
-					padding: 0 var( --sidenav-item-padding-right ) 0 var( --sidenav-item-padding-left );;
+					padding: 5px var( --sidenav-item-padding-right ) 5px var( --sidenav-item-padding-left );;
 				}
 			}
 		}
@@ -99,9 +99,6 @@
 			}
 		}
 
-		&.has_children a {
-			padding-bottom: rem( 0 );
-		}
 
 		small {
 			text-transform: uppercase;

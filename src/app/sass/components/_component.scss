@@ -11,8 +11,12 @@ iframe {
 	background-color: #f7f7f7;
 	border-radius: rem(6px) rem(6px) 0 0;
 	display: flex;
-	justify-content: center;
+	justify-content: left;
 	position: relative;
+
+	iframe {
+		margin: 0 auto;
+	}
 
 	.breakpoint-width {
 		position: absolute;
@@ -38,7 +42,7 @@ iframe {
 				text-align: right;
 				border-radius: 5px;
 				background-color: #f8f9e3;
-				
+
 				min-width: 150px;
 				padding: 0 10px;
 				&::before {
@@ -61,7 +65,6 @@ iframe {
 				border: 1px solid #e3e3e3;
 				cursor: pointer;
 				border-left: none;
-
 
 				div {
 					display: inline-block;

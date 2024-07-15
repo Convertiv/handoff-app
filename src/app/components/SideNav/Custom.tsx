@@ -21,7 +21,7 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
                   <ul className="c-sidenav__sub">
                     {item.menu.map((subItem) => (
                       <li>
-                        <NavLink key={subItem.path} href={`/${item.path}/${subItem.path}`} className="c-sidenav__sub-item">
+                        <NavLink key={subItem.path} href={`/${subItem.path}`} className="c-sidenav__sub-item">
                           {subItem.title}
                         </NavLink>
                       </li>
