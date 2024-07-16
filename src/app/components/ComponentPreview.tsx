@@ -70,7 +70,7 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
     return () => {
       window.removeEventListener('resize', onLoad);
     };
-  }, []);
+  }, [onLoad]);
   return (
     <>
       <div className="breakpoint-width">

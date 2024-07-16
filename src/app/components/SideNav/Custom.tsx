@@ -15,14 +15,14 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
               <small>{item.title}</small>
             ) : (
               <>
-                <NavLink href={`/${item.path}`}>
+                <NavLink href={`${item.path}`}>
                   {item.image && <Icon name={item.image} height={20} width={20} className="o-icon" />}
                   {item.title}
                 </NavLink>
                 {item.menu && (
                   <ul className={`c-sidenav__sub${pathname.includes(item.path) ? ' is-active' : ''}`}>
                     {item.menu.map((subItem) => (
-                      <li>
+                      <li key={subItem.path}>
                         <NavLink key={subItem.path} href={`/${subItem.path}`} className="c-sidenav__sub-item">
                           {subItem.title}
                         </NavLink>
