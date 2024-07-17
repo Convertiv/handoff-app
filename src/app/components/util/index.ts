@@ -159,6 +159,7 @@ export const buildL1StaticPaths = () => {
       if (fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
       return false;
     })
+    .filter((fileName) => fileName.endsWith('.md'))
     .map((fileName) => {
       const path = fileName.replace('.md', '');
       if (knownPaths.indexOf(path) < 0) {
@@ -199,6 +200,7 @@ export const buildL2StaticPaths = () => {
       if (fs.lstatSync(calculatePath).isDirectory()) {
         const subFiles = fs.readdirSync(calculatePath);
         return subFiles
+          .filter((subFile) => subFile.endsWith('.md'))
           .flatMap((subFile) => {
             const childPath = fileName.replace('.md', '');
             if (knownPaths.indexOf(childPath) < 0) {

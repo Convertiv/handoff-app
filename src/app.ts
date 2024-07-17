@@ -68,15 +68,17 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
             if (!fs.existsSync(target)) {
               fs.mkdirSync(target, { recursive: true });
             }
+            console.log(`Copying MDX files from ${path.resolve(pages, file, subFile)} to ${path.resolve(appPath, 'pages', file, subFile)}`);
             transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
-          } else if (fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
-            const thirdFiles = fs.readdirSync(path.resolve(pages, file));
+          } else if (fs.lstatSync(path.resolve(pages, file, subFile)).isDirectory()) {
+            const thirdFiles = fs.readdirSync(path.resolve(pages, file, subFile));
             for (const thirdFile of thirdFiles) {
               if (thirdFile.endsWith('.mdx')) {
                 const target = path.resolve(appPath, 'pages', file, subFile);
                 if (!fs.existsSync(target)) {
                   fs.mkdirSync(target, { recursive: true });
                 }
+                console.log(`Copying MDX files from ${path.resolve(pages, file, subFile, thirdFile)} to ${path.resolve(appPath, 'pages', file, subFile, thirdFile)}`);
                 transformMdx(path.resolve(pages, file, subFile, thirdFile), path.resolve(appPath, 'pages', file, subFile, thirdFile), file);
               }
             }
@@ -106,11 +108,12 @@ const transformMdx = (src: string, dest: string, id: string) => {
   const image = data.image ?? '';
   const menuTitle = data.menuTitle ?? '';
   const enabled = data.enabled ?? true;
+  const wide = data.wide ? 'true': 'false';
   //
   mdx += `\n\n
 import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
 import { getClientConfig } from '@handoff/config';
-
+import { getPreview } from "handoff-app/src/app/components/util";
 export const getStaticProps = async () => {
   // get previews for components on this page
   const previews = getPreview();
@@ -138,6 +141,7 @@ export default function Layout(props) {
         image: "${image}",
         menuTitle: "${menuTitle}",
         enabled: ${enabled},
+        wide: ${wide},
       }}
       current={props.current}
     >

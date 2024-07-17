@@ -8,6 +8,7 @@ import Footer from './Footer';
 
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
+  wide?: boolean;
 }
 
 const MdxLayout = ({
@@ -17,6 +18,7 @@ const MdxLayout = ({
   id,
   config,
   children,
+  wide
 }: MarkdownLayoutProps) => {
 
   if(!menu) menu = [];
@@ -28,7 +30,7 @@ const MdxLayout = ({
       </Head>
       <Header menu={menu} config={config} />
       {current.subSections && current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content c-content__wide">
+      <section className={`c-content${wide ? ' c-content__wide' : ''}`}>
         <div className="o-container-fluid">
           {children}
         </div>
