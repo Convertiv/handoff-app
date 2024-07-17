@@ -357,7 +357,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       if (path.endsWith('.mdx')) {
         mergeMDX(handoff);
       }
-      console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
+          break;
+      }
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
