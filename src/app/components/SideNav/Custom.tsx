@@ -15,7 +15,7 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
               <small>{item.title}</small>
             ) : (
               <>
-                <NavLink href={`${item.path}`}>
+                <NavLink href={`/${item.path}`}>
                   {item.image && <Icon name={item.image} height={20} width={20} className="o-icon" />}
                   {item.title}
                 </NavLink>

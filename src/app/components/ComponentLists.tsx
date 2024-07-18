@@ -8,6 +8,8 @@ interface ComponentMetadata extends Metadata {
   path?: string;
 }
 
+
+
 export const ComponentList = ({ components }: { components: { [id: string]: ComponentMetadata } }) => {
   return (
     <div className="o-row">
@@ -53,7 +55,6 @@ export const ComponentsPageCard = ({
   available?: boolean;
 }) => {
   if (!path) path = 'components';
-  console.log('path', path);
   return (
     <div key={`component-${component}`}>
       <Link href={available ? `/${path}/${component}` : '#'}>

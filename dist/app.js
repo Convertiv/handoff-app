@@ -433,7 +433,13 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                             if (path.endsWith('.mdx')) {
                                 mergeMDX(handoff);
                             }
-                            console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                            switch (event) {
+                                case 'add':
+                                case 'change':
+                                case 'unlink':
+                                    console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                                    break;
+                            }
                             return [2 /*return*/];
                         });
                     }); });
