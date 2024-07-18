@@ -50,7 +50,6 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
 const mergeMDX = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
   const pages = path.resolve(handoff.workingPath, `pages`);
-  console.log(`Copying MDX files from ${pages} to ${appPath}`);
   if (fs.existsSync(pages)) {
     // Find all mdx files in path
     const files = fs.readdirSync(pages);

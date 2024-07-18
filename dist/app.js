@@ -101,7 +101,6 @@ var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
     return __generator(this, function (_c) {
         appPath = getAppPath(handoff);
         pages = path_1.default.resolve(handoff.workingPath, "pages");
-        console.log("Copying MDX files from ".concat(pages, " to ").concat(appPath));
         if (fs_extra_1.default.existsSync(pages)) {
             files = fs_extra_1.default.readdirSync(pages);
             for (_i = 0, files_1 = files; _i < files_1.length; _i++) {
