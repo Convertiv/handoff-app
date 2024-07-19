@@ -128,6 +128,7 @@ export const getStaticProps = async () => {
   };
 };
 import MarkdownLayout from "handoff-app/src/app/components/MarkdownLayout";
+import MdxContent from "handoff-app/src/app/components/context/MdxContext";
 export default function Layout(props) {
   return (
     <MarkdownLayout
@@ -144,7 +145,9 @@ export default function Layout(props) {
       }}
       current={props.current}
     >
-      {props.children}
+      <MdxContent>
+        {props.children}
+      </MdxContent>
     </MarkdownLayout>
   );
 

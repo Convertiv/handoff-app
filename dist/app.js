@@ -25,7 +25,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -164,7 +164,7 @@ var transformMdx = function (src, dest, id) {
     var enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
     var wide = data.wide ? 'true' : 'false';
     //
-    mdx += "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/".concat(id, "\") ?? [],\n    },\n  };\n};\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n        wide: ").concat(wide, ",\n      }}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
+    mdx += "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/".concat(id, "\") ?? [],\n    },\n  };\n};\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nimport MdxContent from \"handoff-app/src/app/components/context/MdxContext\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n        wide: ").concat(wide, ",\n      }}\n      current={props.current}\n    >\n      <MdxContent>\n        {props.children}\n      </MdxContent>\n    </MarkdownLayout>\n  );\n\n}");
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
@@ -273,7 +273,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 // Include any changes made within the app source during watch
                 chokidar_1.default
                     .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
-                    ignored: /(^|[\/\\])\../,
+                    ignored: /(^|[\/\\])\../, // ignore dotfiles
                     persistent: true,
                     ignoreInitial: true,
                 })
@@ -350,7 +350,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     });
                 });
                 chokidarConfig = {
-                    ignored: /(^|[\/\\])\../,
+                    ignored: /(^|[\/\\])\../, // ignore dotfiles
                     persistent: true,
                     ignoreInitial: true,
                 };
