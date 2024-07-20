@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { CodeHighlight } from './Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
 import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
+import { useMdxContext } from './context/MdxContext';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -106,18 +107,28 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
   );
 };
 
-export const CustomComponentPreview: React.FC<{ preview: PreviewObject; code: string; title: string; children: React.ReactNode; breakpoints?: Breakpoints }> = ({
+export const CustomComponentPreview: React.FC<{ preview?: PreviewObject; id: string; code: string; title: string; children: React.ReactNode; breakpoints?: Breakpoints }> = ({
   preview,
   title,
   children,
-  breakpoints
+  breakpoints,
+  id
 }) => {
+  const context = useMdxContext();
+  const config = context.config;
+  if(!preview && context && id) {
+    preview = context.getPreview(id);
+  }
+  if(!preview) {
+    return null;
+  }
+  console.log('config', config);
   return (
     <div id={preview.id}>
       <h4>{title}</h4>
       {children}
       <div className="c-component-preview">
-        <ComponentDisplay component={preview} breakpoints={breakpoints} />
+        <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} />
       </div>
       <CodeHighlight data={preview} collapsible={true} />
       <hr />

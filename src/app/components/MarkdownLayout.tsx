@@ -5,23 +5,18 @@ import startCase from 'lodash/startCase';
 import Header from './Header';
 import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
+import { MdxContextProvider } from './context/MdxContext';
+import { PreviewJson } from '../../types';
 
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
   wide?: boolean;
+  allPreviews?: PreviewJson;
 }
 
-const MdxLayout = ({
-  menu,
-  metadata,
-  current,
-  id,
-  config,
-  children,
-  wide
-}: MarkdownLayoutProps) => {
+const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPreviews }: MarkdownLayoutProps) => {
 
-  if(!menu) menu = [];
+  if (!menu) menu = [];
   return (
     <div className="c-page">
       <Head>
@@ -32,7 +27,10 @@ const MdxLayout = ({
       {current.subSections && current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className={`c-content${wide ? ' c-content__wide' : ''}`}>
         <div className="o-container-fluid">
-          {children}
+          {' '}
+          <MdxContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={allPreviews} defaultConfig={config}>
+            {children}
+          </MdxContextProvider>
         </div>
       </section>
       <Footer config={config} />

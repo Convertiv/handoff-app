@@ -41,8 +41,6 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   }
 };
 
-
-
 /**
  * Copy the mdx files from the working dir to the module dir
  * @param handoff
@@ -67,7 +65,6 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
             if (!fs.existsSync(target)) {
               fs.mkdirSync(target, { recursive: true });
             }
-            console.log(`Copying MDX files from ${path.resolve(pages, file, subFile)} to ${path.resolve(appPath, 'pages', file, subFile)}`);
             transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
           } else if (fs.lstatSync(path.resolve(pages, file, subFile)).isDirectory()) {
             const thirdFiles = fs.readdirSync(path.resolve(pages, file, subFile));
@@ -77,7 +74,6 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
                 if (!fs.existsSync(target)) {
                   fs.mkdirSync(target, { recursive: true });
                 }
-                console.log(`Copying MDX files from ${path.resolve(pages, file, subFile, thirdFile)} to ${path.resolve(appPath, 'pages', file, subFile, thirdFile)}`);
                 transformMdx(path.resolve(pages, file, subFile, thirdFile), path.resolve(appPath, 'pages', file, subFile, thirdFile), file);
               }
             }
@@ -101,18 +97,21 @@ const transformMdx = (src: string, dest: string, id: string) => {
   let mdx = body;
   const title = data.title ?? '';
   const menu = data.menu ?? '';
+  const description = data.description ?? '';
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
   const weight = data.weight ?? 0;
   const image = data.image ?? '';
   const menuTitle = data.menuTitle ?? '';
   const enabled = data.enabled ?? true;
-  const wide = data.wide ? 'true': 'false';
+  const wide = data.wide ? 'true' : 'false';
   //
-  mdx += `\n\n
+  mdx = `
+\n\n${mdx}\n\n
 import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
 import { getClientConfig } from '@handoff/config';
 import { getPreview } from "handoff-app/src/app/components/util";
+
 export const getStaticProps = async () => {
   // get previews for components on this page
   const previews = getPreview();
@@ -124,11 +123,18 @@ export const getStaticProps = async () => {
       menu,
       config,
       current: getCurrentSection(menu, "/${id}") ?? [],
+      title: "${title}",
+      description: "${description}",
+      image: "${image}",
     },
   };
 };
+
+export const preview = (name) => { 
+  return previews.components[name];
+};
+
 import MarkdownLayout from "handoff-app/src/app/components/MarkdownLayout";
-import MdxContent from "handoff-app/src/app/components/context/MdxContext";
 export default function Layout(props) {
   return (
     <MarkdownLayout
@@ -143,17 +149,17 @@ export default function Layout(props) {
         enabled: ${enabled},
         wide: ${wide},
       }}
+      allPreviews={props.previews}
+      config={props.config}
       current={props.current}
     >
-      <MdxContent>
-        {props.children}
-      </MdxContent>
+      {props.children}
     </MarkdownLayout>
   );
 
 }`;
   fs.writeFileSync(dest, mdx, 'utf-8');
-}
+};
 
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
