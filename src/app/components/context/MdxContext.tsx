@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { PreviewJson, PreviewObject } from '../../../types';
-import { ClientConfig } from '../../../types/config';
+import { PreviewJson, PreviewObject } from '@handoff/types';
+import { ClientConfig } from '@handoff/types/config';
 interface IMdxContext {
   preview?: PreviewJson;
   setPreview: (preview: PreviewJson) => void;
