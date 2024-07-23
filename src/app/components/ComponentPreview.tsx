@@ -20,7 +20,10 @@ export const getComponentPreviewTitle = (previewableComponent: ComponentPreview)
   return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
 };
 
-export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews; breakpoints?: Breakpoints }> = ({ components, breakpoints }) => {
+export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews; breakpoints?: Breakpoints }> = ({
+  components,
+  breakpoints,
+}) => {
   return (
     <>
       {components.map((previewableComponent) => {
@@ -30,7 +33,7 @@ export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews;
             <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
             <p>{component.description}</p>
             <div className="c-component-preview">
-              <ComponentDisplay component={previewableComponent.preview} breakpoints={breakpoints}/>
+              <ComponentDisplay component={previewableComponent.preview} breakpoints={breakpoints} />
             </div>
             <CodeHighlight data={previewableComponent.preview} />
             <hr />
@@ -75,22 +78,23 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
   return (
     <>
       <div className="breakpoint-width">
-        {breakpoints && Object.keys(breakpoints).map((key) => (
-          <div
-            key={key}
-            className={['breakpoint-width__item', key === breakpoint ? 'active' : ''].join(' ')}
-            onClick={() => {
-              setBreakpoint(key);
-              setWidth(`${breakpoints[key].size}px`);
-            }}
-          >
-            {key}
-            <div className="breakpoint-width__item__label">
-              <span>{breakpoints[key].name}</span> - &nbsp;
-              <span>{breakpoints[key].size}px</span>
+        {breakpoints &&
+          Object.keys(breakpoints).map((key) => (
+            <div
+              key={key}
+              className={['breakpoint-width__item', key === breakpoint ? 'active' : ''].join(' ')}
+              onClick={() => {
+                setBreakpoint(key);
+                setWidth(`${breakpoints[key].size}px`);
+              }}
+            >
+              {key}
+              <div className="breakpoint-width__item__label">
+                <span>{breakpoints[key].name}</span> - &nbsp;
+                <span>{breakpoints[key].size}px</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
       <iframe
         onLoad={onLoad}
@@ -107,25 +111,25 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
   );
 };
 
-export const CustomComponentPreview: React.FC<{ preview?: PreviewObject; id: string; code: string; title: string; children: React.ReactNode; breakpoints?: Breakpoints }> = ({
-  preview,
-  title,
-  children,
-  breakpoints,
-  id
-}) => {
+export const CustomComponentPreview: React.FC<{
+  preview?: PreviewObject;
+  id: string;
+  code: string;
+  title: string;
+  children: React.ReactNode;
+  breakpoints?: Breakpoints;
+}> = ({ preview, title, children, breakpoints, id }) => {
   const context = useMdxContext();
   const config = context.config;
-  if(!preview && context && id) {
+  if (!preview && context && id) {
     preview = context.getPreview(id);
   }
-  if(!preview) {
+  if (!preview) {
     return null;
   }
-  console.log('config', config);
   return (
     <div id={preview.id}>
-      <h4>{title}</h4>
+      {title && <h4>{title}</h4>}
       {children}
       <div className="c-component-preview">
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} />

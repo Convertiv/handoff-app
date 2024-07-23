@@ -97,7 +97,7 @@ const transformMdx = (src: string, dest: string, id: string) => {
   let mdx = body;
   const title = data.title ?? '';
   const menu = data.menu ?? '';
-  const description = data.description ?? '';
+  const description = data.description.replace(/(\r\n|\n|\r)/gm, "") ?? '';
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
   const weight = data.weight ?? 0;
@@ -147,8 +147,8 @@ export default function Layout(props) {
         image: "${image}",
         menuTitle: "${menuTitle}",
         enabled: ${enabled},
-        wide: ${wide},
       }}
+      wide={${wide}}
       allPreviews={props.previews}
       config={props.config}
       current={props.current}

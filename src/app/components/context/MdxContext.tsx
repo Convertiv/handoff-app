@@ -23,7 +23,6 @@ interface IMdxContextProviderProps {
 export const MdxContext = createContext<IMdxContext | undefined>(undefined);
 
 export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({ children, defaultMenu, defaultMetadata, defaultPreview, defaultConfig }) => {
-  console.log('MdxContextProvider', defaultConfig);
   const [preview, setPreview] = useState<PreviewJson>(defaultPreview);
   const [config, setConfig] = useState<ClientConfig>(defaultConfig);
   const getPreview = (name: string) => {
@@ -53,8 +52,6 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({ childre
 };
 
 export const useMdxContext = () => {
-  console.log('useMdxContext', useContext);
-  console.log('useMdxContext', MdxContext);
   const context = useContext(MdxContext);
   if (!context) {
     throw new Error('useMdxContext must be used within a MdxContext.');

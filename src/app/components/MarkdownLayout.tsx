@@ -15,7 +15,6 @@ interface MarkdownLayoutProps extends ComponentDocumentationProps {
 }
 
 const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPreviews }: MarkdownLayoutProps) => {
-
   if (!menu) menu = [];
   return (
     <div className="c-page">
