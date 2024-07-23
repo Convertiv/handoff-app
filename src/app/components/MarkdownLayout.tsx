@@ -6,7 +6,7 @@ import Header from './Header';
 import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
 import { MdxContextProvider } from './context/MdxContext';
-import { PreviewJson } from '../../types';
+import { PreviewJson } from '@handoff/types';
 
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
