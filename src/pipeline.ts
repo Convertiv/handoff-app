@@ -18,7 +18,6 @@ import cssTransformer from './transformers/css/index';
 import integrationTransformer from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
 import previewTransformer from './transformers/preview/index';
-import { buildClientFiles } from './utils/preview';
 import buildApp from './app';
 import Handoff from '.';
 import sdTransformer from './transformers/sd';
@@ -58,7 +57,7 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
 };
 
 /**
- * Build just the custom fonts
+ * Build integration
  * @param documentationObject
  * @returns
  */
@@ -69,23 +68,14 @@ const buildIntegration = async (handoff: Handoff, documentationObject: Documenta
 };
 
 /**
- * Run just the preview
+ * Build previews
  * @param documentationObject
-*/
-const buildPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+ * @returns
+ */
+const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
     previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
-
-  if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
-    await buildClientFiles(handoff)
-      .then((value) => !!value && console.log(chalk.green(value)))
-      .catch((error) => {
-        throw new Error(error);
-      });
-  } else {
-    console.log(chalk.red('Skipping preview generation'));
-  }
 };
 
 /**
@@ -331,7 +321,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
     await buildIntegration(handoff, documentationObject);
-    await buildPreview(handoff, documentationObject);
+    await buildPreviews(handoff, documentationObject);
   }
 };
 
@@ -349,7 +339,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
-  await buildPreview(handoff, documentationObject);
+  await buildPreviews(handoff, documentationObject);
   if (build) {
     await buildApp(handoff);
   }
