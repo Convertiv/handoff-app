@@ -17,12 +17,15 @@ SyntaxHighlighter.registerLanguage('sass', sass);
  * @param param0
  * @returns ReactElement
  */
-export const CodeHighlight: React.FC<{ data: PreviewObject | undefined; collapsible?: boolean }> = ({ data, collapsible }) => {
+export const CodeHighlight: React.FC<{ data: PreviewObject | string | undefined; collapsible?: boolean; type?: string }> = ({ data, collapsible, type }) => {
   const [collapsed, setCollapsed] = useState<boolean>(true);
 
   if (!data) {
     data = { id: '', preview: '', code: '' };
+  } else if (typeof data === 'string') {
+    data = { id: '', preview: '', code: data };
   }
+  if(!type) type = 'html';
   const states = Object.keys(data).filter((key) => ['id', 'preview'].indexOf(key) === -1);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.code);
@@ -32,7 +35,7 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | undefined; collapsi
     <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
       <SyntaxHighlighter
         style={oneLight}
-        language={activeState === 'code' ? 'html' : activeState}
+        language={activeState === 'code' ? type : activeState}
         PreTag="div"
         showLineNumbers={true}
         wrapLines={true}
@@ -41,20 +44,22 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | undefined; collapsi
         {code}
       </SyntaxHighlighter>
       <CopyCode code={data.code} />
-      <select
-        className="c-code-block__select"
-        value={activeState}
-        onChange={(e) => {
-          setActiveState(e.target.value);
-          setCode(data[e.target.value]);
-        }}
-      >
-        {states.map((state) => (
-          <option key={state} value={state}>
-            {state === 'code' ? 'HTML' : state === 'css' ? 'CSS' : state === 'js' ? 'Javascript' : state === 'sass' ? 'SASS' : state}
-          </option>
-        ))}
-      </select>
+      {states.length > 2 && (
+        <select
+          className="c-code-block__select"
+          value={activeState}
+          onChange={(e) => {
+            setActiveState(e.target.value);
+            setCode(data[e.target.value]);
+          }}
+        >
+          {states.map((state) => (
+            <option key={state} value={state}>
+              {state === 'code' ? 'HTML' : state === 'css' ? 'CSS' : state === 'js' ? 'Javascript' : state === 'sass' ? 'SASS' : state}
+            </option>
+          ))}
+        </select>
+      )}
       {collapsible && (
         <button className="c-code-block__toggle" onClick={(e) => setCollapsed(!collapsed)}>
           {collapsed ? 'Show more' : 'Show less'}

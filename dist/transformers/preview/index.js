@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -45,6 +45,7 @@ var index_1 = require("../../utils/index");
 var utils_1 = require("./utils");
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
+var sass_1 = __importDefault(require("sass"));
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {
@@ -122,7 +123,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
  */
 function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentIds, result, custom, files, _i, files_1, file, template, preview, bodyEl, code, data, jsFile, js, scssFile, scssPath, scss, cssFile, css, previews;
+        var components, componentIds, result, custom, publicPath, files, _i, files_1, file, template, preview, bodyEl, code, data, jsFile, js, scssFile, scssPath, cssFile, cssPath, result_1, scss, css, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -147,14 +148,15 @@ function previewTransformer(handoff, documentationObject) {
                 case 1:
                     result = _a.sent();
                     custom = path_1.default.resolve(handoff.workingPath, "integration/templates/custom");
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 11];
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public");
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 12];
                     files = fs_extra_1.default.readdirSync(custom);
                     _i = 0, files_1 = files;
                     _a.label = 2;
                 case 2:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 11];
+                    if (!(_i < files_1.length)) return [3 /*break*/, 12];
                     file = files_1[_i];
-                    if (!file.endsWith('.html')) return [3 /*break*/, 10];
+                    if (!file.endsWith('.html')) return [3 /*break*/, 11];
                     return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 3:
                     template = _a.sent();
@@ -169,36 +171,49 @@ function previewTransformer(handoff, documentationObject) {
                     js = _a.sent();
                     if (js) {
                         data['js'] = js;
+                        fs_extra_1.default.writeFileSync(path_1.default.join(publicPath, jsFile), js);
                     }
                     _a.label = 5;
                 case 5:
                     scssFile = file.replace('.html', '.scss');
                     scssPath = path_1.default.resolve(custom, scssFile);
-                    if (!fs_extra_1.default.existsSync(scssPath)) return [3 /*break*/, 7];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
+                    cssFile = file.replace('.html', '.css');
+                    cssPath = path_1.default.resolve(custom, cssFile);
+                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 8];
+                    return [4 /*yield*/, sass_1.default.compileAsync(scssPath, { loadPaths: [
+                                path_1.default.resolve(handoff.workingPath, 'integration/sass'),
+                                path_1.default.resolve(handoff.workingPath, 'node_modules'),
+                                path_1.default.resolve(handoff.workingPath),
+                            ] })];
                 case 6:
+                    result_1 = _a.sent();
+                    if (result_1.css) {
+                        data['css'] = result_1.css;
+                    }
+                    fs_extra_1.default.writeFileSync(path_1.default.join(publicPath, cssFile), result_1.css);
+                    return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
+                case 7:
                     scss = _a.sent();
                     if (scss) {
                         data['sass'] = scss;
                     }
-                    _a.label = 7;
-                case 7:
-                    cssFile = file.replace('.html', '.css');
-                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, cssFile))) return [3 /*break*/, 9];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
+                    _a.label = 8;
                 case 8:
+                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 10];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
+                case 9:
                     css = _a.sent();
                     if (css) {
                         data['css'] = css;
                     }
-                    _a.label = 9;
-                case 9:
-                    result.push([file.replace('.html', ''), [data]]);
                     _a.label = 10;
                 case 10:
+                    result.push([file.replace('.html', ''), [data]]);
+                    _a.label = 11;
+                case 11:
                     _i++;
                     return [3 /*break*/, 2];
-                case 11:
+                case 12:
                     previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;

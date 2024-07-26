@@ -113,6 +113,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
   // Allow a user to create custom previews by putting templates in a custom folder
   // Iterate over the html files in that folder and render them as a preview
   const custom = path.resolve(handoff.workingPath, `integration/templates/custom`);
+  const publicPath = path.resolve(handoff.workingPath, `public`);
   if (fs.existsSync(custom)) {
     const files = fs.readdirSync(custom);
     for (const file of files) {
@@ -128,30 +129,33 @@ export default async function previewTransformer(handoff: Handoff, documentation
           const js = await fs.readFile(path.resolve(custom, jsFile), 'utf8');
           if (js) {
             data['js'] = js;
+            fs.writeFileSync(path.join(publicPath, jsFile), js);
           }
         }
         // Is there a css file with the same name?
         const scssFile = file.replace('.html', '.scss');
         const scssPath = path.resolve(custom, scssFile);
-        if (fs.existsSync(scssPath)) {
-          // TODO: Think about what to compile to be useful here
-          // Don't want to pull all the sass dependencies in here
-          // const result = await sass.compileAsync(scssPath, { loadPaths: [
-          //   path.resolve(handoff.workingPath, 'integration/sass'),
-          //   path.resolve(handoff.workingPath, 'node_modules'),
-          //   path.resolve(handoff.workingPath),
-          // ] });
-          // if (result.css) {
-          //   data['css'] = result.css;
-          // }
+        const cssFile = file.replace('.html', '.css');
+        const cssPath = path.resolve(custom, cssFile);
+
+        if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
+          const result = await sass.compileAsync(scssPath, { loadPaths: [
+            path.resolve(handoff.workingPath, 'integration/sass'),
+            path.resolve(handoff.workingPath, 'node_modules'),
+            path.resolve(handoff.workingPath),
+          ] });
+          if (result.css) {
+            data['css'] = result.css;
+          }
+          fs.writeFileSync(path.join(publicPath, cssFile), result.css);
           const scss = await fs.readFile(scssPath, 'utf8');
           if (scss) {
             data['sass'] = scss;
           }
         }
         // Is there a css file with the same name?
-        const cssFile = file.replace('.html', '.css');
-        if (fs.existsSync(path.resolve(custom, cssFile))) {
+        
+        if (fs.existsSync(cssPath)) {
           const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
           if (css) {
             data['css'] = css;
