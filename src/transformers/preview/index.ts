@@ -132,7 +132,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
             fs.writeFileSync(path.join(publicPath, jsFile), js);
           }
         }
-        // Is there a css file with the same name?
+        // Is there a css file with the same name? 
         const scssFile = file.replace('.html', '.scss');
         const scssPath = path.resolve(custom, scssFile);
         const cssFile = file.replace('.html', '.css');
