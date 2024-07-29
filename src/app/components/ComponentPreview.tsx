@@ -111,7 +111,7 @@ export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; 
   );
 };
 
-export const CustomComponentPreview: React.FC<{
+export const SnippetPreview: React.FC<{
   preview?: PreviewObject;
   id: string;
   code: string;

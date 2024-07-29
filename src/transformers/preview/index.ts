@@ -112,7 +112,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
 
   // Allow a user to create custom previews by putting templates in a custom folder
   // Iterate over the html files in that folder and render them as a preview
-  const custom = path.resolve(handoff.workingPath, `integration/templates/custom`);
+  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
   const publicPath = path.resolve(handoff.workingPath, `public`);
   if (fs.existsSync(custom)) {
     const files = fs.readdirSync(custom);

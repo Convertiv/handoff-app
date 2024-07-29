@@ -147,7 +147,7 @@ function previewTransformer(handoff, documentationObject) {
                         }); }))];
                 case 1:
                     result = _a.sent();
-                    custom = path_1.default.resolve(handoff.workingPath, "integration/templates/custom");
+                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
                     publicPath = path_1.default.resolve(handoff.workingPath, "public");
                     if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 12];
                     files = fs_extra_1.default.readdirSync(custom);

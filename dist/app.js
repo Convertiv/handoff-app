@@ -148,19 +148,19 @@ var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param id
  */
 var transformMdx = function (src, dest, id) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     var content = fs_extra_1.default.readFileSync(src);
-    var _k = (0, gray_matter_1.default)(content), data = _k.data, body = _k.content;
+    var _j = (0, gray_matter_1.default)(content), data = _j.data, body = _j.content;
     var mdx = body;
     var title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
     var menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
-    var description = (_c = data.description.replace(/(\r\n|\n|\r)/gm, "")) !== null && _c !== void 0 ? _c : '';
-    var metaDescription = (_d = data.metaDescription) !== null && _d !== void 0 ? _d : '';
-    var metaTitle = (_e = data.metaTitle) !== null && _e !== void 0 ? _e : '';
-    var weight = (_f = data.weight) !== null && _f !== void 0 ? _f : 0;
-    var image = (_g = data.image) !== null && _g !== void 0 ? _g : '';
-    var menuTitle = (_h = data.menuTitle) !== null && _h !== void 0 ? _h : '';
-    var enabled = (_j = data.enabled) !== null && _j !== void 0 ? _j : true;
+    var description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, "") : '';
+    var metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
+    var metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
+    var weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
+    var image = (_f = data.image) !== null && _f !== void 0 ? _f : '';
+    var menuTitle = (_g = data.menuTitle) !== null && _g !== void 0 ? _g : '';
+    var enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
     var wide = data.wide ? 'true' : 'false';
     //
     mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => { \n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
