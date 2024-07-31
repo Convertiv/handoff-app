@@ -10,6 +10,8 @@ import Handoff from '../../index';
 import path from 'path';
 import fs from 'fs-extra';
 import sass from 'sass';
+import { bundleJSWebpack } from '../../utils/preview';
+
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -110,7 +112,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
     })
   );
 
-  // Allow a user to create custom previews by putting templates in a custom folder
+  // Allow a user to create custom previews by putting templates in a snippets folder
   // Iterate over the html files in that folder and render them as a preview
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
   const publicPath = path.resolve(handoff.workingPath, `public`);
@@ -118,21 +120,26 @@ export default async function previewTransformer(handoff: Handoff, documentation
     const files = fs.readdirSync(custom);
     for (const file of files) {
       if (file.endsWith('.html')) {
-        const template = await fs.readFile(path.resolve(custom, file), 'utf8');
-        const preview = Mustache.render(template, {});
-        const bodyEl = parse(preview).querySelector('body');
-        const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-        let data: TransformComponentTokensResult = { id: file, preview, code };
+        let data: TransformComponentTokensResult = { 
+          id: file, 
+          preview: '', 
+          code: '',
+          js: null,
+          css: null,
+          sass: null,
+        };
         // Is there a JS file with the same name?
         const jsFile = file.replace('.html', '.js');
         if (fs.existsSync(path.resolve(custom, jsFile))) {
-          const js = await fs.readFile(path.resolve(custom, jsFile), 'utf8');
+          const jsPath = path.resolve(custom, jsFile);
+          const js = await fs.readFile(jsPath, 'utf8');
+          const compiled = await bundleJSWebpack(jsPath, handoff);
           if (js) {
             data['js'] = js;
-            fs.writeFileSync(path.join(publicPath, jsFile), js);
+            data['jsCompiled'] = compiled;
           }
         }
-        // Is there a css file with the same name? 
+        // Is there a scss file with the same name? 
         const scssFile = file.replace('.html', '.scss');
         const scssPath = path.resolve(custom, scssFile);
         const cssFile = file.replace('.html', '.css');
@@ -141,26 +148,36 @@ export default async function previewTransformer(handoff: Handoff, documentation
         if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
           const result = await sass.compileAsync(scssPath, { loadPaths: [
             path.resolve(handoff.workingPath, 'integration/sass'),
+
             path.resolve(handoff.workingPath, 'node_modules'),
             path.resolve(handoff.workingPath),
           ] });
           if (result.css) {
             data['css'] = result.css;
           }
-          fs.writeFileSync(path.join(publicPath, cssFile), result.css);
           const scss = await fs.readFile(scssPath, 'utf8');
           if (scss) {
             data['sass'] = scss;
           }
         }
-        // Is there a css file with the same name?
-        
+        // Is there a css file with the same name? 
         if (fs.existsSync(cssPath)) {
           const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
           if (css) {
             data['css'] = css;
           }
         }
+        const template = await fs.readFile(path.resolve(custom, file), 'utf8');
+        const preview = Mustache.render(template, {
+          config: handoff.config,
+          style: data['css'] ? `<link rel="stylesheet" type="text/css" href="data:text/css;base64,${Buffer.from(data['css']).toString('base64')}" />` : '',
+          script: data['jsCompiled'] ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script` : '',
+        });
+        const bodyEl = parse(preview).querySelector('body');
+        const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+        data['preview'] = preview;
+        data['code'] = code;
+        // Create a result preview object
         result.push([file.replace('.html', ''), [data]]);
       }
     }

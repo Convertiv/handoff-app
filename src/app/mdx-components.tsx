@@ -15,9 +15,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     img: (props) => <Image sizes="100vw" style={{ width: '100%', height: 'auto' }} {...(props as ImageProps)} />,
     code: (props) => <CodeHighlight {...props} data={props.children.toString()} />,
     pre: (props) => {
-      console.log(props)
+      const language = 'css';
+      //props.children.props.className.replace('language-', '')
       // @ts-ignore
-      return <CodeHighlight {...props} data={props.children.props.children.toString()} type={props.children.props.className.replace('language-', '')} />;
+      return <CodeHighlight {...props} data={props.children.props.children.toString()} type={language} />;
     },
     ...components,
   };

@@ -46,6 +46,7 @@ var utils_1 = require("./utils");
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var sass_1 = __importDefault(require("sass"));
+var preview_1 = require("../../utils/preview");
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {
@@ -123,7 +124,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
  */
 function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentIds, result, custom, publicPath, files, _i, files_1, file, template, preview, bodyEl, code, data, jsFile, js, scssFile, scssPath, cssFile, cssPath, result_1, scss, css, previews;
+        var components, componentIds, result, custom, publicPath, files, _i, files_1, file, data, jsFile, jsPath, js, compiled, scssFile, scssPath, cssFile, cssPath, result_1, scss, css, template, preview, bodyEl, code, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -149,29 +150,34 @@ function previewTransformer(handoff, documentationObject) {
                     result = _a.sent();
                     custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
                     publicPath = path_1.default.resolve(handoff.workingPath, "public");
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 12];
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 13];
                     files = fs_extra_1.default.readdirSync(custom);
                     _i = 0, files_1 = files;
                     _a.label = 2;
                 case 2:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 12];
+                    if (!(_i < files_1.length)) return [3 /*break*/, 13];
                     file = files_1[_i];
-                    if (!file.endsWith('.html')) return [3 /*break*/, 11];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
-                case 3:
-                    template = _a.sent();
-                    preview = mustache_1.default.render(template, {});
-                    bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
-                    code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-                    data = { id: file, preview: preview, code: code };
+                    if (!file.endsWith('.html')) return [3 /*break*/, 12];
+                    data = {
+                        id: file,
+                        preview: '',
+                        code: '',
+                        js: null,
+                        css: null,
+                        sass: null,
+                    };
                     jsFile = file.replace('.html', '.js');
                     if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 5];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, jsFile), 'utf8')];
-                case 4:
+                    jsPath = path_1.default.resolve(custom, jsFile);
+                    return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
+                case 3:
                     js = _a.sent();
+                    return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff)];
+                case 4:
+                    compiled = _a.sent();
                     if (js) {
                         data['js'] = js;
-                        fs_extra_1.default.writeFileSync(path_1.default.join(publicPath, jsFile), js);
+                        data['jsCompiled'] = compiled;
                     }
                     _a.label = 5;
                 case 5:
@@ -190,7 +196,6 @@ function previewTransformer(handoff, documentationObject) {
                     if (result_1.css) {
                         data['css'] = result_1.css;
                     }
-                    fs_extra_1.default.writeFileSync(path_1.default.join(publicPath, cssFile), result_1.css);
                     return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
                 case 7:
                     scss = _a.sent();
@@ -207,13 +212,25 @@ function previewTransformer(handoff, documentationObject) {
                         data['css'] = css;
                     }
                     _a.label = 10;
-                case 10:
-                    result.push([file.replace('.html', ''), [data]]);
-                    _a.label = 11;
+                case 10: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 11:
+                    template = _a.sent();
+                    preview = mustache_1.default.render(template, {
+                        config: handoff.config,
+                        style: data['css'] ? "<link rel=\"stylesheet\" type=\"text/css\" href=\"data:text/css;base64,".concat(Buffer.from(data['css']).toString('base64'), "\" />") : '',
+                        script: data['jsCompiled'] ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script") : '',
+                    });
+                    bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+                    code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+                    data['preview'] = preview;
+                    data['code'] = code;
+                    // Create a result preview object
+                    result.push([file.replace('.html', ''), [data]]);
+                    _a.label = 12;
+                case 12:
                     _i++;
                     return [3 /*break*/, 2];
-                case 12:
+                case 13:
                     previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;
