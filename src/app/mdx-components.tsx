@@ -13,13 +13,23 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     // Allows customizing built-in components, e.g. to add styling.
     h1: ({ children }) => <h1>{children}</h1>,
     img: (props) => <Image sizes="100vw" style={{ width: '100%', height: 'auto' }} {...(props as ImageProps)} />,
-    code: (props) => <CodeHighlight {...props} data={props.children.toString()} />,
-    pre: (props) => {
-      const language = 'css';
-      //props.children.props.className.replace('language-', '')
-      // @ts-ignore
-      return <CodeHighlight {...props} data={props.children.props.children.toString()} type={language} />;
+    //code: (props) => <CodeHighlight {...props} data={props.children.toString()} />,
+    code: (props) => {
+      console.log('code', props);
+      if (props.children.toString().includes('\n')) {
+        return <CodeHighlight {...props} data={props.children.toString()} />;
+      } else {
+        return <code className="inline-code">{props.children}</code>;
+      }
     },
+    // pre: (props) => {
+    //   console.log('pre', props);
+    //   return <code>1{props.children}</code>;
+    //   const language = 'css';
+    //   //props.children.props.className.replace('language-', '')
+    //   // @ts-ignore
+    //   return <CodeHighlight {...props} data={props.children.props.children.toString()} type={language} />;
+    // },
     ...components,
   };
 }
