@@ -129,7 +129,7 @@ export const SnippetPreview: React.FC<{
   }
   return (
     <div id={preview.id}>
-      {title && <h4>{title}</h4>}
+      {title && <h2>{title}</h2>}
       {children}
       <div className="c-component-preview">
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} />

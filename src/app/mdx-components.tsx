@@ -17,17 +17,29 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       if (props.children.toString().includes('\n')) {
         let title = '';
         // @ts-ignore
-        if(props.codetitle) {
+        if (props.codetitle) {
           // @ts-ignore
           title = props.codetitle;
         }
-        return <CodeHighlight {...props} data={props.children.toString().trim()} title={title} dark={true} />;
+        let col = '12';
+        // @ts-ignore
+        console.log('Col', props.col);
+        // @ts-ignore
+        if (props.col) {
+          // @ts-ignore
+          col = props.col;
+        }
+        return (
+          <div className={`o-col-${col}@md`}>
+            <CodeHighlight {...props} data={props.children.toString().trim()} title={title} dark={true} />
+          </div>
+        );
       } else {
         return <code className="inline-code">{props.children}</code>;
       }
     },
     pre: (props) => {
-      return <pre>{props.children}</pre>;
+      return <>{props.children}</>;
     },
     //   const language = 'css';
     //   //props.children.props.className.replace('language-', '')

@@ -7,6 +7,17 @@ const CodeTransform: unified.Plugin<[], mdast.Root> = () => {
     visit(tree, "code", (node, index, parent) => {
       const metaString = `${node.lang ?? ""} ${node.meta ?? ""}`.trim();
       if (!metaString) return;
+      const props = {  }
+      console.log('Meta String', metaString)
+      const [col] = metaString.match(/(?<=col=("|'))(.*?)(?=("|'))/) ?? [
+        "",
+      ];
+      console.log(col);
+      if(col) {
+        // @ts-ignore
+        props.col = col;
+      }
+      
       const [title] = metaString.match(/(?<=title=("|'))(.*?)(?=("|'))/) ?? [
         "",
       ];
@@ -16,8 +27,8 @@ const CodeTransform: unified.Plugin<[], mdast.Root> = () => {
       }
       if (!title) return;
       // @ts-ignore
-      //node.data = title;
-      node.data = { hProperties: { codetitle: [title] } };
+      props.codetitle = title;
+      node.data = { hProperties:  props };
       return index ? index + 2 : 0;
     });
   };
