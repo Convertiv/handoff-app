@@ -33,6 +33,7 @@ declare class Handoff {
     init(configOverride?: Config): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
+    recipe(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;

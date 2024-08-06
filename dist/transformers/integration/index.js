@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -40,10 +51,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
+var handlebars_1 = __importDefault(require("handlebars"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var archiver_1 = __importDefault(require("archiver"));
 var tailwind_1 = require("./tailwind");
+var utils_1 = require("../utils");
+var tokens_1 = require("../tokens");
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
@@ -198,55 +212,160 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
     });
 }); };
 exports.zipTokens = zipTokens;
+var renderIntegrationTemplates = function (sourcePath, destPath, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+    var items, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, fs_extra_1.default.readdir(sourcePath)];
+            case 1:
+                items = _a.sent();
+                _i = 0, items_1 = items;
+                _a.label = 2;
+            case 2:
+                if (!(_i < items_1.length)) return [3 /*break*/, 11];
+                item = items_1[_i];
+                sourceItemPath = path_1.default.join(sourcePath, item);
+                destItemPath = path_1.default.join(destPath, item);
+                return [4 /*yield*/, fs_extra_1.default.stat(sourceItemPath)];
+            case 3:
+                stat = _a.sent();
+                if (!stat.isDirectory()) return [3 /*break*/, 6];
+                // Create the directory in the destination path if it doesn't exist
+                return [4 /*yield*/, fs_extra_1.default.ensureDir(destItemPath)];
+            case 4:
+                // Create the directory in the destination path if it doesn't exist
+                _a.sent();
+                // Recursively process the directory
+                return [4 /*yield*/, renderIntegrationTemplates(sourceItemPath, destItemPath, documentationObject)];
+            case 5:
+                // Recursively process the directory
+                _a.sent();
+                return [3 /*break*/, 10];
+            case 6: return [4 /*yield*/, fs_extra_1.default.readFile(sourceItemPath, 'utf-8')];
+            case 7:
+                content = _a.sent();
+                template = handlebars_1.default.compile(content);
+                renderedContent = template({ documentationObject: documentationObject });
+                // Ensure the directory exists before writing the file
+                return [4 /*yield*/, fs_extra_1.default.ensureDir(path_1.default.dirname(destItemPath))];
+            case 8:
+                // Ensure the directory exists before writing the file
+                _a.sent();
+                // Write the rendered content to the destination path
+                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, renderedContent)];
+            case 9:
+                // Write the rendered content to the destination path
+                _a.sent();
+                _a.label = 10;
+            case 10:
+                _i++;
+                return [3 /*break*/, 2];
+            case 11: return [2 /*return*/];
+        }
+    });
+}); };
 /**
  * Find the integration to sync and sync the sass files and template files.
  * @param documentationObject
  */
 function integrationTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var outputFolder, integrationPath, exportedFolder, sassFolder, templatesFolder, integrationsSass, integrationTemplates, mainScssFilePath, stream, data;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var outputFolder, integrationPath, destinationPath, templatesFolder, integrationsSass, integrationTemplates, _loop_1, _i, _a, tokenType, err_1;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
                     if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
                     return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
                 case 1:
-                    _a.sent();
-                    _a.label = 2;
+                    _b.sent();
+                    _b.label = 2;
                 case 2:
                     integrationPath = (0, exports.getPathToIntegration)(handoff);
-                    exportedFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-                    sassFolder = path_1.default.resolve(handoff.workingPath, exportedFolder, "integration");
+                    destinationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
                     templatesFolder = path_1.default.resolve(__dirname, '../../templates');
                     integrationsSass = path_1.default.resolve(integrationPath, 'sass');
                     integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
-                    // clean dest
-                    fs_extra_1.default.removeSync(sassFolder);
-                    fs_extra_1.default.removeSync(templatesFolder);
-                    // copy to dest
-                    fs_extra_1.default.copySync(integrationsSass, sassFolder);
-                    fs_extra_1.default.copySync(integrationTemplates, templatesFolder);
-                    mainScssFilePath = path_1.default.resolve(sassFolder, 'main.scss');
-                    if (fs_extra_1.default.existsSync(mainScssFilePath)) {
-                        fs_extra_1.default.writeFileSync(mainScssFilePath, replaceHandoffImportTokens(handoff, fs_extra_1.default.readFileSync(mainScssFilePath, 'utf8'), Object.keys(documentationObject.components)));
-                    }
-                    // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
-                    if (process.env.HANDOFF_EXPORT_PATH) {
-                        fs_extra_1.default.copySync(sassFolder, process.env.HANDOFF_EXPORT_PATH);
-                    }
-                    stream = fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip"));
-                    return [4 /*yield*/, (0, exports.zipTokens)(exportedFolder, stream)];
+                    _b.label = 3;
                 case 3:
-                    _a.sent();
-                    data = handoff.integrationHooks.hooks.integration(documentationObject, []);
-                    data = handoff.hooks.integration(documentationObject, data);
-                    if (data.length > 0) {
-                        data.map(function (artifact) {
-                            fs_extra_1.default.writeFileSync(path_1.default.join(sassFolder, artifact.filename), artifact.data);
+                    _b.trys.push([3, 5, , 6]);
+                    handlebars_1.default.registerHelper("value", function (componentName, part, variant, property, options) {
+                        var context = options.data.root;
+                        var component = context.documentationObject.components[componentName.toLocaleLowerCase()];
+                        if (!component) {
+                            return new handlebars_1.default.SafeString("unset");
+                        }
+                        var search = variant.split(',').map(function (pair) {
+                            var _a = pair.split(':'), key = _a[0], value = _a[1];
+                            return [key !== null && key !== void 0 ? key : "".trim(), value !== null && value !== void 0 ? value : "".trim()];
                         });
+                        var componentInstance = component.instances.find(function (instance) {
+                            return search.every(function (_a) {
+                                var searchProperty = _a[0], searchValue = _a[1];
+                                return instance.variantProperties.some(function (variantProperty) {
+                                    return variantProperty[0].toLocaleLowerCase() === searchProperty.toLocaleLowerCase() &&
+                                        variantProperty[1].toLocaleLowerCase() === searchValue.toLocaleLowerCase();
+                                });
+                            });
+                        });
+                        if (!componentInstance) {
+                            return new handlebars_1.default.SafeString("unset");
+                        }
+                        var partTokenSets = componentInstance.parts[""] || componentInstance.parts["$"];
+                        if (!partTokenSets || partTokenSets.length === 0) {
+                            return new handlebars_1.default.SafeString("unset");
+                        }
+                        var tokens = partTokenSets.reduce(function (prev, curr) { return (__assign(__assign({}, prev), (0, tokens_1.getTokenSetTokens)(curr))); }, {});
+                        if (!tokens) {
+                            return new handlebars_1.default.SafeString("unset");
+                        }
+                        var value = tokens[property];
+                        if (!value) {
+                            return new handlebars_1.default.SafeString("unset");
+                        }
+                        if (typeof (value) === "string") {
+                            return new handlebars_1.default.SafeString(value);
+                        }
+                        return new handlebars_1.default.SafeString(value[0]);
+                    });
+                    _loop_1 = function (tokenType) {
+                        handlebars_1.default.registerHelper("".concat(tokenType, "-token"), function (componentName, part, variant, property, options) {
+                            var context = options.data.root;
+                            var component = context.documentationObject.components[componentName.toLocaleLowerCase()];
+                            if (!component) {
+                                return new handlebars_1.default.SafeString("unset");
+                            }
+                            var search = variant.split(',').map(function (pair) {
+                                var _a = pair.split(':'), key = _a[0], value = _a[1];
+                                return [key !== null && key !== void 0 ? key : "".trim(), value !== null && value !== void 0 ? value : "".trim()];
+                            });
+                            var componentInstance = component.instances.find(function (instance) {
+                                return search.every(function (_a) {
+                                    var searchProperty = _a[0], _ = _a[1];
+                                    return instance.variantProperties.some(function (variantProperty) { return variantProperty[0].toLocaleLowerCase() === searchProperty.toLocaleLowerCase(); });
+                                });
+                            });
+                            if (!componentInstance) {
+                                return new handlebars_1.default.SafeString("unset");
+                            }
+                            return new handlebars_1.default.SafeString((0, utils_1.formatTokenName)(tokenType, componentName, search, part, property, {}));
+                        });
+                    };
+                    for (_i = 0, _a = ['css', 'scss']; _i < _a.length; _i++) {
+                        tokenType = _a[_i];
+                        _loop_1(tokenType);
                     }
-                    return [2 /*return*/];
+                    ;
+                    return [4 /*yield*/, renderIntegrationTemplates(integrationPath, destinationPath, documentationObject)];
+                case 4:
+                    _b.sent();
+                    console.log('Templates rendered successfully!');
+                    return [3 /*break*/, 6];
+                case 5:
+                    err_1 = _b.sent();
+                    console.error('Error rendering templates:', err_1);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });

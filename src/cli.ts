@@ -123,6 +123,8 @@ const run = async (
       case 'dev':
         watching = true;
         return handoff.dev();
+      case 'build:recipe':
+        return handoff.recipe();
       case 'build:integration':
         return handoff.integration();
       case 'eject':

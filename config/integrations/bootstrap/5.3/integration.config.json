@@ -1,0 +1,35 @@
+{
+  "name": "Bootstrap 5.3",
+  "entry": "templates/main.js",
+  "options": {
+    "*": {
+      "defaults": {
+        "Theme": "light",
+        "State": "default",
+        "Type": "default",
+        "Activity": "",
+        "Layout": "",
+        "Size": ""
+      },
+      "replace": {
+        "State": {
+          "default": ""
+        },
+        "Size": {
+          "small": "sm",
+          "medium": "md",
+          "large": "lg"
+        }
+      }
+    },
+    "Alert": {
+      "tokenNameSegments": [
+        "${Component}",
+        "${Type}",
+        "${Layout}",
+        "${Part}",
+        "${Property}"
+      ]
+    }
+  }
+}

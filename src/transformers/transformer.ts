@@ -6,9 +6,9 @@ import { getTokenSetTokens } from './tokens';
 
 /**
  * Performs the transformation of the component tokens.
- * @param component 
- * @param options 
- * @returns 
+ * @param component
+ * @param options
+ * @returns
  */
 export const transform = (tokenType: TokenType, component: ComponentInstance, options?: ComponentDefinitionOptions) => {
   let tokens: Token[] = [];
@@ -20,23 +20,31 @@ export const transform = (tokenType: TokenType, component: ComponentInstance, op
       continue;
     }
 
-    tokenSets.forEach(tokenSet => 
+    tokenSets.forEach(tokenSet =>
       tokens.push(...transformTokens(getTokenSetTokens(tokenSet), tokenType, component, part, options))
     )
   }
-  
+
   return tokens;
 };
 
-const transformTokens = (tokens: TokenDict | undefined, tokenType: TokenType, component: ComponentInstance, part: string, options?: ComponentDefinitionOptions) => {
-  return tokens ? Object.entries(tokens).map(([cssProperty, value]) => ({
-    name: formatTokenName(tokenType, component, part, cssProperty, options),
-    value: value instanceof Array ? value[0] : value,
-    metadata: {
-      part,
-      cssProperty,
-      isSupportedCssProperty: value instanceof Array ? value[1] : true ,
-      nameSegments: getTokenNameSegments(component, part, cssProperty, options),
-    }
-  })) : [];
+const transformTokens = (
+  tokens: TokenDict | undefined,
+  tokenType: TokenType,
+  component: ComponentInstance,
+  part: string,
+  options?: ComponentDefinitionOptions
+) => {
+  return tokens
+    ? Object.entries(tokens).map(([cssProperty, value]) => ({
+        name: formatTokenName(tokenType, component.name, component.variantProperties, part, cssProperty, options),
+        value: value instanceof Array ? value[0] : value,
+        metadata: {
+          part,
+          cssProperty,
+          isSupportedCssProperty: value instanceof Array ? value[1] : true,
+          nameSegments: getTokenNameSegments(component.name, component.variantProperties, part, cssProperty, options),
+        },
+      }))
+    : [];
 };

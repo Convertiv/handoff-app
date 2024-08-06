@@ -100,7 +100,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 19, , 20]);
+                _b.trys.push([0, 20, , 21]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -135,19 +135,20 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'build:app': return [3 /*break*/, 2];
                     case 'start': return [3 /*break*/, 4];
                     case 'dev': return [3 /*break*/, 5];
-                    case 'build:integration': return [3 /*break*/, 6];
-                    case 'eject': return [3 /*break*/, 7];
-                    case 'eject:config': return [3 /*break*/, 8];
-                    case 'eject:integration': return [3 /*break*/, 9];
-                    case 'eject:exportables': return [3 /*break*/, 10];
-                    case 'eject:theme': return [3 /*break*/, 11];
-                    case 'eject:pages': return [3 /*break*/, 12];
-                    case 'make': return [3 /*break*/, 13];
-                    case 'make:exportable': return [3 /*break*/, 14];
-                    case 'make:template': return [3 /*break*/, 15];
-                    case 'make:page': return [3 /*break*/, 16];
+                    case 'build:recipe': return [3 /*break*/, 6];
+                    case 'build:integration': return [3 /*break*/, 7];
+                    case 'eject': return [3 /*break*/, 8];
+                    case 'eject:config': return [3 /*break*/, 9];
+                    case 'eject:integration': return [3 /*break*/, 10];
+                    case 'eject:exportables': return [3 /*break*/, 11];
+                    case 'eject:theme': return [3 /*break*/, 12];
+                    case 'eject:pages': return [3 /*break*/, 13];
+                    case 'make': return [3 /*break*/, 14];
+                    case 'make:exportable': return [3 /*break*/, 15];
+                    case 'make:template': return [3 /*break*/, 16];
+                    case 'make:page': return [3 /*break*/, 17];
                 }
-                return [3 /*break*/, 17];
+                return [3 /*break*/, 18];
             case 1: return [2 /*return*/, handoff.fetch()];
             case 2: return [4 /*yield*/, handoff.build()];
             case 3:
@@ -159,19 +160,20 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
             case 5:
                 watching = true;
                 return [2 /*return*/, handoff.dev()];
-            case 6: return [2 /*return*/, handoff.integration()];
-            case 7:
+            case 6: return [2 /*return*/, handoff.recipe()];
+            case 7: return [2 /*return*/, handoff.integration()];
+            case 8:
                 cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables\n  - eject:integration\n  - eject:docs\n  - eject:theme.", 2);
-                return [3 /*break*/, 18];
-            case 8: return [2 /*return*/, handoff.ejectConfig()];
-            case 9: return [2 /*return*/, handoff.ejectIntegration()];
-            case 10: return [2 /*return*/, handoff.ejectExportables()];
-            case 11: return [2 /*return*/, handoff.ejectTheme()];
-            case 12: return [2 /*return*/, handoff.ejectPages()];
-            case 13:
-                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
-                return [3 /*break*/, 18];
+                return [3 /*break*/, 19];
+            case 9: return [2 /*return*/, handoff.ejectConfig()];
+            case 10: return [2 /*return*/, handoff.ejectIntegration()];
+            case 11: return [2 /*return*/, handoff.ejectExportables()];
+            case 12: return [2 /*return*/, handoff.ejectTheme()];
+            case 13: return [2 /*return*/, handoff.ejectPages()];
             case 14:
+                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page", 2);
+                return [3 /*break*/, 19];
+            case 15:
                 type = args._[1];
                 if (!type) {
                     cliError("You must specify a type of 'component' or 'foundation'", 2);
@@ -184,7 +186,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Exportable name must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff.makeExportable(type, name_1)];
-            case 15:
+            case 16:
                 templateComponent = args._[1];
                 if (!templateComponent) {
                     cliError("You must supply a component name", 2);
@@ -197,7 +199,7 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Template state must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff.makeTemplate(templateComponent, templateState)];
-            case 16:
+            case 17:
                 pageName = args._[1];
                 if (!pageName) {
                     cliError("You must supply a page name", 2);
@@ -210,14 +212,14 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Page parent must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff.makePage(pageName, pageParent)];
-            case 17: return [2 /*return*/, showHelp()];
-            case 18: return [3 /*break*/, 20];
-            case 19:
+            case 18: return [2 /*return*/, showHelp()];
+            case 19: return [3 /*break*/, 21];
+            case 20:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 20: return [2 /*return*/];
+            case 21: return [2 /*return*/];
         }
     });
 }); };

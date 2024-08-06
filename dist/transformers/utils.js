@@ -37,9 +37,9 @@ exports.formatComponentCodeBlockComment = formatComponentCodeBlockComment;
  * @param options
  * @returns
  */
-var formatTokenName = function (tokenType, component, part, property, options) {
+var formatTokenName = function (tokenType, componentName, componentVariantProps, part, property, options) {
     var prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
-    var tokenNameParts = (0, exports.getTokenNameSegments)(component, part, property, options);
+    var tokenNameParts = (0, exports.getTokenNameSegments)(componentName, componentVariantProps, part, property, options);
     return "".concat(prefix).concat(tokenNameParts.join('-'));
 };
 exports.formatTokenName = formatTokenName;
@@ -49,23 +49,24 @@ exports.formatTokenName = formatTokenName;
  * @param options
  * @returns
  */
-var getTokenNameSegments = function (component, part, property, options) {
-    if (options === null || options === void 0 ? void 0 : options.transformer.tokenNameSegments) {
+var getTokenNameSegments = function (componentName, componentVariantProps, part, property, options) {
+    var _a;
+    if ((_a = options === null || options === void 0 ? void 0 : options.transformer) === null || _a === void 0 ? void 0 : _a.tokenNameSegments) {
         return options.transformer.tokenNameSegments
             .map(function (tokenNamePart) {
             var initialValue = tokenNamePart;
             tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map([
-                ['Component', component.name],
+                ['Component', componentName],
                 ['Part', normalizeComponentPartName(part)],
                 ['Property', property],
             ]), function (token, _, value) { return (value === '' ? token : value); });
-            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map(component.variantProperties.map(function (_a) {
+            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map(componentVariantProps.map(function (_a) {
                 var k = _a[0], v = _a[1];
                 return ['Variant.' + k, v];
             })), function (_, variantProp, value) { return (0, exports.normalizeTokenNamePartValue)(variantProp.replace('Variant.', ''), value, options); });
             // Backward compatibility (remove before 1.0 release)
             if (tokenNamePart === '') {
-                tokenNamePart = (0, index_1.replaceTokens)(initialValue, new Map(component.variantProperties), function (_, variantProp, value) {
+                tokenNamePart = (0, index_1.replaceTokens)(initialValue, new Map(componentVariantProps), function (_, variantProp, value) {
                     return (0, exports.normalizeTokenNamePartValue)(variantProp, value, options);
                 });
             }
@@ -74,10 +75,10 @@ var getTokenNameSegments = function (component, part, property, options) {
             .filter(function (part) { return part !== ''; });
     }
     var parts = [
-        component.name,
+        componentName,
         normalizeComponentPartName(part)
     ];
-    component.variantProperties.forEach(function (_a) {
+    componentVariantProps.forEach(function (_a) {
         var variantProp = _a[0], value = _a[1];
         parts.push((0, exports.normalizeTokenNamePartValue)(variantProp, value, options));
     });
@@ -96,14 +97,14 @@ exports.getTokenNameSegments = getTokenNameSegments;
  * @returns
  */
 var normalizeTokenNamePartValue = function (variable, value, options, keepDefaults) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f, _g;
     if (keepDefaults === void 0) { keepDefaults = false; }
-    var replace = (_a = options === null || options === void 0 ? void 0 : options.transformer.replace) !== null && _a !== void 0 ? _a : {};
-    var defaults = (_b = options === null || options === void 0 ? void 0 : options.shared.defaults) !== null && _b !== void 0 ? _b : {};
-    if (variable in (replace !== null && replace !== void 0 ? replace : {}) && value && value in ((_c = replace[variable]) !== null && _c !== void 0 ? _c : {})) {
-        return (_d = replace[variable][value]) !== null && _d !== void 0 ? _d : '';
+    var replace = (_b = (_a = options === null || options === void 0 ? void 0 : options.transformer) === null || _a === void 0 ? void 0 : _a.replace) !== null && _b !== void 0 ? _b : {};
+    var defaults = (_d = (_c = options === null || options === void 0 ? void 0 : options.shared) === null || _c === void 0 ? void 0 : _c.defaults) !== null && _d !== void 0 ? _d : {};
+    if (variable in (replace !== null && replace !== void 0 ? replace : {}) && value && value in ((_e = replace[variable]) !== null && _e !== void 0 ? _e : {})) {
+        return (_f = replace[variable][value]) !== null && _f !== void 0 ? _f : '';
     }
-    if (!keepDefaults && variable in (defaults !== null && defaults !== void 0 ? defaults : {}) && value === ((_e = defaults[variable]) !== null && _e !== void 0 ? _e : '')) {
+    if (!keepDefaults && variable in (defaults !== null && defaults !== void 0 ? defaults : {}) && value === ((_g = defaults[variable]) !== null && _g !== void 0 ? _g : '')) {
         return '';
     }
     return value;

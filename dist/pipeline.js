@@ -71,7 +71,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
@@ -84,7 +84,7 @@ var documentation_object_1 = require("./documentation-object");
 var api_2 = require("./api");
 var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
-var index_3 = __importDefault(require("./transformers/integration/index"));
+var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
 var index_5 = __importDefault(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
@@ -429,6 +429,84 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
         }
     });
 }); };
+var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var componentRecords, TOKEN_REGEX, processToken, traverseDirectory, directoryToTraverse;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                componentRecords = { components: [] };
+                TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
+                processToken = function (content) {
+                    var match;
+                    var regex = new RegExp(TOKEN_REGEX, 'g');
+                    var _loop_1 = function () {
+                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4];
+                        var componentRecord = componentRecords.components.find(function (c) { return c.name === component; });
+                        if (!componentRecord) {
+                            componentRecord = { name: component, common: { parts: [] }, recipes: [] };
+                            componentRecords.components.push(componentRecord);
+                        }
+                        if (!componentRecord.common.parts.includes(part)) {
+                            componentRecord.common.parts.push(part);
+                        }
+                        var variantPairs = variants.split(',').map(function (v) { return v.split(':'); });
+                        var variantGroup = { variantProps: [], variantValues: {} };
+                        variantPairs.forEach(function (_a) {
+                            var key = _a[0], value = _a[1];
+                            if (!variantGroup.variantProps.includes(key)) {
+                                variantGroup.variantProps.push(key);
+                            }
+                            if (!variantGroup.variantValues[key]) {
+                                variantGroup.variantValues[key] = [];
+                            }
+                            if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
+                                variantGroup.variantValues[key].push(value);
+                            }
+                        });
+                        var existingGroupIndex = componentRecord.recipes.findIndex(function (recipe) {
+                            return recipe.require.variantProps.length === variantGroup.variantProps.length &&
+                                recipe.require.variantProps.every(function (prop) { return variantGroup.variantProps.includes(prop); }) &&
+                                Object.keys(recipe.require.variantValues).every(function (key) {
+                                    var _a;
+                                    return recipe.require.variantValues[key].length === ((_a = variantGroup.variantValues[key]) === null || _a === void 0 ? void 0 : _a.length) &&
+                                        recipe.require.variantValues[key].every(function (val) { return variantGroup.variantValues[key].includes(val); });
+                                });
+                        });
+                        if (existingGroupIndex === -1) {
+                            componentRecord.recipes.push({ require: variantGroup });
+                        }
+                    };
+                    while ((match = regex.exec(content)) !== null) {
+                        _loop_1();
+                    }
+                };
+                traverseDirectory = function (directory) {
+                    var files = fs_extra_1.default.readdirSync(directory);
+                    files.forEach(function (file) {
+                        var fullPath = path_1.default.join(directory, file);
+                        var stat = fs_extra_1.default.statSync(fullPath);
+                        if (stat.isDirectory()) {
+                            traverseDirectory(fullPath);
+                        }
+                        else if (stat.isFile()) {
+                            var content = fs_extra_1.default.readFileSync(fullPath, 'utf8');
+                            processToken(content);
+                        }
+                    });
+                };
+                directoryToTraverse = (0, index_3.getPathToIntegration)(handoff);
+                traverseDirectory(directoryToTraverse);
+                componentRecords.components.forEach(function (component) {
+                    component.common.parts.sort();
+                });
+                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(handoff.workingPath, 'recipes.json'), JSON.stringify(componentRecords, null, 2))];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); };
+exports.buildRecipe = buildRecipe;
 /**
  * Build only integrations and previews
  * @param handoff

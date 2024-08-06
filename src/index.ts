@@ -8,7 +8,7 @@ import { DocumentationObject } from './types';
 import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly } from './pipeline';
+import pipeline, { buildIntegrationOnly, buildRecipe } from './pipeline';
 import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
@@ -82,6 +82,13 @@ class Handoff {
       this.preRunner();
       await pipeline(this);
       this.hooks.fetch();
+    }
+    return this;
+  }
+  async recipe(): Promise<Handoff> {
+    this.preRunner();
+    if (this.config) {
+      await buildRecipe(this);
     }
     return this;
   }

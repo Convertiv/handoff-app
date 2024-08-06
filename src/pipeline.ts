@@ -15,7 +15,7 @@ import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './api';
 import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
 import cssTransformer from './transformers/css/index';
-import integrationTransformer from './transformers/integration/index';
+import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
 import previewTransformer from './transformers/preview/index';
 import buildApp from './app';
@@ -24,6 +24,7 @@ import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
 import { merge } from 'lodash';
 import { filterOutNull } from './utils';
+import { ComponentIntegration, ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -83,6 +84,7 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @param documentationObject
  */
 const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+  // TODO: Load integration and merge into documentation object?
   let typeFiles = scssTypesTransformer(documentationObject);
   typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
   let cssFiles = cssTransformer(documentationObject);
@@ -311,6 +313,86 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
   );
   return documentationObject;
+};
+
+export const buildRecipe = async (handoff: Handoff) => {
+  const componentRecords: ComponentIntegrations = { components: [] };
+
+  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
+
+  const processToken = (content: string): void => {
+    let match;
+    const regex = new RegExp(TOKEN_REGEX, 'g');
+    while ((match = regex.exec(content)) !== null) {
+      const [_, __, component, part, variants] = match;
+
+      let componentRecord = componentRecords.components.find((c) => c.name === component);
+      if (!componentRecord) {
+        componentRecord = { name: component, common: { parts: [] }, recipes: [] };
+        componentRecords.components.push(componentRecord);
+      }
+
+      if (!componentRecord.common.parts.includes(part)) {
+        componentRecord.common.parts.push(part);
+      }
+
+      const variantPairs = variants.split(',').map((v) => v.split(':'));
+      const variantGroup: ComponentIntegrationRecipe['require'] = { variantProps: [], variantValues: {} };
+
+      variantPairs.forEach(([key, value]) => {
+        if (!variantGroup.variantProps.includes(key)) {
+          variantGroup.variantProps.push(key);
+        }
+
+        if (!variantGroup.variantValues[key]) {
+          variantGroup.variantValues[key] = [];
+        }
+
+        if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
+          variantGroup.variantValues[key].push(value);
+        }
+      });
+
+      const existingGroupIndex = componentRecord.recipes.findIndex(
+        (recipe) =>
+          recipe.require.variantProps.length === variantGroup.variantProps.length &&
+          recipe.require.variantProps.every((prop) => variantGroup.variantProps.includes(prop)) &&
+          Object.keys(recipe.require.variantValues).every(
+            (key) =>
+              recipe.require.variantValues[key].length === variantGroup.variantValues[key]?.length &&
+              recipe.require.variantValues[key].every((val) => variantGroup.variantValues[key].includes(val))
+          )
+      );
+
+      if (existingGroupIndex === -1) {
+        componentRecord.recipes.push({ require: variantGroup });
+      }
+    }
+  };
+  const traverseDirectory = (directory: string): void => {
+    const files = fs.readdirSync(directory);
+
+    files.forEach((file) => {
+      const fullPath = path.join(directory, file);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        traverseDirectory(fullPath);
+      } else if (stat.isFile()) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        processToken(content);
+      }
+    });
+  };
+
+  const directoryToTraverse = getPathToIntegration(handoff);
+  traverseDirectory(directoryToTraverse);
+
+  componentRecords.components.forEach((component) => {
+    component.common.parts.sort();
+  });
+
+  await fs.writeFile(path.resolve(handoff.workingPath, 'recipes.json'), JSON.stringify(componentRecords, null, 2));
 };
 
 /**
