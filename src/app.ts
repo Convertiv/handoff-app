@@ -177,7 +177,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-  const nextConfigPath = path.resolve(appPath, 'next.config.js');
+  const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -243,7 +243,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
 
   const appPath = await prepareProjectApp(handoff);
-  const config = require(path.resolve(appPath, 'next.config.js'));
+  // const config = require(path.resolve(appPath, 'next.config.mjs'));
 
   // Include any changes made within the app source during watch
   chokidar
@@ -262,13 +262,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     });
 
-  // does a ts config exist?
-  let tsconfigPath = 'tsconfig.json';
+  // // does a ts config exist?
+  // let tsconfigPath = 'tsconfig.json';
 
-  config.typescript = {
-    ...config.typescript,
-    tsconfigPath,
-  };
+  // config.typescript = {
+  //   ...config.typescript,
+  //   tsconfigPath,
+  // };
   const dev = true;
   const hostname = 'localhost';
   const port = 3000;
@@ -278,7 +278,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     dir: appPath,
     hostname,
     port,
-    conf: config,
+    // conf: config,
   });
   const handle = app.getRequestHandler();
 

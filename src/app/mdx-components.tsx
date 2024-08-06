@@ -8,23 +8,27 @@ import { CodeHighlight } from './components/Markdown/CodeHighlight';
 // components from other libraries, and more.
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
-  console.log(components);
   return {
     // Allows customizing built-in components, e.g. to add styling.
     h1: ({ children }) => <h1>{children}</h1>,
     img: (props) => <Image sizes="100vw" style={{ width: '100%', height: 'auto' }} {...(props as ImageProps)} />,
     //code: (props) => <CodeHighlight {...props} data={props.children.toString()} />,
     code: (props) => {
-      console.log('code', props);
       if (props.children.toString().includes('\n')) {
-        return <CodeHighlight {...props} data={props.children.toString()} />;
+        let title = '';
+        // @ts-ignore
+        if(props.codetitle) {
+          // @ts-ignore
+          title = props.codetitle;
+        }
+        return <CodeHighlight {...props} data={props.children.toString().trim()} title={title} dark={true} />;
       } else {
         return <code className="inline-code">{props.children}</code>;
       }
     },
-    // pre: (props) => {
-    //   console.log('pre', props);
-    //   return <code>1{props.children}</code>;
+    pre: (props) => {
+      return <pre>{props.children}</pre>;
+    },
     //   const language = 'css';
     //   //props.children.props.className.replace('language-', '')
     //   // @ts-ignore

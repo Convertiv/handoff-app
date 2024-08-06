@@ -25,7 +25,7 @@ const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPre
       <Header menu={menu} config={config} />
       {current.subSections && current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className={`c-content${wide ? ' c-content__wide' : ''}`}>
-        <div className="o-container-fluid">
+        <div className="o-container-fluid o-container__markdown">
           {' '}
           <MdxContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={allPreviews} defaultConfig={config}>
             {children}

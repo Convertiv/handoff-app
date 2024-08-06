@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 interface ComponentMetadata extends Metadata {
   path?: string;
+  absolute?: boolean;
 }
 
 
@@ -27,6 +28,7 @@ export const ComponentList = ({ components }: { components: { [id: string]: Comp
                   description={component.description}
                   image={component.image}
                   path={component.path}
+                  absolute={component.absolute}
                 />
               );
             })}
@@ -45,6 +47,7 @@ export const ComponentsPageCard = ({
   image,
   path,
   available = true,
+  absolute = false
 }: {
   component: string;
   title: string;
@@ -53,11 +56,12 @@ export const ComponentsPageCard = ({
   image?: string;
   path?: string;
   available?: boolean;
+  absolute?: boolean;
 }) => {
   if (!path) path = 'components';
   return (
     <div key={`component-${component}`}>
-      <Link href={available ? `/${path}/${component}` : '#'}>
+      <Link href={available ? absolute ? path : `/${path}/${component}` : '#'}>
         <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
           <div className="c-component-card__img">
             {icon && <Icon name={icon} />}

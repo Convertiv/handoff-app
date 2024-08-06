@@ -1,7 +1,35 @@
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
-const withMDX = require('@next/mdx')();
+import fs from 'fs-extra';
+import path from 'path';
+import chalk from 'chalk';
+import mdx from '@next/mdx';
+import { visit } from 'unist-util-visit';
+
+const CodeTransform = () => {
+  return (tree, file) => {
+    visit(tree, 'code', (node, index, parent) => {
+      const metaString = `${node.lang ?? ''} ${node.meta ?? ''}`.trim();
+      console.log(metaString);
+      if (!metaString) return;
+      const [title] = metaString.match(/(?<=title=("|'))(.*?)(?=("|'))/) ?? [''];
+      if (!title && metaString.includes('title=')) {
+        file.message('Invalid title', node, 'remark-code-title');
+        return;
+      }
+      if (!title) return;
+      // @ts-ignore
+      //node.data = title;
+      node.data = { hProperties: { codetitle: [title] } };
+      return index ? index + 2 : 0;
+    });
+  };
+};
+
+const withMDX = mdx({
+  options: {
+    remarkPlugins: [CodeTransform],
+    rehypePlugins: [],
+  },
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -51,7 +79,8 @@ const nextConfig = {
       const clientConfigPath = path.resolve(env.HANDOFF_WORKING_PATH, 'handoff.config.json');
       if (fs.existsSync(clientConfigPath)) {
         // Load client configuration
-        const clientConfig = require(clientConfigPath);
+        const clientConfigRaw = fs.readFileSync(clientConfigPath);
+        const clientConfig = JSON.parse(clientConfigRaw);
         // Check if client configuration is a valid object
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
           // Check if the client configuration specifies a theme
@@ -116,4 +145,4 @@ const nextConfig = {
 };
 
 // Wrap MDX and Next.js config with each other
-module.exports = withMDX(nextConfig);
+export default withMDX(nextConfig);

@@ -1,4 +1,5 @@
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
 import html from 'refractor/lang/xml-doc';
 import sass from 'refractor/lang/sass';
 import { PreviewObject } from '@handoff/types';
@@ -17,7 +18,14 @@ SyntaxHighlighter.registerLanguage('sass', sass);
  * @param param0
  * @returns ReactElement
  */
-export const CodeHighlight: React.FC<{ data: PreviewObject | string | undefined; collapsible?: boolean; type?: string }> = ({ data, collapsible, type }) => {
+export const CodeHighlight: React.FC<{
+  data: PreviewObject | string | undefined;
+  collapsible?: boolean;
+  type?: string;
+  dark?: boolean;
+  title?: string;
+  language?: string;
+}> = ({ data, collapsible, type, title, dark }) => {
   const [collapsed, setCollapsed] = useState<boolean>(true);
 
   if (!data) {
@@ -25,16 +33,24 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | string | undefined;
   } else if (typeof data === 'string') {
     data = { id: '', preview: '', code: data };
   }
-  if(!type) type = 'html';
+  if (!type) type = 'html';
+
   const states = Object.keys(data).filter((key) => ['id', 'preview'].indexOf(key) === -1);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.code);
-  oneLight['pre[class*="language-"]'].overflow = 'auto';
-  oneLight['pre[class*="language-"]'].maxHeight = '450px';
+  const theme = dark ? oneDark : oneLight;
+  theme['pre[class*="language-"]'].overflow = 'auto';
+  theme['pre[class*="language-"]'].maxHeight = '450px';
+  theme['pre[class*="language-"]'].margin = '0';
+
   return (
     <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
+      <div className="c-code-block__title" data-language="bash">
+        {title && <div>{title}</div>}
+      </div>
+
       <SyntaxHighlighter
-        style={oneLight}
+        style={theme}
         language={activeState === 'code' ? type : activeState}
         PreTag="div"
         showLineNumbers={true}
@@ -43,7 +59,8 @@ export const CodeHighlight: React.FC<{ data: PreviewObject | string | undefined;
       >
         {code}
       </SyntaxHighlighter>
-      <CopyCode code={data.code} />
+
+      <CopyCode code={code} />
       {states.length > 2 && (
         <select
           className="c-code-block__select"
