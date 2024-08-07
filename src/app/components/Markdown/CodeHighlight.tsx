@@ -2,6 +2,7 @@ import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
 import html from 'refractor/lang/xml-doc';
 import sass from 'refractor/lang/sass';
+import scss from 'refractor/lang/scss';
 import { PreviewObject } from '@handoff/types';
 import CopyCode from '../CopyCode';
 // @ts-ignore
@@ -12,6 +13,7 @@ const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('sass', sass);
+SyntaxHighlighter.registerLanguage('scss', scss);
 
 /**
  * Highlight code for preview elements
@@ -45,8 +47,8 @@ export const CodeHighlight: React.FC<{
 
   return (
     <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
-      <div className="c-code-block__title" data-language="bash">
-        {title && <div>{title}</div>}
+      <div className="c-code-block__title" data-language={activeState === 'code' ? type : activeState}>
+        {title && <div>{title}</div>} 
       </div>
 
       <SyntaxHighlighter
@@ -54,7 +56,7 @@ export const CodeHighlight: React.FC<{
         language={activeState === 'code' ? type : activeState}
         PreTag="div"
         showLineNumbers={true}
-        wrapLines={true}
+        wrapLines={false}
         useInlineStyles={true}
       >
         {code}

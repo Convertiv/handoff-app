@@ -12,7 +12,6 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     // Allows customizing built-in components, e.g. to add styling.
     h1: ({ children }) => <h1>{children}</h1>,
     img: (props) => <Image sizes="100vw" style={{ width: '100%', height: 'auto' }} {...(props as ImageProps)} />,
-    //code: (props) => <CodeHighlight {...props} data={props.children.toString()} />,
     code: (props) => {
       if (props.children.toString().includes('\n')) {
         let title = '';
@@ -22,8 +21,13 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
           title = props.codetitle;
         }
         let col = '12';
-        // @ts-ignore
-        console.log('Col', props.col);
+        let type = 'html';
+        if(props.className) {
+          const match = props.className.match(/language-(\w+)/);
+          if(match) {
+            type = match[1];
+          }
+        }
         // @ts-ignore
         if (props.col) {
           // @ts-ignore
@@ -31,7 +35,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         }
         return (
           <div className={`o-col-${col}@md`}>
-            <CodeHighlight {...props} data={props.children.toString().trim()} title={title} dark={true} />
+            <CodeHighlight type={type} key={props.key} data={props.children.toString().trim()} title={title} dark={true} />
           </div>
         );
       } else {

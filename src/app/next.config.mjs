@@ -9,16 +9,22 @@ const CodeTransform = () => {
     visit(tree, 'code', (node, index, parent) => {
       const metaString = `${node.lang ?? ''} ${node.meta ?? ''}`.trim();
       console.log(metaString);
+      const props = { col: '12', codetitle: '' };
       if (!metaString) return;
+      const [col] = metaString.match(/(?<=col=("|'))(.*?)(?=("|'))/) ?? [''];
+      if (col) {
+        props.col = col;
+      }
       const [title] = metaString.match(/(?<=title=("|'))(.*?)(?=("|'))/) ?? [''];
       if (!title && metaString.includes('title=')) {
         file.message('Invalid title', node, 'remark-code-title');
         return;
       }
       if (!title) return;
+      props.codetitle = [title];
       // @ts-ignore
       //node.data = title;
-      node.data = { hProperties: { codetitle: [title] } };
+      node.data = { hProperties: props };
       return index ? index + 2 : 0;
     });
   };
