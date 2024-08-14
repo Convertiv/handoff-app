@@ -63,9 +63,7 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
  * @returns
  */
 const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  if (!!handoff.config.integration) {
-    await integrationTransformer(handoff, documentationObject);
-  }
+  await integrationTransformer(handoff, documentationObject);
 };
 
 /**
@@ -84,16 +82,15 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @param documentationObject
  */
 const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  // TODO: Load integration and merge into documentation object?
-  let typeFiles = scssTypesTransformer(documentationObject);
+  let typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
   typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-  let cssFiles = cssTransformer(documentationObject);
+  let cssFiles = cssTransformer(documentationObject, handoff.integrationObject);
   cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-  let scssFiles = scssTransformer(documentationObject);
+  let scssFiles = scssTransformer(documentationObject, handoff.integrationObject);
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-  let sdFiles = sdTransformer(documentationObject);
+  let sdFiles = sdTransformer(documentationObject, handoff.integrationObject);
   sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-  let mapFiles = mapTransformer(documentationObject);
+  let mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
   mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
 
   await Promise.all([
@@ -277,7 +274,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
   const legacyDefinitions = handoff.config.use_legacy_definitions ? await getLegacyDefinitions(handoff) : null;
-  const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions);
+  const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
@@ -316,20 +313,18 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
 };
 
 export const buildRecipe = async (handoff: Handoff) => {
-  const componentRecords: ComponentIntegrations = { components: [] };
-
   const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
 
-  const processToken = (content: string): void => {
+  const processToken = (content: string, records: ComponentIntegrations): void => {
     let match;
     const regex = new RegExp(TOKEN_REGEX, 'g');
     while ((match = regex.exec(content)) !== null) {
       const [_, __, component, part, variants] = match;
 
-      let componentRecord = componentRecords.components.find((c) => c.name === component);
+      let componentRecord = records.components.find((c) => c.name === component);
       if (!componentRecord) {
         componentRecord = { name: component, common: { parts: [] }, recipes: [] };
-        componentRecords.components.push(componentRecord);
+        records.components.push(componentRecord);
       }
 
       if (!componentRecord.common.parts.includes(part)) {
@@ -369,7 +364,8 @@ export const buildRecipe = async (handoff: Handoff) => {
       }
     }
   };
-  const traverseDirectory = (directory: string): void => {
+
+  const traverseDirectory = (directory: string, records: ComponentIntegrations): void => {
     const files = fs.readdirSync(directory);
 
     files.forEach((file) => {
@@ -377,22 +373,37 @@ export const buildRecipe = async (handoff: Handoff) => {
       const stat = fs.statSync(fullPath);
 
       if (stat.isDirectory()) {
-        traverseDirectory(fullPath);
+        traverseDirectory(fullPath, records);
       } else if (stat.isFile()) {
         const content = fs.readFileSync(fullPath, 'utf8');
-        processToken(content);
+        processToken(content, records);
       }
     });
   };
 
-  const directoryToTraverse = getPathToIntegration(handoff);
-  traverseDirectory(directoryToTraverse);
+  const integrationPath = getPathToIntegration(handoff);
+  const directoryToTraverse = handoff?.integrationObject?.entries?.integration
+    ? path.resolve(integrationPath, handoff.integrationObject.entries.integration)
+    : null;
+
+  if (!directoryToTraverse) {
+    console.log(chalk.yellow('Unable to build integration recipe. Reason: No integration entry was specified.'));
+    return;
+  }
+
+  const componentRecords: ComponentIntegrations = { components: [] };
+
+  traverseDirectory(directoryToTraverse, componentRecords);
 
   componentRecords.components.forEach((component) => {
     component.common.parts.sort();
   });
 
-  await fs.writeFile(path.resolve(handoff.workingPath, 'recipes.json'), JSON.stringify(componentRecords, null, 2));
+  const writePath = path.resolve(handoff.workingPath, 'recipes.json');
+
+  await fs.writeFile(writePath, JSON.stringify(componentRecords, null, 2));
+
+  console.log(chalk.green(`Integration recipe has been successfully written to ${writePath}`));
 };
 
 /**
@@ -460,7 +471,7 @@ const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDe
         const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
 
         const exportableOptions = {};
-        merge(exportableOptions, config?.figma?.options, exportable.options);
+        merge(exportableOptions, exportable.options);
         exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
 
         return exportable;

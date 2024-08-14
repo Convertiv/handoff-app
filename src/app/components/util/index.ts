@@ -1,8 +1,9 @@
 import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
-import { ExportResult, ClientConfig } from '@handoff/types/config';
+import { ExportResult, ClientConfig, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { DocumentComponentDefinitions, FileComponentObject } from '@handoff/exporters/components/types';
 import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
+import { mergeOptions } from '@handoff/utils/integration';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
@@ -74,6 +75,7 @@ export interface ComponentDocumentationProps extends DocumentationWithTokensProp
   legacyDefinition: LegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
+  componentOptions: IntegrationObjectComponentOptions;
 }
 
 export interface FoundationDocumentationProps extends DocumentationWithTokensProps {
@@ -336,7 +338,7 @@ export const fetchComponents = () => {
     return (
       Object.entries(getTokens().components).map(([id, obj]) => ({
         id,
-        group: Object.values(obj.definitions)[0]?.group ?? '',
+        group: '', // TODO
       })) ?? []
     );
   } catch (e) {
@@ -373,7 +375,7 @@ export const getLegacyDefinition = (name: string) => {
   const exportable = JSON.parse(data.toString()) as LegacyComponentDefinition;
 
   const exportableOptions = {};
-  merge(exportableOptions, config?.figma?.options, exportable.options);
+  merge(exportableOptions, exportable.options);
   exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
   return exportable;
 };
@@ -395,6 +397,41 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
       types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
     },
   };
+};
+
+export const getIntegrationObject = (): IntegrationObject => {
+  let integrationFilePath = null;
+
+  if (process.env.HANDOFF_WORKING_PATH) {
+    integrationFilePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'integration', 'integration.config.json');
+
+    if (fs.existsSync(integrationFilePath)) {
+      const buffer = fs.readFileSync(integrationFilePath);
+      const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+
+      return mergeOptions(integration);
+    }
+  }
+
+  if (process.env.HANDOFF_MODULE_PATH) {
+    integrationFilePath = path.resolve(
+      process.env.HANDOFF_MODULE_PATH,
+      'config',
+      'integrations',
+      'bootstrap',
+      '5.3',
+      'integration.config.json'
+    );
+
+    if (fs.existsSync(integrationFilePath)) {
+      const buffer = fs.readFileSync(integrationFilePath);
+      const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+
+      return mergeOptions(integration);
+    }
+  }
+
+  return {} as IntegrationObject;
 };
 
 export const getTokens = (): ExportResult => {

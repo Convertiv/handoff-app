@@ -7,11 +7,10 @@ var transformer_1 = require("../transformer");
  * @param alerts
  * @returns
  */
-var transformComponentsToStyleDictionary = function (_, component) {
+var transformComponentsToStyleDictionary = function (_, component, integrationOptions) {
     var sd = {};
     component.instances.forEach(function (instance) {
-        var options = component.definitions[instance.definitionId].options;
-        var tokens = (0, transformer_1.transform)('sd', instance, options);
+        var tokens = (0, transformer_1.transform)('sd', instance, integrationOptions);
         tokens.forEach(function (token) {
             var tokenNameSegments = token.metadata.nameSegments;
             var lastIdx = tokenNameSegments.length - 1;

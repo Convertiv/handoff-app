@@ -26,7 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
-function extractComponentInstances(components, definition, legacyDefinition) {
+function extractComponentInstances(components, definition, handoff, legacyDefinition) {
     var _a;
     var options = definition.options;
     var sharedComponentVariantIds = (_a = options.exporter.sharedComponentVariants) !== null && _a !== void 0 ? _a : [];
@@ -67,7 +67,6 @@ function extractComponentInstances(components, definition, legacyDefinition) {
             description: description,
             variantProperties: variantProperties,
             parts: parts,
-            definitionId: definition.id,
         };
         var isSharedComponentVariant = ((_f = sharedComponentVariantIds.findIndex(function (s) { return s.componentId === component.node.id; })) !== null && _f !== void 0 ? _f : -1) > -1;
         if (isSharedComponentVariant) {
@@ -77,18 +76,19 @@ function extractComponentInstances(components, definition, legacyDefinition) {
         var result = [instance];
         sharedInstances
             .filter(function (sharedInstance) {
-            var _a;
+            var _a, _b, _c, _d, _e;
             var sharedInstanceDefinition = options.exporter.sharedComponentVariants.find(function (item) { return item.componentId === sharedInstance.componentId; });
             if (!sharedInstanceDefinition) {
                 return false;
             }
             if (instance.variantProperties.get(sharedInstanceDefinition.sharedVariantProperty) !==
-                options.shared.defaults[sharedInstanceDefinition.sharedVariantProperty]) {
+                ((_d = (_c = ((_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.options) !== null && _b !== void 0 ? _b : {})[sharedInstance.name]) === null || _c === void 0 ? void 0 : _c.defaults) !== null && _d !== void 0 ? _d : {})[sharedInstanceDefinition.sharedVariantProperty.toLowerCase()] // TODO: Remove when shared variant functionality gets removed
+            ) {
                 return false;
             }
-            if (((_a = sharedInstanceDefinition.distinctiveVariantProperties) !== null && _a !== void 0 ? _a : []).length > 0) {
-                for (var _i = 0, _b = sharedInstanceDefinition.distinctiveVariantProperties; _i < _b.length; _i++) {
-                    var distinctiveVariantProperty = _b[_i];
+            if (((_e = sharedInstanceDefinition.distinctiveVariantProperties) !== null && _e !== void 0 ? _e : []).length > 0) {
+                for (var _i = 0, _f = sharedInstanceDefinition.distinctiveVariantProperties; _i < _f.length; _i++) {
+                    var distinctiveVariantProperty = _f[_i];
                     if (instance.variantProperties.get(distinctiveVariantProperty) !==
                         sharedInstance.variantProperties.get(distinctiveVariantProperty)) {
                         return false;
@@ -110,7 +110,6 @@ function extractComponentInstances(components, definition, legacyDefinition) {
                 description: additionalInstance.description,
                 variantProperties: additionalInstanceVariantProps,
                 parts: additionalInstance.parts,
-                definitionId: additionalInstance.definitionId,
             });
         });
         return result;
@@ -122,7 +121,6 @@ function extractComponentInstances(components, definition, legacyDefinition) {
             description: component.description,
             variantProperties: Array.from(component.variantProperties.entries()),
             parts: component.parts,
-            definitionId: component.definitionId,
         }); }), true);
     }, []);
     return lodash_1.default.uniqBy(instances, 'id');

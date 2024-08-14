@@ -1,0 +1,73 @@
+/* =============================================================================
+   BUTTONS (extended/_buttons.scss)
+   ========================================================================== */
+
+// Extend default component appearance with exported tokens
+.btn {
+	letter-spacing: var( --button-md-letter-spacing );
+	text-decoration: var( --button-md-text-decoration );
+	text-transform: var( --button-md-text-transform );
+}
+
+// Check if variants map exists and then create modifier classes
+@if variable-exists(button-type-map) and ($button-type-map != null) {
+	@each $variant in $button-type-map {
+		.btn-#{$variant} {
+			background: var( --button-#{$variant}-background );
+			@each $state in $button-state-map {
+				@if $state != '' { $state: '-' + $state;}
+				--#{$prefix}btn#{$state}-color: var( --button-#{$variant}#{$state}-color );
+				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}#{$state}-font-weight );
+				--#{$prefix}btn#{$state}-bg: var( --button-#{$variant}#{$state}-background );
+				--#{$prefix}btn#{$state}-border-color: var( --button-#{$variant}#{$state}-border-color );
+				--#{$prefix}btn#{$state}-border-style: var( --button-#{$variant}#{$state}-border-style );
+				--#{$prefix}btn#{$state}-border-radius: var( --button-#{$variant}#{$state}-border-radius );
+				--#{$prefix}btn#{$state}-box-shadow: var( --button-#{$variant}#{$state}-box-shadow );
+			}
+
+			&:hover {
+				background: var( --button-#{$variant}-hover-background );
+			}
+
+			&:hover,
+			&:focus-visible {
+				font-weight: var( --#{$prefix}btn-hover-font-weight );
+				border-radius: var( --#{$prefix}btn-hover-border-radius );
+				box-shadow: var( --#{$prefix}btn-hover-box-shadow );
+			}
+		}
+
+		@each $state in $button-state-map {
+			@if $state != '' { $state: '-' + $state;}
+			@if $state == '' { $state: 'default';}
+			.btn-#{$variant}:#{$state} {
+				background: var( --button-#{$variant}#{$state}-background );
+			}
+		}
+
+		[data-theme="dark"] .btn-#{$variant} {
+			background: var( --button-#{$variant}-dark-background );
+
+			@each $state in $button-state-map {
+				@if $state != '' { $state: '-' + $state;}
+				--#{$prefix}btn#{$state}-color: var( --button-#{$variant}-dark#{$state}-color );
+				--#{$prefix}btn#{$state}-font-weight: var( --button-#{$variant}-dark#{$state}-font-weight );
+				--#{$prefix}btn#{$state}-bg: var( --button-#{$variant}-dark#{$state}-background );
+				--#{$prefix}btn#{$state}-border-color: var( --button-#{$variant}-dark#{$state}-border-color );
+				--#{$prefix}btn#{$state}-border-style: var( --button-#{$variant}-dark#{$state}-border-style );
+				--#{$prefix}btn#{$state}-border-radius: var( --button-#{$variant}-dark#{$state}-border-radius );
+				--#{$prefix}btn#{$state}-box-shadow: var( --button-#{$variant}-dark#{$state}-box-shadow );
+			}
+		}
+	}
+}
+
+// Check if sizes map exists and then create modifier classes
+@if variable-exists(button-size-map) and ($button-size-map != null) {
+	@each $button-size in $button-size-map {
+		.btn-#{$button-size} {
+			--#{$prefix}border-width: $btn-border-width-#{$button-size};
+			--#{$prefix}line-height: $btn-line-height-#{$button-size};
+		}
+	}
+}

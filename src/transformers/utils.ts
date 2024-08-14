@@ -1,8 +1,9 @@
 import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions, TypographyObject } from "../types";
+import { TypographyObject } from "../types";
 import { TokenType } from "./types";
 import { replaceTokens, slugify } from "../utils/index";
 import { capitalize } from "lodash";
+import { IntegrationObjectComponentOptions } from 'handoff/types/config';
 
 /**
  * Returns normalized type name
@@ -46,7 +47,7 @@ export const formatTokenName = (
   componentVariantProps: [string, string][],
   part: string,
   property: string,
-  options?: ComponentDefinitionOptions
+  options?: IntegrationObjectComponentOptions
 ): string => {
   const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
   const tokenNameParts = getTokenNameSegments(componentName, componentVariantProps, part, property, options);
@@ -60,31 +61,39 @@ export const formatTokenName = (
  * @param options
  * @returns
  */
-export const getTokenNameSegments = (componentName: string, componentVariantProps: [string, string][], part: string, property: string, options?: ComponentDefinitionOptions) => {
-  if (options?.transformer?.tokenNameSegments) {
-    return options.transformer.tokenNameSegments
+export const getTokenNameSegments = (
+  componentName: string,
+  componentVariantProps: [string, string][],
+  part: string,
+  property: string,
+  options?: IntegrationObjectComponentOptions
+) => {
+  if (options?.tokenNameSegments) {
+    return options.tokenNameSegments
       .map((tokenNamePart) => {
         const initialValue = tokenNamePart;
         tokenNamePart = replaceTokens(
           tokenNamePart,
           new Map([
-            ['Component', componentName],
-            ['Part', normalizeComponentPartName(part)],
-            ['Property', property],
+            ['component', componentName],
+            ['part', normalizeComponentPartName(part)],
+            ['property', property],
           ]),
           (token, _, value) => (value === '' ? token : value)
         );
 
         tokenNamePart = replaceTokens(
           tokenNamePart,
-          new Map(componentVariantProps.map(([k, v]) => ['Variant.' + k, v])),
-          (_, variantProp, value) => normalizeTokenNamePartValue(variantProp.replace('Variant.', ''), value, options)
+          new Map(componentVariantProps.map(([k, v]) => [('Variant.' + k).toLowerCase(), v.toLowerCase()])),
+          (_, variantProp, value) => normalizeTokenNamePartValue(variantProp.replace('variant.', ''), value, options)
         );
 
         // Backward compatibility (remove before 1.0 release)
         if (tokenNamePart === '') {
-          tokenNamePart = replaceTokens(initialValue, new Map(componentVariantProps), (_, variantProp, value) =>
-            normalizeTokenNamePartValue(variantProp, value, options)
+          tokenNamePart = replaceTokens(
+            initialValue,
+            new Map(componentVariantProps.map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])),
+            (_, variantProp, value) => normalizeTokenNamePartValue(variantProp, value, options)
           );
         }
 
@@ -93,10 +102,7 @@ export const getTokenNameSegments = (componentName: string, componentVariantProp
       .filter((part) => part !== '');
   }
 
-  const parts: string[] = [
-    componentName,
-    normalizeComponentPartName(part)
-  ];
+  const parts: string[] = [componentName, normalizeComponentPartName(part)];
 
   componentVariantProps.forEach(([variantProp, value]) => {
     parts.push(normalizeTokenNamePartValue(variantProp, value, options));
@@ -104,8 +110,8 @@ export const getTokenNameSegments = (componentName: string, componentVariantProp
 
   parts.push(property);
 
-  return parts.filter(part => part !== '');
-}
+  return parts.filter((part) => part !== '');
+};
 
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
@@ -117,20 +123,28 @@ export const getTokenNameSegments = (componentName: string, componentVariantProp
  * @param options
  * @returns
  */
-export const normalizeTokenNamePartValue = (variable: string, value?: string, options?: ComponentDefinitionOptions, keepDefaults: boolean = false) => {
-  const replace = options?.transformer?.replace ?? {};
-  const defaults = options?.shared?.defaults ?? {};
+export const normalizeTokenNamePartValue = (
+  variable: string,
+  value?: string,
+  options?: IntegrationObjectComponentOptions,
+  keepDefaults: boolean = false
+) => {
+  const normalizedVariable = variable.toLowerCase();
+  const normalizedValue = value.toLowerCase();
 
-  if (variable in (replace ?? {}) && value && value in (replace[variable] ?? {})) {
-    return replace[variable][value] ?? '';
+  const replace = options?.replace ?? {};
+  const defaults = options?.defaults ?? {};
+
+  if (normalizedVariable in (replace ?? {}) && normalizedValue && normalizedValue in (replace[normalizedVariable] ?? {})) {
+    return replace[normalizedVariable][normalizedValue] ?? '';
   }
 
-  if (!keepDefaults && variable in (defaults ?? {}) && value === (defaults[variable as keyof typeof defaults] ?? '') ) {
+  if (!keepDefaults && normalizedVariable in (defaults ?? {}) && normalizedValue === (defaults[normalizedVariable as keyof typeof defaults] ?? '')) {
     return '';
   }
 
-  return value;
-}
+  return normalizedValue;
+};
 
 /**
  * Returns the normalized part name.

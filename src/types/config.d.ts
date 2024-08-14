@@ -16,18 +16,6 @@ export interface Integration {
 }
 
 export interface FigmaSearch {
-  options: {
-    shared?: {
-      defaults: {
-        [variantProperty: string]: string
-      };
-    };
-    transformer?: {
-      cssRootProperty?: string,
-      tokenNameSegments?: string[],
-      replace: { [variantProperty: string]: { [source: string]: string } }
-    };
-  };
   definitions: string[];
 }
 
@@ -90,6 +78,27 @@ export type ClientConfig = Pick<
   Config,
   'app' | 'figma' | 'integration' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'use_legacy_definitions'
 >;
+
+export interface IntegrationObjectComponentOptions {
+  cssRootClass?: string;
+  tokenNameSegments?: string[];
+  defaults: {
+    [variantProperty: string]: string;
+  };
+  replace: { [variantProperty: string]: { [source: string]: string } };
+};
+
+
+export interface IntegrationObject {
+  name: string;
+  entries?: {
+    integration?: string;
+    bundle?: string;
+  }
+  options: {
+    [key: string]: IntegrationObjectComponentOptions;
+  };
+}
 
 declare const config: Config;
 

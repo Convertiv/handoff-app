@@ -1,3 +1,4 @@
+import { IntegrationObject } from 'handoff/types/config';
 import { DocumentationObject } from '../../types';
 import { TransformerOutput } from '../types';
 import { transformComponentsToMap } from './component';
@@ -5,14 +6,14 @@ import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
-export default function mapTransformer(documentationObject: DocumentationObject): TransformerOutput {
+export default function mapTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
   let flatMap: Record<string, string> = {};
 
   const components: Record<string, string> = {};
   for (const componentId in documentationObject.components) {
-    const map = transformComponentsToMap(componentId, documentationObject.components[componentId]);
+    const map = transformComponentsToMap(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
     components[componentId] = JSON.stringify(map, null, 2);
-    flatMap = { ...flatMap, ...map }
+    flatMap = { ...flatMap, ...map };
   }
 
   const colors = transformColors(documentationObject.design.color);
@@ -29,7 +30,7 @@ export default function mapTransformer(documentationObject: DocumentationObject)
       effects: JSON.stringify(effects, null, 2),
     },
     attachments: {
-      "tokens-map": JSON.stringify(flatMap, null, 2),
-    }
+      'tokens-map': JSON.stringify(flatMap, null, 2),
+    },
   };
 }

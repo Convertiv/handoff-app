@@ -30,19 +30,6 @@ export const ejectConfig = async (handoff: Handoff) => {
 export const ejectIntegration = async (handoff: Handoff) => {
   const config = handoff.config;
 
-  if (!config.integration) {
-    console.log(chalk.red(`Unable to eject integration as it is not defined.`));
-    return handoff;
-  }
-
-  const integration = config.integration.name;
-
-  // is the custom integration already being used?
-  if (integration === 'custom') {
-    console.log(chalk.red(`Custom integration cannot be ejected as it's destination matches the source.`));
-    return;
-  }
-
   // does an local integration exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'integration'));
   if (fs.existsSync(workingPath)) {
@@ -55,17 +42,18 @@ export const ejectIntegration = async (handoff: Handoff) => {
   // perform integration ejection
   const integrationPath = getPathToIntegration(handoff);
   fs.copySync(integrationPath, workingPath, { overwrite: false });
-  console.log(chalk.green(`${config?.integration?.name} ${config?.integration?.version} ejected to ${workingPath}`));
+  console.log(chalk.green(`Integration template has been ejected to ${workingPath}`));
 
   // ensure local configuration is set up to support the ejected integration
   const localConfigPath = path.join(handoff.workingPath, 'handoff.config.json');
   !fs.existsSync(localConfigPath) && (await ejectConfig(handoff));
 
+  // TODO: Remove?
   // update (and re-write) the ejected configuration with custom integration
-  const localConfigBuffer = fs.readFileSync(localConfigPath);
-  const localConfig = JSON.parse(localConfigBuffer.toString()) as ClientConfig;
-  localConfig.integration = { name: 'custom', version: '' };
-  fs.writeFileSync(localConfigPath, `${JSON.stringify(localConfig, null, 2)}`);
+  // const localConfigBuffer = fs.readFileSync(localConfigPath);
+  // const localConfig = JSON.parse(localConfigBuffer.toString()) as ClientConfig;
+  // localConfig.integration = { name: 'custom', version: '' };
+  // fs.writeFileSync(localConfigPath, `${JSON.stringify(localConfig, null, 2)}`);
 
   return handoff;
 };

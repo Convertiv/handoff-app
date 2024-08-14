@@ -58,6 +58,7 @@ var archiver_1 = __importDefault(require("archiver"));
 var tailwind_1 = require("./tailwind");
 var utils_1 = require("../utils");
 var tokens_1 = require("../tokens");
+var chalk_1 = __importDefault(require("chalk"));
 var defaultIntegration = 'bootstrap';
 var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
@@ -87,27 +88,12 @@ exports.HandoffIntegration = HandoffIntegration;
  * and version.  Allow users to define custom integration if desired.
  */
 var getPathToIntegration = function (handoff) {
-    if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
+    if (!handoff) {
         throw Error('Handoff not initialized');
     }
-    var integrationFolder = 'config/integrations';
-    var config = handoff.config;
-    if (!config.integration) {
-        return null;
-    }
-    if (config.integration.name === 'custom') {
-        // Look for a custom integration
-        var customPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-        if (!fs_extra_1.default.existsSync(customPath)) {
-            throw Error("The config is set to use a custom integration but no custom integration found at integrations/custom");
-        }
-        return customPath;
-    }
-    var searchPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, integrationFolder, config.integration.name, config.integration.version));
-    if (!fs_extra_1.default.existsSync(searchPath)) {
-        throw Error("The requested integration was ".concat(config.integration.name, " version ").concat(config.integration.version, " but no integration plugin with that name was found"));
-    }
-    return searchPath;
+    var ejectedIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+    var defaultIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+    return fs_extra_1.default.existsSync(ejectedIntegrationPath) ? ejectedIntegrationPath : defaultIntegrationPath;
 };
 exports.getPathToIntegration = getPathToIntegration;
 /**
@@ -115,10 +101,16 @@ exports.getPathToIntegration = getPathToIntegration;
  * @returns string
  */
 var getIntegrationEntryPoint = function (handoff) {
-    var integrationPath = (0, exports.getPathToIntegration)(handoff);
-    return integrationPath
-        ? path_1.default.resolve(path_1.default.join(integrationPath, 'templates', 'main.js'))
-        : null;
+    var _a, _b;
+    var entry = (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.bundle;
+    if (!entry) {
+        return null;
+    }
+    var ejectedIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+    var defaultIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+    return fs_extra_1.default.existsSync(ejectedIntegrationPath)
+        ? path_1.default.resolve(path_1.default.join(ejectedIntegrationPath, entry))
+        : path_1.default.resolve(path_1.default.join(defaultIntegrationPath, entry));
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
 var instantiateIntegration = function (handoff) {
@@ -212,7 +204,7 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
     });
 }); };
 exports.zipTokens = zipTokens;
-var renderIntegrationTemplates = function (sourcePath, destPath, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+var buildIntegration = function (sourcePath, destPath, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     var items, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -236,7 +228,7 @@ var renderIntegrationTemplates = function (sourcePath, destPath, documentationOb
                 // Create the directory in the destination path if it doesn't exist
                 _a.sent();
                 // Recursively process the directory
-                return [4 /*yield*/, renderIntegrationTemplates(sourceItemPath, destItemPath, documentationObject)];
+                return [4 /*yield*/, buildIntegration(sourceItemPath, destItemPath, documentationObject)];
             case 5:
                 // Recursively process the directory
                 _a.sent();
@@ -245,7 +237,10 @@ var renderIntegrationTemplates = function (sourcePath, destPath, documentationOb
             case 7:
                 content = _a.sent();
                 template = handlebars_1.default.compile(content);
-                renderedContent = template({ documentationObject: documentationObject });
+                renderedContent = template({
+                    components: Object.keys(documentationObject.components),
+                    documentationObject: documentationObject,
+                });
                 // Ensure the directory exists before writing the file
                 return [4 /*yield*/, fs_extra_1.default.ensureDir(path_1.default.dirname(destItemPath))];
             case 8:
@@ -269,35 +264,44 @@ var renderIntegrationTemplates = function (sourcePath, destPath, documentationOb
  * @param documentationObject
  */
 function integrationTransformer(handoff, documentationObject) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var outputFolder, integrationPath, destinationPath, templatesFolder, integrationsSass, integrationTemplates, _loop_1, _i, _a, tokenType, err_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var outputFolder, integrationPath, destinationPath, integrationDataPath, _loop_1, _i, _c, tokenType, err_1, exportPath, exportIntegrationPath, data;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
+                    if (!(handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject)) {
+                        return [2 /*return*/];
+                    }
+                    console.log(chalk_1.default.green("Integration build started (using: ".concat(handoff.integrationObject.name, ")...")));
                     outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
                     if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 2];
                     return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
                 case 1:
-                    _b.sent();
-                    _b.label = 2;
+                    _d.sent();
+                    _d.label = 2;
                 case 2:
                     integrationPath = (0, exports.getPathToIntegration)(handoff);
                     destinationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
-                    templatesFolder = path_1.default.resolve(__dirname, '../../templates');
-                    integrationsSass = path_1.default.resolve(integrationPath, 'sass');
-                    integrationTemplates = path_1.default.resolve(integrationPath, 'templates');
-                    _b.label = 3;
+                    integrationDataPath = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration)
+                        ? path_1.default.resolve(integrationPath, handoff.integrationObject.entries.integration)
+                        : null;
+                    if (!integrationDataPath) {
+                        console.log(chalk_1.default.yellow('Unable to build integration. Reason: No integration entry was specified.'));
+                        return [2 /*return*/];
+                    }
+                    _d.label = 3;
                 case 3:
-                    _b.trys.push([3, 5, , 6]);
+                    _d.trys.push([3, 5, , 6]);
                     handlebars_1.default.registerHelper("value", function (componentName, part, variant, property, options) {
                         var context = options.data.root;
                         var component = context.documentationObject.components[componentName.toLocaleLowerCase()];
                         if (!component) {
-                            return new handlebars_1.default.SafeString("unset");
+                            return new handlebars_1.default.SafeString('unset');
                         }
                         var search = variant.split(',').map(function (pair) {
                             var _a = pair.split(':'), key = _a[0], value = _a[1];
-                            return [key !== null && key !== void 0 ? key : "".trim(), value !== null && value !== void 0 ? value : "".trim()];
+                            return [key !== null && key !== void 0 ? key : ''.trim(), value !== null && value !== void 0 ? value : ''.trim()];
                         });
                         var componentInstance = component.instances.find(function (instance) {
                             return search.every(function (_a) {
@@ -309,21 +313,21 @@ function integrationTransformer(handoff, documentationObject) {
                             });
                         });
                         if (!componentInstance) {
-                            return new handlebars_1.default.SafeString("unset");
+                            return new handlebars_1.default.SafeString('unset');
                         }
-                        var partTokenSets = componentInstance.parts[""] || componentInstance.parts["$"];
+                        var partTokenSets = componentInstance.parts[''] || componentInstance.parts['$'];
                         if (!partTokenSets || partTokenSets.length === 0) {
-                            return new handlebars_1.default.SafeString("unset");
+                            return new handlebars_1.default.SafeString('unset');
                         }
                         var tokens = partTokenSets.reduce(function (prev, curr) { return (__assign(__assign({}, prev), (0, tokens_1.getTokenSetTokens)(curr))); }, {});
                         if (!tokens) {
-                            return new handlebars_1.default.SafeString("unset");
+                            return new handlebars_1.default.SafeString('unset');
                         }
                         var value = tokens[property];
                         if (!value) {
-                            return new handlebars_1.default.SafeString("unset");
+                            return new handlebars_1.default.SafeString('unset');
                         }
-                        if (typeof (value) === "string") {
+                        if (typeof value === 'string') {
                             return new handlebars_1.default.SafeString(value);
                         }
                         return new handlebars_1.default.SafeString(value[0]);
@@ -333,11 +337,11 @@ function integrationTransformer(handoff, documentationObject) {
                             var context = options.data.root;
                             var component = context.documentationObject.components[componentName.toLocaleLowerCase()];
                             if (!component) {
-                                return new handlebars_1.default.SafeString("unset");
+                                return new handlebars_1.default.SafeString('unset');
                             }
                             var search = variant.split(',').map(function (pair) {
                                 var _a = pair.split(':'), key = _a[0], value = _a[1];
-                                return [key !== null && key !== void 0 ? key : "".trim(), value !== null && value !== void 0 ? value : "".trim()];
+                                return [key !== null && key !== void 0 ? key : ''.trim(), value !== null && value !== void 0 ? value : ''.trim()];
                             });
                             var componentInstance = component.instances.find(function (instance) {
                                 return search.every(function (_a) {
@@ -346,61 +350,46 @@ function integrationTransformer(handoff, documentationObject) {
                                 });
                             });
                             if (!componentInstance) {
-                                return new handlebars_1.default.SafeString("unset");
+                                return new handlebars_1.default.SafeString('unset');
                             }
-                            return new handlebars_1.default.SafeString((0, utils_1.formatTokenName)(tokenType, componentName, search, part, property, {}));
+                            return new handlebars_1.default.SafeString((0, utils_1.formatTokenName)(tokenType, componentName, search, part, property, handoff.integrationObject.options[componentName]));
                         });
                     };
-                    for (_i = 0, _a = ['css', 'scss']; _i < _a.length; _i++) {
-                        tokenType = _a[_i];
+                    for (_i = 0, _c = ['css', 'scss']; _i < _c.length; _i++) {
+                        tokenType = _c[_i];
                         _loop_1(tokenType);
                     }
-                    ;
-                    return [4 /*yield*/, renderIntegrationTemplates(integrationPath, destinationPath, documentationObject)];
+                    return [4 /*yield*/, buildIntegration(integrationDataPath, destinationPath, documentationObject)];
                 case 4:
-                    _b.sent();
-                    console.log('Templates rendered successfully!');
+                    _d.sent();
+                    console.log(chalk_1.default.green('Integration build finished successfully!'));
                     return [3 /*break*/, 6];
                 case 5:
-                    err_1 = _b.sent();
-                    console.error('Error rendering templates:', err_1);
+                    err_1 = _d.sent();
+                    console.error(chalk_1.default.red("Unable to build integration. Reason: Error was encountered (".concat(err_1, ")")));
                     return [3 /*break*/, 6];
-                case 6: return [2 /*return*/];
+                case 6:
+                    exportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
+                    exportIntegrationPath = path_1.default.resolve(handoff.workingPath, exportPath, "integration");
+                    // copy the exported integration into the user defined dir (if the EXPORT_PATH environment variable is defined)
+                    if (process.env.HANDOFF_EXPORT_PATH) {
+                        fs_extra_1.default.copySync(exportIntegrationPath, process.env.HANDOFF_EXPORT_PATH);
+                    }
+                    // zip the tokens
+                    return [4 /*yield*/, (0, exports.zipTokens)(exportPath, fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, "tokens.zip")))];
+                case 7:
+                    // zip the tokens
+                    _d.sent();
+                    data = handoff.integrationHooks.hooks.integration(documentationObject, []);
+                    data = handoff.hooks.integration(documentationObject, data);
+                    if (data.length > 0) {
+                        data.map(function (artifact) {
+                            fs_extra_1.default.writeFileSync(path_1.default.join(exportIntegrationPath, artifact.filename), artifact.data);
+                        });
+                    }
+                    return [2 /*return*/];
             }
         });
     });
 }
 exports.default = integrationTransformer;
-var replaceHandoffImportTokens = function (handoff, content, components) {
-    getHandoffImportTokens(handoff, components)
-        .forEach(function (_a) {
-        var token = _a[0], imports = _a[1];
-        content = content.replaceAll("//<#".concat(token, "#>"), imports.map(function (path) { return "@import '".concat(path, "';"); }).join("\r\n"));
-    });
-    return content;
-};
-var getHandoffImportTokens = function (handoff, components) {
-    var result = [];
-    components.forEach(function (component) {
-        getHandoffImportTokensForComponent(handoff, component)
-            .forEach(function (_a, idx) {
-            var _b;
-            var importToken = _a[0], searchPath = _a.slice(1);
-            (_b = result[idx]) !== null && _b !== void 0 ? _b : result.push([importToken, []]);
-            if (fs_extra_1.default.existsSync(path_1.default.resolve.apply(path_1.default, searchPath))) {
-                result[idx][1].push("".concat(searchPath[1], "/").concat(component));
-            }
-        });
-    });
-    return result;
-};
-var getHandoffImportTokensForComponent = function (handoff, component) {
-    var integrationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
-    return [
-        ['HANDOFF.TOKENS.TYPES', integrationPath, '../tokens/types', "".concat(component, ".scss")],
-        ['HANDOFF.TOKENS.SASS', integrationPath, '../tokens/sass', "".concat(component, ".scss")],
-        ['HANDOFF.TOKENS.CSS', integrationPath, '../tokens/css', "".concat(component, ".css")],
-        ['HANDOFF.MAPS', integrationPath, 'maps', "_".concat(component, ".scss")],
-        ['HANDOFF.EXTENSIONS', integrationPath, 'extended', "_".concat(component, ".scss")]
-    ];
-};

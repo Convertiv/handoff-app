@@ -1,5 +1,5 @@
 import { defaultConfig } from './config';
-import { Config } from './types/config';
+import { Config, IntegrationObject } from './types/config';
 import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
@@ -14,6 +14,7 @@ import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
+import { mergeOptions } from './utils/integration';
 
 class Handoff {
   config: Config | null;
@@ -23,6 +24,7 @@ class Handoff {
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
+  integrationObject: IntegrationObject;
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -65,6 +67,7 @@ class Handoff {
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
+    this.integrationObject = initIntegrationObject(this.workingPath, this.modulePath);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -216,6 +219,18 @@ const initConfig = (configOverride?: any): Config => {
   return returnConfig;
 };
 
+const initIntegrationObject = (workingPath: string, modulePath: string): IntegrationObject => {
+  let searchPath = path.resolve(path.join(workingPath, 'integration', 'integration.config.json'));
+
+  if (!fs.existsSync(searchPath)) {
+    searchPath = path.resolve(path.join(modulePath, 'config', 'integrations', 'bootstrap', '5.3', 'integration.config.json'));
+  }
+
+  const buffer = fs.readFileSync(searchPath);
+  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+
+  return mergeOptions(integration);
+};
 
 const validateConfig = (config: Config): Config => {
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {

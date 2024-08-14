@@ -8,6 +8,7 @@ import { AxiosResponse } from 'axios';
 import { slugify } from '../../utils';
 import { IComponentSetMetadata } from '../../types/plugin';
 import { FileComponentsObject } from './types';
+import Handoff from 'handoff/index';
 
 const groupReplaceRules = (tupleList: [string, string, string][]): { [key: string]: { [key: string]: string } } => {
   const res: { [key: string]: { [key: string]: string } } = {};
@@ -55,19 +56,9 @@ const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSe
     name,
     group: '', // TODO
     options: {
-      shared: {
-        defaults: Object.entries(metadata.defaults).reduce((res, [variantProperty, defaultValue]) => {
-          return { ...res, ...{ [variantProperty]: slugify(defaultValue) }}
-        }, {}),
-      },
       exporter: {
         variantProperties: variantProperties.map((variantProp) => variantProp.name),
         sharedComponentVariants: metadata.sharedVariants,
-      },
-      transformer: {
-        cssRootClass: metadata.cssRootClass || name,
-        tokenNameSegments: metadata.tokenNameSegments,
-        replace: groupReplaceRules(metadata.replacements),
       },
     },
     parts: metadata.parts.map((part) => ({
@@ -87,13 +78,13 @@ const getComponentNodesWithMetadata = (
   }));
 };
 
-export const getFigmaFileComponents = async (fileId: string, accessToken: string, legacyDefinitions?: LegacyComponentDefinition[]): Promise<FileComponentsObject> => {
+export const getFigmaFileComponents = async (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]): Promise<FileComponentsObject> => {
   const useLegacyFetchFlow = !!legacyDefinitions;
 
   let fileComponentSetsRes: AxiosResponse<FigmaTypes.FileComponentSetsResponse, any>;
 
   try {
-    fileComponentSetsRes = await getComponentSets(fileId, accessToken);
+    fileComponentSetsRes = await getComponentSets(handoff.config.figma_project_id, handoff.config.dev_access_token);
   } catch (err) {
     throw new Error(
       'Handoff could not access the figma file. \n - Check your file id, dev token, and permissions. \n - For more information on permissions, see https://www.handoff.com/docs/guide'
@@ -115,19 +106,19 @@ export const getFigmaFileComponents = async (fileId: string, accessToken: string
   }
 
   const componentSetNodesResult = await getComponentSetNodes(
-    fileId,
+    handoff.config.figma_project_id,
     fullComponentMetadataArray.map((item) => item.node_id),
-    accessToken
+    handoff.config.dev_access_token
   );
 
   if (useLegacyFetchFlow) {
-    return processFigmaNodesForLegacyDefinitions(componentSetNodesResult.data, fullComponentMetadataArray, legacyDefinitions);
+    return processFigmaNodesForLegacyDefinitions(componentSetNodesResult.data, fullComponentMetadataArray, legacyDefinitions, handoff);
   }
 
-  return processFigmaNodes(componentSetNodesResult.data);
+  return processFigmaNodes(componentSetNodesResult.data, handoff);
 };
 
-const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
+const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse, handoff: Handoff) => {
   // console.warn(
   //   chalk.redBright(
   //     '!!! Using Handoff Figma Plugin fetch flow !!!'
@@ -175,7 +166,6 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
     if (!componentTokens[definition.name]) {
       componentTokens[definition.name] = {
         instances: [],
-        definitions: {},
       };
     }
 
@@ -183,10 +173,8 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
 
     componentTokens[definition.name].instances = [
       ...componentTokens[definition.name].instances,
-      ...extractComponentInstances(components, definition),
+      ...extractComponentInstances(components, definition, handoff),
     ];
-
-    componentTokens[definition.name].definitions[componentSet.id] = definition;
   }
 
   return componentTokens;
@@ -196,12 +184,13 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse) => {
  * Processes figma nodes by utilizing the legacy component definitions
  * @deprecated Will be removed before 1.0.0 release.
  */
-const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.FileNodesResponse, fullComponentMetadataArray: readonly FigmaTypes.FullComponentMetadata[], legacyDefinitions: LegacyComponentDefinition[]) => {
-  console.warn(
-    chalk.redBright(
-      '!!! Using legacy fetch flow !!!'
-    )
-  );
+const processFigmaNodesForLegacyDefinitions = (
+  fileNodesResponse: FigmaTypes.FileNodesResponse,
+  fullComponentMetadataArray: readonly FigmaTypes.FullComponentMetadata[],
+  legacyDefinitions: LegacyComponentDefinition[],
+  handoff: Handoff,
+) => {
+  console.warn(chalk.redBright('!!! Using legacy fetch flow !!!'));
 
   const componentTokens: FileComponentsObject = {};
 
@@ -240,7 +229,11 @@ const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.Fil
       continue;
     }
 
-    const componentSets = getComponentSetsForLegacyComponentDefinition(figmaComponentSetNodes, fullComponentMetadataArray, legacyDefinition);
+    const componentSets = getComponentSetsForLegacyComponentDefinition(
+      figmaComponentSetNodes,
+      fullComponentMetadataArray,
+      legacyDefinition
+    );
 
     for (const componentSet of componentSets) {
       const definition = getComponentDefinitionForLegacyComponentDefinition(componentSet, legacyDefinition);
@@ -248,7 +241,6 @@ const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.Fil
       if (!componentTokens[definition.name]) {
         componentTokens[definition.name] = {
           instances: [],
-          definitions: {},
         };
       }
 
@@ -256,15 +248,13 @@ const processFigmaNodesForLegacyDefinitions = (fileNodesResponse: FigmaTypes.Fil
 
       componentTokens[definition.name].instances = [
         ...componentTokens[definition.name].instances,
-        ...extractComponentInstances(components, definition, legacyDefinition),
+        ...extractComponentInstances(components, definition, handoff, legacyDefinition),
       ];
-
-      componentTokens[definition.name].definitions[componentSet.id] = definition;
     }
   }
 
   return componentTokens;
-}
+};
 
 /**
  * Returns the legacy component definition variant property with all associated parameters.
@@ -337,17 +327,9 @@ const getComponentDefinitionForLegacyComponentDefinition = (componentSet: FigmaT
     name: legacyDefinition.id,
     group: legacyDefinition.group,
     options: {
-      shared: {
-        defaults: legacyDefinition.options.shared?.defaults ?? {},
-      },
       exporter: {
         variantProperties: variantProperties.map((variantProp) => variantProp.name),
         sharedComponentVariants,
-      },
-      transformer: {
-        cssRootClass: legacyDefinition.options.transformer?.cssRootClass ?? legacyDefinition.id,
-        tokenNameSegments: legacyDefinition.options.transformer?.tokenNameSegments,
-        replace: legacyDefinition.options.transformer?.replace,
       },
     },
     parts: legacyDefinition.parts,

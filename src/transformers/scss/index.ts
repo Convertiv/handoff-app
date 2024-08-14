@@ -5,17 +5,22 @@ import transformTypography, { transformTypographyTypes } from './design/typograp
 import { transformComponentTokensToScssVariables, transformComponentsToScssTypes } from './component';
 import { formatComponentCodeBlockComment } from '../utils';
 import { TransformerOutput } from '../types';
+import { IntegrationObject } from 'handoff/types/config';
 
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
  * @returns
  */
-export function scssTypesTransformer(documentationObject: DocumentationObject): TransformerOutput {
+export function scssTypesTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
-    components[componentId] = transformComponentsToScssTypes(componentId, documentationObject.components[componentId]);
+    components[componentId] = transformComponentsToScssTypes(
+      componentId,
+      documentationObject.components[componentId],
+      integrationObject.options[componentId]
+    );
   }
 
   const design = {
@@ -32,17 +37,15 @@ export function scssTypesTransformer(documentationObject: DocumentationObject): 
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject): TransformerOutput {
+export default function scssTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
-    const definitions = documentationObject.components[componentId].definitions;
     components[componentId] = documentationObject.components[componentId].instances
       .map((instance) => {
-        const options = definitions[instance.definitionId].options;
         return [
           formatComponentCodeBlockComment(instance, '//'),
-          transformComponentTokensToScssVariables(instance, options)
+          transformComponentTokensToScssVariables(instance, integrationObject.options[componentId])
             .map((token) => `${token.name}: ${token.value};`)
             .join('\n'),
         ].join('\n');
@@ -54,7 +57,7 @@ export default function scssTransformer(documentationObject: DocumentationObject
     colors: transformColors(documentationObject.design.color),
     typography: transformTypography(documentationObject.design.typography),
     effects: transformEffects(documentationObject.design.effect),
-  }
+  };
 
   return { components, design };
 }

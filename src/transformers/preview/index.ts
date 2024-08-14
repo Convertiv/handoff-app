@@ -48,10 +48,6 @@ const transformComponentTokens = async (
     throw Error('Handoff not initialized');
   }
 
-  if (!handoff.config.integration) {
-    return null;
-  }
-
   const template = await getComponentTemplateByComponentId(handoff, componentId, component);
 
   if (!template) {

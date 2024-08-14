@@ -7,10 +7,10 @@ var component_1 = require("./component");
 var colors_1 = __importDefault(require("./design/colors"));
 var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
-function cssTransformer(documentationObject) {
+function cssTransformer(documentationObject, integrationObject) {
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToCssVariables)(componentId, documentationObject.components[componentId]);
+        components[componentId] = (0, component_1.transformComponentsToCssVariables)(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
     }
     var design = {
         colors: (0, colors_1.default)(documentationObject.design.color),

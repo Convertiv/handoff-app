@@ -141,13 +141,10 @@ var buildCustomFonts = function (handoff, documentationObject) { return __awaite
 var buildIntegration = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                if (!!!handoff.config.integration) return [3 /*break*/, 2];
-                return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
+            case 0: return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
             case 1:
                 _a.sent();
-                _a.label = 2;
-            case 2: return [2 /*return*/];
+                return [2 /*return*/];
         }
     });
 }); };
@@ -177,15 +174,15 @@ var buildStyles = function (handoff, documentationObject) { return __awaiter(voi
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                typeFiles = (0, index_1.scssTypesTransformer)(documentationObject);
+                typeFiles = (0, index_1.scssTypesTransformer)(documentationObject, handoff.integrationObject);
                 typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-                cssFiles = (0, index_2.default)(documentationObject);
+                cssFiles = (0, index_2.default)(documentationObject, handoff.integrationObject);
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-                scssFiles = (0, index_1.default)(documentationObject);
+                scssFiles = (0, index_1.default)(documentationObject, handoff.integrationObject);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-                sdFiles = (0, sd_1.default)(documentationObject);
+                sdFiles = (0, sd_1.default)(documentationObject, handoff.integrationObject);
                 sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-                mapFiles = (0, map_1.default)(documentationObject);
+                mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
                 mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
@@ -392,7 +389,7 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                 _b.label = 6;
             case 6:
                 legacyDefinitions = _a;
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff, legacyDefinitions)];
             case 7:
                 documentationObject = _b.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
@@ -430,21 +427,21 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
     });
 }); };
 var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var componentRecords, TOKEN_REGEX, processToken, traverseDirectory, directoryToTraverse;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var TOKEN_REGEX, processToken, traverseDirectory, integrationPath, directoryToTraverse, componentRecords, writePath;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
-                componentRecords = { components: [] };
                 TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
-                processToken = function (content) {
+                processToken = function (content, records) {
                     var match;
                     var regex = new RegExp(TOKEN_REGEX, 'g');
                     var _loop_1 = function () {
                         var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4];
-                        var componentRecord = componentRecords.components.find(function (c) { return c.name === component; });
+                        var componentRecord = records.components.find(function (c) { return c.name === component; });
                         if (!componentRecord) {
                             componentRecord = { name: component, common: { parts: [] }, recipes: [] };
-                            componentRecords.components.push(componentRecord);
+                            records.components.push(componentRecord);
                         }
                         if (!componentRecord.common.parts.includes(part)) {
                             componentRecord.common.parts.push(part);
@@ -480,28 +477,38 @@ var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, 
                         _loop_1();
                     }
                 };
-                traverseDirectory = function (directory) {
+                traverseDirectory = function (directory, records) {
                     var files = fs_extra_1.default.readdirSync(directory);
                     files.forEach(function (file) {
                         var fullPath = path_1.default.join(directory, file);
                         var stat = fs_extra_1.default.statSync(fullPath);
                         if (stat.isDirectory()) {
-                            traverseDirectory(fullPath);
+                            traverseDirectory(fullPath, records);
                         }
                         else if (stat.isFile()) {
                             var content = fs_extra_1.default.readFileSync(fullPath, 'utf8');
-                            processToken(content);
+                            processToken(content, records);
                         }
                     });
                 };
-                directoryToTraverse = (0, index_3.getPathToIntegration)(handoff);
-                traverseDirectory(directoryToTraverse);
+                integrationPath = (0, index_3.getPathToIntegration)(handoff);
+                directoryToTraverse = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration)
+                    ? path_1.default.resolve(integrationPath, handoff.integrationObject.entries.integration)
+                    : null;
+                if (!directoryToTraverse) {
+                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: No integration entry was specified.'));
+                    return [2 /*return*/];
+                }
+                componentRecords = { components: [] };
+                traverseDirectory(directoryToTraverse, componentRecords);
                 componentRecords.components.forEach(function (component) {
                     component.common.parts.sort();
                 });
-                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(handoff.workingPath, 'recipes.json'), JSON.stringify(componentRecords, null, 2))];
+                writePath = path_1.default.resolve(handoff.workingPath, 'recipes.json');
+                return [4 /*yield*/, fs_extra_1.default.writeFile(writePath, JSON.stringify(componentRecords, null, 2))];
             case 1:
-                _a.sent();
+                _c.sent();
+                console.log(chalk_1.default.green("Integration recipe has been successfully written to ".concat(writePath)));
                 return [2 /*return*/];
         }
     });
@@ -596,7 +603,6 @@ var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0,
             }
             exportables = definitions
                 .map(function (def) {
-                var _a;
                 var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
                 var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
                 // If the project path exists, use that first as an override
@@ -609,7 +615,7 @@ var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0,
                 var defBuffer = fs_extra_1.default.readFileSync(defPath);
                 var exportable = JSON.parse(defBuffer.toString());
                 var exportableOptions = {};
-                (0, lodash_1.merge)(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                (0, lodash_1.merge)(exportableOptions, exportable.options);
                 exportable.options = exportableOptions;
                 return exportable;
             })

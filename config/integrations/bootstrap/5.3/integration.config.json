@@ -1,6 +1,9 @@
 {
   "name": "Bootstrap 5.3",
-  "entry": "templates/main.js",
+  "entries": {
+    "integration": "sass",
+    "bundle": "templates/main.js"
+  },
   "options": {
     "*": {
       "defaults": {
@@ -22,13 +25,58 @@
         }
       }
     },
-    "Alert": {
+    "alert": {
+      "tokenNameSegments": ["${component}", "${variant.type}", "${variant.layout}", "${part}", "${property}"]
+    },
+    "button": {
+      "cssRootClass": "btn",
       "tokenNameSegments": [
-        "${Component}",
-        "${Type}",
-        "${Layout}",
-        "${Part}",
-        "${Property}"
+        "${component}",
+        "${variant.type}",
+        "${variant.size}",
+        "${part}",
+        "${variant.theme}",
+        "${variant.state}",
+        "${property}"
+      ]
+    },
+    "checkbox": {
+      "tokenNameSegments": [
+        "${component}",
+        "${variant.state}",
+        "${variant.size}",
+        "${part}",
+        "${variant.theme}",
+        "${variant.activity}",
+        "${property}"
+      ]
+    },
+    "input": {
+      "tokenNameSegments": ["${component}", "${variant.size}", "${part}", "${variant.theme}", "${variant.state}", "${property}"]
+    },
+    "radio": {
+      "tokenNameSegments": [
+        "${component}",
+        "${variant.state}",
+        "${variant.size}",
+        "${part}",
+        "${variant.theme}",
+        "${variant.activity}",
+        "${property}"
+      ]
+    },
+    "select": {
+      "tokenNameSegments": ["${component}", "${variant.size}", "${part}", "${variant.theme}", "${variant.state}", "${property}"]
+    },
+    "switch": {
+      "tokenNameSegments": [
+        "${component}",
+        "${variant.state}",
+        "${variant.size}",
+        "${part}",
+        "${variant.theme}",
+        "${variant.activity}",
+        "${property}"
       ]
     }
   }

@@ -9,7 +9,7 @@
 		--#{$prefix}alert-border-color: var( {{ css-token "alert" "" "type:#{$variant}" "border-color" }} );
 		--#{$prefix}alert-padding-x: var( {{ css-token "alert" "" "type:#{$variant}" "padding-top" }} );
 		--#{$prefix}alert-border: var( {{ css-token "alert" "" "type:#{$variant}" "border-width" }} ) solid var( {{ css-token "alert" "" "type:#{$variant}" "border-color" }} );
-		background: var( --alert-#{$variant}-background );
+		background: var( {{ css-token "alert" "" "type:#{$variant}" "background" }} );
 		border-radius: var( {{ css-token "alert" "" "type:#{$variant}" "border-radius" }} );
 		border-style: var( {{ css-token "alert" "" "type:#{$variant}" "border-style" }} );
 		font-family: var( {{ css-token "alert" "text" "type:#{$variant}" "font-family" }} );

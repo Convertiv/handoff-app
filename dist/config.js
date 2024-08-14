@@ -50,7 +50,6 @@ var defaultConfig = function () {
             base_path: '',
         },
         figma: {
-            options: {},
             definitions: [
                 'components/alert',
                 'components/button',

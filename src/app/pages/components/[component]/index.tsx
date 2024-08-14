@@ -8,6 +8,7 @@ import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
   fetchComponents,
+  getIntegrationObject,
   getLegacyDefinition,
   getPreview,
   getTokens,
@@ -53,6 +54,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
   const componentPreviews = getPreview().components[componentSlug!];
+  const componentOptions = (getIntegrationObject()?.options ?? {})[componentSlug] ?? {};
 
   return {
     props: {
@@ -60,6 +62,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       component: componentObject,
       legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : null,
       previews: componentPreviews,
+      integration: componentOptions,
       ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
       config,
     },
@@ -109,6 +112,7 @@ const GenericComponentPage = ({
   component,
   legacyDefinition,
   previews,
+  componentOptions,
   config,
 }: ComponentDocumentationProps) => {
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -209,7 +213,7 @@ const GenericComponentPage = ({
                       key={previewComponent.component.id}
                       title={getComponentPreviewTitle(previewComponent)}
                       previewObject={previewComponent.component}
-                      previewObjectOptions={component.definitions[previewComponent.component.definitionId].options}
+                      previewObjectOptions={componentOptions}
                       componentInstances={component?.instances}
                       overrides={previewComponent.overrides}
                       renderPreviews={hasPreviews}

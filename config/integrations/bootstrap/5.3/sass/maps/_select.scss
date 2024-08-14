@@ -1,0 +1,43 @@
+// scss-docs-start form-select-variables
+$form-select-padding-y:             ($select-md-padding-top - $select-md-border-width);
+$form-select-padding-x:             $select-md-padding-left;
+$form-select-font-family:           $select-md-option-font-family;
+$form-select-font-size:             $select-md-option-font-size;
+$form-select-indicator-padding:     $form-select-padding-x * 2 + $select-md-icon-width; // Extra padding for background-image
+$form-select-font-weight:           $select-option-active-font-weight;
+$form-select-line-height:           $select-md-option-line-height;
+$form-select-color:                 $select-option-active-color;
+$form-select-bg:                    $select-background;
+$form-select-disabled-color:        $select-option-disabled-color;
+$form-select-disabled-bg:           $select-disabled-background;
+$form-select-disabled-border-color: $select-disabled-border-color;
+$form-select-bg-position:           right $form-select-padding-x center;
+$form-select-bg-size:               $select-md-icon-width; // In pixels because image dimensions
+$form-select-indicator-color:       $select-md-icon-color;
+$form-select-indicator:             url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='#{$form-select-indicator-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m4 6 4 4 4-4'/></svg>" );
+
+$form-select-feedback-icon-padding-end: $form-select-padding-x * 2.5 + $form-select-indicator-padding;
+$form-select-feedback-icon-position:    center right $form-select-indicator-padding;
+// $form-select-feedback-icon-size:        $input-height-inner-half $input-height-inner-half; // remove or set defaults?
+
+$form-select-border-width:        $select-md-border-width;
+$form-select-border-color:        $select-border-color;
+$form-select-border-radius:       $select-md-border-radius;
+$form-select-box-shadow:          $select-box-shadow;
+
+$form-select-focus-border-color:  $select-active-border-color;
+$form-select-focus-width:         $select-active-border-width;
+$form-select-focus-box-shadow:    $select-active-box-shadow;
+
+$form-select-padding-y-sm:        $select-sm-padding-top - $select-sm-border-width;
+$form-select-padding-x-sm:        $select-sm-padding-left;
+$form-select-font-size-sm:        $select-sm-option-font-size;
+$form-select-border-radius-sm:    $select-sm-border-radius;
+
+$form-select-padding-y-lg:        $select-lg-padding-top - $select-lg-border-width;
+$form-select-padding-x-lg:        $select-lg-padding-left;
+$form-select-font-size-lg:        $select-lg-option-font-size;
+$form-select-border-radius-lg:    $select-lg-border-radius;
+
+$form-select-transition:          all .25s ease-in-out;
+// scss-docs-end form-select-variables

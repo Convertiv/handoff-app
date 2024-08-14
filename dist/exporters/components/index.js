@@ -102,21 +102,9 @@ var getComponentSetComponentDefinition = function (componentSet) {
         name: name,
         group: '',
         options: {
-            shared: {
-                defaults: Object.entries(metadata.defaults).reduce(function (res, _a) {
-                    var _b;
-                    var variantProperty = _a[0], defaultValue = _a[1];
-                    return __assign(__assign({}, res), (_b = {}, _b[variantProperty] = (0, utils_2.slugify)(defaultValue), _b));
-                }, {}),
-            },
             exporter: {
                 variantProperties: variantProperties.map(function (variantProp) { return variantProp.name; }),
                 sharedComponentVariants: metadata.sharedVariants,
-            },
-            transformer: {
-                cssRootClass: metadata.cssRootClass || name,
-                tokenNameSegments: metadata.tokenNameSegments,
-                replace: groupReplaceRules(metadata.replacements),
             },
         },
         parts: metadata.parts.map(function (part) { return ({
@@ -131,7 +119,7 @@ var getComponentNodesWithMetadata = function (componentSet, componentsMetadata) 
         metadata: componentsMetadata.get(component.id),
     }); });
 };
-var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
+var getFigmaFileComponents = function (handoff, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var useLegacyFetchFlow, fileComponentSetsRes, err_1, fullComponentMetadataArray, componentSetNodesResult;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -140,7 +128,7 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, (0, api_1.getComponentSets)(fileId, accessToken)];
+                return [4 /*yield*/, (0, api_1.getComponentSets)(handoff.config.figma_project_id, handoff.config.dev_access_token)];
             case 2:
                 fileComponentSetsRes = _a.sent();
                 return [3 /*break*/, 4];
@@ -154,18 +142,18 @@ var getFigmaFileComponents = function (fileId, accessToken, legacyDefinitions) {
                     console.log(chalk_1.default.blue('Continuing fetch with only colors and typography design foundations'));
                     return [2 /*return*/, {}];
                 }
-                return [4 /*yield*/, (0, api_1.getComponentSetNodes)(fileId, fullComponentMetadataArray.map(function (item) { return item.node_id; }), accessToken)];
+                return [4 /*yield*/, (0, api_1.getComponentSetNodes)(handoff.config.figma_project_id, fullComponentMetadataArray.map(function (item) { return item.node_id; }), handoff.config.dev_access_token)];
             case 5:
                 componentSetNodesResult = _a.sent();
                 if (useLegacyFetchFlow) {
-                    return [2 /*return*/, processFigmaNodesForLegacyDefinitions(componentSetNodesResult.data, fullComponentMetadataArray, legacyDefinitions)];
+                    return [2 /*return*/, processFigmaNodesForLegacyDefinitions(componentSetNodesResult.data, fullComponentMetadataArray, legacyDefinitions, handoff)];
                 }
-                return [2 /*return*/, processFigmaNodes(componentSetNodesResult.data)];
+                return [2 /*return*/, processFigmaNodes(componentSetNodesResult.data, handoff)];
         }
     });
 }); };
 exports.getFigmaFileComponents = getFigmaFileComponents;
-var processFigmaNodes = function (fileNodesResponse) {
+var processFigmaNodes = function (fileNodesResponse, handoff) {
     // console.warn(
     //   chalk.redBright(
     //     '!!! Using Handoff Figma Plugin fetch flow !!!'
@@ -204,12 +192,10 @@ var processFigmaNodes = function (fileNodesResponse) {
         if (!componentTokens[definition.name]) {
             componentTokens[definition.name] = {
                 instances: [],
-                definitions: {},
             };
         }
         var components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
-        componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition), true);
-        componentTokens[definition.name].definitions[componentSet.id] = definition;
+        componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition, handoff), true);
     }
     return componentTokens;
 };
@@ -217,7 +203,7 @@ var processFigmaNodes = function (fileNodesResponse) {
  * Processes figma nodes by utilizing the legacy component definitions
  * @deprecated Will be removed before 1.0.0 release.
  */
-var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullComponentMetadataArray, legacyDefinitions) {
+var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullComponentMetadataArray, legacyDefinitions, handoff) {
     var _a;
     console.warn(chalk_1.default.redBright('!!! Using legacy fetch flow !!!'));
     var componentTokens = {};
@@ -248,12 +234,10 @@ var processFigmaNodesForLegacyDefinitions = function (fileNodesResponse, fullCom
             if (!componentTokens[definition.name]) {
                 componentTokens[definition.name] = {
                     instances: [],
-                    definitions: {},
                 };
             }
             var components = getComponentNodesWithMetadata(componentSet, componentsMetadata);
-            componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition, legacyDefinition), true);
-            componentTokens[definition.name].definitions[componentSet.id] = definition;
+            componentTokens[definition.name].instances = __spreadArray(__spreadArray([], componentTokens[definition.name].instances, true), (0, extractor_1.default)(components, definition, handoff, legacyDefinition), true);
         }
     }
     return componentTokens;
@@ -281,7 +265,7 @@ var getComponentPropertyWithParams = function (variantProperty) {
  * @deprecated Will be removed before 1.0.0 release.
  */
 var getComponentDefinitionForLegacyComponentDefinition = function (componentSet, legacyDefinition) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     var supportedVariantProps = __spreadArray(__spreadArray([], (_d = (_c = (_b = (_a = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _a === void 0 ? void 0 : _a.exporter) === null || _b === void 0 ? void 0 : _b.supportedVariantProps) === null || _c === void 0 ? void 0 : _c.design) !== null && _d !== void 0 ? _d : [], true), (_h = (_g = (_f = (_e = legacyDefinition === null || legacyDefinition === void 0 ? void 0 : legacyDefinition.options) === null || _e === void 0 ? void 0 : _e.exporter) === null || _f === void 0 ? void 0 : _f.supportedVariantProps) === null || _g === void 0 ? void 0 : _g.layout) !== null && _h !== void 0 ? _h : [], true);
     var definitionSupportedVariantProperties = supportedVariantProps.map(function (variantProp) { return variantProp.replace(/ *\([^)]*\) */g, ''); });
     var definitionSupportedVariantPropertiesWithShareParams = supportedVariantProps.filter(function (variantProperty) { return variantProperty.match((/ *\([^)]*\) */g)); });
@@ -323,17 +307,9 @@ var getComponentDefinitionForLegacyComponentDefinition = function (componentSet,
         name: legacyDefinition.id,
         group: legacyDefinition.group,
         options: {
-            shared: {
-                defaults: (_k = (_j = legacyDefinition.options.shared) === null || _j === void 0 ? void 0 : _j.defaults) !== null && _k !== void 0 ? _k : {},
-            },
             exporter: {
                 variantProperties: variantProperties.map(function (variantProp) { return variantProp.name; }),
                 sharedComponentVariants: sharedComponentVariants,
-            },
-            transformer: {
-                cssRootClass: (_m = (_l = legacyDefinition.options.transformer) === null || _l === void 0 ? void 0 : _l.cssRootClass) !== null && _m !== void 0 ? _m : legacyDefinition.id,
-                tokenNameSegments: (_o = legacyDefinition.options.transformer) === null || _o === void 0 ? void 0 : _o.tokenNameSegments,
-                replace: (_p = legacyDefinition.options.transformer) === null || _p === void 0 ? void 0 : _p.replace,
             },
         },
         parts: legacyDefinition.parts,

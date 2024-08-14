@@ -16,9 +16,7 @@ var transform = function (tokenType, component, options) {
         if (!tokenSets || tokenSets.length === 0) {
             return "continue";
         }
-        tokenSets.forEach(function (tokenSet) {
-            return tokens.push.apply(tokens, transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options));
-        });
+        tokenSets.forEach(function (tokenSet) { return tokens.push.apply(tokens, transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options)); });
     };
     for (var part in component.parts) {
         _loop_1(part);

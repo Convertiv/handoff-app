@@ -1,0 +1,60 @@
+// /* =============================================================================
+//    INPUT (project/components/_input.scss)
+//    ========================================================================== */
+
+
+// .form-control {
+// 	&::placeholder {
+// 		font-weight: $input-placeholder-font-weight;
+// 	}
+
+// 	&:hover {
+// 		color: $input-hover-color;
+// 		background-color: $input-hover-bg;
+// 		background: $input-hover-bg;
+// 		border-color: $input-hover-border-color;
+// 		border-style: $input-hover-border-style;
+// 		box-shadow: $input-hover-box-shadow;
+// 	}
+
+// 	&:focus {
+// 		color: $input-focus-color;
+// 		background-color: $input-focus-bg;
+// 		background: $input-focus-bg;
+// 		border-color: $input-focus-border-color;
+// 		border-style: $input-focus-border-style;
+// 		box-shadow: $input-focus-box-shadow;
+// 	}
+
+// 	&:disabled {
+// 		color: $input-disabled-color;
+// 		background-color: $input-disabled-bg;
+// 		background: $input-disabled-bg;
+// 		border-color: $input-disabled-border-color;
+// 		border-style: $input-disabled-border-style;
+// 		box-shadow: $input-disabled-box-shadow;
+// 	}
+
+// 	&.is-invalid,
+// 	&.is-invalid:hover,
+// 	&.is-invalid:focus {
+// 		color: $input-invalid-color;
+// 		background-color: $input-invalid-bg;
+// 		background: $input-invalid-bg;
+// 		border-color: $input-invalid-border-color;
+// 		border-style: $input-invalid-border-style;
+// 		box-shadow: $input-invalid-box-shadow;
+// 	}
+// }
+
+// .form-control-sm {
+// 	min-height: 0;
+// 	line-height: $input-line-height-sm;
+// 	border-width: $input-border-width-sm;
+// }
+
+// .form-control-lg {
+// 	min-height: 0;
+// 	line-height: $input-line-height-lg;
+// 	border-width: $input-border-width-lg;
+// }

@@ -18,11 +18,11 @@ var component_1 = require("./component");
 var colors_1 = __importDefault(require("./design/colors"));
 var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
-function mapTransformer(documentationObject) {
+function mapTransformer(documentationObject, integrationObject) {
     var flatMap = {};
     var components = {};
     for (var componentId in documentationObject.components) {
-        var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId]);
+        var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
         components[componentId] = JSON.stringify(map, null, 2);
         flatMap = __assign(__assign({}, flatMap), map);
     }
@@ -38,8 +38,8 @@ function mapTransformer(documentationObject) {
             effects: JSON.stringify(effects, null, 2),
         },
         attachments: {
-            "tokens-map": JSON.stringify(flatMap, null, 2),
-        }
+            'tokens-map': JSON.stringify(flatMap, null, 2),
+        },
     };
 }
 exports.default = mapTransformer;

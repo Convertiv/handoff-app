@@ -41,7 +41,6 @@ export const defaultConfig = (): Config => ({
     base_path: '',
   },
   figma: {
-    options: {},
     definitions: [
       'components/alert',
       'components/button',

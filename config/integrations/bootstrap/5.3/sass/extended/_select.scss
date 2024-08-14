@@ -1,0 +1,54 @@
+/* =============================================================================
+   SELECT (extended/_select.scss)
+   ========================================================================== */
+
+.form-select {
+	&:hover {
+		color: $select-option-active-color;
+		background-color: $select-hover-background;
+		background: $select-hover-background;
+		border-color: $select-hover-border-color;
+		border-style: $select-hover-border-style;
+		box-shadow: $select-hover-box-shadow;
+	}
+
+	&:focus {
+		color: $select-option-active-color;
+		background-color: $select-active-background;
+		background: $select-active-background;
+		border-color: $select-active-border-color;
+		border-style: $select-active-border-style;
+		box-shadow: $select-active-box-shadow;
+	}
+
+	&:disabled {
+		color: $select-option-disabled-color;
+		background-color: $select-disabled-background;
+		background: $select-disabled-background;
+		border-color: $select-disabled-border-color;
+		border-style: $select-disabled-border-style;
+		box-shadow: $select-disabled-box-shadow;
+	}
+
+	&.is-invalid,
+	&.is-invalid:hover,
+	&.is-invalid:focus {
+		color: $select-option-error-color;
+		background-color: $select-error-background;
+		background: $select-error-background;
+		background-repeat: no-repeat;
+		border-color: $select-error-border-color;
+		border-style: $select-error-border-style;
+		box-shadow: $select-error-box-shadow;
+	}
+}
+
+.form-select-sm {
+	line-height: $select-sm-option-line-height;
+	border-width: $select-sm-border-width;
+}
+
+.form-select-lg {
+	line-height: $select-lg-option-line-height;
+	border-width: $select-lg-border-width;
+}

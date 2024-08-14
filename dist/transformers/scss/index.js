@@ -34,10 +34,10 @@ var utils_1 = require("../utils");
  * @param documentationObject
  * @returns
  */
-function scssTypesTransformer(documentationObject) {
+function scssTypesTransformer(documentationObject, integrationObject) {
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId]);
+        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
     }
     var design = {
         colors: (0, colors_1.transformColorTypes)(documentationObject.design.color),
@@ -52,16 +52,14 @@ exports.scssTypesTransformer = scssTypesTransformer;
  * @param documentationObject
  * @returns
  */
-function scssTransformer(documentationObject) {
+function scssTransformer(documentationObject, integrationObject) {
     var components = {};
     var _loop_1 = function (componentId) {
-        var definitions = documentationObject.components[componentId].definitions;
         components[componentId] = documentationObject.components[componentId].instances
             .map(function (instance) {
-            var options = definitions[instance.definitionId].options;
             return [
                 (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
-                (0, component_1.transformComponentTokensToScssVariables)(instance, options)
+                (0, component_1.transformComponentTokensToScssVariables)(instance, integrationObject.options[componentId])
                     .map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); })
                     .join('\n'),
             ].join('\n');

@@ -119,19 +119,9 @@ export interface ComponentPart {
 };
 
 export interface ComponentDefinitionOptions {
-  shared?: {
-    defaults?: {
-      [variantProperty: string]: string;
-    };
-  };
   exporter?: {
     variantProperties: string[];
     sharedComponentVariants?: { componentId: string; sharedVariantProperty?: string; distinctiveVariantProperties?: string[] }[];
-  };
-  transformer?: {
-    cssRootClass?: string;
-    tokenNameSegments?: string[];
-    replace: { [variantProperty: string]: { [source: string]: string } };
   };
   demo?: ComponentDocumentationOptions;
 }
@@ -166,25 +156,11 @@ export interface LegacyComponentDefinition {
  * @deprecated Will be removed before 1.0.0 release.
  */
 export interface LegacyComponentDefinitionOptions {
-  shared?: {
-    defaults?: {
-        [variantProperty: string]: string;
-    };
-  };
   exporter?: {
     search: string;
     supportedVariantProps: {
         design: string[];
         layout: string[];
-    };
-  };
-  transformer?: {
-    cssRootClass?: string;
-    tokenNameSegments?: string[];
-    replace: {
-        [variantProperty: string]: {
-            [source: string]: string;
-        };
     };
   };
   demo?: {

@@ -15,17 +15,6 @@
         ]
       }
     },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${Type}",
-        "${Size}",
-        "${Part}",
-        "${Theme}",
-        "${State}",
-        "${Property}"
-      ]
-    },
     "demo": {
       "tabs": {
         "overview": {

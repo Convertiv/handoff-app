@@ -1,15 +1,14 @@
 /**
  * Replaces tokens in the given string and returns it
- * @param str 
- * @param tokenValMap 
- * @param pipe 
- * @returns 
+ * @param str
+ * @param tokenValMap
+ * @param pipe
+ * @returns
  */
 export function replaceTokens(str: string, tokenValMap: Map<string, string>, pipe?: (token: string, key: string, value: string) => string) {
   return str.replace(/\$\{(.*?)\}/g, token => {
-    const key = token.substring(2, token.length - 1);
+    const key = token.substring(2, token.length - 1).toLowerCase();
     const val = tokenValMap.get(key) ?? '';
-    
     return pipe ? pipe(token, key, val) : val;
   });
 }

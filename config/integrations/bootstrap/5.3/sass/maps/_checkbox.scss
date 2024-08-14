@@ -1,0 +1,35 @@
+// scss-docs-start form-check-variables
+$form-check-input-width:                  $checkbox-off-width;
+$form-check-min-height:                   $checkbox-label-off-font-size * $checkbox-label-off-line-height;
+$form-check-padding-start:                $form-check-input-width + $checkbox-off-spacing;
+$form-check-margin-bottom:                null;
+$form-check-label-color:                  $checkbox-label-off-color;
+$form-check-label-cursor:                 pointer;
+$form-check-transition:                   all .25s ease-in-out;
+
+//$form-check-input-active-filter:          brightness(90%);
+
+$form-check-input-bg:                     $checkbox-off-background;
+$form-check-input-border:                 $checkbox-off-border-width solid rgba($black, .25);
+$form-check-input-border-radius:          $checkbox-off-border-radius;
+// $form-check-radio-border-radius:          50%; // Remove (moved to radio mappings)?
+$form-check-input-focus-border:           $checkbox-off-border-color;
+$form-check-input-focus-box-shadow:       $checkbox-off-box-shadow;
+
+$form-check-input-checked-color:          $checkbox-icon-on-color;
+$form-check-input-checked-bg-color:       $checkbox-on-background;
+$form-check-input-checked-border-color:   $checkbox-on-border-color;
+$form-check-input-checked-bg-image:       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-checked-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1.5 6 3 3 6-6'/></svg>" );
+// $form-check-radio-checked-bg-image:       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 10 10'><circle r='2' fill='#{$form-check-input-checked-color}'/></svg>"); // Remove (moved to radio mappings)?
+
+$form-check-input-indeterminate-color:          $checkbox-icon-on-color;
+$form-check-input-indeterminate-bg-color:       $checkbox-on-background;
+$form-check-input-indeterminate-border-color:   $checkbox-on-background;
+$form-check-input-indeterminate-bg-image:       url( "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='none' stroke='#{$form-check-input-indeterminate-color}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 6h8'/></svg>" );
+
+$form-check-input-disabled-opacity:        $checkbox-disabled-off-opacity;
+$form-check-label-disabled-opacity:        $checkbox-disabled-label-off-opacity;
+//$form-check-btn-check-disabled-opacity:    $btn-disabled-opacity;
+
+$form-check-inline-margin-end:    1rem;
+// scss-docs-end form-check-variables

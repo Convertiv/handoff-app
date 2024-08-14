@@ -62,7 +62,10 @@ var getComponentTemplate = function (handoff, component, parts) { return __await
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                sources = [path_1.default.resolve(handoff.workingPath, "integration/templates/".concat(component)), path_1.default.resolve(__dirname, "../../templates/".concat(component))];
+                sources = [
+                    path_1.default.resolve(handoff.workingPath, "integration/templates/".concat(component)),
+                    path_1.default.resolve(handoff.modulePath, "config/integrations/bootstrap/5.3/templates/".concat(component)),
+                ];
                 _i = 0, sources_1 = sources;
                 _b.label = 1;
             case 1:

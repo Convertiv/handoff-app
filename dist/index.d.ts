@@ -1,4 +1,4 @@
-import { Config } from './types/config';
+import { Config, IntegrationObject } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
@@ -14,6 +14,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
+    integrationObject: IntegrationObject;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;

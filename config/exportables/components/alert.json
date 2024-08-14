@@ -13,15 +13,6 @@
         ]
       }
     },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${Type}",
-        "${Layout}",
-        "${Part}",
-        "${Property}"
-      ]
-    },
     "demo": {
       "tabs": {
         "overview": {
