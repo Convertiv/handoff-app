@@ -217,13 +217,18 @@ function previewTransformer(handoff, documentationObject) {
                     template = _a.sent();
                     preview = mustache_1.default.render(template, {
                         config: handoff.config,
-                        style: data['css'] ? "<link rel=\"stylesheet\" type=\"text/css\" href=\"data:text/css;base64,".concat(Buffer.from(data['css']).toString('base64'), "\" />") : '',
-                        script: data['jsCompiled'] ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script") : '',
+                        style: data['css'] ? "<link rel=\"stylesheet\" type=\"text/css\" href=\"data:text/css;base64,".concat(Buffer.from(data['css']).toString('base64'), "\">") : '',
+                        script: data['jsCompiled'] ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>") : '',
                     });
-                    bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
-                    code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-                    data['preview'] = preview;
-                    data['code'] = code;
+                    try {
+                        bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+                        code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+                        data['preview'] = preview;
+                        data['code'] = code;
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
                     // Create a result preview object
                     result.push([file.replace('.html', ''), [data]]);
                     _a.label = 12;

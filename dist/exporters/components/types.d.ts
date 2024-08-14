@@ -67,8 +67,8 @@ export interface SizeTokenSet extends BaseTokenSet {
     width: number;
     height: number;
 }
-export type DocumentComponentDefinitions = {
+export declare type DocumentComponentDefinitions = {
     [id: string]: ComponentDefinition;
 };
-export type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
-export type TokenSets = TokenSet[];
+export declare type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
+export declare type TokenSets = TokenSet[];

@@ -1,4 +1,4 @@
-export type TransformComponentTokensResult = {
+export declare type TransformComponentTokensResult = {
     id: string;
     preview: string;
     code: string;

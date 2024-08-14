@@ -13,7 +13,7 @@ export interface ChangelogRecord {
 export interface ChangeLogEntry {
     type: string;
 }
-export type ChangelogObject<ObjectType> = {
+export declare type ChangelogObject<ObjectType> = {
     type: 'add' | 'delete';
     object: ObjectType;
 } | {

@@ -1,5 +1,5 @@
 import { Exportable } from "../types";
-export type IVariantPropValueReplacement = [variantProperty: string, find: string, replace: string];
+export declare type IVariantPropValueReplacement = [variantProperty: string, find: string, replace: string];
 export interface IComponentSetMetadata {
     exposed: boolean;
     name: string;
