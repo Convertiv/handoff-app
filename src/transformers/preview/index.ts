@@ -170,13 +170,20 @@ export default async function previewTransformer(handoff: Handoff, documentation
         const template = await fs.readFile(path.resolve(custom, file), 'utf8');
         const preview = Mustache.render(template, {
           config: handoff.config,
-          style: data['css'] ? `<link rel="stylesheet" type="text/css" href="data:text/css;base64,${Buffer.from(data['css']).toString('base64')}" />` : '',
-          script: data['jsCompiled'] ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script` : '',
+          style: data['css'] ? `<link rel="stylesheet" type="text/css" href="data:text/css;base64,${Buffer.from(data['css']).toString('base64')}">` : '',
+          script: data['jsCompiled'] ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>` : '',
         });
-        const bodyEl = parse(preview).querySelector('body');
-        const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-        data['preview'] = preview;
-        data['code'] = code;
+        
+        try{
+          const bodyEl = parse(preview).querySelector('body');
+          const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+          data['preview'] = preview;
+          data['code'] = code;
+        }catch(e){
+          console.log(e);
+        }
+
+        
         // Create a result preview object
         result.push([file.replace('.html', ''), [data]]);
       }
