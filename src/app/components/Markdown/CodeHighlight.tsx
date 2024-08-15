@@ -3,6 +3,7 @@ import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
 import html from 'refractor/lang/xml-doc';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
+import js from 'refractor/lang/javascript';
 import { PreviewObject } from '@handoff/types';
 import CopyCode from '../CopyCode';
 // @ts-ignore
@@ -12,6 +13,7 @@ import { useState } from 'react';
 const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
+SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('scss', scss);
 

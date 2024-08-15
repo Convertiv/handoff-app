@@ -1,9 +1,27 @@
-export const Hero: React.FC<{ title: string; image: string; children: React.ReactNode }> = ({ title, image, children }) => {
+export const Hero: React.FC<{
+  title: string;
+  image: string;
+  children: React.ReactNode;
+  toc?: {
+    title: string;
+    link: string;
+  }[];
+}> = ({ title, image, children, toc }) => {
+  console.log(toc);
   return (
-    <div className="c-hero c-hero--boxed c-hero--bg-yellow">
+    <div className="c-hero">
       <div>
         <h1>{title}</h1>
-        {children}
+        <div className="u-mb-2">{children}</div>
+        {toc && toc.length > 0 && (
+          <ul className="c-hero__toc">
+            {toc.map((item, i) => (
+              <li key={`toc-item-${i}`}>
+                <a href={item.link}>{item.title}</a>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {image && (
         <img
