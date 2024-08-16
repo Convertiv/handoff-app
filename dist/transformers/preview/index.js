@@ -217,7 +217,7 @@ function previewTransformer(handoff, documentationObject) {
                     template = _a.sent();
                     preview = mustache_1.default.render(template, {
                         config: handoff.config,
-                        style: data['css'] ? "<link rel=\"stylesheet\" type=\"text/css\" href=\"data:text/css;base64,".concat(Buffer.from(data['css']).toString('base64'), "\">") : '',
+                        style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
                         script: data['jsCompiled'] ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>") : '',
                     });
                     try {

@@ -44,17 +44,20 @@ export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews;
   );
 };
 
-export const ComponentDisplay: React.FC<{ component: PreviewObject | undefined; breakpoints?: Breakpoints }> = ({
-  component,
-  breakpoints,
-}) => {
+export const ComponentDisplay: React.FC<{
+  component: PreviewObject | undefined;
+  breakpoints?: Breakpoints;
+  defaultHeight?: string | undefined;
+}> = ({ component, breakpoints, defaultHeight }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
   const [width, setWidth] = React.useState('100%');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
   const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
   const onLoad = () => {
-    if (ref.current) {
+    if (defaultHeight) {
+      setHeight(defaultHeight);
+    } else if (ref.current) {
       if (ref.current.contentWindow.document.body) {
         setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
       }
@@ -118,7 +121,8 @@ export const SnippetPreview: React.FC<{
   title: string;
   children: React.ReactNode;
   breakpoints?: Breakpoints;
-}> = ({ preview, title, children, breakpoints, id }) => {
+  height?: string;
+}> = ({ preview, title, children, breakpoints, id, height }) => {
   const context = useMdxContext();
   const config = context.config;
   if (!preview && context && id) {
@@ -132,7 +136,7 @@ export const SnippetPreview: React.FC<{
       {title && <h2>{title}</h2>}
       {children}
       <div className="c-component-preview">
-        <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} />
+        <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
       </div>
       <CodeHighlight data={preview} collapsible={true} />
       <hr />

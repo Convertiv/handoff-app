@@ -170,7 +170,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
         const template = await fs.readFile(path.resolve(custom, file), 'utf8');
         const preview = Mustache.render(template, {
           config: handoff.config,
-          style: data['css'] ? `<link rel="stylesheet" type="text/css" href="data:text/css;base64,${Buffer.from(data['css']).toString('base64')}">` : '',
+          style: data['css'] ? `<style rel="stylesheet" type="text/css">${data['css']}</style>` : '',
           script: data['jsCompiled'] ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>` : '',
         });
         
