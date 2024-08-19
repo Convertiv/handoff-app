@@ -24,7 +24,8 @@ import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
 import { merge } from 'lodash';
 import { filterOutNull } from './utils';
-import { ComponentIntegration, ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
+import { ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
+import { findFilesByExtension } from './utils/fs';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -273,7 +274,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
-  const legacyDefinitions = handoff.config.use_legacy_definitions ? await getLegacyDefinitions(handoff) : null;
+  const legacyDefinitions = await getLegacyDefinitions(handoff);
   const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
@@ -381,13 +382,16 @@ export const buildRecipe = async (handoff: Handoff) => {
     });
   };
 
-  const integrationPath = getPathToIntegration(handoff);
-  const directoryToTraverse = handoff?.integrationObject?.entries?.integration
-    ? path.resolve(integrationPath, handoff.integrationObject.entries.integration)
-    : null;
+  const integrationPath = getPathToIntegration(handoff, false);
 
+  if (!integrationPath) {
+    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration not found.'));
+    return;
+  }
+
+  const directoryToTraverse = handoff?.integrationObject?.entries?.integration;
   if (!directoryToTraverse) {
-    console.log(chalk.yellow('Unable to build integration recipe. Reason: No integration entry was specified.'));
+    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
     return;
   }
 
@@ -445,29 +449,20 @@ export default pipeline;
  * Returns configured legacy component definitions in array form.
  * @deprecated Will be removed before 1.0.0 release.
  */
-const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[]> => {
+const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[] | null> => {
   try {
-    if (!handoff.config) {
-      throw new Error('Handoff config not found');
-    }
-    const config = handoff.config;
-    const definitions = config?.figma?.definitions;
-    if (!definitions || definitions.length === 0) {
-      return [];
+
+    const sourcePath = path.resolve(handoff.workingPath, 'exportables');
+
+    if (!fs.existsSync(sourcePath)) {
+      return null;
     }
 
-    const exportables = definitions
-      .map((def) => {
-        let defPath = path.resolve(path.join(handoff.modulePath, 'config/exportables', `${def}.json`));
-        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
-        // If the project path exists, use that first as an override
-        if (fs.existsSync(projectPath)) {
-          defPath = projectPath;
-        } else if (!fs.existsSync(defPath)) {
-          return null;
-        }
+    const definitionPaths = findFilesByExtension(sourcePath, '.json');
 
-        const defBuffer = fs.readFileSync(defPath);
+    const exportables = definitionPaths
+      .map((definitionPath) => {
+        const defBuffer = fs.readFileSync(definitionPath);
         const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
 
         const exportableOptions = {};
@@ -478,7 +473,7 @@ const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDe
       })
       .filter(filterOutNull);
 
-    return exportables ? exportables : [];
+    return exportables ? exportables : null;
   } catch (e) {
     return [];
   }

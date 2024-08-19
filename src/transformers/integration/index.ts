@@ -8,26 +8,20 @@ import { TransformedPreviewComponents } from '../preview/types';
 import webpack from 'webpack';
 import { HookReturn } from '../../types';
 import Handoff from '../../index';
-import { modifyWebpackConfigForTailwind, postTailwindIntegration } from './tailwind';
 import { formatTokenName } from '../utils';
 import { TokenDict, TokenType } from '../types';
 import { getTokenSetTokens } from '../tokens';
 import chalk from 'chalk';
 
-const defaultIntegration = 'bootstrap';
-const defaultVersion = '5.3';
-
 export class HandoffIntegration {
-  name: string;
-  version: string;
+  name?: string;
   hooks: {
     integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
     webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
-  constructor(name: string, version: string) {
+  constructor(name?: string) {
     this.name = name;
-    this.version = version;
     this.hooks = {
       integration: (documentationObject, artifacts) => artifacts,
       webpack: (handoff, webpackConfig) => webpackConfig,
@@ -48,18 +42,24 @@ export class HandoffIntegration {
 }
 
 /**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Allow users to define custom integration if desired.
+ * Derive the path to the integration.
  */
-export const getPathToIntegration = (handoff: Handoff): string | null => {
+export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: boolean): string | null => {
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
 
-  const ejectedIntegrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-  const defaultIntegrationPath = path.resolve(path.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+  const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
 
-  return fs.existsSync(ejectedIntegrationPath) ? ejectedIntegrationPath : defaultIntegrationPath;
+  if (fs.existsSync(integrationPath)) {
+    return integrationPath;
+  }
+
+  if (resolveTemplatePath) {
+    return path.resolve(path.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+  }
+
+  return null;
 };
 
 /**
@@ -67,37 +67,15 @@ export const getPathToIntegration = (handoff: Handoff): string | null => {
  * @returns string
  */
 export const getIntegrationEntryPoint = (handoff: Handoff): string | null => {
-  const entry = handoff?.integrationObject?.entries?.bundle;
-
-  if (!entry) {
-    return null;
-  }
-
-  const ejectedIntegrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-  const defaultIntegrationPath = path.resolve(path.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
-
-  return fs.existsSync(ejectedIntegrationPath)
-    ? path.resolve(path.join(ejectedIntegrationPath, entry))
-    : path.resolve(path.join(defaultIntegrationPath, entry));
+  return handoff?.integrationObject?.entries?.bundle;
 };
 
 export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => {
   if (!handoff || !handoff?.config) {
     throw Error('Handoff not initialized');
   }
-  const config = handoff.config;
-  if (config.integration) {
-    switch (config?.integration?.name) {
-      case 'tailwind':
-        const integration = new HandoffIntegration(config.integration.name, config.integration.version);
-        integration.postIntegration(postTailwindIntegration);
-        integration.modifyWebpackConfig(modifyWebpackConfigForTailwind);
-        return integration;
-      default:
-        return new HandoffIntegration(config.integration.name, config.integration.version);
-    }
-  }
-  return new HandoffIntegration(defaultIntegration, defaultVersion);
+
+  return new HandoffIntegration(handoff.integrationObject ? handoff.integrationObject.name : undefined);
 };
 
 /**
@@ -194,14 +172,18 @@ export default async function integrationTransformer(handoff: Handoff, documenta
     await fs.promises.mkdir(outputFolder, { recursive: true });
   }
 
-  const integrationPath = getPathToIntegration(handoff);
+  const integrationPath = getPathToIntegration(handoff, false);
+
+  if (!integrationPath) {
+    console.log(chalk.yellow('Unable to build integration. Reason: Unable to resolve integration path.'));
+    return;
+  }
+
   const destinationPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
-  const integrationDataPath = handoff?.integrationObject?.entries?.integration
-    ? path.resolve(integrationPath, handoff.integrationObject.entries.integration)
-    : null;
+  const integrationDataPath = handoff?.integrationObject?.entries?.integration;
 
   if (!integrationDataPath) {
-    console.log(chalk.yellow('Unable to build integration. Reason: No integration entry was specified.'));
+    console.log(chalk.yellow('Unable to build integration. Reason: Integration entry not specified.'));
     return;
   }
 

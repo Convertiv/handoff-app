@@ -55,7 +55,6 @@ export interface Config {
   figma_project_id?: string | null | undefined;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
-  integration?: Integration;
   app: NextAppConfig;
   figma: FigmaSearch;
   /**
@@ -71,12 +70,11 @@ export interface Config {
      */
     logos?: string;
   };
-  use_legacy_definitions?: boolean | null | undefined;
 }
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'figma' | 'integration' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'use_legacy_definitions'
+  'app' | 'figma' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
 >;
 
 export interface IntegrationObjectComponentOptions {
@@ -93,6 +91,7 @@ export interface IntegrationObject {
   name: string;
   entries?: {
     integration?: string;
+    templates?: string;
     bundle?: string;
   }
   options: {

@@ -6,12 +6,16 @@ import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
-export default function mapTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
+export default function mapTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
   let flatMap: Record<string, string> = {};
 
   const components: Record<string, string> = {};
   for (const componentId in documentationObject.components) {
-    const map = transformComponentsToMap(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
+    const map = transformComponentsToMap(
+      componentId,
+      documentationObject.components[componentId],
+      integrationObject?.options[componentId] ?? integrationObject?.options['*']
+    );
     components[componentId] = JSON.stringify(map, null, 2);
     flatMap = { ...flatMap, ...map };
   }

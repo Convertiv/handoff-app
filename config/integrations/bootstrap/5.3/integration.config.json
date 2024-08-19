@@ -2,6 +2,7 @@
   "name": "Bootstrap 5.3",
   "entries": {
     "integration": "sass",
+    "templates": "templates",
     "bundle": "templates/main.js"
   },
   "options": {

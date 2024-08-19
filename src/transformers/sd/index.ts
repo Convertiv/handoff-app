@@ -6,14 +6,14 @@ import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
-export default function sdTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
+export default function sdTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
     components[componentId] = transformComponentsToStyleDictionary(
       componentId,
       documentationObject.components[componentId],
-      integrationObject.options[componentId]
+      integrationObject?.options[componentId] ?? integrationObject?.options['*']
     );
   }
 

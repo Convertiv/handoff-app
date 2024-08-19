@@ -92,6 +92,7 @@ var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
+var fs_1 = require("./utils/fs");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
@@ -365,33 +366,26 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
     });
 }); };
 var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, legacyDefinitions, _a, documentationObject, changelogRecord, outputFolder;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var prevDocumentationObject, changelog, legacyDefinitions, documentationObject, changelogRecord, outputFolder;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
                 console.log(chalk_1.default.green("Starting Figma data extraction."));
                 return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
-                prevDocumentationObject = _b.sent();
+                prevDocumentationObject = _a.sent();
                 return [4 /*yield*/, readPrevJSONFile(changelogFilePath(handoff))];
             case 2:
-                changelog = (_b.sent()) || [];
+                changelog = (_a.sent()) || [];
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
-                _b.sent();
-                if (!handoff.config.use_legacy_definitions) return [3 /*break*/, 5];
+                _a.sent();
                 return [4 /*yield*/, getLegacyDefinitions(handoff)];
             case 4:
-                _a = _b.sent();
-                return [3 /*break*/, 6];
-            case 5:
-                _a = null;
-                _b.label = 6;
-            case 6:
-                legacyDefinitions = _a;
+                legacyDefinitions = _a.sent();
                 return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff, legacyDefinitions)];
-            case 7:
-                documentationObject = _b.sent();
+            case 5:
+                documentationObject = _a.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
                     changelog = __spreadArray([changelogRecord], changelog, true);
@@ -410,15 +404,15 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                             }),
                         ]
                         : []), true))];
-            case 8:
-                _b.sent();
+            case 6:
+                _a.sent();
                 outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
-                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 10];
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 8];
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
-            case 9:
-                _b.sent();
-                _b.label = 10;
-            case 10:
+            case 7:
+                _a.sent();
+                _a.label = 8;
+            case 8:
                 // copy assets to output folder
                 fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
                 fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
@@ -491,12 +485,14 @@ var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, 
                         }
                     });
                 };
-                integrationPath = (0, index_3.getPathToIntegration)(handoff);
-                directoryToTraverse = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration)
-                    ? path_1.default.resolve(integrationPath, handoff.integrationObject.entries.integration)
-                    : null;
+                integrationPath = (0, index_3.getPathToIntegration)(handoff, false);
+                if (!integrationPath) {
+                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: Integration not found.'));
+                    return [2 /*return*/];
+                }
+                directoryToTraverse = (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration;
                 if (!directoryToTraverse) {
-                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: No integration entry was specified.'));
+                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
                     return [2 /*return*/];
                 }
                 componentRecords = { components: [] };
@@ -589,30 +585,17 @@ exports.default = pipeline;
  * @deprecated Will be removed before 1.0.0 release.
  */
 var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config_1, definitions, exportables;
-    var _a;
-    return __generator(this, function (_b) {
+    var sourcePath, definitionPaths, exportables;
+    return __generator(this, function (_a) {
         try {
-            if (!handoff.config) {
-                throw new Error('Handoff config not found');
+            sourcePath = path_1.default.resolve(handoff.workingPath, 'exportables');
+            if (!fs_extra_1.default.existsSync(sourcePath)) {
+                return [2 /*return*/, null];
             }
-            config_1 = handoff.config;
-            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
-            if (!definitions || definitions.length === 0) {
-                return [2 /*return*/, []];
-            }
-            exportables = definitions
-                .map(function (def) {
-                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
-                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
-                // If the project path exists, use that first as an override
-                if (fs_extra_1.default.existsSync(projectPath)) {
-                    defPath = projectPath;
-                }
-                else if (!fs_extra_1.default.existsSync(defPath)) {
-                    return null;
-                }
-                var defBuffer = fs_extra_1.default.readFileSync(defPath);
+            definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
+            exportables = definitionPaths
+                .map(function (definitionPath) {
+                var defBuffer = fs_extra_1.default.readFileSync(definitionPath);
                 var exportable = JSON.parse(defBuffer.toString());
                 var exportableOptions = {};
                 (0, lodash_1.merge)(exportableOptions, exportable.options);
@@ -620,7 +603,7 @@ var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0,
                 return exportable;
             })
                 .filter(utils_1.filterOutNull);
-            return [2 /*return*/, exportables ? exportables : []];
+            return [2 /*return*/, exportables ? exportables : null];
         }
         catch (e) {
             return [2 /*return*/, []];

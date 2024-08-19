@@ -8,7 +8,7 @@ var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var _1 = require(".");
 var modifyWebpackConfigForTailwind = function (handoff, webpackConfig) {
-    var tailwindPath = path_1.default.resolve(path_1.default.join((0, _1.getPathToIntegration)(handoff), 'templates/tailwind.config.js'));
+    var tailwindPath = path_1.default.resolve(path_1.default.join((0, _1.getPathToIntegration)(handoff, false), 'templates/tailwind.config.js'));
     var plugins = [];
     try {
         var tailwindcss = require('tailwindcss');

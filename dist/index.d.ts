@@ -14,7 +14,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
-    integrationObject: IntegrationObject;
+    integrationObject: IntegrationObject | null;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;
@@ -45,6 +45,7 @@ declare class Handoff {
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
+    makeIntegration(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;

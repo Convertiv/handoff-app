@@ -112,7 +112,6 @@ export interface ComponentDefinitionOptions {
             distinctiveVariantProperties?: string[];
         }[];
     };
-    demo?: ComponentDocumentationOptions;
 }
 export interface ComponentDocumentationOptions {
     views?: {
@@ -150,15 +149,6 @@ export interface LegacyComponentDefinitionOptions {
         supportedVariantProps: {
             design: string[];
             layout: string[];
-        };
-    };
-    demo?: {
-        tabs?: {
-            [tab: string]: {
-                [componentType: string]: {
-                    [property: string]: ComponentViewFilterValue;
-                };
-            };
         };
     };
 }

@@ -1,2 +1,2 @@
 import { IntegrationObject } from '../types/config';
-export declare const mergeOptions: (integration: IntegrationObject) => IntegrationObject;
+export declare const prepareIntegrationObject: (integration: IntegrationObject, integrationPath: string) => IntegrationObject;

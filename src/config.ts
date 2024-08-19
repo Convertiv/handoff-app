@@ -15,7 +15,6 @@ export const defaultConfig = (): Config => ({
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
-  integration: null,
   app: {
     theme: 'default',
     title: 'Convertiv Design System',
@@ -53,7 +52,6 @@ export const defaultConfig = (): Config => ({
       'components/switch',
     ],
   },
-  use_legacy_definitions: (process.env.HANDOFF_USE_FIGMA_PLUGIN ?? '').toLowerCase() === 'false',
 });
 
 /**
@@ -74,7 +72,7 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, figma, integration, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links, use_legacy_definitions } = {
+  const { app, figma, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links } = {
     ...defaultConfig(),
     ...config,
   } as unknown as Config;
@@ -82,10 +80,8 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
   return {
     app,
     figma,
-    integration,
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
-    use_legacy_definitions,
   };
 };

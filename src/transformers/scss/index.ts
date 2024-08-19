@@ -12,14 +12,14 @@ import { IntegrationObject } from 'handoff/types/config';
  * @param documentationObject
  * @returns
  */
-export function scssTypesTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
+export function scssTypesTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
     components[componentId] = transformComponentsToScssTypes(
       componentId,
       documentationObject.components[componentId],
-      integrationObject.options[componentId]
+      integrationObject?.options[componentId] ?? integrationObject?.options['*']
     );
   }
 
@@ -37,7 +37,7 @@ export function scssTypesTransformer(documentationObject: DocumentationObject, i
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject, integrationObject: IntegrationObject): TransformerOutput {
+export default function scssTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
@@ -45,7 +45,7 @@ export default function scssTransformer(documentationObject: DocumentationObject
       .map((instance) => {
         return [
           formatComponentCodeBlockComment(instance, '//'),
-          transformComponentTokensToScssVariables(instance, integrationObject.options[componentId])
+          transformComponentTokensToScssVariables(instance, integrationObject?.options[componentId] ?? integrationObject?.options['*'])
             .map((token) => `${token.name}: ${token.value};`)
             .join('\n'),
         ].join('\n');

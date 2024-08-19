@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.ejectIntegration = exports.ejectConfig = void 0;
+exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.makeIntegration = exports.ejectConfig = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
@@ -66,10 +66,10 @@ var ejectConfig = function (handoff) { return __awaiter(void 0, void 0, void 0, 
 }); };
 exports.ejectConfig = ejectConfig;
 /**
- * Eject the integration to the working directory
+ * Creates a integration within the working directory
  * @param handoff
  */
-var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var config, workingPath, integrationPath, localConfigPath, _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -82,9 +82,9 @@ var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, voi
                         return [2 /*return*/];
                     }
                 }
-                integrationPath = (0, integration_1.getPathToIntegration)(handoff);
+                integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
                 fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
-                console.log(chalk_1.default.green("Integration template has been ejected to ".concat(workingPath)));
+                console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
                 localConfigPath = path_1.default.join(handoff.workingPath, 'handoff.config.json');
                 _a = !fs_extra_1.default.existsSync(localConfigPath);
                 if (!_a) return [3 /*break*/, 2];
@@ -104,7 +104,7 @@ var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, voi
         }
     });
 }); };
-exports.ejectIntegration = ejectIntegration;
+exports.makeIntegration = makeIntegration;
 /**
  * Eject the integration to the working directory
  * @param handoff

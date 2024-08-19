@@ -22,6 +22,7 @@ Commands:
   build - Using the current tokens, build various outputs
     build:app [opts] - Builds the design system static application
     build:integration [opts] - Builds current selected integration, styles and previews
+    build:recipe - Builds a recipe file based on the integration that is curretnly used (if any)
 
   start [opts] - Starts the design system in development mode
 
@@ -29,6 +30,7 @@ Commands:
     make:exportable <type> <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
     make:page <name> <parent> [opts] - Creates a new custom page
+    make:integration - Creates a new integration based on a Bootstrap 5.3 template
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
@@ -123,10 +125,10 @@ const run = async (
       case 'dev':
         watching = true;
         return handoff.dev();
-      case 'build:recipe':
-        return handoff.recipe();
       case 'build:integration':
         return handoff.integration();
+      case 'build:recipe':
+        return handoff.recipe();
       case 'eject':
         cliError(
           `Eject commands will eject the default configuration into the working directory so you can customize it.
@@ -157,7 +159,8 @@ Eject must have a subcommand. Did you mean:
   Make must have a subcommand. Did you mean:
     - make:template
     - make:exportable
-    - make:page`,
+    - make:page
+    - make:integration`,
             2
           );
           break;
@@ -200,6 +203,8 @@ Eject must have a subcommand. Did you mean:
           cliError(`Page parent must be alphanumeric and may contain dashes or underscores`, 2);
         }
         return handoff.makePage(pageName, pageParent);
+      case 'make:integration':
+        return handoff.makeIntegration();
       default:
         return showHelp();
     }

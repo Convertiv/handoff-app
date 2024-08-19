@@ -24,10 +24,10 @@ export const ejectConfig = async (handoff: Handoff) => {
 };
 
 /**
- * Eject the integration to the working directory
+ * Creates a integration within the working directory
  * @param handoff
  */
-export const ejectIntegration = async (handoff: Handoff) => {
+export const makeIntegration = async (handoff: Handoff) => {
   const config = handoff.config;
 
   // does an local integration exist?
@@ -40,20 +40,13 @@ export const ejectIntegration = async (handoff: Handoff) => {
   }
 
   // perform integration ejection
-  const integrationPath = getPathToIntegration(handoff);
+  const integrationPath = getPathToIntegration(handoff, true);
   fs.copySync(integrationPath, workingPath, { overwrite: false });
-  console.log(chalk.green(`Integration template has been ejected to ${workingPath}`));
+  console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
 
   // ensure local configuration is set up to support the ejected integration
   const localConfigPath = path.join(handoff.workingPath, 'handoff.config.json');
   !fs.existsSync(localConfigPath) && (await ejectConfig(handoff));
-
-  // TODO: Remove?
-  // update (and re-write) the ejected configuration with custom integration
-  // const localConfigBuffer = fs.readFileSync(localConfigPath);
-  // const localConfig = JSON.parse(localConfigBuffer.toString()) as ClientConfig;
-  // localConfig.integration = { name: 'custom', version: '' };
-  // fs.writeFileSync(localConfigPath, `${JSON.stringify(localConfig, null, 2)}`);
 
   return handoff;
 };

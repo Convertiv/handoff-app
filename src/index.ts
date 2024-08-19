@@ -9,12 +9,12 @@ import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly, buildRecipe } from './pipeline';
-import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
+import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
-import { mergeOptions } from './utils/integration';
+import { prepareIntegrationObject } from './utils/integration';
 
 class Handoff {
   config: Config | null;
@@ -24,7 +24,7 @@ class Handoff {
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
-  integrationObject: IntegrationObject;
+  integrationObject: IntegrationObject | null;
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -67,7 +67,7 @@ class Handoff {
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    this.integrationObject = initIntegrationObject(this.workingPath, this.modulePath);
+    this.integrationObject = initIntegrationObject(this.workingPath);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -118,7 +118,7 @@ class Handoff {
   }
   async ejectIntegration(): Promise<Handoff> {
     if (this.config) {
-      await ejectIntegration(this);
+      await makeIntegration(this);
     }
     return this;
   }
@@ -155,6 +155,12 @@ class Handoff {
   async makePage(name: string, parent: string): Promise<Handoff> {
     if (this.config) {
       await makePage(this, name, parent);
+    }
+    return this;
+  }
+  async makeIntegration(): Promise<Handoff> {
+    if (this.config) {
+      await makeIntegration(this);
     }
     return this;
   }
@@ -219,17 +225,23 @@ const initConfig = (configOverride?: any): Config => {
   return returnConfig;
 };
 
-const initIntegrationObject = (workingPath: string, modulePath: string): IntegrationObject => {
-  let searchPath = path.resolve(path.join(workingPath, 'integration', 'integration.config.json'));
+const initIntegrationObject = (workingPath: string): IntegrationObject => {
+  const integrationPath = path.join(workingPath, 'integration');
 
-  if (!fs.existsSync(searchPath)) {
-    searchPath = path.resolve(path.join(modulePath, 'config', 'integrations', 'bootstrap', '5.3', 'integration.config.json'));
+  if (!fs.existsSync(integrationPath)) {
+    return null;
   }
 
-  const buffer = fs.readFileSync(searchPath);
+  const integrationConfigPath = path.resolve(path.join(workingPath, 'integration', 'integration.config.json'));
+
+  if (!fs.existsSync(integrationConfigPath)) {
+    return null;
+  }
+
+  const buffer = fs.readFileSync(integrationConfigPath);
   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
 
-  return mergeOptions(integration);
+  return prepareIntegrationObject(integration, integrationPath);
 };
 
 const validateConfig = (config: Config): Config => {

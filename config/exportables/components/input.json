@@ -5,63 +5,8 @@
     "exporter": {
       "search": "Input",
       "supportedVariantProps": {
-        "design": [
-          "Theme",
-          "State"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "State": [
-              "default",
-              "error",
-              "disabled"
-            ],
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        },
-        "designTokens": {
-          "design": {
-            "State": {
-              "default": {
-                "State": [
-                  "default",
-                  "hover",
-                  "active"
-                ],
-                "Theme": "light"
-              },
-              "error": {
-                "State": [
-                  "error",
-                  "hover",
-                  "active"
-                ],
-                "Theme": "light"
-              },
-              "disabled": {
-                "State": [
-                  "disabled",
-                  "hover"
-                ],
-                "Theme": "light"
-              }
-            },
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        }
+        "design": ["Theme", "State"],
+        "layout": ["Size"]
       }
     }
   },
@@ -71,19 +16,11 @@
       "tokens": [
         {
           "from": "FRAME[name=':: input']",
-          "export": [
-            "BACKGROUND",
-            "BORDER",
-            "SPACING",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
         },
         {
           "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     },
@@ -92,11 +29,7 @@
       "tokens": [
         {
           "from": "TEXT[name='Input Label']",
-          "export": [
-            "SPACING",
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["SPACING", "TYPOGRAPHY", "FILL"]
         }
       ]
     },
@@ -105,10 +38,7 @@
       "tokens": [
         {
           "from": "FRAME[name=':: input'] > TEXT[name='Input Text']",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     },
@@ -117,9 +47,7 @@
       "tokens": [
         {
           "from": "FRAME[name=':: input'] > VECTOR",
-          "export": [
-            "BORDER"
-          ]
+          "export": ["BORDER"]
         }
       ]
     },
@@ -128,11 +56,7 @@
       "tokens": [
         {
           "from": "TEXT[name='Help Text']",
-          "export": [
-            "SPACING",
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["SPACING", "TYPOGRAPHY", "FILL"]
         }
       ]
     }

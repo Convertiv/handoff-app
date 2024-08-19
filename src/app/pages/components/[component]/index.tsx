@@ -14,7 +14,7 @@ import {
   getTokens,
 } from '../../../components/util';
 import { getClientConfig } from '@handoff/config';
-import { ComponentDocumentationOptions, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
 import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
 import { filterOutNull } from '@handoff/utils';
 import { ComponentTab } from '@handoff/types/tabs';
@@ -50,52 +50,24 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   const config = getClientConfig();
   const { component } = context.params as IParams;
+  const integrationObject = getIntegrationObject();
 
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
   const componentPreviews = getPreview().components[componentSlug!];
-  const componentOptions = (getIntegrationObject()?.options ?? {})[componentSlug] ?? {};
+  const componentOptions = (integrationObject?.options ?? {})[componentSlug] ?? {};
 
   return {
     props: {
       id: component,
       component: componentObject,
-      legacyDefinition: config.use_legacy_definitions ? getLegacyDefinition(componentSlug!) : null,
+      legacyDefinition: getLegacyDefinition(componentSlug!),
       previews: componentPreviews,
       integration: componentOptions,
-      ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`).props,
+      ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`, integrationObject).props,
       config,
     },
   };
-};
-
-/**
- * Transforms the legacy definition doc page options to new doc page options.
- * @deprecated Will be removed before 1.0.0 release.
- */
-const transformLegacyDocPageOptions = (docViews: LegacyComponentDefinitionOptions['demo'] | undefined) => {
-  return docViews
-    ? {
-        views: {
-          overview: docViews['overview']
-            ? {
-                condition: {
-                  ...(docViews['overview']['design'] ?? {}),
-                  ...(docViews['overview']['layout'] ?? {}),
-                },
-              }
-            : undefined,
-          tokens: docViews['designTokens']
-            ? {
-                condition: {
-                  ...(docViews['designTokens']['design'] ?? {}),
-                  ...(docViews['designTokens']['layout'] ?? {}),
-                },
-              }
-            : undefined,
-        },
-      }
-    : undefined;
 };
 
 const GenericComponentPage = ({
@@ -139,9 +111,8 @@ const GenericComponentPage = ({
     );
   }
 
-  const componentDocumentationOptions = transformLegacyDocPageOptions(legacyDefinition?.options?.demo?.tabs) ?? options;
-  const overviewTabComponents = getComponentPreviews('overview', component, componentDocumentationOptions, previews);
-  const tokensTabComponents = getComponentPreviews('tokens', component, componentDocumentationOptions, previews);
+  const overviewTabComponents = getComponentPreviews('overview', component, options, previews);
+  const tokensTabComponents = getComponentPreviews('tokens', component, options, previews);
 
   return (
     <div className="c-page">
@@ -387,7 +358,7 @@ const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ 
   const [height, setHeight] = React.useState('0px');
   const onLoad = () => {
     if (ref.current) {
-      setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
+      setHeight((ref.current.contentWindow?.document?.body?.scrollHeight ?? 0) + 'px');
     }
   };
   React.useEffect(() => {

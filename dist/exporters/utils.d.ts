@@ -1,9 +1,7 @@
 /// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { Exportable } from '../types';
-export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type): (obj?: FigmaTypes.Node | null) => obj is Extract<FigmaTypes.Component, {
-    type: Type;
-}> | Extract<FigmaTypes.Document, {
+export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(type: Type): (obj?: FigmaTypes.Node | null) => obj is Extract<FigmaTypes.Document, {
     type: Type;
 }> | Extract<FigmaTypes.Canvas, {
     type: Type;
@@ -29,6 +27,8 @@ export declare function filterByNodeType<Type extends FigmaTypes.Node['type']>(t
     type: Type;
 }> | Extract<FigmaTypes.Slice, {
     type: Type;
+}> | Extract<FigmaTypes.Component, {
+    type: Type;
 }> | Extract<FigmaTypes.ComponentSet, {
     type: Type;
 }> | Extract<FigmaTypes.Instance, {
@@ -46,7 +46,7 @@ export declare function findChildNodeWithTypeAndName<Type extends FigmaTypes.Nod
 export declare function getComponentInstanceNamePart(componentInstanceName: string, partKey: string): string;
 export declare function extractComponentInstanceVariantProps(componentInstanceName: string, supportedVariantProps: string[]): Map<string, string>;
 export declare const isExportable: (exportable: string) => exportable is Exportable;
-export declare const isValidNodeType: (type: string) => type is "INSTANCE" | "COMPONENT" | "DOCUMENT" | "CANVAS" | "FRAME" | "GROUP" | "VECTOR" | "BOOLEAN_OPERATION" | "STAR" | "LINE" | "ELLIPSE" | "REGULAR_POLYGON" | "RECTANGLE" | "TEXT" | "SLICE" | "COMPONENT_SET";
+export declare const isValidNodeType: (type: string) => type is "DOCUMENT" | "CANVAS" | "FRAME" | "GROUP" | "VECTOR" | "BOOLEAN_OPERATION" | "STAR" | "LINE" | "ELLIPSE" | "REGULAR_POLYGON" | "RECTANGLE" | "TEXT" | "SLICE" | "COMPONENT" | "COMPONENT_SET" | "INSTANCE";
 export declare const isValidEffectType: (effect: FigmaTypes.Effect['type']) => boolean;
 export declare const isShadowEffectType: (effect: FigmaTypes.Effect['type']) => boolean;
 export declare const isValidGradientType: (gradientType: FigmaTypes.PaintType) => boolean;

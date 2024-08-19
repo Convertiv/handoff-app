@@ -118,7 +118,7 @@ var Handoff = /** @class */ (function () {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = initIntegrationObject(this.workingPath, this.modulePath);
+        this.integrationObject = initIntegrationObject(this.workingPath);
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
@@ -219,7 +219,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectIntegration)(this)];
+                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -318,6 +318,21 @@ var Handoff = /** @class */ (function () {
             });
         });
     };
+    Handoff.prototype.makeIntegration = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
     Handoff.prototype.start = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -392,14 +407,18 @@ var initConfig = function (configOverride) {
     var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
 };
-var initIntegrationObject = function (workingPath, modulePath) {
-    var searchPath = path_1.default.resolve(path_1.default.join(workingPath, 'integration', 'integration.config.json'));
-    if (!fs_extra_1.default.existsSync(searchPath)) {
-        searchPath = path_1.default.resolve(path_1.default.join(modulePath, 'config', 'integrations', 'bootstrap', '5.3', 'integration.config.json'));
+var initIntegrationObject = function (workingPath) {
+    var integrationPath = path_1.default.join(workingPath, 'integration');
+    if (!fs_extra_1.default.existsSync(integrationPath)) {
+        return null;
     }
-    var buffer = fs_extra_1.default.readFileSync(searchPath);
+    var integrationConfigPath = path_1.default.resolve(path_1.default.join(workingPath, 'integration', 'integration.config.json'));
+    if (!fs_extra_1.default.existsSync(integrationConfigPath)) {
+        return null;
+    }
+    var buffer = fs_extra_1.default.readFileSync(integrationConfigPath);
     var integration = JSON.parse(buffer.toString());
-    return (0, integration_2.mergeOptions)(integration);
+    return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
 };
 var validateConfig = function (config) {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {

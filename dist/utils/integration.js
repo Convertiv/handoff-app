@@ -10,8 +10,12 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mergeOptions = void 0;
+exports.prepareIntegrationObject = void 0;
+var path_1 = __importDefault(require("path"));
 var toLowerCaseKeysAndValues = function (obj) {
     var loweredObj = {};
     for (var key in obj) {
@@ -29,8 +33,19 @@ var toLowerCaseKeysAndValues = function (obj) {
     }
     return loweredObj;
 };
-var mergeOptions = function (integration) {
+var prepareIntegrationObject = function (integration, integrationPath) {
     var _a;
+    if (integration.entries) {
+        if (integration.entries.bundle) {
+            integration.entries.bundle = path_1.default.resolve(integrationPath, integration.entries.bundle);
+        }
+        if (integration.entries.templates) {
+            integration.entries.templates = path_1.default.resolve(integrationPath, integration.entries.templates);
+        }
+        if (integration.entries.integration) {
+            integration.entries.integration = path_1.default.resolve(integrationPath, integration.entries.integration);
+        }
+    }
     var options = (_a = integration.options) !== null && _a !== void 0 ? _a : {};
     if (!options || !options['*']) {
         return integration;
@@ -39,16 +54,15 @@ var mergeOptions = function (integration) {
     var mergedOptions = {};
     for (var _i = 0, _b = Object.keys(options); _i < _b.length; _i++) {
         var key = _b[_i];
-        if (key === '*')
-            continue;
+        // if (key === '*') continue;
         var specificOptions = options[key];
         mergedOptions[key] = {
             cssRootClass: specificOptions.cssRootClass || wildcardOptions.cssRootClass || null,
-            tokenNameSegments: specificOptions.tokenNameSegments || wildcardOptions.tokenNameSegments,
+            tokenNameSegments: specificOptions.tokenNameSegments || wildcardOptions.tokenNameSegments || null,
             defaults: toLowerCaseKeysAndValues(__assign(__assign({}, wildcardOptions.defaults), specificOptions.defaults)),
             replace: toLowerCaseKeysAndValues(__assign(__assign({}, wildcardOptions.replace), specificOptions.replace)),
         };
     }
     return __assign(__assign({}, integration), { options: mergedOptions });
 };
-exports.mergeOptions = mergeOptions;
+exports.prepareIntegrationObject = prepareIntegrationObject;

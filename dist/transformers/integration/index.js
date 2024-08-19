@@ -55,16 +55,12 @@ var handlebars_1 = __importDefault(require("handlebars"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var archiver_1 = __importDefault(require("archiver"));
-var tailwind_1 = require("./tailwind");
 var utils_1 = require("../utils");
 var tokens_1 = require("../tokens");
 var chalk_1 = __importDefault(require("chalk"));
-var defaultIntegration = 'bootstrap';
-var defaultVersion = '5.3';
 var HandoffIntegration = /** @class */ (function () {
-    function HandoffIntegration(name, version) {
+    function HandoffIntegration(name) {
         this.name = name;
-        this.version = version;
         this.hooks = {
             integration: function (documentationObject, artifacts) { return artifacts; },
             webpack: function (handoff, webpackConfig) { return webpackConfig; },
@@ -84,16 +80,20 @@ var HandoffIntegration = /** @class */ (function () {
 }());
 exports.HandoffIntegration = HandoffIntegration;
 /**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Allow users to define custom integration if desired.
+ * Derive the path to the integration.
  */
-var getPathToIntegration = function (handoff) {
+var getPathToIntegration = function (handoff, resolveTemplatePath) {
     if (!handoff) {
         throw Error('Handoff not initialized');
     }
-    var ejectedIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-    var defaultIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
-    return fs_extra_1.default.existsSync(ejectedIntegrationPath) ? ejectedIntegrationPath : defaultIntegrationPath;
+    var integrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+    if (fs_extra_1.default.existsSync(integrationPath)) {
+        return integrationPath;
+    }
+    if (resolveTemplatePath) {
+        return path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+    }
+    return null;
 };
 exports.getPathToIntegration = getPathToIntegration;
 /**
@@ -102,35 +102,14 @@ exports.getPathToIntegration = getPathToIntegration;
  */
 var getIntegrationEntryPoint = function (handoff) {
     var _a, _b;
-    var entry = (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.bundle;
-    if (!entry) {
-        return null;
-    }
-    var ejectedIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-    var defaultIntegrationPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
-    return fs_extra_1.default.existsSync(ejectedIntegrationPath)
-        ? path_1.default.resolve(path_1.default.join(ejectedIntegrationPath, entry))
-        : path_1.default.resolve(path_1.default.join(defaultIntegrationPath, entry));
+    return (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.bundle;
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
 var instantiateIntegration = function (handoff) {
-    var _a;
     if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
         throw Error('Handoff not initialized');
     }
-    var config = handoff.config;
-    if (config.integration) {
-        switch ((_a = config === null || config === void 0 ? void 0 : config.integration) === null || _a === void 0 ? void 0 : _a.name) {
-            case 'tailwind':
-                var integration = new HandoffIntegration(config.integration.name, config.integration.version);
-                integration.postIntegration(tailwind_1.postTailwindIntegration);
-                integration.modifyWebpackConfig(tailwind_1.modifyWebpackConfigForTailwind);
-                return integration;
-            default:
-                return new HandoffIntegration(config.integration.name, config.integration.version);
-        }
-    }
-    return new HandoffIntegration(defaultIntegration, defaultVersion);
+    return new HandoffIntegration(handoff.integrationObject ? handoff.integrationObject.name : undefined);
 };
 exports.instantiateIntegration = instantiateIntegration;
 /**
@@ -281,13 +260,15 @@ function integrationTransformer(handoff, documentationObject) {
                     _d.sent();
                     _d.label = 2;
                 case 2:
-                    integrationPath = (0, exports.getPathToIntegration)(handoff);
+                    integrationPath = (0, exports.getPathToIntegration)(handoff, false);
+                    if (!integrationPath) {
+                        console.log(chalk_1.default.yellow('Unable to build integration. Reason: Unable to resolve integration path.'));
+                        return [2 /*return*/];
+                    }
                     destinationPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration');
-                    integrationDataPath = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration)
-                        ? path_1.default.resolve(integrationPath, handoff.integrationObject.entries.integration)
-                        : null;
+                    integrationDataPath = (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration;
                     if (!integrationDataPath) {
-                        console.log(chalk_1.default.yellow('Unable to build integration. Reason: No integration entry was specified.'));
+                        console.log(chalk_1.default.yellow('Unable to build integration. Reason: Integration entry not specified.'));
                         return [2 /*return*/];
                     }
                     _d.label = 3;

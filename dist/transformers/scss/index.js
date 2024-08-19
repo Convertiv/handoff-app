@@ -35,9 +35,10 @@ var utils_1 = require("../utils");
  * @returns
  */
 function scssTypesTransformer(documentationObject, integrationObject) {
+    var _a;
     var components = {};
     for (var componentId in documentationObject.components) {
-        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], integrationObject.options[componentId]);
+        components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
     }
     var design = {
         colors: (0, colors_1.transformColorTypes)(documentationObject.design.color),
@@ -57,9 +58,10 @@ function scssTransformer(documentationObject, integrationObject) {
     var _loop_1 = function (componentId) {
         components[componentId] = documentationObject.components[componentId].instances
             .map(function (instance) {
+            var _a;
             return [
                 (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
-                (0, component_1.transformComponentTokensToScssVariables)(instance, integrationObject.options[componentId])
+                (0, component_1.transformComponentTokensToScssVariables)(instance, (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*'])
                     .map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); })
                     .join('\n'),
             ].join('\n');

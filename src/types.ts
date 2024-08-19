@@ -123,7 +123,7 @@ export interface ComponentDefinitionOptions {
     variantProperties: string[];
     sharedComponentVariants?: { componentId: string; sharedVariantProperty?: string; distinctiveVariantProperties?: string[] }[];
   };
-  demo?: ComponentDocumentationOptions;
+  // demo?: ComponentDocumentationOptions;
 }
 
 export interface ComponentDocumentationOptions {
@@ -161,15 +161,6 @@ export interface LegacyComponentDefinitionOptions {
     supportedVariantProps: {
         design: string[];
         layout: string[];
-    };
-  };
-  demo?: {
-    tabs?: {
-        [tab: string]: {
-            [componentType: string]: {
-              [property: string]: ComponentViewFilterValue
-            };
-        };
     };
   };
 }

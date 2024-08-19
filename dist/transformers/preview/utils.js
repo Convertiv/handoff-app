@@ -59,15 +59,18 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
  */
 var getComponentTemplate = function (handoff, component, parts) { return __awaiter(void 0, void 0, void 0, function () {
     var sources, _i, sources_1, src, cwd, srcParts, templatePath, pathToDir, pathToFile, _a, sources_2, src, templatePath;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
             case 0:
+                if (!((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.templates)) {
+                    return [2 /*return*/, null];
+                }
                 sources = [
-                    path_1.default.resolve(handoff.workingPath, "integration/templates/".concat(component)),
-                    path_1.default.resolve(handoff.modulePath, "config/integrations/bootstrap/5.3/templates/".concat(component)),
+                    path_1.default.resolve(handoff.integrationObject.entries.templates, component),
                 ];
                 _i = 0, sources_1 = sources;
-                _b.label = 1;
+                _d.label = 1;
             case 1:
                 if (!(_i < sources_1.length)) return [3 /*break*/, 4];
                 src = sources_1[_i];
@@ -90,22 +93,22 @@ var getComponentTemplate = function (handoff, component, parts) { return __await
                 }
                 if (!templatePath) return [3 /*break*/, 3];
                 return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
-            case 2: return [2 /*return*/, _b.sent()];
+            case 2: return [2 /*return*/, _d.sent()];
             case 3:
                 _i++;
                 return [3 /*break*/, 1];
             case 4:
                 _a = 0, sources_2 = sources;
-                _b.label = 5;
+                _d.label = 5;
             case 5:
                 if (!(_a < sources_2.length)) return [3 /*break*/, 9];
                 src = sources_2[_a];
                 templatePath = path_1.default.resolve(src, "default.html");
                 return [4 /*yield*/, fs_extra_1.default.pathExists(templatePath)];
             case 6:
-                if (!_b.sent()) return [3 /*break*/, 8];
+                if (!_d.sent()) return [3 /*break*/, 8];
                 return [4 /*yield*/, fs_extra_1.default.readFile(templatePath, 'utf8')];
-            case 7: return [2 /*return*/, _b.sent()];
+            case 7: return [2 /*return*/, _d.sent()];
             case 8:
                 _a++;
                 return [3 /*break*/, 5];
