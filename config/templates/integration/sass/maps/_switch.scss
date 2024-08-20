@@ -1,0 +1,15 @@
+// scss-docs-start form-switch-variables
+$form-switch-color:               rgba($black, .25);
+$form-switch-width:               $switch-off-width;
+$form-switch-padding-start:       $switch-off-width + $switch-off-spacing;
+$form-switch-bg-image:            url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-color}'/></svg>");
+$form-switch-border-radius:       $form-switch-width;
+$form-switch-transition:          all .25s ease-in-out;
+
+$form-switch-focus-color:         $switch-thumb-off-color;
+$form-switch-focus-bg-image:      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-focus-color}'/></svg>");
+
+$form-switch-checked-color:       $switch-thumb-on-color;
+$form-switch-checked-bg-image:    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='#{$form-switch-checked-color}'/></svg>");
+$form-switch-checked-bg-position: right center;
+// scss-docs-end form-switch-variables

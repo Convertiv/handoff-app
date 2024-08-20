@@ -56,7 +56,7 @@ export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: bool
   }
 
   if (resolveTemplatePath) {
-    return path.resolve(path.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+    return path.resolve(path.join(handoff.modulePath, 'config', 'templates', 'integration'));
   }
 
   return null;

@@ -1,0 +1,30 @@
+// Tooltips
+
+// scss-docs-start tooltip-variables
+
+$tooltip-font-size:                 $tooltip-font-size;
+$tooltip-max-width:                 200px;
+$tooltip-color:                     $white;
+$tooltip-bg:                        $tooltip-background;
+$tooltip-border-radius:             $tooltip-border-radius;
+$tooltip-opacity:                   1;
+$tooltip-padding-y:                 $tooltip-padding-y;
+$tooltip-padding-x:                 $tooltip-padding-right;
+$tooltip-margin:                    null; // TODO: remove this in v6
+
+$tooltip-arrow-width:               .8rem;
+$tooltip-arrow-height:              .4rem;
+// fusv-disable
+$tooltip-arrow-color:               null; // Deprecated in Bootstrap 5.2.0 for CSS variables
+// fusv-enable
+// scss-docs-end tooltip-variables
+
+// Form tooltips must come after regular tooltips
+// scss-docs-start tooltip-feedback-variables
+$form-feedback-tooltip-padding-y:     $tooltip-padding-y;
+$form-feedback-tooltip-padding-x:     $tooltip-padding-x;
+$form-feedback-tooltip-font-size:     $tooltip-font-size;
+$form-feedback-tooltip-line-height:   null;
+$form-feedback-tooltip-opacity:       $tooltip-opacity;
+$form-feedback-tooltip-border-radius: $tooltip-border-radius;
+// scss-docs-end tooltip-feedback-variables

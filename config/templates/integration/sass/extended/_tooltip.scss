@@ -1,0 +1,20 @@
+/* =============================================================================
+   TOOLTIPS (extended/_tooltips.scss)
+   ========================================================================== */
+
+// Tooltip background
+.tooltip {
+	border-width: var( --tooltip-border-width );
+	border-color: var( --tooltip-border-color );
+	border-style: var( --tooltip-border-style );
+}
+
+// Tooltip content
+.tooltip-inner {
+	font-family: var( --tooltip-font-family );
+	font-weight: var( --tooltip-font-weight );
+	line-height: var( --tooltip-line-height );
+	letter-spacing: var( --tooltip-letter-spacing );
+	text-align: var( --tooltip-text-align );
+	text-decoration: var( --tooltip-text-decoration );
+}

@@ -1,0 +1,118 @@
+/* =============================================================================
+   FORM CHECK (extended/_checkbox.scss)
+   ========================================================================== */
+
+// Checkbox
+
+.form-check {
+	line-height: 1;
+}
+
+.form-check-input {
+	margin-top: calc( ( ( $checkbox-label-off-font-size * $checkbox-label-off-line-height ) - $checkbox-off-height ) / 2 );
+	box-shadow: var( --checkbox-check-off-box-shadow );
+	background-size: $checkbox-icon-on-width;
+
+	&:focus {
+		background-color: $checkbox-off-color;
+		border-color: $checkbox-off-border-color;
+		border-style: $checkbox-off-border-style;
+		box-shadow: var( --checkbox-hover-check-off-box-shadow );
+	}
+
+	&:hover,
+	.form-check:hover & {
+		background-color: $checkbox-hover-off-color;
+		border-color: $checkbox-hover-off-border-color;
+		border-style: $checkbox-hover-off-border-style;
+		box-shadow: var( --checkbox-hover-check-off-box-shadow );
+	}
+
+	&[ disabled ],
+	&:disabled,
+	&[ disabled ]:hover,
+	&:disabled:hover,
+	.form-check:hover &[ disabled ],
+	.form-check:hover &:disabled {
+		background-color: $checkbox-disabled-off-color;
+		border-color: $checkbox-disabled-off-border-color;
+		border-style: $checkbox-disabled-off-border-style;
+		box-shadow: $checkbox-disabled-off-box-shadow;
+	}
+
+	&:checked {
+		background-color: $checkbox-on-color;
+		border-color: $checkbox-on-border-color;
+		border-style: $checkbox-on-border-style;
+		box-shadow: var( --checkbox-check-on-box-shadow );
+
+		&:focus {
+			background-color: $checkbox-on-color;
+			border-color: $checkbox-on-border-color;
+			border-style: $checkbox-on-border-style;
+			box-shadow: var( --checkbox-check-on-box-shadow );
+		}
+
+		&:hover,
+		.form-check:hover & {
+			background-color: $checkbox-hover-on-color;
+			border-color: $checkbox-hover-on-border-color;
+			border-style: $checkbox-hover-on-border-style;
+			box-shadow: var( --checkbox-hover-check-on-box-shadow );
+		}
+
+		&[ disabled ],
+		&:disabled,
+		&[ disabled ]:hover,
+		&:disabled:hover,
+		.form-check:hover &[ disabled ],
+		.form-check:hover &:disabled {
+			background-color: $checkbox-disabled-on-color;
+			border-color: $checkbox-disabled-on-border-color;
+			border-style: $checkbox-disabled-on-border-style;
+			box-shadow: $checkbox-disabled-on-box-shadow;
+		}
+	}
+}
+
+.form-check-label {
+	font-size: $checkbox-label-off-font-size;
+	font-family: $checkbox-label-off-font-family;
+	font-weight: $checkbox-label-off-font-weight;
+	line-height: $checkbox-label-off-line-height;
+	letter-spacing: $checkbox-label-off-letter-spacing;
+	text-decoration: $checkbox-label-off-text-decoration;
+	text-transform: $checkbox-label-off-text-transform;
+
+	&:hover,
+	.form-check:hover & {
+		color: $checkbox-hover-label-off-color;
+	}
+
+	[ disabled ] ~ &,
+	:disabled ~ &,
+	[ disabled ]:hover ~ &,
+	:disabled:hover ~ &,
+	.form-check:hover input[ disabled ] ~ &,
+	.form-check:hover input:disabled ~ & {
+		color: $checkbox-disabled-label-off-color;
+	}
+
+	input:checked ~ & {
+		color: $checkbox-label-on-color;
+
+		&:hover,
+		.form-check:hover & {
+			color: $checkbox-hover-label-on-color;
+		}
+	}
+
+	input:checked[ disabled ] ~ &,
+	input:checked:disabled ~ &,
+	input:checked[ disabled ]:hover ~ &,
+	input:checked:disabled:hover ~ &,
+	.form-check:hover input:checked[ disabled ] ~ &,
+	.form-check:hover input:checked:disabled ~ & {
+		color: $checkbox-disabled-label-on-color;
+	}
+}

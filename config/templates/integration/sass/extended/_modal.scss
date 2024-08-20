@@ -1,0 +1,46 @@
+/* =============================================================================
+   MODAL (extended/_modal.scss)
+   ========================================================================== */
+
+.modal-content {
+	box-shadow: var( --modal-box-shadow );
+	padding: var( --modal-padding-y ) var( --modal-padding-x );
+}
+
+.modal-header {
+	background-color: var( --modal-header-background );
+	background: var( --modal-header-background );
+	border-radius: var( --modal-header-border-radius );
+	padding-top: var( --modal-header-padding-top );
+	padding-right: var( --modal-header-padding-right );
+	padding-bottom: var( --modal-header-padding-bottom );
+	padding-left: var( --modal-header-padding-left );
+}
+
+.modal-body {
+	background-color: var( --modal-body-background );
+	background: var( --modal-body-background );
+	border-color: var( --modal-body-border-color );
+	border-style: var( --modal-body-border-style );
+	border-radius: var( --modal-body-border-radius );
+	border-width: var( --modal-body-border-width );
+	padding-top: var( --modal-body-padding-top );
+	padding-right: var( --modal-body-padding-right );
+	padding-bottom: var( --modal-body-padding-bottom );
+	padding-left: var( --modal-body-padding-left );
+}
+
+.modal-footer {
+	border-radius: var( --modal-footer-border-radius );
+	padding-top: var( --modal-footer-padding-top );
+	padding-right: var( --modal-footer-padding-right );
+	padding-bottom: var( --modal-footer-padding-bottom );
+	padding-left: var( --modal-footer-padding-left );
+}
+
+.modal-title {
+	font-family: var( --modal-title-font-family );
+	font-size: var( --modal-title-font-size );
+	font-weight: var( --modal-title-font-weight );
+	letter-spacing: var( --modal-title-letter-spacing );
+}

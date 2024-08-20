@@ -1,0 +1,54 @@
+// Modals
+
+// scss-docs-start modal-variables
+$modal-inner-padding:               $spacer;
+
+$modal-footer-margin-between:       .5rem;
+
+$modal-dialog-margin:               .5rem;
+$modal-dialog-margin-y-sm-up:       1.75rem;
+
+$modal-title-line-height:           $line-height-base;
+
+$modal-content-color:               null;
+$modal-content-bg:                  $modal-background;
+$modal-content-border-color:        $modal-border-color;
+$modal-content-border-width:        $modal-border-width;
+$modal-content-border-radius:       $modal-border-radius;
+$modal-content-inner-border-radius: subtract($modal-content-border-radius, $modal-content-border-width);
+$modal-content-box-shadow-xs:       $box-shadow-sm;
+$modal-content-box-shadow-sm-up:    $modal-box-shadow;
+
+$modal-backdrop-bg:                 $black;
+$modal-backdrop-opacity:            .5;
+
+$modal-header-border-color:         var(--#{$prefix}border-color) !default;
+$modal-header-border-width:         $modal-content-border-width !default;
+$modal-header-padding-y:            $modal-header-padding-y;
+$modal-header-padding-x:            $modal-header-padding-x;
+$modal-header-padding:              $modal-header-padding-y $modal-header-padding-x !default; // Keep this for backwards compatibility
+
+$modal-footer-bg:                   $modal-footer-background;
+$modal-footer-border-color:         $modal-footer-border-color;
+$modal-footer-border-width:         $modal-footer-border-width;
+/////////
+@if variable-exists(modal-header-border-color)    { $modal-header-border-color:         $modal-header-border-color; }
+@if variable-exists(modal-header-border-width)    { $modal-header-border-width:         $modal-header-border-width; }
+@if variable-exists(modal-header-padding-y)       { $modal-header-padding-y:            $modal-header-padding-y; }
+@if variable-exists(modal-header-padding-x)       { $modal-header-padding-x:            $modal-header-padding-x; }
+@if variable-exists(modal-header-padding-y)       { $modal-header-padding:              $modal-header-padding-y $modal-header-padding-x; } // Keep this for backwards compatibility
+
+@if variable-exists(modal-footer-background)   { $modal-footer-bg:                   $modal-footer-background; }
+@if variable-exists(modal-footer-border-color) { $modal-footer-border-color:         $modal-footer-border-color; }
+@if variable-exists(modal-footer-border-width) { $modal-footer-border-width:         $modal-footer-border-width; }
+//////////
+$modal-sm:                          300px;
+$modal-md:                          500px;
+$modal-lg:                          800px;
+$modal-xl:                          1140px;
+
+$modal-fade-transform:              translate(0, -50px);
+$modal-show-transform:              none;
+$modal-transition:                  transform .3s ease-out;
+$modal-scale-transform:             scale(1.02);
+// scss-docs-end modal-variables

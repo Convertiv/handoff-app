@@ -30,7 +30,7 @@ Commands:
     make:exportable <type> <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
     make:page <name> <parent> [opts] - Creates a new custom page
-    make:integration - Creates a new integration based on a Bootstrap 5.3 template
+    make:integration - Creates a new integration based on the provided Bootstrap 5.3 template
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory

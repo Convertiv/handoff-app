@@ -1,0 +1,10 @@
+{
+  "views": {
+    "overview": {
+      "sort": ["Type", "Layout"]
+    },
+    "tokens": {
+      "sort": ["Type", "Layout"]
+    }
+  }
+}

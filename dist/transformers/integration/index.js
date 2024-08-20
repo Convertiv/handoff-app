@@ -91,7 +91,7 @@ var getPathToIntegration = function (handoff, resolveTemplatePath) {
         return integrationPath;
     }
     if (resolveTemplatePath) {
-        return path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'integrations', 'bootstrap', '5.3'));
+        return path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'templates', 'integration'));
     }
     return null;
 };
