@@ -7,7 +7,6 @@ export const Hero: React.FC<{
     link: string;
   }[];
 }> = ({ title, image, children, toc }) => {
-  console.log(toc);
   return (
     <div className="c-hero">
       <div>

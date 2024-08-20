@@ -6,7 +6,6 @@ const CodeTransform: unified.Plugin<[], mdast.Root> = () => {
   return (tree, file) => {
     visit(tree, "code", (node, index, parent) => {
       const metaString = `${node.lang ?? ""} ${node.meta ?? ""}`.trim();
-      console.log('itterating')
       if (!metaString) return;
       const props = {  }
       const [col] = metaString.match(/(?<=col=("|'))(.*?)(?=("|'))/) ?? [

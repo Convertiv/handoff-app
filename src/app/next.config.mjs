@@ -8,7 +8,6 @@ const CodeTransform = () => {
   return (tree, file) => {
     visit(tree, 'code', (node, index, parent) => {
       const metaString = `${node.lang ?? ''} ${node.meta ?? ''}`.trim();
-      console.log(metaString);
       const props = { col: '12', codetitle: '' };
       if (!metaString) return;
       const [col] = metaString.match(/(?<=col=("|'))(.*?)(?=("|'))/) ?? [''];
