@@ -119,12 +119,6 @@ export const getFigmaFileComponents = async (handoff: Handoff, legacyDefinitions
 };
 
 const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse, handoff: Handoff) => {
-  // console.warn(
-  //   chalk.redBright(
-  //     '!!! Using Handoff Figma Plugin fetch flow !!!'
-  //   )
-  // );
-
   const componentTokens: FileComponentsObject = {};
 
   const componentsMetadata = new Map(
@@ -150,7 +144,7 @@ const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse, hand
         const settings = JSON.parse(
           componentSet.sharedPluginData[`convertiv_handoff_app`][`node_${componentSet.id}_settings`]
         ) as IComponentSetMetadata;
-        return settings.exposed;
+        return !!settings.exposed;
       } catch {
         return false;
       }

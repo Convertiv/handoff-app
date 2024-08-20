@@ -154,11 +154,6 @@ var getFigmaFileComponents = function (handoff, legacyDefinitions) { return __aw
 }); };
 exports.getFigmaFileComponents = getFigmaFileComponents;
 var processFigmaNodes = function (fileNodesResponse, handoff) {
-    // console.warn(
-    //   chalk.redBright(
-    //     '!!! Using Handoff Figma Plugin fetch flow !!!'
-    //   )
-    // );
     var _a;
     var componentTokens = {};
     var componentsMetadata = new Map(Object.entries((_a = Object.values(fileNodesResponse.nodes)
@@ -177,7 +172,7 @@ var processFigmaNodes = function (fileNodesResponse, handoff) {
                 return false;
             }
             var settings = JSON.parse(componentSet.sharedPluginData["convertiv_handoff_app"]["node_".concat(componentSet.id, "_settings")]);
-            return settings.exposed;
+            return !!settings.exposed;
         }
         catch (_a) {
             return false;
