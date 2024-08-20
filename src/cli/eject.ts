@@ -4,7 +4,6 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import { getPathToIntegration } from '../transformers/integration';
 import { getClientConfig } from '../config';
-import { ClientConfig } from 'handoff/types/config';
 
 /**
  * Eject the config to the working directory
@@ -43,10 +42,6 @@ export const makeIntegration = async (handoff: Handoff) => {
   const integrationPath = getPathToIntegration(handoff, true);
   fs.copySync(integrationPath, workingPath, { overwrite: false });
   console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
-
-  // ensure local configuration is set up to support the ejected integration
-  const localConfigPath = path.join(handoff.workingPath, 'handoff.config.json');
-  !fs.existsSync(localConfigPath) && (await ejectConfig(handoff));
 
   return handoff;
 };

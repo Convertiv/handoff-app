@@ -10,7 +10,7 @@ import {
 } from '../utils';
 import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types';
 import { replaceTokens, slugify } from '../../utils/index';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
 type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: string };

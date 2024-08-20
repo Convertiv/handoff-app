@@ -1,6 +1,6 @@
 import { ComponentInstance } from '../exporters/components/types';
 import { Token, TokenType } from './types';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../types/config';
 /**
  * Performs the transformation of the component tokens.
  * @param component

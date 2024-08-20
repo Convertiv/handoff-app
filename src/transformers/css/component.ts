@@ -1,7 +1,7 @@
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
 import { formatComponentCodeBlockComment } from '../utils';
 import { transform } from '../transformer';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 
 /**
  * Map down to a variable object

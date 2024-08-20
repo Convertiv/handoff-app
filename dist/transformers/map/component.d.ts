@@ -1,5 +1,5 @@
 import { FileComponentObject } from '../../exporters/components/types';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts

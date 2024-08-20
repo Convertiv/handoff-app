@@ -70,38 +70,20 @@ exports.ejectConfig = ejectConfig;
  * @param handoff
  */
 var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, workingPath, integrationPath, localConfigPath, _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                config = handoff.config;
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-                if (fs_extra_1.default.existsSync(workingPath)) {
-                    if (!handoff.force) {
-                        console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
-                        return [2 /*return*/];
-                    }
-                }
-                integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
-                fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
-                console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
-                localConfigPath = path_1.default.join(handoff.workingPath, 'handoff.config.json');
-                _a = !fs_extra_1.default.existsSync(localConfigPath);
-                if (!_a) return [3 /*break*/, 2];
-                return [4 /*yield*/, (0, exports.ejectConfig)(handoff)];
-            case 1:
-                _a = (_b.sent());
-                _b.label = 2;
-            case 2:
-                _a;
-                // TODO: Remove?
-                // update (and re-write) the ejected configuration with custom integration
-                // const localConfigBuffer = fs.readFileSync(localConfigPath);
-                // const localConfig = JSON.parse(localConfigBuffer.toString()) as ClientConfig;
-                // localConfig.integration = { name: 'custom', version: '' };
-                // fs.writeFileSync(localConfigPath, `${JSON.stringify(localConfig, null, 2)}`);
-                return [2 /*return*/, handoff];
+    var config, workingPath, integrationPath;
+    return __generator(this, function (_a) {
+        config = handoff.config;
+        workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+        if (fs_extra_1.default.existsSync(workingPath)) {
+            if (!handoff.force) {
+                console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
+                return [2 /*return*/];
+            }
         }
+        integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
+        fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
+        console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
+        return [2 /*return*/, handoff];
     });
 }); };
 exports.makeIntegration = makeIntegration;

@@ -1,4 +1,4 @@
-import { IntegrationObject } from 'handoff/types/config';
+import { IntegrationObject } from '../../types/config';
 import { DocumentationObject } from '../../types';
 import { TransformerOutput } from '../types';
 import { transformComponentsToMap } from './component';

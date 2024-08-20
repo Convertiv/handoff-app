@@ -23,9 +23,10 @@ import Handoff from '.';
 import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
 import { merge } from 'lodash';
-import { filterOutNull } from './utils';
-import { ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
+import { filterOutNull, filterOutUndefined } from './utils';
+import { ComponentIntegrationRecipe, ComponentIntegrationRecipePart, ComponentIntegrations } from './types/recipes';
 import { findFilesByExtension } from './utils/fs';
+import { getTokenSetNameByProperty } from './transformers/tokens';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -314,13 +315,13 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
 };
 
 export const buildRecipe = async (handoff: Handoff) => {
-  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
+  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
 
   const processToken = (content: string, records: ComponentIntegrations): void => {
     let match;
     const regex = new RegExp(TOKEN_REGEX, 'g');
     while ((match = regex.exec(content)) !== null) {
-      const [_, __, component, part, variants] = match;
+      const [_, __, component, part, variants, cssProperty] = match;
 
       let componentRecord = records.components.find((c) => c.name === component);
       if (!componentRecord) {
@@ -328,8 +329,19 @@ export const buildRecipe = async (handoff: Handoff) => {
         records.components.push(componentRecord);
       }
 
-      if (!componentRecord.common.parts.includes(part)) {
-        componentRecord.common.parts.push(part);
+      const requiredTokenSet = getTokenSetNameByProperty(cssProperty);
+      const existingPartIndex = (componentRecord.common.parts ?? []).findIndex((p) => typeof p !== 'string' && p.name === part);
+
+      if (existingPartIndex === -1) {
+        componentRecord.common.parts.push({
+          name: part,
+          require: [getTokenSetNameByProperty(cssProperty)].filter(filterOutUndefined),
+        });
+      } else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
+        componentRecord.common.parts[existingPartIndex].require = [
+          ...componentRecord.common.parts[existingPartIndex].require,
+          requiredTokenSet,
+        ];
       }
 
       const variantPairs = variants.split(',').map((v) => v.split(':'));

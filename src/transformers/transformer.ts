@@ -2,7 +2,7 @@ import { ComponentInstance } from '../exporters/components/types';
 import { Token, TokenDict, TokenType } from './types';
 import { formatTokenName, getTokenNameSegments } from './utils';
 import { getTokenSetTokens } from './tokens';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../types/config';
 
 /**
  * Performs the transformation of the component tokens.

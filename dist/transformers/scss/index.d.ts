@@ -1,6 +1,6 @@
 import { DocumentationObject } from '../../types';
 import { TransformerOutput } from '../types';
-import { IntegrationObject } from 'handoff/types/config';
+import { IntegrationObject } from '../../types/config';
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject

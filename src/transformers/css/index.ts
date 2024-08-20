@@ -1,5 +1,5 @@
-import { IntegrationObject } from 'handoff/types/config';
 import { DocumentationObject } from '../../types';
+import { IntegrationObject } from '../../types/config';
 import { TransformerOutput } from '../types';
 import { transformComponentsToCssVariables } from './component';
 import transformColors from './design/colors';

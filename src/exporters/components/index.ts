@@ -8,7 +8,7 @@ import { AxiosResponse } from 'axios';
 import { slugify } from '../../utils';
 import { IComponentSetMetadata } from '../../types/plugin';
 import { FileComponentsObject } from './types';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 
 const groupReplaceRules = (tupleList: [string, string, string][]): { [key: string]: { [key: string]: string } } => {
   const res: { [key: string]: { [key: string]: string } } = {};

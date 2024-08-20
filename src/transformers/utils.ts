@@ -3,7 +3,7 @@ import { TypographyObject } from "../types";
 import { TokenType } from "./types";
 import { replaceTokens, slugify } from "../utils/index";
 import { capitalize } from "lodash";
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../types/config';
 
 /**
  * Returns normalized type name

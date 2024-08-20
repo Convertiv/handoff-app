@@ -7,7 +7,7 @@ export type ComponentIntegrationRecipePart = {
 
 export type ComponentIntegrationRecipe = {
   cssRootClass?: string;
-  parts?: ComponentIntegrationRecipePart[] | string[];
+  parts?: ComponentIntegrationRecipePart[];
   defaults?: {
     [key: string]: string;
   };

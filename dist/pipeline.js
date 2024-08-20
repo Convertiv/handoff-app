@@ -93,6 +93,7 @@ var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
 var fs_1 = require("./utils/fs");
+var tokens_1 = require("./transformers/tokens");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
@@ -426,19 +427,30 @@ var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, 
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
-                TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"[^"]*"\s*}}/;
+                TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
                 processToken = function (content, records) {
+                    var _a;
                     var match;
                     var regex = new RegExp(TOKEN_REGEX, 'g');
                     var _loop_1 = function () {
-                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4];
+                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
                         var componentRecord = records.components.find(function (c) { return c.name === component; });
                         if (!componentRecord) {
                             componentRecord = { name: component, common: { parts: [] }, recipes: [] };
                             records.components.push(componentRecord);
                         }
-                        if (!componentRecord.common.parts.includes(part)) {
-                            componentRecord.common.parts.push(part);
+                        var requiredTokenSet = (0, tokens_1.getTokenSetNameByProperty)(cssProperty);
+                        var existingPartIndex = ((_a = componentRecord.common.parts) !== null && _a !== void 0 ? _a : []).findIndex(function (p) { return typeof p !== 'string' && p.name === part; });
+                        if (existingPartIndex === -1) {
+                            componentRecord.common.parts.push({
+                                name: part,
+                                require: [(0, tokens_1.getTokenSetNameByProperty)(cssProperty)].filter(utils_1.filterOutUndefined),
+                            });
+                        }
+                        else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
+                            componentRecord.common.parts[existingPartIndex].require = __spreadArray(__spreadArray([], componentRecord.common.parts[existingPartIndex].require, true), [
+                                requiredTokenSet,
+                            ], false);
                         }
                         var variantPairs = variants.split(',').map(function (v) { return v.split(':'); });
                         var variantGroup = { variantProps: [], variantValues: {} };

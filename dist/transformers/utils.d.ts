@@ -1,7 +1,7 @@
 import { ComponentInstance } from '../exporters/components/types';
 import { TypographyObject } from "../types";
 import { TokenType } from "./types";
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../types/config';
 /**
  * Returns normalized type name
  * @param type

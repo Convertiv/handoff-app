@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTokenSetTokens = void 0;
+exports.getTokenSetNameByProperty = exports.getTokenSetTokens = void 0;
 var convertColor_1 = require("../utils/convertColor");
 var numbers_1 = require("../utils/numbers");
 var getTokenSetTokens = function (tokenSet) {
@@ -26,8 +26,12 @@ var getTokenSetTokens = function (tokenSet) {
     }
 };
 exports.getTokenSetTokens = getTokenSetTokens;
+var getTokenSetNameByProperty = function (cssProp) {
+    return keyToTokenSetMap[cssProp];
+};
+exports.getTokenSetNameByProperty = getTokenSetNameByProperty;
 var getBackgroundTokenSetTokens = function (tokenSet) { return ({
-    'background': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color
+    background: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.background).color,
 }); };
 var getSpacingTokenSetTokens = function (tokenSet) { return ({
     'padding-y': ["".concat((0, numbers_1.normalizeCssNumber)((tokenSet.padding.TOP + tokenSet.padding.BOTTOM) / 2), "px"), false],
@@ -38,7 +42,7 @@ var getSpacingTokenSetTokens = function (tokenSet) { return ({
     'padding-left': ["".concat((0, numbers_1.normalizeCssNumber)(tokenSet.padding.LEFT), "px"), false],
     'padding-start': ["".concat((0, numbers_1.normalizeCssNumber)(tokenSet.padding.LEFT), "px"), false],
     'padding-end': "".concat((0, numbers_1.normalizeCssNumber)(tokenSet.padding.RIGHT), "px"),
-    'spacing': ["".concat((0, numbers_1.normalizeCssNumber)(tokenSet.spacing), "px"), false],
+    spacing: ["".concat((0, numbers_1.normalizeCssNumber)(tokenSet.spacing), "px"), false],
 }); };
 var getBorderTokenSetTokens = function (tokenSet) {
     var _a;
@@ -57,23 +61,62 @@ var getTypographyTokenSetTokens = function (tokenSet) { return ({
     'letter-spacing': "".concat((0, numbers_1.normalizeCssNumber)(tokenSet.letterSpacing), "px"),
     'text-align': (0, convertColor_1.transformFigmaTextAlignToCss)(tokenSet.textAlignHorizontal),
     'text-decoration': (0, convertColor_1.transformFigmaTextDecorationToCss)(tokenSet.textDecoration),
-    'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase)
+    'text-transform': (0, convertColor_1.transformFigmaTextCaseToCssTextTransform)(tokenSet.textCase),
 }); };
 var getFillTokenSetTokens = function (tokenSet) { return ({
-    'color': (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color, true).color,
+    color: (0, convertColor_1.transformFigmaFillsToCssColor)(tokenSet.color, true).color,
 }); };
 var getEffectTokenSetTokens = function (tokenSet) { return ({
-    'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none'
+    'box-shadow': tokenSet.effect.map(convertColor_1.transformFigmaEffectToCssBoxShadow).filter(Boolean).join(', ') || 'none',
 }); };
 var getOpacityTokenSetTokens = function (tokenSet) { return ({
-    'opacity': "".concat((0, numbers_1.normalizeCssNumber)(tokenSet.opacity)),
+    opacity: "".concat((0, numbers_1.normalizeCssNumber)(tokenSet.opacity)),
 }); };
 var getSizeTokenSetTokens = function (tokenSet) {
     var _a, _b, _c, _d;
     return ({
-        'width': "".concat((_a = (0, numbers_1.normalizeCssNumber)(tokenSet.width)) !== null && _a !== void 0 ? _a : '0', "px"),
+        width: "".concat((_a = (0, numbers_1.normalizeCssNumber)(tokenSet.width)) !== null && _a !== void 0 ? _a : '0', "px"),
         'width-raw': ["".concat((_b = (0, numbers_1.normalizeCssNumber)(tokenSet.width)) !== null && _b !== void 0 ? _b : '0'), false],
-        'height': "".concat((_c = (0, numbers_1.normalizeCssNumber)(tokenSet.height)) !== null && _c !== void 0 ? _c : '0', "px"),
+        height: "".concat((_c = (0, numbers_1.normalizeCssNumber)(tokenSet.height)) !== null && _c !== void 0 ? _c : '0', "px"),
         'height-raw': ["".concat((_d = (0, numbers_1.normalizeCssNumber)(tokenSet.height)) !== null && _d !== void 0 ? _d : '0'), false],
     });
+};
+var keyToTokenSetMap = {
+    // Background tokens
+    background: 'BACKGROUND',
+    // Spacing tokens
+    'padding-y': 'SPACING',
+    'padding-x': 'SPACING',
+    'padding-top': 'SPACING',
+    'padding-right': 'SPACING',
+    'padding-bottom': 'SPACING',
+    'padding-left': 'SPACING',
+    'padding-start': 'SPACING',
+    'padding-end': 'SPACING',
+    spacing: 'SPACING',
+    // Border tokens
+    'border-width': 'BORDER',
+    'border-radius': 'BORDER',
+    'border-color': 'BORDER',
+    'border-style': 'BORDER',
+    // Typography tokens
+    'font-family': 'TYPOGRAPHY',
+    'font-size': 'TYPOGRAPHY',
+    'font-weight': 'TYPOGRAPHY',
+    'line-height': 'TYPOGRAPHY',
+    'letter-spacing': 'TYPOGRAPHY',
+    'text-align': 'TYPOGRAPHY',
+    'text-decoration': 'TYPOGRAPHY',
+    'text-transform': 'TYPOGRAPHY',
+    // Fill tokens
+    color: 'FILL',
+    // Effect tokens
+    'box-shadow': 'EFFECT',
+    // Opacity tokens
+    opacity: 'OPACITY',
+    // Size tokens
+    width: 'SIZE',
+    'width-raw': 'SIZE',
+    height: 'SIZE',
+    'height-raw': 'SIZE',
 };

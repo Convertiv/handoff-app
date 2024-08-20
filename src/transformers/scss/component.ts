@@ -2,7 +2,7 @@ import { normalizeTokenNamePartValue } from '../utils';
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
 import { transform } from '../transformer';
 import { slugify } from '../../utils';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 
 export const transformComponentsToScssTypes = (
   name: string,

@@ -1,5 +1,5 @@
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
-import { IntegrationObjectComponentOptions } from 'handoff/types/config';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 /**
  * Map down to a variable object
  * @param alerts
