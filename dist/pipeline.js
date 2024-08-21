@@ -87,7 +87,6 @@ var index_2 = __importDefault(require("./transformers/css/index"));
 var index_3 = __importDefault(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
 var index_5 = __importDefault(require("./transformers/preview/index"));
-var preview_1 = require("./utils/preview");
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
@@ -135,7 +134,7 @@ var buildCustomFonts = function (handoff, documentationObject) { return __awaite
     });
 }); };
 /**
- * Build just the custom fonts
+ * Build integration
  * @param documentationObject
  * @returns
  */
@@ -153,10 +152,11 @@ var buildIntegration = function (handoff, documentationObject) { return __awaite
     });
 }); };
 /**
- * Run just the preview
+ * Build previews
  * @param documentationObject
-*/
-var buildPreview = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+ * @returns
+ */
+var buildPreviews = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, Promise.all([
@@ -164,19 +164,7 @@ var buildPreview = function (handoff, documentationObject) { return __awaiter(vo
                 ])];
             case 1:
                 _a.sent();
-                if (!(Object.keys(documentationObject.components).filter(function (name) { return documentationObject.components[name].instances.length > 0; }).length > 0)) return [3 /*break*/, 3];
-                return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
-                        .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
-                        .catch(function (error) {
-                        throw new Error(error);
-                    })];
-            case 2:
-                _a.sent();
-                return [3 /*break*/, 4];
-            case 3:
-                console.log(chalk_1.default.red('Skipping preview generation'));
-                _a.label = 4;
-            case 4: return [2 /*return*/];
+                return [2 /*return*/];
         }
     });
 }); };
@@ -456,7 +444,7 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 2:
                 _a.sent();
-                return [4 /*yield*/, buildPreview(handoff, documentationObject)];
+                return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 3:
                 _a.sent();
                 _a.label = 4;
@@ -495,7 +483,7 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 6:
                 _a.sent();
-                return [4 /*yield*/, buildPreview(handoff, documentationObject)];
+                return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 7:
                 _a.sent();
                 if (!build) return [3 /*break*/, 9];

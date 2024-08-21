@@ -121,7 +121,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
           }
         }
       }
-      return resolve('Preview template styles built');
+      return resolve('Preview styles successfully built.');
     });
   });
 };
