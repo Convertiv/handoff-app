@@ -53,15 +53,15 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
   });
 };
 
-export const bundleJSWebpack = async (target: string, handoff: Handoff): Promise<string> => {
+export const bundleJSWebpack = async (target: string, handoff: Handoff, mode?: 'none' | 'development' | 'production'): Promise<string> => {
   const fs = createFsFromVolume(new Volume());
   return new Promise((resolve, reject) => {
     const filename = target.split('/').pop();
     const output = {
       path: '/',
       filename,
-    }
-    const compiler = webpack(generateWebpackConfig(target, handoff, output));
+    };
+    const compiler = webpack(generateWebpackConfig(target, handoff, output, mode));
 
     compiler.outputFileSystem = fs;
     compiler.run((err, stats) => {
@@ -80,18 +80,26 @@ export const bundleJSWebpack = async (target: string, handoff: Handoff): Promise
   });
 };
 
-export const generateWebpackConfig = (entry: string, handoff: Handoff, output?: {
-  path: string,
-  filename: string,
-}): webpack.Configuration => {
-  if(!output) {
+export const generateWebpackConfig = (
+  entry: string,
+  handoff: Handoff,
+  output?: {
+    path: string;
+    filename: string;
+  },
+  mode?: 'none' | 'development' | 'production'
+): webpack.Configuration => {
+  if (!output) {
     output = {
       path: path.resolve(handoff?.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'components'),
       filename: 'bundle.js',
     };
   }
+  if (!mode) {
+    mode = 'production';
+  }
   let config: webpack.Configuration = {
-    mode: 'production',
+    mode,
     entry,
     resolve: {
       alias: {

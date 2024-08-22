@@ -92,7 +92,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
     });
 }); };
 exports.buildClientFiles = buildClientFiles;
-var bundleJSWebpack = function (target, handoff) { return __awaiter(void 0, void 0, void 0, function () {
+var bundleJSWebpack = function (target, handoff, mode) { return __awaiter(void 0, void 0, void 0, function () {
     var fs;
     return __generator(this, function (_a) {
         fs = createFsFromVolume(new Volume());
@@ -102,7 +102,7 @@ var bundleJSWebpack = function (target, handoff) { return __awaiter(void 0, void
                     path: '/',
                     filename: filename,
                 };
-                var compiler = (0, webpack_1.default)((0, exports.generateWebpackConfig)(target, handoff, output));
+                var compiler = (0, webpack_1.default)((0, exports.generateWebpackConfig)(target, handoff, output, mode));
                 compiler.outputFileSystem = fs;
                 compiler.run(function (err, stats) {
                     // Read the output later:
@@ -121,15 +121,18 @@ var bundleJSWebpack = function (target, handoff) { return __awaiter(void 0, void
     });
 }); };
 exports.bundleJSWebpack = bundleJSWebpack;
-var generateWebpackConfig = function (entry, handoff, output) {
+var generateWebpackConfig = function (entry, handoff, output, mode) {
     if (!output) {
         output = {
             path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
             filename: 'bundle.js',
         };
     }
+    if (!mode) {
+        mode = 'production';
+    }
     var config = {
-        mode: 'production',
+        mode: mode,
         entry: entry,
         resolve: {
             alias: {

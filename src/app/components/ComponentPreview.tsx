@@ -98,6 +98,19 @@ export const ComponentDisplay: React.FC<{
               </div>
             </div>
           ))}
+          <div
+              className={['breakpoint-width__item', 'full' === breakpoint ? 'active' : ''].join(' ')}
+              onClick={() => {
+                setBreakpoint('full');
+                setWidth(`100%`);
+              }}
+            >
+              full
+              <div className="breakpoint-width__item__label">
+                <span>Full Width</span> - &nbsp;
+                <span>100%</span>
+              </div>
+            </div>
       </div>
       <iframe
         onLoad={onLoad}

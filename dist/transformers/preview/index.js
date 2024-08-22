@@ -172,7 +172,7 @@ function previewTransformer(handoff, documentationObject) {
                     return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
                 case 3:
                     js = _a.sent();
-                    return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff)];
+                    return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, "development")];
                 case 4:
                     compiled = _a.sent();
                     if (js) {

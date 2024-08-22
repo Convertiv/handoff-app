@@ -124,7 +124,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
           id: file, 
           preview: '', 
           code: '',
-          js: null,
+          js: null, 
           css: null,
           sass: null,
         };
@@ -133,7 +133,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
         if (fs.existsSync(path.resolve(custom, jsFile))) {
           const jsPath = path.resolve(custom, jsFile);
           const js = await fs.readFile(jsPath, 'utf8');
-          const compiled = await bundleJSWebpack(jsPath, handoff);
+          const compiled = await bundleJSWebpack(jsPath, handoff, "development");
           if (js) {
             data['js'] = js;
             data['jsCompiled'] = compiled;
