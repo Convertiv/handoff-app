@@ -123,7 +123,6 @@ export interface ComponentDefinitionOptions {
     variantProperties: string[];
     sharedComponentVariants?: { componentId: string; sharedVariantProperty?: string; distinctiveVariantProperties?: string[] }[];
   };
-  // demo?: ComponentDocumentationOptions;
 }
 
 export interface ComponentDocumentationOptions {
