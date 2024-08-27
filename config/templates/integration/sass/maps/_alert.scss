@@ -3,12 +3,12 @@
 // Define alert colors, border radius, and padding.
 
 // scss-docs-start alert-variables
-$alert-padding-y:               {{ scss-token "alert" "" "layout:horizontal" "padding-top" }};
-$alert-padding-x:               {{ scss-token "alert" "" "layout:horizontal" "padding-right" }};
+$alert-padding-y:               $alert-horizontal-padding-top;
+$alert-padding-x:               $alert-horizontal-padding-right;
 $alert-margin-bottom:           1rem;
-$alert-border-radius:           {{ scss-token "alert" "" "layout:horizontal" "border-radius" }};
+$alert-border-radius:           $alert-horizontal-border-radius;
 $alert-link-font-weight:        $font-weight-bold;
-$alert-border-width:            {{ scss-token "alert" "" "layout:horizontal" "border-width" }};
+$alert-border-width:            $alert-horizontal-border-width;
 $alert-bg-scale:                -80%;
 $alert-border-scale:            -70%;
 $alert-color-scale:             40%;
