@@ -98,19 +98,19 @@ export const ComponentDisplay: React.FC<{
               </div>
             </div>
           ))}
-          <div
-              className={['breakpoint-width__item', 'full' === breakpoint ? 'active' : ''].join(' ')}
-              onClick={() => {
-                setBreakpoint('full');
-                setWidth(`100%`);
-              }}
-            >
-              full
-              <div className="breakpoint-width__item__label">
-                <span>Full Width</span> - &nbsp;
-                <span>100%</span>
-              </div>
-            </div>
+        <div
+          className={['breakpoint-width__item', 'full' === breakpoint ? 'active' : ''].join(' ')}
+          onClick={() => {
+            setBreakpoint('full');
+            setWidth(`100%`);
+          }}
+        >
+          full
+          <div className="breakpoint-width__item__label">
+            <span>Full Width</span> - &nbsp;
+            <span>100%</span>
+          </div>
+        </div>
       </div>
       <iframe
         onLoad={onLoad}
@@ -128,21 +128,36 @@ export const ComponentDisplay: React.FC<{
 };
 
 export const SnippetPreview: React.FC<{
-  preview?: PreviewObject;
+  defaultPreview?: PreviewObject;
   id: string;
   code: string;
   title: string;
   children: React.ReactNode;
   breakpoints?: Breakpoints;
   height?: string;
-}> = ({ preview, title, children, breakpoints, id, height }) => {
+}> = ({ defaultPreview, title, children, breakpoints, id, height }) => {
   const context = useMdxContext();
   const config = context.config;
-  if (!preview && context && id) {
-    preview = context.getPreview(id);
-  }
+  const [loaded, setLoaded] = React.useState(false);
+  const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
+  React.useEffect(() => {
+    async function loadPreview() {
+      if (!preview && context && id) {
+        let previewData = await context.getPreview(id);
+        if (previewData) {
+          setPreview(previewData);
+        }
+      }
+      setLoaded(true);
+    }
+    loadPreview();
+  }, [loaded, setLoaded]);
+
   if (!preview) {
     return null;
+  }
+  if (!loaded) {
+    return <div id={preview.id}>Loading Previews</div>;
   }
   return (
     <div id={preview.id}>

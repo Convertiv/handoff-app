@@ -4,7 +4,7 @@ import { ClientConfig } from '@handoff/types/config';
 interface IMdxContext {
   preview?: PreviewJson;
   setPreview: (preview: PreviewJson) => void;
-  getPreview: (name: string) => PreviewObject;
+  getPreview: (name: string) => Promise<PreviewObject>;
   metadata: Record<string, any>;
   setMetadata: (metadata: Record<string, any>) => void;
   menu: Record<string, any>;
@@ -17,18 +17,30 @@ interface IMdxContextProviderProps {
   defaultPreview?: PreviewJson;
   defaultMetadata?: Record<string, any>;
   defaultMenu?: Record<string, any>;
-  defaultConfig?: ClientConfig;  
+  defaultConfig?: ClientConfig;
 }
 
 export const MdxContext = createContext<IMdxContext | undefined>(undefined);
 
-export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({ children, defaultMenu, defaultMetadata, defaultPreview, defaultConfig }) => {
+export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
+  children,
+  defaultMenu,
+  defaultMetadata,
+  defaultPreview,
+  defaultConfig,
+}) => {
   const [preview, setPreview] = useState<PreviewJson>(defaultPreview);
   const [config, setConfig] = useState<ClientConfig>(defaultConfig);
-  const getPreview = (name: string) => {
-    if(!preview) return null;
+  const getPreview = async (name: string) => {
+    if (!preview) return null;
     const components = preview.components;
-    return components[name] ? components[name][0] : null;
+    if (components[name]) {
+      return components[name] ? components[name][0] : null;
+    } else {
+      // Try to load the component from the public json
+      let data = fetch(`/snippets/${name}.json`).then((res) => res.json());
+      return data as Promise<PreviewObject>;
+    }
   };
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);
@@ -43,7 +55,7 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({ childre
         menu,
         setMenu,
         config,
-        setConfig
+        setConfig,
       }}
     >
       {children}
