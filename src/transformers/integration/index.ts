@@ -139,7 +139,7 @@ const buildIntegration = async (sourcePath: string, destPath: string, documentat
       await buildIntegration(sourceItemPath, destItemPath, documentationObject);
     } else {
       // Read the file content
-      const content = await fs.readFile(sourceItemPath, 'utf-8');
+      const content = await loadTemplateContent(sourceItemPath);
       // Compile the template with Handlebars
       const template = Handlebars.compile(content);
       // Render the content with Handlebars
@@ -153,6 +153,34 @@ const buildIntegration = async (sourcePath: string, destPath: string, documentat
       await fs.writeFile(destItemPath, renderedContent);
     }
   }
+};
+
+/**
+ * Asynchronously loads the content of a template file and transforms it if necessary.
+ *
+ * This function reads the content of a file specified by the given path. If the file is an SCSS file,
+ * it performs a transformation on custom Handlebars-like syntax to actual Handlebars syntax, specifically
+ * targeting a custom `@handoff-each-component` directive. This transformation is essential for processing the
+ * file with Handlebars later.
+ *
+ * **Note:** This function contains a hardcoded transformation for SCSS files that should be refactored in the future
+ * to allow more flexibility and extensibility, potentially using a plugin system or configuration-driven approach.
+ *
+ * @param {string} path - The path to the template file.
+ * @returns {Promise<string>} - A promise that resolves to the content of the file, potentially transformed.
+ */
+const loadTemplateContent = async (path: string): Promise<string> => {
+  const ext = path.split('.').pop();
+  let content = await fs.readFile(path, 'utf-8');
+
+  if (ext === 'scss') {
+    content = content.replace(
+      /@handoff-each-component {\s+@import '([^']*)\/\{\{component\}\}';\s+}/g,
+      "{{#each components}}\n@import '$1/{{this}}';\n{{/each}}"
+    );
+  }
+
+  return content;
 };
 
 /**

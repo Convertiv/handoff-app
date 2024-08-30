@@ -212,7 +212,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject) { re
                 // Recursively process the directory
                 _a.sent();
                 return [3 /*break*/, 10];
-            case 6: return [4 /*yield*/, fs_extra_1.default.readFile(sourceItemPath, 'utf-8')];
+            case 6: return [4 /*yield*/, loadTemplateContent(sourceItemPath)];
             case 7:
                 content = _a.sent();
                 template = handlebars_1.default.compile(content);
@@ -235,6 +235,36 @@ var buildIntegration = function (sourcePath, destPath, documentationObject) { re
                 _i++;
                 return [3 /*break*/, 2];
             case 11: return [2 /*return*/];
+        }
+    });
+}); };
+/**
+ * Asynchronously loads the content of a template file and transforms it if necessary.
+ *
+ * This function reads the content of a file specified by the given path. If the file is an SCSS file,
+ * it performs a transformation on custom Handlebars-like syntax to actual Handlebars syntax, specifically
+ * targeting a custom `@handoff-each-component` directive. This transformation is essential for processing the
+ * file with Handlebars later.
+ *
+ * **Note:** This function contains a hardcoded transformation for SCSS files that should be refactored in the future
+ * to allow more flexibility and extensibility, potentially using a plugin system or configuration-driven approach.
+ *
+ * @param {string} path - The path to the template file.
+ * @returns {Promise<string>} - A promise that resolves to the content of the file, potentially transformed.
+ */
+var loadTemplateContent = function (path) { return __awaiter(void 0, void 0, void 0, function () {
+    var ext, content;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                ext = path.split('.').pop();
+                return [4 /*yield*/, fs_extra_1.default.readFile(path, 'utf-8')];
+            case 1:
+                content = _a.sent();
+                if (ext === 'scss') {
+                    content = content.replace(/@handoff-each-component {\s+@import '([^']*)\/\{\{component\}\}';\s+}/g, "{{#each components}}\n@import '$1/{{this}}';\n{{/each}}");
+                }
+                return [2 /*return*/, content];
         }
     });
 }); };
