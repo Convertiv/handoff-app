@@ -38,7 +38,6 @@ class Handoff {
     mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-    configureExportables: (exportables: string[]) => string[];
   };
 
   constructor(config?: Config) {
@@ -55,7 +54,6 @@ class Handoff {
       mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
       webpack: (webpackConfig) => webpackConfig,
       preview: (webpackConfig, preview) => preview,
-      configureExportables: (exportables) => exportables,
     };
     this.init(config);
     this.integrationHooks = instantiateIntegration(this);
@@ -77,7 +75,6 @@ class Handoff {
     if (validate) {
       this.config = validateConfig(this.config);
     }
-    this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
     return this;
   }
   async fetch(): Promise<Handoff> {
@@ -203,9 +200,6 @@ class Handoff {
   }
   modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
     this.hooks.webpack = callback;
-  }
-  configureExportables(callback: (exportables: string[]) => string[]) {
-    this.hooks.configureExportables = callback;
   }
 }
 

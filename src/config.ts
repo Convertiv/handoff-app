@@ -39,19 +39,6 @@ export const defaultConfig = (): Config => ({
     component_sort: ['primary', 'secondary', 'transparent'],
     base_path: '',
   },
-  figma: {
-    definitions: [
-      'components/alert',
-      'components/button',
-      'components/modal',
-      'components/tooltip',
-      'components/checkbox',
-      'components/input',
-      'components/radio',
-      'components/select',
-      'components/switch',
-    ],
-  },
 });
 
 /**
@@ -72,14 +59,13 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, figma, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links } = {
+  const { app, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links } = {
     ...defaultConfig(),
     ...config,
   } as unknown as Config;
 
   return {
     app,
-    figma,
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links: assets_zip_links ?? { icons: null, logos: null },

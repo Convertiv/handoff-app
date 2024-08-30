@@ -48,19 +48,6 @@ var defaultConfig = function () {
             component_sort: ['primary', 'secondary', 'transparent'],
             base_path: '',
         },
-        figma: {
-            definitions: [
-                'components/alert',
-                'components/button',
-                'components/modal',
-                'components/tooltip',
-                'components/checkbox',
-                'components/input',
-                'components/radio',
-                'components/select',
-                'components/switch',
-            ],
-        },
     });
 };
 exports.defaultConfig = defaultConfig;
@@ -79,10 +66,9 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links;
     return {
         app: app,
-        figma: figma,
         exportsOutputDirectory: exportsOutputDirectory,
         sitesOutputDirectory: sitesOutputDirectory,
         assets_zip_links: assets_zip_links !== null && assets_zip_links !== void 0 ? assets_zip_links : { icons: null, logos: null },

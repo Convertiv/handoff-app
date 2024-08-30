@@ -15,10 +15,6 @@ export interface Integration {
   version: string;
 }
 
-export interface FigmaSearch {
-  definitions: string[];
-}
-
 export interface ComponentSizeMap {
   figma: string;
   css: string;
@@ -56,7 +52,6 @@ export interface Config {
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
   app: NextAppConfig;
-  figma: FigmaSearch;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
@@ -74,7 +69,7 @@ export interface Config {
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'figma' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
+  'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
 >;
 
 export interface IntegrationObjectComponentOptions {

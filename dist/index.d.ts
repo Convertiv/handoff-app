@@ -28,7 +28,6 @@ declare class Handoff {
         mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-        configureExportables: (exportables: string[]) => string[];
     };
     constructor(config?: Config);
     init(configOverride?: Config): Handoff;
@@ -56,6 +55,5 @@ declare class Handoff {
     postBuild(callback: (documentationObject: DocumentationObject) => void): void;
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
-    configureExportables(callback: (exportables: string[]) => string[]): void;
 }
 export default Handoff;

@@ -105,7 +105,6 @@ var Handoff = /** @class */ (function () {
             mapTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
             webpack: function (webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
-            configureExportables: function (exportables) { return exportables; },
         };
         this.init(config);
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
@@ -122,14 +121,12 @@ var Handoff = /** @class */ (function () {
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
-        var _a;
         if (!this.config) {
             throw Error('Handoff not initialized');
         }
         if (validate) {
             this.config = validateConfig(this.config);
         }
-        this.config.figma.definitions = this.hooks.configureExportables(((_a = this.config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         return this;
     };
     Handoff.prototype.fetch = function () {
@@ -388,9 +385,6 @@ var Handoff = /** @class */ (function () {
     };
     Handoff.prototype.modifyWebpackConfig = function (callback) {
         this.hooks.webpack = callback;
-    };
-    Handoff.prototype.configureExportables = function (callback) {
-        this.hooks.configureExportables = callback;
     };
     return Handoff;
 }());
