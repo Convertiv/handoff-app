@@ -183,13 +183,16 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
     });
 }); };
 exports.zipTokens = zipTokens;
-var buildIntegration = function (sourcePath, destPath, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
-    var items, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
+var buildIntegration = function (sourcePath, destPath, documentationObject, rootPath, rootReturnPath) { return __awaiter(void 0, void 0, void 0, function () {
+    var items, components, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, fs_extra_1.default.readdir(sourcePath)];
+            case 0:
+                rootPath !== null && rootPath !== void 0 ? rootPath : (rootPath = sourcePath);
+                return [4 /*yield*/, fs_extra_1.default.readdir(sourcePath)];
             case 1:
                 items = _a.sent();
+                components = Object.keys(documentationObject.components);
                 _i = 0, items_1 = items;
                 _a.label = 2;
             case 2:
@@ -207,7 +210,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject) { re
                 // Create the directory in the destination path if it doesn't exist
                 _a.sent();
                 // Recursively process the directory
-                return [4 /*yield*/, buildIntegration(sourceItemPath, destItemPath, documentationObject)];
+                return [4 /*yield*/, buildIntegration(sourceItemPath, destItemPath, documentationObject, rootPath, (rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../') + '../')];
             case 5:
                 // Recursively process the directory
                 _a.sent();
@@ -226,7 +229,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject) { re
                 // Ensure the directory exists before writing the file
                 _a.sent();
                 // Write the rendered content to the destination path
-                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, renderedContent)];
+                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path_1.default.parse(destItemPath).dir, rootPath, rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../'))];
             case 9:
                 // Write the rendered content to the destination path
                 _a.sent();
@@ -239,31 +242,18 @@ var buildIntegration = function (sourcePath, destPath, documentationObject) { re
     });
 }); };
 /**
- * Asynchronously loads the content of a template file and transforms it if necessary.
- *
- * This function reads the content of a file specified by the given path. If the file is an SCSS file,
- * it performs a transformation on custom Handlebars-like syntax to actual Handlebars syntax, specifically
- * targeting a custom `@handoff-each-component` directive. This transformation is essential for processing the
- * file with Handlebars later.
- *
- * **Note:** This function contains a hardcoded transformation for SCSS files that should be refactored in the future
- * to allow more flexibility and extensibility, potentially using a plugin system or configuration-driven approach.
+ * Asynchronously loads the content of a template file.
  *
  * @param {string} path - The path to the template file.
- * @returns {Promise<string>} - A promise that resolves to the content of the file, potentially transformed.
+ * @returns {Promise<string>} - A promise that resolves to the content of the file.
  */
 var loadTemplateContent = function (path) { return __awaiter(void 0, void 0, void 0, function () {
-    var ext, content;
+    var content;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                ext = path.split('.').pop();
-                return [4 /*yield*/, fs_extra_1.default.readFile(path, 'utf-8')];
+            case 0: return [4 /*yield*/, fs_extra_1.default.readFile(path, 'utf-8')];
             case 1:
                 content = _a.sent();
-                if (ext === 'scss') {
-                    content = content.replace(/@handoff-each-component {\s+@import '([^']*)\/\{\{component\}\}';\s+}/g, "{{#each components}}\n@import '$1/{{this}}';\n{{/each}}");
-                }
                 return [2 /*return*/, content];
         }
     });
@@ -404,3 +394,34 @@ function integrationTransformer(handoff, documentationObject) {
     });
 }
 exports.default = integrationTransformer;
+var replaceHandoffImportTokens = function (content, components, currentPath, rootPath, rootReturnPath) {
+    getHandoffImportTokens(components, currentPath, rootPath, rootReturnPath).forEach(function (_a) {
+        var token = _a[0], imports = _a[1];
+        content = content.replaceAll("//<#".concat(token, "#>"), imports.map(function (path) { return "@import '".concat(path, "';"); }).join("\r\n"));
+    });
+    return content;
+};
+var getHandoffImportTokens = function (components, currentPath, rootPath, rootReturnPath) {
+    var result = [];
+    components.forEach(function (component) {
+        getHandoffImportTokensForComponent(component, currentPath, rootPath, rootReturnPath).forEach(function (_a, idx) {
+            var _b;
+            var importToken = _a[0], searchPath = _a.slice(1);
+            (_b = result[idx]) !== null && _b !== void 0 ? _b : result.push([importToken, []]);
+            if (fs_extra_1.default.existsSync(path_1.default.resolve.apply(path_1.default, searchPath))) {
+                result[idx][1].push("".concat(searchPath[1], "/").concat(component));
+            }
+        });
+    });
+    return result;
+};
+var getHandoffImportTokensForComponent = function (component, currentPath, rootPath, rootReturnPath) {
+    var integrationPath = path_1.default.resolve(currentPath, rootReturnPath);
+    return [
+        ['HANDOFF.TOKENS.TYPES', currentPath, "".concat(rootReturnPath, "tokens/types"), "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.SASS', currentPath, "".concat(rootReturnPath, "tokens/sass"), "".concat(component, ".scss")],
+        ['HANDOFF.TOKENS.CSS', currentPath, "".concat(rootReturnPath, "tokens/css"), "".concat(component, ".css")],
+        ['HANDOFF.MAPS', rootPath, 'maps', "_".concat(component, ".scss")],
+        ['HANDOFF.EXTENSIONS', rootPath, 'extended', "_".concat(component, ".scss")],
+    ];
+};

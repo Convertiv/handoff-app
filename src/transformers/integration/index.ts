@@ -123,8 +123,17 @@ export const zipTokens = async (dirPath: string, destination: stream.Writable) =
   return destination;
 };
 
-const buildIntegration = async (sourcePath: string, destPath: string, documentationObject: DocumentationObject): Promise<void> => {
+const buildIntegration = async (
+  sourcePath: string,
+  destPath: string,
+  documentationObject: DocumentationObject,
+  rootPath?: string,
+  rootReturnPath?: string
+): Promise<void> => {
+  rootPath ??= sourcePath;
+
   const items = await fs.readdir(sourcePath);
+  const components = Object.keys(documentationObject.components);
 
   for (const item of items) {
     const sourceItemPath = path.join(sourcePath, item);
@@ -136,7 +145,7 @@ const buildIntegration = async (sourcePath: string, destPath: string, documentat
       // Create the directory in the destination path if it doesn't exist
       await fs.ensureDir(destItemPath);
       // Recursively process the directory
-      await buildIntegration(sourceItemPath, destItemPath, documentationObject);
+      await buildIntegration(sourceItemPath, destItemPath, documentationObject, rootPath, (rootReturnPath ?? '../') + '../');
     } else {
       // Read the file content
       const content = await loadTemplateContent(sourceItemPath);
@@ -150,35 +159,19 @@ const buildIntegration = async (sourcePath: string, destPath: string, documentat
       // Ensure the directory exists before writing the file
       await fs.ensureDir(path.dirname(destItemPath));
       // Write the rendered content to the destination path
-      await fs.writeFile(destItemPath, renderedContent);
+      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
     }
   }
 };
 
 /**
- * Asynchronously loads the content of a template file and transforms it if necessary.
- *
- * This function reads the content of a file specified by the given path. If the file is an SCSS file,
- * it performs a transformation on custom Handlebars-like syntax to actual Handlebars syntax, specifically
- * targeting a custom `@handoff-each-component` directive. This transformation is essential for processing the
- * file with Handlebars later.
- *
- * **Note:** This function contains a hardcoded transformation for SCSS files that should be refactored in the future
- * to allow more flexibility and extensibility, potentially using a plugin system or configuration-driven approach.
+ * Asynchronously loads the content of a template file.
  *
  * @param {string} path - The path to the template file.
- * @returns {Promise<string>} - A promise that resolves to the content of the file, potentially transformed.
+ * @returns {Promise<string>} - A promise that resolves to the content of the file.
  */
 const loadTemplateContent = async (path: string): Promise<string> => {
-  const ext = path.split('.').pop();
   let content = await fs.readFile(path, 'utf-8');
-
-  if (ext === 'scss') {
-    content = content.replace(
-      /@handoff-each-component {\s+@import '([^']*)\/\{\{component\}\}';\s+}/g,
-      "{{#each components}}\n@import '$1/{{this}}';\n{{/each}}"
-    );
-  }
 
   return content;
 };
@@ -339,3 +332,41 @@ interface IntegrationTemplateContext {
   components: string[];
   documentationObject: DocumentationObject;
 }
+
+const replaceHandoffImportTokens = (content: string, components: string[], currentPath: string, rootPath: string, rootReturnPath: string) => {
+  getHandoffImportTokens(components, currentPath, rootPath, rootReturnPath).forEach(([token, imports]) => {
+    content = content.replaceAll(`//<#${token}#>`, imports.map((path) => `@import '${path}';`).join(`\r\n`));
+  });
+
+  return content;
+};
+
+const getHandoffImportTokens = (components: string[], currentPath: string, rootPath: string, rootReturnPath: string) => {
+  const result: [token: string, imports: string[]][] = [];
+  components.forEach((component) => {
+    getHandoffImportTokensForComponent(component, currentPath, rootPath, rootReturnPath).forEach(([importToken, ...searchPath], idx) => {
+      result[idx] ?? result.push([importToken, []]);
+      if (fs.existsSync(path.resolve(...searchPath))) {
+        result[idx][1].push(`${searchPath[1]}/${component}`);
+      }
+    });
+  });
+
+  return result;
+};
+
+const getHandoffImportTokensForComponent = (
+  component: string,
+  currentPath: string,
+  rootPath: string,
+  rootReturnPath: string
+): [token: string, root: string, path: string, file: string][] => {
+  const integrationPath = path.resolve(currentPath, rootReturnPath);
+  return [
+    ['HANDOFF.TOKENS.TYPES', currentPath, `${rootReturnPath}tokens/types`, `${component}.scss`],
+    ['HANDOFF.TOKENS.SASS', currentPath, `${rootReturnPath}tokens/sass`, `${component}.scss`],
+    ['HANDOFF.TOKENS.CSS', currentPath, `${rootReturnPath}tokens/css`, `${component}.css`],
+    ['HANDOFF.MAPS', rootPath, 'maps', `_${component}.scss`],
+    ['HANDOFF.EXTENSIONS', rootPath, 'extended', `_${component}.scss`],
+  ];
+};
