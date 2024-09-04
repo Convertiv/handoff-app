@@ -1,16 +1,19 @@
 import { normalizeTokenNamePartValue } from '../utils';
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
-import { ComponentDefinitionOptions } from '../../types';
 import { transform } from '../transformer';
 import { slugify } from '../../utils';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 
-export const transformComponentsToScssTypes = (name: string, component: FileComponentObject): string => {
+export const transformComponentsToScssTypes = (
+  name: string,
+  component: FileComponentObject,
+  options?: IntegrationObjectComponentOptions
+): string => {
   const result: { [variantProp: string]: Set<string> } = {};
 
   component.instances.forEach((instance) => {
     instance.variantProperties.forEach(([variantProp, value]) => {
       if (value) {
-        const options = component.definitions[instance.definitionId].options;
         result[variantProp] ??= new Set<string>();
         result[variantProp].add(normalizeTokenNamePartValue(variantProp, value, options, true));
       }
@@ -29,6 +32,6 @@ export const transformComponentsToScssTypes = (name: string, component: FileComp
   );
 };
 
-export const transformComponentTokensToScssVariables = (component: ComponentInstance, options?: ComponentDefinitionOptions) => {
+export const transformComponentTokensToScssVariables = (component: ComponentInstance, options?: IntegrationObjectComponentOptions) => {
   return transform('scss', component, options);
 };

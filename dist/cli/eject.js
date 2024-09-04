@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.ejectIntegration = exports.ejectConfig = void 0;
+exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.makeIntegration = exports.ejectConfig = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
@@ -66,54 +66,27 @@ var ejectConfig = function (handoff) { return __awaiter(void 0, void 0, void 0, 
 }); };
 exports.ejectConfig = ejectConfig;
 /**
- * Eject the integration to the working directory
+ * Creates a integration within the working directory
  * @param handoff
  */
-var ejectIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, integration, workingPath, integrationPath, localConfigPath, _a, localConfigBuffer, localConfig;
-    var _b, _c;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
-            case 0:
-                config = handoff.config;
-                if (!config.integration) {
-                    console.log(chalk_1.default.red("Unable to eject integration as it is not defined."));
-                    return [2 /*return*/, handoff];
-                }
-                integration = config.integration.name;
-                // is the custom integration already being used?
-                if (integration === 'custom') {
-                    console.log(chalk_1.default.red("Custom integration cannot be ejected as it's destination matches the source."));
-                    return [2 /*return*/];
-                }
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-                if (fs_extra_1.default.existsSync(workingPath)) {
-                    if (!handoff.force) {
-                        console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
-                        return [2 /*return*/];
-                    }
-                }
-                integrationPath = (0, integration_1.getPathToIntegration)(handoff);
-                fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
-                console.log(chalk_1.default.green("".concat((_b = config === null || config === void 0 ? void 0 : config.integration) === null || _b === void 0 ? void 0 : _b.name, " ").concat((_c = config === null || config === void 0 ? void 0 : config.integration) === null || _c === void 0 ? void 0 : _c.version, " ejected to ").concat(workingPath)));
-                localConfigPath = path_1.default.join(handoff.workingPath, 'handoff.config.json');
-                _a = !fs_extra_1.default.existsSync(localConfigPath);
-                if (!_a) return [3 /*break*/, 2];
-                return [4 /*yield*/, (0, exports.ejectConfig)(handoff)];
-            case 1:
-                _a = (_d.sent());
-                _d.label = 2;
-            case 2:
-                _a;
-                localConfigBuffer = fs_extra_1.default.readFileSync(localConfigPath);
-                localConfig = JSON.parse(localConfigBuffer.toString());
-                localConfig.integration = { name: 'custom', version: '' };
-                fs_extra_1.default.writeFileSync(localConfigPath, "".concat(JSON.stringify(localConfig, null, 2)));
-                return [2 /*return*/, handoff];
+var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var config, workingPath, integrationPath;
+    return __generator(this, function (_a) {
+        config = handoff.config;
+        workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+        if (fs_extra_1.default.existsSync(workingPath)) {
+            if (!handoff.force) {
+                console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
+                return [2 /*return*/];
+            }
         }
+        integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
+        fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
+        console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
+        return [2 /*return*/, handoff];
     });
 }); };
-exports.ejectIntegration = ejectIntegration;
+exports.makeIntegration = makeIntegration;
 /**
  * Eject the integration to the working directory
  * @param handoff

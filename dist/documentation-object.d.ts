@@ -1,2 +1,3 @@
 import { DocumentationObject, LegacyComponentDefinition } from './types';
-export declare const createDocumentationObject: (figmaFileKey: string, figmaAccessToken: string, legacyDefinitions?: LegacyComponentDefinition[]) => Promise<DocumentationObject>;
+import Handoff from '.';
+export declare const createDocumentationObject: (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]) => Promise<DocumentationObject>;

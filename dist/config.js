@@ -41,13 +41,12 @@ exports.getClientConfig = exports.defaultConfig = void 0;
 var fs = __importStar(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     return ({
         dev_access_token: (_a = process.env.HANDOFF_DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
         figma_project_id: (_b = process.env.HANDOFF_FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
         exportsOutputDirectory: (_c = process.env.HANDOFF_OUTPUT_DIR) !== null && _c !== void 0 ? _c : 'exported',
         sitesOutputDirectory: (_d = process.env.HANDOFF_SITES_DIR) !== null && _d !== void 0 ? _d : 'out',
-        integration: null,
         app: {
             theme: 'default',
             title: 'Convertiv Design System',
@@ -78,21 +77,6 @@ var defaultConfig = function () {
                 xl: { size: 1200, name: 'Extra Large' },
             },
         },
-        figma: {
-            options: {},
-            definitions: [
-                'components/alert',
-                'components/button',
-                'components/modal',
-                'components/tooltip',
-                'components/checkbox',
-                'components/input',
-                'components/radio',
-                'components/select',
-                'components/switch',
-            ],
-        },
-        use_legacy_definitions: ((_e = process.env.HANDOFF_USE_FIGMA_PLUGIN) !== null && _e !== void 0 ? _e : '').toLowerCase() === 'false',
     });
 };
 exports.defaultConfig = defaultConfig;
@@ -111,15 +95,12 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, figma = _a.figma, integration = _a.integration, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links, use_legacy_definitions = _a.use_legacy_definitions;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, assets_zip_links = _a.assets_zip_links;
     return {
         app: app,
-        figma: figma,
-        integration: integration,
         exportsOutputDirectory: exportsOutputDirectory,
         sitesOutputDirectory: sitesOutputDirectory,
         assets_zip_links: assets_zip_links !== null && assets_zip_links !== void 0 ? assets_zip_links : { icons: null, logos: null },
-        use_legacy_definitions: use_legacy_definitions,
     };
 };
 exports.getClientConfig = getClientConfig;

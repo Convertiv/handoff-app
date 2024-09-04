@@ -48,23 +48,32 @@ export const makeExportable = async (handoff: Handoff, type: string, name: strin
  * @param handoff
  */
 export const makeTemplate = async (handoff: Handoff, component: string, state: string) => {
-  const config = await handoff.config;
+  if (!handoff?.integrationObject?.entries?.templates) {
+    console.log(chalk.red(`Integration does not specify entry for templates.`));
+    return;
+  }
+
   if (!component) {
     console.log(chalk.red(`Template component must be set`));
     return;
   }
+
   if (!state) {
     state = 'default';
   }
+
   if (!/^[a-z0-9]+$/i.test(component)) {
     console.log(chalk.red(`Template component must be alphanumeric and may contain dashes or underscores`));
     return;
   }
+
   if (!/^[a-z0-9]+$/i.test(state)) {
     console.log(chalk.red(`Template state must be alphanumeric and may contain dashes or underscores`));
     return;
   }
-  const workingPath = path.resolve(path.join(handoff.workingPath, `integration/templates/${component}`));
+
+  const workingPath = path.resolve(handoff.integrationObject.entries.templates, component);
+
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }

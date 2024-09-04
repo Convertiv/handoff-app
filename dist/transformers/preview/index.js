@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var mustache_1 = __importDefault(require("mustache"));
+var handlebars_1 = __importDefault(require("handlebars"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
 var utils_1 = require("./utils");
@@ -86,9 +86,6 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
                 if (!handoff) {
                     throw Error('Handoff not initialized');
                 }
-                if (!handoff.config.integration) {
-                    return [2 /*return*/, null];
-                }
                 return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component)];
             case 1:
                 template = _a.sent();
@@ -105,7 +102,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
                         renderableComponent.parts[part] = mergeTokenSets(component.parts[part]);
                     });
                 }
-                preview = mustache_1.default.render(template, renderableComponent);
+                preview = handlebars_1.default.compile(template)(renderableComponent);
                 if (handoff.config.app.base_path) {
                     preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, function (match, capturedGroup) {
                         return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);

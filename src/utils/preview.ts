@@ -48,7 +48,7 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
         }
       }
       compile.close((closeErr) => {});
-      return resolve('Preview template styles built');
+      return resolve('Preview styles successfully built.');
     });
   });
 };

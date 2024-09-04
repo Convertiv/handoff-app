@@ -5,53 +5,8 @@
     "exporter": {
       "search": "Button",
       "supportedVariantProps": {
-        "design": [
-          "Theme",
-          "Type",
-          "State(:disabled/Theme)"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${Type}",
-        "${Size}",
-        "${Part}",
-        "${Theme}",
-        "${State}",
-        "${Property}"
-      ]
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "State": "default",
-            "Theme": "light"
-          }
-        },
-        "designTokens": {
-          "design": {
-            "State": {
-              "default" : {
-                "State": [
-                  "default",
-                  "hover",
-                  "disabled"
-                ],
-                "Theme": "light"
-              }
-            },
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        }
+        "design": ["Theme", "Type", "State(:disabled/Theme)"],
+        "layout": ["Size"]
       }
     }
   },
@@ -61,19 +16,11 @@
       "tokens": [
         {
           "from": "$",
-          "export": [
-            "BACKGROUND",
-            "BORDER",
-            "SPACING",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
         },
         {
           "from": "TEXT",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     }

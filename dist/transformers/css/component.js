@@ -8,14 +8,13 @@ var transformer_1 = require("../transformer");
  * @param alerts
  * @returns
  */
-var transformComponentsToCssVariables = function (componentId, component) {
-    var _a, _b;
+var transformComponentsToCssVariables = function (componentId, component, integrationOptions) {
+    var _a;
     var lines = [];
-    var options = (_a = Object.values(component.definitions)[0]) === null || _a === void 0 ? void 0 : _a.options;
-    var componentCssClass = (_b = options === null || options === void 0 ? void 0 : options.transformer.cssRootClass) !== null && _b !== void 0 ? _b : componentId;
+    var componentCssClass = (_a = integrationOptions === null || integrationOptions === void 0 ? void 0 : integrationOptions.cssRootClass) !== null && _a !== void 0 ? _a : componentId;
     lines.push(".".concat(componentCssClass, " {"));
     var cssVars = component.instances.map(function (instance) {
-        return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(instance, '/**/'), "\n").concat((0, exports.transformComponentTokensToCssVariables)(instance, component.definitions[instance.definitionId].options)
+        return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(instance, '/**/'), "\n").concat((0, exports.transformComponentTokensToCssVariables)(instance, integrationOptions)
             .map(function (token) { return "\t".concat(token.name, ": ").concat(token.value, ";"); })
             .join('\n'));
     });

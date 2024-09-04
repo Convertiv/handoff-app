@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import { DocumentationObject } from '../../types';
@@ -7,23 +6,21 @@ import webpack from 'webpack';
 import { HookReturn } from '../../types';
 import Handoff from '../../index';
 export declare class HandoffIntegration {
-    name: string;
-    version: string;
+    name?: string;
     hooks: {
         integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
         webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
-    constructor(name: string, version: string);
+    constructor(name?: string);
     postIntegration(callback: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration): void;
     postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
 }
 /**
- * Derive the path to the integration. Use the config to find the integration
- * and version.  Allow users to define custom integration if desired.
+ * Derive the path to the integration.
  */
-export declare const getPathToIntegration: (handoff: Handoff) => string | null;
+export declare const getPathToIntegration: (handoff: Handoff, resolveTemplatePath: boolean) => string | null;
 /**
  * Get the entry point for the integration
  * @returns string

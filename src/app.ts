@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
+import { buildClientFiles } from './utils/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -201,6 +202,13 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 
+  // Build client preview styles
+  await buildClientFiles(handoff)
+    .then((value) => !!value && console.log(chalk.green(value)))
+    .catch((error) => {
+      throw new Error(error);
+    });
+
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
 
@@ -241,6 +249,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // Build client preview styles
+  await buildClientFiles(handoff)
+    .then((value) => !!value && console.log(chalk.green(value)))
+    .catch((error) => {
+      throw new Error(error);
+    });
 
   const appPath = await prepareProjectApp(handoff);
   // const config = require(path.resolve(appPath, 'next.config.mjs'));
@@ -393,6 +408,14 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // Build client preview styles
+  await buildClientFiles(handoff)
+    .then((value) => !!value && console.log(chalk.green(value)))
+    .catch((error) => {
+      throw new Error(error);
+    });
+
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
   // Purge app cache

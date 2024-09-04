@@ -5,60 +5,8 @@
     "exporter": {
       "search": "Checkbox",
       "supportedVariantProps": {
-        "design": [
-          "Theme",
-          "State",
-          "Activity"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${State}",
-        "${Size}",
-        "${Part}",
-        "${Theme}",
-        "${Activity}",
-        "${Property}"
-      ]
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "State": [
-              "default",
-              "disabled"
-            ],
-            "Activity": "off",
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        },
-        "designTokens": {
-          "design": {
-            "State": {
-              "default": {
-                "State": [
-                  "default",
-                  "hover",
-                  "disabled"
-                ],
-                "Theme": "light"
-              }
-            },
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        }
+        "design": ["Theme", "State", "Activity"],
+        "layout": ["Size"]
       }
     }
   },
@@ -68,23 +16,15 @@
       "tokens": [
         {
           "from": "$",
-          "export": [
-            "SPACING"
-          ]
+          "export": ["SPACING"]
         },
         {
           "from": "GROUP[name=':: checkbox']",
-          "export": [
-            "OPACITY"
-          ]
+          "export": ["OPACITY"]
         },
         {
           "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
-          "export": [
-            "FILL",
-            "BORDER",
-            "SIZE"
-          ]
+          "export": ["FILL", "BORDER", "SIZE"]
         }
       ]
     },
@@ -93,11 +33,7 @@
       "tokens": [
         {
           "from": "TEXT[name='Checkbox Label']",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL",
-            "OPACITY"
-          ]
+          "export": ["TYPOGRAPHY", "FILL", "OPACITY"]
         }
       ]
     },
@@ -106,17 +42,11 @@
       "tokens": [
         {
           "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='body']",
-          "export": [
-            "BORDER",
-            "SIZE",
-            "EFFECT"
-          ]
+          "export": ["BORDER", "SIZE", "EFFECT"]
         },
         {
           "from": "GROUP[name=':: checkbox'] > RECTANGLE[name='color']",
-          "export": [
-            "FILL"
-          ]
+          "export": ["FILL"]
         }
       ]
     },
@@ -125,10 +55,7 @@
       "tokens": [
         {
           "from": "GROUP[name=':: checkbox'] > INSTANCE[name='${Activity}']",
-          "export": [
-            "SIZE",
-            "FILL"
-          ]
+          "export": ["SIZE", "FILL"]
         }
       ]
     }

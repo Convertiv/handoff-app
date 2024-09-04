@@ -15,16 +15,18 @@ import { createDocumentationObject } from './documentation-object';
 import { zipAssets } from './api';
 import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
 import cssTransformer from './transformers/css/index';
-import integrationTransformer from './transformers/integration/index';
+import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
 import previewTransformer from './transformers/preview/index';
-import { buildClientFiles } from './utils/preview';
 import buildApp from './app';
 import Handoff from '.';
 import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
 import { merge } from 'lodash';
-import { filterOutNull } from './utils';
+import { filterOutNull, filterOutUndefined } from './utils';
+import { ComponentIntegrationRecipe, ComponentIntegrationRecipePart, ComponentIntegrations } from './types/recipes';
+import { findFilesByExtension } from './utils/fs';
+import { getTokenSetNameByProperty } from './transformers/tokens';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -58,34 +60,23 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: Documenta
 };
 
 /**
- * Build just the custom fonts
+ * Build integration
  * @param documentationObject
  * @returns
  */
 const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  if (!!handoff.config.integration) {
-    await integrationTransformer(handoff, documentationObject);
-  }
+  await integrationTransformer(handoff, documentationObject);
 };
 
 /**
- * Run just the preview
+ * Build previews
  * @param documentationObject
-*/
-const buildPreview = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+ * @returns
+ */
+const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
     previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
   ]);
-
-  if (Object.keys(documentationObject.components).filter((name) => documentationObject.components[name].instances.length > 0).length > 0) {
-    await buildClientFiles(handoff)
-      .then((value) => !!value && console.log(chalk.green(value)))
-      .catch((error) => {
-        throw new Error(error);
-      });
-  } else {
-    console.log(chalk.red('Skipping preview generation'));
-  }
 };
 
 /**
@@ -93,15 +84,15 @@ const buildPreview = async (handoff: Handoff, documentationObject: Documentation
  * @param documentationObject
  */
 const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  let typeFiles = scssTypesTransformer(documentationObject);
+  let typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
   typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-  let cssFiles = cssTransformer(documentationObject);
+  let cssFiles = cssTransformer(documentationObject, handoff.integrationObject);
   cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-  let scssFiles = scssTransformer(documentationObject);
+  let scssFiles = scssTransformer(documentationObject, handoff.integrationObject);
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-  let sdFiles = sdTransformer(documentationObject);
+  let sdFiles = sdTransformer(documentationObject, handoff.integrationObject);
   sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-  let mapFiles = mapTransformer(documentationObject);
+  let mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
   mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
 
   await Promise.all([
@@ -284,8 +275,8 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
   await fs.emptyDir(outputPath(handoff));
-  const legacyDefinitions = handoff.config.use_legacy_definitions ? await getLegacyDefinitions(handoff) : null;
-  const documentationObject = await createDocumentationObject(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions);
+  const legacyDefinitions = await getLegacyDefinitions(handoff);
+  const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
@@ -323,6 +314,114 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   return documentationObject;
 };
 
+export const buildRecipe = async (handoff: Handoff) => {
+  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
+
+  const processToken = (content: string, records: ComponentIntegrations): void => {
+    let match;
+    const regex = new RegExp(TOKEN_REGEX, 'g');
+    while ((match = regex.exec(content)) !== null) {
+      const [_, __, component, part, variants, cssProperty] = match;
+
+      let componentRecord = records.components.find((c) => c.name === component);
+      if (!componentRecord) {
+        componentRecord = { name: component, common: { parts: [] }, recipes: [] };
+        records.components.push(componentRecord);
+      }
+
+      const requiredTokenSet = getTokenSetNameByProperty(cssProperty);
+      const existingPartIndex = (componentRecord.common.parts ?? []).findIndex((p) => typeof p !== 'string' && p.name === part);
+
+      if (existingPartIndex === -1) {
+        componentRecord.common.parts.push({
+          name: part,
+          require: [getTokenSetNameByProperty(cssProperty)].filter(filterOutUndefined),
+        });
+      } else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
+        componentRecord.common.parts[existingPartIndex].require = [
+          ...componentRecord.common.parts[existingPartIndex].require,
+          requiredTokenSet,
+        ];
+      }
+
+      const variantPairs = variants.split(',').map((v) => v.split(':'));
+      const variantGroup: ComponentIntegrationRecipe['require'] = { variantProps: [], variantValues: {} };
+
+      variantPairs.forEach(([key, value]) => {
+        if (!variantGroup.variantProps.includes(key)) {
+          variantGroup.variantProps.push(key);
+        }
+
+        if (!variantGroup.variantValues[key]) {
+          variantGroup.variantValues[key] = [];
+        }
+
+        if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
+          variantGroup.variantValues[key].push(value);
+        }
+      });
+
+      const existingGroupIndex = componentRecord.recipes.findIndex(
+        (recipe) =>
+          recipe.require.variantProps.length === variantGroup.variantProps.length &&
+          recipe.require.variantProps.every((prop) => variantGroup.variantProps.includes(prop)) &&
+          Object.keys(recipe.require.variantValues).every(
+            (key) =>
+              recipe.require.variantValues[key].length === variantGroup.variantValues[key]?.length &&
+              recipe.require.variantValues[key].every((val) => variantGroup.variantValues[key].includes(val))
+          )
+      );
+
+      if (existingGroupIndex === -1) {
+        componentRecord.recipes.push({ require: variantGroup });
+      }
+    }
+  };
+
+  const traverseDirectory = (directory: string, records: ComponentIntegrations): void => {
+    const files = fs.readdirSync(directory);
+
+    files.forEach((file) => {
+      const fullPath = path.join(directory, file);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        traverseDirectory(fullPath, records);
+      } else if (stat.isFile()) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        processToken(content, records);
+      }
+    });
+  };
+
+  const integrationPath = getPathToIntegration(handoff, false);
+
+  if (!integrationPath) {
+    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration not found.'));
+    return;
+  }
+
+  const directoryToTraverse = handoff?.integrationObject?.entries?.integration;
+  if (!directoryToTraverse) {
+    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
+    return;
+  }
+
+  const componentRecords: ComponentIntegrations = { components: [] };
+
+  traverseDirectory(directoryToTraverse, componentRecords);
+
+  componentRecords.components.forEach((component) => {
+    component.common.parts.sort();
+  });
+
+  const writePath = path.resolve(handoff.workingPath, 'recipes.json');
+
+  await fs.writeFile(writePath, JSON.stringify(componentRecords, null, 2));
+
+  console.log(chalk.green(`Integration recipe has been successfully written to ${writePath}`));
+};
+
 /**
  * Build only integrations and previews
  * @param handoff
@@ -331,7 +430,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
     await buildIntegration(handoff, documentationObject);
-    await buildPreview(handoff, documentationObject);
+    await buildPreviews(handoff, documentationObject);
   }
 };
 
@@ -349,7 +448,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
-  await buildPreview(handoff, documentationObject);
+  await buildPreviews(handoff, documentationObject);
   if (build) {
     await buildApp(handoff);
   }
@@ -362,40 +461,31 @@ export default pipeline;
  * Returns configured legacy component definitions in array form.
  * @deprecated Will be removed before 1.0.0 release.
  */
-const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[]> => {
+const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[] | null> => {
   try {
-    if (!handoff.config) {
-      throw new Error('Handoff config not found');
-    }
-    const config = handoff.config;
-    const definitions = config?.figma?.definitions;
-    if (!definitions || definitions.length === 0) {
-      return [];
+
+    const sourcePath = path.resolve(handoff.workingPath, 'exportables');
+
+    if (!fs.existsSync(sourcePath)) {
+      return null;
     }
 
-    const exportables = definitions
-      .map((def) => {
-        let defPath = path.resolve(path.join(handoff.modulePath, 'config/exportables', `${def}.json`));
-        const projectPath = path.resolve(path.join(handoff.workingPath, 'exportables', `${def}.json`));
-        // If the project path exists, use that first as an override
-        if (fs.existsSync(projectPath)) {
-          defPath = projectPath;
-        } else if (!fs.existsSync(defPath)) {
-          return null;
-        }
+    const definitionPaths = findFilesByExtension(sourcePath, '.json');
 
-        const defBuffer = fs.readFileSync(defPath);
+    const exportables = definitionPaths
+      .map((definitionPath) => {
+        const defBuffer = fs.readFileSync(definitionPath);
         const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
 
         const exportableOptions = {};
-        merge(exportableOptions, config?.figma?.options, exportable.options);
+        merge(exportableOptions, exportable.options);
         exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
 
         return exportable;
       })
       .filter(filterOutNull);
 
-    return exportables ? exportables : [];
+    return exportables ? exportables : null;
   } catch (e) {
     return [];
   }

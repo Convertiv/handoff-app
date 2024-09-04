@@ -10,6 +10,7 @@ import {
 } from '../utils';
 import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types';
 import { replaceTokens, slugify } from '../../utils/index';
+import Handoff from '../../index';
 
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
 type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: string };
@@ -17,6 +18,7 @@ type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: 
 export default function extractComponentInstances(
   components: { node: FigmaTypes.Component; metadata: FigmaTypes.ComponentMetadata }[],
   definition: ComponentDefinition,
+  handoff: Handoff,
   legacyDefinition?: LegacyComponentDefinition,
 ): ExportTypes.ComponentInstance[] {
   const options = definition.options;
@@ -68,7 +70,6 @@ export default function extractComponentInstances(
       description,
       variantProperties: variantProperties,
       parts,
-      definitionId: definition.id,
     } as ExportPipeComponentInstance;
 
     const isSharedComponentVariant = (sharedComponentVariantIds.findIndex((s) => s.componentId === component.node.id) ?? -1) > -1;
@@ -91,7 +92,9 @@ export default function extractComponentInstances(
 
         if (
           instance.variantProperties.get(sharedInstanceDefinition.sharedVariantProperty) !==
-          options.shared.defaults[sharedInstanceDefinition.sharedVariantProperty]
+          ((handoff.integrationObject?.options ?? {})[sharedInstance.name]?.defaults ?? {})[
+            sharedInstanceDefinition.sharedVariantProperty.toLowerCase()
+          ] // TODO: Remove when shared variant functionality gets removed
         ) {
           return false;
         }
@@ -131,7 +134,6 @@ export default function extractComponentInstances(
           description: additionalInstance.description,
           variantProperties: additionalInstanceVariantProps,
           parts: additionalInstance.parts,
-          definitionId: additionalInstance.definitionId,
         });
       });
 
@@ -147,7 +149,6 @@ export default function extractComponentInstances(
         description: component.description,
         variantProperties: Array.from(component.variantProperties.entries()),
         parts: component.parts,
-        definitionId: component.definitionId,
       })),
     ];
   }, [] as ExportTypes.ComponentInstance[]);

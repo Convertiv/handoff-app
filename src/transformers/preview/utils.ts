@@ -9,8 +9,13 @@ import Handoff from '../../index';
  * @returns
  */
 export const getComponentTemplate = async (handoff: Handoff, component: string, parts: string[]): Promise<string | null> => {
-  // [override, local]
-  const sources = [path.resolve(handoff.workingPath, `integration/templates/${component}`), path.resolve(__dirname, `../../templates/${component}`)];
+  if (!handoff?.integrationObject?.entries?.templates) {
+    return null;
+  }
+
+  const sources = [
+    path.resolve(handoff.integrationObject.entries.templates, component),
+  ];
 
   for (const src of sources) {
     let cwd: string = src;

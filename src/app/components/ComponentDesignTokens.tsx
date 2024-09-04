@@ -2,9 +2,9 @@ import startCase from 'lodash/startCase';
 import round from 'lodash/round';
 import React, { useEffect } from 'react';
 import Icon from './Icon';
-import { ComponentDefinitionOptions } from '@handoff/types';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { ComponentInstance } from '@handoff/exporters/components/types';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -36,7 +36,7 @@ const NormalizeValue = (value: string): string => {
 export interface ComponentDesignTokensProps {
   title: string,
   previewObject: ComponentInstance,
-  previewObjectOptions: ComponentDefinitionOptions,
+  previewObjectOptions?: IntegrationObjectComponentOptions,
   componentInstances: ComponentInstance[],
   overrides?: { [variantProp: string]: string[] },
   children?: JSX.Element,
