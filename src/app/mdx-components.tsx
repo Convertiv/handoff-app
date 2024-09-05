@@ -22,9 +22,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         }
         let col = '12';
         let type = 'html';
-        if(props.className) {
+        if (props.className) {
           const match = props.className.match(/language-(\w+)/);
-          if(match) {
+          if (match) {
             type = match[1];
           }
         }
@@ -33,11 +33,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
           // @ts-ignore
           col = props.col;
         }
-        return (
-          <div className={`o-col-${col}@md`}>
-            <CodeHighlight type={type} key={props.key} data={props.children.toString().trim()} title={title} dark={true} />
-          </div>
-        );
+        return <CodeHighlight type={type} key={props.key} data={props.children.toString().trim()} title={title} dark={true} />;
       } else {
         return <code className="inline-code">{props.children}</code>;
       }
