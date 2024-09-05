@@ -1,19 +1,23 @@
 import { transform } from '../transformer';
 import { FileComponentObject } from '../../exporters/components/types';
+import { IntegrationObjectComponentOptions } from '../../types/config';
 
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
  * @returns
  */
-export const transformComponentsToStyleDictionary = (_: string, component: FileComponentObject): string => {
+export const transformComponentsToStyleDictionary = (
+  _: string,
+  component: FileComponentObject,
+  integrationOptions?: IntegrationObjectComponentOptions
+): string => {
   const sd = {} as any;
 
-  component.instances.forEach(instance => {
-    const options = component.definitions[instance.definitionId].options;
-    const tokens = transform('sd', instance, options);
+  component.instances.forEach((instance) => {
+    const tokens = transform('sd', instance, integrationOptions);
 
-    tokens.forEach(token =>{
+    tokens.forEach((token) => {
       const tokenNameSegments = token.metadata.nameSegments;
       const lastIdx = tokenNameSegments.length - 1;
       let ref = sd;
@@ -29,14 +33,14 @@ export const transformComponentsToStyleDictionary = (_: string, component: FileC
 
       const propParts = tokenNameSegments[lastIdx].split('-');
 
-      propParts.forEach(el => {
+      propParts.forEach((el) => {
         ref[el] ??= {};
         ref = ref[el];
       });
 
       ref['value'] = token.value;
     });
-  })
+  });
 
   return JSON.stringify(sd, null, 2);
 };

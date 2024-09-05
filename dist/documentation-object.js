@@ -45,11 +45,11 @@ var index_1 = require("./exporters/components/index");
 var design_1 = require("./exporters/design");
 var startCase_1 = __importDefault(require("lodash/startCase"));
 var chalk_1 = __importDefault(require("chalk"));
-var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
+var createDocumentationObject = function (handoff, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var components, design, icons, logos;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(figmaFileKey, figmaAccessToken, legacyDefinitions)];
+            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(handoff, legacyDefinitions)];
             case 1:
                 components = _a.sent();
                 // Log out components
@@ -61,13 +61,13 @@ var createDocumentationObject = function (figmaFileKey, figmaAccessToken, legacy
                         console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].instances.length);
                     }
                 });
-                return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(figmaFileKey, figmaAccessToken)];
+                return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(handoff.config.figma_project_id, handoff.config.dev_access_token)];
             case 2:
                 design = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Icons')];
+                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons')];
             case 3:
                 icons = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(figmaFileKey, figmaAccessToken, 'Logo')];
+                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo')];
             case 4:
                 logos = _a.sent();
                 return [2 /*return*/, {

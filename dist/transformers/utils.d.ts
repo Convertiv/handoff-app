@@ -1,6 +1,7 @@
 import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions, TypographyObject } from "../types";
+import { TypographyObject } from "../types";
 import { TokenType } from "./types";
+import { IntegrationObjectComponentOptions } from '../types/config';
 /**
  * Returns normalized type name
  * @param type
@@ -23,14 +24,14 @@ export declare const formatComponentCodeBlockComment: (component: ComponentInsta
  * @param options
  * @returns
  */
-export declare const formatTokenName: (tokenType: TokenType, component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => string;
+export declare const formatTokenName: (tokenType: TokenType, componentName: string, componentVariantProps: [string, string][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string;
 /**
  * Returns the token name segments
  * @param component
  * @param options
  * @returns
  */
-export declare const getTokenNameSegments: (component: ComponentInstance, part: string, property: string, options?: ComponentDefinitionOptions) => string[];
+export declare const getTokenNameSegments: (componentName: string, componentVariantProps: [string, string][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string[];
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
  * with some other value based replace rules defined in the transformer options of the component
@@ -41,4 +42,4 @@ export declare const getTokenNameSegments: (component: ComponentInstance, part: 
  * @param options
  * @returns
  */
-export declare const normalizeTokenNamePartValue: (variable: string, value?: string, options?: ComponentDefinitionOptions, keepDefaults?: boolean) => string;
+export declare const normalizeTokenNamePartValue: (variable: string, value?: string, options?: IntegrationObjectComponentOptions, keepDefaults?: boolean) => string;

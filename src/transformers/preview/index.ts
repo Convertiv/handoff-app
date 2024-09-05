@@ -1,4 +1,4 @@
-import Mustache from 'mustache';
+import Handlebars from 'handlebars';
 import { parse } from 'node-html-parser';
 import { DocumentationObject, ComponentDefinitionOptions } from '../../types';
 import { filterOutNull } from '../../utils/index';
@@ -48,10 +48,6 @@ const transformComponentTokens = async (
     throw Error('Handoff not initialized');
   }
 
-  if (!handoff.config.integration) {
-    return null;
-  }
-
   const template = await getComponentTemplateByComponentId(handoff, componentId, component);
 
   if (!template) {
@@ -70,7 +66,7 @@ const transformComponentTokens = async (
     });
   }
 
-  let preview = Mustache.render(template, renderableComponent);
+  let preview = Handlebars.compile(template)(renderableComponent);
 
   if (handoff.config.app.base_path) {
     preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, (match, capturedGroup) => {

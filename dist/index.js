@@ -83,6 +83,7 @@ var eject_1 = require("./cli/eject");
 var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 var chalk_1 = __importDefault(require("chalk"));
+var integration_2 = require("./utils/integration");
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
@@ -104,7 +105,6 @@ var Handoff = /** @class */ (function () {
             mapTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
             webpack: function (webpackConfig) { return webpackConfig; },
             preview: function (webpackConfig, preview) { return preview; },
-            configureExportables: function (exportables) { return exportables; },
         };
         this.init(config);
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
@@ -117,17 +117,16 @@ var Handoff = /** @class */ (function () {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
+        this.integrationObject = initIntegrationObject(this.workingPath);
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
-        var _a;
         if (!this.config) {
             throw Error('Handoff not initialized');
         }
         if (validate) {
             this.config = validateConfig(this.config);
         }
-        this.config.figma.definitions = this.hooks.configureExportables(((_a = this.config.figma) === null || _a === void 0 ? void 0 : _a.definitions) || []);
         return this;
     };
     Handoff.prototype.fetch = function () {
@@ -141,6 +140,22 @@ var Handoff = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         this.hooks.fetch();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.recipe = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.preRunner();
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, pipeline_1.buildRecipe)(this)];
+                    case 1:
+                        _a.sent();
                         _a.label = 2;
                     case 2: return [2 /*return*/, this];
                 }
@@ -201,7 +216,7 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectIntegration)(this)];
+                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
                     case 1:
                         _a.sent();
                         _a.label = 2;
@@ -300,6 +315,21 @@ var Handoff = /** @class */ (function () {
             });
         });
     };
+    Handoff.prototype.makeIntegration = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
     Handoff.prototype.start = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -356,9 +386,6 @@ var Handoff = /** @class */ (function () {
     Handoff.prototype.modifyWebpackConfig = function (callback) {
         this.hooks.webpack = callback;
     };
-    Handoff.prototype.configureExportables = function (callback) {
-        this.hooks.configureExportables = callback;
-    };
     return Handoff;
 }());
 var initConfig = function (configOverride) {
@@ -373,6 +400,19 @@ var initConfig = function (configOverride) {
     }
     var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
+};
+var initIntegrationObject = function (workingPath) {
+    var integrationPath = path_1.default.join(workingPath, 'integration');
+    if (!fs_extra_1.default.existsSync(integrationPath)) {
+        return null;
+    }
+    var integrationConfigPath = path_1.default.resolve(path_1.default.join(workingPath, 'integration', 'integration.config.json'));
+    if (!fs_extra_1.default.existsSync(integrationConfigPath)) {
+        return null;
+    }
+    var buffer = fs_extra_1.default.readFileSync(integrationConfigPath);
+    var integration = JSON.parse(buffer.toString());
+    return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
 };
 var validateConfig = function (config) {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {

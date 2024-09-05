@@ -3,7 +3,6 @@ import { Exportable, ComponentDefinition, Side } from "../../types";
 
 export interface FileComponentObject {
   instances: ComponentInstance[];
-  definitions: DocumentComponentDefinitions;
 }
 
 export interface FileComponentsObject {
@@ -16,7 +15,6 @@ export interface ComponentInstance {
   description?: string;
   variantProperties: [string, string][];
   parts?: { [key: string]: TokenSets; };
-  definitionId: string;
 }
 
 export interface BaseTokenSet {
