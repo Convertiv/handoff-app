@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars';
+import Mustache from 'mustache';
 import { parse } from 'node-html-parser';
 import { DocumentationObject, ComponentDefinitionOptions } from '../../types';
 import { filterOutNull } from '../../utils/index';
