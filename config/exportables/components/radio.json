@@ -5,60 +5,8 @@
     "exporter": {
       "search": "Radio",
       "supportedVariantProps": {
-        "design": [
-          "Theme",
-          "State",
-          "Activity"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${State}",
-        "${Size}",
-        "${Part}",
-        "${Theme}",
-        "${Activity}",
-        "${Property}"
-      ]
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "State": [
-              "default",
-              "disabled"
-            ],
-            "Activity": "off",
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        },
-        "designTokens": {
-          "design": {
-            "State": {
-              "default": {
-                "State": [
-                  "default",
-                  "hover",
-                  "disabled"
-                ],
-                "Theme": "light"
-              }
-            },
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        }
+        "design": ["Theme", "State", "Activity"],
+        "layout": ["Size"]
       }
     }
   },
@@ -72,10 +20,7 @@
       "tokens": [
         {
           "from": "GROUP[name':: radio'] > RECTANGLE[name='body']",
-          "export": [
-            "SIZE",
-            "SPACING"
-          ]
+          "export": ["SIZE", "SPACING"]
         }
       ]
     },
@@ -84,11 +29,7 @@
       "tokens": [
         {
           "from": "GROUP[name=':: radio'] > ELLIPSE[name='on']",
-          "export": [
-            "SIZE",
-            "FILL",
-            "BORDER"
-          ]
+          "export": ["SIZE", "FILL", "BORDER"]
         }
       ]
     },
@@ -97,11 +38,7 @@
       "tokens": [
         {
           "from": "TEXT[name='Radio Label']",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL",
-            "OPACITY"
-          ]
+          "export": ["TYPOGRAPHY", "FILL", "OPACITY"]
         }
       ]
     }

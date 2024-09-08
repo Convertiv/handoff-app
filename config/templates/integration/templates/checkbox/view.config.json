@@ -1,0 +1,26 @@
+{
+  "views": {
+    "overview": {
+      "condition": {
+        "State": ["default", "disabled"],
+        "Activity": "off",
+        "Theme": "light",
+        "Size": ""
+      },
+      "sort": ["State", "Size"]
+    },
+    "tokens": {
+      "condition": {
+        "State": {
+          "default": {
+            "State": ["default", "hover", "disabled"],
+            "Theme": "light"
+          }
+        },
+        "Theme": "light",
+        "Size": [""]
+      },
+      "sort": ["State", "Size"]
+    }
+  }
+}

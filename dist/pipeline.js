@@ -71,7 +71,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
@@ -84,7 +84,7 @@ var documentation_object_1 = require("./documentation-object");
 var api_2 = require("./api");
 var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
-var index_3 = __importDefault(require("./transformers/integration/index"));
+var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
 var index_5 = __importDefault(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
@@ -92,6 +92,8 @@ var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
+var fs_1 = require("./utils/fs");
+var tokens_1 = require("./transformers/tokens");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
@@ -141,13 +143,10 @@ var buildCustomFonts = function (handoff, documentationObject) { return __awaite
 var buildIntegration = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                if (!!!handoff.config.integration) return [3 /*break*/, 2];
-                return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
+            case 0: return [4 /*yield*/, (0, index_3.default)(handoff, documentationObject)];
             case 1:
                 _a.sent();
-                _a.label = 2;
-            case 2: return [2 /*return*/];
+                return [2 /*return*/];
         }
     });
 }); };
@@ -177,15 +176,15 @@ var buildStyles = function (handoff, documentationObject) { return __awaiter(voi
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                typeFiles = (0, index_1.scssTypesTransformer)(documentationObject);
+                typeFiles = (0, index_1.scssTypesTransformer)(documentationObject, handoff.integrationObject);
                 typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-                cssFiles = (0, index_2.default)(documentationObject);
+                cssFiles = (0, index_2.default)(documentationObject, handoff.integrationObject);
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-                scssFiles = (0, index_1.default)(documentationObject);
+                scssFiles = (0, index_1.default)(documentationObject, handoff.integrationObject);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-                sdFiles = (0, sd_1.default)(documentationObject);
+                sdFiles = (0, sd_1.default)(documentationObject, handoff.integrationObject);
                 sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-                mapFiles = (0, map_1.default)(documentationObject);
+                mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
                 mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
                 return [4 /*yield*/, Promise.all([
                         fs_extra_1.default
@@ -368,33 +367,26 @@ var validateFigmaAuth = function (handoff) { return __awaiter(void 0, void 0, vo
     });
 }); };
 var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var prevDocumentationObject, changelog, legacyDefinitions, _a, documentationObject, changelogRecord, outputFolder;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var prevDocumentationObject, changelog, legacyDefinitions, documentationObject, changelogRecord, outputFolder;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
                 console.log(chalk_1.default.green("Starting Figma data extraction."));
                 return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
-                prevDocumentationObject = _b.sent();
+                prevDocumentationObject = _a.sent();
                 return [4 /*yield*/, readPrevJSONFile(changelogFilePath(handoff))];
             case 2:
-                changelog = (_b.sent()) || [];
+                changelog = (_a.sent()) || [];
                 return [4 /*yield*/, fs_extra_1.default.emptyDir(outputPath(handoff))];
             case 3:
-                _b.sent();
-                if (!handoff.config.use_legacy_definitions) return [3 /*break*/, 5];
+                _a.sent();
                 return [4 /*yield*/, getLegacyDefinitions(handoff)];
             case 4:
-                _a = _b.sent();
-                return [3 /*break*/, 6];
+                legacyDefinitions = _a.sent();
+                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff, legacyDefinitions)];
             case 5:
-                _a = null;
-                _b.label = 6;
-            case 6:
-                legacyDefinitions = _a;
-                return [4 /*yield*/, (0, documentation_object_1.createDocumentationObject)(handoff.config.figma_project_id, handoff.config.dev_access_token, legacyDefinitions)];
-            case 7:
-                documentationObject = _b.sent();
+                documentationObject = _a.sent();
                 changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
                 if (changelogRecord) {
                     changelog = __spreadArray([changelogRecord], changelog, true);
@@ -413,15 +405,15 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
                             }),
                         ]
                         : []), true))];
-            case 8:
-                _b.sent();
+            case 6:
+                _a.sent();
                 outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public');
-                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 10];
+                if (!!fs_extra_1.default.existsSync(outputFolder)) return [3 /*break*/, 8];
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true })];
-            case 9:
-                _b.sent();
-                _b.label = 10;
-            case 10:
+            case 7:
+                _a.sent();
+                _a.label = 8;
+            case 8:
                 // copy assets to output folder
                 fs_extra_1.default.copyFileSync(iconsZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'icons.zip'));
                 fs_extra_1.default.copyFileSync(logosZipFilePath(handoff), path_1.default.join(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'logos.zip'));
@@ -429,6 +421,107 @@ var figmaExtract = function (handoff) { return __awaiter(void 0, void 0, void 0,
         }
     });
 }); };
+var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var TOKEN_REGEX, processToken, traverseDirectory, integrationPath, directoryToTraverse, componentRecords, writePath;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
+            case 0:
+                TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
+                processToken = function (content, records) {
+                    var _a;
+                    var match;
+                    var regex = new RegExp(TOKEN_REGEX, 'g');
+                    var _loop_1 = function () {
+                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
+                        var componentRecord = records.components.find(function (c) { return c.name === component; });
+                        if (!componentRecord) {
+                            componentRecord = { name: component, common: { parts: [] }, recipes: [] };
+                            records.components.push(componentRecord);
+                        }
+                        var requiredTokenSet = (0, tokens_1.getTokenSetNameByProperty)(cssProperty);
+                        var existingPartIndex = ((_a = componentRecord.common.parts) !== null && _a !== void 0 ? _a : []).findIndex(function (p) { return typeof p !== 'string' && p.name === part; });
+                        if (existingPartIndex === -1) {
+                            componentRecord.common.parts.push({
+                                name: part,
+                                require: [(0, tokens_1.getTokenSetNameByProperty)(cssProperty)].filter(utils_1.filterOutUndefined),
+                            });
+                        }
+                        else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
+                            componentRecord.common.parts[existingPartIndex].require = __spreadArray(__spreadArray([], componentRecord.common.parts[existingPartIndex].require, true), [
+                                requiredTokenSet,
+                            ], false);
+                        }
+                        var variantPairs = variants.split(',').map(function (v) { return v.split(':'); });
+                        var variantGroup = { variantProps: [], variantValues: {} };
+                        variantPairs.forEach(function (_a) {
+                            var key = _a[0], value = _a[1];
+                            if (!variantGroup.variantProps.includes(key)) {
+                                variantGroup.variantProps.push(key);
+                            }
+                            if (!variantGroup.variantValues[key]) {
+                                variantGroup.variantValues[key] = [];
+                            }
+                            if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
+                                variantGroup.variantValues[key].push(value);
+                            }
+                        });
+                        var existingGroupIndex = componentRecord.recipes.findIndex(function (recipe) {
+                            return recipe.require.variantProps.length === variantGroup.variantProps.length &&
+                                recipe.require.variantProps.every(function (prop) { return variantGroup.variantProps.includes(prop); }) &&
+                                Object.keys(recipe.require.variantValues).every(function (key) {
+                                    var _a;
+                                    return recipe.require.variantValues[key].length === ((_a = variantGroup.variantValues[key]) === null || _a === void 0 ? void 0 : _a.length) &&
+                                        recipe.require.variantValues[key].every(function (val) { return variantGroup.variantValues[key].includes(val); });
+                                });
+                        });
+                        if (existingGroupIndex === -1) {
+                            componentRecord.recipes.push({ require: variantGroup });
+                        }
+                    };
+                    while ((match = regex.exec(content)) !== null) {
+                        _loop_1();
+                    }
+                };
+                traverseDirectory = function (directory, records) {
+                    var files = fs_extra_1.default.readdirSync(directory);
+                    files.forEach(function (file) {
+                        var fullPath = path_1.default.join(directory, file);
+                        var stat = fs_extra_1.default.statSync(fullPath);
+                        if (stat.isDirectory()) {
+                            traverseDirectory(fullPath, records);
+                        }
+                        else if (stat.isFile()) {
+                            var content = fs_extra_1.default.readFileSync(fullPath, 'utf8');
+                            processToken(content, records);
+                        }
+                    });
+                };
+                integrationPath = (0, index_3.getPathToIntegration)(handoff, false);
+                if (!integrationPath) {
+                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: Integration not found.'));
+                    return [2 /*return*/];
+                }
+                directoryToTraverse = (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.integration;
+                if (!directoryToTraverse) {
+                    console.log(chalk_1.default.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
+                    return [2 /*return*/];
+                }
+                componentRecords = { components: [] };
+                traverseDirectory(directoryToTraverse, componentRecords);
+                componentRecords.components.forEach(function (component) {
+                    component.common.parts.sort();
+                });
+                writePath = path_1.default.resolve(handoff.workingPath, 'recipes.json');
+                return [4 /*yield*/, fs_extra_1.default.writeFile(writePath, JSON.stringify(componentRecords, null, 2))];
+            case 1:
+                _c.sent();
+                console.log(chalk_1.default.green("Integration recipe has been successfully written to ".concat(writePath)));
+                return [2 /*return*/];
+        }
+    });
+}); };
+exports.buildRecipe = buildRecipe;
 /**
  * Build only integrations and previews
  * @param handoff
@@ -504,39 +597,25 @@ exports.default = pipeline;
  * @deprecated Will be removed before 1.0.0 release.
  */
 var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var config_1, definitions, exportables;
-    var _a;
-    return __generator(this, function (_b) {
+    var sourcePath, definitionPaths, exportables;
+    return __generator(this, function (_a) {
         try {
-            if (!handoff.config) {
-                throw new Error('Handoff config not found');
+            sourcePath = path_1.default.resolve(handoff.workingPath, 'exportables');
+            if (!fs_extra_1.default.existsSync(sourcePath)) {
+                return [2 /*return*/, null];
             }
-            config_1 = handoff.config;
-            definitions = (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.definitions;
-            if (!definitions || definitions.length === 0) {
-                return [2 /*return*/, []];
-            }
-            exportables = definitions
-                .map(function (def) {
-                var _a;
-                var defPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables', "".concat(def, ".json")));
-                var projectPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables', "".concat(def, ".json")));
-                // If the project path exists, use that first as an override
-                if (fs_extra_1.default.existsSync(projectPath)) {
-                    defPath = projectPath;
-                }
-                else if (!fs_extra_1.default.existsSync(defPath)) {
-                    return null;
-                }
-                var defBuffer = fs_extra_1.default.readFileSync(defPath);
+            definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
+            exportables = definitionPaths
+                .map(function (definitionPath) {
+                var defBuffer = fs_extra_1.default.readFileSync(definitionPath);
                 var exportable = JSON.parse(defBuffer.toString());
                 var exportableOptions = {};
-                (0, lodash_1.merge)(exportableOptions, (_a = config_1 === null || config_1 === void 0 ? void 0 : config_1.figma) === null || _a === void 0 ? void 0 : _a.options, exportable.options);
+                (0, lodash_1.merge)(exportableOptions, exportable.options);
                 exportable.options = exportableOptions;
                 return exportable;
             })
                 .filter(utils_1.filterOutNull);
-            return [2 /*return*/, exportables ? exportables : []];
+            return [2 /*return*/, exportables ? exportables : null];
         }
         catch (e) {
             return [2 /*return*/, []];

@@ -1,10 +1,10 @@
 import { ComponentInstance } from '../exporters/components/types';
-import { ComponentDefinitionOptions } from '../types';
 import { Token, TokenType } from './types';
+import { IntegrationObjectComponentOptions } from '../types/config';
 /**
  * Performs the transformation of the component tokens.
  * @param component
  * @param options
  * @returns
  */
-export declare const transform: (tokenType: TokenType, component: ComponentInstance, options?: ComponentDefinitionOptions) => Token[];
+export declare const transform: (tokenType: TokenType, component: ComponentInstance, options?: IntegrationObjectComponentOptions) => Token[];

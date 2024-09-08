@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2024-09-08
+
+### Changes
+
+- **Integration System Overhaul**
+  - **Local Integrations Only:** From this release onward, only local (ejected) integrations are supported. Handoff will automatically use the locally found integration.
+    - Create a new local integration using `handoff-app make:integration` (or `eject:integration` which is still supported as an alias).
+    - Since there is no need to specify integration information, integration options in `handoff.config.json` such as name and version are no longer recognized, making the integration section of `handoff.config.json` obsolete.
+  - **Introduction of `integration.config.json`:**
+    - This new file replaces the old `figma.options` section in `handoff.config.json` as well as all transformer related options within the legacy schemas as this file now contains all integration-specific details, including those options previously managed manually across different places.
+    - This change leaves the `figma.options` section in `handoff.config.json` no longer supported and also means that all transformer options have been removed from legacy schemas (exportables), rendering this section no longer supported as well.
+  - **Documentation App Configuration Changes:**
+    - View of the component pages is now managed from within the integration(s), more specifically within the newly introduced `view.config.json` files, located in the respective component’s directory within the integration’s templates folder.
+    - As a result the `demo` options section in all legacy schemas has now been removed and is no longer supported by Handoff.
+
+- **Legacy Schema Updates**
+  - **Local Schema Requirement:** Legacy schemas (exportables) are now only supported if ejected. The `use_legacy_definitions` option in `handoff.config.json` is no longer supported.
+  - **Automatic Schema Consumption:** Handoff now automatically consumes all locally found schemas. The `figma.definitions` section in `handoff.config.json` is deprecated.
+
+### Upgrading from Earlier Releases
+
+- **For Projects with Local Integrations:**
+  1. Temporarily rename your current local integration directory.
+  2. Create a new local integration using `handoff-app make:integration`.
+  3. Transfer the contents from your old integration (excluding `integration.config.json`) to the new directory (merge).
+  4. Update options in `integration.config.json` if needed.
+  5. Remove the old integration directory.
+- **For Projects Without Local Integrations:**
+  1. Create a new local integration using `handoff-app make:integration`. This will use a Bootstrap 5.3 template.
+  2. If previously using Bootstrap 5.2, update the integration contents accordingly. [Bootstrap 5.2 template](https://github.com/Convertiv/handoff-app/tree/v0.12.2/config/integrations/bootstrap/5.2).
+  3. Update `integration.config.json` options if necessary.
+- **For Projects with Legacy Schemas:**
+  1. Eject legacy schemas using `handoff-app eject:exportables`.
+  2. If schemas are already ejected:
+    - Verify that transformer options are in `integration.config.json`.
+    - Verify that demo options are in `view.config.json` files of respective components.
+    - Temporarily rename the directory containing legacy schemas.
+    - Re-eject schemas and move custom schemas into the new exportables.
+    - Optionally, update custom schemas to remove obsolete options.
+- **For Projects with `handoff.config.json`:**
+  1. Merge options from `figma.options` to the `integration.config.json` file as necessary.
+  2. Optionally remove deprecated sections: `figma.options`, `figma.definitions`, `figma`, `integration`, and `use_legacy_definitions`.
+
 ## [0.12.2] - 2024-08-21
 
 ### Changes

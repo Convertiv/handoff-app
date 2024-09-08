@@ -15,22 +15,6 @@ export interface Integration {
   version: string;
 }
 
-export interface FigmaSearch {
-  options: {
-    shared?: {
-      defaults: {
-        [variantProperty: string]: string
-      };
-    };
-    transformer?: {
-      cssRootProperty?: string,
-      tokenNameSegments?: string[],
-      replace: { [variantProperty: string]: { [source: string]: string } }
-    };
-  };
-  definitions: string[];
-}
-
 export interface ComponentSizeMap {
   figma: string;
   css: string;
@@ -67,9 +51,7 @@ export interface Config {
   figma_project_id?: string | null | undefined;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
-  integration?: Integration;
   app: NextAppConfig;
-  figma: FigmaSearch;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
@@ -83,13 +65,34 @@ export interface Config {
      */
     logos?: string;
   };
-  use_legacy_definitions?: boolean | null | undefined;
 }
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'figma' | 'integration' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'use_legacy_definitions'
+  'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
 >;
+
+export interface IntegrationObjectComponentOptions {
+  cssRootClass?: string;
+  tokenNameSegments?: string[];
+  defaults: {
+    [variantProperty: string]: string;
+  };
+  replace: { [variantProperty: string]: { [source: string]: string } };
+};
+
+
+export interface IntegrationObject {
+  name: string;
+  entries?: {
+    integration?: string;
+    templates?: string;
+    bundle?: string;
+  }
+  options: {
+    [key: string]: IntegrationObjectComponentOptions;
+  };
+}
 
 declare const config: Config;
 

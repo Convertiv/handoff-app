@@ -5,26 +5,8 @@
     "exporter": {
       "search": "Modal",
       "supportedVariantProps": {
-        "design": [
-          "Type"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "Type": "default"
-          }
-        },
-        "designTokens": {
-          "design": {
-            "Type": "default"
-          }
-        }
+        "design": ["Type"],
+        "layout": ["Size"]
       }
     }
   },
@@ -34,12 +16,7 @@
       "tokens": [
         {
           "from": "$",
-          "export": [
-            "BACKGROUND",
-            "BORDER",
-            "SPACING",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "BORDER", "SPACING", "EFFECT"]
         }
       ]
     },
@@ -48,12 +25,7 @@
       "tokens": [
         {
           "from": "FRAME[name='header']",
-          "export": [
-            "BACKGROUND",
-            "SPACING",
-            "BORDER",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
         }
       ]
     },
@@ -62,10 +34,7 @@
       "tokens": [
         {
           "from": "FRAME[name='header'] > TEXT",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     },
@@ -74,19 +43,11 @@
       "tokens": [
         {
           "from": "FRAME[name='body']",
-          "export": [
-            "BACKGROUND",
-            "SPACING",
-            "BORDER",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
         },
         {
           "path": "FRAME[name='body'] > TEXT",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     },
@@ -95,19 +56,11 @@
       "tokens": [
         {
           "from": "FRAME[name='footer']",
-          "export": [
-            "BACKGROUND",
-            "SPACING",
-            "BORDER",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "SPACING", "BORDER", "EFFECT"]
         },
         {
           "path": "FRAME[name='footer'] > TEXT",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     }

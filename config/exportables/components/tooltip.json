@@ -5,17 +5,6 @@
     "exporter": {
       "search": "Tooltip",
       "supportedVariantProps": {}
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {},
-          "layout": {}
-        },
-        "designTokens": {
-          "design": {}
-        }
-      }
     }
   },
   "parts": [
@@ -24,18 +13,11 @@
       "tokens": [
         {
           "from": "FRAME[name='Body']",
-          "export": [
-            "BACKGROUND",
-            "BORDER",
-            "SPACING"
-          ]
+          "export": ["BACKGROUND", "BORDER", "SPACING"]
         },
         {
           "from": "FRAME[name='Body'] > TEXT",
-          "export": [
-            "TYPOGRAPHY",
-            "FILL"
-          ]
+          "export": ["TYPOGRAPHY", "FILL"]
         }
       ]
     }
