@@ -1,5 +1,5 @@
 import { defaultConfig } from './config';
-import { Config } from './types/config';
+import { Config, IntegrationObject } from './types/config';
 import fs from 'fs-extra';
 import path from 'path';
 import 'dotenv/config';
@@ -8,12 +8,13 @@ import { DocumentationObject } from './types';
 import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly } from './pipeline';
-import { ejectConfig, ejectExportables, ejectIntegration, ejectPages, ejectTheme } from './cli/eject';
+import pipeline, { buildIntegrationOnly, buildRecipe } from './pipeline';
+import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
 import { makeExportable, makePage, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
+import { prepareIntegrationObject } from './utils/integration';
 
 class Handoff {
   config: Config | null;
@@ -23,6 +24,7 @@ class Handoff {
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
+  integrationObject: IntegrationObject | null;
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -36,7 +38,6 @@ class Handoff {
     mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-    configureExportables: (exportables: string[]) => string[];
   };
 
   constructor(config?: Config) {
@@ -53,7 +54,6 @@ class Handoff {
       mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
       webpack: (webpackConfig) => webpackConfig,
       preview: (webpackConfig, preview) => preview,
-      configureExportables: (exportables) => exportables,
     };
     this.init(config);
     this.integrationHooks = instantiateIntegration(this);
@@ -65,6 +65,7 @@ class Handoff {
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
+    this.integrationObject = initIntegrationObject(this.workingPath);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -74,7 +75,6 @@ class Handoff {
     if (validate) {
       this.config = validateConfig(this.config);
     }
-    this.config.figma.definitions = this.hooks.configureExportables(this.config.figma?.definitions || []);
     return this;
   }
   async fetch(): Promise<Handoff> {
@@ -82,6 +82,13 @@ class Handoff {
       this.preRunner();
       await pipeline(this);
       this.hooks.fetch();
+    }
+    return this;
+  }
+  async recipe(): Promise<Handoff> {
+    this.preRunner();
+    if (this.config) {
+      await buildRecipe(this);
     }
     return this;
   }
@@ -108,7 +115,7 @@ class Handoff {
   }
   async ejectIntegration(): Promise<Handoff> {
     if (this.config) {
-      await ejectIntegration(this);
+      await makeIntegration(this);
     }
     return this;
   }
@@ -145,6 +152,12 @@ class Handoff {
   async makePage(name: string, parent: string): Promise<Handoff> {
     if (this.config) {
       await makePage(this, name, parent);
+    }
+    return this;
+  }
+  async makeIntegration(): Promise<Handoff> {
+    if (this.config) {
+      await makeIntegration(this);
     }
     return this;
   }
@@ -188,9 +201,6 @@ class Handoff {
   modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
     this.hooks.webpack = callback;
   }
-  configureExportables(callback: (exportables: string[]) => string[]) {
-    this.hooks.configureExportables = callback;
-  }
 }
 
 const initConfig = (configOverride?: any): Config => {
@@ -209,6 +219,24 @@ const initConfig = (configOverride?: any): Config => {
   return returnConfig;
 };
 
+const initIntegrationObject = (workingPath: string): IntegrationObject => {
+  const integrationPath = path.join(workingPath, 'integration');
+
+  if (!fs.existsSync(integrationPath)) {
+    return null;
+  }
+
+  const integrationConfigPath = path.resolve(path.join(workingPath, 'integration', 'integration.config.json'));
+
+  if (!fs.existsSync(integrationConfigPath)) {
+    return null;
+  }
+
+  const buffer = fs.readFileSync(integrationConfigPath);
+  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+
+  return prepareIntegrationObject(integration, integrationPath);
+};
 
 const validateConfig = (config: Config): Config => {
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {

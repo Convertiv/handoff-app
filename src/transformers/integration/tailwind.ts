@@ -7,7 +7,7 @@ import { getPathToIntegration } from '.';
 import Handoff from '../../index';
 
 export const modifyWebpackConfigForTailwind = (handoff: Handoff, webpackConfig: webpack.Configuration): webpack.Configuration => {
-  const tailwindPath = path.resolve(path.join(getPathToIntegration(handoff), 'templates/tailwind.config.js'));
+  const tailwindPath = path.resolve(path.join(getPathToIntegration(handoff, false), 'templates/tailwind.config.js'));
   let plugins: any[] = [];
   try {
     const tailwindcss = require('tailwindcss');

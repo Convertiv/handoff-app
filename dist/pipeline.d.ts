@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import Handoff from '.';
+export declare const buildRecipe: (handoff: Handoff) => Promise<void>;
 /**
  * Build only integrations and previews
  * @param handoff

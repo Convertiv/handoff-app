@@ -95,44 +95,44 @@ exports.makeExportable = makeExportable;
  * @param handoff
  */
 var makeTemplate = function (handoff, component, state) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, workingPath, target, templatePath, template;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, handoff.config];
-            case 1:
-                config = _a.sent();
-                if (!component) {
-                    console.log(chalk_1.default.red("Template component must be set"));
-                    return [2 /*return*/];
-                }
-                if (!state) {
-                    state = 'default';
-                }
-                if (!/^[a-z0-9]+$/i.test(component)) {
-                    console.log(chalk_1.default.red("Template component must be alphanumeric and may contain dashes or underscores"));
-                    return [2 /*return*/];
-                }
-                if (!/^[a-z0-9]+$/i.test(state)) {
-                    console.log(chalk_1.default.red("Template state must be alphanumeric and may contain dashes or underscores"));
-                    return [2 /*return*/];
-                }
-                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/templates/".concat(component)));
-                if (!fs_extra_1.default.existsSync(workingPath)) {
-                    fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
-                }
-                target = path_1.default.resolve(workingPath, "".concat(state, ".html"));
-                if (fs_extra_1.default.existsSync(target)) {
-                    if (!handoff.force) {
-                        console.log(chalk_1.default.yellow("'".concat(state, "' already exists as custom template.  Use the --force flag revert it to default.")));
-                        return [2 /*return*/];
-                    }
-                }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'template.html'));
-                template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
-                fs_extra_1.default.writeFileSync(target, template);
-                console.log(chalk_1.default.green("New template ".concat(state, ".html was created in ").concat(workingPath)));
-                return [2 /*return*/, handoff];
+    var workingPath, target, templatePath, template;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
+            console.log(chalk_1.default.red("Integration does not specify entry for templates."));
+            return [2 /*return*/];
         }
+        if (!component) {
+            console.log(chalk_1.default.red("Template component must be set"));
+            return [2 /*return*/];
+        }
+        if (!state) {
+            state = 'default';
+        }
+        if (!/^[a-z0-9]+$/i.test(component)) {
+            console.log(chalk_1.default.red("Template component must be alphanumeric and may contain dashes or underscores"));
+            return [2 /*return*/];
+        }
+        if (!/^[a-z0-9]+$/i.test(state)) {
+            console.log(chalk_1.default.red("Template state must be alphanumeric and may contain dashes or underscores"));
+            return [2 /*return*/];
+        }
+        workingPath = path_1.default.resolve(handoff.integrationObject.entries.templates, component);
+        if (!fs_extra_1.default.existsSync(workingPath)) {
+            fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
+        }
+        target = path_1.default.resolve(workingPath, "".concat(state, ".html"));
+        if (fs_extra_1.default.existsSync(target)) {
+            if (!handoff.force) {
+                console.log(chalk_1.default.yellow("'".concat(state, "' already exists as custom template.  Use the --force flag revert it to default.")));
+                return [2 /*return*/];
+            }
+        }
+        templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'template.html'));
+        template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
+        fs_extra_1.default.writeFileSync(target, template);
+        console.log(chalk_1.default.green("New template ".concat(state, ".html was created in ").concat(workingPath)));
+        return [2 /*return*/, handoff];
     });
 }); };
 exports.makeTemplate = makeTemplate;

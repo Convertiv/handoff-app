@@ -2,7 +2,6 @@ import * as FigmaTypes from '../../figma/types';
 import { Exportable, ComponentDefinition, Side } from "../../types";
 export interface FileComponentObject {
     instances: ComponentInstance[];
-    definitions: DocumentComponentDefinitions;
 }
 export interface FileComponentsObject {
     [key: string]: FileComponentObject;
@@ -15,7 +14,6 @@ export interface ComponentInstance {
     parts?: {
         [key: string]: TokenSets;
     };
-    definitionId: string;
 }
 export interface BaseTokenSet {
     name: Exportable;
