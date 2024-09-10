@@ -50,6 +50,7 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
 var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
 var gray_matter_1 = __importDefault(require("gray-matter"));
+var preview_1 = require("./utils/preview");
 var getWorkingPublicPath = function (handoff) {
     var paths = [
         path_1.default.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
@@ -213,8 +214,17 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
-                return [4 /*yield*/, prepareProjectApp(handoff)];
+                // Build client preview styles
+                return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
+                        .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
+                        .catch(function (error) {
+                        throw new Error(error);
+                    })];
             case 1:
+                // Build client preview styles
+                _a.sent();
+                return [4 /*yield*/, prepareProjectApp(handoff)];
+            case 2:
                 appPath = _a.sent();
                 // Build app
                 return [4 /*yield*/, (0, next_build_1.nextBuild)({
@@ -225,7 +235,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         experimentalTurbo: false,
                         experimentalBuildMode: 'default',
                     }, appPath)];
-            case 2:
+            case 3:
                 // Build app
                 _a.sent();
                 outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -254,8 +264,17 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
-                return [4 /*yield*/, prepareProjectApp(handoff)];
+                // Build client preview styles
+                return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
+                        .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
+                        .catch(function (error) {
+                        throw new Error(error);
+                    })];
             case 1:
+                // Build client preview styles
+                _a.sent();
+                return [4 /*yield*/, prepareProjectApp(handoff)];
+            case 2:
                 appPath = _a.sent();
                 // const config = require(path.resolve(appPath, 'next.config.mjs'));
                 // Include any changes made within the app source during watch
@@ -454,15 +473,24 @@ var devApp = function (handoff) { return __awaiter(void 0, void 0, void 0, funct
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
-                return [4 /*yield*/, prepareProjectApp(handoff)];
+                // Build client preview styles
+                return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
+                        .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
+                        .catch(function (error) {
+                        throw new Error(error);
+                    })];
             case 1:
+                // Build client preview styles
+                _a.sent();
+                return [4 /*yield*/, prepareProjectApp(handoff)];
+            case 2:
                 appPath = _a.sent();
                 moduleOutput = path_1.default.resolve(appPath, 'out');
                 if (fs_extra_1.default.existsSync(moduleOutput)) {
                     fs_extra_1.default.removeSync(moduleOutput);
                 }
                 return [4 /*yield*/, (0, next_dev_1.nextDev)({ port: 3000 }, 'cli', appPath)];
-            case 2: 
+            case 3: 
             // Run
             return [2 /*return*/, _a.sent()];
         }

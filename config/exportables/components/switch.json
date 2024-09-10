@@ -5,60 +5,8 @@
     "exporter": {
       "search": "Switch",
       "supportedVariantProps": {
-        "design": [
-          "Theme",
-          "State",
-          "Activity"
-        ],
-        "layout": [
-          "Size"
-        ]
-      }
-    },
-    "transformer": {
-      "tokenNameSegments": [
-        "${Component}",
-        "${State}",
-        "${Size}",
-        "${Part}",
-        "${Theme}",
-        "${Activity}",
-        "${Property}"
-      ]
-    },
-    "demo": {
-      "tabs": {
-        "overview": {
-          "design": {
-            "State": [
-              "default",
-              "disabled"
-            ],
-            "Activity": "off",
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        },
-        "designTokens": {
-          "design": {
-            "State": {
-              "default": {
-                "State": [
-                  "default",
-                  "hover",
-                  "disabled"
-                ],
-                "Theme": "light"
-              }
-            },
-            "Theme": "light"
-          },
-          "layout": {
-            "Size": ""
-          }
-        }
+        "design": ["Theme", "State", "Activity"],
+        "layout": ["Size"]
       }
     }
   },
@@ -68,24 +16,15 @@
       "tokens": [
         {
           "from": "$",
-          "export": [
-            "SPACING"
-          ]
+          "export": ["SPACING"]
         },
         {
           "from": "GROUP[name=':: switch']",
-          "export": [
-            "OPACITY"
-          ]
+          "export": ["OPACITY"]
         },
         {
           "from": "GROUP[name=':: switch'] > RECTANGLE[name='body']",
-          "export": [
-            "BACKGROUND",
-            "SIZE",
-            "BORDER",
-            "EFFECT"
-          ]
+          "export": ["BACKGROUND", "SIZE", "BORDER", "EFFECT"]
         }
       ]
     },
@@ -94,11 +33,7 @@
       "tokens": [
         {
           "from": "GROUP[name=':: switch'] > ELLIPSE[name='${Activity}']",
-          "export": [
-            "FILL",
-            "BORDER",
-            "SIZE"
-          ]
+          "export": ["FILL", "BORDER", "SIZE"]
         }
       ]
     },
@@ -107,11 +42,7 @@
       "tokens": [
         {
           "from": "TEXT[name='Switch Label']",
-          "export": [
-            "TYPOGRAPHY",
-            "COLOR",
-            "OPACITY"
-          ]
+          "export": ["TYPOGRAPHY", "COLOR", "OPACITY"]
         }
       ]
     }

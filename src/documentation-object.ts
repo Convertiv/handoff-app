@@ -4,9 +4,10 @@ import { getFigmaFileDesignTokens } from './exporters/design';
 import { DocumentationObject, LegacyComponentDefinition } from './types';
 import startCase from 'lodash/startCase';
 import chalk from 'chalk';
+import Handoff from '.';
 
-export const createDocumentationObject = async (figmaFileKey: string, figmaAccessToken: string, legacyDefinitions?: LegacyComponentDefinition[]): Promise<DocumentationObject> => {
-  const components = await getFigmaFileComponents(figmaFileKey, figmaAccessToken, legacyDefinitions);
+export const createDocumentationObject = async (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]): Promise<DocumentationObject> => {
+  const components = await getFigmaFileComponents(handoff, legacyDefinitions);
 
   // Log out components
   Object.keys(components).map((component: string) => {
@@ -17,9 +18,9 @@ export const createDocumentationObject = async (figmaFileKey: string, figmaAcces
     }
   });
 
-  const design = await getFigmaFileDesignTokens(figmaFileKey, figmaAccessToken);
-  const icons = await assetsExporter(figmaFileKey, figmaAccessToken, 'Icons');
-  const logos = await assetsExporter(figmaFileKey, figmaAccessToken, 'Logo');
+  const design = await getFigmaFileDesignTokens(handoff.config.figma_project_id, handoff.config.dev_access_token);
+  const icons = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons');
+  const logos = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo');
 
   return {
     timestamp: new Date().toISOString(),

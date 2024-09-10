@@ -1,4 +1,4 @@
-import { Config } from './types/config';
+import { Config, IntegrationObject } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
 import { DocumentationObject } from './types';
@@ -14,6 +14,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
+    integrationObject: IntegrationObject | null;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;
@@ -27,12 +28,12 @@ declare class Handoff {
         mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-        configureExportables: (exportables: string[]) => string[];
     };
     constructor(config?: Config);
     init(configOverride?: Config): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
+    recipe(): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
@@ -43,6 +44,7 @@ declare class Handoff {
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
+    makeIntegration(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;
@@ -53,6 +55,5 @@ declare class Handoff {
     postBuild(callback: (documentationObject: DocumentationObject) => void): void;
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
-    configureExportables(callback: (exportables: string[]) => string[]): void;
 }
 export default Handoff;

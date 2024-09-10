@@ -1,0 +1,33 @@
+{
+  "views": {
+    "overview": {
+      "condition": {
+        "State": ["default", "error", "disabled"],
+        "Theme": "light",
+        "Size": ""
+      },
+      "sort": ["State", "Size"]
+    },
+    "tokens": {
+      "condition": {
+        "State": {
+          "default": {
+            "State": ["default", "hover"],
+            "Theme": "light"
+          },
+          "error": {
+            "State": ["error", "hover"],
+            "Theme": "light"
+          },
+          "disabled": {
+            "State": ["disabled", "hover"],
+            "Theme": "light"
+          }
+        },
+        "Theme": "light",
+        "Size": ""
+      },
+      "sort": ["State", "Size"]
+    }
+  }
+}

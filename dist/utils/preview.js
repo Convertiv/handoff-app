@@ -86,7 +86,7 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                         }
                     }
                     compile.close(function (closeErr) { });
-                    return resolve('Preview template styles built');
+                    return resolve('Preview styles successfully built.');
                 });
             })];
     });
