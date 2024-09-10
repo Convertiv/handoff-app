@@ -241,7 +241,7 @@ function previewTransformer(handoff, documentationObject) {
                 case 15: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 16:
                     template = _a.sent();
-                    preview = mustache_1.default.render(template, {
+                    preview = handlebars_1.default.compile(template)({
                         config: handoff.config,
                         style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
                         script: data['jsCompiled']

@@ -187,7 +187,7 @@ export default async function previewTransformer(handoff: Handoff, documentation
           }
         }
         const template = await fs.readFile(path.resolve(custom, file), 'utf8');
-        const preview = Mustache.render(template, {
+        const preview = Handlebars.compile(template)({
           config: handoff.config,
           style: data['css'] ? `<style rel="stylesheet" type="text/css">${data['css']}</style>` : '',
           script: data['jsCompiled']
