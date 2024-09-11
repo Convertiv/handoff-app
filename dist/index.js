@@ -315,6 +315,21 @@ var Handoff = /** @class */ (function () {
             });
         });
     };
+    Handoff.prototype.makeSnippet = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, make_1.makeSnippet)(this, name)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
     Handoff.prototype.makeIntegration = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {

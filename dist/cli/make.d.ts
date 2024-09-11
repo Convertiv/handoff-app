@@ -14,3 +14,8 @@ export declare const makeTemplate: (handoff: Handoff, component: string, state: 
  * @param handoff
  */
 export declare const makePage: (handoff: Handoff, name: string, parent: string | undefined) => Promise<Handoff>;
+/**
+ * Make a new docs page
+ * @param handoff
+ */
+export declare const makeSnippet: (handoff: Handoff, name: string) => Promise<Handoff>;

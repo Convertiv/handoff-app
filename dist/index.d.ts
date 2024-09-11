@@ -44,6 +44,7 @@ declare class Handoff {
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
+    makeSnippet(name: string): Promise<Handoff>;
     makeIntegration(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;

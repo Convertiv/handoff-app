@@ -69,7 +69,7 @@ var HandoffCliError = /** @class */ (function (_super) {
     }
     return HandoffCliError;
 }(Error));
-var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts] - Fetches the design tokens from the design system\n\n  build - Using the current tokens, build various outputs\n    build:app [opts] - Builds the design system static application\n    build:integration [opts] - Builds current selected integration, styles and previews\n    build:recipe - Builds a recipe file based on the integration that is curretnly used (if any)\n\n  start [opts] - Starts the design system in development mode\n\n  make\n    make:exportable <type> <name> [opts] - Creates a new schema\n    make:template <component> <state> [opts] - Creates a new template\n    make:page <name> <parent> [opts] - Creates a new custom page\n    make:integration - Creates a new integration based on the provided Bootstrap 5.3 template\n\n  eject - Ejects the default entire configuration to the current directory\n    eject:config [opts] - Ejects the default configuration to the current directory\n    eject:integration [opts] - Ejects the default integration to the current directory\n    eject:exportables [opts] - Ejects the default exportables to the current directory\n    eject:pages [opts] - Ejects the default pages to the current directory\n    eject:theme [opts] - Ejects the currently selected theme to theme/main.scss\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
+var usage = "Usage: handoff-app <cmd> <opts>\n\nCommands:\n  fetch [opts] - Fetches the design tokens from the design system\n\n  build - Using the current tokens, build various outputs\n    build:app [opts] - Builds the design system static application\n    build:integration [opts] - Builds current selected integration, styles and previews\n    build:recipe - Builds a recipe file based on the integration that is curretnly used (if any)\n\n  start [opts] - Starts the design system in development mode\n\n  make\n    make:exportable <type> <name> [opts] - Creates a new schema\n    make:template <component> <state> [opts] - Creates a new template\n    make:page <name> <parent> [opts] - Creates a new custom page\n    make:integration - Creates a new integration based on the provided Bootstrap 5.3 template\n    make:snippet - <name> Creates a new html code snippet that you can embed in your documentation\n\n  eject - Ejects the default entire configuration to the current directory\n    eject:config [opts] - Ejects the default configuration to the current directory\n    eject:integration [opts] - Ejects the default integration to the current directory\n    eject:exportables [opts] - Ejects the default exportables to the current directory\n    eject:pages [opts] - Ejects the default pages to the current directory\n    eject:theme [opts] - Ejects the currently selected theme to theme/main.scss\n\nOptions:\n  -c, --config [file]      Define the path to the config file\n  -d, --debug              Show debug logs\n  -h, --help               Show this help message\n  -v, --version            Show the version number\n";
 /**
  * Show the help message
  */
@@ -80,7 +80,7 @@ var showHelp = function () {
  * Show the help message
  */
 var showVersion = function () {
-    cliError('Handoff App - 0.13.0', 2);
+    cliError('Handoff App - 0.14.0', 2);
 };
 /**
  * Define a CLI error
@@ -96,11 +96,11 @@ var cliError = function (msg, exitCode) {
 };
 var watching = false;
 var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, void 0, function () {
-    var args, handoff, _a, type, name_1, templateComponent, templateState, pageName, pageParent, e_1;
+    var args, handoff, _a, type, name_1, templateComponent, templateState, pageName, pageParent, snippetName, e_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 21, , 22]);
+                _b.trys.push([0, 22, , 23]);
                 args = (0, arg_1.default)({
                     '--help': Boolean,
                     '-h': '--help',
@@ -147,9 +147,10 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     case 'make:exportable': return [3 /*break*/, 15];
                     case 'make:template': return [3 /*break*/, 16];
                     case 'make:page': return [3 /*break*/, 17];
-                    case 'make:integration': return [3 /*break*/, 18];
+                    case 'make:snippet': return [3 /*break*/, 18];
+                    case 'make:integration': return [3 /*break*/, 19];
                 }
-                return [3 /*break*/, 19];
+                return [3 /*break*/, 20];
             case 1: return [2 /*return*/, handoff.fetch()];
             case 2: return [4 /*yield*/, handoff.build()];
             case 3:
@@ -165,15 +166,15 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
             case 7: return [2 /*return*/, handoff.recipe()];
             case 8:
                 cliError("Eject commands will eject the default configuration into the working directory so you can customize it.\n\nEject must have a subcommand. Did you mean:\n  - eject:config\n  - eject:exportables\n  - eject:integration\n  - eject:docs\n  - eject:theme.", 2);
-                return [3 /*break*/, 20];
+                return [3 /*break*/, 21];
             case 9: return [2 /*return*/, handoff.ejectConfig()];
             case 10: return [2 /*return*/, handoff.ejectIntegration()];
             case 11: return [2 /*return*/, handoff.ejectExportables()];
             case 12: return [2 /*return*/, handoff.ejectTheme()];
             case 13: return [2 /*return*/, handoff.ejectPages()];
             case 14:
-                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page\n    - make:integration", 2);
-                return [3 /*break*/, 20];
+                cliError("Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.\n\n  Make must have a subcommand. Did you mean:\n    - make:template\n    - make:exportable\n    - make:page\n    - make:integration\n    - make:snippet", 2);
+                return [3 /*break*/, 21];
             case 15:
                 type = args._[1];
                 if (!type) {
@@ -213,15 +214,24 @@ var run = function (argv, stdout, stderr) { return __awaiter(void 0, void 0, voi
                     cliError("Page parent must be alphanumeric and may contain dashes or underscores", 2);
                 }
                 return [2 /*return*/, handoff.makePage(pageName, pageParent)];
-            case 18: return [2 /*return*/, handoff.makeIntegration()];
-            case 19: return [2 /*return*/, showHelp()];
-            case 20: return [3 /*break*/, 22];
-            case 21:
+            case 18:
+                snippetName = args._[1];
+                if (!snippetName) {
+                    cliError("You must supply a snippet name", 2);
+                }
+                if (!/^[a-z0-9]+$/i.test(snippetName)) {
+                    cliError("Snippet name must be alphanumeric and may contain dashes or underscores", 2);
+                }
+                return [2 /*return*/, handoff.makeSnippet(snippetName)];
+            case 19: return [2 /*return*/, handoff.makeIntegration()];
+            case 20: return [2 /*return*/, showHelp()];
+            case 21: return [3 /*break*/, 23];
+            case 22:
                 e_1 = _b.sent();
                 if (e_1.message.indexOf('Unknown or unexpected option') === -1)
                     throw e_1;
                 return [2 /*return*/, cliError(e_1.message + "\n".concat(usage), 2)];
-            case 22: return [2 /*return*/];
+            case 23: return [2 /*return*/];
         }
     });
 }); };
