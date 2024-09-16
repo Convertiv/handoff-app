@@ -15,6 +15,15 @@ import Handoff from '../../index';
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
 type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: string };
 
+/**
+ * Given a list of components, a component definition, and a handoff object, 
+ * this function will extract the component instances
+ * @param components 
+ * @param definition 
+ * @param handoff 
+ * @param legacyDefinition 
+ * @returns ComponentInstance[] 
+ */
 export default function extractComponentInstances(
   components: { node: FigmaTypes.Component; metadata: FigmaTypes.ComponentMetadata }[],
   definition: ComponentDefinition,
@@ -156,6 +165,14 @@ export default function extractComponentInstances(
   return _.uniqBy(instances, 'id');
 }
 
+/**
+ * Given a component instance, a component definition, and a handoff object,
+ * this function will extract the component instance's token sets
+ * @param root
+ * @param part
+ * @param tokens
+ * @returns ExportTypes.TokenSets
+ */
 function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ComponentPart, tokens: Map<string, string>): ExportTypes.TokenSets {
   if (!part.tokens || part.tokens.length === 0) {
     return [];
@@ -198,6 +215,13 @@ function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ComponentPar
   return tokenSets;
 }
 
+/**
+ * Find the node from a path provided by the schema
+ * @param root 
+ * @param path 
+ * @param tokens 
+ * @returns FigmaTypes.Node
+ */
 function resolveNodeFromPath(root: FigmaTypes.Node, path: string, tokens: Map<string, string>) {
   const pathArr = path
     .split('>')
@@ -228,6 +252,11 @@ function resolveNodeFromPath(root: FigmaTypes.Node, path: string, tokens: Map<st
   return currentNode;
 }
 
+/**
+ * Given a schema path, this function will parse the node type and name
+ * @param path 
+ * @returns 
+ */
 function parsePathNodeParams(path: string): { type?: FigmaTypes.Node['type']; name?: string } {
   const type = path.split('[')[0];
   const selectors = new Map<string, string>();
@@ -334,6 +363,11 @@ function extractNodeOpacity(node: FigmaTypes.Node): ExportTypes.OpacityTokenSet 
   };
 }
 
+/**
+ * Get the size bounding box size from a node
+ * @param node 
+ * @returns ExportTypes.SizeTokenSet | null
+ */
 function extractNodeSize(node: FigmaTypes.Node): ExportTypes.SizeTokenSet | null {
   return {
     name: 'SIZE',
@@ -342,6 +376,13 @@ function extractNodeSize(node: FigmaTypes.Node): ExportTypes.SizeTokenSet | null
   };
 }
 
+/**
+ * Extract the exportable from a node.  Given a node and an exportable 
+ * identifier, this function will return the token set
+ * @param node 
+ * @param exportable 
+ * @returns 
+ */
 function extractNodeExportable(node: FigmaTypes.Node, exportable: Exportable): ExportTypes.TokenSet | null {
   switch (exportable) {
     case 'BACKGROUND':

@@ -10,6 +10,11 @@ interface GroupNameData {
   group: string;
 }
 
+/**
+ * Create a machine name from a string
+ * @param name 
+ * @returns string
+ */
 const toMachineName = (name: string): string => {
   return name
     .toLowerCase()
@@ -17,6 +22,11 @@ const toMachineName = (name: string): string => {
     .replace(/\s\-\s|\s+/gi, '-');
 }
 
+/**
+ * Extracts the group name and machine name from a string
+ * @param name 
+ * @returns GroupNameData
+ */
 const fieldData = (name: string): GroupNameData => {
   let nameArray = name.split('/');
   const data = {
@@ -35,10 +45,21 @@ const fieldData = (name: string): GroupNameData => {
   return data;
 };
 
+/**
+ * Checks if input is an array
+ * @param input 
+ * @returns boolean
+ */
 const isArray = (input: any): input is any[] | readonly any[] => {
   return Array.isArray(input);
 };
 
+/**
+ * Fetches design tokens from a Figma file
+ * @param fileId 
+ * @param accessToken 
+ * @returns Promise <{ color: ColorObject[]; typography: TypographyObject[]; effect: EffectObject[]; }>
+ */
 export const getFigmaFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
   color: ColorObject[];
   typography: TypographyObject[];
