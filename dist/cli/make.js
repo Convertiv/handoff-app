@@ -142,12 +142,13 @@ exports.makeTemplate = makeTemplate;
  * @param handoff
  */
 var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, workingPath, sourcePath, templatePath, target, template;
+    var config, type, checkType, workingPath, sourcePath, templatePath, target, template;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, handoff.config];
             case 1:
                 config = _a.sent();
+                type = 'mdx';
                 if (!name) {
                     console.log(chalk_1.default.red("Page name must be set"));
                     return [2 /*return*/];
@@ -156,35 +157,41 @@ var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 
                     console.log(chalk_1.default.red("Page name must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
+                return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green("By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': "))];
+            case 2:
+                checkType = _a.sent();
+                if (checkType === 'markdown') {
+                    type = 'md';
+                }
                 if (parent) {
                     if (!/^[a-z0-9]+$/i.test(parent)) {
                         console.log(chalk_1.default.red("Parent name must be alphanumeric and may contain dashes or underscores"));
                         return [2 /*return*/];
                     }
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs", parent));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".md")));
+                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "pages", parent));
+                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".").concat(type)));
                 }
                 else {
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs"));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", "".concat(name, ".md")));
+                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "pages"));
+                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", "".concat(name, ".").concat(type)));
                 }
                 if (!fs_extra_1.default.existsSync(workingPath)) {
                     fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
                 }
-                target = path_1.default.resolve(workingPath, "".concat(name, ".md"));
+                target = path_1.default.resolve(workingPath, "".concat(name, ".").concat(type));
                 if (fs_extra_1.default.existsSync(target)) {
                     if (!handoff.force) {
                         console.log(chalk_1.default.yellow("'".concat(name, "' already exists as custom page.  Use the --force flag revert it to default.")));
                         return [2 /*return*/];
                     }
                 }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'page.md'));
+                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', "page.".concat(type)));
                 if (fs_extra_1.default.existsSync(sourcePath)) {
                     templatePath = sourcePath;
                 }
                 template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
                 fs_extra_1.default.writeFileSync(target, template);
-                console.log(chalk_1.default.green("New template ".concat(name, ".md was created in ").concat(workingPath)));
+                console.log(chalk_1.default.green("New template ".concat(name, ".").concat(type, " was created in ").concat(workingPath)));
                 return [2 /*return*/, handoff];
         }
     });

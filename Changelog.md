@@ -10,8 +10,9 @@ and this project adheres to
 
 This release enables creation of complex documentation pages, with storybook
 compatible formats. It has two main features - MDX support for adding react
-components to your documentation pages, and Snippet Previews - a system for using
-Handoff's existing html build process to create complex component previews.
+components to your documentation pages, and Snippet Previews - a system for 
+using Handoff's existing html build process to create complex component 
+previews.
 
 ### Features
 - **MDX Support** Support for MDX files in Handoff Documentation App

@@ -99,6 +99,7 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
  */
 export const makePage = async (handoff: Handoff, name: string, parent: string | undefined) => {
   const config = await handoff.config;
+  let type = 'mdx';
   if (!name) {
     console.log(chalk.red(`Page name must be set`));
     return;
@@ -108,37 +109,42 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
     return;
   }
 
+  const checkType = await prompt(chalk.green(`By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `));
+  if (checkType === 'markdown') {
+    type = 'md';
+  }
   let workingPath, sourcePath, templatePath;
   if (parent) {
     if (!/^[a-z0-9]+$/i.test(parent)) {
       console.log(chalk.red(`Parent name must be alphanumeric and may contain dashes or underscores`));
       return;
     }
-    workingPath = path.resolve(path.join(handoff.workingPath, `docs`, parent));
-    sourcePath = path.resolve(path.join(handoff.modulePath, `config/docs`, parent, `${name}.md`));
+    workingPath = path.resolve(path.join(handoff.workingPath, `pages`, parent));
+    sourcePath = path.resolve(path.join(handoff.modulePath, `config/docs`, parent, `${name}.${type}`));
   } else {
-    workingPath = path.resolve(path.join(handoff.workingPath, `docs`));
-    sourcePath = path.resolve(path.join(handoff.modulePath, `config/docs`, `${name}.md`));
+    workingPath = path.resolve(path.join(handoff.workingPath, `pages`));
+    sourcePath = path.resolve(path.join(handoff.modulePath, `config/docs`, `${name}.${type}`));
   }
 
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }
 
-  const target = path.resolve(workingPath, `${name}.md`);
+  const target = path.resolve(workingPath, `${name}.${type}`);
   if (fs.existsSync(target)) {
     if (!handoff.force) {
       console.log(chalk.yellow(`'${name}' already exists as custom page.  Use the --force flag revert it to default.`));
       return;
     }
   }
-  templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'page.md'));
+
+  templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', `page.${type}`));
   if (fs.existsSync(sourcePath)) {
     templatePath = sourcePath;
   }
   const template = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(target, template);
-  console.log(chalk.green(`New template ${name}.md was created in ${workingPath}`));
+  console.log(chalk.green(`New template ${name}.${type} was created in ${workingPath}`));
   return handoff;
 };
 
