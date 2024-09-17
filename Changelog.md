@@ -6,11 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2024-09-17
+
+This release fixes a couple of small path issues that affect running 0.13.0 from the global path.
+
+[Bugfix]
+
+    Fix a path issue in the ComponentDesignTokens component that causes an error when run from the global namespace
+    Prevents typescript compile errors with the react-scroll <Link> component
+
 ## [0.13.0] - 2024-09-08
 
 ### Changes
 
 - **Integration System Overhaul**
+
   - **Local Integrations Only:** From this release onward, only local (ejected) integrations are supported. Handoff will automatically use the locally found integration.
     - Create a new local integration using `handoff-app make:integration` (or `eject:integration` which is still supported as an alias).
     - Since there is no need to specify integration information, integration options in `handoff.config.json` such as name and version are no longer recognized, making the integration section of `handoff.config.json` obsolete.
@@ -40,11 +50,11 @@ and this project adheres to
 - **For Projects with Legacy Schemas:**
   1. Eject legacy schemas using `handoff-app eject:exportables`.
   2. If schemas are already ejected:
-    - Verify that transformer options are in `integration.config.json`.
-    - Verify that demo options are in `view.config.json` files of respective components.
-    - Temporarily rename the directory containing legacy schemas.
-    - Re-eject schemas and move custom schemas into the new exportables.
-    - Optionally, update custom schemas to remove obsolete options.
+  - Verify that transformer options are in `integration.config.json`.
+  - Verify that demo options are in `view.config.json` files of respective components.
+  - Temporarily rename the directory containing legacy schemas.
+  - Re-eject schemas and move custom schemas into the new exportables.
+  - Optionally, update custom schemas to remove obsolete options.
 - **For Projects with `handoff.config.json`:**
   1. Merge options from `figma.options` to the `integration.config.json` file as necessary.
   2. Optionally remove deprecated sections: `figma.options`, `figma.definitions`, `figma`, `integration`, and `use_legacy_definitions`.
@@ -53,122 +63,122 @@ and this project adheres to
 
 ### Changes
 
-* Integration bundle used for the docs app is no longer being built during `fetch` and `build:integration` steps.
+- Integration bundle used for the docs app is no longer being built during `fetch` and `build:integration` steps.
 
 ## [0.12.1] - 2024-06-18
 
 ### Changes
 
-* Added support for the `cssRootClass` property in the Handoff Figma plugin metadata.
+- Added support for the `cssRootClass` property in the Handoff Figma plugin metadata.
 
 ### Improvements
 
-* Enhanced handling of unnamed parts, resolving visibility issues in the documentation previews.
+- Enhanced handling of unnamed parts, resolving visibility issues in the documentation previews.
 
 ## [0.12.0] - 2024-06-11
 
 ### Changes
 
-* All environment variables now contain the `HANDOFF_` prefix.
-  * After updating to version 0.12.0, all environment variables need to be updated to reflect the new variable names:
-    * `FIGMA_BASE_URL` -> `HANDOFF_FIGMA_BASE_URL`
-    * `DEV_ACCESS_TOKEN` -> `HANDOFF_DEV_ACCESS_TOKEN`
-    * `FIGMA_PROJECT_ID` -> `HANDOFF_FIGMA_PROJECT_ID`
-    * `OUTPUT_DIR` -> `HANDOFF_OUTPUT_DIR`
-    * `SITES_DIR` -> `HANDOFF_SITES_DIR`
-    * `USE_HANDOFF_PLUGIN` -> `HANDOFF_USE_HANDOFF_PLUGIN`
-    * `CREATE_ASSETS_ZIP_FILES` -> `HANDOFF_CREATE_ASSETS_ZIP_FILES`
-* The default integration is no longer pre-defined.
-  * Bootstrap 5.3 is no longer set as the default integration.
-  * To continue using the Bootstrap 5.3 integration in your project, ensure the configuration is ejected (`handoff-app eject:config`) and update it by setting the `integration` property to `{name: 'bootstrap', version: '5.3'}`.
-* All default options specified in the configuration that are used by the exporter and transformer have been removed.
-  * To continue using the defaults present before the 0.12.0 release, ensure the configuration is ejected (`handoff-app eject:config`) and update the `figma.options` property to the [previous default value](https://github.com/Convertiv/handoff-app/blob/2a396145e7366732ae6a0e15cdf2226641d40a12/src/config.ts#L36-L59).
-* The logo placeholder copy showing spacing and orientation has been removed allowing users to add custom content via Markdown.
+- All environment variables now contain the `HANDOFF_` prefix.
+  - After updating to version 0.12.0, all environment variables need to be updated to reflect the new variable names:
+    - `FIGMA_BASE_URL` -> `HANDOFF_FIGMA_BASE_URL`
+    - `DEV_ACCESS_TOKEN` -> `HANDOFF_DEV_ACCESS_TOKEN`
+    - `FIGMA_PROJECT_ID` -> `HANDOFF_FIGMA_PROJECT_ID`
+    - `OUTPUT_DIR` -> `HANDOFF_OUTPUT_DIR`
+    - `SITES_DIR` -> `HANDOFF_SITES_DIR`
+    - `USE_HANDOFF_PLUGIN` -> `HANDOFF_USE_HANDOFF_PLUGIN`
+    - `CREATE_ASSETS_ZIP_FILES` -> `HANDOFF_CREATE_ASSETS_ZIP_FILES`
+- The default integration is no longer pre-defined.
+  - Bootstrap 5.3 is no longer set as the default integration.
+  - To continue using the Bootstrap 5.3 integration in your project, ensure the configuration is ejected (`handoff-app eject:config`) and update it by setting the `integration` property to `{name: 'bootstrap', version: '5.3'}`.
+- All default options specified in the configuration that are used by the exporter and transformer have been removed.
+  - To continue using the defaults present before the 0.12.0 release, ensure the configuration is ejected (`handoff-app eject:config`) and update the `figma.options` property to the [previous default value](https://github.com/Convertiv/handoff-app/blob/2a396145e7366732ae6a0e15cdf2226641d40a12/src/config.ts#L36-L59).
+- The logo placeholder copy showing spacing and orientation has been removed allowing users to add custom content via Markdown.
 
 ### Improvements
 
-* Handoff now appends to existing `.env` files instead of overriding them if the file already exists.
-* Introduced normalization of numeric values in `.css` and `.scss` files, along with correct indentations. This ensures that the generated files are valid for any local linting tools your project might use.
-* Configuration ejected by the `handoff-app eject:integration` command is now the same as the one ejected by the `handoff-app eject:config` command.
-* Handoff no longer uses the `iframe-resizer` package.
-* Resolved potential security issues by updating to newer versions of the `axios` and `next` packages.
+- Handoff now appends to existing `.env` files instead of overriding them if the file already exists.
+- Introduced normalization of numeric values in `.css` and `.scss` files, along with correct indentations. This ensures that the generated files are valid for any local linting tools your project might use.
+- Configuration ejected by the `handoff-app eject:integration` command is now the same as the one ejected by the `handoff-app eject:config` command.
+- Handoff no longer uses the `iframe-resizer` package.
+- Resolved potential security issues by updating to newer versions of the `axios` and `next` packages.
 
 ## [0.11.0] - 2024-05-23
 
 ### Bugfixes
 
-* Issue that was causing the `handoff-app start` command to malfunction has been fixed.
-* The `Reference error: name is not defined` issue that occurred when a component specified in the schema was missing from the Figma file has been resolved. The `name` reference has been replaced with a correct identifier.
-* Icon sizes have been corrected.
+- Issue that was causing the `handoff-app start` command to malfunction has been fixed.
+- The `Reference error: name is not defined` issue that occurred when a component specified in the schema was missing from the Figma file has been resolved. The `name` reference has been replaced with a correct identifier.
+- Icon sizes have been corrected.
 
 ### Changes
 
-* **Integration with Handoff Figma Plugin**: This release now seamlessly integrates with the Handoff Figma Plugin by default.
-  * As a result, the local schema will not be used by default.
-  * If you prefer to continue using local schemas, set `USE_HANDOFF_PLUGIN="FALSE"` in your `.env` file.
-* Internal module working directory has been relocated from `./src` to `./.handoff`
+- **Integration with Handoff Figma Plugin**: This release now seamlessly integrates with the Handoff Figma Plugin by default.
+  - As a result, the local schema will not be used by default.
+  - If you prefer to continue using local schemas, set `USE_HANDOFF_PLUGIN="FALSE"` in your `.env` file.
+- Internal module working directory has been relocated from `./src` to `./.handoff`
 
 ## [0.10.0] - 2024-01-16
 
 ### Improvements
 
-* Docs App:
-  * Updated docs app to present components without associated content and assets more elegantly.
-  * Improved the component pages by showing only the "Tokens" tab when no previews are detected; the "Overview" tab is hidden in such cases.
-* Configuration Handling:
-  * Eliminated the need for `handoff.state.json` file.
-  * All required parameters are now passed to the docs app through environment variables (`process.env`), defined in the project's respective `next.config.js` file.
-  * Replaced `getConfig` with the more secure `getClientConfig` function.
-  * New function returns only configurations that can be safely exposed on the client side.
+- Docs App:
+  - Updated docs app to present components without associated content and assets more elegantly.
+  - Improved the component pages by showing only the "Tokens" tab when no previews are detected; the "Overview" tab is hidden in such cases.
+- Configuration Handling:
+  - Eliminated the need for `handoff.state.json` file.
+  - All required parameters are now passed to the docs app through environment variables (`process.env`), defined in the project's respective `next.config.js` file.
+  - Replaced `getConfig` with the more secure `getClientConfig` function.
+  - New function returns only configurations that can be safely exposed on the client side.
 
 ### Changes
 
-* Handoff Figma Plugin Support:
-  * Introduced initial support for the Handoff Figma Plugin.
-  * Currently an opt-in feature as development is ongoing.
-  * Can be enabled by setting `USE_HANDOFF_PLUGIN="TRUE"` in your `.env` file.
-  * This functionality allows Handoff to extract metadata directly from the Figma file. Local JSON definitions are completely ignored in this case.
-  * Will become the default behavior in the 1.0.0 release!
-* Deprecation Notice:
-  * Deprecated local exportable component JSON definitions.
-  * Still usable, but will be completely removed and ignored before the 1.0.0 release.
-  * Components, parts, and related definitions should be defined with the Handoff Figma Plugin prior to the 1.0.0 release.
+- Handoff Figma Plugin Support:
+  - Introduced initial support for the Handoff Figma Plugin.
+  - Currently an opt-in feature as development is ongoing.
+  - Can be enabled by setting `USE_HANDOFF_PLUGIN="TRUE"` in your `.env` file.
+  - This functionality allows Handoff to extract metadata directly from the Figma file. Local JSON definitions are completely ignored in this case.
+  - Will become the default behavior in the 1.0.0 release!
+- Deprecation Notice:
+  - Deprecated local exportable component JSON definitions.
+  - Still usable, but will be completely removed and ignored before the 1.0.0 release.
+  - Components, parts, and related definitions should be defined with the Handoff Figma Plugin prior to the 1.0.0 release.
 
 ## [0.9.3] - 2023-11-23
 
 ### Improvements
 
-* It's now possible to declare conditions for exportable component parts. Condition dictates should the part be built based on provided condition (e.g. does a specific variant property have a certain value etc.).
-* Handoff will now process all component sets found within the frame in which the component set that matches the search is found. Previously it was limited to process only one (first) extra component set while others were ignored.
+- It's now possible to declare conditions for exportable component parts. Condition dictates should the part be built based on provided condition (e.g. does a specific variant property have a certain value etc.).
+- Handoff will now process all component sets found within the frame in which the component set that matches the search is found. Previously it was limited to process only one (first) extra component set while others were ignored.
 
 ### Changes
 
-* Component preview title will no longer default to the value of the first variant property if no distinctive value is found. Empty value is now used instead.
+- Component preview title will no longer default to the value of the first variant property if no distinctive value is found. Empty value is now used instead.
 
 ### Bugfixes
 
-* Update of the app source will now update the watched app without having to restart the watch process (issue introduced in version 0.9.0).
-
+- Update of the app source will now update the watched app without having to restart the watch process (issue introduced in version 0.9.0).
 
 ## [0.9.2] - 2023-11-21
 
 ### Improvements
 
-* Handoff now supports both **personal access** and **OAuth2 bearer** tokens. If Handoff detects that a access token used starts with "Bearer " it will use the `Authorization` header to send the token as part of any Figma API request. In any other case, `X-Figma-Token` header will be used.
+- Handoff now supports both **personal access** and **OAuth2 bearer** tokens. If Handoff detects that a access token used starts with "Bearer " it will use the `Authorization` header to send the token as part of any Figma API request. In any other case, `X-Figma-Token` header will be used.
 
 ## [0.9.1] - 2023-11-14
 
 ### Changes
 
-* Footer component has been brought back into the app and is now visible on all pages.
-* Introduced token maps export feature which exports generated tokens alongside their respective values in form in JSON files (key/value object). Tokens for individual components/foundations are exported into the `tokens/maps` directory of the designated export directory as individual files while the `tokens-map` file, which contains all available tokens, gets exported into the designated export directory root.
+- Footer component has been brought back into the app and is now visible on all pages.
+- Introduced token maps export feature which exports generated tokens alongside their respective values in form in JSON files (key/value object). Tokens for individual components/foundations are exported into the `tokens/maps` directory of the designated export directory as individual files while the `tokens-map` file, which contains all available tokens, gets exported into the designated export directory root.
 
 ### Improvements
-* Added additional logging into the app's `next.config.js` file alongside improved path resolving for custom themes.
+
+- Added additional logging into the app's `next.config.js` file alongside improved path resolving for custom themes.
 
 ### Maintenance
 
-* Updated the `.npmignore` file to reflect latest `.gitignore` changes made in the last release.
+- Updated the `.npmignore` file to reflect latest `.gitignore` changes made in the last release.
 
 ## [0.9.0] - 2023-11-10
 
@@ -176,27 +186,27 @@ This release focuses heavily on better support for environments on which multipl
 
 ### Changes
 
-* Handoff exports and builds are now updated to support export and build of multiple projects. Each respective output is now located in the subdirectory that matches the exported project id (e.g. /exports/{figmaProjectId}). This change prevents issues where one project would override handoff output of another project in environments where multiple Figma projects are being handled.
-* Due to the change in the output directory structure, Bootstrap integration has been updated with a @exported alias which is set to point to export directory of the current project for which the integration is being built.
-* Alongside existing support for customized app assets via the `public` directory, it’s now also possible to create a `public-{figmaProjectId}` directory which gets used only when the project with the respective Figma project id is being built. If the `public` directory is used, assets located in that directory will be applied to all projects.
-* Handoff state file now always includes the Figma project id.
-* Initial anonymization of the config file that gets loaded into the app to prevent secrets from being exposed on the client side.
-* Improvements to path resolving for custom app theme(s).
-* Restructure and improvements of the configuration:
-    * `poweredBy` option is now called `attribution` and has been moved into `app` config key.
-    * `next_base_path` option is now called `base_path` and has been moved into the `app` config key.
-    * Following options have also been moved into the `app` config key: `theme`, `title`, `client`, `google_tag_manager`, `type_copy`, `type_sort`, `color_sort`, `component_sort`
-    * `logo` and `favicon` options have been removed (it’s still possible to use custom assets but their name must match the default names).
-* Misc.
+- Handoff exports and builds are now updated to support export and build of multiple projects. Each respective output is now located in the subdirectory that matches the exported project id (e.g. /exports/{figmaProjectId}). This change prevents issues where one project would override handoff output of another project in environments where multiple Figma projects are being handled.
+- Due to the change in the output directory structure, Bootstrap integration has been updated with a @exported alias which is set to point to export directory of the current project for which the integration is being built.
+- Alongside existing support for customized app assets via the `public` directory, it’s now also possible to create a `public-{figmaProjectId}` directory which gets used only when the project with the respective Figma project id is being built. If the `public` directory is used, assets located in that directory will be applied to all projects.
+- Handoff state file now always includes the Figma project id.
+- Initial anonymization of the config file that gets loaded into the app to prevent secrets from being exposed on the client side.
+- Improvements to path resolving for custom app theme(s).
+- Restructure and improvements of the configuration:
+  - `poweredBy` option is now called `attribution` and has been moved into `app` config key.
+  - `next_base_path` option is now called `base_path` and has been moved into the `app` config key.
+  - Following options have also been moved into the `app` config key: `theme`, `title`, `client`, `google_tag_manager`, `type_copy`, `type_sort`, `color_sort`, `component_sort`
+  - `logo` and `favicon` options have been removed (it’s still possible to use custom assets but their name must match the default names).
+- Misc.
 
 ### Bugfixes
 
-* Resolved the wrong favicon path issue when app base path was set/used.
+- Resolved the wrong favicon path issue when app base path was set/used.
 
 ### Migrate to a New Version
 
-* Due to the restructure of the configuration, any local configuration (if exists) needs to be updated to match the new structure. Recommended way is to create a backup of the current local configuration(s) and to re-eject of the handoff configuration. Use the backup of the local configuration to update the up-to-date configuration ejected earlier. This process will ensure all the configuration options are defined correctly.
-* Since the export and app output directory structures have been updated, any custom script that relies on the old output path(s) should be updated to support new structure that includes the project id subdirectory.
+- Due to the restructure of the configuration, any local configuration (if exists) needs to be updated to match the new structure. Recommended way is to create a backup of the current local configuration(s) and to re-eject of the handoff configuration. Use the backup of the local configuration to update the up-to-date configuration ejected earlier. This process will ensure all the configuration options are defined correctly.
+- Since the export and app output directory structures have been updated, any custom script that relies on the old output path(s) should be updated to support new structure that includes the project id subdirectory.
 
 ## [0.8.8] - 2023-10-19
 
