@@ -133,7 +133,9 @@ const buildIntegration = async (
   rootPath ??= sourcePath;
 
   const items = await fs.readdir(sourcePath);
+
   const components = Object.keys(documentationObject.components);
+  const componentsWithInstances = components.filter((component) => documentationObject.components[component].instances.length > 0);
 
   for (const item of items) {
     const sourceItemPath = path.join(sourcePath, item);
@@ -159,7 +161,7 @@ const buildIntegration = async (
       // Ensure the directory exists before writing the file
       await fs.ensureDir(path.dirname(destItemPath));
       // Write the rendered content to the destination path
-      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
+      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, componentsWithInstances, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
     }
   }
 };
