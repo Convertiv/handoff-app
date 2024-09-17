@@ -10,10 +10,10 @@ and this project adheres to
 
 This release fixes a couple of small path issues that affect running 0.13.0 from the global path.
 
-[Bugfix]
+### Bugfixes
 
-    Fix a path issue in the ComponentDesignTokens component that causes an error when run from the global namespace
-    Prevents typescript compile errors with the react-scroll <Link> component
+- Fix a path issue in the ComponentDesignTokens component that causes an error when run from the global namespace
+- Prevents typescript compile errors with the react-scroll `<Link>` component
 
 ## [0.13.0] - 2024-09-08
 
