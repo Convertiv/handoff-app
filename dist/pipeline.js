@@ -88,6 +88,7 @@ var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
 var index_5 = __importDefault(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
+var _1 = require(".");
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
@@ -433,7 +434,7 @@ var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, 
                     var match;
                     var regex = new RegExp(TOKEN_REGEX, 'g');
                     var _loop_1 = function () {
-                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
+                        var _2 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
                         var componentRecord = records.components.find(function (c) { return c.name === component; });
                         if (!componentRecord) {
                             componentRecord = { name: component, common: { parts: [] }, recipes: [] };
@@ -534,6 +535,8 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
             case 1:
                 documentationObject = _a.sent();
                 if (!documentationObject) return [3 /*break*/, 4];
+                // Ensure that the integration object is set if possible
+                handoff.integrationObject = (0, _1.initIntegrationObject)(handoff.workingPath);
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 2:
                 _a.sent();

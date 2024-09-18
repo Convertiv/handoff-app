@@ -11,15 +11,25 @@ export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, children }) =>
 
   useEffect(() => {
     setOffset(document.getElementById('site-header')?.clientHeight ?? 0);
-  }, [])
+  }, []);
 
   return (
-    // @ts-ignore
-    <Link href="#" activeClass='is-selected' smooth spy to={to} offset={offset * -1.5} onClick={() => {
-      history.pushState ? history.pushState(null, '', `#${to}`) : location.hash = `#${to}`;
-    }}>
-      {children}
-    </Link>
+    <>
+      {/* @ts-ignore */}
+      <Link
+        href="#"
+        activeClass="is-selected"
+        smooth
+        spy
+        to={to}
+        offset={offset * -1.5}
+        onClick={() => {
+          history.pushState ? history.pushState(null, '', `#${to}`) : (location.hash = `#${to}`);
+        }}
+      >
+        {children}
+      </Link>
+    </>
   );
 };
 
