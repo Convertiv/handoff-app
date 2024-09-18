@@ -148,8 +148,10 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                // If we are building the app, ensure the integration is built first
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
             case 1:
+                // If we are building the app, ensure the integration is built first
                 _a.sent();
                 // Build client preview styles
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)

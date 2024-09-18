@@ -95,9 +95,11 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
     const compile = webpack(config);
     compile.run((err, stats) => {
       if (err) {
-        let error = 'Errors encountered trying to build preview styles.\n';
+        let error = chalk.red('Errors encountered trying to build preview styles.') + '\n  The integration sass expects a token that isn\'t found in your Figma component.\n';
         if (handoff.debug) {
-          error += err.stack || err;
+          error += chalk.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + err.stack || err;
+        }else{
+          error += 'Add the --debug flag to see the full error trace\n\n';
         }
         return reject(error);
       }
@@ -105,9 +107,11 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map((err) => err.message);
-          let error = 'Errors encountered trying to build preview styles.\n';
+          let error = chalk.red('Errors encountered trying to build preview styles.') + '\nThe integration sass expects a token that isn\'t found in your Figma component.\n';
           if (handoff.debug) {
-            error += buildErrors;
+            error += chalk.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + buildErrors;
+          }else{
+            error += 'Add the --debug flag to see the full error trace\n\n';
           }
           return reject(error);
         }
