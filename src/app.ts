@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
 import { buildClientFiles } from './utils/preview';
+import { buildIntegrationOnly } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -79,6 +80,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // If we are building the app, ensure the integration is built first
+  await buildIntegrationOnly(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)

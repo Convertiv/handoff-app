@@ -19,7 +19,7 @@ import integrationTransformer, { getPathToIntegration } from './transformers/int
 import fontTransformer from './transformers/font/index';
 import previewTransformer from './transformers/preview/index';
 import buildApp from './app';
-import Handoff from '.';
+import Handoff, { initIntegrationObject } from '.';
 import sdTransformer from './transformers/sd';
 import mapTransformer from './transformers/map';
 import { merge } from 'lodash';
@@ -429,6 +429,8 @@ export const buildRecipe = async (handoff: Handoff) => {
 export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
+    // Ensure that the integration object is set if possible
+    handoff.integrationObject = initIntegrationObject(handoff.workingPath);
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
   }
