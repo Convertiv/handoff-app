@@ -48,13 +48,13 @@ export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: bool
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
+  if (!handoff.force) {
+    const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
 
-  const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-
-  if (fs.existsSync(integrationPath)) {
-    return integrationPath;
+    if (fs.existsSync(integrationPath)) {
+      return integrationPath;
+    }
   }
-
   if (resolveTemplatePath) {
     return path.resolve(path.join(handoff.modulePath, 'config', 'templates', 'integration'));
   }
@@ -161,7 +161,16 @@ const buildIntegration = async (
       // Ensure the directory exists before writing the file
       await fs.ensureDir(path.dirname(destItemPath));
       // Write the rendered content to the destination path
-      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, componentsWithInstances, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
+      await fs.writeFile(
+        destItemPath,
+        replaceHandoffImportTokens(
+          renderedContent,
+          componentsWithInstances,
+          path.parse(destItemPath).dir,
+          rootPath,
+          rootReturnPath ?? '../'
+        )
+      );
     }
   }
 };
@@ -335,7 +344,13 @@ interface IntegrationTemplateContext {
   documentationObject: DocumentationObject;
 }
 
-const replaceHandoffImportTokens = (content: string, components: string[], currentPath: string, rootPath: string, rootReturnPath: string) => {
+const replaceHandoffImportTokens = (
+  content: string,
+  components: string[],
+  currentPath: string,
+  rootPath: string,
+  rootReturnPath: string
+) => {
   getHandoffImportTokens(components, currentPath, rootPath, rootReturnPath).forEach(([token, imports]) => {
     content = content.replaceAll(`//<#${token}#>`, imports.map((path) => `@import '${path}';`).join(`\r\n`));
   });

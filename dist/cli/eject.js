@@ -84,7 +84,9 @@ var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void
                     }
                 }
                 integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
-                fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
+                fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
+                if (handoff.force)
+                    handoff.force = false;
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
             case 1:
                 _a.sent();

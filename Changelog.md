@@ -26,6 +26,8 @@ before building or serving the app
 the error messages were not clear, and didn't explain that you could use `--debug`
 to make them more clear. The error message has been improved and now alerts
 users to the `--debug` flag to help them debug their integration.
+- When ejecting an integration with the `--force` flag, the force now triggers
+an overwrite rather than failing.
 
 ## [0.13.1] - 2024-09-17
 
