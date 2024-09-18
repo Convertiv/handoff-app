@@ -86,9 +86,11 @@ var getPathToIntegration = function (handoff, resolveTemplatePath) {
     if (!handoff) {
         throw Error('Handoff not initialized');
     }
-    var integrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-    if (fs_extra_1.default.existsSync(integrationPath)) {
-        return integrationPath;
+    if (!handoff.force) {
+        var integrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+        if (fs_extra_1.default.existsSync(integrationPath)) {
+            return integrationPath;
+        }
     }
     if (resolveTemplatePath) {
         return path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'templates', 'integration'));
@@ -184,7 +186,7 @@ var zipTokens = function (dirPath, destination) { return __awaiter(void 0, void 
 }); };
 exports.zipTokens = zipTokens;
 var buildIntegration = function (sourcePath, destPath, documentationObject, rootPath, rootReturnPath) { return __awaiter(void 0, void 0, void 0, function () {
-    var items, components, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
+    var items, components, componentsWithInstances, _i, items_1, item, sourceItemPath, destItemPath, stat, content, template, renderedContent;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -193,6 +195,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
             case 1:
                 items = _a.sent();
                 components = Object.keys(documentationObject.components);
+                componentsWithInstances = components.filter(function (component) { return documentationObject.components[component].instances.length > 0; });
                 _i = 0, items_1 = items;
                 _a.label = 2;
             case 2:
@@ -229,7 +232,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
                 // Ensure the directory exists before writing the file
                 _a.sent();
                 // Write the rendered content to the destination path
-                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path_1.default.parse(destItemPath).dir, rootPath, rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../'))];
+                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, componentsWithInstances, path_1.default.parse(destItemPath).dir, rootPath, rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../'))];
             case 9:
                 // Write the rendered content to the destination path
                 _a.sent();

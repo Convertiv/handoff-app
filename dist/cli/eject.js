@@ -45,6 +45,7 @@ var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
 var integration_1 = require("../transformers/integration");
 var config_1 = require("../config");
+var pipeline_1 = require("../pipeline");
 /**
  * Eject the config to the working directory
  * @param handoff
@@ -72,18 +73,26 @@ exports.ejectConfig = ejectConfig;
 var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var config, workingPath, integrationPath;
     return __generator(this, function (_a) {
-        config = handoff.config;
-        workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-        if (fs_extra_1.default.existsSync(workingPath)) {
-            if (!handoff.force) {
-                console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
-                return [2 /*return*/];
-            }
+        switch (_a.label) {
+            case 0:
+                config = handoff.config;
+                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+                if (fs_extra_1.default.existsSync(workingPath)) {
+                    if (!handoff.force) {
+                        console.log(chalk_1.default.red("An integration already exists in the working directory. Use the --force flag to overwrite."));
+                        return [2 /*return*/];
+                    }
+                }
+                integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
+                fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
+                if (handoff.force)
+                    handoff.force = false;
+                return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
+            case 1:
+                _a.sent();
+                console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
+                return [2 /*return*/, handoff];
         }
-        integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
-        fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
-        console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
-        return [2 /*return*/, handoff];
     });
 }); };
 exports.makeIntegration = makeIntegration;

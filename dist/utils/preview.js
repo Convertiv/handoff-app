@@ -137,18 +137,24 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {
-                        var error = 'Errors encountered trying to build preview styles.\n';
+                        var error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\n  The integration sass expects a token that isn\'t found in your Figma component.\n';
                         if (handoff.debug) {
-                            error += err.stack || err;
+                            error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + err.stack || err;
+                        }
+                        else {
+                            error += 'Add the --debug flag to see the full error trace\n\n';
                         }
                         return reject(error);
                     }
                     if (stats) {
                         if (stats.hasErrors()) {
                             var buildErrors = (_a = stats.compilation.errors) === null || _a === void 0 ? void 0 : _a.map(function (err) { return err.message; });
-                            var error = 'Errors encountered trying to build preview styles.\n';
+                            var error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\nThe integration sass expects a token that isn\'t found in your Figma component.\n';
                             if (handoff.debug) {
-                                error += buildErrors;
+                                error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + buildErrors;
+                            }
+                            else {
+                                error += 'Add the --debug flag to see the full error trace\n\n';
                             }
                             return reject(error);
                         }
