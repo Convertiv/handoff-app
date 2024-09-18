@@ -7,27 +7,15 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.13.2] - 2024-09-18
+
 This release addresses several developer experience issues
 
 ### Bugfixes
-- When an integration compiles SASS code, the token injection was injecting 
-components that had no instances in Figma. This causes integrations to fail if
-the designer had published a component, but not annotated them in Figma with the
-plugin. This release checks to see if the component has any instances in the 
-Figma export and skips injection for components that are not yet annotated in
-Figma
-- When running `eject:integration` or `make:integration` the default integration
-is exported, but it is not built.  This causes a weird developer experience
-if you try to `build:app` without `build:integration` first.  This patch adds
-the `build:integration` logic to execute after `eject` or `make` as well as before
-`build:app` to ensure that if an integration exists, the integration is built
-before building or serving the app
-- If an an `build:app` fails while building the integration preview sass code
-the error messages were not clear, and didn't explain that you could use `--debug`
-to make them more clear. The error message has been improved and now alerts
-users to the `--debug` flag to help them debug their integration.
-- When ejecting an integration with the `--force` flag, the force now triggers
-an overwrite rather than failing.
+
+- When an integration compiles SASS code, the token injection was injecting components that had no instances in Figma. This causes integrations to fail if the designer had published a component, but not annotated them in Figma with the plugin. This release checks to see if the component has any instances in the Figma export and skips injection for components that are not yet annotated in Figma
+- When running `eject:integration` or `make:integration` the default integration is exported, but it is not built. This causes a weird developer experience if you try to `build:app` without `build:integration` first. This patch adds the `build:integration` logic to execute after `eject` or `make` as well as before `build:app` to ensure that if an integration exists, the integration is built before building or serving the app
+- If an an `build:app` fails while building the integration preview sass code the error messages were not clear, and didn't explain that you could use `--debug` to make them more clear. The error message has been improved and now alerts users to the `--debug` flag to help them debug their integration.
+- When ejecting an integration with the `--force` flag, the force now triggers an overwrite rather than failing.
 
 ## [0.13.1] - 2024-09-17
 
