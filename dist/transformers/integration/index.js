@@ -196,7 +196,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
                 _i = 0, items_1 = items;
                 _a.label = 2;
             case 2:
-                if (!(_i < items_1.length)) return [3 /*break*/, 11];
+                if (!(_i < items_1.length)) return [3 /*break*/, 14];
                 item = items_1[_i];
                 sourceItemPath = path_1.default.join(sourcePath, item);
                 destItemPath = path_1.default.join(destPath, item);
@@ -214,8 +214,10 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
             case 5:
                 // Recursively process the directory
                 _a.sent();
-                return [3 /*break*/, 10];
-            case 6: return [4 /*yield*/, loadTemplateContent(sourceItemPath)];
+                return [3 /*break*/, 13];
+            case 6:
+                if (!['scss', 'css', 'json'].includes(sourceItemPath.split('.').at(-1))) return [3 /*break*/, 10];
+                return [4 /*yield*/, loadTemplateContent(sourceItemPath)];
             case 7:
                 content = _a.sent();
                 template = handlebars_1.default.compile(content);
@@ -233,11 +235,23 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
             case 9:
                 // Write the rendered content to the destination path
                 _a.sent();
-                _a.label = 10;
-            case 10:
+                return [3 /*break*/, 13];
+            case 10: 
+            // Ensure the directory exists before writing the file
+            return [4 /*yield*/, fs_extra_1.default.ensureDir(path_1.default.dirname(destItemPath))];
+            case 11:
+                // Ensure the directory exists before writing the file
+                _a.sent();
+                // Copy file
+                return [4 /*yield*/, fs_extra_1.default.copyFile(sourceItemPath, destItemPath)];
+            case 12:
+                // Copy file
+                _a.sent();
+                _a.label = 13;
+            case 13:
                 _i++;
                 return [3 /*break*/, 2];
-            case 11: return [2 /*return*/];
+            case 14: return [2 /*return*/];
         }
     });
 }); };
