@@ -10,7 +10,7 @@ import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
 import pipeline, { buildIntegrationOnly, buildRecipe } from './pipeline';
 import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeTemplate } from './cli/make';
+import { makeExportable, makePage, makeSnippet, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
@@ -152,6 +152,12 @@ class Handoff {
   async makePage(name: string, parent: string): Promise<Handoff> {
     if (this.config) {
       await makePage(this, name, parent);
+    }
+    return this;
+  }
+  async makeSnippet(name: string): Promise<Handoff> {
+    if (this.config) {
+      await makeSnippet(this, name);
     }
     return this;
   }

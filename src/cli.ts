@@ -31,6 +31,7 @@ Commands:
     make:template <component> <state> [opts] - Creates a new template
     make:page <name> <parent> [opts] - Creates a new custom page
     make:integration - Creates a new integration based on the provided Bootstrap 5.3 template
+    make:snippet - <name> Creates a new html code snippet that you can embed in your documentation
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
@@ -57,7 +58,7 @@ const showHelp = () => {
  * Show the help message
  */
 const showVersion = () => {
-  cliError('Handoff App - 0.13.2', 2);
+  cliError('Handoff App - 0.14.0', 2);
 };
 
 /**
@@ -160,7 +161,8 @@ Eject must have a subcommand. Did you mean:
     - make:template
     - make:exportable
     - make:page
-    - make:integration`,
+    - make:integration
+    - make:snippet`,
             2
           );
           break;
@@ -203,6 +205,15 @@ Eject must have a subcommand. Did you mean:
           cliError(`Page parent must be alphanumeric and may contain dashes or underscores`, 2);
         }
         return handoff.makePage(pageName, pageParent);
+      case 'make:snippet':
+        const snippetName = args._[1];
+        if (!snippetName) {
+          cliError(`You must supply a snippet name`, 2);
+        }
+        if (!/^[a-z0-9]+$/i.test(snippetName)) {
+          cliError(`Snippet name must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        return handoff.makeSnippet(snippetName);
       case 'make:integration':
         return handoff.makeIntegration();
       default:
