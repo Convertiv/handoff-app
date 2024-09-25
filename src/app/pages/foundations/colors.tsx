@@ -35,7 +35,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-const ColorsPage = ({ content, menu, metadata, current, scss, css, styleDictionary, types, design, config }: util.FoundationDocumentationProps) => {
+const ColorsPage = ({
+  content,
+  menu,
+  metadata,
+  current,
+  scss,
+  css,
+  styleDictionary,
+  types,
+  design,
+  config,
+}: util.FoundationDocumentationProps) => {
   const colorGroups = Object.fromEntries(
     Object.entries(groupBy(design.color, 'group'))
       .map(([groupKey, colors]) => {
@@ -120,10 +131,11 @@ const ColorsPage = ({ content, menu, metadata, current, scss, css, styleDictiona
             </div>
           </div>
         </div>
+
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
       </section>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
       <Footer config={config} />
     </div>
   );

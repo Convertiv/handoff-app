@@ -7,6 +7,11 @@ import { ComponentInstance } from '../../exporters/components/types';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
 import Handoff from '../../index';
+import path from 'path';
+import fs from 'fs-extra';
+import sass from 'sass';
+import { bundleJSWebpack } from '../../utils/preview';
+import chalk from 'chalk';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -82,6 +87,141 @@ const transformComponentTokens = async (
     code: bodyEl ? bodyEl.innerHTML.trim() : preview,
   };
 };
+/**
+ * Create a snippet transformer
+ * @param handoff
+ * @param documentationObject
+ * @returns
+ */
+export async function snippetTransformer(handoff: Handoff) {
+  // Allow a user to create custom previews by putting templates in a snippets folder
+  // Iterate over the html files in that folder and render them as a preview
+  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
+
+  const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+  // ensure public path exists
+  if (!fs.existsSync(publicPath)) {
+    fs.mkdirSync(publicPath, { recursive: true });
+  }
+  if (fs.existsSync(custom)) {
+    console.log(chalk.green(`Rendering Snippet Previews in ${custom}`));
+    const files = fs.readdirSync(custom);
+    for (const file of files) {
+      if (file.endsWith('.html')) {
+        await processSnippet(handoff, file);
+      }
+    }
+  }
+  return;
+}
+
+export async function renameSnippet(handoff: Handoff, source: string, destination: string) {
+  source = path.resolve(handoff.workingPath, 'integration/snippets', source);
+  destination = path.resolve(handoff.workingPath, 'integration/snippets', destination);
+  ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
+    console.log(`Checking for ${source}.${ext}`);
+    let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
+    if(fs.existsSync(test)) {
+      await fs.rename(
+        test,
+        destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`
+      );
+    }
+  });
+
+  // find any references to the old snippet in the pages and replace them with the new snippet id
+  // const pagesPath = path.resolve(this.workingPath, 'integration/pages');
+}
+
+export async function processSnippet(handoff: Handoff, file: string) {
+  let data: TransformComponentTokensResult = {
+    id: file,
+    preview: '',
+    code: '',
+    js: null,
+    css: null,
+    sass: null,
+  };
+  console.log(chalk.green(`Processing snippet ${file}`));
+  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
+  const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+  // Is there a JS file with the same name?
+  const jsFile = file.replace('.html', '.js');
+  if (fs.existsSync(path.resolve(custom, jsFile))) {
+    console.log(chalk.green(`Detected JS file for ${file}`));
+    try {
+      const jsPath = path.resolve(custom, jsFile);
+      const js = await fs.readFile(jsPath, 'utf8');
+      const compiled = await bundleJSWebpack(jsPath, handoff, 'development');
+      if (js) {
+        data['js'] = js;
+        data['jsCompiled'] = compiled;
+      }
+    } catch (e) {
+      console.log(chalk.red(`Error compiling JS for ${file}`));
+      console.log(e);
+    }
+  }
+  // Is there a scss file with the same name?
+  const scssFile = file.replace('.html', '.scss');
+  const scssPath = path.resolve(custom, scssFile);
+  const cssFile = file.replace('.html', '.css');
+  const cssPath = path.resolve(custom, cssFile);
+
+  if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
+    console.log(chalk.green(`Detected SCSS file for ${file}`));
+    try {
+      const result = await sass.compileAsync(scssPath, {
+        loadPaths: [
+          path.resolve(handoff.workingPath, 'integration/sass'),
+          path.resolve(handoff.workingPath, 'node_modules'),
+          path.resolve(handoff.workingPath),
+          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+        ],
+      });
+      if (result.css) {
+        // @ts-ignore
+        data['css'] = result.css;
+      }
+    } catch (e) {
+      console.log(chalk.red(`Error compiling SCSS for ${file}`));
+      console.log(e);
+    }
+
+    const scss = await fs.readFile(scssPath, 'utf8');
+    if (scss) {
+      data['sass'] = scss;
+    }
+  }
+  // Is there a css file with the same name?
+  if (fs.existsSync(cssPath)) {
+    const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
+    if (css) {
+      data['css'] = css;
+    }
+  }
+  const template = await fs.readFile(path.resolve(custom, file), 'utf8');
+  const preview = Handlebars.compile(template)({
+    config: handoff.config,
+    style: data['css'] ? `<style rel="stylesheet" type="text/css">${data['css']}</style>` : '',
+    script: data['jsCompiled']
+      ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>`
+      : '',
+  });
+
+  try {
+    const bodyEl = parse(preview).querySelector('body');
+    const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+    data['preview'] = preview;
+    data['code'] = code;
+  } catch (e) {
+    console.log(e);
+  }
+  // write the preview to the public folder
+  const publicFile = path.resolve(publicPath, file);
+  await fs.writeFile(publicFile, preview);
+  await fs.writeFile(publicFile.replace('.html', '.json'), JSON.stringify(data, null, 2));
+}
 
 /**
  * Transforms the documentation object components into a preview and code

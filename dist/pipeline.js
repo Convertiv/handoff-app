@@ -71,7 +71,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = exports.buildRecipe = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = exports.buildSnippets = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
@@ -86,8 +86,9 @@ var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
 var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
-var index_5 = __importDefault(require("./transformers/preview/index"));
+var index_5 = __importStar(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
+var _1 = require(".");
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
 var lodash_1 = require("lodash");
@@ -167,6 +168,24 @@ var buildPreviews = function (handoff, documentationObject) { return __awaiter(v
         }
     });
 }); };
+/**
+ * Build previews
+ * @param documentationObject
+ * @returns
+ */
+var buildSnippets = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, Promise.all([
+                    (0, index_5.snippetTransformer)(handoff),
+                ])];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); };
+exports.buildSnippets = buildSnippets;
 /**
  * Build only the styles pipeline
  * @param documentationObject
@@ -433,7 +452,7 @@ var buildRecipe = function (handoff) { return __awaiter(void 0, void 0, void 0, 
                     var match;
                     var regex = new RegExp(TOKEN_REGEX, 'g');
                     var _loop_1 = function () {
-                        var _1 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
+                        var _2 = match[0], __ = match[1], component = match[2], part = match[3], variants = match[4], cssProperty = match[5];
                         var componentRecord = records.components.find(function (c) { return c.name === component; });
                         if (!componentRecord) {
                             componentRecord = { name: component, common: { parts: [] }, recipes: [] };
@@ -533,15 +552,20 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
             case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
                 documentationObject = _a.sent();
-                if (!documentationObject) return [3 /*break*/, 4];
+                if (!documentationObject) return [3 /*break*/, 5];
+                // Ensure that the integration object is set if possible
+                handoff.integrationObject = (0, _1.initIntegrationObject)(handoff.workingPath);
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 2:
                 _a.sent();
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 3:
                 _a.sent();
-                _a.label = 4;
-            case 4: return [2 /*return*/];
+                return [4 /*yield*/, (0, exports.buildSnippets)(handoff)];
+            case 4:
+                _a.sent();
+                _a.label = 5;
+            case 5: return [2 /*return*/];
         }
     });
 }); };
@@ -579,12 +603,15 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 7:
                 _a.sent();
-                if (!build) return [3 /*break*/, 9];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                return [4 /*yield*/, (0, exports.buildSnippets)(handoff)];
             case 8:
                 _a.sent();
-                _a.label = 9;
+                if (!build) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
+                _a.sent();
+                _a.label = 10;
+            case 10:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

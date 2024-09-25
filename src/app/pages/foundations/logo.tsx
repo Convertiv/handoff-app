@@ -13,7 +13,7 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 
-const DisplayLogo: React.FC<{ logo: AssetObject, content?: string }> = ({ logo, content }) => {
+const DisplayLogo: React.FC<{ logo: AssetObject; content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {
     // For SSR
     if (typeof window === 'undefined') {
@@ -55,8 +55,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ...fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`).props,
       config: getClientConfig(),
       assets: getTokens().assets,
-    }
-  }
+    },
+  };
 };
 
 const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
@@ -115,10 +115,10 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
           </div>
           <hr />
         </div>
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
       </section>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
       <Footer config={config} />
     </div>
   );

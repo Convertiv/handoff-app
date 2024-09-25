@@ -1,4 +1,4 @@
-import fs from 'fs-extra';
+import * as fs from 'fs-extra';
 import path from 'path';
 import { ClientConfig, Config } from './types/config';
 
@@ -38,6 +38,12 @@ export const defaultConfig = (): Config => ({
     color_sort: ['primary', 'secondary', 'extra', 'system'],
     component_sort: ['primary', 'secondary', 'transparent'],
     base_path: '',
+    breakpoints: {
+      sm: { size: 576, name: 'Small' },
+      md: { size: 768, name: 'Medium' },
+      lg: { size: 992, name: 'Large' },
+      xl: { size: 1200, name: 'Extra Large' },
+    },
   },
 });
 

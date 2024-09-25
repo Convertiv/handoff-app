@@ -38,6 +38,11 @@ export interface SectionLink {
     title: string;
     path: string;
     image: string;
+    menu?: {
+      title: string;
+      path: string;
+      image: string;
+    }[];
   }[];
 }
 // Documentation Page Properties
@@ -136,20 +141,21 @@ export const pluralizeComponent = (singular: string): string => {
  * @returns
  */
 export const buildL1StaticPaths = () => {
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let list = files;
-  if(fs.existsSync(pageRoot)){
+  if (fs.existsSync(pageRoot)) {
     const pages = fs.readdirSync(pageRoot);
     list = files.concat(pages);
   }
   const paths = list
     .filter((fileName) => {
-      if(fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
-      if(fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
+      if (fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
+      if (fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
       return false;
     })
+    .filter((fileName) => fileName.endsWith('.md'))
     .map((fileName) => {
       const path = fileName.replace('.md', '');
       if (knownPaths.indexOf(path) < 0) {
@@ -169,27 +175,28 @@ export const buildL1StaticPaths = () => {
  * @returns SubPathType[]
  */
 export const buildL2StaticPaths = () => {
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let list = files;
-  if(fs.existsSync(pageRoot)){
+  if (fs.existsSync(pageRoot)) {
     const pages = fs.readdirSync(pageRoot);
     list = files.concat(pages);
   }
   const paths: SubPageType[] = list
     .flatMap((fileName) => {
       let calculatePath;
-      if(fs.existsSync(path.join(pageRoot, fileName))){
+      if (fs.existsSync(path.join(pageRoot, fileName))) {
         calculatePath = path.join(pageRoot, fileName);
-      }else if(fs.existsSync(path.join(docRoot, fileName))){
+      } else if (fs.existsSync(path.join(docRoot, fileName))) {
         calculatePath = path.join(docRoot, fileName);
-      }else{
+      } else {
         return undefined;
       }
       if (fs.lstatSync(calculatePath).isDirectory()) {
         const subFiles = fs.readdirSync(calculatePath);
         return subFiles
+          .filter((subFile) => subFile.endsWith('.md'))
           .flatMap((subFile) => {
             const childPath = fileName.replace('.md', '');
             if (knownPaths.indexOf(childPath) < 0) {
@@ -213,11 +220,12 @@ export const buildL2StaticPaths = () => {
  * @returns SectionLink[]
  */
 export const staticBuildMenu = () => {
-  // Contents of docs
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", 'config/docs');
+  // // Contents of docs
+  const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
+  // Get the file list
   const files = fs.readdirSync(docRoot);
   let list = files;
-  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? "", 'pages');
+  const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let pages: string[] = [];
   if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
@@ -233,18 +241,21 @@ export const staticBuildMenu = () => {
       } else {
         search = path.resolve(docRoot, fileName);
       }
-      if (!fs.lstatSync(search).isDirectory() && search !== path.resolve(docRoot, 'index.md') && fileName.endsWith('md')) {
+      if (
+        !fs.lstatSync(search).isDirectory() &&
+        search !== path.resolve(docRoot, 'index.md') &&
+        (fileName.endsWith('md') || fileName.endsWith('mdx'))
+      ) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
-
         if (metadata.enabled === false) {
           return undefined;
         }
 
-        const path = `/${fileName.replace('.md', '')}`;
+        const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
         let subSections = [];
 
-        if (path === '/components') {
+        if (filepath === '/components') {
           const components = fetchComponents();
           // Build the submenu of exportables (components)
           const groupedComponents = groupBy(components, (e) => e.group ?? '');
@@ -272,7 +283,7 @@ export const staticBuildMenu = () => {
         return {
           title: metadata.menuTitle ?? metadata.title,
           weight: metadata.weight,
-          path,
+          path: filepath,
           subSections,
         };
       }
@@ -307,6 +318,17 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       options,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? [],
+    },
+  };
+};
+
+export const fetchMdxPageMarkdown = () => {
+  //const menu = staticBuildMenu();
+  // Return props
+  return {
+    props: {
+      menu: [],
+      current: [],
     },
   };
 };
@@ -420,22 +442,28 @@ export const getIntegrationObject = (): IntegrationObject => {
 };
 
 export const getTokens = (): ExportResult => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if(!fs.existsSync(exportedFilePath)) return {} as ExportResult;
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
+  if (!fs.existsSync(exportedFilePath)) return {} as ExportResult;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ExportResult;
 };
 
 export const getChangelog = () => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
-  if(!fs.existsSync(exportedFilePath)) return [];
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
+  if (!fs.existsSync(exportedFilePath)) return [];
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 export const getPreview = (): PreviewJson => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
-  if(!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
+  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
+  if (!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as PreviewJson;
 };
@@ -519,7 +547,9 @@ export const titleString = (prefix: string | null): string => {
 
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
-  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens') : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens');
+  const baseSearchPath = process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens')
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens');
   const scssSearchPath = path.resolve(baseSearchPath, 'sass', `${component}.scss`);
   const typeSearchPath = path.resolve(baseSearchPath, 'types', `${component}.scss`);
   const sdSearchPath = path.resolve(baseSearchPath, 'sd', 'tokens', `${component}.tokens.json`);

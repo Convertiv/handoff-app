@@ -33,6 +33,13 @@ export interface ExportResult {
   };
 }
 
+export interface Breakpoints {
+  [key: string]: {
+    size: number;
+    name: string;
+  };
+}
+
 interface NextAppConfig {
   theme?: string;
   title: string;
@@ -41,6 +48,7 @@ interface NextAppConfig {
   type_copy: string;
   type_sort: string[];
   color_sort: string[];
+  breakpoints: Breakpoints;
   component_sort: string[];
   base_path: string;
   attribution: boolean;

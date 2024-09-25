@@ -39,12 +39,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildClientFiles = void 0;
+exports.generateWebpackConfig = exports.bundleJSWebpack = exports.buildClientFiles = void 0;
 var webpack_1 = __importDefault(require("webpack"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var chalk_1 = __importDefault(require("chalk"));
 var index_1 = require("../transformers/integration/index");
+var _a = require('memfs'), createFsFromVolume = _a.createFsFromVolume, Volume = _a.Volume;
 var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var entry;
     return __generator(this, function (_a) {
@@ -56,99 +57,28 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
             return [2 /*return*/, Promise.resolve('')];
         }
         return [2 /*return*/, new Promise(function (resolve, reject) {
-                var config = {
-                    mode: 'production',
-                    entry: entry,
-                    resolve: {
-                        alias: {
-                            '@exported': path_1.default.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
-                            '@integration': path_1.default.join(handoff.workingPath, 'integration/sass'),
-                        },
-                        modules: [
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path_1.default.resolve(process.cwd(), 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
-                        ],
-                    },
-                    output: {
-                        path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
-                        filename: 'bundle.js',
-                    },
-                    resolveLoader: {
-                        modules: [
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                            path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                            path_1.default.resolve(process.cwd(), 'node_modules'),
-                        ],
-                    },
-                    module: {
-                        rules: [
-                            {
-                                test: /\.s[ac]ss$/i,
-                                use: [
-                                    // Creates `style` nodes from JS strings
-                                    'style-loader',
-                                    // Translates CSS into CommonJS
-                                    'css-loader',
-                                    // Compiles Sass to CSS
-                                    {
-                                        loader: 'sass-loader',
-                                        options: {
-                                            sassOptions: {
-                                                indentWidth: 4,
-                                                includePaths: [
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
-                                                    path_1.default.resolve(process.cwd(), 'node_modules'),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
-                                                    path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
-                                                ],
-                                            },
-                                            additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
-                                                var integrationPath;
-                                                return __generator(this, function (_a) {
-                                                    integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
-                                                    if (fs_extra_1.default.existsSync(integrationPath)) {
-                                                        fs_extra_1.default.readdirSync(integrationPath)
-                                                            .filter(function (file) {
-                                                            return path_1.default.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
-                                                        })
-                                                            .forEach(function (file) {
-                                                            content = content + "\n @import \"@integration/".concat(file, "\";");
-                                                        });
-                                                    }
-                                                    return [2 /*return*/, content];
-                                                });
-                                            }); },
-                                        },
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                };
-                config = handoff.integrationHooks.hooks.webpack(handoff, config);
-                config = handoff.hooks.webpack(config);
-                var compile = (0, webpack_1.default)(config);
+                var compile = (0, webpack_1.default)((0, exports.generateWebpackConfig)(entry, handoff));
                 compile.run(function (err, stats) {
                     var _a, _b;
                     if (err) {
-                        var error = 'Errors encountered trying to build preview styles.\n';
+                        var error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\n  The integration sass expects a token that isn\'t found in your Figma component.\n';
                         if (handoff.debug) {
-                            error += err.stack || err;
+                            error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + err.stack || err;
+                        }
+                        else {
+                            error += 'Add the --debug flag to see the full error trace\n\n';
                         }
                         return reject(error);
                     }
                     if (stats) {
                         if (stats.hasErrors()) {
                             var buildErrors = (_a = stats.compilation.errors) === null || _a === void 0 ? void 0 : _a.map(function (err) { return err.message; });
-                            var error = 'Errors encountered trying to build preview styles.\n';
+                            var error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\nThe integration sass expects a token that isn\'t found in your Figma component.\n';
                             if (handoff.debug) {
-                                error += buildErrors;
+                                error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + buildErrors;
+                            }
+                            else {
+                                error += 'Add the --debug flag to see the full error trace\n\n';
                             }
                             return reject(error);
                         }
@@ -161,9 +91,127 @@ var buildClientFiles = function (handoff) { return __awaiter(void 0, void 0, voi
                             }
                         }
                     }
+                    compile.close(function (closeErr) { });
                     return resolve('Preview styles successfully built.');
                 });
             })];
     });
 }); };
 exports.buildClientFiles = buildClientFiles;
+var bundleJSWebpack = function (target, handoff, mode) { return __awaiter(void 0, void 0, void 0, function () {
+    var fs;
+    return __generator(this, function (_a) {
+        fs = createFsFromVolume(new Volume());
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                var filename = target.split('/').pop();
+                var output = {
+                    path: '/',
+                    filename: filename,
+                };
+                var compiler = (0, webpack_1.default)((0, exports.generateWebpackConfig)(target, handoff, output, mode));
+                compiler.outputFileSystem = fs;
+                compiler.run(function (err, stats) {
+                    // Read the output later:
+                    var content = fs.readFileSync('/' + output.filename, 'utf-8');
+                    compiler.close(function (closeErr) {
+                        if (err) {
+                            reject(err);
+                        }
+                        if (closeErr) {
+                            reject(closeErr);
+                        }
+                        resolve(content);
+                    });
+                });
+            })];
+    });
+}); };
+exports.bundleJSWebpack = bundleJSWebpack;
+var generateWebpackConfig = function (entry, handoff, output, mode) {
+    if (!output) {
+        output = {
+            path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
+            filename: 'bundle.js',
+        };
+    }
+    if (!mode) {
+        mode = 'production';
+    }
+    var config = {
+        mode: mode,
+        entry: entry,
+        resolve: {
+            alias: {
+                '@exported': path_1.default.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
+                '@integration': path_1.default.join(handoff.workingPath, 'integration/sass'),
+            },
+            modules: [
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                path_1.default.resolve(process.cwd(), 'node_modules'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'exported', handoff === null || handoff === void 0 ? void 0 : handoff.config.figma_project_id),
+            ],
+        },
+        output: output,
+        resolveLoader: {
+            modules: [
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                path_1.default.resolve(process.cwd(), 'node_modules'),
+            ],
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.s[ac]ss$/i,
+                    use: [
+                        // Creates `style` nodes from JS strings
+                        'style-loader',
+                        // Translates CSS into CommonJS
+                        'css-loader',
+                        // Compiles Sass to CSS
+                        {
+                            loader: 'sass-loader',
+                            options: {
+                                sassOptions: {
+                                    indentWidth: 4,
+                                    includePaths: [
+                                        path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
+                                        path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
+                                        path_1.default.resolve(process.cwd(), 'node_modules'),
+                                        path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath),
+                                        path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath),
+                                    ],
+                                },
+                                additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
+                                    var integrationPath;
+                                    return __generator(this, function (_a) {
+                                        integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
+                                        if (fs_extra_1.default.existsSync(integrationPath)) {
+                                            fs_extra_1.default.readdirSync(integrationPath)
+                                                .filter(function (file) {
+                                                return path_1.default.extname(file).toLowerCase() === '.scss' && file !== 'main.scss';
+                                            })
+                                                .forEach(function (file) {
+                                                content = content + "\n @import \"@integration/".concat(file, "\";");
+                                            });
+                                        }
+                                        return [2 /*return*/, content];
+                                    });
+                                }); },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    };
+    config = handoff.integrationHooks.hooks.webpack(handoff, config);
+    config = handoff.hooks.webpack(config);
+    return config;
+};
+exports.generateWebpackConfig = generateWebpackConfig;

@@ -73,6 +73,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initIntegrationObject = void 0;
 var config_1 = require("./config");
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
@@ -84,6 +85,7 @@ var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 var chalk_1 = __importDefault(require("chalk"));
 var integration_2 = require("./utils/integration");
+var preview_1 = require("./transformers/preview");
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
@@ -117,7 +119,7 @@ var Handoff = /** @class */ (function () {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = initIntegrationObject(this.workingPath);
+        this.integrationObject = (0, exports.initIntegrationObject)(this.workingPath);
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
@@ -159,6 +161,42 @@ var Handoff = /** @class */ (function () {
                         _a.label = 2;
                     case 2: return [2 /*return*/, this];
                 }
+            });
+        });
+    };
+    Handoff.prototype.snippet = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var snippetPath;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.preRunner();
+                        if (!this.config) return [3 /*break*/, 4];
+                        if (!name) return [3 /*break*/, 2];
+                        // Get snippet path
+                        name = name.includes('.html') ? name : "".concat(name, ".html");
+                        snippetPath = path_1.default.resolve(this.workingPath, 'integration/snippets', name);
+                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath)];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.renameSnippet = function (oldName, target) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.preRunner();
+                if (this.config) {
+                    (0, preview_1.renameSnippet)(this, oldName, target);
+                }
+                return [2 /*return*/, this];
             });
         });
     };
@@ -315,6 +353,21 @@ var Handoff = /** @class */ (function () {
             });
         });
     };
+    Handoff.prototype.makeSnippet = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, make_1.makeSnippet)(this, name)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
     Handoff.prototype.makeIntegration = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -414,6 +467,7 @@ var initIntegrationObject = function (workingPath) {
     var integration = JSON.parse(buffer.toString());
     return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
 };
+exports.initIntegrationObject = initIntegrationObject;
 var validateConfig = function (config) {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env

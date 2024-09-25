@@ -14,6 +14,8 @@ export const getTypeName = (type: TypographyObject) => type.group
   ? `${type.group}-${type.machine_name}`
   : `${type.machine_name}`;
 
+
+
 /**
  * Generates a standardized component comment block.
  * @param type

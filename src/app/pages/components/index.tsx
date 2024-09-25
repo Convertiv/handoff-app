@@ -1,6 +1,5 @@
 import * as React from 'react';
 import type { GetStaticProps } from 'next';
-import Link from 'next/link';
 import Head from 'next/head';
 import { startCase } from 'lodash';
 import ReactMarkdown from 'react-markdown';
@@ -12,6 +11,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { ComponentsPageCard } from '../../components/ComponentLists';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -101,29 +101,5 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
     </div>
   );
 };
-
-const ComponentsPageCard = ({
-  component,
-  title,
-  description: descripton,
-  icon,
-  available = true,
-}: {
-  component: string;
-  title: string;
-  description: string;
-  icon: string;
-  available?: boolean;
-}) => (
-  <div key={`component-${component}`}>
-    <Link href={available ? `/components/${component}` : '#'}>
-      <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
-        <div className="c-component-card__img">{icon && <Icon name={icon} />}</div>
-        <h6>{title}</h6>
-        <p>{descripton}</p>
-      </div>
-    </Link>
-  </div>
-);
 
 export default ComponentsPage;

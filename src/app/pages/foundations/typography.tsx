@@ -41,7 +41,7 @@ const renderTypes: (type: TypographyObject, content: string) => typographyTypes 
   Blockquote: <blockquote style={pluckStyle(type)}>{content}</blockquote>,
   Link: <a style={pluckStyle(type)}>{content}</a>,
   Paragraph: <p style={pluckStyle(type)}>{content}</p>,
-})
+});
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -58,10 +58,21 @@ export const getStaticProps: next.GetStaticProps = async () => {
       config: getClientConfig(),
       design: getTokens().design,
     },
-  }
+  };
 };
 
-const Typography = ({ content, menu, metadata, current, scss, css, styleDictionary, types, config, design }: FoundationDocumentationProps) => {
+const Typography = ({
+  content,
+  menu,
+  metadata,
+  current,
+  scss,
+  css,
+  styleDictionary,
+  types,
+  config,
+  design,
+}: FoundationDocumentationProps) => {
   const [copy, setCopy] = React.useState('Copy link to clipboard');
 
   const typography = design.typography.slice().sort((a, b) => {
@@ -110,7 +121,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                   <p>Primary font used, related assets can be found in the assets page.</p>
                   <p>
                     <NavLink href="/assets/fonts">
-                      Download Fonts <Icon name="arrow-right"  className="o-icon" />
+                      Download Fonts <Icon name="arrow-right" className="o-icon" />
                     </NavLink>
                   </p>
                 </div>
@@ -171,7 +182,7 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
                         }}
                       >
                         <span>
-                          <Icon name="link"  className="o-icon" />
+                          <Icon name="link" className="o-icon" />
                         </span>
                       </a>
                     </h6>
@@ -190,10 +201,11 @@ const Typography = ({ content, menu, metadata, current, scss, css, styleDictiona
             ))}
           </div>
         </div>
+
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
       </section>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
       <Footer config={config} />
     </div>
   );

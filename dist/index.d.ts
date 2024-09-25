@@ -34,6 +34,8 @@ declare class Handoff {
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     recipe(): Promise<Handoff>;
+    snippet(name: string | null): Promise<Handoff>;
+    renameSnippet(oldName: string, target: string): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
@@ -44,6 +46,7 @@ declare class Handoff {
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
+    makeSnippet(name: string): Promise<Handoff>;
     makeIntegration(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
@@ -56,4 +59,5 @@ declare class Handoff {
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
+export declare const initIntegrationObject: (workingPath: string) => IntegrationObject;
 export default Handoff;
