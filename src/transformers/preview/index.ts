@@ -87,28 +87,15 @@ const transformComponentTokens = async (
     code: bodyEl ? bodyEl.innerHTML.trim() : preview,
   };
 };
-
 /**
- * Transforms the documentation object components into a preview and code
+ * Create a snippet transformer
+ * @param handoff 
+ * @param documentationObject 
+ * @returns 
  */
-export default async function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
-  const { components } = documentationObject;
-  const componentIds = Object.keys(components);
+export async function snippetTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
 
-  const result = await Promise.all(
-    componentIds.map(async (componentId) => {
-      return [
-        componentId,
-        await Promise.all(
-          documentationObject.components[componentId].instances.map((instance) => {
-            return transformComponentTokens(handoff, componentId, instance);
-          })
-        ).then((res) => res.filter(filterOutNull)),
-      ] as [string, TransformComponentTokensResult[]];
-    })
-  );
-
-  // Allow a user to create custom previews by putting templates in a snippets folder
+    // Allow a user to create custom previews by putting templates in a snippets folder
   // Iterate over the html files in that folder and render them as a preview
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
 
@@ -212,6 +199,29 @@ export default async function previewTransformer(handoff: Handoff, documentation
       }
     }
   }
+  return;
+}
+
+/**
+ * Transforms the documentation object components into a preview and code
+ */
+export default async function previewTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
+  const { components } = documentationObject;
+  const componentIds = Object.keys(components);
+
+  const result = await Promise.all(
+    componentIds.map(async (componentId) => {
+      return [
+        componentId,
+        await Promise.all(
+          documentationObject.components[componentId].instances.map((instance) => {
+            return transformComponentTokens(handoff, componentId, instance);
+          })
+        ).then((res) => res.filter(filterOutNull)),
+      ] as [string, TransformComponentTokensResult[]];
+    })
+  );
+
 
   let previews = result.reduce((obj, el) => {
     obj[el[0]] = el[1];
