@@ -147,19 +147,30 @@ const buildIntegration = async (
       // Recursively process the directory
       await buildIntegration(sourceItemPath, destItemPath, documentationObject, rootPath, (rootReturnPath ?? '../') + '../');
     } else {
-      // Read the file content
-      const content = await loadTemplateContent(sourceItemPath);
-      // Compile the template with Handlebars
-      const template = Handlebars.compile(content);
-      // Render the content with Handlebars
-      const renderedContent = template({
-        components: Object.keys(documentationObject.components),
-        documentationObject: documentationObject,
-      } as IntegrationTemplateContext);
-      // Ensure the directory exists before writing the file
-      await fs.ensureDir(path.dirname(destItemPath));
-      // Write the rendered content to the destination path
-      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
+      // Check if the file needs to be processed
+      if (['scss', 'css', 'json'].includes(sourceItemPath.split('.').at(-1))) {
+        // Read the file content and prepare for processing
+        const content = await loadTemplateContent(sourceItemPath);
+        // Compile the template with Handlebars
+        const template = Handlebars.compile(content);
+        // Render the content with Handlebars
+        const renderedContent = template({
+          components: Object.keys(documentationObject.components),
+          documentationObject: documentationObject,
+        } as IntegrationTemplateContext);
+        // Ensure the directory exists before writing the file
+        await fs.ensureDir(path.dirname(destItemPath));
+        // Write the rendered content to the destination path
+        await fs.writeFile(
+          destItemPath,
+          replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../')
+        );
+      } else {
+        // Ensure the directory exists before writing the file
+        await fs.ensureDir(path.dirname(destItemPath));
+        // Copy file
+        await fs.copyFile(sourceItemPath, destItemPath);
+      }
     }
   }
 };
