@@ -131,7 +131,6 @@ const buildIntegration = async (
   rootReturnPath?: string
 ): Promise<void> => {
   rootPath ??= sourcePath;
-
   const items = await fs.readdir(sourcePath);
   const components = Object.keys(documentationObject.components);
 

@@ -113,6 +113,7 @@ export const generateWebpackConfig = (
         path.resolve(process.cwd(), 'node_modules'),
         path.resolve(handoff?.workingPath, 'node_modules'),
         path.resolve(handoff?.workingPath, 'integration/sass'),
+        path.resolve(handoff?.workingPath, 'exported', handoff?.config.figma_project_id),
       ],
     },
     output,

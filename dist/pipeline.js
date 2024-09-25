@@ -86,7 +86,7 @@ var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
 var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
-var index_5 = __importDefault(require("./transformers/preview/index"));
+var index_5 = __importStar(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
 var sd_1 = __importDefault(require("./transformers/sd"));
 var map_1 = __importDefault(require("./transformers/map"));
@@ -160,6 +160,23 @@ var buildPreviews = function (handoff, documentationObject) { return __awaiter(v
         switch (_a.label) {
             case 0: return [4 /*yield*/, Promise.all([
                     (0, index_5.default)(handoff, documentationObject).then(function (out) { return fs_extra_1.default.writeJSON(previewFilePath(handoff), out, { spaces: 2 }); }),
+                ])];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); };
+/**
+ * Build previews
+ * @param documentationObject
+ * @returns
+ */
+var buildSnippets = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, Promise.all([
+                    (0, index_5.snippetTransformer)(handoff, documentationObject),
                 ])];
             case 1:
                 _a.sent();
@@ -533,15 +550,18 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
             case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
                 documentationObject = _a.sent();
-                if (!documentationObject) return [3 /*break*/, 4];
+                if (!documentationObject) return [3 /*break*/, 5];
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 2:
                 _a.sent();
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 3:
                 _a.sent();
-                _a.label = 4;
-            case 4: return [2 /*return*/];
+                return [4 /*yield*/, buildSnippets(handoff, documentationObject)];
+            case 4:
+                _a.sent();
+                _a.label = 5;
+            case 5: return [2 /*return*/];
         }
     });
 }); };
@@ -579,12 +599,15 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 7:
                 _a.sent();
-                if (!build) return [3 /*break*/, 9];
-                return [4 /*yield*/, (0, app_1.default)(handoff)];
+                return [4 /*yield*/, buildSnippets(handoff, documentationObject)];
             case 8:
                 _a.sent();
-                _a.label = 9;
+                if (!build) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, app_1.default)(handoff)];
             case 9:
+                _a.sent();
+                _a.label = 10;
+            case 10:
                 // (await pluginTransformer()).postBuild(documentationObject);
                 console.log(chalk_1.default.green("Figma pipeline complete:", "".concat((0, api_1.getRequestCount)(), " requests")));
                 return [2 /*return*/];

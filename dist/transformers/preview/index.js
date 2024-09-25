@@ -39,6 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processSnippet = exports.snippetTransformer = void 0;
 var handlebars_1 = __importDefault(require("handlebars"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
@@ -118,11 +119,169 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
     });
 }); };
 /**
+ * Create a snippet transformer
+ * @param handoff
+ * @param documentationObject
+ * @returns
+ */
+function snippetTransformer(handoff, documentationObject) {
+    return __awaiter(this, void 0, void 0, function () {
+        var custom, publicPath, files, _i, files_1, file;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
+                    // ensure public path exists
+                    if (!fs_extra_1.default.existsSync(publicPath)) {
+                        fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
+                    }
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 4];
+                    console.log(chalk_1.default.green("Rendering Snippet Previews in ".concat(custom)));
+                    files = fs_extra_1.default.readdirSync(custom);
+                    _i = 0, files_1 = files;
+                    _a.label = 1;
+                case 1:
+                    if (!(_i < files_1.length)) return [3 /*break*/, 4];
+                    file = files_1[_i];
+                    if (!file.endsWith('.html')) return [3 /*break*/, 3];
+                    return [4 /*yield*/, processSnippet(handoff, file)];
+                case 2:
+                    _a.sent();
+                    _a.label = 3;
+                case 3:
+                    _i++;
+                    return [3 /*break*/, 1];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.snippetTransformer = snippetTransformer;
+function processSnippet(handoff, file) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, custom, publicPath, jsFile, jsPath, js, compiled, e_1, scssFile, scssPath, cssFile, cssPath, result, e_2, scss, css, template, preview, bodyEl, code, publicFile;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    data = {
+                        id: file,
+                        preview: '',
+                        code: '',
+                        js: null,
+                        css: null,
+                        sass: null,
+                    };
+                    console.log(chalk_1.default.green("Processing snippet ".concat(file)));
+                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
+                    jsFile = file.replace('.html', '.js');
+                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 5];
+                    console.log(chalk_1.default.green("Detected JS file for ".concat(file)));
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    jsPath = path_1.default.resolve(custom, jsFile);
+                    return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
+                case 2:
+                    js = _a.sent();
+                    return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development')];
+                case 3:
+                    compiled = _a.sent();
+                    if (js) {
+                        data['js'] = js;
+                        data['jsCompiled'] = compiled;
+                    }
+                    return [3 /*break*/, 5];
+                case 4:
+                    e_1 = _a.sent();
+                    console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
+                    console.log(e_1);
+                    return [3 /*break*/, 5];
+                case 5:
+                    scssFile = file.replace('.html', '.scss');
+                    scssPath = path_1.default.resolve(custom, scssFile);
+                    cssFile = file.replace('.html', '.css');
+                    cssPath = path_1.default.resolve(custom, cssFile);
+                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 11];
+                    console.log(chalk_1.default.green("Detected SCSS file for ".concat(file)));
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 8, , 9]);
+                    return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
+                            loadPaths: [
+                                path_1.default.resolve(handoff.workingPath, 'integration/sass'),
+                                path_1.default.resolve(handoff.workingPath, 'node_modules'),
+                                path_1.default.resolve(handoff.workingPath),
+                                path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                            ],
+                        })];
+                case 7:
+                    result = _a.sent();
+                    if (result.css) {
+                        // @ts-ignore
+                        data['css'] = result.css;
+                    }
+                    return [3 /*break*/, 9];
+                case 8:
+                    e_2 = _a.sent();
+                    console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
+                    console.log(e_2);
+                    return [3 /*break*/, 9];
+                case 9: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
+                case 10:
+                    scss = _a.sent();
+                    if (scss) {
+                        data['sass'] = scss;
+                    }
+                    _a.label = 11;
+                case 11:
+                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 13];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
+                case 12:
+                    css = _a.sent();
+                    if (css) {
+                        data['css'] = css;
+                    }
+                    _a.label = 13;
+                case 13: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
+                case 14:
+                    template = _a.sent();
+                    preview = handlebars_1.default.compile(template)({
+                        config: handoff.config,
+                        style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
+                        script: data['jsCompiled']
+                            ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>")
+                            : '',
+                    });
+                    try {
+                        bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+                        code = bodyEl ? bodyEl.innerHTML.trim() : preview;
+                        data['preview'] = preview;
+                        data['code'] = code;
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    publicFile = path_1.default.resolve(publicPath, file);
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, preview)];
+                case 15:
+                    _a.sent();
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile.replace('.html', '.json'), JSON.stringify(data, null, 2))];
+                case 16:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.processSnippet = processSnippet;
+/**
  * Transforms the documentation object components into a preview and code
  */
 function previewTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function () {
-        var components, componentIds, result, custom, publicPath, files, _i, files_1, file, data, jsFile, jsPath, js, compiled, e_1, scssFile, scssPath, cssFile, cssPath, result_1, e_2, scss, css, template, preview, bodyEl, code, publicFile, previews;
+        var components, componentIds, result, previews;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -146,129 +305,6 @@ function previewTransformer(handoff, documentationObject) {
                         }); }))];
                 case 1:
                     result = _a.sent();
-                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
-                    publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
-                    // ensure public path exists
-                    if (!fs_extra_1.default.existsSync(publicPath)) {
-                        fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
-                    }
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 20];
-                    console.log(chalk_1.default.green("Rendering Snippet Previews in ".concat(custom)));
-                    files = fs_extra_1.default.readdirSync(custom);
-                    _i = 0, files_1 = files;
-                    _a.label = 2;
-                case 2:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 20];
-                    file = files_1[_i];
-                    if (!file.endsWith('.html')) return [3 /*break*/, 19];
-                    console.log(chalk_1.default.green("Processing snippet ".concat(file)));
-                    data = {
-                        id: file,
-                        preview: '',
-                        code: '',
-                        js: null,
-                        css: null,
-                        sass: null,
-                    };
-                    jsFile = file.replace('.html', '.js');
-                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 7];
-                    console.log(chalk_1.default.green("Detected JS file for ".concat(file)));
-                    _a.label = 3;
-                case 3:
-                    _a.trys.push([3, 6, , 7]);
-                    jsPath = path_1.default.resolve(custom, jsFile);
-                    return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
-                case 4:
-                    js = _a.sent();
-                    return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development')];
-                case 5:
-                    compiled = _a.sent();
-                    if (js) {
-                        data['js'] = js;
-                        data['jsCompiled'] = compiled;
-                    }
-                    return [3 /*break*/, 7];
-                case 6:
-                    e_1 = _a.sent();
-                    console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
-                    console.log(e_1);
-                    return [3 /*break*/, 7];
-                case 7:
-                    scssFile = file.replace('.html', '.scss');
-                    scssPath = path_1.default.resolve(custom, scssFile);
-                    cssFile = file.replace('.html', '.css');
-                    cssPath = path_1.default.resolve(custom, cssFile);
-                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 13];
-                    console.log(chalk_1.default.green("Detected SCSS file for ".concat(file)));
-                    _a.label = 8;
-                case 8:
-                    _a.trys.push([8, 10, , 11]);
-                    return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
-                            loadPaths: [
-                                path_1.default.resolve(handoff.workingPath, 'integration/sass'),
-                                path_1.default.resolve(handoff.workingPath, 'node_modules'),
-                                path_1.default.resolve(handoff.workingPath),
-                            ],
-                        })];
-                case 9:
-                    result_1 = _a.sent();
-                    if (result_1.css) {
-                        // @ts-ignore
-                        data['css'] = result_1.css;
-                    }
-                    return [3 /*break*/, 11];
-                case 10:
-                    e_2 = _a.sent();
-                    console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
-                    console.log(e_2);
-                    return [3 /*break*/, 11];
-                case 11: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
-                case 12:
-                    scss = _a.sent();
-                    if (scss) {
-                        data['sass'] = scss;
-                    }
-                    _a.label = 13;
-                case 13:
-                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 15];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
-                case 14:
-                    css = _a.sent();
-                    if (css) {
-                        data['css'] = css;
-                    }
-                    _a.label = 15;
-                case 15: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
-                case 16:
-                    template = _a.sent();
-                    preview = handlebars_1.default.compile(template)({
-                        config: handoff.config,
-                        style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
-                        script: data['jsCompiled']
-                            ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>")
-                            : '',
-                    });
-                    try {
-                        bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
-                        code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-                        data['preview'] = preview;
-                        data['code'] = code;
-                    }
-                    catch (e) {
-                        console.log(e);
-                    }
-                    publicFile = path_1.default.resolve(publicPath, file);
-                    return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, preview)];
-                case 17:
-                    _a.sent();
-                    return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile.replace('.html', '.json'), JSON.stringify(data, null, 2))];
-                case 18:
-                    _a.sent();
-                    _a.label = 19;
-                case 19:
-                    _i++;
-                    return [3 /*break*/, 2];
-                case 20:
                     previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;

@@ -145,6 +145,7 @@ var generateWebpackConfig = function (entry, handoff, output, mode) {
                 path_1.default.resolve(process.cwd(), 'node_modules'),
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'exported', handoff === null || handoff === void 0 ? void 0 : handoff.config.figma_project_id),
             ],
         },
         output: output,

@@ -9,8 +9,6 @@ interface ComponentMetadata extends Metadata {
   absolute?: boolean;
 }
 
-
-
 export const ComponentList = ({ components }: { components: { [id: string]: ComponentMetadata } }) => {
   return (
     <div className="o-row">
@@ -47,7 +45,7 @@ export const ComponentsPageCard = ({
   image,
   path,
   available = true,
-  absolute = false
+  absolute = false,
 }: {
   component: string;
   title: string;
@@ -61,12 +59,14 @@ export const ComponentsPageCard = ({
   if (!path) path = 'components';
   return (
     <div key={`component-${component}`}>
-      <Link href={available ? absolute ? path : `/${path}/${component}` : '#'}>
+      <Link href={available ? (absolute ? path : `/${path}/${component}`) : '#'}>
         <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
-          <div className="c-component-card__img">
-            {icon && <Icon name={icon} />}
-            {image && <Image src={image} alt={title} width={170} height={135} />}
-          </div>
+          {(icon || image) && (
+            <div className="c-component-card__img">
+              {icon && <Icon name={icon} />}
+              {image && <Image src={image} alt={title} width={170} height={135} />}
+            </div>
+          )}
           <h6>{title}</h6>
           <p>{descripton}</p>
         </div>

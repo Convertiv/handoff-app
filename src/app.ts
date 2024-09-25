@@ -10,6 +10,7 @@ import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
+import { processSnippet } from './transformers/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -47,6 +48,7 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 const mergeMDX = async (handoff: Handoff): Promise<void> => {
+  console.log(chalk.yellow('Merging MDX files...'));
   const appPath = getAppPath(handoff);
   const pages = path.resolve(handoff.workingPath, `pages`);
   if (fs.existsSync(pages)) {
@@ -98,7 +100,7 @@ const transformMdx = (src: string, dest: string, id: string) => {
   let mdx = body;
   const title = data.title ?? '';
   const menu = data.menu ?? '';
-  const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, "") : '';
+  const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
   const weight = data.weight ?? 0;
@@ -258,8 +260,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
 
   const appPath = await prepareProjectApp(handoff);
-  // const config = require(path.resolve(appPath, 'next.config.mjs'));
-
   // Include any changes made within the app source during watch
   chokidar
     .watch(path.resolve(handoff.modulePath, 'src', 'app'), {
@@ -364,15 +364,19 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
 
   if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'integration')).on('all', async (event, path) => {
+    chokidar.watch(path.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', async (event, file) => {
       switch (event) {
         case 'add':
         case 'change':
         case 'unlink':
-          if (path.includes('json') && !debounce) {
-            console.log(chalk.yellow('Integration changed. Handoff will rerender the integrations...'));
+          if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
+            console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
             debounce = true;
-            await handoff.integration();
+            if(file.includes('snippet')) {
+              await processSnippet(handoff, path.basename(file));
+            }else{
+              await handoff.integration();
+            }
             debounce = false;
           }
           break;
@@ -380,21 +384,22 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'pages')).on('all', async (event, path) => {
-      if (path.endsWith('.mdx')) {
-        mergeMDX(handoff);
-      }
+    chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
+      
       switch (event) {
         case 'add':
         case 'change':
         case 'unlink':
-          console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
+          if (path.endsWith('.mdx')) {
+            mergeMDX(handoff);
+          }
+          console.log(chalk.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
           break;
       }
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json')).on('all', async (event, path) => {
+    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, path) => {
       console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
     });
   }

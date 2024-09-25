@@ -51,6 +51,14 @@ html, js, css and sass code below the preview
 </SnippetPreview>
 ```
 
+### Bugfixes
+- Fixes a bug introduced in 0.13.0 where the integration preprocess would try to
+execute handlebars insertion even on non text files
+- Fixes a bug in the foundation page templates where the markdown would be included
+outside of the section wrapper
+- Fixes a bug in the `start` command where every page would be flagged as changed
+on watch.
+
 ## [0.13.0] - 2024-09-08
 
 ### Changes
