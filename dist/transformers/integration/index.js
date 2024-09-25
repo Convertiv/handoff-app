@@ -234,7 +234,7 @@ var buildIntegration = function (sourcePath, destPath, documentationObject, root
                 // Ensure the directory exists before writing the file
                 _a.sent();
                 // Write the rendered content to the destination path
-                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, componentsWithInstances, path_1.default.parse(destItemPath).dir, rootPath, rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../'))];
+                return [4 /*yield*/, fs_extra_1.default.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path_1.default.parse(destItemPath).dir, rootPath, rootReturnPath !== null && rootReturnPath !== void 0 ? rootReturnPath : '../'))];
             case 9:
                 // Write the rendered content to the destination path
                 _a.sent();
