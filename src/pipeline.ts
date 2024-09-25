@@ -84,9 +84,9 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @param documentationObject
  * @returns
  */
-const buildSnippets = async (handoff: Handoff, documentationObject: DocumentationObject) => {
+export const buildSnippets = async (handoff: Handoff) => {
   await Promise.all([
-    snippetTransformer(handoff, documentationObject),
+    snippetTransformer(handoff),
   ]);
 };
 
@@ -442,7 +442,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   if (documentationObject) {
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
-    await buildSnippets(handoff, documentationObject);
+    await buildSnippets(handoff);
   }
 };
 
@@ -461,7 +461,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
   await buildPreviews(handoff, documentationObject);
-  await buildSnippets(handoff, documentationObject);
+  await buildSnippets(handoff);
   if (build) {
     await buildApp(handoff);
   }

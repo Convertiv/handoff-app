@@ -93,7 +93,7 @@ const transformComponentTokens = async (
  * @param documentationObject
  * @returns
  */
-export async function snippetTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
+export async function snippetTransformer(handoff: Handoff) {
   // Allow a user to create custom previews by putting templates in a snippets folder
   // Iterate over the html files in that folder and render them as a preview
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
@@ -113,6 +113,24 @@ export async function snippetTransformer(handoff: Handoff, documentationObject: 
     }
   }
   return;
+}
+
+export async function renameSnippet(handoff: Handoff, source: string, destination: string) {
+  source = path.resolve(handoff.workingPath, 'integration/snippets', source);
+  destination = path.resolve(handoff.workingPath, 'integration/snippets', destination);
+  ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
+    console.log(`Checking for ${source}.${ext}`);
+    let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
+    if(fs.existsSync(test)) {
+      await fs.rename(
+        test,
+        destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`
+      );
+    }
+  });
+
+  // find any references to the old snippet in the pages and replace them with the new snippet id
+  // const pagesPath = path.resolve(this.workingPath, 'integration/pages');
 }
 
 export async function processSnippet(handoff: Handoff, file: string) {

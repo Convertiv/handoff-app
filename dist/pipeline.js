@@ -71,7 +71,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = exports.buildRecipe = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = exports.buildSnippets = void 0;
 var changelog_1 = __importDefault(require("./changelog"));
 var prompt_1 = require("./utils/prompt");
 var chalk_1 = __importDefault(require("chalk"));
@@ -172,11 +172,11 @@ var buildPreviews = function (handoff, documentationObject) { return __awaiter(v
  * @param documentationObject
  * @returns
  */
-var buildSnippets = function (handoff, documentationObject) { return __awaiter(void 0, void 0, void 0, function () {
+var buildSnippets = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, Promise.all([
-                    (0, index_5.snippetTransformer)(handoff, documentationObject),
+                    (0, index_5.snippetTransformer)(handoff),
                 ])];
             case 1:
                 _a.sent();
@@ -184,6 +184,7 @@ var buildSnippets = function (handoff, documentationObject) { return __awaiter(v
         }
     });
 }); };
+exports.buildSnippets = buildSnippets;
 /**
  * Build only the styles pipeline
  * @param documentationObject
@@ -557,7 +558,7 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, buildSnippets(handoff, documentationObject)];
+                return [4 /*yield*/, (0, exports.buildSnippets)(handoff)];
             case 4:
                 _a.sent();
                 _a.label = 5;
@@ -599,7 +600,7 @@ var pipeline = function (handoff, build) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 7:
                 _a.sent();
-                return [4 /*yield*/, buildSnippets(handoff, documentationObject)];
+                return [4 /*yield*/, (0, exports.buildSnippets)(handoff)];
             case 8:
                 _a.sent();
                 if (!build) return [3 /*break*/, 10];

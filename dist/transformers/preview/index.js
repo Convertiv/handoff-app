@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSnippet = exports.snippetTransformer = void 0;
+exports.processSnippet = exports.renameSnippet = exports.snippetTransformer = void 0;
 var handlebars_1 = __importDefault(require("handlebars"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
@@ -124,7 +124,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
  * @param documentationObject
  * @returns
  */
-function snippetTransformer(handoff, documentationObject) {
+function snippetTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function () {
         var custom, publicPath, files, _i, files_1, file;
         return __generator(this, function (_a) {
@@ -158,6 +158,33 @@ function snippetTransformer(handoff, documentationObject) {
     });
 }
 exports.snippetTransformer = snippetTransformer;
+function renameSnippet(handoff, source, destination) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _this = this;
+        return __generator(this, function (_a) {
+            source = path_1.default.resolve(handoff.workingPath, 'integration/snippets', source);
+            destination = path_1.default.resolve(handoff.workingPath, 'integration/snippets', destination);
+            ['html', 'js', 'scss', 'css'].forEach(function (ext) { return __awaiter(_this, void 0, void 0, function () {
+                var test;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            console.log("Checking for ".concat(source, ".").concat(ext));
+                            test = source.includes(".".concat(ext)) ? source : "".concat(source, ".").concat(ext);
+                            if (!fs_extra_1.default.existsSync(test)) return [3 /*break*/, 2];
+                            return [4 /*yield*/, fs_extra_1.default.rename(test, destination.includes(".".concat(ext)) ? destination : "".concat(destination, ".").concat(ext))];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2: return [2 /*return*/];
+                    }
+                });
+            }); });
+            return [2 /*return*/];
+        });
+    });
+}
+exports.renameSnippet = renameSnippet;
 function processSnippet(handoff, file) {
     return __awaiter(this, void 0, void 0, function () {
         var data, custom, publicPath, jsFile, jsPath, js, compiled, e_1, scssFile, scssPath, cssFile, cssPath, result, e_2, scss, css, template, preview, bodyEl, code, publicFile;

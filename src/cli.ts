@@ -23,6 +23,7 @@ Commands:
     build:app [opts] - Builds the design system static application
     build:integration [opts] - Builds current selected integration, styles and previews
     build:recipe - Builds a recipe file based on the integration that is curretnly used (if any)
+    build:snippets <name> [opts] - Builds the snippets for the current integration. Pass a name to build a specific snippet.
 
   start [opts] - Starts the design system in development mode
 
@@ -39,6 +40,8 @@ Commands:
     eject:exportables [opts] - Ejects the default exportables to the current directory
     eject:pages [opts] - Ejects the default pages to the current directory
     eject:theme [opts] - Ejects the currently selected theme to theme/main.scss
+
+  rename:snippet <source> <destination> [opts] - Renames a snippet from source to destination and update any references.
 
 Options:
   -c, --config [file]      Define the path to the config file
@@ -128,6 +131,19 @@ const run = async (
         return handoff.dev();
       case 'build:integration':
         return handoff.integration();
+      case 'build:snippets':
+        const snippet = args._[1];
+        return handoff.snippet(snippet);
+      case 'rename:snippet':
+        const source = args._[1];
+        if (!source) {
+          cliError(`You must specify a source snippet name`, 2);
+        }
+        const destination = args._[2];
+        if (!destination) {
+          cliError(`You must specify a destination snippet name`, 2);
+        }
+        return handoff.renameSnippet(source, destination);
       case 'build:recipe':
         return handoff.recipe();
       case 'eject':

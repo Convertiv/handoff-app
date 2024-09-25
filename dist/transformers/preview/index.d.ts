@@ -6,7 +6,8 @@ import Handoff from '../../index';
  * @param documentationObject
  * @returns
  */
-export declare function snippetTransformer(handoff: Handoff, documentationObject: DocumentationObject): Promise<void>;
+export declare function snippetTransformer(handoff: Handoff): Promise<void>;
+export declare function renameSnippet(handoff: Handoff, source: string, destination: string): Promise<void>;
 export declare function processSnippet(handoff: Handoff, file: string): Promise<void>;
 /**
  * Transforms the documentation object components into a preview and code
