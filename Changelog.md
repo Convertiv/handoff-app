@@ -10,47 +10,62 @@ and this project adheres to
 
 This release enables creation of complex documentation pages, with storybook
 compatible formats. It has two main features - MDX support for adding react
-components to your documentation pages, and Snippet Previews - a system for 
-using Handoff's existing html build process to create complex component 
+components to your documentation pages, and Snippet Previews - a system for
+using Handoff's existing html build process to create complex component
 previews.
 
 ### Features
+
 - **MDX Support** Support for MDX files in Handoff Documentation App
   - [MDX Files](https://mdxjs.com/) Markdown files with react components
   - Any react component can be imported
   - Handoff exposes a number of custom react components that you can use in
-  MDX pages to build 
+    MDX pages to build
 - **Snippet Previews** Create html snippets that will render as a preview with
-html, js, css and sass code below the preview
-  - Place a file ending with `.html` in the `/integration/snippets` file or 
-  run the `make:snippet [name]` cli command
+  html, js, css and sass code below the preview
+  - Place a file ending with `.html` in the `/integration/snippets` file or
+    run the `make:snippet [name]` cli command
   - Handoff will detect the file and make it available to the `SnippetPreview`
-  component
-  - If Handoff detects a snippet file ending in js or scss, with the same name 
-  as the html file, Handoff will automatically use webpack and node-sass to 
-  build those files and make the compiled code available to html template.
+    component
+  - If Handoff detects a snippet file ending in js or scss, with the same name
+    as the html file, Handoff will automatically use webpack and node-sass to
+    build those files and make the compiled code available to html template.
   - If Handoff detects a css file with the same name, it will use that file
-  for styling the preview
+    for styling the preview
     - The `html` file is a Mustache template. At present there are two variables
-    that can be used in these files
+      that can be used in these files
     - `{{{style}}}` a compressed inline style of either the compiled sass code
-    or the raw css code provided.
+      or the raw css code provided.
     - `{{{script}}}` a compressed inline script of the output of the js compilation
   - In your MDX files you can display the snippets using `SnippetPreview`. This
-  component accepts 2 - 3 properties, plus a react fragment as the children.
+    component accepts 2 - 3 properties, plus a react fragment as the children.
     - `title` accepts a string as the `h2` title. Set to false or exclude if you
-    don't want it
+      don't want it
     - `id` is the name of your snippet `{name}.html` The snippet will load dynamical
     - `height` accepts a string to set the height of the preview. If you leave it
-    off, Handoff will set the height of the preview automatically from the contents
-    of the snippet.
+      off, Handoff will set the height of the preview automatically from the contents
+      of the snippet.
 
 ```jsx
 <SnippetPreview title="A Testimonial Component" id="testimonial" height="725px">
   <p>Render a testimonial inline with other content.</p>
 </SnippetPreview>
 ```
+### Additional CLI Commands
 
+- `build:snippets <name>` will either rebuild all the snippets for you, or if an
+  optional name is passed, will rebuild a single snippet
+- `rename:snippet <source> <destination>` will rename a snippet and its js and scss
+  files
+
+### Bugfixes
+
+- Fixes a bug introduced in 0.13.0 where the integration preprocess would try to
+  execute handlebars insertion even on non text files
+- Fixes a bug in the foundation page templates where the markdown would be included
+  outside of the section wrapper
+- Fixes a bug in the `start` command where every page would be flagged as changed
+  on watch.
 ## [0.13.2] - 2024-09-18
 
 This release addresses several developer experience issues

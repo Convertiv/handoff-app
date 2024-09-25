@@ -8,13 +8,14 @@ import { DocumentationObject } from './types';
 import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildRecipe } from './pipeline';
+import pipeline, { buildIntegrationOnly, buildRecipe, buildSnippets } from './pipeline';
 import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
 import { makeExportable, makePage, makeSnippet, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
 import { prepareIntegrationObject } from './utils/integration';
+import { processSnippet, renameSnippet } from './transformers/preview';
 
 class Handoff {
   config: Config | null;
@@ -89,6 +90,27 @@ class Handoff {
     this.preRunner();
     if (this.config) {
       await buildRecipe(this);
+    }
+    return this;
+  }
+  async snippet(name: string | null): Promise<Handoff> {
+    this.preRunner();
+    if (this.config) {
+      if (name) {
+        // Get snippet path
+        name = name.includes('.html') ? name : `${name}.html`;
+        const snippetPath = path.resolve(this.workingPath, 'integration/snippets', name);
+        await processSnippet(this, snippetPath);
+      } else {
+        await buildSnippets(this);
+      }
+    }
+    return this;
+  }
+  async renameSnippet(oldName: string, target: string): Promise<Handoff> {
+    this.preRunner();
+    if (this.config) {
+      renameSnippet(this, oldName, target);
     }
     return this;
   }

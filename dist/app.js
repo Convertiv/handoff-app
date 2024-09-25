@@ -52,6 +52,7 @@ var chalk_1 = __importDefault(require("chalk"));
 var gray_matter_1 = __importDefault(require("gray-matter"));
 var preview_1 = require("./utils/preview");
 var pipeline_1 = require("./pipeline");
+var preview_2 = require("./transformers/preview");
 var getWorkingPublicPath = function (handoff) {
     var paths = [
         path_1.default.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
@@ -90,6 +91,7 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
 var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, pages, files, _i, files_1, file, subFiles, _a, subFiles_1, subFile, target, thirdFiles, _b, thirdFiles_1, thirdFile, target;
     return __generator(this, function (_c) {
+        console.log(chalk_1.default.yellow('Merging MDX files...'));
         appPath = getAppPath(handoff);
         pages = path_1.default.resolve(handoff.workingPath, "pages");
         if (fs_extra_1.default.existsSync(pages)) {
@@ -145,7 +147,7 @@ var transformMdx = function (src, dest, id) {
     var mdx = body;
     var title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
     var menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
-    var description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, "") : '';
+    var description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
     var metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
     var metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
     var weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
@@ -282,7 +284,6 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 2:
                 appPath = _a.sent();
-                // const config = require(path.resolve(appPath, 'next.config.mjs'));
                 // Include any changes made within the app source during watch
                 chokidar_1.default
                     .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
@@ -410,7 +411,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
                         var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
@@ -421,33 +422,40 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 4];
+                                    return [3 /*break*/, 7];
                                 case 1:
-                                    if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
-                                    console.log(chalk_1.default.yellow('Integration changed. Handoff will rerender the integrations...'));
+                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 6];
+                                    console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
-                                    return [4 /*yield*/, handoff.integration()];
+                                    if (!file.includes('snippet')) return [3 /*break*/, 3];
+                                    return [4 /*yield*/, (0, preview_2.processSnippet)(handoff, path_1.default.basename(file))];
                                 case 2:
                                     _b.sent();
+                                    return [3 /*break*/, 5];
+                                case 3: return [4 /*yield*/, handoff.integration()];
+                                case 4:
+                                    _b.sent();
+                                    _b.label = 5;
+                                case 5:
                                     debounce = false;
-                                    _b.label = 3;
-                                case 3: return [3 /*break*/, 4];
-                                case 4: return [2 /*return*/];
+                                    _b.label = 6;
+                                case 6: return [3 /*break*/, 7];
+                                case 7: return [2 /*return*/];
                             }
                         });
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
-                            if (path.endsWith('.mdx')) {
-                                mergeMDX(handoff);
-                            }
                             switch (event) {
                                 case 'add':
                                 case 'change':
                                 case 'unlink':
-                                    console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                                    if (path.endsWith('.mdx')) {
+                                        mergeMDX(handoff);
+                                    }
+                                    console.log(chalk_1.default.yellow("Doc page ".concat(event, "ed. Please reload browser to see changes...")), path);
                                     break;
                             }
                             return [2 /*return*/];
@@ -455,7 +463,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
                             return [2 /*return*/];

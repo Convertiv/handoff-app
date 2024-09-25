@@ -24,8 +24,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/', 'foundations', `/foundations`).props,
       config: getClientConfig(),
-    }
-  }
+    },
+  };
 };
 
 const DesignPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
@@ -80,10 +80,11 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
             </div>
           </div>
         </div>
+
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
       </section>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
       <Footer config={config} />
     </div>
   );
