@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -60,7 +49,9 @@ var next_1 = __importDefault(require("next"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
+var gray_matter_1 = __importDefault(require("gray-matter"));
 var preview_1 = require("./utils/preview");
+var preview_2 = require("./transformers/preview");
 var pipeline_1 = require("./pipeline");
 var getWorkingPublicPath = function (handoff) {
     var paths = [
@@ -93,6 +84,81 @@ var mergePublicDir = function (handoff) { return __awaiter(void 0, void 0, void 
         return [2 /*return*/];
     });
 }); };
+/**
+ * Copy the mdx files from the working dir to the module dir
+ * @param handoff
+ */
+var mergeMDX = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath, pages, files, _i, files_1, file, subFiles, _a, subFiles_1, subFile, target, thirdFiles, _b, thirdFiles_1, thirdFile, target;
+    return __generator(this, function (_c) {
+        console.log(chalk_1.default.yellow('Merging MDX files...'));
+        appPath = getAppPath(handoff);
+        pages = path_1.default.resolve(handoff.workingPath, "pages");
+        if (fs_extra_1.default.existsSync(pages)) {
+            files = fs_extra_1.default.readdirSync(pages);
+            for (_i = 0, files_1 = files; _i < files_1.length; _i++) {
+                file = files_1[_i];
+                if (file.endsWith('.mdx')) {
+                    // transform the file
+                    transformMdx(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
+                }
+                else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file)).isDirectory()) {
+                    subFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file));
+                    for (_a = 0, subFiles_1 = subFiles; _a < subFiles_1.length; _a++) {
+                        subFile = subFiles_1[_a];
+                        if (subFile.endsWith('.mdx')) {
+                            target = path_1.default.resolve(appPath, 'pages', file);
+                            if (!fs_extra_1.default.existsSync(target)) {
+                                fs_extra_1.default.mkdirSync(target, { recursive: true });
+                            }
+                            transformMdx(path_1.default.resolve(pages, file, subFile), path_1.default.resolve(appPath, 'pages', file, subFile), file);
+                        }
+                        else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file, subFile)).isDirectory()) {
+                            thirdFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file, subFile));
+                            for (_b = 0, thirdFiles_1 = thirdFiles; _b < thirdFiles_1.length; _b++) {
+                                thirdFile = thirdFiles_1[_b];
+                                if (thirdFile.endsWith('.mdx')) {
+                                    target = path_1.default.resolve(appPath, 'pages', file, subFile);
+                                    if (!fs_extra_1.default.existsSync(target)) {
+                                        fs_extra_1.default.mkdirSync(target, { recursive: true });
+                                    }
+                                    transformMdx(path_1.default.resolve(pages, file, subFile, thirdFile), path_1.default.resolve(appPath, 'pages', file, subFile, thirdFile), file);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return [2 /*return*/];
+    });
+}); };
+/**
+ * Remove the frontmatter from the mdx file, convert it to an import, and
+ * add the metadata to the export.  Then write the file to the destination.
+ * @param src
+ * @param dest
+ * @param id
+ */
+var transformMdx = function (src, dest, id) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var content = fs_extra_1.default.readFileSync(src);
+    var _j = (0, gray_matter_1.default)(content), data = _j.data, body = _j.content;
+    var mdx = body;
+    var title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
+    var menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
+    var description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
+    var metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
+    var metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
+    var weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
+    var image = (_f = data.image) !== null && _f !== void 0 ? _f : '';
+    var menuTitle = (_g = data.menuTitle) !== null && _g !== void 0 ? _g : '';
+    var enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
+    var wide = data.wide ? 'true' : 'false';
+    //
+    mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => {\n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
+    fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
+};
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
     var _a, _b;
@@ -112,14 +178,17 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
                 _c.sent();
+                return [4 /*yield*/, mergeMDX(handoff)];
+            case 4:
+                _c.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
                 handoffModulePath = path_1.default.resolve(handoff.modulePath);
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-                nextConfigPath = path_1.default.resolve(appPath, 'next.config.js');
+                nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
-            case 4:
+            case 5:
                 nextConfigContent = (_c.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
@@ -129,7 +198,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
-            case 5:
+            case 6:
                 _c.sent();
                 return [2 /*return*/, appPath];
         }
@@ -196,7 +265,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, config, tsconfigPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
+    var appPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -215,7 +284,6 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 2:
                 appPath = _a.sent();
-                config = require(path_1.default.resolve(appPath, 'next.config.js'));
                 // Include any changes made within the app source during watch
                 chokidar_1.default
                     .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
@@ -243,8 +311,6 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         }
                     });
                 }); });
-                tsconfigPath = 'tsconfig.json';
-                config.typescript = __assign(__assign({}, config.typescript), { tsconfigPath: tsconfigPath });
                 dev = true;
                 hostname = 'localhost';
                 port = 3000;
@@ -253,7 +319,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     dir: appPath,
                     hostname: hostname,
                     port: port,
-                    conf: config,
+                    // conf: config,
                 });
                 handle = app.getRequestHandler();
                 moduleOutput = path_1.default.resolve(appPath, 'out');
@@ -345,7 +411,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
                         var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
@@ -356,32 +422,48 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 4];
+                                    return [3 /*break*/, 7];
                                 case 1:
-                                    if (!(path.includes('json') && !debounce)) return [3 /*break*/, 3];
-                                    console.log(chalk_1.default.yellow('Integration changed. Handoff will rerender the integrations...'));
+                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 6];
+                                    console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
-                                    return [4 /*yield*/, handoff.integration()];
+                                    if (!file.includes('snippet')) return [3 /*break*/, 3];
+                                    return [4 /*yield*/, (0, preview_2.processSnippet)(handoff, path_1.default.basename(file))];
                                 case 2:
                                     _b.sent();
+                                    return [3 /*break*/, 5];
+                                case 3: return [4 /*yield*/, handoff.integration()];
+                                case 4:
+                                    _b.sent();
+                                    _b.label = 5;
+                                case 5:
                                     debounce = false;
-                                    _b.label = 3;
-                                case 3: return [3 /*break*/, 4];
-                                case 4: return [2 /*return*/];
+                                    _b.label = 6;
+                                case 6: return [3 /*break*/, 7];
+                                case 7: return [2 /*return*/];
                             }
                         });
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
-                            console.log(chalk_1.default.yellow('Doc page changed. Please reload browser to see changes...'));
+                            switch (event) {
+                                case 'add':
+                                case 'change':
+                                case 'unlink':
+                                    if (path.endsWith('.mdx')) {
+                                        mergeMDX(handoff);
+                                    }
+                                    console.log(chalk_1.default.yellow("Doc page ".concat(event, "ed. Please reload browser to see changes...")), path);
+                                    break;
+                            }
                             return [2 /*return*/];
                         });
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json')).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
                             return [2 /*return*/];

@@ -39,10 +39,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
+exports.makeSnippet = exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var chalk_1 = __importDefault(require("chalk"));
+var prompt_1 = require("../utils/prompt");
 /**
  * Make a new exportable component
  * @param handoff
@@ -141,12 +142,13 @@ exports.makeTemplate = makeTemplate;
  * @param handoff
  */
 var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 0, void 0, function () {
-    var config, workingPath, sourcePath, templatePath, target, template;
+    var config, type, checkType, workingPath, sourcePath, templatePath, target, template;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, handoff.config];
             case 1:
                 config = _a.sent();
+                type = 'mdx';
                 if (!name) {
                     console.log(chalk_1.default.red("Page name must be set"));
                     return [2 /*return*/];
@@ -155,37 +157,101 @@ var makePage = function (handoff, name, parent) { return __awaiter(void 0, void 
                     console.log(chalk_1.default.red("Page name must be alphanumeric and may contain dashes or underscores"));
                     return [2 /*return*/];
                 }
+                return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green("By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': "))];
+            case 2:
+                checkType = _a.sent();
+                if (checkType === 'markdown') {
+                    type = 'md';
+                }
                 if (parent) {
                     if (!/^[a-z0-9]+$/i.test(parent)) {
                         console.log(chalk_1.default.red("Parent name must be alphanumeric and may contain dashes or underscores"));
                         return [2 /*return*/];
                     }
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs", parent));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".md")));
+                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "pages", parent));
+                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", parent, "".concat(name, ".").concat(type)));
                 }
                 else {
-                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "docs"));
-                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", "".concat(name, ".md")));
+                    workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "pages"));
+                    sourcePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, "config/docs", "".concat(name, ".").concat(type)));
                 }
                 if (!fs_extra_1.default.existsSync(workingPath)) {
                     fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
                 }
-                target = path_1.default.resolve(workingPath, "".concat(name, ".md"));
+                target = path_1.default.resolve(workingPath, "".concat(name, ".").concat(type));
                 if (fs_extra_1.default.existsSync(target)) {
                     if (!handoff.force) {
                         console.log(chalk_1.default.yellow("'".concat(name, "' already exists as custom page.  Use the --force flag revert it to default.")));
                         return [2 /*return*/];
                     }
                 }
-                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'page.md'));
+                templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', "page.".concat(type)));
                 if (fs_extra_1.default.existsSync(sourcePath)) {
                     templatePath = sourcePath;
                 }
                 template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
                 fs_extra_1.default.writeFileSync(target, template);
-                console.log(chalk_1.default.green("New template ".concat(name, ".md was created in ").concat(workingPath)));
+                console.log(chalk_1.default.green("New template ".concat(name, ".").concat(type, " was created in ").concat(workingPath)));
                 return [2 /*return*/, handoff];
         }
     });
 }); };
 exports.makePage = makePage;
+/**
+ * Make a new docs page
+ * @param handoff
+ */
+var makeSnippet = function (handoff, name) { return __awaiter(void 0, void 0, void 0, function () {
+    var config, workingPath, targetHtml, htmlPath, htmlTemplate, writeJSFile, jsPath, jsTemplate, writeSassFile, scssPath, scssTemplate;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, handoff.config];
+            case 1:
+                config = _a.sent();
+                if (!name) {
+                    console.log(chalk_1.default.red("Snippet name must be set"));
+                    return [2 /*return*/];
+                }
+                if (!/^[a-z0-9]+$/i.test(name)) {
+                    console.log(chalk_1.default.red("Snippet name must be alphanumeric and may contain dashes or underscores"));
+                    return [2 /*return*/];
+                }
+                name = name.replace('.html', '');
+                workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, "integration/snippets"));
+                if (!fs_extra_1.default.existsSync(workingPath)) {
+                    fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
+                }
+                targetHtml = path_1.default.resolve(workingPath, "".concat(name, ".html"));
+                if (fs_extra_1.default.existsSync(targetHtml)) {
+                    if (!handoff.force) {
+                        console.log(chalk_1.default.yellow("'".concat(name, "' already exists as custom snippet.")));
+                        return [2 /*return*/];
+                    }
+                }
+                htmlPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.html'));
+                htmlTemplate = fs_extra_1.default.readFileSync(htmlPath, 'utf8');
+                fs_extra_1.default.writeFileSync(targetHtml, htmlTemplate);
+                console.log(chalk_1.default.green("New snippet ".concat(name, ".html was created in ").concat(workingPath)));
+                return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green("Would you like us to generate a supporting javascript file ".concat(name, ".js? (y/n): ")))];
+            case 2:
+                writeJSFile = _a.sent();
+                if (writeJSFile === 'y') {
+                    console.log(chalk_1.default.green("Writing ".concat(name, ".js.\n")));
+                    jsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.js'));
+                    jsTemplate = fs_extra_1.default.readFileSync(jsPath, 'utf8');
+                    fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, "".concat(name, ".js")), jsTemplate);
+                }
+                return [4 /*yield*/, (0, prompt_1.prompt)(chalk_1.default.green("Would you like us to generate a supporting SASS file ".concat(name, ".scss? (y/n): ")))];
+            case 3:
+                writeSassFile = _a.sent();
+                if (writeSassFile === 'y') {
+                    console.log(chalk_1.default.green("Writing ".concat(name, ".scss.\n")));
+                    scssPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.scss'));
+                    scssTemplate = fs_extra_1.default.readFileSync(scssPath, 'utf8');
+                    fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, "".concat(name, ".scss")), scssTemplate);
+                }
+                return [2 /*return*/, handoff];
+        }
+    });
+}); };
+exports.makeSnippet = makeSnippet;

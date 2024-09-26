@@ -17,7 +17,7 @@ import scssTransformer, { scssTypesTransformer } from './transformers/scss/index
 import cssTransformer from './transformers/css/index';
 import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
-import previewTransformer from './transformers/preview/index';
+import previewTransformer, { snippetTransformer } from './transformers/preview/index';
 import buildApp from './app';
 import Handoff, { initIntegrationObject } from '.';
 import sdTransformer from './transformers/sd';
@@ -76,6 +76,17 @@ const buildIntegration = async (handoff: Handoff, documentationObject: Documenta
 const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
     previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+  ]);
+};
+
+/**
+ * Build previews
+ * @param documentationObject
+ * @returns
+ */
+export const buildSnippets = async (handoff: Handoff) => {
+  await Promise.all([
+    snippetTransformer(handoff),
   ]);
 };
 
@@ -433,6 +444,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
     handoff.integrationObject = initIntegrationObject(handoff.workingPath);
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
+    await buildSnippets(handoff);
   }
 };
 
@@ -451,6 +463,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
   await buildPreviews(handoff, documentationObject);
+  await buildSnippets(handoff);
   if (build) {
     await buildApp(handoff);
   }

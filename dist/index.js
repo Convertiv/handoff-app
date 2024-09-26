@@ -85,6 +85,7 @@ var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 var chalk_1 = __importDefault(require("chalk"));
 var integration_2 = require("./utils/integration");
+var preview_1 = require("./transformers/preview");
 var Handoff = /** @class */ (function () {
     function Handoff(config) {
         this.debug = false;
@@ -160,6 +161,42 @@ var Handoff = /** @class */ (function () {
                         _a.label = 2;
                     case 2: return [2 /*return*/, this];
                 }
+            });
+        });
+    };
+    Handoff.prototype.snippet = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            var snippetPath;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        this.preRunner();
+                        if (!this.config) return [3 /*break*/, 4];
+                        if (!name) return [3 /*break*/, 2];
+                        // Get snippet path
+                        name = name.includes('.html') ? name : "".concat(name, ".html");
+                        snippetPath = path_1.default.resolve(this.workingPath, 'integration/snippets', name);
+                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath)];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.renameSnippet = function (oldName, target) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.preRunner();
+                if (this.config) {
+                    (0, preview_1.renameSnippet)(this, oldName, target);
+                }
+                return [2 /*return*/, this];
             });
         });
     };
@@ -308,6 +345,21 @@ var Handoff = /** @class */ (function () {
                     case 0:
                         if (!this.config) return [3 /*break*/, 2];
                         return [4 /*yield*/, (0, make_1.makePage)(this, name, parent)];
+                    case 1:
+                        _a.sent();
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this];
+                }
+            });
+        });
+    };
+    Handoff.prototype.makeSnippet = function (name) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.config) return [3 /*break*/, 2];
+                        return [4 /*yield*/, (0, make_1.makeSnippet)(this, name)];
                     case 1:
                         _a.sent();
                         _a.label = 2;

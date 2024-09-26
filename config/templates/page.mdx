@@ -1,0 +1,53 @@
+---
+title: 'The visible title of the page.'
+description: A description of the page.
+weight: 0
+menuTitle: 'Menu Title'
+metaTitle: 'Meta Title'
+metaDescription: 'Insert a meta description'
+enabled: true
+---
+
+import Icon from "handoff-app/src/app/components/Icon";
+import {
+  ComponentDisplay,
+  SnippetPreview,
+} from "handoff-app/src/app/components/ComponentPreview";
+import { Hero } from "handoff-app/src/app/components/Hero";
+import { CodeHighlight } from "handoff-app/src/app/components/Markdown/CodeHighlight";
+import { ComponentList } from "handoff-app/src/app/components/ComponentLists";
+
+
+<Hero title={props.title} image="">
+  <p>{props.description}</p>
+</Hero>
+
+Replace this with your content. We've created a simple hero block that will
+pull data from the frontmatter of the page. You can add more components to
+create a more complex layout.
+
+Here's a component that shows a grid of images and text:
+
+
+<ComponentList
+  components={{
+    "alert": {
+      title: "Alerts",
+      description: "Alerts are used to communicate a state that affects a system, feature or page. They are used to provide feedback about an action that has taken place.",
+      image: "/assets/svg/component-alert.svg",
+      path: "components",
+    },
+    "button": {
+      title: "Buttons",
+      description: "Render page titles for different types of content.",
+      image: "/assets/svg/component-button.svg",
+      path: "components",
+    },
+    "modal": {
+      title: "Model Dialogs",
+      description: "Modal dialogs present popup information to inform users of important information and sometimes allow the user to take action.",
+      image: "/assets/svg/component-modal.svg",
+      path: "components",
+    },
+  }}
+/>

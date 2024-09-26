@@ -23,6 +23,7 @@ Commands:
     build:app [opts] - Builds the design system static application
     build:integration [opts] - Builds current selected integration, styles and previews
     build:recipe - Builds a recipe file based on the integration that is curretnly used (if any)
+    build:snippets <name> [opts] - Builds the snippets for the current integration. Pass a name to build a specific snippet.
 
   start [opts] - Starts the design system in development mode
 
@@ -31,6 +32,7 @@ Commands:
     make:template <component> <state> [opts] - Creates a new template
     make:page <name> <parent> [opts] - Creates a new custom page
     make:integration - Creates a new integration based on the provided Bootstrap 5.3 template
+    make:snippet - <name> Creates a new html code snippet that you can embed in your documentation
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
@@ -38,6 +40,8 @@ Commands:
     eject:exportables [opts] - Ejects the default exportables to the current directory
     eject:pages [opts] - Ejects the default pages to the current directory
     eject:theme [opts] - Ejects the currently selected theme to theme/main.scss
+
+  rename:snippet <source> <destination> [opts] - Renames a snippet from source to destination and update any references.
 
 Options:
   -c, --config [file]      Define the path to the config file
@@ -57,7 +61,7 @@ const showHelp = () => {
  * Show the help message
  */
 const showVersion = () => {
-  cliError('Handoff App - 0.13.2', 2);
+  cliError('Handoff App - 0.14.0', 2);
 };
 
 /**
@@ -127,6 +131,19 @@ const run = async (
         return handoff.dev();
       case 'build:integration':
         return handoff.integration();
+      case 'build:snippets':
+        const snippet = args._[1];
+        return handoff.snippet(snippet);
+      case 'rename:snippet':
+        const source = args._[1];
+        if (!source) {
+          cliError(`You must specify a source snippet name`, 2);
+        }
+        const destination = args._[2];
+        if (!destination) {
+          cliError(`You must specify a destination snippet name`, 2);
+        }
+        return handoff.renameSnippet(source, destination);
       case 'build:recipe':
         return handoff.recipe();
       case 'eject':
@@ -153,14 +170,15 @@ Eject must have a subcommand. Did you mean:
       case 'eject:pages':
         return handoff.ejectPages();
       case 'make':
-          cliError(
-            `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
+        cliError(
+          `Make commands create configuration files in your working root and scaffold up the appropriate folder structure if needed.
 
   Make must have a subcommand. Did you mean:
     - make:template
     - make:exportable
     - make:page
-    - make:integration`,
+    - make:integration
+    - make:snippet`,
             2
           );
           break;
@@ -203,6 +221,15 @@ Eject must have a subcommand. Did you mean:
           cliError(`Page parent must be alphanumeric and may contain dashes or underscores`, 2);
         }
         return handoff.makePage(pageName, pageParent);
+      case 'make:snippet':
+        const snippetName = args._[1];
+        if (!snippetName) {
+          cliError(`You must supply a snippet name`, 2);
+        }
+        if (!/^[a-z0-9]+$/i.test(snippetName)) {
+          cliError(`Snippet name must be alphanumeric and may contain dashes or underscores`, 2);
+        }
+        return handoff.makeSnippet(snippetName);
       case 'make:integration':
         return handoff.makeIntegration();
       default:

@@ -23,10 +23,10 @@ import Header from '../../../components/Header';
 import CustomNav from '../../../components/SideNav/Custom';
 import AnchorNav from '../../../components/AnchorNav';
 import Icon from '../../../components/Icon';
-import { CodeHighlight } from '../../../components/Markdown/CodeHighlight';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import Footer from '../../../components/Footer';
+import { ComponentDisplay, ComponentPreview, ComponentPreviews, OverviewComponentPreview, getComponentPreviewTitle } from '../../../components/ComponentPreview';
 
 /**
  * Render all index pages
@@ -205,16 +205,10 @@ const GenericComponentPage = ({
 
 export default GenericComponentPage;
 
-type ComponentPreview = {
-  component: ComponentInstance;
-  name: string;
-  preview: PreviewObject | undefined;
-  overrides?: { states?: string[] | undefined };
-};
 
-type ComponentPreviews = ComponentPreview[];
 
-const getComponentPreviews = (
+
+export const getComponentPreviews = (
   tab: 'overview' | 'tokens',
   component: FileComponentObject,
   options: ComponentDocumentationOptions,
@@ -290,28 +284,8 @@ const getComponentPreviews = (
   return tabComponents;
 };
 
-const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
-  return (
-    <>
-      {components.map((previewableComponent) => {
-        const component = previewableComponent.component;
-        return (
-          <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
-            <p>{component.description}</p>
-            <div className="c-component-preview">
-              <ComponentDisplay component={previewableComponent.preview} />
-            </div>
-            <CodeHighlight data={previewableComponent.preview} />
-            <hr />
-          </div>
-        );
-      })}
-    </>
-  );
-};
 
-const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
+export const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       <h4>Classes</h4>
@@ -345,7 +319,7 @@ const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({
   );
 };
 
-const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
+export const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
   return (
     <>
       <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
@@ -353,36 +327,6 @@ const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) 
   );
 };
 
-const ComponentDisplay: React.FC<{ component: PreviewObject | undefined }> = ({ component }) => {
-  const ref = React.useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = React.useState('0px');
-  const onLoad = () => {
-    if (ref.current) {
-      setHeight((ref.current.contentWindow?.document?.body?.scrollHeight ?? 0) + 'px');
-    }
-  };
-  React.useEffect(() => {
-    onLoad();
-  }, []);
-  return (
-
-    <iframe
-      onLoad={onLoad}
-      ref={ref}
-      height={height}
-      style={{
-        width: '1px',
-        minWidth: '100%',
-        height: height,
-      }}
-      srcDoc={component?.preview}
-    />
-  );
-};
-
-export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
-  return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
-};
 
 function multiPropSort(properties: string[], array: ComponentPreview[]) {
   return array.sort((l, r) => {
