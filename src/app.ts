@@ -8,7 +8,10 @@ import next from 'next';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
 import chalk from 'chalk';
+import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
+import { processSnippet } from './transformers/preview';
+import { buildIntegrationOnly } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -41,6 +44,127 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
   }
 };
 
+/**
+ * Copy the mdx files from the working dir to the module dir
+ * @param handoff
+ */
+const mergeMDX = async (handoff: Handoff): Promise<void> => {
+  console.log(chalk.yellow('Merging MDX files...'));
+  const appPath = getAppPath(handoff);
+  const pages = path.resolve(handoff.workingPath, `pages`);
+  if (fs.existsSync(pages)) {
+    // Find all mdx files in path
+    const files = fs.readdirSync(pages);
+    for (const file of files) {
+      if (file.endsWith('.mdx')) {
+        // transform the file
+        transformMdx(path.resolve(pages, file), path.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
+      } else if (fs.lstatSync(path.resolve(pages, file)).isDirectory()) {
+        // Recursion - find all mdx files in sub directories
+        const subFiles = fs.readdirSync(path.resolve(pages, file));
+        for (const subFile of subFiles) {
+          if (subFile.endsWith('.mdx')) {
+            // transform the file
+            const target = path.resolve(appPath, 'pages', file);
+            if (!fs.existsSync(target)) {
+              fs.mkdirSync(target, { recursive: true });
+            }
+            transformMdx(path.resolve(pages, file, subFile), path.resolve(appPath, 'pages', file, subFile), file);
+          } else if (fs.lstatSync(path.resolve(pages, file, subFile)).isDirectory()) {
+            const thirdFiles = fs.readdirSync(path.resolve(pages, file, subFile));
+            for (const thirdFile of thirdFiles) {
+              if (thirdFile.endsWith('.mdx')) {
+                const target = path.resolve(appPath, 'pages', file, subFile);
+                if (!fs.existsSync(target)) {
+                  fs.mkdirSync(target, { recursive: true });
+                }
+                transformMdx(path.resolve(pages, file, subFile, thirdFile), path.resolve(appPath, 'pages', file, subFile, thirdFile), file);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Remove the frontmatter from the mdx file, convert it to an import, and
+ * add the metadata to the export.  Then write the file to the destination.
+ * @param src
+ * @param dest
+ * @param id
+ */
+const transformMdx = (src: string, dest: string, id: string) => {
+  const content = fs.readFileSync(src);
+  const { data, content: body } = matter(content);
+  let mdx = body;
+  const title = data.title ?? '';
+  const menu = data.menu ?? '';
+  const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
+  const metaDescription = data.metaDescription ?? '';
+  const metaTitle = data.metaTitle ?? '';
+  const weight = data.weight ?? 0;
+  const image = data.image ?? '';
+  const menuTitle = data.menuTitle ?? '';
+  const enabled = data.enabled ?? true;
+  const wide = data.wide ? 'true' : 'false';
+  //
+  mdx = `
+\n\n${mdx}\n\n
+import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
+import { getClientConfig } from '@handoff/config';
+import { getPreview } from "handoff-app/src/app/components/util";
+
+export const getStaticProps = async () => {
+  // get previews for components on this page
+  const previews = getPreview();
+  const menu = staticBuildMenu();
+  const config = getClientConfig();
+  return {
+    props: {
+      previews,
+      menu,
+      config,
+      current: getCurrentSection(menu, "/${id}") ?? [],
+      title: "${title}",
+      description: "${description}",
+      image: "${image}",
+    },
+  };
+};
+
+export const preview = (name) => {
+  return previews.components[name];
+};
+
+import MarkdownLayout from "handoff-app/src/app/components/MarkdownLayout";
+export default function Layout(props) {
+  return (
+    <MarkdownLayout
+      menu={props.menu}
+      metadata={{
+        metaDescription: "${metaDescription}",
+        metaTitle: "${metaTitle}",
+        title: "${title}",
+        weight: ${weight},
+        image: "${image}",
+        menuTitle: "${menuTitle}",
+        enabled: ${enabled},
+      }}
+      wide={${wide}}
+      allPreviews={props.previews}
+      config={props.config}
+      current={props.current}
+    >
+      {props.children}
+    </MarkdownLayout>
+  );
+
+}`;
+  fs.writeFileSync(dest, mdx, 'utf-8');
+};
+
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
@@ -49,6 +173,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   await fs.promises.mkdir(appPath, { recursive: true });
   await fs.copy(srcPath, appPath, { overwrite: true });
   await mergePublicDir(handoff);
+  await mergeMDX(handoff);
 
   // Prepare project app configuration
   const handoffProjectId = handoff.config.figma_project_id ?? '';
@@ -56,7 +181,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-  const nextConfigPath = path.resolve(appPath, 'next.config.js');
+  const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -79,6 +204,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // If we are building the app, ensure the integration is built first
+  await buildIntegrationOnly(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -136,8 +264,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
 
   const appPath = await prepareProjectApp(handoff);
-  const config = require(path.resolve(appPath, 'next.config.js'));
-
   // Include any changes made within the app source during watch
   chokidar
     .watch(path.resolve(handoff.modulePath, 'src', 'app'), {
@@ -155,13 +281,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     });
 
-  // does a ts config exist?
-  let tsconfigPath = 'tsconfig.json';
+  // // does a ts config exist?
+  // let tsconfigPath = 'tsconfig.json';
 
-  config.typescript = {
-    ...config.typescript,
-    tsconfigPath,
-  };
+  // config.typescript = {
+  //   ...config.typescript,
+  //   tsconfigPath,
+  // };
   const dev = true;
   const hostname = 'localhost';
   const port = 3000;
@@ -171,7 +297,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     dir: appPath,
     hostname,
     port,
-    conf: config,
+    // conf: config,
   });
   const handle = app.getRequestHandler();
 
@@ -242,15 +368,19 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
 
   if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'integration')).on('all', async (event, path) => {
+    chokidar.watch(path.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', async (event, file) => {
       switch (event) {
         case 'add':
         case 'change':
         case 'unlink':
-          if (path.includes('json') && !debounce) {
-            console.log(chalk.yellow('Integration changed. Handoff will rerender the integrations...'));
+          if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
+            console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
             debounce = true;
-            await handoff.integration();
+            if(file.includes('snippet')) {
+              await processSnippet(handoff, path.basename(file));
+            }else{
+              await handoff.integration();
+            }
             debounce = false;
           }
           break;
@@ -258,12 +388,22 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'pages')).on('all', async (event, path) => {
-      console.log(chalk.yellow('Doc page changed. Please reload browser to see changes...'));
+    chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
+
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if (path.endsWith('.mdx')) {
+            mergeMDX(handoff);
+          }
+          console.log(chalk.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
+          break;
+      }
     });
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json')).on('all', async (event, path) => {
+    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, path) => {
       console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
     });
   }

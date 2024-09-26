@@ -28,4 +28,25 @@ export const CopyCode: React.FC<CopyCodeProps> = ({ code }) => {
   );
 };
 
+export interface DownloadCodeProps {
+  code: string;
+  filename: string;
+}
+
+export const DownloadCode: React.FC<DownloadCodeProps> = ({ code, filename }) => {
+  const [download, setDownload] = React.useState('Download code as file');
+
+  return (
+    <a
+      href={'data:text/plain;charset=utf-8,' + encodeURIComponent(code)}
+      className="c-code-block__button c-tooltip"
+      data-tooltip={download}
+      data-download-state="download"
+      onMouseEnter={(e) => setDownload('Download code as file')}
+    >
+      <Icon name="download" width={15} height={15}/>
+    </a>
+  );
+};
+
 export default CopyCode;

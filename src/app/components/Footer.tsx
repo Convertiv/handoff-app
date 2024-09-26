@@ -6,7 +6,6 @@ interface FooterProps {
 
 function Footer({ config }: FooterProps) {
   const date = new Date();
-
   return (
     <footer id="site-footer" className="c-site-footer">
       <div className="o-container-fluid">

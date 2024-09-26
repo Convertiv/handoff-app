@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import Icon from './Icon';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { ComponentInstance } from '@handoff/exporters/components/types';
-import { IntegrationObjectComponentOptions } from '../../types/config';
+import { IntegrationObjectComponentOptions } from '@handoff/types/config';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',

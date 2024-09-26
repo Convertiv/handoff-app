@@ -48,13 +48,13 @@ export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: bool
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
+  if (!handoff.force) {
+    const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
 
-  const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-
-  if (fs.existsSync(integrationPath)) {
-    return integrationPath;
+    if (fs.existsSync(integrationPath)) {
+      return integrationPath;
+    }
   }
-
   if (resolveTemplatePath) {
     return path.resolve(path.join(handoff.modulePath, 'config', 'templates', 'integration'));
   }
@@ -131,9 +131,10 @@ const buildIntegration = async (
   rootReturnPath?: string
 ): Promise<void> => {
   rootPath ??= sourcePath;
-
   const items = await fs.readdir(sourcePath);
+
   const components = Object.keys(documentationObject.components);
+  const componentsWithInstances = components.filter((component) => documentationObject.components[component].instances.length > 0);
 
   for (const item of items) {
     const sourceItemPath = path.join(sourcePath, item);
@@ -147,19 +148,30 @@ const buildIntegration = async (
       // Recursively process the directory
       await buildIntegration(sourceItemPath, destItemPath, documentationObject, rootPath, (rootReturnPath ?? '../') + '../');
     } else {
-      // Read the file content
-      const content = await loadTemplateContent(sourceItemPath);
-      // Compile the template with Handlebars
-      const template = Handlebars.compile(content);
-      // Render the content with Handlebars
-      const renderedContent = template({
-        components: Object.keys(documentationObject.components),
-        documentationObject: documentationObject,
-      } as IntegrationTemplateContext);
-      // Ensure the directory exists before writing the file
-      await fs.ensureDir(path.dirname(destItemPath));
-      // Write the rendered content to the destination path
-      await fs.writeFile(destItemPath, replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../'));
+      // Check if the file needs to be processed
+      if (['scss', 'css', 'json'].includes(sourceItemPath.split('.').at(-1))) {
+        // Read the file content and prepare for processing
+        const content = await loadTemplateContent(sourceItemPath);
+        // Compile the template with Handlebars
+        const template = Handlebars.compile(content);
+        // Render the content with Handlebars
+        const renderedContent = template({
+          components: Object.keys(documentationObject.components),
+          documentationObject: documentationObject,
+        } as IntegrationTemplateContext);
+        // Ensure the directory exists before writing the file
+        await fs.ensureDir(path.dirname(destItemPath));
+        // Write the rendered content to the destination path
+        await fs.writeFile(
+          destItemPath,
+          replaceHandoffImportTokens(renderedContent, components, path.parse(destItemPath).dir, rootPath, rootReturnPath ?? '../')
+        );
+      } else {
+        // Ensure the directory exists before writing the file
+        await fs.ensureDir(path.dirname(destItemPath));
+        // Copy file
+        await fs.copyFile(sourceItemPath, destItemPath);
+      }
     }
   }
 };
@@ -333,7 +345,13 @@ interface IntegrationTemplateContext {
   documentationObject: DocumentationObject;
 }
 
-const replaceHandoffImportTokens = (content: string, components: string[], currentPath: string, rootPath: string, rootReturnPath: string) => {
+const replaceHandoffImportTokens = (
+  content: string,
+  components: string[],
+  currentPath: string,
+  rootPath: string,
+  rootReturnPath: string
+) => {
   getHandoffImportTokens(components, currentPath, rootPath, rootReturnPath).forEach(([token, imports]) => {
     content = content.replaceAll(`//<#${token}#>`, imports.map((path) => `@import '${path}';`).join(`\r\n`));
   });
