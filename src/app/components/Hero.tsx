@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export const Hero: React.FC<{
   title: string;
   image: string;
@@ -23,7 +25,7 @@ export const Hero: React.FC<{
         )}
       </div>
       {image && (
-        <img
+        <Image
           alt="Icon for component-button"
           loading="lazy"
           width="100"

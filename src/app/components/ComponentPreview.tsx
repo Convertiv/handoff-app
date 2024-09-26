@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { CodeHighlight } from './Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
@@ -54,7 +54,7 @@ export const ComponentDisplay: React.FC<{
   const [width, setWidth] = React.useState('100%');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
   const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
-  const onLoad = () => {
+  const onLoad = useCallback(() => {
     if (defaultHeight) {
       setHeight(defaultHeight);
     } else if (ref.current) {
@@ -70,7 +70,9 @@ export const ComponentDisplay: React.FC<{
         });
       }
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultHeight, ref, breakpoints]);
+
   React.useEffect(() => {
     onLoad();
     window.addEventListener('resize', onLoad);
@@ -151,6 +153,7 @@ export const SnippetPreview: React.FC<{
       setLoaded(true);
     }
     loadPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, setLoaded]);
 
   if (!preview) {
