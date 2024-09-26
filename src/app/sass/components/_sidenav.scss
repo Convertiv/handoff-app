@@ -18,7 +18,8 @@
 		height: 0;
 		visibility: hidden;
 		transform: translateY(-1rem);
-		transition: opacity 0.2s, visibility 0.2s, transform 0.3s;
+		transition: opacity .2s, visibility .2s, transform .3s;
+
 		&.is-active {
 			opacity: 1;
 			height: auto;
@@ -44,10 +45,11 @@
 		ul {
 			li & {
 				padding-bottom: 0;
-				border: 1px solid black;
+				border: 1px solid #000000;
 			}
 			padding-left: rem(10px);
 			margin-bottom: rem(0);
+
 			li {
 				a {
 					padding: 5px var(--sidenav-item-padding-right) 5px var(--sidenav-item-padding-left);
@@ -90,7 +92,7 @@
 
 				svg {
 					opacity: 1;
-					transition: 0.2s all ease-in-out;
+					transition: .2s all ease-in-out;
 				}
 			}
 
@@ -109,7 +111,7 @@
 
 				svg {
 					opacity: 1;
-					transition: 0.2s all ease-in-out;
+					transition: .2s all ease-in-out;
 				}
 			}
 		}
@@ -131,7 +133,7 @@
 	img,
 	.icon-wrapper {
 		margin-right: rem(15px);
-		opacity: 0.17;
+		opacity: .17;
 		width: rem(16px);
 	}
 

@@ -33,6 +33,7 @@ iframe {
 			border-left: none;
 			border-top-left-radius: 0;
 			border-bottom-left-radius: 0;
+
 			&__label {
 				display: none;
 				position: absolute;
@@ -42,9 +43,9 @@ iframe {
 				text-align: right;
 				border-radius: 5px;
 				background-color: #f8f9e3;
-
 				min-width: 150px;
 				padding: 0 10px;
+
 				&::before {
 					content: '';
 					position: absolute;
@@ -57,10 +58,12 @@ iframe {
 					border-bottom: 5px solid #e3e3e3;
 				}
 			}
+
 			&.active {
 				border: 1px solid #e3e3e3;
 				border-left: none;
 			}
+
 			&:hover {
 				border: 1px solid #e3e3e3;
 				cursor: pointer;
