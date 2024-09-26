@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.14.0] - 2024-09-11
+## [0.14.0] - 2024-09-26
 
 This release enables creation of complex documentation pages, with storybook
 compatible formats. It has two main features - MDX support for adding react
@@ -65,8 +65,8 @@ previews.
   execute handlebars insertion even on non text files
 - Fixes a bug in the foundation page templates where the markdown would be included
   outside of the section wrapper
-- Fixes a bug in the `start` command where every page would be flagged as changed
-  on watch.
+- Fixes a bug in the `start` command where every doc page would be flagged as
+  changed on watch.
 
 ## [0.13.0] - 2024-09-08
 
