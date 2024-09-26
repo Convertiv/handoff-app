@@ -11,6 +11,7 @@ import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
 import { processSnippet } from './transformers/preview';
+import { buildIntegrationOnly } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -133,7 +134,7 @@ export const getStaticProps = async () => {
   };
 };
 
-export const preview = (name) => { 
+export const preview = (name) => {
   return previews.components[name];
 };
 
@@ -203,6 +204,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // If we are building the app, ensure the integration is built first
+  await buildIntegrationOnly(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -385,7 +389,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
-      
+
       switch (event) {
         case 'add':
         case 'change':

@@ -247,7 +247,8 @@ const initConfig = (configOverride?: any): Config => {
   return returnConfig;
 };
 
-const initIntegrationObject = (workingPath: string): IntegrationObject => {
+
+export const initIntegrationObject = (workingPath: string): IntegrationObject => {
   const integrationPath = path.join(workingPath, 'integration');
 
   if (!fs.existsSync(integrationPath)) {

@@ -59,4 +59,5 @@ declare class Handoff {
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
+export declare const initIntegrationObject: (workingPath: string) => IntegrationObject;
 export default Handoff;

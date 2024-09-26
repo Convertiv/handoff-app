@@ -73,6 +73,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initIntegrationObject = void 0;
 var config_1 = require("./config");
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
@@ -118,7 +119,7 @@ var Handoff = /** @class */ (function () {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = initIntegrationObject(this.workingPath);
+        this.integrationObject = (0, exports.initIntegrationObject)(this.workingPath);
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
@@ -466,6 +467,7 @@ var initIntegrationObject = function (workingPath) {
     var integration = JSON.parse(buffer.toString());
     return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
 };
+exports.initIntegrationObject = initIntegrationObject;
 var validateConfig = function (config) {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env

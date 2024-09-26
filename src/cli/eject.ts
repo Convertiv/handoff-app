@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import { getPathToIntegration } from '../transformers/integration';
 import { getClientConfig } from '../config';
+import { buildIntegrationOnly } from '../pipeline';
 
 /**
  * Eject the config to the working directory
@@ -40,9 +41,10 @@ export const makeIntegration = async (handoff: Handoff) => {
 
   // perform integration ejection
   const integrationPath = getPathToIntegration(handoff, true);
-  fs.copySync(integrationPath, workingPath, { overwrite: false });
+  fs.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
+  if (handoff.force) handoff.force = false;
+  await buildIntegrationOnly(handoff);
   console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
-
   return handoff;
 };
 

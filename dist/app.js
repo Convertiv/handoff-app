@@ -52,6 +52,7 @@ var chalk_1 = __importDefault(require("chalk"));
 var gray_matter_1 = __importDefault(require("gray-matter"));
 var preview_1 = require("./utils/preview");
 var preview_2 = require("./transformers/preview");
+var pipeline_1 = require("./pipeline");
 var getWorkingPublicPath = function (handoff) {
     var paths = [
         path_1.default.resolve(handoff.workingPath, "public-".concat(handoff.config.figma_project_id)),
@@ -155,7 +156,7 @@ var transformMdx = function (src, dest, id) {
     var enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
     var wide = data.wide ? 'true' : 'false';
     //
-    mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => { \n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
+    mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => {\n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
@@ -216,17 +217,22 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                // If we are building the app, ensure the integration is built first
+                return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
+            case 1:
+                // If we are building the app, ensure the integration is built first
+                _a.sent();
                 // Build client preview styles
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
                         .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
                         .catch(function (error) {
                         throw new Error(error);
                     })];
-            case 1:
+            case 2:
                 // Build client preview styles
                 _a.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
-            case 2:
+            case 3:
                 appPath = _a.sent();
                 // Build app
                 return [4 /*yield*/, (0, next_build_1.nextBuild)({
@@ -237,7 +243,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         experimentalTurbo: false,
                         experimentalBuildMode: 'default',
                     }, appPath)];
-            case 3:
+            case 4:
                 // Build app
                 _a.sent();
                 outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
