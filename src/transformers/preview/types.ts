@@ -5,6 +5,7 @@ export type TransformComponentTokensResult = {
   js?: string; 
   css?: string;
   sass?: string; 
+  sharedStyles?: string;
 } | null;
 
 export interface TransformedPreviewComponents {

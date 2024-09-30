@@ -5,6 +5,7 @@ export declare type TransformComponentTokensResult = {
     js?: string;
     css?: string;
     sass?: string;
+    sharedStyles?: string;
 } | null;
 export interface TransformedPreviewComponents {
     [key: string]: TransformComponentTokensResult[];

@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSnippet = exports.renameSnippet = exports.snippetTransformer = void 0;
+exports.processSnippet = exports.processSharedStyles = exports.renameSnippet = exports.snippetTransformer = void 0;
 var handlebars_1 = __importDefault(require("handlebars"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
@@ -126,7 +126,7 @@ var transformComponentTokens = function (handoff, componentId, component) { retu
  */
 function snippetTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var custom, publicPath, files, _i, files_1, file;
+        var custom, publicPath, sharedStyles, files, _i, files_1, file;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -136,23 +136,26 @@ function snippetTransformer(handoff) {
                     if (!fs_extra_1.default.existsSync(publicPath)) {
                         fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
                     }
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 4];
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 5];
                     console.log(chalk_1.default.green("Rendering Snippet Previews in ".concat(custom)));
+                    return [4 /*yield*/, processSharedStyles(handoff)];
+                case 1:
+                    sharedStyles = _a.sent();
                     files = fs_extra_1.default.readdirSync(custom);
                     _i = 0, files_1 = files;
-                    _a.label = 1;
-                case 1:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 4];
-                    file = files_1[_i];
-                    if (!file.endsWith('.html')) return [3 /*break*/, 3];
-                    return [4 /*yield*/, processSnippet(handoff, file)];
+                    _a.label = 2;
                 case 2:
-                    _a.sent();
-                    _a.label = 3;
+                    if (!(_i < files_1.length)) return [3 /*break*/, 5];
+                    file = files_1[_i];
+                    if (!file.endsWith('.html')) return [3 /*break*/, 4];
+                    return [4 /*yield*/, processSnippet(handoff, file, sharedStyles)];
                 case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4:
                     _i++;
-                    return [3 /*break*/, 1];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 2];
+                case 5: return [2 /*return*/];
             }
         });
     });
@@ -185,9 +188,56 @@ function renameSnippet(handoff, source, destination) {
     });
 }
 exports.renameSnippet = renameSnippet;
-function processSnippet(handoff, file) {
+function processSharedStyles(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var data, custom, publicPath, jsFile, jsPath, js, compiled, e_1, scssFile, scssPath, cssFile, cssPath, result, e_2, scss, css, template, preview, bodyEl, code, publicFile;
+        var custom, publicPath, scssPath, cssPath, result, e_1, css;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
+                    scssPath = path_1.default.resolve(custom, 'shared.scss');
+                    cssPath = path_1.default.resolve(custom, 'shared.css');
+                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 5];
+                    console.log(chalk_1.default.green("Compiling shared styles"));
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
+                            loadPaths: [
+                                path_1.default.resolve(handoff.workingPath, 'integration/sass'),
+                                path_1.default.resolve(handoff.workingPath, 'node_modules'),
+                                path_1.default.resolve(handoff.workingPath),
+                                path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                            ],
+                        })];
+                case 2:
+                    result = _a.sent();
+                    if (result.css) {
+                        return [2 /*return*/, result.css];
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_1 = _a.sent();
+                    console.log(chalk_1.default.red("Error compiling shared styles"));
+                    console.log(e_1);
+                    return [3 /*break*/, 4];
+                case 4: return [3 /*break*/, 7];
+                case 5:
+                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 7];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(cssPath, 'utf8')];
+                case 6:
+                    css = _a.sent();
+                    return [2 /*return*/, css];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.processSharedStyles = processSharedStyles;
+function processSnippet(handoff, file, sharedStyles) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, custom, publicPath, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, preview, bodyEl, code, publicFile;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -198,6 +248,7 @@ function processSnippet(handoff, file) {
                         js: null,
                         css: null,
                         sass: null,
+                        sharedStyles: sharedStyles,
                     };
                     console.log(chalk_1.default.green("Processing snippet ".concat(file)));
                     custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
@@ -221,9 +272,9 @@ function processSnippet(handoff, file) {
                     }
                     return [3 /*break*/, 5];
                 case 4:
-                    e_1 = _a.sent();
+                    e_2 = _a.sent();
                     console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
-                    console.log(e_1);
+                    console.log(e_2);
                     return [3 /*break*/, 5];
                 case 5:
                     scssFile = file.replace('.html', '.scss');
@@ -251,9 +302,9 @@ function processSnippet(handoff, file) {
                     }
                     return [3 /*break*/, 9];
                 case 8:
-                    e_2 = _a.sent();
+                    e_3 = _a.sent();
                     console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
-                    console.log(e_2);
+                    console.log(e_3);
                     return [3 /*break*/, 9];
                 case 9: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
                 case 10:
@@ -280,12 +331,14 @@ function processSnippet(handoff, file) {
                         script: data['jsCompiled']
                             ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>")
                             : '',
+                        sharedStyles: sharedStyles ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(sharedStyles, "</style>") : '',
                     });
                     try {
                         bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
                         code = bodyEl ? bodyEl.innerHTML.trim() : preview;
                         data['preview'] = preview;
                         data['code'] = code;
+                        data['sharedStyles'] = sharedStyles;
                     }
                     catch (e) {
                         console.log(e);

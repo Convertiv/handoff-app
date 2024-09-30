@@ -10,7 +10,7 @@ import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
-import { processSnippet } from './transformers/preview';
+import { processSharedStyles, processSnippet } from './transformers/preview';
 import { buildIntegrationOnly } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
@@ -377,7 +377,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
             debounce = true;
             if(file.includes('snippet')) {
-              await processSnippet(handoff, path.basename(file));
+              const sharedStyles = await processSharedStyles(handoff);
+              await processSnippet(handoff, path.basename(file), sharedStyles);
             }else{
               await handoff.integration();
             }

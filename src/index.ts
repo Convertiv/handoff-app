@@ -15,7 +15,7 @@ import { HandoffIntegration, instantiateIntegration } from './transformers/integ
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
 import { prepareIntegrationObject } from './utils/integration';
-import { processSnippet, renameSnippet } from './transformers/preview';
+import { processSharedStyles, processSnippet, renameSnippet } from './transformers/preview';
 
 class Handoff {
   config: Config | null;
@@ -100,7 +100,8 @@ class Handoff {
         // Get snippet path
         name = name.includes('.html') ? name : `${name}.html`;
         const snippetPath = path.resolve(this.workingPath, 'integration/snippets', name);
-        await processSnippet(this, snippetPath);
+        const sharedStyles = await processSharedStyles(this);
+        await processSnippet(this, snippetPath, sharedStyles);
       } else {
         await buildSnippets(this);
       }
