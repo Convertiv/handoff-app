@@ -6,20 +6,26 @@ export interface ColorGroup {
     colors: ColorObject[];
 }
 export interface EffectObject {
+    id: string;
+    reference: string;
     name: string;
     machineName: string;
     group: string;
     effects: EffectParametersObject[];
 }
 export interface ColorObject {
+    id: string;
     name: string;
     machineName: string;
     value: string | null;
     blend: string | null;
     group: string;
     sass: string;
+    reference: string;
 }
 export interface TypographyObject {
+    id: string;
+    reference: string;
     name: string;
     machine_name: string;
     group: string;

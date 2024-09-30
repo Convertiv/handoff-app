@@ -101,6 +101,8 @@ export const getFigmaFileDesignTokens = async (fileId: string, accessToken: stri
         let { name, machine_name, group } = fieldData(document.name);
         if (isArray(document.effects) && document.effects.length > 0) {
           effectsArray.push({
+            id: document.id,
+            reference: `effect-${group}-${machine_name}`,
             name,
             machineName: machine_name,
             group,
@@ -115,13 +117,15 @@ export const getFigmaFileDesignTokens = async (fileId: string, accessToken: stri
               ))
           });
         } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
-          const color = transformFigmaFillsToCssColor(document.fills);
+          const color = transformFigmaFillsToCssColor(document.fills);  
           colorsArray.push({
+            id: document.id,
             name,
             group,
             value: color.color,
             blend: color.blend,
             sass: `$color-${group}-${machine_name}`,
+            reference: `color-${group}-${machine_name}`,
             machineName: machine_name,
           });
         }
@@ -134,6 +138,8 @@ export const getFigmaFileDesignTokens = async (fileId: string, accessToken: stri
           color = transformFigmaColorToHex(document.fills[0].color);
         }
         typographyArray.push({
+          id: document.id,
+          reference: `typography-${group}-${machine_name}`,
           name: document.name,
           machine_name,
           group,

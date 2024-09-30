@@ -7,8 +7,12 @@ import chalk from 'chalk';
 import Handoff from '.';
 
 export const createDocumentationObject = async (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]): Promise<DocumentationObject> => {
-  const components = await getFigmaFileComponents(handoff, legacyDefinitions);
+  const design = await getFigmaFileDesignTokens(handoff.config.figma_project_id, handoff.config.dev_access_token);
+  const icons = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons');
+  const logos = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo');
 
+  const components = await getFigmaFileComponents(handoff, legacyDefinitions);
+  
   // Log out components
   Object.keys(components).map((component: string) => {
     if (components[component].instances.length === 0) {
@@ -18,10 +22,7 @@ export const createDocumentationObject = async (handoff: Handoff, legacyDefiniti
     }
   });
 
-  const design = await getFigmaFileDesignTokens(handoff.config.figma_project_id, handoff.config.dev_access_token);
-  const icons = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons');
-  const logos = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo');
-
+  
   return {
     timestamp: new Date().toISOString(),
     design,
