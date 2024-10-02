@@ -138,6 +138,9 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
                 <strong>{startCase(heading)}</strong>
               </p>
             ))}
+            <p>
+              <strong>Reference</strong>
+            </p>
           </div>
 
           {Array.from(dataTable).map(([part, propertiesMap], rowIdx) => (
@@ -161,6 +164,12 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
                       value={tokenValue}
                     />
                   )))}
+                  <PropertyStateValue
+                      key={`${previewObject.id}-${part}-${prop}-ref`}
+                      property={prop}
+                      variable="test"
+                      value="test"
+                    />
                 </div>
               ))}
             </React.Fragment>

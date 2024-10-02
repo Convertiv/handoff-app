@@ -20,7 +20,9 @@ export const transform = (tokenType: TokenType, component: ComponentInstance, op
       continue;
     }
 
-    tokenSets.forEach((tokenSet) => tokens.push(...transformTokens(getTokenSetTokens(tokenSet), tokenType, component, part, options)));
+    tokenSets.forEach((tokenSet) =>
+      tokens.push(...transformTokens(getTokenSetTokens(tokenSet), tokenType, component, part, options, tokenSet.reference))
+    );
   }
 
   return tokens;
@@ -31,7 +33,8 @@ const transformTokens = (
   tokenType: TokenType,
   component: ComponentInstance,
   part: string,
-  options?: IntegrationObjectComponentOptions
+  options?: IntegrationObjectComponentOptions,
+  reference?: string
 ) => {
   return tokens
     ? Object.entries(tokens).map(([cssProperty, value]) => ({
@@ -40,6 +43,7 @@ const transformTokens = (
         metadata: {
           part,
           cssProperty,
+          reference,
           isSupportedCssProperty: value instanceof Array ? value[1] : true,
           nameSegments: getTokenNameSegments(component.name, component.variantProperties, part, cssProperty, options),
         },

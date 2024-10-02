@@ -1,5 +1,6 @@
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
 import { IntegrationObjectComponentOptions } from '../../types/config';
+import { Token } from '../types';
 /**
  * Map down to a variable object
  * @param alerts
@@ -11,4 +12,5 @@ export declare const transformComponentsToCssVariables: (componentId: string, co
  * @param tokens
  * @returns
  */
-export declare const transformComponentTokensToCssVariables: (component: ComponentInstance, options?: IntegrationObjectComponentOptions) => import("../types").Token[];
+export declare const transformComponentTokensToCssVariables: (component: ComponentInstance, options?: IntegrationObjectComponentOptions) => Token[];
+export declare const tokenReferenceFormat: (token: Token, type: 'css' | 'scss') => string;

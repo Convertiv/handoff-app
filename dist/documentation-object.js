@@ -58,6 +58,21 @@ var createDocumentationObject = function (handoff, legacyDefinitions) { return _
                 return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo')];
             case 3:
                 logos = _a.sent();
+                /// create a design map of node ids and references
+                handoff.designMap = {
+                    colors: design.color.reduce(function (acc, color) {
+                        acc[color.id] = color.reference;
+                        return acc;
+                    }, {}),
+                    effects: design.effect.reduce(function (acc, effect) {
+                        acc[effect.id] = effect.reference;
+                        return acc;
+                    }, {}),
+                    typography: design.typography.reduce(function (acc, typo) {
+                        acc[typo.id] = typo.reference;
+                        return acc;
+                    }, {}),
+                };
                 return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(handoff, legacyDefinitions)];
             case 4:
                 components = _a.sent();

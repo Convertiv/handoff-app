@@ -68,7 +68,7 @@ function extractComponentInstances(components, definition, handoff, legacyDefini
         }
         var parts = definition.parts.reduce(function (previous, current) {
             var _a;
-            return __assign(__assign({}, previous), (_a = {}, _a[current.id || '$'] = extractComponentPartTokenSets(rootNode, current, variantProperties), _a));
+            return __assign(__assign({}, previous), (_a = {}, _a[current.id || '$'] = extractComponentPartTokenSets(rootNode, current, variantProperties, handoff), _a));
         }, {});
         var instance = {
             id: id,
@@ -143,7 +143,7 @@ exports.default = extractComponentInstances;
  * @param tokens
  * @returns ExportTypes.TokenSets
  */
-function extractComponentPartTokenSets(root, part, tokens) {
+function extractComponentPartTokenSets(root, part, tokens, handoff) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
     }
@@ -163,6 +163,9 @@ function extractComponentPartTokenSets(root, part, tokens) {
                 continue;
             }
             var tokenSet = extractNodeExportable(node, exportable);
+            if (node.styles) {
+                tokenSet.reference = getReferenceFromMap(node, tokenSet, handoff);
+            }
             if (!tokenSet) {
                 continue;
             }
@@ -176,6 +179,66 @@ function extractComponentPartTokenSets(root, part, tokens) {
         }
     }
     return tokenSets;
+}
+/**
+ * Get the reference from a node
+ * @param node
+ * @param handoff
+ * @returns
+ */
+function getReferenceFromMap(node, tokenSet, handoff) {
+    var styles = node.styles;
+    if (!styles) {
+        return undefined;
+    }
+    switch (tokenSet.name) {
+        case 'BACKGROUND':
+            // @ts-ignore
+            if (styles.fills) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.fill) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+            }
+        case 'FILL':
+            // @ts-ignore
+            if (styles.fills) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.fill) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+            }
+        case 'BORDER':
+            // @ts-ignore
+            if (styles.strokes) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.strokes] ? handoff.designMap.colors[styles.strokes] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.stroke) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.stroke] ? handoff.designMap.colors[styles.stroke] : undefined;
+            }
+        case 'TYPOGRAPHY':
+            // @ts-ignore
+            if (styles.text) {
+                // @ts-ignore
+                return handoff.designMap.typography[styles.text] ? handoff.designMap.typography[styles.text] : undefined;
+            }
+        case 'EFFECT':
+            // @ts-ignore
+            if (styles.effect) {
+                // @ts-ignore
+                return handoff.designMap.effects[styles.effect] ? handoff.designMap.effects[styles.effect] : undefined;
+            }
+    }
+    return undefined;
 }
 /**
  * Find the node from a path provided by the schema
