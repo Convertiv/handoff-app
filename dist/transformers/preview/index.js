@@ -190,7 +190,7 @@ function renameSnippet(handoff, source, destination) {
 exports.renameSnippet = renameSnippet;
 function processSharedStyles(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var custom, publicPath, scssPath, cssPath, result, e_1, css;
+        var custom, publicPath, scssPath, cssPath, result, cssPath_1, e_1, css;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -198,11 +198,11 @@ function processSharedStyles(handoff) {
                     publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
                     scssPath = path_1.default.resolve(custom, 'shared.scss');
                     cssPath = path_1.default.resolve(custom, 'shared.css');
-                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 5];
+                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 6];
                     console.log(chalk_1.default.green("Compiling shared styles"));
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 3, , 4]);
+                    _a.trys.push([1, 4, , 5]);
                     return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
                             loadPaths: [
                                 path_1.default.resolve(handoff.workingPath, 'integration/sass'),
@@ -213,23 +213,25 @@ function processSharedStyles(handoff) {
                         })];
                 case 2:
                     result = _a.sent();
-                    if (result.css) {
-                        return [2 /*return*/, result.css];
-                    }
-                    return [3 /*break*/, 4];
+                    cssPath_1 = path_1.default.resolve(publicPath, 'shared.css');
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(cssPath_1, result.css)];
                 case 3:
+                    _a.sent();
+                    console.log(chalk_1.default.green("Wrote shared styles to ".concat(cssPath_1)));
+                    throw new Error('Error compiling shared styles');
+                case 4:
                     e_1 = _a.sent();
                     console.log(chalk_1.default.red("Error compiling shared styles"));
                     console.log(e_1);
-                    return [3 /*break*/, 4];
-                case 4: return [3 /*break*/, 7];
-                case 5:
-                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 7];
-                    return [4 /*yield*/, fs_extra_1.default.readFile(cssPath, 'utf8')];
+                    return [3 /*break*/, 5];
+                case 5: return [3 /*break*/, 8];
                 case 6:
+                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 8];
+                    return [4 /*yield*/, fs_extra_1.default.readFile(cssPath, 'utf8')];
+                case 7:
                     css = _a.sent();
                     return [2 /*return*/, css];
-                case 7: return [2 /*return*/];
+                case 8: return [2 /*return*/];
             }
         });
     });

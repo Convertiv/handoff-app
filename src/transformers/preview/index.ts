@@ -122,11 +122,8 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
   ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
     console.log(`Checking for ${source}.${ext}`);
     let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
-    if(fs.existsSync(test)) {
-      await fs.rename(
-        test,
-        destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`
-      );
+    if (fs.existsSync(test)) {
+      await fs.rename(test, destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`);
     }
   });
 
@@ -153,19 +150,24 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
           path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
         ],
       });
+      const cssPath = path.resolve(publicPath, 'shared.css');
+      await fs.writeFile(cssPath, result.css);
+      console.log(chalk.green(`Wrote shared styles to ${cssPath}`));
+      throw new Error('Error compiling shared styles');
       if (result.css) {
+        // write the css to the public folder
+
         return result.css;
       }
     } catch (e) {
       console.log(chalk.red(`Error compiling shared styles`));
       console.log(e);
     }
-  }else if(fs.existsSync(cssPath)){
+  } else if (fs.existsSync(cssPath)) {
     const css = await fs.readFile(cssPath, 'utf8');
     return css;
   }
 }
-
 
 export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null) {
   let data: TransformComponentTokensResult = {
