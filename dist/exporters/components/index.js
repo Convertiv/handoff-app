@@ -113,12 +113,25 @@ var getComponentSetComponentDefinition = function (componentSet) {
         }); }),
     };
 };
+/**
+ * Given a component set, returns an array of objects containing the component
+ * node and its metadata.
+ * @param componentSet
+ * @param componentsMetadata
+ * @returns {Array<{node: FigmaTypes.Component, metadata: FigmaTypes.ComponentMetadata}>}
+ */
 var getComponentNodesWithMetadata = function (componentSet, componentsMetadata) {
     return componentSet.children.map(function (component) { return ({
         node: component,
         metadata: componentsMetadata.get(component.id),
     }); });
 };
+/**
+ * Given a component set, returns an array of objects containing the component
+ * @param handoff
+ * @param legacyDefinitions
+ * @returns
+ */
 var getFigmaFileComponents = function (handoff, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
     var useLegacyFetchFlow, fileComponentSetsRes, err_1, fullComponentMetadataArray, componentSetNodesResult;
     return __generator(this, function (_a) {
@@ -153,6 +166,12 @@ var getFigmaFileComponents = function (handoff, legacyDefinitions) { return __aw
     });
 }); };
 exports.getFigmaFileComponents = getFigmaFileComponents;
+/**
+ * Processes figma nodes by utilizing the new component definitions
+ * @param fileNodesResponse FigmaTypes.FileNodesResponse
+ * @param handoff Handoff instance
+ * @returns FileComponentsObject
+ */
 var processFigmaNodes = function (fileNodesResponse, handoff) {
     var _a;
     var componentTokens = {};

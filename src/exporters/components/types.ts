@@ -19,6 +19,7 @@ export interface ComponentInstance {
 
 export interface BaseTokenSet {
   name: Exportable;
+  reference?: string;
 }
 
 export interface EffectTokenSet extends BaseTokenSet {

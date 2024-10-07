@@ -1,25 +1,36 @@
 import type { FileComponentsObject } from './exporters/components/types';
 import { BlendMode } from './figma/types';
 import { Effect } from './figma/types';
+export interface DesignObject {
+    color: ColorObject[];
+    typography: TypographyObject[];
+    effect: EffectObject[];
+}
 export interface ColorGroup {
     group: string;
     colors: ColorObject[];
 }
 export interface EffectObject {
+    id: string;
+    reference: string;
     name: string;
     machineName: string;
     group: string;
     effects: EffectParametersObject[];
 }
 export interface ColorObject {
+    id: string;
     name: string;
     machineName: string;
     value: string | null;
     blend: string | null;
     group: string;
     sass: string;
+    reference: string;
 }
 export interface TypographyObject {
+    id: string;
+    reference: string;
     name: string;
     machine_name: string;
     group: string;
@@ -73,6 +84,14 @@ export interface DocumentationObject {
         icons: AssetObject[];
         logos: AssetObject[];
     };
+}
+export interface DesignStylesMap {
+    colors: NodeStyleMap;
+    effects: NodeStyleMap;
+    typography: NodeStyleMap;
+}
+export interface NodeStyleMap {
+    [key: string]: string;
 }
 export interface HookReturn {
     filename: string;
