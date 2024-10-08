@@ -13,6 +13,8 @@ export interface Global {
     readonly sharedPluginData?: any;
     /** a mapping of a layer's property to component property name of component properties attached to this node. The component property name can be used to look up more information on the node's containing component's or component set's componentPropertyDefinitions. */
     readonly componentPropertyReferencesMap: Record<string, string>;
+    /** a mapping of a layer's property to component property name of component properties attached to this node. The component property name can be used to look up more information on the node's containing component's or component set's componentPropertyDefinitions. */
+    readonly styles?: StylesObject;
 }
 /**
  * Styles can be one of the following types
@@ -21,7 +23,7 @@ export declare type StyleType = 'FILL' | 'TEXT' | 'EFFECT' | 'GRID';
 /**
  * the above styles can be used in the following ways
  */
-export declare type StyleKeyType = 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
+export declare type StyleKeyType = 'fills' | 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
 export declare type StylesObject = {
     [key in StyleKeyType]: Record<key, string>;
 }[StyleKeyType];
@@ -55,6 +57,7 @@ export interface Document extends Global {
     readonly type: 'DOCUMENT';
     /** An array of canvases attached to the document */
     readonly children: ReadonlyArray<Node>;
+    readonly styles?: StylesObject;
 }
 export interface FlowStartingPoint {
     /** Unique identifier specifying the frame */
@@ -862,6 +865,9 @@ export interface ComponentMetadata {
     /** The description of the element as entered in the editor */
     readonly description: string;
     readonly documentationLinks: ReadonlyArray<DocumentationLink>;
+}
+export interface ComponentStyles {
+    readonly [key: string]: Style;
 }
 /** Represents a link to documentation for a component. */
 export interface DocumentationLink {

@@ -29,6 +29,7 @@ var effects_1 = __importStar(require("./design/effects"));
 var typography_1 = __importStar(require("./design/typography"));
 var component_1 = require("./component");
 var utils_1 = require("../utils");
+var component_2 = require("../css/component");
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
@@ -62,7 +63,7 @@ function scssTransformer(documentationObject, integrationObject) {
             return [
                 (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
                 (0, component_1.transformComponentTokensToScssVariables)(instance, (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*'])
-                    .map(function (token) { return "".concat(token.name, ": ").concat(token.value, ";"); })
+                    .map(function (token) { return "\t".concat(token.name, ": ").concat((0, component_2.tokenReferenceFormat)(token, 'scss'), ";"); })
                     .join('\n'),
             ].join('\n');
         })

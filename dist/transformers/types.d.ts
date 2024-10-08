@@ -55,6 +55,7 @@ export interface Token {
     metadata: {
         part: string;
         cssProperty: string;
+        reference?: string;
         isSupportedCssProperty: boolean;
         nameSegments: string[];
     };

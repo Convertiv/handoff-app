@@ -26,6 +26,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var utils_1 = require("../utils");
 var index_1 = require("../../utils/index");
+/**
+ * Given a list of components, a component definition, and a handoff object,
+ * this function will extract the component instances
+ * @param components
+ * @param definition
+ * @param handoff
+ * @param legacyDefinition
+ * @returns ComponentInstance[]
+ */
 function extractComponentInstances(components, definition, handoff, legacyDefinition) {
     var _a;
     var options = definition.options;
@@ -59,7 +68,7 @@ function extractComponentInstances(components, definition, handoff, legacyDefini
         }
         var parts = definition.parts.reduce(function (previous, current) {
             var _a;
-            return __assign(__assign({}, previous), (_a = {}, _a[current.id || '$'] = extractComponentPartTokenSets(rootNode, current, variantProperties), _a));
+            return __assign(__assign({}, previous), (_a = {}, _a[current.id || '$'] = extractComponentPartTokenSets(rootNode, current, variantProperties, handoff), _a));
         }, {});
         var instance = {
             id: id,
@@ -126,7 +135,15 @@ function extractComponentInstances(components, definition, handoff, legacyDefini
     return lodash_1.default.uniqBy(instances, 'id');
 }
 exports.default = extractComponentInstances;
-function extractComponentPartTokenSets(root, part, tokens) {
+/**
+ * Given a component instance, a component definition, and a handoff object,
+ * this function will extract the component instance's token sets
+ * @param root
+ * @param part
+ * @param tokens
+ * @returns ExportTypes.TokenSets
+ */
+function extractComponentPartTokenSets(root, part, tokens, handoff) {
     if (!part.tokens || part.tokens.length === 0) {
         return [];
     }
@@ -146,6 +163,9 @@ function extractComponentPartTokenSets(root, part, tokens) {
                 continue;
             }
             var tokenSet = extractNodeExportable(node, exportable);
+            if (node.styles) {
+                tokenSet.reference = getReferenceFromMap(node, tokenSet, handoff);
+            }
             if (!tokenSet) {
                 continue;
             }
@@ -160,6 +180,73 @@ function extractComponentPartTokenSets(root, part, tokens) {
     }
     return tokenSets;
 }
+/**
+ * Get the reference from a node
+ * @param node
+ * @param handoff
+ * @returns
+ */
+function getReferenceFromMap(node, tokenSet, handoff) {
+    var styles = node.styles;
+    if (!styles) {
+        return undefined;
+    }
+    switch (tokenSet.name) {
+        case 'BACKGROUND':
+            // @ts-ignore
+            if (styles.fills) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.fill) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+            }
+        case 'FILL':
+            // @ts-ignore
+            if (styles.fills) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.fill) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+            }
+        case 'BORDER':
+            // @ts-ignore
+            if (styles.strokes) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.strokes] ? handoff.designMap.colors[styles.strokes] : undefined;
+                // @ts-ignore
+            }
+            else if (styles.stroke) {
+                // @ts-ignore
+                return handoff.designMap.colors[styles.stroke] ? handoff.designMap.colors[styles.stroke] : undefined;
+            }
+        case 'TYPOGRAPHY':
+            // @ts-ignore
+            if (styles.text) {
+                // @ts-ignore
+                return handoff.designMap.typography[styles.text] ? handoff.designMap.typography[styles.text] : undefined;
+            }
+        case 'EFFECT':
+            // @ts-ignore
+            if (styles.effect) {
+                // @ts-ignore
+                return handoff.designMap.effects[styles.effect] ? handoff.designMap.effects[styles.effect] : undefined;
+            }
+    }
+    return undefined;
+}
+/**
+ * Find the node from a path provided by the schema
+ * @param root
+ * @param path
+ * @param tokens
+ * @returns FigmaTypes.Node
+ */
 function resolveNodeFromPath(root, path, tokens) {
     var pathArr = path
         .split('>')
@@ -184,6 +271,11 @@ function resolveNodeFromPath(root, path, tokens) {
     }
     return currentNode;
 }
+/**
+ * Given a schema path, this function will parse the node type and name
+ * @param path
+ * @returns
+ */
 function parsePathNodeParams(path) {
     var type = path.split('[')[0];
     var selectors = new Map();
@@ -277,6 +369,11 @@ function extractNodeOpacity(node) {
         opacity: 'opacity' in node ? (_a = node.opacity) !== null && _a !== void 0 ? _a : 1 : 1,
     };
 }
+/**
+ * Get the size bounding box size from a node
+ * @param node
+ * @returns ExportTypes.SizeTokenSet | null
+ */
 function extractNodeSize(node) {
     var _a, _b;
     return {
@@ -285,6 +382,13 @@ function extractNodeSize(node) {
         height: 'absoluteBoundingBox' in node ? (_b = node.absoluteBoundingBox.height) !== null && _b !== void 0 ? _b : 0 : 0,
     };
 }
+/**
+ * Extract the exportable from a node.  Given a node and an exportable
+ * identifier, this function will return the token set
+ * @param node
+ * @param exportable
+ * @returns
+ */
 function extractNodeExportable(node, exportable) {
     switch (exportable) {
         case 'BACKGROUND':
