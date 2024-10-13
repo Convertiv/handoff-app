@@ -423,7 +423,7 @@ export const getIntegrationObject = (): IntegrationObject => {
     return defaultObject;
   }
 
-  const integrationPath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'integration');
+  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
 
   if (!fs.existsSync(integrationPath)) {
     return defaultObject;

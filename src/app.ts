@@ -32,6 +32,15 @@ const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
 
+const sanitizeAppDir = async (handoff: Handoff): Promise<void> => {
+  const legacyConfigPath = path.resolve(getAppPath(handoff), 'next.config.js');
+  // Check if a legacy next.config.js file exists
+  if (fs.existsSync(legacyConfigPath)) {
+    // Remove the legacy next.config.js file
+    await fs.rm(legacyConfigPath);
+  }
+};
+
 /**
  * Copy the public dir from the working dir to the module dir
  * @param handoff
@@ -172,6 +181,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   // Prepare project app dir
   await fs.promises.mkdir(appPath, { recursive: true });
   await fs.copy(srcPath, appPath, { overwrite: true });
+  await sanitizeAppDir(handoff);
   await mergePublicDir(handoff);
   await mergeMDX(handoff);
 
@@ -179,6 +189,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffProjectId = handoff.config.figma_project_id ?? '';
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
+  const handoffIntegrationPath = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
@@ -187,6 +198,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
+    .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, `HANDOFF_INTEGRATION_PATH: '${handoffIntegrationPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
@@ -367,8 +379,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
   }
 
-  if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', async (event, file) => {
+  if (fs.existsSync(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'), chokidarConfig).on('all', async (event, file) => {
       switch (event) {
         case 'add':
         case 'change':

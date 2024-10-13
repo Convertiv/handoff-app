@@ -109,14 +109,14 @@ export const generateWebpackConfig = (
     resolve: {
       alias: {
         '@exported': path.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
-        '@integration': path.join(handoff.workingPath, 'integration/sass'),
+        '@integration': path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
       },
       modules: [
         path.resolve(handoff?.modulePath, 'src'),
         path.resolve(handoff?.modulePath, 'node_modules'),
         path.resolve(process.cwd(), 'node_modules'),
         path.resolve(handoff?.workingPath, 'node_modules'),
-        path.resolve(handoff?.workingPath, 'integration/sass'),
+        path.resolve(handoff?.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
         path.resolve(handoff?.workingPath, 'exported', handoff?.config.figma_project_id),
       ],
     },
@@ -154,7 +154,7 @@ export const generateWebpackConfig = (
                   ],
                 },
                 additionalData: async (content, loaderContext) => {
-                  const integrationPath = path.join(handoff.workingPath, 'integration/sass');
+                  const integrationPath = path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass');
 
                   if (fs.existsSync(integrationPath)) {
                     fs.readdirSync(integrationPath)

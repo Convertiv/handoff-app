@@ -69,6 +69,23 @@ var getWorkingPublicPath = function (handoff) {
 var getAppPath = function (handoff) {
     return path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id));
 };
+var sanitizeAppDir = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var legacyConfigPath;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                legacyConfigPath = path_1.default.resolve(getAppPath(handoff), 'next.config.js');
+                if (!fs_extra_1.default.existsSync(legacyConfigPath)) return [3 /*break*/, 2];
+                // Remove the legacy next.config.js file
+                return [4 /*yield*/, fs_extra_1.default.rm(legacyConfigPath)];
+            case 1:
+                // Remove the legacy next.config.js file
+                _a.sent();
+                _a.label = 2;
+            case 2: return [2 /*return*/];
+        }
+    });
+}); };
 /**
  * Copy the public dir from the working dir to the module dir
  * @param handoff
@@ -160,10 +177,10 @@ var transformMdx = function (src, dest, id) {
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffIntegrationPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
+    var _a, _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
@@ -171,35 +188,40 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
             case 1:
                 // Prepare project app dir
-                _c.sent();
+                _d.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
             case 2:
-                _c.sent();
-                return [4 /*yield*/, mergePublicDir(handoff)];
+                _d.sent();
+                return [4 /*yield*/, sanitizeAppDir(handoff)];
             case 3:
-                _c.sent();
-                return [4 /*yield*/, mergeMDX(handoff)];
+                _d.sent();
+                return [4 /*yield*/, mergePublicDir(handoff)];
             case 4:
-                _c.sent();
+                _d.sent();
+                return [4 /*yield*/, mergeMDX(handoff)];
+            case 5:
+                _d.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
+                handoffIntegrationPath = path_1.default.resolve(handoff.workingPath, (_c = handoff.config.integrationPath) !== null && _c !== void 0 ? _c : 'integration');
                 handoffModulePath = path_1.default.resolve(handoff.modulePath);
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
-            case 5:
-                nextConfigContent = (_c.sent())
+            case 6:
+                nextConfigContent = (_d.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
                     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, "HANDOFF_APP_BASE_PATH: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, "HANDOFF_WORKING_PATH: '".concat(handoffWorkingPath, "'"))
+                    .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, "HANDOFF_INTEGRATION_PATH: '".concat(handoffIntegrationPath, "'"))
                     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, "HANDOFF_MODULE_PATH: '".concat(handoffModulePath, "'"))
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
-            case 6:
-                _c.sent();
+            case 7:
+                _d.sent();
                 return [2 /*return*/, appPath];
         }
     });
@@ -266,8 +288,9 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -280,10 +303,10 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     })];
             case 1:
                 // Build client preview styles
-                _a.sent();
+                _c.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 2:
-                appPath = _a.sent();
+                appPath = _c.sent();
                 // Include any changes made within the app source during watch
                 chokidar_1.default
                     .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
@@ -410,8 +433,8 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         });
                     }); });
                 }
-                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
                         var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
