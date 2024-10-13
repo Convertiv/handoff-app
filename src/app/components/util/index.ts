@@ -244,6 +244,7 @@ export const staticBuildMenu = () => {
       if (
         !fs.lstatSync(search).isDirectory() &&
         search !== path.resolve(docRoot, 'index.md') &&
+        search !== path.resolve(workingPages, 'index.md') &&
         (fileName.endsWith('md') || fileName.endsWith('mdx'))
       ) {
         const contents = fs.readFileSync(search, 'utf-8');
