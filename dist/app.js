@@ -69,23 +69,6 @@ var getWorkingPublicPath = function (handoff) {
 var getAppPath = function (handoff) {
     return path_1.default.resolve(handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id));
 };
-var sanitizeAppDir = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var legacyConfigPath;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                legacyConfigPath = path_1.default.resolve(getAppPath(handoff), 'next.config.js');
-                if (!fs_extra_1.default.existsSync(legacyConfigPath)) return [3 /*break*/, 2];
-                // Remove the legacy next.config.js file
-                return [4 /*yield*/, fs_extra_1.default.rm(legacyConfigPath)];
-            case 1:
-                // Remove the legacy next.config.js file
-                _a.sent();
-                _a.label = 2;
-            case 2: return [2 /*return*/];
-        }
-    });
-}); };
 /**
  * Copy the public dir from the working dir to the module dir
  * @param handoff
@@ -184,22 +167,25 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
-                // Prepare project app dir
-                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
+                if (!fs_extra_1.default.existsSync(appPath)) return [3 /*break*/, 2];
+                return [4 /*yield*/, fs_extra_1.default.rm(appPath, { recursive: true })];
             case 1:
+                _d.sent();
+                _d.label = 2;
+            case 2: 
+            // Prepare project app dir
+            return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
+            case 3:
                 // Prepare project app dir
                 _d.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
-            case 2:
-                _d.sent();
-                return [4 /*yield*/, sanitizeAppDir(handoff)];
-            case 3:
-                _d.sent();
-                return [4 /*yield*/, mergePublicDir(handoff)];
             case 4:
                 _d.sent();
-                return [4 /*yield*/, mergeMDX(handoff)];
+                return [4 /*yield*/, mergePublicDir(handoff)];
             case 5:
+                _d.sent();
+                return [4 /*yield*/, mergeMDX(handoff)];
+            case 6:
                 _d.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
@@ -209,7 +195,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
-            case 6:
+            case 7:
                 nextConfigContent = (_d.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
@@ -220,7 +206,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
-            case 7:
+            case 8:
                 _d.sent();
                 return [2 /*return*/, appPath];
         }

@@ -32,15 +32,6 @@ const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
 
-const sanitizeAppDir = async (handoff: Handoff): Promise<void> => {
-  const legacyConfigPath = path.resolve(getAppPath(handoff), 'next.config.js');
-  // Check if a legacy next.config.js file exists
-  if (fs.existsSync(legacyConfigPath)) {
-    // Remove the legacy next.config.js file
-    await fs.rm(legacyConfigPath);
-  }
-};
-
 /**
  * Copy the public dir from the working dir to the module dir
  * @param handoff
@@ -178,10 +169,14 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
 
+  // Clean project app dir
+  if (fs.existsSync(appPath)) {
+    await fs.rm(appPath, { recursive: true });
+  }
+
   // Prepare project app dir
   await fs.promises.mkdir(appPath, { recursive: true });
   await fs.copy(srcPath, appPath, { overwrite: true });
-  await sanitizeAppDir(handoff);
   await mergePublicDir(handoff);
   await mergeMDX(handoff);
 
