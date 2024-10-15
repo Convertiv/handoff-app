@@ -33,11 +33,13 @@ exports.transformComponentTokensToCssVariables = transformComponentTokensToCssVa
 var tokenReferenceFormat = function (token, type) {
     var reference = token.metadata.reference;
     if (reference) {
-        // If the token is a border token, we don't need to add the css property to the reference
-        if (['border-width', 'border-radius', 'border-style'].includes(token.metadata.cssProperty)) {
+        // There are some values that we can't yet tokenize because of the data out of figma
+        if (['border-width', 'border-radius', 'border-style', 'text-align', 'text-decoration', 'text-transform'].includes(token.metadata.cssProperty)) {
             reference = undefined;
+            // Some values should be suffixed with the css property
+            // Everything on this list shouldn't, everything else should
         }
-        else if (!['box-shadow', 'background', 'color'].includes(token.metadata.cssProperty)) {
+        else if (!['box-shadow', 'background', 'color', 'border-color'].includes(token.metadata.cssProperty)) {
             reference += "-".concat(token.metadata.cssProperty);
         }
     }

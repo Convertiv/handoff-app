@@ -150,13 +150,11 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
           path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
         ],
       });
-      const cssPath = path.resolve(publicPath, 'shared.css');
-      await fs.writeFile(cssPath, result.css);
-      console.log(chalk.green(`Wrote shared styles to ${cssPath}`));
-      throw new Error('Error compiling shared styles');
+
       if (result.css) {
         // write the css to the public folder
-
+        const cssPath = path.resolve(publicPath, 'shared.css');
+        await fs.writeFile(cssPath, result.css);
         return result.css;
       }
     } catch (e) {
@@ -244,7 +242,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     script: data['jsCompiled']
       ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>`
       : '',
-    sharedStyles: sharedStyles ? `<style rel="stylesheet" type="text/css">${sharedStyles}</style>` : '',
+    sharedStyles: sharedStyles ? `<style rel="stylesheet" type="text/css">${sharedStyles}</style>` : 'shared',
   });
 
   try {

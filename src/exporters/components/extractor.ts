@@ -202,11 +202,11 @@ function extractComponentPartTokenSets(
       }
 
       const tokenSet = extractNodeExportable(node, exportable);
-      if (node.styles) {
-        tokenSet.reference = getReferenceFromMap(node, tokenSet, handoff);
-      }
       if (!tokenSet) {
         continue;
+      }
+      if (node.styles) {
+        tokenSet.reference = getReferenceFromMap(node, tokenSet, handoff);
       }
 
       const conflictingTokenSetIdx = tokenSets.map((set) => set.name).indexOf(exportable);
@@ -244,7 +244,7 @@ function getReferenceFromMap(node: FigmaTypes.Node, tokenSet: any, handoff: Hand
         // @ts-ignore
         return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
       }
-
+      break;
     case 'FILL':
       // @ts-ignore
       if (styles.fills) {
@@ -255,6 +255,7 @@ function getReferenceFromMap(node: FigmaTypes.Node, tokenSet: any, handoff: Hand
         // @ts-ignore
         return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
       }
+      break;
     case 'BORDER':
       // @ts-ignore
       if (styles.strokes) {
@@ -265,12 +266,14 @@ function getReferenceFromMap(node: FigmaTypes.Node, tokenSet: any, handoff: Hand
         // @ts-ignore
         return handoff.designMap.colors[styles.stroke] ? handoff.designMap.colors[styles.stroke] : undefined;
       }
+      break;
     case 'TYPOGRAPHY':
       // @ts-ignore
       if (styles.text) {
         // @ts-ignore
         return handoff.designMap.typography[styles.text] ? handoff.designMap.typography[styles.text] : undefined;
       }
+      break;
 
     case 'EFFECT':
       // @ts-ignore
@@ -278,6 +281,7 @@ function getReferenceFromMap(node: FigmaTypes.Node, tokenSet: any, handoff: Hand
         // @ts-ignore
         return handoff.designMap.effects[styles.effect] ? handoff.designMap.effects[styles.effect] : undefined;
       }
+      break;
   }
   return undefined;
 }

@@ -59,6 +59,7 @@ export interface Config {
   figma_project_id?: string | null | undefined;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
+  useStyleReferences?: boolean;
   app: NextAppConfig;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
