@@ -214,7 +214,7 @@ function processSharedStyles(handoff) {
                 case 2:
                     result = _a.sent();
                     if (!result.css) return [3 /*break*/, 4];
-                    css = '// These are the shared styles used in every component. \n\n' + result.css;
+                    css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
                     cssPath_1 = path_1.default.resolve(publicPath, 'shared.css');
                     return [4 /*yield*/, fs_extra_1.default.writeFile(cssPath_1, result.css)];
                 case 3:
