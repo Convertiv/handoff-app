@@ -153,9 +153,10 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
 
       if (result.css) {
         // write the css to the public folder
+        const css = '// These are the shared styles used in every component. \n\n' + result.css;
         const cssPath = path.resolve(publicPath, 'shared.css');
         await fs.writeFile(cssPath, result.css);
-        return result.css;
+        return css;
       }
     } catch (e) {
       console.log(chalk.red(`Error compiling shared styles`));

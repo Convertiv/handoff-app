@@ -190,7 +190,7 @@ function renameSnippet(handoff, source, destination) {
 exports.renameSnippet = renameSnippet;
 function processSharedStyles(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var custom, publicPath, scssPath, cssPath, result, cssPath_1, e_1, css;
+        var custom, publicPath, scssPath, cssPath, result, css, cssPath_1, e_1, css;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -214,11 +214,12 @@ function processSharedStyles(handoff) {
                 case 2:
                     result = _a.sent();
                     if (!result.css) return [3 /*break*/, 4];
+                    css = '// These are the shared styles used in every component. \n\n' + result.css;
                     cssPath_1 = path_1.default.resolve(publicPath, 'shared.css');
                     return [4 /*yield*/, fs_extra_1.default.writeFile(cssPath_1, result.css)];
                 case 3:
                     _a.sent();
-                    return [2 /*return*/, result.css];
+                    return [2 /*return*/, css];
                 case 4: return [3 /*break*/, 6];
                 case 5:
                     e_1 = _a.sent();
