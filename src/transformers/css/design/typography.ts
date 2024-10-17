@@ -14,6 +14,13 @@ export default function transformTypography(typography: TypographyObject[]): str
       `	--typography-${getTypeName(type)}-paragraph-spacing: ${type.values.paragraphSpacing | 20}px;`,
     ].join('\n'));
   })
+  // Get a unique list of font families
+  const fontFamilies = typography.map(type => type.values.fontFamily);
+  const uniqueFontFamilies = Array.from(new Set(fontFamilies));
+  // Add the font families to the top of the typography
+  uniqueFontFamilies.forEach(fontFamily => {
+    stringBuilder.unshift(`	--font-family-${fontFamily.replace(/ /g, '-').toLowerCase()}: '${fontFamily}';`);
+  });
 
   return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }

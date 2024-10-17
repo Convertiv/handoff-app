@@ -1,3 +1,4 @@
+/// <reference types="plugin-typings" />
 import * as FigmaTypes from '../figma/types';
 import { GradientObject } from '../types';
 /**

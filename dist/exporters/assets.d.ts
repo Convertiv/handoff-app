@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import * as stream from 'node:stream';
 import { AssetObject } from '../types';
 declare const assetsExporter: (fileId: string, accessToken: string, component: string) => Promise<AssetObject[]>;
