@@ -32,6 +32,7 @@ export const transformComponentsToScssTypes = (
   );
 };
 
+
 export const transformComponentTokensToScssVariables = (component: ComponentInstance, options?: IntegrationObjectComponentOptions) => {
   return transform('scss', component, options);
 };

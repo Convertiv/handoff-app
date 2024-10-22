@@ -76,7 +76,13 @@ export const CodeHighlight: React.FC<{
         >
           {states.map((state) => (
             <option key={state} value={state}>
-              {state === 'code' ? 'HTML' : state === 'css' ? 'CSS' : state === 'js' ? 'Javascript' : state === 'sass' ? 'SASS' : state}
+              {
+                state === 'code' ? 'HTML' : 
+                state === 'css' ? 'CSS' : 
+                state === 'js' ? 'Javascript' : 
+                state === 'sass' ? 'SASS' : 
+                state === 'sharedStyles' ? 'Shared CSS' : 
+                state}
             </option>
           ))}
         </select>

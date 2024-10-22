@@ -13,6 +13,13 @@ function transformTypography(typography) {
             "\t--typography-".concat((0, utils_1.getTypeName)(type), "-paragraph-spacing: ").concat(type.values.paragraphSpacing | 20, "px;"),
         ].join('\n'));
     });
+    // Get a unique list of font families
+    var fontFamilies = typography.map(function (type) { return type.values.fontFamily; });
+    var uniqueFontFamilies = Array.from(new Set(fontFamilies));
+    // Add the font families to the top of the typography
+    uniqueFontFamilies.forEach(function (fontFamily) {
+        stringBuilder.unshift("\t--font-family-".concat(fontFamily.replace(/ /g, '-').toLowerCase(), ": '").concat(fontFamily, "';"));
+    });
     return ":root {\n".concat(stringBuilder.join('\n'), "\n}\n");
 }
 exports.default = transformTypography;
