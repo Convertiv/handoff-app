@@ -44,6 +44,10 @@ var tokenReferenceFormat = function (token, type) {
         }
     }
     var wrapped = type === 'css' ? "var(--".concat(reference, ")") : "$".concat(reference);
+    if (type === 'sd' && reference) {
+        // build reference for style dictionary
+        wrapped = "{".concat(reference.replace(/-/g, '.'), "}");
+    }
     return reference ? wrapped : token.value;
 };
 exports.tokenReferenceFormat = tokenReferenceFormat;

@@ -46,6 +46,7 @@ const transformTokens = (
           reference,
           isSupportedCssProperty: value instanceof Array ? value[1] : true,
           nameSegments: getTokenNameSegments(component.name, component.variantProperties, part, cssProperty, options),
+
         },
       }))
     : [];

@@ -1,6 +1,7 @@
 import { transform } from '../transformer';
 import { FileComponentObject } from '../../exporters/components/types';
 import { IntegrationObjectComponentOptions } from '../../types/config';
+import { tokenReferenceFormat } from '../css/component';
 
 /**
  * Transforms the component tokens into a style dictionary
@@ -38,7 +39,7 @@ export const transformComponentsToStyleDictionary = (
         ref = ref[el];
       });
 
-      ref['value'] = token.value;
+      ref['value'] = tokenReferenceFormat(token, 'sd');
     });
   });
 

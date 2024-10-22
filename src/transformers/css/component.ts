@@ -36,7 +36,7 @@ export const transformComponentTokensToCssVariables = (component: ComponentInsta
   return transform('css', component, options);
 };
 
-export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss') => {
+export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd') => {
   let reference = token.metadata.reference;
   if (reference) {
     // There are some values that we can't yet tokenize because of the data out of figma
@@ -48,6 +48,10 @@ export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss') => {
       reference += `-${token.metadata.cssProperty}`;
     }
   }
-  const wrapped = type === 'css' ? `var(--${reference})` : `$${reference}`;
+  let wrapped = type === 'css' ? `var(--${reference})` : `$${reference}`;
+  if(type === 'sd' && reference) {
+    // build reference for style dictionary
+    wrapped = `{${reference.replace(/-/g, '.')}}`;
+  }
   return reference ? wrapped : token.value;
 };
