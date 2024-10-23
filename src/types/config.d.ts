@@ -78,7 +78,7 @@ export interface Config {
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'integration', 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
+  'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
 >;
 
 export interface IntegrationObjectComponentOptions {

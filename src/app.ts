@@ -165,14 +165,18 @@ export default function Layout(props) {
   fs.writeFileSync(dest, mdx, 'utf-8');
 };
 
-const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
-  const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
+const performCleanup = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
 
   // Clean project app dir
   if (fs.existsSync(appPath)) {
     await fs.rm(appPath, { recursive: true });
   }
+}
+
+const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
+  const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
+  const appPath = getAppPath(handoff);
 
   // Prepare project app dir
   await fs.promises.mkdir(appPath, { recursive: true });
@@ -211,6 +215,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // Perform cleanup
+  await performCleanup(handoff);
 
   // If we are building the app, ensure the integration is built first
   await buildIntegrationOnly(handoff);

@@ -159,6 +159,21 @@ var transformMdx = function (src, dest, id) {
     mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => {\n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
+var performCleanup = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                appPath = getAppPath(handoff);
+                if (!fs_extra_1.default.existsSync(appPath)) return [3 /*break*/, 2];
+                return [4 /*yield*/, fs_extra_1.default.rm(appPath, { recursive: true })];
+            case 1:
+                _a.sent();
+                _a.label = 2;
+            case 2: return [2 /*return*/];
+        }
+    });
+}); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffIntegrationPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
     var _a, _b, _c;
@@ -167,25 +182,19 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
-                if (!fs_extra_1.default.existsSync(appPath)) return [3 /*break*/, 2];
-                return [4 /*yield*/, fs_extra_1.default.rm(appPath, { recursive: true })];
+                // Prepare project app dir
+                return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
             case 1:
-                _d.sent();
-                _d.label = 2;
-            case 2: 
-            // Prepare project app dir
-            return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
-            case 3:
                 // Prepare project app dir
                 _d.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
-            case 4:
+            case 2:
                 _d.sent();
                 return [4 /*yield*/, mergePublicDir(handoff)];
-            case 5:
+            case 3:
                 _d.sent();
                 return [4 /*yield*/, mergeMDX(handoff)];
-            case 6:
+            case 4:
                 _d.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
@@ -195,7 +204,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
-            case 7:
+            case 5:
                 nextConfigContent = (_d.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
@@ -206,7 +215,7 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
-            case 8:
+            case 6:
                 _d.sent();
                 return [2 /*return*/, appPath];
         }
@@ -225,9 +234,14 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                // Perform cleanup
+                return [4 /*yield*/, performCleanup(handoff)];
+            case 1:
+                // Perform cleanup
+                _a.sent();
                 // If we are building the app, ensure the integration is built first
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
-            case 1:
+            case 2:
                 // If we are building the app, ensure the integration is built first
                 _a.sent();
                 // Build client preview styles
@@ -236,11 +250,11 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         .catch(function (error) {
                         throw new Error(error);
                     })];
-            case 2:
+            case 3:
                 // Build client preview styles
                 _a.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
-            case 3:
+            case 4:
                 appPath = _a.sent();
                 // Build app
                 return [4 /*yield*/, (0, next_build_1.nextBuild)({
@@ -251,7 +265,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         experimentalTurbo: false,
                         experimentalBuildMode: 'default',
                     }, appPath)];
-            case 4:
+            case 5:
                 // Build app
                 _a.sent();
                 outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
