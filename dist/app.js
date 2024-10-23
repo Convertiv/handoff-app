@@ -159,11 +159,26 @@ var transformMdx = function (src, dest, id) {
     mdx = "\n\n\n".concat(mdx, "\n\n\nimport {staticBuildMenu, getCurrentSection} from \"handoff-app/src/app/components/util\";\nimport { getClientConfig } from '@handoff/config';\nimport { getPreview } from \"handoff-app/src/app/components/util\";\n\nexport const getStaticProps = async () => {\n  // get previews for components on this page\n  const previews = getPreview();\n  const menu = staticBuildMenu();\n  const config = getClientConfig();\n  return {\n    props: {\n      previews,\n      menu,\n      config,\n      current: getCurrentSection(menu, \"/").concat(id, "\") ?? [],\n      title: \"").concat(title, "\",\n      description: \"").concat(description, "\",\n      image: \"").concat(image, "\",\n    },\n  };\n};\n\nexport const preview = (name) => {\n  return previews.components[name];\n};\n\nimport MarkdownLayout from \"handoff-app/src/app/components/MarkdownLayout\";\nexport default function Layout(props) {\n  return (\n    <MarkdownLayout\n      menu={props.menu}\n      metadata={{\n        metaDescription: \"").concat(metaDescription, "\",\n        metaTitle: \"").concat(metaTitle, "\",\n        title: \"").concat(title, "\",\n        weight: ").concat(weight, ",\n        image: \"").concat(image, "\",\n        menuTitle: \"").concat(menuTitle, "\",\n        enabled: ").concat(enabled, ",\n      }}\n      wide={").concat(wide, "}\n      allPreviews={props.previews}\n      config={props.config}\n      current={props.current}\n    >\n      {props.children}\n    </MarkdownLayout>\n  );\n\n}");
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
+var performCleanup = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    var appPath;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                appPath = getAppPath(handoff);
+                if (!fs_extra_1.default.existsSync(appPath)) return [3 /*break*/, 2];
+                return [4 /*yield*/, fs_extra_1.default.rm(appPath, { recursive: true })];
+            case 1:
+                _a.sent();
+                _a.label = 2;
+            case 2: return [2 /*return*/];
+        }
+    });
+}); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffIntegrationPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
+    var _a, _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
@@ -171,35 +186,37 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
             case 1:
                 // Prepare project app dir
-                _c.sent();
+                _d.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
             case 2:
-                _c.sent();
+                _d.sent();
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
-                _c.sent();
+                _d.sent();
                 return [4 /*yield*/, mergeMDX(handoff)];
             case 4:
-                _c.sent();
+                _d.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
+                handoffIntegrationPath = path_1.default.resolve(handoff.workingPath, (_c = handoff.config.integrationPath) !== null && _c !== void 0 ? _c : 'integration');
                 handoffModulePath = path_1.default.resolve(handoff.modulePath);
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 5:
-                nextConfigContent = (_c.sent())
+                nextConfigContent = (_d.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
                     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, "HANDOFF_APP_BASE_PATH: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, "HANDOFF_WORKING_PATH: '".concat(handoffWorkingPath, "'"))
+                    .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, "HANDOFF_INTEGRATION_PATH: '".concat(handoffIntegrationPath, "'"))
                     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, "HANDOFF_MODULE_PATH: '".concat(handoffModulePath, "'"))
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
             case 6:
-                _c.sent();
+                _d.sent();
                 return [2 /*return*/, appPath];
         }
     });
@@ -217,9 +234,14 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
                 }
+                // Perform cleanup
+                return [4 /*yield*/, performCleanup(handoff)];
+            case 1:
+                // Perform cleanup
+                _a.sent();
                 // If we are building the app, ensure the integration is built first
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
-            case 1:
+            case 2:
                 // If we are building the app, ensure the integration is built first
                 _a.sent();
                 // Build client preview styles
@@ -228,11 +250,11 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         .catch(function (error) {
                         throw new Error(error);
                     })];
-            case 2:
+            case 3:
                 // Build client preview styles
                 _a.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
-            case 3:
+            case 4:
                 appPath = _a.sent();
                 // Build app
                 return [4 /*yield*/, (0, next_build_1.nextBuild)({
@@ -243,7 +265,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         experimentalTurbo: false,
                         experimentalBuildMode: 'default',
                     }, appPath)];
-            case 4:
+            case 5:
                 // Build app
                 _a.sent();
                 outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -266,8 +288,9 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
     var appPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
                     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -280,10 +303,10 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     })];
             case 1:
                 // Build client preview styles
-                _a.sent();
+                _c.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
             case 2:
-                appPath = _a.sent();
+                appPath = _c.sent();
                 // Include any changes made within the app source during watch
                 chokidar_1.default
                     .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
@@ -410,8 +433,8 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         });
                     }); });
                 }
-                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
                         var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {

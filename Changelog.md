@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2024-10-24
+
+This release introduces greater flexibility for custom integrations and general improvements to CLI handling.
+
+### Changes
+
+- Added support for custom integration paths with the `-i <path-to-integration>` CLI argument.
+  - Can be used with commands like `fetch`, `start`, `build:app`, etc.
+  - Defaults to the `integration` directory if the argument isn't specified, ensuring backward compatibility.
+
+### Improvements
+
+- Enhanced CLI command management:
+  - Switched to `yargs` for improved CLI parsing.
+  - Each command now has a dedicated handler file for better modularity.
+- Improved the docs app build process:
+  - Introduced a cleanup procedure that ensures only files present in the working directory are included in the final build.
+
 ## [0.14.0] - 2024-09-26
 
 This release enables creation of complex documentation pages, with storybook

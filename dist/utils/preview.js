@@ -128,6 +128,7 @@ var bundleJSWebpack = function (target, handoff, mode) { return __awaiter(void 0
 }); };
 exports.bundleJSWebpack = bundleJSWebpack;
 var generateWebpackConfig = function (entry, handoff, output, mode) {
+    var _a, _b;
     if (!output) {
         output = {
             path: path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, '.handoff', "".concat(handoff.config.figma_project_id), 'public', 'components'),
@@ -143,14 +144,14 @@ var generateWebpackConfig = function (entry, handoff, output, mode) {
         resolve: {
             alias: {
                 '@exported': path_1.default.join(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration'),
-                '@integration': path_1.default.join(handoff.workingPath, 'integration/sass'),
+                '@integration': path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
             },
             modules: [
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'src'),
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.modulePath, 'node_modules'),
                 path_1.default.resolve(process.cwd(), 'node_modules'),
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'node_modules'),
-                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'integration/sass'),
+                path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'sass'),
                 path_1.default.resolve(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'exported', handoff === null || handoff === void 0 ? void 0 : handoff.config.figma_project_id),
             ],
         },
@@ -189,8 +190,9 @@ var generateWebpackConfig = function (entry, handoff, output, mode) {
                                 },
                                 additionalData: function (content, loaderContext) { return __awaiter(void 0, void 0, void 0, function () {
                                     var integrationPath;
-                                    return __generator(this, function (_a) {
-                                        integrationPath = path_1.default.join(handoff.workingPath, 'integration/sass');
+                                    var _a;
+                                    return __generator(this, function (_b) {
+                                        integrationPath = path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass');
                                         if (fs_extra_1.default.existsSync(integrationPath)) {
                                             fs_extra_1.default.readdirSync(integrationPath)
                                                 .filter(function (file) {

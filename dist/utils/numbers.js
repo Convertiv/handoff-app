@@ -5,8 +5,8 @@ var normalizeCssNumber = function (input) {
     if (input % 1 === 0) {
         return input.toString();
     }
-    var rounded = parseFloat(input.toFixed(2));
-    var roundedStr = rounded.toFixed(2);
+    var rounded = parseFloat(input.toFixed(3));
+    var roundedStr = rounded.toFixed(3);
     if (rounded === 0) {
         return '0';
     }

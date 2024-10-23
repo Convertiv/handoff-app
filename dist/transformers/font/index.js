@@ -87,8 +87,9 @@ function fontTransformer(handoff, documentationObject) {
             customFonts = [];
             Object.keys(families).map(function (key) { return __awaiter(_this, void 0, void 0, function () {
                 var name, fontDirName, stream_1, fontsFolder;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
                             name = key.replace(/\s/g, '');
                             fontDirName = path_1.default.join(fontLocation, name);
@@ -97,16 +98,16 @@ function fontTransformer(handoff, documentationObject) {
                             stream_1 = fs_extra_1.default.createWriteStream(path_1.default.join(fontLocation, "".concat(name, ".zip")));
                             return [4 /*yield*/, (0, exports.zipFonts)(fontDirName, stream_1)];
                         case 1:
-                            _a.sent();
-                            fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration', 'fonts');
+                            _b.sent();
+                            fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'fonts');
                             if (!fs_extra_1.default.existsSync(fontsFolder)) {
                                 fs_extra_1.default.mkdirSync(fontsFolder);
                             }
                             return [4 /*yield*/, fs_extra_1.default.copySync(fontDirName, fontsFolder)];
                         case 2:
-                            _a.sent();
+                            _b.sent();
                             customFonts.push("".concat(name, ".zip"));
-                            _a.label = 3;
+                            _b.label = 3;
                         case 3: return [2 /*return*/];
                     }
                 });

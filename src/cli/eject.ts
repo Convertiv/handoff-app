@@ -43,8 +43,8 @@ export const makeIntegration = async (handoff: Handoff) => {
   const integrationPath = getPathToIntegration(handoff, true);
   fs.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
   if (handoff.force) handoff.force = false;
-  await buildIntegrationOnly(handoff);
   console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
+  await buildIntegrationOnly(handoff);
   return handoff;
 };
 

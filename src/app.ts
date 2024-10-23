@@ -165,6 +165,15 @@ export default function Layout(props) {
   fs.writeFileSync(dest, mdx, 'utf-8');
 };
 
+const performCleanup = async (handoff: Handoff): Promise<void> => {
+  const appPath = getAppPath(handoff);
+
+  // Clean project app dir
+  if (fs.existsSync(appPath)) {
+    await fs.rm(appPath, { recursive: true });
+  }
+}
+
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
@@ -179,6 +188,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffProjectId = handoff.config.figma_project_id ?? '';
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
+  const handoffIntegrationPath = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
@@ -187,6 +197,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
+    .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, `HANDOFF_INTEGRATION_PATH: '${handoffIntegrationPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
@@ -204,6 +215,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  // Perform cleanup
+  await performCleanup(handoff);
 
   // If we are building the app, ensure the integration is built first
   await buildIntegrationOnly(handoff);
@@ -367,8 +381,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
   }
 
-  if (fs.existsSync(path.resolve(handoff.workingPath, 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'integration'), chokidarConfig).on('all', async (event, file) => {
+  if (fs.existsSync(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'))) {
+    chokidar.watch(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'), chokidarConfig).on('all', async (event, file) => {
       switch (event) {
         case 'add':
         case 'change':

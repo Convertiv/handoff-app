@@ -1,20 +1,18 @@
-import spawn from 'cross-spawn';
-import fs from 'fs';
-import path from 'path';
 import readline from 'readline';
-import chalk from 'chalk';
-import { Writable } from 'stream';
 
-export const prompt = (query: string) => new Promise((resolve) => {
-  var rl = readline.createInterface({
+export const prompt = async (query: string): Promise<string> => {
+  const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
-  return rl.question(query, (answer) => {
-    rl.close();
-    return resolve(answer);
+
+  return new Promise((resolve) => {
+    rl.question(query, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
   });
-});
+};
 
 /**
  * Hide the Prompt

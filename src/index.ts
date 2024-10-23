@@ -25,7 +25,7 @@ class Handoff {
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
-  integrationObject: IntegrationObject | null;
+  integrationObject?: IntegrationObject | null;
   integrationHooks: HandoffIntegration;
   hooks: {
     init: (config: Config) => Config;
@@ -41,8 +41,10 @@ class Handoff {
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
 
-  constructor(config?: Config) {
+  constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this.config = null;
+    this.debug = debug ?? false;
+    this.force = force ?? false;
     this.hooks = {
       init: (config: Config): Config => config,
       fetch: () => {},
@@ -60,13 +62,13 @@ class Handoff {
     this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
-  init(configOverride?: Config): Handoff {
+  init(configOverride?: Partial<Config>): Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    this.integrationObject = initIntegrationObject(this.workingPath);
+    this.integrationObject = initIntegrationObject(this);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -99,7 +101,7 @@ class Handoff {
       if (name) {
         // Get snippet path
         name = name.includes('.html') ? name : `${name}.html`;
-        const snippetPath = path.resolve(this.workingPath, 'integration/snippets', name);
+        const snippetPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'snippets', name);
         await processSnippet(this, snippetPath);
       } else {
         await buildSnippets(this);
@@ -231,7 +233,7 @@ class Handoff {
   }
 }
 
-const initConfig = (configOverride?: any): Config => {
+const initConfig = (configOverride?: Partial<Config>): Config => {
   let config = {};
   let configPath = path.resolve(process.cwd(), 'handoff.config.json');
 
@@ -241,21 +243,29 @@ const initConfig = (configOverride?: any): Config => {
   }
 
   if (configOverride) {
-    config = { ...config, ...configOverride };
+    Object.keys(configOverride).forEach((key) => {
+      const value = configOverride[key as keyof Config];
+      if (value !== undefined) {
+        config[key as keyof Config] = value;
+      }
+    });
   }
+
   const returnConfig = { ...defaultConfig(), ...config } as unknown as Config;
   return returnConfig;
 };
 
 
-export const initIntegrationObject = (workingPath: string): IntegrationObject => {
-  const integrationPath = path.join(workingPath, 'integration');
+export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
+  const integrationPath = path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
 
   if (!fs.existsSync(integrationPath)) {
     return null;
   }
 
-  const integrationConfigPath = path.resolve(path.join(workingPath, 'integration', 'integration.config.json'));
+  const integrationConfigPath = path.resolve(
+    path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'integration.config.json')
+  );
 
   if (!fs.existsSync(integrationConfigPath)) {
     return null;

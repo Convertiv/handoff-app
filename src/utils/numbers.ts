@@ -3,8 +3,8 @@ export const normalizeCssNumber = (input: number): string => {
     return input.toString();
   }
 
-  let rounded = parseFloat(input.toFixed(2));
-  let roundedStr = rounded.toFixed(2);
+  let rounded = parseFloat(input.toFixed(3));
+  let roundedStr = rounded.toFixed(3);
 
   if (rounded === 0) {
     return '0';
