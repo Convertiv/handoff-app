@@ -57,6 +57,7 @@ const nextConfig = {
     HANDOFF_PROJECT_ID: '',
     HANDOFF_APP_BASE_PATH: '',
     HANDOFF_WORKING_PATH: '',
+    HANDOFF_INTEGRATION_PATH: '',
     HANDOFF_MODULE_PATH: '',
     HANDOFF_EXPORT_PATH: '',
   },
@@ -76,6 +77,7 @@ const nextConfig = {
         HANDOFF_PROJECT_ID: '',
         HANDOFF_APP_BASE_PATH: '',
         HANDOFF_WORKING_PATH: '',
+        HANDOFF_INTEGRATION_PATH: '',
         HANDOFF_MODULE_PATH: '',
         HANDOFF_EXPORT_PATH: '',
       };

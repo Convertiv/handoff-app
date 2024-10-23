@@ -83,11 +83,12 @@ exports.HandoffIntegration = HandoffIntegration;
  * Derive the path to the integration.
  */
 var getPathToIntegration = function (handoff, resolveTemplatePath) {
+    var _a;
     if (!handoff) {
         throw Error('Handoff not initialized');
     }
     if (!handoff.force) {
-        var integrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
+        var integrationPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'));
         if (fs_extra_1.default.existsSync(integrationPath)) {
             return integrationPath;
         }

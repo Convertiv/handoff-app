@@ -1,4 +1,4 @@
-export declare const prompt: (query: string) => Promise<unknown>;
+export declare const prompt: (query: string) => Promise<string>;
 /**
  * Hide the Prompt
  * @param {string} query
