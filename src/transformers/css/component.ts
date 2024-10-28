@@ -3,6 +3,7 @@ import { formatComponentCodeBlockComment } from '../utils';
 import { transform } from '../transformer';
 import { IntegrationObjectComponentOptions } from '../../types/config';
 import { Token } from '../types';
+import Handoff from 'handoff/index';
 
 /**
  * Map down to a variable object
@@ -12,7 +13,9 @@ import { Token } from '../types';
 export const transformComponentsToCssVariables = (
   componentId: string,
   component: FileComponentObject,
-  integrationOptions?: IntegrationObjectComponentOptions
+  integrationOptions?: IntegrationObjectComponentOptions,
+  handoff?: Handoff
+
 ): string => {
   const lines = [];
   const componentCssClass = integrationOptions?.cssRootClass ?? componentId;
@@ -21,7 +24,7 @@ export const transformComponentsToCssVariables = (
   const cssVars = component.instances.map(
     (instance) =>
       `\t${formatComponentCodeBlockComment(instance, '/**/')}\n${transformComponentTokensToCssVariables(instance, integrationOptions)
-        .map((token) => `\t${token.name}: ${tokenReferenceFormat(token, 'css')};`)
+        .map((token) => `\t${token.name}: ${tokenReferenceFormat(token, 'css', handoff)};`)
         .join('\n')}`
   );
   return lines.concat(cssVars).join('\n\n') + '\n}\n';
@@ -36,7 +39,8 @@ export const transformComponentTokensToCssVariables = (component: ComponentInsta
   return transform('css', component, options);
 };
 
-export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd') => {
+export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd', handoff: Handoff) => {
+  if (!handoff || !handoff.config.useStyleReferences) return token.value;
   let reference = token.metadata.reference;
   if (reference) {
     // There are some values that we can't yet tokenize because of the data out of figma
@@ -49,7 +53,7 @@ export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd') 
     }
   }
   let wrapped = type === 'css' ? `var(--${reference})` : `$${reference}`;
-  if(type === 'sd' && reference) {
+  if (type === 'sd' && reference) {
     // build reference for style dictionary
     wrapped = `{${reference.replace(/-/g, '.')}}`;
   }

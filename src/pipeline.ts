@@ -97,9 +97,9 @@ export const buildSnippets = async (handoff: Handoff) => {
 const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   let typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
   typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-  let cssFiles = cssTransformer(documentationObject, handoff.integrationObject);
+  let cssFiles = cssTransformer(documentationObject, handoff, handoff.integrationObject);
   cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-  let scssFiles = scssTransformer(documentationObject, handoff.integrationObject);
+  let scssFiles = scssTransformer(documentationObject, handoff, handoff.integrationObject);
   scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
   let sdFiles = sdTransformer(documentationObject, handoff.integrationObject);
   sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
