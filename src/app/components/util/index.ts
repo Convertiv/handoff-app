@@ -244,6 +244,7 @@ export const staticBuildMenu = () => {
       if (
         !fs.lstatSync(search).isDirectory() &&
         search !== path.resolve(docRoot, 'index.md') &&
+        search !== path.resolve(workingPages, 'index.md') &&
         (fileName.endsWith('md') || fileName.endsWith('mdx'))
       ) {
         const contents = fs.readFileSync(search, 'utf-8');
@@ -423,7 +424,7 @@ export const getIntegrationObject = (): IntegrationObject => {
     return defaultObject;
   }
 
-  const integrationPath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'integration');
+  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
 
   if (!fs.existsSync(integrationPath)) {
     return defaultObject;

@@ -554,7 +554,7 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
                 documentationObject = _a.sent();
                 if (!documentationObject) return [3 /*break*/, 5];
                 // Ensure that the integration object is set if possible
-                handoff.integrationObject = (0, _1.initIntegrationObject)(handoff.workingPath);
+                handoff.integrationObject = (0, _1.initIntegrationObject)(handoff);
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
             case 2:
                 _a.sent();

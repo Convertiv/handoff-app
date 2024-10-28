@@ -87,7 +87,7 @@ var chalk_1 = __importDefault(require("chalk"));
 var integration_2 = require("./utils/integration");
 var preview_1 = require("./transformers/preview");
 var Handoff = /** @class */ (function () {
-    function Handoff(config) {
+    function Handoff(debug, force, config) {
         this.debug = false;
         this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
@@ -95,6 +95,8 @@ var Handoff = /** @class */ (function () {
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
         this.config = null;
+        this.debug = debug !== null && debug !== void 0 ? debug : false;
+        this.force = force !== null && force !== void 0 ? force : false;
         this.hooks = {
             init: function (config) { return config; },
             fetch: function () { },
@@ -119,7 +121,7 @@ var Handoff = /** @class */ (function () {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = (0, exports.initIntegrationObject)(this.workingPath);
+        this.integrationObject = (0, exports.initIntegrationObject)(this);
         return this;
     };
     Handoff.prototype.preRunner = function (validate) {
@@ -165,25 +167,26 @@ var Handoff = /** @class */ (function () {
         });
     };
     Handoff.prototype.snippet = function (name) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
             var snippetPath;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         this.preRunner();
                         if (!this.config) return [3 /*break*/, 4];
                         if (!name) return [3 /*break*/, 2];
                         // Get snippet path
                         name = name.includes('.html') ? name : "".concat(name, ".html");
-                        snippetPath = path_1.default.resolve(this.workingPath, 'integration/snippets', name);
+                        snippetPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', name);
                         return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath)];
                     case 1:
-                        _a.sent();
+                        _b.sent();
                         return [3 /*break*/, 4];
                     case 2: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
                     case 3:
-                        _a.sent();
-                        _a.label = 4;
+                        _b.sent();
+                        _b.label = 4;
                     case 4: return [2 /*return*/, this];
                 }
             });
@@ -449,17 +452,23 @@ var initConfig = function (configOverride) {
         config = JSON.parse(defBuffer.toString());
     }
     if (configOverride) {
-        config = __assign(__assign({}, config), configOverride);
+        Object.keys(configOverride).forEach(function (key) {
+            var value = configOverride[key];
+            if (value !== undefined) {
+                config[key] = value;
+            }
+        });
     }
     var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
 };
-var initIntegrationObject = function (workingPath) {
-    var integrationPath = path_1.default.join(workingPath, 'integration');
+var initIntegrationObject = function (handoff) {
+    var _a, _b;
+    var integrationPath = path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration');
     if (!fs_extra_1.default.existsSync(integrationPath)) {
         return null;
     }
-    var integrationConfigPath = path_1.default.resolve(path_1.default.join(workingPath, 'integration', 'integration.config.json'));
+    var integrationConfigPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'integration.config.json'));
     if (!fs_extra_1.default.existsSync(integrationConfigPath)) {
         return null;
     }

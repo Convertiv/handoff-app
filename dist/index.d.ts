@@ -14,7 +14,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
-    integrationObject: IntegrationObject | null;
+    integrationObject?: IntegrationObject | null;
     integrationHooks: HandoffIntegration;
     hooks: {
         init: (config: Config) => Config;
@@ -29,8 +29,8 @@ declare class Handoff {
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
-    constructor(config?: Config);
-    init(configOverride?: Config): Handoff;
+    constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
+    init(configOverride?: Partial<Config>): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     recipe(): Promise<Handoff>;
@@ -59,5 +59,5 @@ declare class Handoff {
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
-export declare const initIntegrationObject: (workingPath: string) => IntegrationObject;
+export declare const initIntegrationObject: (handoff: Handoff) => IntegrationObject;
 export default Handoff;

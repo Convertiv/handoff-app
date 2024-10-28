@@ -48,13 +48,15 @@ export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: bool
   if (!handoff) {
     throw Error('Handoff not initialized');
   }
+
   if (!handoff.force) {
-    const integrationPath = path.resolve(path.join(handoff.workingPath, 'integration'));
+    const integrationPath = path.resolve(path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration'));
 
     if (fs.existsSync(integrationPath)) {
       return integrationPath;
     }
   }
+
   if (resolveTemplatePath) {
     return path.resolve(path.join(handoff.modulePath, 'config', 'templates', 'integration'));
   }

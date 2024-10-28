@@ -57,9 +57,10 @@ interface NextAppConfig {
 export interface Config {
   dev_access_token?: string | null | undefined;
   figma_project_id?: string | null | undefined;
+  integrationPath?: string;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
-  app: NextAppConfig;
+  app?: NextAppConfig;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
@@ -77,7 +78,7 @@ export interface Config {
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
+  'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
 >;
 
 export interface IntegrationObjectComponentOptions {
