@@ -162,11 +162,12 @@ function snippetTransformer(handoff) {
 }
 exports.snippetTransformer = snippetTransformer;
 function renameSnippet(handoff, source, destination) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        return __generator(this, function (_a) {
-            source = path_1.default.resolve(handoff.workingPath, 'integration/snippets', source);
-            destination = path_1.default.resolve(handoff.workingPath, 'integration/snippets', destination);
+        return __generator(this, function (_c) {
+            source = path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', source);
+            destination = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'snippets', destination);
             ['html', 'js', 'scss', 'css'].forEach(function (ext) { return __awaiter(_this, void 0, void 0, function () {
                 var test;
                 return __generator(this, function (_a) {
@@ -240,10 +241,11 @@ function processSharedStyles(handoff) {
 }
 exports.processSharedStyles = processSharedStyles;
 function processSnippet(handoff, file, sharedStyles) {
+    var _a;
     return __awaiter(this, void 0, void 0, function () {
         var data, custom, publicPath, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, preview, bodyEl, code, publicFile;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     data = {
                         id: file,
@@ -260,23 +262,23 @@ function processSnippet(handoff, file, sharedStyles) {
                     jsFile = file.replace('.html', '.js');
                     if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 5];
                     console.log(chalk_1.default.green("Detected JS file for ".concat(file)));
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
-                    _a.trys.push([1, 4, , 5]);
+                    _b.trys.push([1, 4, , 5]);
                     jsPath = path_1.default.resolve(custom, jsFile);
                     return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
                 case 2:
-                    js = _a.sent();
+                    js = _b.sent();
                     return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development')];
                 case 3:
-                    compiled = _a.sent();
+                    compiled = _b.sent();
                     if (js) {
                         data['js'] = js;
                         data['jsCompiled'] = compiled;
                     }
                     return [3 /*break*/, 5];
                 case 4:
-                    e_2 = _a.sent();
+                    e_2 = _b.sent();
                     console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
                     console.log(e_2);
                     return [3 /*break*/, 5];
@@ -287,48 +289,48 @@ function processSnippet(handoff, file, sharedStyles) {
                     cssPath = path_1.default.resolve(custom, cssFile);
                     if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 11];
                     console.log(chalk_1.default.green("Detected SCSS file for ".concat(file)));
-                    _a.label = 6;
+                    _b.label = 6;
                 case 6:
-                    _a.trys.push([6, 8, , 9]);
+                    _b.trys.push([6, 8, , 9]);
                     return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
                             loadPaths: [
-                                path_1.default.resolve(handoff.workingPath, 'integration/sass'),
+                                path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
                                 path_1.default.resolve(handoff.workingPath, 'node_modules'),
                                 path_1.default.resolve(handoff.workingPath),
                                 path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                             ],
                         })];
                 case 7:
-                    result = _a.sent();
+                    result = _b.sent();
                     if (result.css) {
                         // @ts-ignore
                         data['css'] = result.css;
                     }
                     return [3 /*break*/, 9];
                 case 8:
-                    e_3 = _a.sent();
+                    e_3 = _b.sent();
                     console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
                     console.log(e_3);
                     return [3 /*break*/, 9];
                 case 9: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
                 case 10:
-                    scss = _a.sent();
+                    scss = _b.sent();
                     if (scss) {
                         data['sass'] = scss;
                     }
-                    _a.label = 11;
+                    _b.label = 11;
                 case 11:
                     if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 13];
                     return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
                 case 12:
-                    css = _a.sent();
+                    css = _b.sent();
                     if (css) {
                         data['css'] = css;
                     }
-                    _a.label = 13;
+                    _b.label = 13;
                 case 13: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 14:
-                    template = _a.sent();
+                    template = _b.sent();
                     preview = handlebars_1.default.compile(template)({
                         config: handoff.config,
                         style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
@@ -350,10 +352,10 @@ function processSnippet(handoff, file, sharedStyles) {
                     publicFile = path_1.default.resolve(publicPath, file);
                     return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, preview)];
                 case 15:
-                    _a.sent();
+                    _b.sent();
                     return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile.replace('.html', '.json'), JSON.stringify(data, null, 2))];
                 case 16:
-                    _a.sent();
+                    _b.sent();
                     return [2 /*return*/];
             }
         });

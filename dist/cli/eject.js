@@ -87,10 +87,10 @@ var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void
                 fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
                 if (handoff.force)
                     handoff.force = false;
+                console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
             case 1:
                 _a.sent();
-                console.log(chalk_1.default.green("Integration has been successfully created! Path: ".concat(workingPath)));
                 return [2 /*return*/, handoff];
         }
     });

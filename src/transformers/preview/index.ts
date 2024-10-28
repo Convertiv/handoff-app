@@ -117,8 +117,8 @@ export async function snippetTransformer(handoff: Handoff) {
 }
 
 export async function renameSnippet(handoff: Handoff, source: string, destination: string) {
-  source = path.resolve(handoff.workingPath, 'integration/snippets', source);
-  destination = path.resolve(handoff.workingPath, 'integration/snippets', destination);
+  source = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'snippets', source);
+  destination = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'snippets', destination);
   ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
     console.log(`Checking for ${source}.${ext}`);
     let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
@@ -209,7 +209,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     try {
       const result = await sass.compileAsync(scssPath, {
         loadPaths: [
-          path.resolve(handoff.workingPath, 'integration/sass'),
+          path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
           path.resolve(handoff.workingPath, 'node_modules'),
           path.resolve(handoff.workingPath),
           path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),

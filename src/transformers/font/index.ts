@@ -6,7 +6,6 @@ import path from 'path';
 import sortedUniq from 'lodash/sortedUniq';
 import * as stream from 'node:stream';
 import { FontFamily } from './types';
-//import { pluginTransformer } from '../plugin';
 import Handoff from '../../index';
 
 /**
@@ -38,7 +37,7 @@ export default async function fontTransformer(handoff: Handoff, documentationObj
       // Zip the font up and put the zip in the font location
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zipFonts(fontDirName, stream);
-      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'integration', 'fonts');
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, handoff.config.integrationPath ?? 'integration', 'fonts');
       if(!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }

@@ -66,15 +66,17 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     config = { ...config, ...configOverride };
   }
 
-  const { app, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links } = {
-    ...defaultConfig(),
-    ...config,
-  } as unknown as Config;
+  const {
+    app,
+    exportsOutputDirectory,
+    sitesOutputDirectory,
+    assets_zip_links = { icons: null, logos: null },
+  } = { ...defaultConfig(), ...config };
 
   return {
     app,
     exportsOutputDirectory,
     sitesOutputDirectory,
-    assets_zip_links: assets_zip_links ?? { icons: null, logos: null },
+    assets_zip_links,
   };
 };

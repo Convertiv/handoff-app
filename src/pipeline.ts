@@ -441,7 +441,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
     // Ensure that the integration object is set if possible
-    handoff.integrationObject = initIntegrationObject(handoff.workingPath);
+    handoff.integrationObject = initIntegrationObject(handoff);
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
     await buildSnippets(handoff);
