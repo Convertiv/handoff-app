@@ -40,7 +40,7 @@ export const transformComponentTokensToCssVariables = (component: ComponentInsta
 };
 
 export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd', handoff: Handoff) => {
-  if (!handoff || !handoff.config.useStyleReferences) return token.value;
+  if (!handoff || !handoff.config.useVariables) return token.value;
   let reference = token.metadata.reference;
   if (reference) {
     // There are some values that we can't yet tokenize because of the data out of figma

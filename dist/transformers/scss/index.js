@@ -54,7 +54,7 @@ exports.scssTypesTransformer = scssTypesTransformer;
  * @param documentationObject
  * @returns
  */
-function scssTransformer(documentationObject, integrationObject) {
+function scssTransformer(documentationObject, handoff, integrationObject) {
     var components = {};
     var _loop_1 = function (componentId) {
         components[componentId] = documentationObject.components[componentId].instances
@@ -63,7 +63,7 @@ function scssTransformer(documentationObject, integrationObject) {
             return [
                 (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
                 (0, component_1.transformComponentTokensToScssVariables)(instance, (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*'])
-                    .map(function (token) { return "\t".concat(token.name, ": ").concat((0, component_2.tokenReferenceFormat)(token, 'scss'), ";"); })
+                    .map(function (token) { return "\t".concat(token.name, ": ").concat((0, component_2.tokenReferenceFormat)(token, 'scss', handoff), ";"); })
                     .join('\n'),
             ].join('\n');
         })

@@ -15,7 +15,7 @@ export const defaultConfig = (): Config => ({
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
-  useStyleReferences: false,
+  useVariables: false,
   app: {
     theme: 'default',
     title: 'Convertiv Design System',

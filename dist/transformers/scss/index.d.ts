@@ -1,6 +1,7 @@
 import { DocumentationObject } from '../../types';
 import { TransformerOutput } from '../types';
 import { IntegrationObject } from '../../types/config';
+import Handoff from 'handoff/index';
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
@@ -12,4 +13,4 @@ export declare function scssTypesTransformer(documentationObject: DocumentationO
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput;
+export default function scssTransformer(documentationObject: DocumentationObject, handoff: Handoff, integrationObject?: IntegrationObject): TransformerOutput;

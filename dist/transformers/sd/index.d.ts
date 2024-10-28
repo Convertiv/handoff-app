@@ -1,4 +1,5 @@
+import Handoff from 'handoff/index';
 import { DocumentationObject } from '../../types';
 import { IntegrationObject } from '../../types/config';
 import { TransformerOutput } from '../types';
-export default function sdTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput;
+export default function sdTransformer(documentationObject: DocumentationObject, handoff: Handoff, integrationObject?: IntegrationObject): TransformerOutput;

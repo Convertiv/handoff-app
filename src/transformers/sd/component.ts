@@ -2,6 +2,7 @@ import { transform } from '../transformer';
 import { FileComponentObject } from '../../exporters/components/types';
 import { IntegrationObjectComponentOptions } from '../../types/config';
 import { tokenReferenceFormat } from '../css/component';
+import Handoff from 'handoff/index';
 
 /**
  * Transforms the component tokens into a style dictionary
@@ -11,6 +12,7 @@ import { tokenReferenceFormat } from '../css/component';
 export const transformComponentsToStyleDictionary = (
   _: string,
   component: FileComponentObject,
+  handoff: Handoff,
   integrationOptions?: IntegrationObjectComponentOptions
 ): string => {
   const sd = {} as any;
@@ -39,7 +41,7 @@ export const transformComponentsToStyleDictionary = (
         ref = ref[el];
       });
 
-      ref['value'] = tokenReferenceFormat(token, 'sd');
+      ref['value'] = tokenReferenceFormat(token, 'sd', handoff);
     });
   });
 

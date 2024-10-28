@@ -8,14 +8,14 @@ var transformer_1 = require("../transformer");
  * @param alerts
  * @returns
  */
-var transformComponentsToCssVariables = function (componentId, component, integrationOptions) {
+var transformComponentsToCssVariables = function (componentId, component, integrationOptions, handoff) {
     var _a;
     var lines = [];
     var componentCssClass = (_a = integrationOptions === null || integrationOptions === void 0 ? void 0 : integrationOptions.cssRootClass) !== null && _a !== void 0 ? _a : componentId;
     lines.push(".".concat(componentCssClass, " {"));
     var cssVars = component.instances.map(function (instance) {
         return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(instance, '/**/'), "\n").concat((0, exports.transformComponentTokensToCssVariables)(instance, integrationOptions)
-            .map(function (token) { return "\t".concat(token.name, ": ").concat((0, exports.tokenReferenceFormat)(token, 'css'), ";"); })
+            .map(function (token) { return "\t".concat(token.name, ": ").concat((0, exports.tokenReferenceFormat)(token, 'css', handoff), ";"); })
             .join('\n'));
     });
     return lines.concat(cssVars).join('\n\n') + '\n}\n';
@@ -30,7 +30,9 @@ var transformComponentTokensToCssVariables = function (component, options) {
     return (0, transformer_1.transform)('css', component, options);
 };
 exports.transformComponentTokensToCssVariables = transformComponentTokensToCssVariables;
-var tokenReferenceFormat = function (token, type) {
+var tokenReferenceFormat = function (token, type, handoff) {
+    if (!handoff || !handoff.config.useVariables)
+        return token.value;
     var reference = token.metadata.reference;
     if (reference) {
         // There are some values that we can't yet tokenize because of the data out of figma
