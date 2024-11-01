@@ -61,15 +61,30 @@ var createDocumentationObject = function (handoff, legacyDefinitions) { return _
                 /// create a design map of node ids and references
                 handoff.designMap = {
                     colors: design.color.reduce(function (acc, color) {
-                        acc[color.id] = color.reference;
+                        acc[color.id] = {
+                            reference: color.reference,
+                            type: 'color',
+                            group: color.group,
+                            name: color.name,
+                        };
                         return acc;
                     }, {}),
                     effects: design.effect.reduce(function (acc, effect) {
-                        acc[effect.id] = effect.reference;
+                        acc[effect.id] = {
+                            reference: effect.reference,
+                            group: effect.group,
+                            name: effect.name,
+                            type: 'effect',
+                        };
                         return acc;
                     }, {}),
                     typography: design.typography.reduce(function (acc, typo) {
-                        acc[typo.id] = typo.reference;
+                        acc[typo.id] = {
+                            reference: typo.reference,
+                            type: 'typography',
+                            group: typo.group,
+                            name: typo.name,
+                        };
                         return acc;
                     }, {}),
                 };

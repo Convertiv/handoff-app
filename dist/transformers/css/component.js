@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.tokenReferenceFormat = exports.transformComponentTokensToCssVariables = exports.transformComponentsToCssVariables = void 0;
 var utils_1 = require("../utils");
 var transformer_1 = require("../transformer");
+var design_1 = require("../../exporters/design");
 /**
  * Map down to a variable object
  * @param alerts
@@ -33,23 +34,54 @@ exports.transformComponentTokensToCssVariables = transformComponentTokensToCssVa
 var tokenReferenceFormat = function (token, type, handoff) {
     if (!handoff || !handoff.config.useVariables)
         return token.value;
-    var reference = token.metadata.reference;
-    if (reference) {
-        // There are some values that we can't yet tokenize because of the data out of figma
-        if (['border-width', 'border-radius', 'border-style', 'text-align', 'text-decoration', 'text-transform'].includes(token.metadata.cssProperty)) {
-            reference = undefined;
-            // Some values should be suffixed with the css property
-            // Everything on this list shouldn't, everything else should
+    var referenceObject = token.metadata.reference;
+    var wrapped = '';
+    if (referenceObject) {
+        var reference = '';
+        if (type === 'sd') {
+            // build reference for style dictionary
+            if (referenceObject.type === 'color') {
+                reference = "color.".concat(referenceObject.group, ".").concat((0, design_1.toSDMachineName)(referenceObject.name));
+            }
+            else if (referenceObject.type === 'effect') {
+                reference = "effect.".concat(referenceObject.group, ".").concat((0, design_1.toSDMachineName)(referenceObject.name));
+            }
+            else if (referenceObject.type === 'typography') {
+                switch (token.metadata.cssProperty) {
+                    case 'font-size':
+                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.size");
+                        break;
+                    case 'font-weight':
+                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.weight");
+                        break;
+                    case 'font-family':
+                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.family");
+                        break;
+                    case 'line-height':
+                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".line.height");
+                        break;
+                    case 'letter-spacing':
+                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".letter.spacing");
+                        break;
+                }
+            }
+            return reference ? "{".concat(reference, "}") : token.value;
         }
-        else if (!['box-shadow', 'background', 'color', 'border-color'].includes(token.metadata.cssProperty)) {
-            reference += "-".concat(token.metadata.cssProperty);
+        else {
+            reference = referenceObject.reference;
+            // There are some values that we can't yet tokenize because of the data out of figma
+            if (['border-width', 'border-radius', 'border-style', 'text-align', 'text-decoration', 'text-transform'].includes(token.metadata.cssProperty)) {
+                reference = undefined;
+                // Some values should be suffixed with the css property
+                // Everything on this list shouldn't, everything else should
+            }
+            else if (!['box-shadow', 'background', 'color', 'border-color'].includes(token.metadata.cssProperty)) {
+                reference += "-".concat(token.metadata.cssProperty);
+            }
+            wrapped = type === 'css' ? "var(--".concat(reference, ")") : "$".concat(reference);
         }
+        return reference ? wrapped : token.value;
     }
-    var wrapped = type === 'css' ? "var(--".concat(reference, ")") : "$".concat(reference);
-    if (type === 'sd' && reference) {
-        // build reference for style dictionary
-        wrapped = "{".concat(reference.replace(/-/g, '.'), "}");
-    }
-    return reference ? wrapped : token.value;
+    return token.value;
 };
 exports.tokenReferenceFormat = tokenReferenceFormat;

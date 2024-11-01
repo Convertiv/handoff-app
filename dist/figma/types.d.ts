@@ -23,10 +23,10 @@ export declare type StyleType = 'FILL' | 'TEXT' | 'EFFECT' | 'GRID';
 /**
  * the above styles can be used in the following ways
  */
-export declare type StyleKeyType = 'fills' | 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
+export declare type StyleKeyType = 'fills' | 'fill' | 'stroke' | 'strokes' | 'effect' | 'grid' | 'text' | 'background';
 export declare type StylesObject = {
-    [key in StyleKeyType]: Record<key, string>;
-}[StyleKeyType];
+    [key in StyleKeyType]: string;
+};
 export declare type ScaleMode = 'FILL' | 'FIT' | 'TILE' | 'STRETCH';
 export declare type PaintTypeSolid = 'SOLID';
 export declare type PaintTypeGradient = 'GRADIENT_LINEAR' | 'GRADIENT_RADIAL' | 'GRADIENT_ANGULAR' | 'GRADIENT_DIAMOND';

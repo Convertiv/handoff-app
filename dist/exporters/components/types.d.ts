@@ -1,5 +1,5 @@
 import * as FigmaTypes from '../../figma/types';
-import { Exportable, ComponentDefinition, Side } from "../../types";
+import { Exportable, ComponentDefinition, Side, ReferenceObject } from "../../types";
 export interface FileComponentObject {
     instances: ComponentInstance[];
 }
@@ -17,7 +17,7 @@ export interface ComponentInstance {
 }
 export interface BaseTokenSet {
     name: Exportable;
-    reference?: string;
+    reference?: ReferenceObject;
 }
 export interface EffectTokenSet extends BaseTokenSet {
     name: 'EFFECT';

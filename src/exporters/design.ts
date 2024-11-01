@@ -12,19 +12,33 @@ interface GroupNameData {
 
 /**
  * Create a machine name from a string
- * @param name 
+ * @param name
  * @returns string
  */
-const toMachineName = (name: string): string => {
+export const toMachineName = (name: string): string => {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9\s\-]/gi, '')
     .replace(/\s\-\s|\s+/gi, '-');
-}
+};
+
+/**
+ * Create a machine name from a string
+ * @param name
+ * @returns string
+ */
+export const toSDMachineName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\-]/gi, '-')
+    .replace(/\s\-\s|\s+/gi, '-')
+    .replace(/-+/gi, '-')
+    .replace(/(^,)|(,$)/g, '');
+};
 
 /**
  * Extracts the group name and machine name from a string
- * @param name 
+ * @param name
  * @returns GroupNameData
  */
 const fieldData = (name: string): GroupNameData => {
@@ -35,19 +49,19 @@ const fieldData = (name: string): GroupNameData => {
     group: '',
   };
   if (nameArray[1]) {
-    data.group = toMachineName(nameArray[0]!)
+    data.group = toMachineName(nameArray[0]!);
     data.name = nameArray[1];
-    data.machine_name = toMachineName(data.name)
+    data.machine_name = toMachineName(data.name);
   } else {
     data.name = nameArray[0]!;
-    data.machine_name = toMachineName(data.name)
+    data.machine_name = toMachineName(data.name);
   }
   return data;
 };
 
 /**
  * Checks if input is an array
- * @param input 
+ * @param input
  * @returns boolean
  */
 const isArray = (input: any): input is any[] | readonly any[] => {
@@ -56,11 +70,14 @@ const isArray = (input: any): input is any[] | readonly any[] => {
 
 /**
  * Fetches design tokens from a Figma file
- * @param fileId 
- * @param accessToken 
+ * @param fileId
+ * @param accessToken
  * @returns Promise <{ color: ColorObject[]; typography: TypographyObject[]; effect: EffectObject[]; }>
  */
-export const getFigmaFileDesignTokens = async (fileId: string, accessToken: string): Promise<{
+export const getFigmaFileDesignTokens = async (
+  fileId: string,
+  accessToken: string
+): Promise<{
   color: ColorObject[];
   typography: TypographyObject[];
   effect: EffectObject[];
@@ -110,14 +127,15 @@ export const getFigmaFileDesignTokens = async (fileId: string, accessToken: stri
               .filter((effect) => isValidEffectType(effect.type) && effect.visible)
               .map((effect) => ({
                 type: effect.type,
-                value: isShadowEffectType(effect.type)
-                  ? transformFigmaEffectToCssBoxShadow(effect)
-                  : '',
-              }
-              ))
+                value: isShadowEffectType(effect.type) ? transformFigmaEffectToCssBoxShadow(effect) : '',
+              })),
           });
-        } else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))) {
-          const color = transformFigmaFillsToCssColor(document.fills);  
+        } else if (
+          isArray(document.fills) &&
+          document.fills[0] &&
+          (document.fills[0].type === 'SOLID' || isValidGradientType(document.fills[0].type))
+        ) {
+          const color = transformFigmaFillsToCssColor(document.fills);
           colorsArray.push({
             id: document.id,
             name,
@@ -152,7 +170,7 @@ export const getFigmaFileDesignTokens = async (fileId: string, accessToken: stri
       }
     });
 
-    chalk.green('Colors, Effects and Typography Exported')
+    chalk.green('Colors, Effects and Typography Exported');
     const data = {
       color: colorsArray,
       effect: effectsArray,

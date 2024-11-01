@@ -13,6 +13,13 @@ export interface ColorGroup {
   colors: ColorObject[];
 }
 
+export interface ReferenceObject {
+  reference: string;
+  type: string;
+  name: string;
+  group: string;
+}
+
 export interface EffectObject {
   id: string;
   reference: string;
@@ -106,7 +113,7 @@ export interface DesignStylesMap {
 }
 
 export interface NodeStyleMap {
-  [key: string]: string;
+  [key: string]: ReferenceObject;
 }
 
 export interface HookReturn {

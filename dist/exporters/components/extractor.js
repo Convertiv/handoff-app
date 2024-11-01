@@ -193,52 +193,36 @@ function getReferenceFromMap(node, tokenSet, handoff) {
     }
     switch (tokenSet.name) {
         case 'BACKGROUND':
-            // @ts-ignore
             if (styles.fills) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
-                // @ts-ignore
             }
             else if (styles.fill) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
             }
             break;
         case 'FILL':
-            // @ts-ignore
             if (styles.fills) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
-                // @ts-ignore
             }
             else if (styles.fill) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
             }
             break;
         case 'BORDER':
-            // @ts-ignore
             if (styles.strokes) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.strokes] ? handoff.designMap.colors[styles.strokes] : undefined;
-                // @ts-ignore
             }
             else if (styles.stroke) {
-                // @ts-ignore
                 return handoff.designMap.colors[styles.stroke] ? handoff.designMap.colors[styles.stroke] : undefined;
             }
             break;
         case 'TYPOGRAPHY':
-            // @ts-ignore
             if (styles.text) {
-                // @ts-ignore
                 return handoff.designMap.typography[styles.text] ? handoff.designMap.typography[styles.text] : undefined;
             }
             break;
         case 'EFFECT':
-            // @ts-ignore
             if (styles.effect) {
-                // @ts-ignore
                 return handoff.designMap.effects[styles.effect] ? handoff.designMap.effects[styles.effect] : undefined;
             }
             break;

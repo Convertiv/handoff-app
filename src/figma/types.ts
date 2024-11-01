@@ -25,11 +25,11 @@ export type StyleType = 'FILL' | 'TEXT' | 'EFFECT' | 'GRID';
 /**
  * the above styles can be used in the following ways
  */
-export type StyleKeyType = 'fills' | 'fill' | 'stroke' | 'effect' | 'grid' | 'text' | 'background';
+export type StyleKeyType = 'fills' | 'fill' | 'stroke' | 'strokes' | 'effect' | 'grid' | 'text' | 'background';
 
 export type StylesObject = {
-  [key in StyleKeyType]: Record<key, string>;
-}[StyleKeyType];
+  [key in StyleKeyType]: string;
+};
 
 export type ScaleMode = 'FILL' | 'FIT' | 'TILE' | 'STRETCH';
 

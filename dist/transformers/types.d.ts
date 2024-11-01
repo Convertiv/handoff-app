@@ -1,3 +1,4 @@
+import { ReferenceObject } from "handoff/types";
 export declare type FoundationType = 'colors' | 'typography' | 'effects';
 export declare type TokenType = 'css' | 'scss' | 'sd' | 'map' | 'default';
 export declare type TokenDict = {
@@ -55,7 +56,7 @@ export interface Token {
     metadata: {
         part: string;
         cssProperty: string;
-        reference?: string;
+        reference?: ReferenceObject;
         isSupportedCssProperty: boolean;
         nameSegments: string[];
     };
