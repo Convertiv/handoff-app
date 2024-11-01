@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2024-11-03
+
+This release allows Figma foundation styles - Colors, Typography, and Effects
+to create variable references in component styles in CSS, SASS, and Style
+Dictionaries. It also adds shared style support in snippets to make it easier
+to structure and reuse styles across multiple large components.
+
+### Features
+
+- Figma foundation styles - Colors, Typography, and Effects - are now linked to
+  component styles in the tokens export. This allows you to use foundation styles
+  as variables in component styles in CSS, SASS, and Style Dictionaries.
+  - To enable, set `useVariables` to `true` in the `handoff.config.json` file.
+  - When enabled, Handoff will create variable references in the component styles
+    for the foundation styles wherever possible instead of using the string value.
+  - For example a color foundation style `Blue` in the `Primary` color group
+    with value `#FF0000` will be referenced as `var(--color-primary-blue)` in
+    the component styles instead of `#FF0000`.
+  - This feature is disabled by default.
+- Added support for shared styles in snippets. Shared Styles exist to allow users
+  to seperate styles used across multiple components from the styles unique to
+  each component.
+  - To use a shared style in a snippet, add a `{{ sharedStyles }}` to your snippet
+    HTML file. Handoff will replace this with the shared styles from the Figma
+    file.
+  - Created a `shared.scss` or `shared.css` file in the `integration/snippets`
+    directory to define the shared styles.
+  - If the shared styles are defined in a `shared.scss` file, Handoff will compile
+    the shared styles to CSS and include them in the snippet.
+
+### Changes
+
+- The default configuration now has a `useVariables` property set to `false` to
+  maintain backward compatibility.
+- The default snippets.html file now includes a `{{ sharedStyles }}` token to
+  support shared styles in snippets. This value will be empty if no shared styles
+  exists.
+
 ## [0.14.1] - 2024-10-28
 
 This release introduces greater flexibility for custom integrations and general improvements to CLI handling.
