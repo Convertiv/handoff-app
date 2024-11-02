@@ -488,6 +488,10 @@ const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDe
     const definitionPaths = findFilesByExtension(sourcePath, '.json');
 
     const exportables = definitionPaths
+      .filter((definitionPath) => {
+        const filename = definitionPath.split('/').pop() || "";
+        return !filename.startsWith('_');
+      })
       .map((definitionPath) => {
         const defBuffer = fs.readFileSync(definitionPath);
         const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;

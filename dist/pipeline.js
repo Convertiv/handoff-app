@@ -633,6 +633,10 @@ var getLegacyDefinitions = function (handoff) { return __awaiter(void 0, void 0,
             }
             definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
             exportables = definitionPaths
+                .filter(function (definitionPath) {
+                var filename = definitionPath.split('/').pop() || "";
+                return !filename.startsWith('_');
+            })
                 .map(function (definitionPath) {
                 var defBuffer = fs_extra_1.default.readFileSync(definitionPath);
                 var exportable = JSON.parse(defBuffer.toString());
