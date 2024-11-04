@@ -19,13 +19,15 @@ var colors_1 = __importDefault(require("./design/colors"));
 var effects_1 = __importDefault(require("./design/effects"));
 var typography_1 = __importDefault(require("./design/typography"));
 function mapTransformer(documentationObject, integrationObject) {
-    var _a;
+    var _a, _b;
     var flatMap = {};
+    var variants = {};
     var components = {};
     for (var componentId in documentationObject.components) {
         var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
         components[componentId] = JSON.stringify(map, null, 2);
         flatMap = __assign(__assign({}, flatMap), map);
+        variants[componentId] = (0, component_1.transformComponentsToVariantsMap)(documentationObject.components[componentId], (_b = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _b !== void 0 ? _b : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
     }
     var colors = (0, colors_1.default)(documentationObject.design.color);
     var typography = (0, typography_1.default)(documentationObject.design.typography);
@@ -40,6 +42,7 @@ function mapTransformer(documentationObject, integrationObject) {
         },
         attachments: {
             'tokens-map': JSON.stringify(flatMap, null, 2),
+            'variants-map': JSON.stringify(variants, null, 2),
         },
     };
 }

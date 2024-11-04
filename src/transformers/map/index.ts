@@ -1,7 +1,7 @@
 import { IntegrationObject } from '../../types/config';
 import { DocumentationObject } from '../../types';
 import { TransformerOutput } from '../types';
-import { transformComponentsToMap } from './component';
+import { transformComponentsToMap, transformComponentsToVariantsMap } from './component';
 import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
@@ -9,6 +9,7 @@ import transformTypography from './design/typography';
 export default function mapTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
   let flatMap: Record<string, string> = {};
 
+  const variants : Record<string, Record<string, string[]>> = {};
   const components: Record<string, string> = {};
   for (const componentId in documentationObject.components) {
     const map = transformComponentsToMap(
@@ -16,8 +17,14 @@ export default function mapTransformer(documentationObject: DocumentationObject,
       documentationObject.components[componentId],
       integrationObject?.options[componentId] ?? integrationObject?.options['*']
     );
+
     components[componentId] = JSON.stringify(map, null, 2);
     flatMap = { ...flatMap, ...map };
+
+    variants[componentId] = transformComponentsToVariantsMap(
+      documentationObject.components[componentId],
+      integrationObject?.options[componentId] ?? integrationObject?.options['*']
+    );
   }
 
   const colors = transformColors(documentationObject.design.color);
@@ -35,6 +42,7 @@ export default function mapTransformer(documentationObject: DocumentationObject,
     },
     attachments: {
       'tokens-map': JSON.stringify(flatMap, null, 2),
+      'variants-map': JSON.stringify(variants, null, 2),
     },
   };
 }
