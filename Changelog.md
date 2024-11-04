@@ -28,7 +28,7 @@ to structure and reuse styles across multiple large components.
     the component styles instead of `#FF0000`.
   - This feature is disabled by default.
 - Added support for shared styles in snippets. Shared Styles exist to allow users
-  to seperate styles used across multiple components from the styles unique to
+  to separate styles used across multiple components from the styles unique to
   each component.
   - To use a shared style in a snippet, add a `{{ sharedStyles }}` to your snippet
     HTML file. Handoff will replace this with the shared styles from the Figma
