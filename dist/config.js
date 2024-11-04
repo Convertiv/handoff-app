@@ -41,13 +41,13 @@ exports.getClientConfig = exports.defaultConfig = void 0;
 var fs = __importStar(require("fs-extra"));
 var path_1 = __importDefault(require("path"));
 var defaultConfig = function () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     return ({
         dev_access_token: (_a = process.env.HANDOFF_DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
         figma_project_id: (_b = process.env.HANDOFF_FIGMA_PROJECT_ID) !== null && _b !== void 0 ? _b : null,
         exportsOutputDirectory: (_c = process.env.HANDOFF_OUTPUT_DIR) !== null && _c !== void 0 ? _c : 'exported',
         sitesOutputDirectory: (_d = process.env.HANDOFF_SITES_DIR) !== null && _d !== void 0 ? _d : 'out',
-        useVariables: true,
+        useVariables: (_e = Boolean(process.env.HANDOFF_USE_VARIABLES)) !== null && _e !== void 0 ? _e : false,
         app: {
             theme: 'default',
             title: 'Convertiv Design System',

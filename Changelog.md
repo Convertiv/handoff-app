@@ -19,6 +19,8 @@ to structure and reuse styles across multiple large components.
   component styles in the tokens export. This allows you to use foundation styles
   as variables in component styles in CSS, SASS, and Style Dictionaries.
   - To enable, set `useVariables` to `true` in the `handoff.config.json` file.
+  - You can also enable variable support via the `.env` var 
+  `HANDOFF_USE_VARIABLES`. You can use a boolean or string ("true"/"false")
   - When enabled, Handoff will create variable references in the component styles
     for the foundation styles wherever possible instead of using the string value.
   - For example a color foundation style `Blue` in the `Primary` color group
