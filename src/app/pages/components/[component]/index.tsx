@@ -188,6 +188,7 @@ const GenericComponentPage = ({
                       componentInstances={component?.instances}
                       overrides={previewComponent.overrides}
                       renderPreviews={hasPreviews}
+                      useReferences={config.useVariables ?? false}
                     >
                       <ComponentDisplay component={previewComponent.preview} />
                     </ComponentDesignTokens>

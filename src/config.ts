@@ -71,6 +71,7 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links = { icons: null, logos: null },
+    useVariables,
   } = { ...defaultConfig(), ...config };
 
   return {
@@ -78,5 +79,6 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links,
+    useVariables,
   };
 };

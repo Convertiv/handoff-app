@@ -2,7 +2,13 @@ import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
 import { ExportResult, ClientConfig, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
-import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewJson, PreviewObject } from '@handoff/types';
+import {
+  ComponentDocumentationOptions,
+  LegacyComponentDefinition,
+  LegacyComponentDefinitionOptions,
+  PreviewJson,
+  PreviewObject,
+} from '@handoff/types';
 import { prepareIntegrationObject } from '@handoff/utils/integration';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
@@ -11,6 +17,7 @@ import { groupBy, merge, startCase, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { Token } from '../../../transformers/types';
 
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
@@ -383,7 +390,7 @@ export const getLegacyDefinition = (name: string) => {
     return null;
   }
 
-  const definitionPaths = (findFilesByExtension(sourcePath, '.json') ?? []).filter(path => path.split('/').pop() === name);
+  const definitionPaths = (findFilesByExtension(sourcePath, '.json') ?? []).filter((path) => path.split('/').pop() === name);
 
   if (definitionPaths.length === 0) {
     return null;
@@ -573,3 +580,4 @@ export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'sty
   }
   return tokens;
 };
+

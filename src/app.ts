@@ -192,6 +192,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
+  const handoffUseReferences = handoff.config.useVariables ?? false;
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -200,6 +201,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, `HANDOFF_INTEGRATION_PATH: '${handoffIntegrationPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
+    .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 

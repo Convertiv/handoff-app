@@ -39,7 +39,7 @@ export const transformComponentTokensToCssVariables = (component: ComponentInsta
   return transform('css', component, options);
 };
 
-export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd', handoff: Handoff) => {
+export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'sd', handoff?: Handoff) => {
   if (!handoff || !handoff.config.useVariables) return token.value;
   let referenceObject = token.metadata.reference;
   let wrapped = '';

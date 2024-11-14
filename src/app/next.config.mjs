@@ -80,6 +80,7 @@ const nextConfig = {
         HANDOFF_INTEGRATION_PATH: '',
         HANDOFF_MODULE_PATH: '',
         HANDOFF_EXPORT_PATH: '',
+        HANDOFF_USE_REFERENCES: false,
       };
 
       // Check if client configuration exists
