@@ -147,7 +147,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
         {useReferences && (
           <div className="c-tokens-preview__actions u-flex u-justify-end">
             <input type="checkbox" id="showReference" checked={showReference} onChange={() => setShowReference(!showReference)} />
-            {showReference ? 'Show Value' : 'Show Reference'}
+            Show Reference
           </div>
         )}
       </div>
@@ -244,7 +244,7 @@ const PropertyStateValue: React.FC<{
         </div>
       )}
       <PropertyIcon name={property} />
-      <p>{showReference ? NormalizeValue(value) : tokenReference ? <>{tokenReferenceFormat(tokenReference, 'generic')} </> : NormalizeValue(value)}</p>
+      <p>{!showReference ? NormalizeValue(value) : tokenReference ? <>{tokenReferenceFormat(tokenReference, 'generic')} </> : NormalizeValue(value)}</p>
     </div>
   );
 };
