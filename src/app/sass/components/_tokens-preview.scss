@@ -24,14 +24,15 @@
 	.o-row {
 		justify-content: space-between;
 	}
+
 	&__actions {
 		display: flex;
 		font-size: rem( 11px );
+
 		input {
 			margin-right: rem( 10px );
 			accent-color: #f7f7f7;
 		}
-
 	}
 }
 
