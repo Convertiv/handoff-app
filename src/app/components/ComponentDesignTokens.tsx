@@ -5,6 +5,8 @@ import Icon from './Icon';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { ComponentInstance } from '@handoff/exporters/components/types';
 import { IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { tokenReferenceFormat } from './util/token';
+import { Token } from '@handoff/transformers/types';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -18,8 +20,8 @@ const PropertyIconPathMap = {
 } as { [k: string]: string };
 
 const IsColorValue = (value: string) => {
-  return value.match(/^#[0-9A-F]{6}$/i) || value.match(/linear-gradient\(.*?\)|rgba\(.*?\)/)
-}
+  return value.match(/^#[0-9A-F]{6}$/i) || value.match(/linear-gradient\(.*?\)|rgba\(.*?\)/);
+};
 
 const NormalizeValue = (value: string): string => {
   if (!Number.isNaN(Number(value))) {
@@ -32,23 +34,32 @@ const NormalizeValue = (value: string): string => {
   return value.replaceAll(/\d*\.\d+/g, (match) => round(Number(match), 2).toFixed(2));
 };
 
-
 export interface ComponentDesignTokensProps {
-  title: string,
-  previewObject: ComponentInstance,
-  previewObjectOptions?: IntegrationObjectComponentOptions,
-  componentInstances: ComponentInstance[],
-  overrides?: { [variantProp: string]: string[] },
-  children?: JSX.Element,
-  renderPreviews : boolean,
+  title: string;
+  previewObject: ComponentInstance;
+  previewObjectOptions?: IntegrationObjectComponentOptions;
+  componentInstances: ComponentInstance[];
+  overrides?: { [variantProp: string]: string[] };
+  children?: JSX.Element;
+  renderPreviews: boolean;
+  useReferences: boolean;
 }
 
-interface DataTableRow extends Map<string, [string, string][]> {}
+interface DataTableRow extends Map<string, [string, string, Token | undefined][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ title, componentInstances, previewObject, previewObjectOptions, overrides, children, renderPreviews }) => {
+export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
+  title,
+  componentInstances,
+  previewObject,
+  previewObjectOptions,
+  overrides,
+  children,
+  renderPreviews,
+  useReferences,
+}) => {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
-
+  const [showReference, setShowReference] = React.useState(useReferences);
   const headings: Set<string> = new Set<string>();
   const dataTable = new Map() as DataTable;
 
@@ -65,7 +76,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
 
       //   return state_sort.indexOf(lVal) - state_sort.indexOf(rVal);
       // })
-      .forEach(component => {
+      .forEach((component) => {
         const componentVariantPropsMap = new Map(component.variantProperties);
 
         for (const [variantProp, value] of component.variantProperties) {
@@ -81,14 +92,18 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
         }
 
         // Set values for the component
-        transformComponentTokensToScssVariables(component, previewObjectOptions).forEach(token => {
+        transformComponentTokensToScssVariables(component, previewObjectOptions).forEach((token) => {
           // Initialize part if not already initialized
           dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
           // Initialize property for part if not already initialized
-          dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
+          dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ??
+            dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
           // Append the value for the part property
-          dataTable.get(token.metadata.part).get(token.metadata.cssProperty).push([token.name, token.value]);
-        })
+          dataTable
+            .get(token.metadata.part)
+            .get(token.metadata.cssProperty)
+            .push([token.name, token.value, token ?? undefined]);
+        });
 
         // Increase columns count
         numberOfColumns++;
@@ -98,14 +113,18 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
       });
   } else {
     // Set values for the component
-    transformComponentTokensToScssVariables(previewObject, previewObjectOptions).forEach(token => {
+    transformComponentTokensToScssVariables(previewObject, previewObjectOptions).forEach((token) => {
       // Initialize part if not already initialized
       dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized
-      dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ?? dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
+      dataTable.get(token.metadata.part).get(token.metadata.cssProperty) ??
+        dataTable.get(token.metadata.part).set(token.metadata.cssProperty, []);
       // Append the value for the part property
-      dataTable.get(token.metadata.part).get(token.metadata.cssProperty).push([token.name, token.value]);
-    })
+      dataTable
+        .get(token.metadata.part)
+        .get(token.metadata.cssProperty)
+        .push([token.name, token.value, token ?? undefined]);
+    });
 
     // Increase columns count
     numberOfColumns++;
@@ -125,6 +144,12 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
     <div key={`${previewObject.id}`} className="o-col-12@md c-tokens-preview u-mb-5">
       <div key={`${previewObject.id}__title`} id={previewObject.id}>
         <h4>{title}</h4>
+        {useReferences && (
+          <div className="c-tokens-preview__actions u-flex u-justify-end">
+            <input type="checkbox" id="showReference" checked={showReference} onChange={() => setShowReference(!showReference)} />
+            Show Reference
+          </div>
+        )}
       </div>
       <hr />
       <div className="o-row">
@@ -150,19 +175,26 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
                   </p>
                 </>
               )}
-              {Array.from(propertiesMap).sort(([lProp], [rProp]) => lProp.localeCompare(rProp)).map(([prop, cells]) => (
-                <div key={`${previewObject.id}-${part}-${prop}-row`} className="c-tokens-preview__row">
-                  <p>{prop}</p>
-                  {cells.map((([tokenName, tokenValue], i) => (
-                    <PropertyStateValue
-                      key={`${previewObject.id}-${part}-${prop}-${i}`}
-                      property={prop}
-                      variable={tokenName}
-                      value={tokenValue}
-                    />
-                  )))}
-                </div>
-              ))}
+              {Array.from(propertiesMap)
+                .sort(([lProp], [rProp]) => lProp.localeCompare(rProp))
+                .map(([prop, cells]) => (
+                  <div key={`${previewObject.id}-${part}-${prop}-row`} className="c-tokens-preview__row">
+                    <p>{prop}</p>
+
+                    {cells.map(([tokenName, tokenValue, tokenReference], i) => (
+                      <>
+                        <PropertyStateValue
+                          key={`${previewObject.id}-${part}-${prop}-${i}`}
+                          property={prop}
+                          variable={tokenName}
+                          value={tokenValue}
+                          tokenReference={tokenReference}
+                          showReference={showReference}
+                        />
+                      </>
+                    ))}
+                  </div>
+                ))}
             </React.Fragment>
           ))}
         </div>
@@ -178,7 +210,13 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({ ti
   );
 };
 
-const PropertyStateValue: React.FC<{ property: string; variable: string; value: string }> = ({ property, variable, value }) => {
+const PropertyStateValue: React.FC<{
+  property: string;
+  variable: string;
+  value: string;
+  tokenReference: Token;
+  showReference: boolean;
+}> = ({ property, variable, value, tokenReference, showReference = false }) => {
   const [tooltip, setTooltip] = React.useState(variable);
 
   useEffect(() => {
@@ -206,7 +244,7 @@ const PropertyStateValue: React.FC<{ property: string; variable: string; value: 
         </div>
       )}
       <PropertyIcon name={property} />
-      <p>{NormalizeValue(value)}</p>
+      <p>{!showReference ? NormalizeValue(value) : tokenReference ? <>{tokenReferenceFormat(tokenReference, 'generic')} </> : NormalizeValue(value)}</p>
     </div>
   );
 };

@@ -197,11 +197,11 @@ var buildStyles = function (handoff, documentationObject) { return __awaiter(voi
             case 0:
                 typeFiles = (0, index_1.scssTypesTransformer)(documentationObject, handoff.integrationObject);
                 typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-                cssFiles = (0, index_2.default)(documentationObject, handoff.integrationObject);
+                cssFiles = (0, index_2.default)(documentationObject, handoff, handoff.integrationObject);
                 cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-                scssFiles = (0, index_1.default)(documentationObject, handoff.integrationObject);
+                scssFiles = (0, index_1.default)(documentationObject, handoff, handoff.integrationObject);
                 scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-                sdFiles = (0, sd_1.default)(documentationObject, handoff.integrationObject);
+                sdFiles = (0, sd_1.default)(documentationObject, handoff, handoff.integrationObject);
                 sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
                 mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
                 mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);

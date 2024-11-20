@@ -1,3 +1,5 @@
+import { ReferenceObject } from "handoff/types";
+
 export type FoundationType = 'colors' | 'typography' | 'effects';
 
 export type TokenType = 'css' | 'scss' | 'sd' | 'map' | 'default';
@@ -83,6 +85,7 @@ export interface Token {
   metadata: {
     part: string;
     cssProperty: string;
+    reference?: ReferenceObject;
     isSupportedCssProperty: boolean;
     nameSegments: string[];
   };

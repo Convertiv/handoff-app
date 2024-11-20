@@ -50,17 +50,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFigmaFileDesignTokens = void 0;
+exports.getFigmaFileDesignTokens = exports.toSDMachineName = exports.toMachineName = void 0;
 var chalk_1 = __importDefault(require("chalk"));
 var api_1 = require("../figma/api");
 var convertColor_1 = require("../utils/convertColor");
 var utils_1 = require("./utils");
+/**
+ * Create a machine name from a string
+ * @param name
+ * @returns string
+ */
 var toMachineName = function (name) {
     return name
         .toLowerCase()
         .replace(/[^a-z0-9\s\-]/gi, '')
         .replace(/\s\-\s|\s+/gi, '-');
 };
+exports.toMachineName = toMachineName;
+/**
+ * Create a machine name from a string
+ * @param name
+ * @returns string
+ */
+var toSDMachineName = function (name) {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s\-]/gi, '-')
+        .replace(/\s\-\s|\s+/gi, '-')
+        .replace(/-+/gi, '-')
+        .replace(/(^,)|(,$)/g, '');
+};
+exports.toSDMachineName = toSDMachineName;
+/**
+ * Extracts the group name and machine name from a string
+ * @param name
+ * @returns GroupNameData
+ */
 var fieldData = function (name) {
     var nameArray = name.split('/');
     var data = {
@@ -69,19 +94,30 @@ var fieldData = function (name) {
         group: '',
     };
     if (nameArray[1]) {
-        data.group = toMachineName(nameArray[0]);
+        data.group = (0, exports.toMachineName)(nameArray[0]);
         data.name = nameArray[1];
-        data.machine_name = toMachineName(data.name);
+        data.machine_name = (0, exports.toMachineName)(data.name);
     }
     else {
         data.name = nameArray[0];
-        data.machine_name = toMachineName(data.name);
+        data.machine_name = (0, exports.toMachineName)(data.name);
     }
     return data;
 };
+/**
+ * Checks if input is an array
+ * @param input
+ * @returns boolean
+ */
 var isArray = function (input) {
     return Array.isArray(input);
 };
+/**
+ * Fetches design tokens from a Figma file
+ * @param fileId
+ * @param accessToken
+ * @returns Promise <{ color: ColorObject[]; typography: TypographyObject[]; effect: EffectObject[]; }>
+ */
 var getFigmaFileDesignTokens = function (fileId, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
     var apiResponse, file, styles, nodeMeta, nodeIds, childrenApiResponse, tokens, colorsArray_1, effectsArray_1, typographyArray_1, data, err_1;
     return __generator(this, function (_a) {
@@ -125,6 +161,8 @@ var getFigmaFileDesignTokens = function (fileId, accessToken) { return __awaiter
                         var _b = fieldData(document.name), name_1 = _b.name, machine_name = _b.machine_name, group = _b.group;
                         if (isArray(document.effects) && document.effects.length > 0) {
                             effectsArray_1.push({
+                                id: document.id,
+                                reference: "effect-".concat(group, "-").concat(machine_name),
                                 name: name_1,
                                 machineName: machine_name,
                                 group: group,
@@ -132,20 +170,22 @@ var getFigmaFileDesignTokens = function (fileId, accessToken) { return __awaiter
                                     .filter(function (effect) { return (0, utils_1.isValidEffectType)(effect.type) && effect.visible; })
                                     .map(function (effect) { return ({
                                     type: effect.type,
-                                    value: (0, utils_1.isShadowEffectType)(effect.type)
-                                        ? (0, convertColor_1.transformFigmaEffectToCssBoxShadow)(effect)
-                                        : '',
-                                }); })
+                                    value: (0, utils_1.isShadowEffectType)(effect.type) ? (0, convertColor_1.transformFigmaEffectToCssBoxShadow)(effect) : '',
+                                }); }),
                             });
                         }
-                        else if (isArray(document.fills) && document.fills[0] && (document.fills[0].type === 'SOLID' || (0, utils_1.isValidGradientType)(document.fills[0].type))) {
+                        else if (isArray(document.fills) &&
+                            document.fills[0] &&
+                            (document.fills[0].type === 'SOLID' || (0, utils_1.isValidGradientType)(document.fills[0].type))) {
                             var color = (0, convertColor_1.transformFigmaFillsToCssColor)(document.fills);
                             colorsArray_1.push({
+                                id: document.id,
                                 name: name_1,
                                 group: group,
                                 value: color.color,
                                 blend: color.blend,
                                 sass: "$color-".concat(group, "-").concat(machine_name),
+                                reference: "color-".concat(group, "-").concat(machine_name),
                                 machineName: machine_name,
                             });
                         }
@@ -157,6 +197,8 @@ var getFigmaFileDesignTokens = function (fileId, accessToken) { return __awaiter
                             color = (0, convertColor_1.transformFigmaColorToHex)(document.fills[0].color);
                         }
                         typographyArray_1.push({
+                            id: document.id,
+                            reference: "typography-".concat(group, "-").concat(machine_name),
                             name: document.name,
                             machine_name: machine_name,
                             group: group,

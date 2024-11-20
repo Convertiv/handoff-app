@@ -67,7 +67,13 @@ const getComponentSetComponentDefinition = (componentSet: FigmaTypes.ComponentSe
     })),
   };
 };
-
+/**
+ * Given a component set, returns an array of objects containing the component 
+ * node and its metadata.
+ * @param componentSet 
+ * @param componentsMetadata 
+ * @returns {Array<{node: FigmaTypes.Component, metadata: FigmaTypes.ComponentMetadata}>}
+ */
 const getComponentNodesWithMetadata = (
   componentSet: FigmaTypes.ComponentSet,
   componentsMetadata: ReadonlyMap<string, FigmaTypes.ComponentMetadata>
@@ -78,6 +84,12 @@ const getComponentNodesWithMetadata = (
   }));
 };
 
+/**
+ * Given a component set, returns an array of objects containing the component
+ * @param handoff 
+ * @param legacyDefinitions 
+ * @returns 
+ */
 export const getFigmaFileComponents = async (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]): Promise<FileComponentsObject> => {
   const useLegacyFetchFlow = !!legacyDefinitions;
 
@@ -118,6 +130,12 @@ export const getFigmaFileComponents = async (handoff: Handoff, legacyDefinitions
   return processFigmaNodes(componentSetNodesResult.data, handoff);
 };
 
+/**
+ * Processes figma nodes by utilizing the new component definitions
+ * @param fileNodesResponse FigmaTypes.FileNodesResponse
+ * @param handoff Handoff instance
+ * @returns FileComponentsObject
+ */
 const processFigmaNodes = (fileNodesResponse: FigmaTypes.FileNodesResponse, handoff: Handoff) => {
   const componentTokens: FileComponentsObject = {};
 

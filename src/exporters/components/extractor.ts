@@ -8,18 +8,27 @@ import {
   isExportable,
   isValidNodeType,
 } from '../utils';
-import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition } from '../../types';
+import { Exportable, ComponentDefinition, ComponentPart, LegacyComponentDefinition, ReferenceObject } from '../../types';
 import { replaceTokens, slugify } from '../../utils/index';
 import Handoff from '../../index';
 
 type ExportPipeComponentInstance = Omit<ExportTypes.ComponentInstance, 'variantProperties'> & { variantProperties: Map<string, string> };
 type SharedPipeComponentInstance = ExportPipeComponentInstance & { componentId: string };
 
+/**
+ * Given a list of components, a component definition, and a handoff object,
+ * this function will extract the component instances
+ * @param components
+ * @param definition
+ * @param handoff
+ * @param legacyDefinition
+ * @returns ComponentInstance[]
+ */
 export default function extractComponentInstances(
   components: { node: FigmaTypes.Component; metadata: FigmaTypes.ComponentMetadata }[],
   definition: ComponentDefinition,
   handoff: Handoff,
-  legacyDefinition?: LegacyComponentDefinition,
+  legacyDefinition?: LegacyComponentDefinition
 ): ExportTypes.ComponentInstance[] {
   const options = definition.options;
   const sharedComponentVariantIds = options.exporter.sharedComponentVariants ?? [];
@@ -60,7 +69,7 @@ export default function extractComponentInstances(
     const parts = definition.parts.reduce((previous, current) => {
       return {
         ...previous,
-        ...{ [current.id || '$']: extractComponentPartTokenSets(rootNode, current, variantProperties) },
+        ...{ [current.id || '$']: extractComponentPartTokenSets(rootNode, current, variantProperties, handoff) },
       };
     }, {});
 
@@ -156,7 +165,20 @@ export default function extractComponentInstances(
   return _.uniqBy(instances, 'id');
 }
 
-function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ComponentPart, tokens: Map<string, string>): ExportTypes.TokenSets {
+/**
+ * Given a component instance, a component definition, and a handoff object,
+ * this function will extract the component instance's token sets
+ * @param root
+ * @param part
+ * @param tokens
+ * @returns ExportTypes.TokenSets
+ */
+function extractComponentPartTokenSets(
+  root: FigmaTypes.Node,
+  part: ComponentPart,
+  tokens: Map<string, string>,
+  handoff: Handoff
+): ExportTypes.TokenSets {
   if (!part.tokens || part.tokens.length === 0) {
     return [];
   }
@@ -180,9 +202,11 @@ function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ComponentPar
       }
 
       const tokenSet = extractNodeExportable(node, exportable);
-
       if (!tokenSet) {
         continue;
+      }
+      if (node.styles) {
+        tokenSet.reference = getReferenceFromMap(node, tokenSet, handoff);
       }
 
       const conflictingTokenSetIdx = tokenSets.map((set) => set.name).indexOf(exportable);
@@ -198,6 +222,61 @@ function extractComponentPartTokenSets(root: FigmaTypes.Node, part: ComponentPar
   return tokenSets;
 }
 
+/**
+ * Get the reference from a node
+ * @param node
+ * @param handoff
+ * @returns
+ */
+function getReferenceFromMap(node: FigmaTypes.Node, tokenSet: any, handoff: Handoff): ReferenceObject | undefined {
+  const styles = node.styles;
+  if (!styles) {
+    return undefined;
+  }
+  switch (tokenSet.name) {
+    case 'BACKGROUND':
+      if (styles.fills) {
+        return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+      } else if (styles.fill) {
+        return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+      }
+      break;
+    case 'FILL':
+      if (styles.fills) {
+        return handoff.designMap.colors[styles.fills] ? handoff.designMap.colors[styles.fills] : undefined;
+      } else if (styles.fill) {
+        return handoff.designMap.colors[styles.fill] ? handoff.designMap.colors[styles.fill] : undefined;
+      }
+      break;
+    case 'BORDER':
+      if (styles.strokes) {
+        return handoff.designMap.colors[styles.strokes] ? handoff.designMap.colors[styles.strokes] : undefined;
+      } else if (styles.stroke) {
+        return handoff.designMap.colors[styles.stroke] ? handoff.designMap.colors[styles.stroke] : undefined;
+      }
+      break;
+    case 'TYPOGRAPHY':
+      if (styles.text) {
+        return handoff.designMap.typography[styles.text] ? handoff.designMap.typography[styles.text] : undefined;
+      }
+      break;
+
+    case 'EFFECT':
+      if (styles.effect) {
+        return handoff.designMap.effects[styles.effect] ? handoff.designMap.effects[styles.effect] : undefined;
+      }
+      break;
+  }
+  return undefined;
+}
+
+/**
+ * Find the node from a path provided by the schema
+ * @param root
+ * @param path
+ * @param tokens
+ * @returns FigmaTypes.Node
+ */
 function resolveNodeFromPath(root: FigmaTypes.Node, path: string, tokens: Map<string, string>) {
   const pathArr = path
     .split('>')
@@ -228,6 +307,11 @@ function resolveNodeFromPath(root: FigmaTypes.Node, path: string, tokens: Map<st
   return currentNode;
 }
 
+/**
+ * Given a schema path, this function will parse the node type and name
+ * @param path
+ * @returns
+ */
 function parsePathNodeParams(path: string): { type?: FigmaTypes.Node['type']; name?: string } {
   const type = path.split('[')[0];
   const selectors = new Map<string, string>();
@@ -334,6 +418,11 @@ function extractNodeOpacity(node: FigmaTypes.Node): ExportTypes.OpacityTokenSet 
   };
 }
 
+/**
+ * Get the size bounding box size from a node
+ * @param node
+ * @returns ExportTypes.SizeTokenSet | null
+ */
 function extractNodeSize(node: FigmaTypes.Node): ExportTypes.SizeTokenSet | null {
   return {
     name: 'SIZE',
@@ -342,6 +431,13 @@ function extractNodeSize(node: FigmaTypes.Node): ExportTypes.SizeTokenSet | null
   };
 }
 
+/**
+ * Extract the exportable from a node.  Given a node and an exportable
+ * identifier, this function will return the token set
+ * @param node
+ * @param exportable
+ * @returns
+ */
 function extractNodeExportable(node: FigmaTypes.Node, exportable: Exportable): ExportTypes.TokenSet | null {
   switch (exportable) {
     case 'BACKGROUND':

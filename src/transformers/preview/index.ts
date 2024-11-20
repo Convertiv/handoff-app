@@ -105,10 +105,11 @@ export async function snippetTransformer(handoff: Handoff) {
   }
   if (fs.existsSync(custom)) {
     console.log(chalk.green(`Rendering Snippet Previews in ${custom}`));
+    const sharedStyles = await processSharedStyles(handoff);
     const files = fs.readdirSync(custom);
     for (const file of files) {
       if (file.endsWith('.html')) {
-        await processSnippet(handoff, file);
+        await processSnippet(handoff, file, sharedStyles);
       }
     }
   }
@@ -121,11 +122,8 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
   ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
     console.log(`Checking for ${source}.${ext}`);
     let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
-    if(fs.existsSync(test)) {
-      await fs.rename(
-        test,
-        destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`
-      );
+    if (fs.existsSync(test)) {
+      await fs.rename(test, destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`);
     }
   });
 
@@ -133,7 +131,44 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
   // const pagesPath = path.resolve(this.workingPath, 'integration/pages');
 }
 
-export async function processSnippet(handoff: Handoff, file: string) {
+export async function processSharedStyles(handoff: Handoff): Promise<string | null> {
+  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
+  const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+
+  // Is there a scss file with the same name?
+  const scssPath = path.resolve(custom, 'shared.scss');
+  const cssPath = path.resolve(custom, 'shared.css');
+
+  if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
+    console.log(chalk.green(`Compiling shared styles`));
+    try {
+      const result = await sass.compileAsync(scssPath, {
+        loadPaths: [
+          path.resolve(handoff.workingPath, 'integration/sass'),
+          path.resolve(handoff.workingPath, 'node_modules'),
+          path.resolve(handoff.workingPath),
+          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+        ],
+      });
+
+      if (result.css) {
+        // write the css to the public folder
+        const css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
+        const cssPath = path.resolve(publicPath, 'shared.css');
+        await fs.writeFile(cssPath, result.css);
+        return css;
+      }
+    } catch (e) {
+      console.log(chalk.red(`Error compiling shared styles`));
+      console.log(e);
+    }
+  } else if (fs.existsSync(cssPath)) {
+    const css = await fs.readFile(cssPath, 'utf8');
+    return css;
+  }
+}
+
+export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null) {
   let data: TransformComponentTokensResult = {
     id: file,
     preview: '',
@@ -141,6 +176,7 @@ export async function processSnippet(handoff: Handoff, file: string) {
     js: null,
     css: null,
     sass: null,
+    sharedStyles: sharedStyles,
   };
   console.log(chalk.green(`Processing snippet ${file}`));
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
@@ -207,6 +243,7 @@ export async function processSnippet(handoff: Handoff, file: string) {
     script: data['jsCompiled']
       ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>`
       : '',
+    sharedStyles: sharedStyles ? `<style rel="stylesheet" type="text/css">${sharedStyles}</style>` : 'shared',
   });
 
   try {
@@ -214,6 +251,7 @@ export async function processSnippet(handoff: Handoff, file: string) {
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
     data['preview'] = preview;
     data['code'] = code;
+    data['sharedStyles'] = sharedStyles;
   } catch (e) {
     console.log(e);
   }

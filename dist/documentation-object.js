@@ -46,11 +46,50 @@ var design_1 = require("./exporters/design");
 var startCase_1 = __importDefault(require("lodash/startCase"));
 var chalk_1 = __importDefault(require("chalk"));
 var createDocumentationObject = function (handoff, legacyDefinitions) { return __awaiter(void 0, void 0, void 0, function () {
-    var components, design, icons, logos;
+    var design, icons, logos, components;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(handoff, legacyDefinitions)];
+            case 0: return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(handoff.config.figma_project_id, handoff.config.dev_access_token)];
             case 1:
+                design = _a.sent();
+                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons')];
+            case 2:
+                icons = _a.sent();
+                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo')];
+            case 3:
+                logos = _a.sent();
+                /// create a design map of node ids and references
+                handoff.designMap = {
+                    colors: design.color.reduce(function (acc, color) {
+                        acc[color.id] = {
+                            reference: color.reference,
+                            type: 'color',
+                            group: color.group,
+                            name: color.name,
+                        };
+                        return acc;
+                    }, {}),
+                    effects: design.effect.reduce(function (acc, effect) {
+                        acc[effect.id] = {
+                            reference: effect.reference,
+                            group: effect.group,
+                            name: effect.name,
+                            type: 'effect',
+                        };
+                        return acc;
+                    }, {}),
+                    typography: design.typography.reduce(function (acc, typo) {
+                        acc[typo.id] = {
+                            reference: typo.reference,
+                            type: 'typography',
+                            group: typo.group,
+                            name: typo.name,
+                        };
+                        return acc;
+                    }, {}),
+                };
+                return [4 /*yield*/, (0, index_1.getFigmaFileComponents)(handoff, legacyDefinitions)];
+            case 4:
                 components = _a.sent();
                 // Log out components
                 Object.keys(components).map(function (component) {
@@ -61,15 +100,6 @@ var createDocumentationObject = function (handoff, legacyDefinitions) { return _
                         console.log(chalk_1.default.green("".concat((0, startCase_1.default)(component), " exported:")), components[component].instances.length);
                     }
                 });
-                return [4 /*yield*/, (0, design_1.getFigmaFileDesignTokens)(handoff.config.figma_project_id, handoff.config.dev_access_token)];
-            case 2:
-                design = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons')];
-            case 3:
-                icons = _a.sent();
-                return [4 /*yield*/, (0, assets_1.default)(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo')];
-            case 4:
-                logos = _a.sent();
                 return [2 /*return*/, {
                         timestamp: new Date().toISOString(),
                         design: design,

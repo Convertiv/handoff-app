@@ -16,6 +16,11 @@ declare class Handoff {
     sitesDirectory: string;
     integrationObject?: IntegrationObject | null;
     integrationHooks: HandoffIntegration;
+    designMap: {
+        colors: {};
+        effects: {};
+        typography: {};
+    };
     hooks: {
         init: (config: Config) => Config;
         fetch: () => void;

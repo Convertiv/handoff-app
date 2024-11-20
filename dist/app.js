@@ -175,10 +175,10 @@ var performCleanup = function (handoff) { return __awaiter(void 0, void 0, void 
     });
 }); };
 var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffIntegrationPath, handoffModulePath, handoffExportPath, nextConfigPath, nextConfigContent;
-    var _a, _b, _c;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
+    var srcPath, appPath, handoffProjectId, handoffAppBasePath, handoffWorkingPath, handoffIntegrationPath, handoffModulePath, handoffExportPath, nextConfigPath, handoffUseReferences, nextConfigContent;
+    var _a, _b, _c, _d;
+    return __generator(this, function (_e) {
+        switch (_e.label) {
             case 0:
                 srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
                 appPath = getAppPath(handoff);
@@ -186,16 +186,16 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, fs_extra_1.default.promises.mkdir(appPath, { recursive: true })];
             case 1:
                 // Prepare project app dir
-                _d.sent();
+                _e.sent();
                 return [4 /*yield*/, fs_extra_1.default.copy(srcPath, appPath, { overwrite: true })];
             case 2:
-                _d.sent();
+                _e.sent();
                 return [4 /*yield*/, mergePublicDir(handoff)];
             case 3:
-                _d.sent();
+                _e.sent();
                 return [4 /*yield*/, mergeMDX(handoff)];
             case 4:
-                _d.sent();
+                _e.sent();
                 handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
                 handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
                 handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
@@ -203,9 +203,11 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffModulePath = path_1.default.resolve(handoff.modulePath);
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
+                handoffUseReferences = (_d = handoff.config.useVariables) !== null && _d !== void 0 ? _d : false;
+                console.log(handoffUseReferences);
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 5:
-                nextConfigContent = (_d.sent())
+                nextConfigContent = (_e.sent())
                     .replace(/basePath:\s+\'\'/g, "basePath: '".concat(handoffAppBasePath, "'"))
                     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, "HANDOFF_PROJECT_ID: '".concat(handoffProjectId, "'"))
                     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, "HANDOFF_APP_BASE_PATH: '".concat(handoffAppBasePath, "'"))
@@ -213,10 +215,11 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                     .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, "HANDOFF_INTEGRATION_PATH: '".concat(handoffIntegrationPath, "'"))
                     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, "HANDOFF_MODULE_PATH: '".concat(handoffModulePath, "'"))
                     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, "HANDOFF_EXPORT_PATH: '".concat(handoffExportPath, "'"))
+                    .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, "HANDOFF_USE_REFERENCES: '".concat(handoffUseReferences, "'"))
                     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
                 return [4 /*yield*/, fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent)];
             case 6:
-                _d.sent();
+                _e.sent();
                 return [2 /*return*/, appPath];
         }
     });
@@ -435,7 +438,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
                     chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
-                        var _a;
+                        var _a, sharedStyles;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
                                 case 0:
@@ -445,25 +448,28 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 7];
+                                    return [3 /*break*/, 8];
                                 case 1:
-                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 6];
+                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 7];
                                     console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
-                                    if (!file.includes('snippet')) return [3 /*break*/, 3];
-                                    return [4 /*yield*/, (0, preview_2.processSnippet)(handoff, path_1.default.basename(file))];
+                                    if (!file.includes('snippet')) return [3 /*break*/, 4];
+                                    return [4 /*yield*/, (0, preview_2.processSharedStyles)(handoff)];
                                 case 2:
+                                    sharedStyles = _b.sent();
+                                    return [4 /*yield*/, (0, preview_2.processSnippet)(handoff, path_1.default.basename(file), sharedStyles)];
+                                case 3:
                                     _b.sent();
-                                    return [3 /*break*/, 5];
-                                case 3: return [4 /*yield*/, handoff.integration()];
-                                case 4:
-                                    _b.sent();
-                                    _b.label = 5;
+                                    return [3 /*break*/, 6];
+                                case 4: return [4 /*yield*/, handoff.integration()];
                                 case 5:
-                                    debounce = false;
+                                    _b.sent();
                                     _b.label = 6;
-                                case 6: return [3 /*break*/, 7];
-                                case 7: return [2 /*return*/];
+                                case 6:
+                                    debounce = false;
+                                    _b.label = 7;
+                                case 7: return [3 /*break*/, 8];
+                                case 8: return [2 /*return*/];
                             }
                         });
                     }); });

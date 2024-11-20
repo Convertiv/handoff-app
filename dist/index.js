@@ -169,25 +169,28 @@ var Handoff = /** @class */ (function () {
     Handoff.prototype.snippet = function (name) {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var snippetPath;
+            var snippetPath, sharedStyles;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         this.preRunner();
-                        if (!this.config) return [3 /*break*/, 4];
-                        if (!name) return [3 /*break*/, 2];
+                        if (!this.config) return [3 /*break*/, 5];
+                        if (!name) return [3 /*break*/, 3];
                         // Get snippet path
                         name = name.includes('.html') ? name : "".concat(name, ".html");
                         snippetPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', name);
-                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath)];
+                        return [4 /*yield*/, (0, preview_1.processSharedStyles)(this)];
                     case 1:
+                        sharedStyles = _b.sent();
+                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath, sharedStyles)];
+                    case 2:
                         _b.sent();
-                        return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
-                    case 3:
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
+                    case 4:
                         _b.sent();
-                        _b.label = 4;
-                    case 4: return [2 /*return*/, this];
+                        _b.label = 5;
+                    case 5: return [2 /*return*/, this];
                 }
             });
         });

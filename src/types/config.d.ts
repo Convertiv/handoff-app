@@ -60,6 +60,7 @@ export interface Config {
   integrationPath?: string;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
+  useVariables?: boolean;
   app?: NextAppConfig;
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
@@ -78,7 +79,7 @@ export interface Config {
 
 export type ClientConfig = Pick<
   Config,
-  'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links'
+  'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'
 >;
 
 export interface IntegrationObjectComponentOptions {

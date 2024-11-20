@@ -16,7 +16,9 @@ var transform = function (tokenType, component, options) {
         if (!tokenSets || tokenSets.length === 0) {
             return "continue";
         }
-        tokenSets.forEach(function (tokenSet) { return tokens.push.apply(tokens, transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options)); });
+        tokenSets.forEach(function (tokenSet) {
+            return tokens.push.apply(tokens, transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options, tokenSet.reference));
+        });
     };
     for (var part in component.parts) {
         _loop_1(part);
@@ -24,7 +26,7 @@ var transform = function (tokenType, component, options) {
     return tokens;
 };
 exports.transform = transform;
-var transformTokens = function (tokens, tokenType, component, part, options) {
+var transformTokens = function (tokens, tokenType, component, part, options, reference) {
     return tokens
         ? Object.entries(tokens).map(function (_a) {
             var cssProperty = _a[0], value = _a[1];
@@ -34,6 +36,7 @@ var transformTokens = function (tokens, tokenType, component, part, options) {
                 metadata: {
                     part: part,
                     cssProperty: cssProperty,
+                    reference: reference,
                     isSupportedCssProperty: value instanceof Array ? value[1] : true,
                     nameSegments: (0, utils_1.getTokenNameSegments)(component.name, component.variantProperties, part, cssProperty, options),
                 },

@@ -6,6 +6,8 @@ import { transformComponentTokensToScssVariables, transformComponentsToScssTypes
 import { formatComponentCodeBlockComment } from '../utils';
 import { TransformerOutput } from '../types';
 import { IntegrationObject } from '../../types/config';
+import { tokenReferenceFormat } from '../css/component';
+import Handoff from 'handoff/index';
 
 /**
  * Build a set of Component types to use as a set of SCSS vars
@@ -37,7 +39,11 @@ export function scssTypesTransformer(documentationObject: DocumentationObject, i
  * @param documentationObject
  * @returns
  */
-export default function scssTransformer(documentationObject: DocumentationObject, integrationObject?: IntegrationObject): TransformerOutput {
+export default function scssTransformer(
+  documentationObject: DocumentationObject,
+  handoff: Handoff,
+  integrationObject?: IntegrationObject
+): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {
@@ -46,7 +52,7 @@ export default function scssTransformer(documentationObject: DocumentationObject
         return [
           formatComponentCodeBlockComment(instance, '//'),
           transformComponentTokensToScssVariables(instance, integrationObject?.options[componentId] ?? integrationObject?.options['*'])
-            .map((token) => `${token.name}: ${token.value};`)
+            .map((token) => `\t${token.name}: ${tokenReferenceFormat(token, 'scss', handoff)};`)
             .join('\n'),
         ].join('\n');
       })

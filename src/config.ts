@@ -15,6 +15,7 @@ export const defaultConfig = (): Config => ({
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
+  useVariables: Boolean(process.env.HANDOFF_USE_VARIABLES) ?? false,
   app: {
     theme: 'default',
     title: 'Convertiv Design System',
@@ -70,6 +71,7 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links = { icons: null, logos: null },
+    useVariables,
   } = { ...defaultConfig(), ...config };
 
   return {
@@ -77,5 +79,6 @@ export const getClientConfig = (configOverride?: any): ClientConfig => {
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links,
+    useVariables,
   };
 };
