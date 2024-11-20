@@ -204,7 +204,6 @@ var prepareProjectApp = function (handoff) { return __awaiter(void 0, void 0, vo
                 handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
                 nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
                 handoffUseReferences = (_d = handoff.config.useVariables) !== null && _d !== void 0 ? _d : false;
-                console.log(handoffUseReferences);
                 return [4 /*yield*/, fs_extra_1.default.readFile(nextConfigPath, 'utf-8')];
             case 5:
                 nextConfigContent = (_e.sent())

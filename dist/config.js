@@ -96,12 +96,13 @@ var getClientConfig = function (configOverride) {
     if (configOverride) {
         config = __assign(__assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, _b = _a.assets_zip_links, assets_zip_links = _b === void 0 ? { icons: null, logos: null } : _b;
+    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, _b = _a.assets_zip_links, assets_zip_links = _b === void 0 ? { icons: null, logos: null } : _b, useVariables = _a.useVariables;
     return {
         app: app,
         exportsOutputDirectory: exportsOutputDirectory,
         sitesOutputDirectory: sitesOutputDirectory,
         assets_zip_links: assets_zip_links,
+        useVariables: useVariables,
     };
 };
 exports.getClientConfig = getClientConfig;

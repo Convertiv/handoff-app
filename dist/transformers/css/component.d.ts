@@ -14,4 +14,4 @@ export declare const transformComponentsToCssVariables: (componentId: string, co
  * @returns
  */
 export declare const transformComponentTokensToCssVariables: (component: ComponentInstance, options?: IntegrationObjectComponentOptions) => Token[];
-export declare const tokenReferenceFormat: (token: Token, type: 'css' | 'scss' | 'sd', handoff: Handoff) => string;
+export declare const tokenReferenceFormat: (token: Token, type: 'css' | 'scss' | 'sd', handoff?: Handoff) => string;

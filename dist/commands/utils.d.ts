@@ -1,5 +1,5 @@
 import { Argv } from 'yargs';
-export declare const getSharedOptions: (yargs: Argv) => Argv<import("yargs").Omit<{}, "config" | "integration" | "force" | "debug"> & import("yargs").InferredOptionTypes<{
+export declare const getSharedOptions: (yargs: Argv) => Argv<import("yargs").Omit<{}, "integration" | "config" | "force" | "debug"> & import("yargs").InferredOptionTypes<{
     config: {
         alias: string;
         type: "string";
