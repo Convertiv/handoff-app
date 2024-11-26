@@ -33,9 +33,9 @@ export const CodeHighlight: React.FC<{
   const [collapsed, setCollapsed] = useState<boolean>(true);
 
   if (!data) {
-    data = { id: '', preview: '', code: '' };
+    data = { id: '', title: '', description: '', previews: {}, preview: '', code: '' };
   } else if (typeof data === 'string') {
-    data = { id: '', preview: '', code: data };
+    data = data = { id: '', title: '', description: '', previews: {}, preview: '', code: data };
   }
   if (!type) type = 'html';
 
