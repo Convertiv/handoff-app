@@ -10,7 +10,7 @@ import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
-import { processSharedStyles, processSnippet } from './transformers/preview';
+import { processSharedStyles, processSnippet } from './transformers/preview/snippets';
 import { buildIntegrationOnly } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {

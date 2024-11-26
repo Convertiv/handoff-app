@@ -17,7 +17,6 @@ import { groupBy, merge, startCase, uniq } from 'lodash';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
-import { Token } from '../../../transformers/types';
 
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {

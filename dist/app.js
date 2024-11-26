@@ -51,7 +51,7 @@ var chokidar_1 = __importDefault(require("chokidar"));
 var chalk_1 = __importDefault(require("chalk"));
 var gray_matter_1 = __importDefault(require("gray-matter"));
 var preview_1 = require("./utils/preview");
-var preview_2 = require("./transformers/preview");
+var snippets_1 = require("./transformers/preview/snippets");
 var pipeline_1 = require("./pipeline");
 var getWorkingPublicPath = function (handoff) {
     var paths = [
@@ -453,10 +453,10 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                     console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
                                     if (!file.includes('snippet')) return [3 /*break*/, 4];
-                                    return [4 /*yield*/, (0, preview_2.processSharedStyles)(handoff)];
+                                    return [4 /*yield*/, (0, snippets_1.processSharedStyles)(handoff)];
                                 case 2:
                                     sharedStyles = _b.sent();
-                                    return [4 /*yield*/, (0, preview_2.processSnippet)(handoff, path_1.default.basename(file), sharedStyles)];
+                                    return [4 /*yield*/, (0, snippets_1.processSnippet)(handoff, path_1.default.basename(file), sharedStyles)];
                                 case 3:
                                     _b.sent();
                                     return [3 /*break*/, 6];

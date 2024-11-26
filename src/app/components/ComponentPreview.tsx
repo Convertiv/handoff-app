@@ -51,9 +51,11 @@ export const ComponentDisplay: React.FC<{
 }> = ({ component, breakpoints, defaultHeight }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
+  const [previewUrl, setPreviewUrl] = React.useState('');
   const [width, setWidth] = React.useState('100%');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
   const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
+
   const onLoad = useCallback(() => {
     if (defaultHeight) {
       setHeight(defaultHeight);
@@ -80,6 +82,15 @@ export const ComponentDisplay: React.FC<{
       window.removeEventListener('resize', onLoad);
     };
   }, [onLoad]);
+
+  React.useEffect(() => {
+    if (component) {
+      if (component.previews) {
+        const keys = Object.keys(component.previews);
+        setPreviewUrl(component.previews[keys[0]].url);
+      }
+    }
+  });
   return (
     <>
       <div className="breakpoint-width">
@@ -114,17 +125,40 @@ export const ComponentDisplay: React.FC<{
           </div>
         </div>
       </div>
-      <iframe
-        onLoad={onLoad}
-        ref={ref}
-        height={height}
-        style={{
-          width: '1px',
-          minWidth: width,
-          height: height,
-        }}
-        srcDoc={component?.preview}
-      />
+      {component?.previews ? (
+        <>
+          <ul>
+            {Object.keys(component.previews).map((key) => (
+              <li>
+                <button onClick={() => setPreviewUrl(component.previews[key].url)}>{component.previews[key].title}</button>
+              </li>
+            ))}
+          </ul>
+          <iframe
+            onLoad={onLoad}
+            ref={ref}
+            height={height}
+            style={{
+              width: '1px',
+              minWidth: width,
+              height: height,
+            }}
+            src={previewUrl}
+          />
+        </>
+      ) : (
+        <iframe
+          onLoad={onLoad}
+          ref={ref}
+          height={height}
+          style={{
+            width: '1px',
+            minWidth: width,
+            height: height,
+          }}
+          srcDoc={component?.preview}
+        />
+      )}
     </>
   );
 };
@@ -135,9 +169,8 @@ export const SnippetPreview: React.FC<{
   code: string;
   title: string;
   children: React.ReactNode;
-  breakpoints?: Breakpoints;
   height?: string;
-}> = ({ defaultPreview, title, children, breakpoints, id, height }) => {
+}> = ({ defaultPreview, title, children, id, height }) => {
   const context = useMdxContext();
   const config = context.config;
   const [loaded, setLoaded] = React.useState(false);
@@ -164,7 +197,7 @@ export const SnippetPreview: React.FC<{
   }
   return (
     <div id={preview.id}>
-      {title && <h2>{title}</h2>}
+      {title ? <h2>{title}</h2> : preview.title ? <h2>{preview.title}</h2> : null}
       {children}
       <div className="c-component-preview">
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />

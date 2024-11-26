@@ -15,7 +15,7 @@ import { HandoffIntegration, instantiateIntegration } from './transformers/integ
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
 import { prepareIntegrationObject } from './utils/integration';
-import { processSharedStyles, processSnippet, renameSnippet } from './transformers/preview';
+import { processSharedStyles, processSnippet, renameSnippet } from './transformers/preview/snippets';
 
 class Handoff {
   config: Config | null;

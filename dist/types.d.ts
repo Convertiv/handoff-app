@@ -105,7 +105,18 @@ export interface HookReturn {
 }
 export interface PreviewObject {
     id: string;
+    title: string;
+    description: string;
     preview: string;
+    previews: {
+        [key: string]: {
+            title: string;
+            values: {
+                [key: string]: string;
+            };
+            url: string;
+        };
+    };
     code: string;
 }
 export declare type PreviewJson = {

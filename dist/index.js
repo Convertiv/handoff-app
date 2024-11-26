@@ -85,7 +85,7 @@ var make_1 = require("./cli/make");
 var integration_1 = require("./transformers/integration");
 var chalk_1 = __importDefault(require("chalk"));
 var integration_2 = require("./utils/integration");
-var preview_1 = require("./transformers/preview");
+var snippets_1 = require("./transformers/preview/snippets");
 var Handoff = /** @class */ (function () {
     function Handoff(debug, force, config) {
         this.debug = false;
@@ -179,10 +179,10 @@ var Handoff = /** @class */ (function () {
                         // Get snippet path
                         name = name.includes('.html') ? name : "".concat(name, ".html");
                         snippetPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', name);
-                        return [4 /*yield*/, (0, preview_1.processSharedStyles)(this)];
+                        return [4 /*yield*/, (0, snippets_1.processSharedStyles)(this)];
                     case 1:
                         sharedStyles = _b.sent();
-                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath, sharedStyles)];
+                        return [4 /*yield*/, (0, snippets_1.processSnippet)(this, snippetPath, sharedStyles)];
                     case 2:
                         _b.sent();
                         return [3 /*break*/, 5];
@@ -200,7 +200,7 @@ var Handoff = /** @class */ (function () {
             return __generator(this, function (_a) {
                 this.preRunner();
                 if (this.config) {
-                    (0, preview_1.renameSnippet)(this, oldName, target);
+                    (0, snippets_1.renameSnippet)(this, oldName, target);
                 }
                 return [2 /*return*/, this];
             });

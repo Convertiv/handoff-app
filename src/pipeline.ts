@@ -17,7 +17,7 @@ import scssTransformer, { scssTypesTransformer } from './transformers/scss/index
 import cssTransformer from './transformers/css/index';
 import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
 import fontTransformer from './transformers/font/index';
-import previewTransformer, { snippetTransformer } from './transformers/preview/index';
+import previewTransformer from './transformers/preview/index';
 import buildApp from './app';
 import Handoff, { initIntegrationObject } from '.';
 import sdTransformer from './transformers/sd';
@@ -27,6 +27,7 @@ import { filterOutNull, filterOutUndefined } from './utils';
 import { ComponentIntegrationRecipe, ComponentIntegrationRecipePart, ComponentIntegrations } from './types/recipes';
 import { findFilesByExtension } from './utils/fs';
 import { getTokenSetNameByProperty } from './transformers/tokens';
+import { snippetTransformer } from './transformers/preview/snippets';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);

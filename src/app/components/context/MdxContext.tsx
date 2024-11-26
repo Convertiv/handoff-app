@@ -31,6 +31,7 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
 }) => {
   const [preview, setPreview] = useState<PreviewJson>(defaultPreview);
   const [config, setConfig] = useState<ClientConfig>(defaultConfig);
+
   const getPreview = async (name: string) => {
     if (!preview) return null;
     const components = preview.components;
@@ -38,10 +39,11 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
       return components[name] ? components[name][0] : null;
     } else {
       // Try to load the component from the public json
-      let data = fetch(`/snippets/${name}.json`).then((res) => res.json());
+      let data = fetch(`/api/preview/${name}.json`).then((res) => res.json());
       return data as Promise<PreviewObject>;
     }
   };
+  
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);
   return (

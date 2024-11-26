@@ -86,7 +86,7 @@ var index_1 = __importStar(require("./transformers/scss/index"));
 var index_2 = __importDefault(require("./transformers/css/index"));
 var index_3 = __importStar(require("./transformers/integration/index"));
 var index_4 = __importDefault(require("./transformers/font/index"));
-var index_5 = __importStar(require("./transformers/preview/index"));
+var index_5 = __importDefault(require("./transformers/preview/index"));
 var app_1 = __importDefault(require("./app"));
 var _1 = require(".");
 var sd_1 = __importDefault(require("./transformers/sd"));
@@ -95,6 +95,7 @@ var lodash_1 = require("lodash");
 var utils_1 = require("./utils");
 var fs_1 = require("./utils/fs");
 var tokens_1 = require("./transformers/tokens");
+var snippets_1 = require("./transformers/preview/snippets");
 var config;
 var outputPath = function (handoff) { return path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id); };
 var tokensFilePath = function (handoff) { return path_1.default.join(outputPath(handoff), 'tokens.json'); };
@@ -177,7 +178,7 @@ var buildSnippets = function (handoff) { return __awaiter(void 0, void 0, void 0
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, Promise.all([
-                    (0, index_5.snippetTransformer)(handoff),
+                    (0, snippets_1.snippetTransformer)(handoff),
                 ])];
             case 1:
                 _a.sent();
