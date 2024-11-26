@@ -22,6 +22,7 @@ var formatComponentCodeBlockComment = function (component, format) {
     var parts = [(0, lodash_1.capitalize)(component.name)];
     component.variantProperties.forEach(function (_a) {
         var variantProp = _a[0], val = _a[1];
+        // @ts-ignore
         parts.push("".concat(variantProp.toLowerCase(), ": ").concat(val));
     });
     var str = parts.join(', ');

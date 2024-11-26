@@ -90,7 +90,7 @@ export const ComponentDisplay: React.FC<{
         setPreviewUrl(component.previews[keys[0]].url);
       }
     }
-  });
+  }, [component]);
   return (
     <>
       <div className="breakpoint-width">
@@ -129,7 +129,7 @@ export const ComponentDisplay: React.FC<{
         <>
           <ul>
             {Object.keys(component.previews).map((key) => (
-              <li>
+              <li key={key}>
                 <button onClick={() => setPreviewUrl(component.previews[key].url)}>{component.previews[key].title}</button>
               </li>
             ))}

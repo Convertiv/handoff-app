@@ -26,6 +26,7 @@ export const formatComponentCodeBlockComment = (component: ComponentInstance, fo
   const parts = [capitalize(component.name)];
 
   component.variantProperties.forEach(([variantProp, val]) => {
+    // @ts-ignore
     parts.push(`${variantProp.toLowerCase()}: ${val}`);
   });
 
