@@ -17,7 +17,7 @@ export declare type TransformComponentTokensResult = {
 export declare type OptionalPreviewRender = {
     title: string;
     values: {
-        [key: string]: string;
+        [key: string]: string | string[];
     };
     url: string;
 };

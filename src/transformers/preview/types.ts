@@ -16,7 +16,7 @@ export type TransformComponentTokensResult = {
 
 export type OptionalPreviewRender = {
   title: string;
-  values: { [key: string]: string };
+  values: { [key: string]: string | string[] };
   url: string;
 };
 export interface TransformedPreviewComponents {

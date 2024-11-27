@@ -6,6 +6,7 @@ import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { useMdxContext } from './context/MdxContext';
+import { SlotMetadata } from '../../transformers/preview/snippets';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -87,6 +88,7 @@ export const ComponentDisplay: React.FC<{
     if (component) {
       if (component.previews) {
         const keys = Object.keys(component.previews);
+        console.log('keys', keys, keys[0], component.previews[keys[0]]);
         setPreviewUrl(component.previews[keys[0]].url);
       }
     }
@@ -125,11 +127,12 @@ export const ComponentDisplay: React.FC<{
           </div>
         </div>
       </div>
+
       {component?.previews ? (
         <>
-          <ul>
+          <ul className="c-component-preview-tabs">
             {Object.keys(component.previews).map((key) => (
-              <li key={key}>
+              <li key={key} className="tab">
                 <button onClick={() => setPreviewUrl(component.previews[key].url)}>{component.previews[key].title}</button>
               </li>
             ))}
@@ -143,7 +146,7 @@ export const ComponentDisplay: React.FC<{
               minWidth: width,
               height: height,
             }}
-            src={previewUrl}
+            src={`/api/preview/${previewUrl}`}
           />
         </>
       ) : (
@@ -199,11 +202,61 @@ export const SnippetPreview: React.FC<{
     <div id={preview.id}>
       {title ? <h2>{title}</h2> : preview.title ? <h2>{preview.title}</h2> : null}
       {children}
+      {preview?.slots && (
+        <ComponentSlots
+          fields={Object.keys(preview.slots).map((key) => {
+            return { ...preview.slots[key], key };
+          })}
+        />
+      )}
       <div className="c-component-preview">
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
       </div>
       <CodeHighlight data={preview} collapsible={true} />
       <hr />
+    </div>
+  );
+};
+
+export const ComponentSlots: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
+  const humanReadableRule = (rule: string, value: any) => {
+    switch (rule) {
+      case 'required':
+        return 'This field is required';
+      case 'minLength':
+        return 'This field must be at least ' + value + ' characters long';
+      case 'maxLength':
+        return 'This field must be at most ' + value + ' characters long';
+      case 'minValue':
+        return 'This field must be at least ' + value;
+      case 'maxValue':
+        return 'This field must be at most ' + value;
+      case 'pattern':
+        return 'This field must match the pattern ' + value;
+      case 'enum':
+        return 'Enumeration';
+      default:
+        return rule;
+    }
+  }
+  return (
+    <div className="c-component-preview__slots">
+      {fields.map((field) => {
+        return (
+          <div key={field.key} className="c-component-preview__slot">
+            <h4>{startCase(field.name)}</h4>
+            <div className="c-component-preview__slot__content">
+              <p>This field is a {field.type}. {field.description}</p>
+              {field.validation &&
+                Object.keys(field.validation).map((rule) => (
+                  <div key={field.key + rule} className="c-component-preview__slot__content__example">
+                    <div className="c-component-preview__slot__content__example__label">{humanReadableRule(rule, field.validation[rule])}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

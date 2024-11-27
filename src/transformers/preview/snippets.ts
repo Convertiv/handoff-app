@@ -24,6 +24,8 @@ export interface SlotMetadata {
   description: string;
   generic: string;
   type: SlotType;
+  key?: string;
+  validation?: string;
 }
 
 /**
@@ -130,13 +132,13 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     id: file,
     title: 'Untitled',
     description: 'No description provided',
-    preview: "No preview available",
+    preview: 'No preview available',
     previews: [
-        {
-            title: 'Default',
-            values: {},
-            url: file,
-        },
+      {
+        title: 'Default',
+        values: {},
+        url: file,
+      },
     ],
     slots: {},
     code: '',
@@ -236,8 +238,11 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
 
   try {
     const previews = {};
+
     for (const previewKey in data.previews) {
-      const publicFile = path.resolve(publicPath, file.replace('.html', `-${previewKey}.html`));
+      const url = file.replace('.html', `-${previewKey}.html`);
+      data.previews[previewKey].url = url;
+      const publicFile = path.resolve(publicPath, url);
       previews[previewKey] = Handlebars.compile(template)({
         config: handoff.config,
         style: data['css'] ? `<style rel="stylesheet" type="text/css">${data['css']}</style>` : '',
@@ -249,15 +254,16 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
       });
       await fs.writeFile(publicFile, previews[previewKey]);
     }
-    data.preview = "";
+    data.preview = '';
     const bodyEl = parse(template).querySelector('body');
     const code = bodyEl ? bodyEl.innerHTML.trim() : template;
     data['code'] = code;
     data['sharedStyles'] = sharedStyles;
   } catch (e) {
     console.log(e);
+    // write the preview to the public folder
+    throw new Error('stop');
   }
-  // write the preview to the public folder
 
   await fs.writeFile(path.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2));
 }

@@ -197,7 +197,7 @@ exports.processSharedStyles = processSharedStyles;
 function processSnippet(handoff, file, sharedStyles) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _c, _d, _i, previewKey, publicFile, bodyEl, code, e_4;
+        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _c, _d, _i, previewKey, url, publicFile, bodyEl, code, e_4;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
@@ -205,7 +205,7 @@ function processSnippet(handoff, file, sharedStyles) {
                         id: file,
                         title: 'Untitled',
                         description: 'No description provided',
-                        preview: "No preview available",
+                        preview: 'No preview available',
                         previews: [
                             {
                                 title: 'Default',
@@ -336,7 +336,9 @@ function processSnippet(handoff, file, sharedStyles) {
                 case 18:
                     if (!(_i < _c.length)) return [3 /*break*/, 21];
                     previewKey = _c[_i];
-                    publicFile = path_1.default.resolve(publicPath, file.replace('.html', "-".concat(previewKey, ".html")));
+                    url = file.replace('.html', "-".concat(previewKey, ".html"));
+                    data.previews[previewKey].url = url;
+                    publicFile = path_1.default.resolve(publicPath, url);
                     previews[previewKey] = handlebars_1.default.compile(template)({
                         config: handoff.config,
                         style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
@@ -354,7 +356,7 @@ function processSnippet(handoff, file, sharedStyles) {
                     _i++;
                     return [3 /*break*/, 18];
                 case 21:
-                    data.preview = "";
+                    data.preview = '';
                     bodyEl = (0, node_html_parser_1.parse)(template).querySelector('body');
                     code = bodyEl ? bodyEl.innerHTML.trim() : template;
                     data['code'] = code;
@@ -363,12 +365,10 @@ function processSnippet(handoff, file, sharedStyles) {
                 case 22:
                     e_4 = _e.sent();
                     console.log(e_4);
-                    return [3 /*break*/, 23];
-                case 23: 
-                // write the preview to the public folder
-                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2))];
-                case 24:
                     // write the preview to the public folder
+                    throw new Error('stop');
+                case 23: return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2))];
+                case 24:
                     _e.sent();
                     return [2 /*return*/];
             }

@@ -17,7 +17,25 @@ iframe {
 	iframe {
 		margin: 0 auto;
 	}
-
+	.c-component-preview-tabs {
+		display: flex;
+		justify-content: center;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		background-color: #f7f7f7;
+		border-radius: rem(6px) rem(6px) 0 0;
+		li {
+			list-style: none;
+			display: inline-block;
+			padding: rem(10px) rem(20px);
+			cursor: pointer;
+			&:hover {
+				background-color: #e3e3e3;
+			}
+		}
+	}
 	.breakpoint-width {
 		position: absolute;
 		top: 5px;
