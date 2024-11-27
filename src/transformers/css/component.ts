@@ -3,7 +3,7 @@ import { formatComponentCodeBlockComment } from '../utils';
 import { transform } from '../transformer';
 import { IntegrationObjectComponentOptions } from '../../types/config';
 import { Token } from '../types';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 import { toMachineName, toSDMachineName } from '../../exporters/design';
 
 /**
