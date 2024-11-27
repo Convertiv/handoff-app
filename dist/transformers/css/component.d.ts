@@ -1,7 +1,7 @@
 import { ComponentInstance, FileComponentObject } from '../../exporters/components/types';
 import { IntegrationObjectComponentOptions } from '../../types/config';
 import { Token } from '../types';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 /**
  * Map down to a variable object
  * @param alerts

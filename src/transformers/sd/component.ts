@@ -2,7 +2,7 @@ import { transform } from '../transformer';
 import { FileComponentObject } from '../../exporters/components/types';
 import { IntegrationObjectComponentOptions } from '../../types/config';
 import { tokenReferenceFormat } from '../css/component';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 
 /**
  * Transforms the component tokens into a style dictionary
