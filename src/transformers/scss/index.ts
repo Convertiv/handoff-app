@@ -7,7 +7,7 @@ import { formatComponentCodeBlockComment } from '../utils';
 import { TransformerOutput } from '../types';
 import { IntegrationObject } from '../../types/config';
 import { tokenReferenceFormat } from '../css/component';
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 
 /**
  * Build a set of Component types to use as a set of SCSS vars

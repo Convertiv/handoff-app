@@ -15,6 +15,8 @@ export interface SlotMetadata {
     description: string;
     generic: string;
     type: SlotType;
+    key?: string;
+    validation?: string;
 }
 /**
  * Create a snippet transformer

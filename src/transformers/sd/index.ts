@@ -1,4 +1,4 @@
-import Handoff from 'handoff/index';
+import Handoff from '../../index';
 import { DocumentationObject } from '../../types';
 import { IntegrationObject } from '../../types/config';
 import { TransformerOutput } from '../types';

@@ -1,6 +1,7 @@
 import type { FileComponentsObject } from './exporters/components/types';
 import { BlendMode } from './figma/types';
 import { Effect } from './figma/types';
+import { SlotMetadata } from './transformers/preview/snippets';
 export interface DesignObject {
     color: ColorObject[];
     typography: TypographyObject[];
@@ -116,6 +117,9 @@ export interface PreviewObject {
             };
             url: string;
         };
+    };
+    slots?: {
+        [key: string]: SlotMetadata;
     };
     code: string;
 }
