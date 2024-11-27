@@ -4,6 +4,7 @@ import { SectionLink } from './util';
 import React from 'react';
 import { ClientConfig } from '@handoff/types/config';
 
+
 interface HeaderProps {
   menu: SectionLink[];
   config: ClientConfig;
