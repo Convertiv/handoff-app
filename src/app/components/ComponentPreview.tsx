@@ -6,7 +6,7 @@ import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { useMdxContext } from './context/MdxContext';
-import { SlotMetadata } from '../../transformers/preview/snippets';
+import { SlotMetadata } from '@handoff/transformers/preview/snippets';
 
 export type ComponentPreview = {
   component: ComponentInstance;
