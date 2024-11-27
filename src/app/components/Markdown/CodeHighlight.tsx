@@ -50,7 +50,7 @@ export const CodeHighlight: React.FC<{
   return (
     <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
       <div className="c-code-block__title" data-language={activeState === 'code' ? type : activeState}>
-        {title && <div>{title}</div>} 
+        {title && <div>{title}</div>}
       </div>
 
       <SyntaxHighlighter
@@ -74,17 +74,23 @@ export const CodeHighlight: React.FC<{
             setCode(data[e.target.value]);
           }}
         >
-          {states.map((state) => (
-            <option key={state} value={state}>
-              {
-                state === 'code' ? 'HTML' : 
-                state === 'css' ? 'CSS' : 
-                state === 'js' ? 'Javascript' : 
-                state === 'sass' ? 'SASS' : 
-                state === 'sharedStyles' ? 'Shared CSS' : 
-                state}
-            </option>
-          ))}
+          {states
+            .filter((value) => ['code', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+            .map((state) => (
+              <option key={state} value={state}>
+                {state === 'code'
+                  ? 'HTML'
+                  : state === 'css'
+                  ? 'CSS'
+                  : state === 'js'
+                  ? 'Javascript'
+                  : state === 'sass'
+                  ? 'SASS'
+                  : state === 'sharedStyles'
+                  ? 'Shared CSS'
+                  : state}
+              </option>
+            ))}
         </select>
       )}
       {collapsible && (

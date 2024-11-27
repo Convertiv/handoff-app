@@ -201,7 +201,6 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
   const scssPath = path.resolve(custom, scssFile);
   const cssFile = file.replace('.html', '.css');
   const cssPath = path.resolve(custom, cssFile);
-
   if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
     console.log(chalk.green(`Detected SCSS file for ${file}`));
     try {
@@ -259,12 +258,21 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     const code = bodyEl ? bodyEl.innerHTML.trim() : template;
     data['code'] = code;
     data['sharedStyles'] = sharedStyles;
+    // discard shared styles from the css output
   } catch (e) {
     console.log(e);
     // write the preview to the public folder
     throw new Error('stop');
   }
+  // Split the CSS into shared styles and component styles
+  const splitCSS = data['css']?.split('/* COMPONENT STYLES*/');
+  // If there are two parts, the first part is the shared styles
+  if (splitCSS && splitCSS.length > 1) {
+    data['css'] = splitCSS[1];
+    data['sharedStyles'] = splitCSS[0];
+  }
 
+  // Write the API file
   await fs.writeFile(path.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2));
 }
 

@@ -195,11 +195,11 @@ exports.processSharedStyles = processSharedStyles;
  * @param sharedStyles
  */
 function processSnippet(handoff, file, sharedStyles) {
-    var _a, _b;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function () {
-        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _c, _d, _i, previewKey, url, publicFile, bodyEl, code, e_4;
-        return __generator(this, function (_e) {
-            switch (_e.label) {
+        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _d, _e, _i, previewKey, url, publicFile, bodyEl, code, e_4, splitCSS;
+        return __generator(this, function (_f) {
+            switch (_f.label) {
                 case 0:
                     data = {
                         id: file,
@@ -233,7 +233,7 @@ function processSnippet(handoff, file, sharedStyles) {
                     if (!fs_extra_1.default.existsSync(jsonPath)) return [3 /*break*/, 2];
                     return [4 /*yield*/, fs_extra_1.default.readFile(jsonPath, 'utf8')];
                 case 1:
-                    json = _e.sent();
+                    json = _f.sent();
                     if (json) {
                         try {
                             parsed = JSON.parse(json);
@@ -250,28 +250,28 @@ function processSnippet(handoff, file, sharedStyles) {
                             console.log(e);
                         }
                     }
-                    _e.label = 2;
+                    _f.label = 2;
                 case 2:
                     jsFile = file.replace('.html', '.js');
                     if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 7];
                     console.log(chalk_1.default.green("Detected JS file for ".concat(file)));
-                    _e.label = 3;
+                    _f.label = 3;
                 case 3:
-                    _e.trys.push([3, 6, , 7]);
+                    _f.trys.push([3, 6, , 7]);
                     jsPath = path_1.default.resolve(custom, jsFile);
                     return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
                 case 4:
-                    js = _e.sent();
+                    js = _f.sent();
                     return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development')];
                 case 5:
-                    compiled = _e.sent();
+                    compiled = _f.sent();
                     if (js) {
                         data.js = js;
                         data['jsCompiled'] = compiled;
                     }
                     return [3 /*break*/, 7];
                 case 6:
-                    e_2 = _e.sent();
+                    e_2 = _f.sent();
                     console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
                     console.log(e_2);
                     return [3 /*break*/, 7];
@@ -282,9 +282,9 @@ function processSnippet(handoff, file, sharedStyles) {
                     cssPath = path_1.default.resolve(custom, cssFile);
                     if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 13];
                     console.log(chalk_1.default.green("Detected SCSS file for ".concat(file)));
-                    _e.label = 8;
+                    _f.label = 8;
                 case 8:
-                    _e.trys.push([8, 10, , 11]);
+                    _f.trys.push([8, 10, , 11]);
                     return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
                             loadPaths: [
                                 path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
@@ -294,48 +294,48 @@ function processSnippet(handoff, file, sharedStyles) {
                             ],
                         })];
                 case 9:
-                    result = _e.sent();
+                    result = _f.sent();
                     if (result.css) {
                         // @ts-ignore
                         data['css'] = result.css;
                     }
                     return [3 /*break*/, 11];
                 case 10:
-                    e_3 = _e.sent();
+                    e_3 = _f.sent();
                     console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
                     console.log(e_3);
                     return [3 /*break*/, 11];
                 case 11: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
                 case 12:
-                    scss = _e.sent();
+                    scss = _f.sent();
                     if (scss) {
                         data['sass'] = scss;
                     }
-                    _e.label = 13;
+                    _f.label = 13;
                 case 13:
                     if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 15];
                     return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
                 case 14:
-                    css = _e.sent();
+                    css = _f.sent();
                     if (css) {
                         data['css'] = css;
                     }
-                    _e.label = 15;
+                    _f.label = 15;
                 case 15: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
                 case 16:
-                    template = _e.sent();
-                    _e.label = 17;
+                    template = _f.sent();
+                    _f.label = 17;
                 case 17:
-                    _e.trys.push([17, 22, , 23]);
+                    _f.trys.push([17, 22, , 23]);
                     previews = {};
-                    _c = [];
-                    for (_d in data.previews)
-                        _c.push(_d);
+                    _d = [];
+                    for (_e in data.previews)
+                        _d.push(_e);
                     _i = 0;
-                    _e.label = 18;
+                    _f.label = 18;
                 case 18:
-                    if (!(_i < _c.length)) return [3 /*break*/, 21];
-                    previewKey = _c[_i];
+                    if (!(_i < _d.length)) return [3 /*break*/, 21];
+                    previewKey = _d[_i];
                     url = file.replace('.html', "-".concat(previewKey, ".html"));
                     data.previews[previewKey].url = url;
                     publicFile = path_1.default.resolve(publicPath, url);
@@ -350,8 +350,8 @@ function processSnippet(handoff, file, sharedStyles) {
                     });
                     return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, previews[previewKey])];
                 case 19:
-                    _e.sent();
-                    _e.label = 20;
+                    _f.sent();
+                    _f.label = 20;
                 case 20:
                     _i++;
                     return [3 /*break*/, 18];
@@ -363,13 +363,22 @@ function processSnippet(handoff, file, sharedStyles) {
                     data['sharedStyles'] = sharedStyles;
                     return [3 /*break*/, 23];
                 case 22:
-                    e_4 = _e.sent();
+                    e_4 = _f.sent();
                     console.log(e_4);
                     // write the preview to the public folder
                     throw new Error('stop');
-                case 23: return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2))];
+                case 23:
+                    splitCSS = (_c = data['css']) === null || _c === void 0 ? void 0 : _c.split('/* COMPONENT STYLES*/');
+                    console.log(splitCSS);
+                    if (splitCSS && splitCSS.length > 1) {
+                        data['css'] = splitCSS[1];
+                        data['sharedStyles'] = splitCSS[0];
+                    }
+                    // Write the API file
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2))];
                 case 24:
-                    _e.sent();
+                    // Write the API file
+                    _f.sent();
                     return [2 /*return*/];
             }
         });
