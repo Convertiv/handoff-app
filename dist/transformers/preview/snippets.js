@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -47,6 +58,7 @@ var preview_1 = require("../../utils/preview");
 var chalk_1 = __importDefault(require("chalk"));
 var node_html_parser_1 = require("node-html-parser");
 var handlebars_1 = __importDefault(require("handlebars"));
+var semver_1 = __importDefault(require("semver"));
 var SlotType;
 (function (SlotType) {
     SlotType["STRING"] = "string";
@@ -60,39 +72,99 @@ var SlotType;
  */
 function snippetTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var custom, publicPath, sharedStyles, files, _i, files_1, file;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var custom, publicPath, publicAPIPath, sharedStyles, files, componentData, _i, files_1, file, latest, versions, data, versionDirectories, _a, versionDirectories_1, versionDirectory, versionFiles, _b, versionFiles_1, versionFile, name_1;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
                     publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
+                    publicAPIPath = path_1.default.resolve(handoff.workingPath, "public/api/component");
                     // ensure public path exists
                     if (!fs_extra_1.default.existsSync(publicPath)) {
                         fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
                     }
-                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 6];
+                    if (!fs_extra_1.default.existsSync(custom)) return [3 /*break*/, 15];
                     console.log(chalk_1.default.green("Rendering Snippet Previews in ".concat(custom)));
                     return [4 /*yield*/, processSharedStyles(handoff)];
                 case 1:
-                    sharedStyles = _a.sent();
+                    sharedStyles = _c.sent();
                     files = fs_extra_1.default.readdirSync(custom);
+                    componentData = {};
                     _i = 0, files_1 = files;
-                    _a.label = 2;
+                    _c.label = 2;
                 case 2:
-                    if (!(_i < files_1.length)) return [3 /*break*/, 5];
+                    if (!(_i < files_1.length)) return [3 /*break*/, 14];
                     file = files_1[_i];
+                    latest = undefined;
+                    versions = {};
+                    data = undefined;
                     if (!file.endsWith('.html')) return [3 /*break*/, 4];
                     return [4 /*yield*/, processSnippet(handoff, file, sharedStyles)];
                 case 3:
-                    _a.sent();
-                    _a.label = 4;
+                    data = _c.sent();
+                    // Write the API file
+                    // we're in the root directory so this must be version 0.
+                    versions['v0.0.0'] = data;
+                    if (!latest) {
+                        versions['latest'] = data;
+                        versions['version'] = 'v0.0.0';
+                    }
+                    return [3 /*break*/, 12];
                 case 4:
+                    if (!fs_extra_1.default.lstatSync(path_1.default.resolve(custom, file)).isDirectory()) return [3 /*break*/, 12];
+                    versionDirectories = fs_extra_1.default.readdirSync(path_1.default.resolve(custom, file));
+                    _a = 0, versionDirectories_1 = versionDirectories;
+                    _c.label = 5;
+                case 5:
+                    if (!(_a < versionDirectories_1.length)) return [3 /*break*/, 12];
+                    versionDirectory = versionDirectories_1[_a];
+                    if (!semver_1.default.valid(versionDirectory)) return [3 /*break*/, 10];
+                    versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(custom, file, versionDirectory));
+                    _b = 0, versionFiles_1 = versionFiles;
+                    _c.label = 6;
+                case 6:
+                    if (!(_b < versionFiles_1.length)) return [3 /*break*/, 9];
+                    versionFile = versionFiles_1[_b];
+                    console.log("Processing version ".concat(versionDirectory, " for ").concat(file));
+                    if (!versionFile.endsWith('.html')) return [3 /*break*/, 8];
+                    return [4 /*yield*/, processSnippet(handoff, versionFile, sharedStyles, path_1.default.join(file, versionDirectory))];
+                case 7:
+                    data = _c.sent();
+                    versions[versionDirectory] = data;
+                    if (!latest || semver_1.default.gt(versionDirectory, latest)) {
+                        versions['latest'] = data;
+                        versions['version'] = versionDirectory;
+                    }
+                    _c.label = 8;
+                case 8:
+                    _b++;
+                    return [3 /*break*/, 6];
+                case 9: return [3 /*break*/, 11];
+                case 10:
+                    console.error("Invalid version directory ".concat(versionDirectory));
+                    _c.label = 11;
+                case 11:
+                    _a++;
+                    return [3 /*break*/, 5];
+                case 12:
+                    if (data) {
+                        name_1 = file.replace('.html', '');
+                        if (componentData[name_1]) {
+                            // merge the versions
+                            componentData[name_1] = __assign(__assign({}, componentData[name_1]), versions);
+                        }
+                        else {
+                            componentData[name_1] = versions;
+                        }
+                    }
+                    _c.label = 13;
+                case 13:
                     _i++;
                     return [3 /*break*/, 2];
-                case 5:
-                    buildPreviewAPI(handoff);
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                case 14:
+                    buildPreviewAPI(handoff, componentData);
+                    _c.label = 15;
+                case 15: return [2 /*return*/];
             }
         });
     });
@@ -194,7 +266,7 @@ exports.processSharedStyles = processSharedStyles;
  * @param file
  * @param sharedStyles
  */
-function processSnippet(handoff, file, sharedStyles) {
+function processSnippet(handoff, file, sharedStyles, sub) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function () {
         var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _d, _e, _i, previewKey, url, publicFile, bodyEl, code, e_4, splitCSS;
@@ -221,8 +293,10 @@ function processSnippet(handoff, file, sharedStyles) {
                         sharedStyles: sharedStyles,
                     };
                     console.log(chalk_1.default.green("Processing snippet ".concat(file)));
-                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
-                    publicPath = path_1.default.resolve(handoff.workingPath, "public/api/preview");
+                    if (!sub)
+                        sub = '';
+                    custom = path_1.default.resolve(handoff.workingPath, "integration/snippets", sub);
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public/api/component");
                     // Ensure the public API path exists
                     if (!fs_extra_1.default.existsSync(publicPath)) {
                         fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
@@ -369,53 +443,57 @@ function processSnippet(handoff, file, sharedStyles) {
                     throw new Error('stop');
                 case 23:
                     splitCSS = (_c = data['css']) === null || _c === void 0 ? void 0 : _c.split('/* COMPONENT STYLES*/');
-                    console.log(splitCSS);
+                    // If there are two parts, the first part is the shared styles
                     if (splitCSS && splitCSS.length > 1) {
                         data['css'] = splitCSS[1];
                         data['sharedStyles'] = splitCSS[0];
                     }
-                    // Write the API file
-                    return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2))];
-                case 24:
-                    // Write the API file
-                    _f.sent();
-                    return [2 /*return*/];
+                    return [2 /*return*/, data];
             }
         });
     });
 }
 exports.processSnippet = processSnippet;
-var buildPreviewAPI = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var publicPath, files, output, _i, files_2, file, data, parsed;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+var buildPreviewAPI = function (handoff, componentData) { return __awaiter(void 0, void 0, void 0, function () {
+    var publicPath, files, output, _a, _b, _i, component, latest;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
-                publicPath = path_1.default.resolve(handoff.workingPath, "public/api/preview");
+                publicPath = path_1.default.resolve(handoff.workingPath, "public/api/component");
                 files = fs_extra_1.default.readdirSync(publicPath);
                 output = [];
-                _i = 0, files_2 = files;
-                _a.label = 1;
+                _a = [];
+                for (_b in componentData)
+                    _a.push(_b);
+                _i = 0;
+                _c.label = 1;
             case 1:
-                if (!(_i < files_2.length)) return [3 /*break*/, 4];
-                file = files_2[_i];
-                if (!file.endsWith('.json')) return [3 /*break*/, 3];
-                return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(publicPath, file), 'utf8')];
+                if (!(_i < _a.length)) return [3 /*break*/, 4];
+                component = _a[_i];
+                latest = componentData[component]['latest'];
+                if (latest) {
+                    // read the file
+                    output.push({
+                        id: component,
+                        version: componentData[component]['version'],
+                        title: latest.title,
+                        description: latest.description,
+                        slots: latest.slots,
+                    });
+                }
+                else {
+                    console.log("No latest version found for ".concat(component));
+                }
+                return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, "".concat(component, ".json")), JSON.stringify(componentData[component], null, 2))];
             case 2:
-                data = _a.sent();
-                parsed = JSON.parse(data);
-                output.push({
-                    id: parsed.id,
-                    title: parsed.title,
-                    description: parsed.description,
-                    slots: parsed.slots,
-                });
-                _a.label = 3;
+                _c.sent();
+                _c.label = 3;
             case 3:
                 _i++;
                 return [3 /*break*/, 1];
             case 4: return [4 /*yield*/, fs_extra_1.default.writeFile(publicPath + 's.json', JSON.stringify(output, null, 2))];
             case 5:
-                _a.sent();
+                _c.sent();
                 return [2 /*return*/];
         }
     });

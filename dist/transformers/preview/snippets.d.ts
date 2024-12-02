@@ -44,5 +44,19 @@ export declare function processSharedStyles(handoff: Handoff): Promise<string | 
  * @param file
  * @param sharedStyles
  */
-export declare function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null): Promise<void>;
+export declare function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string): Promise<{
+    id: string;
+    code: string;
+    preview: string;
+    js?: string;
+    css?: string;
+    sass?: string;
+    sharedStyles?: string;
+    title?: string;
+    description?: string;
+    previews?: import("./types").OptionalPreviewRender[];
+    slots?: {
+        [key: string]: SlotMetadata;
+    };
+}>;
 export {};

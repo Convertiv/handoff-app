@@ -7,6 +7,8 @@ import { parse } from 'node-html-parser';
 import Handoff from '../../index';
 import { TransformComponentTokensResult } from './types';
 import Handlebars from 'handlebars';
+import semver from 'semver';
+import { version } from 'yargs';
 
 export interface SnippetMetadata {
   title: string;
@@ -40,6 +42,7 @@ export async function snippetTransformer(handoff: Handoff) {
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
 
   const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+  const publicAPIPath = path.resolve(handoff.workingPath, `public/api/component`);
   // ensure public path exists
   if (!fs.existsSync(publicPath)) {
     fs.mkdirSync(publicPath, { recursive: true });
@@ -48,12 +51,56 @@ export async function snippetTransformer(handoff: Handoff) {
     console.log(chalk.green(`Rendering Snippet Previews in ${custom}`));
     const sharedStyles = await processSharedStyles(handoff);
     const files = fs.readdirSync(custom);
+    const componentData = {};
     for (const file of files) {
+      let latest = undefined;
+      let versions = {};
+      let data = undefined;
       if (file.endsWith('.html')) {
-        await processSnippet(handoff, file, sharedStyles);
+        data = await processSnippet(handoff, file, sharedStyles);
+        // Write the API file
+        // we're in the root directory so this must be version 0.
+        versions['v0.0.0'] = data;
+        if (!latest) {
+          versions['latest'] = data;
+          versions['version'] = 'v0.0.0';
+        }
+      } else if (fs.lstatSync(path.resolve(custom, file)).isDirectory()) {
+        // this is a directory structure.  this should be the component name,
+        // and each directory inside should be a version
+        const versionDirectories = fs.readdirSync(path.resolve(custom, file));
+        // The directory name must be a semver
+        for (const versionDirectory of versionDirectories) {
+          if (semver.valid(versionDirectory)) {
+            const versionFiles = fs.readdirSync(path.resolve(custom, file, versionDirectory));
+            for (const versionFile of versionFiles) {
+              console.log(`Processing version ${versionDirectory} for ${file}`);
+              if (versionFile.endsWith('.html')) {
+                data = await processSnippet(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
+                versions[versionDirectory] = data;
+                if (!latest || semver.gt(versionDirectory, latest)) {
+                  versions['latest'] = data;
+                  versions['version'] = versionDirectory;
+                }
+              }
+            }
+          } else {
+            console.error(`Invalid version directory ${versionDirectory}`);
+          }
+        }
+      }
+      if (data) {
+        let name = file.replace('.html', '');
+        if (componentData[name]) {
+          // merge the versions
+          componentData[name] = { ...componentData[name], ...versions };
+        } else {
+          componentData[name] = versions;
+        }
       }
     }
-    buildPreviewAPI(handoff);
+
+    buildPreviewAPI(handoff, componentData);
   }
   return;
 }
@@ -127,7 +174,7 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
  * @param file
  * @param sharedStyles
  */
-export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null) {
+export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string) {
   let data: TransformComponentTokensResult = {
     id: file,
     title: 'Untitled',
@@ -148,8 +195,9 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     sharedStyles: sharedStyles,
   };
   console.log(chalk.green(`Processing snippet ${file}`));
-  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
-  const publicPath = path.resolve(handoff.workingPath, `public/api/preview`);
+  if (!sub) sub = '';
+  const custom = path.resolve(handoff.workingPath, `integration/snippets`, sub);
+  const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
   // Ensure the public API path exists
   if (!fs.existsSync(publicPath)) {
     fs.mkdirSync(publicPath, { recursive: true });
@@ -271,29 +319,31 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     data['css'] = splitCSS[1];
     data['sharedStyles'] = splitCSS[0];
   }
-
-  // Write the API file
-  await fs.writeFile(path.resolve(publicPath, file.replace('.html', '.json')), JSON.stringify(data, null, 2));
+  return data;
 }
 
-const buildPreviewAPI = async (handoff: Handoff) => {
-  const publicPath = path.resolve(handoff.workingPath, `public/api/preview`);
+const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
+  const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
 
   const files = fs.readdirSync(publicPath);
   const output = [];
 
-  for (const file of files) {
-    if (file.endsWith('.json')) {
+  for (const component in componentData) {
+    // find the latest
+    let latest = componentData[component]['latest'];
+    if (latest) {
       // read the file
-      const data = await fs.readFile(path.resolve(publicPath, file), 'utf8');
-      const parsed = JSON.parse(data);
       output.push({
-        id: parsed.id,
-        title: parsed.title,
-        description: parsed.description,
-        slots: parsed.slots,
+        id: component,
+        version: componentData[component]['version'],
+        title: latest.title,
+        description: latest.description,
+        slots: latest.slots,
       });
+    } else {
+      console.log(`No latest version found for ${component}`);
     }
+    await fs.writeFile(path.resolve(publicPath, `${component}.json`), JSON.stringify(componentData[component], null, 2));
   }
   await fs.writeFile(publicPath + 's.json', JSON.stringify(output, null, 2));
 };

@@ -146,7 +146,7 @@ export const ComponentDisplay: React.FC<{
               minWidth: width,
               height: height,
             }}
-            src={`/api/preview/${previewUrl}`}
+            src={`/api/components/${previewUrl}`}
           />
         </>
       ) : (
