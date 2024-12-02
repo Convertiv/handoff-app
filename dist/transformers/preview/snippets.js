@@ -274,7 +274,7 @@ function processSnippet(handoff, file, sharedStyles, sub) {
             switch (_f.label) {
                 case 0:
                     data = {
-                        id: file,
+                        id: file.replace('.html', ''),
                         title: 'Untitled',
                         description: 'No description provided',
                         preview: 'No preview available',
