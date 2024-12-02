@@ -176,7 +176,7 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
  */
 export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string) {
   let data: TransformComponentTokensResult = {
-    id: file,
+    id: file.replace('.html', ''),
     title: 'Untitled',
     description: 'No description provided',
     preview: 'No preview available',
