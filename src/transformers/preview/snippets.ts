@@ -62,6 +62,7 @@ export async function snippetTransformer(handoff: Handoff) {
         // we're in the root directory so this must be version 0.
         versions['v0.0.0'] = data;
         if (!latest) {
+          latest = 'v0.0.0';
           versions['latest'] = data;
           versions['version'] = 'v0.0.0';
         }
@@ -79,6 +80,7 @@ export async function snippetTransformer(handoff: Handoff) {
                 data = await processSnippet(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
                 versions[versionDirectory] = data;
                 if (!latest || semver.gt(versionDirectory, latest)) {
+                  latest = versionDirectory
                   versions['latest'] = data;
                   versions['version'] = versionDirectory;
                 }
