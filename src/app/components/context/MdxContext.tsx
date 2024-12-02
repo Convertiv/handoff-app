@@ -39,8 +39,9 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
       return components[name] ? components[name][0] : null;
     } else {
       // Try to load the component from the public json
-      let data = fetch(`/api/component/${name}.json`).then((res) => res.json());
-      return data as Promise<PreviewObject>;
+      let data = await fetch(`/api/component/${name}.json`).then((res) => res.json());
+      
+      return data.latest as PreviewObject;
     }
   };
   
