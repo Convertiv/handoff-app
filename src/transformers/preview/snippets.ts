@@ -53,7 +53,6 @@ export async function snippetTransformer(handoff: Handoff) {
     const files = fs.readdirSync(custom);
     const componentData = {};
     for (const file of files) {
-      let latest = undefined;
       let versions = {};
       let data = undefined;
       if (file.endsWith('.html')) {
@@ -61,11 +60,6 @@ export async function snippetTransformer(handoff: Handoff) {
         // Write the API file
         // we're in the root directory so this must be version 0.
         versions['v0.0.0'] = data;
-        if (!latest) {
-          latest = 'v0.0.0';
-          versions['latest'] = data;
-          versions['version'] = 'v0.0.0';
-        }
       } else if (fs.lstatSync(path.resolve(custom, file)).isDirectory()) {
         // this is a directory structure.  this should be the component name,
         // and each directory inside should be a version
@@ -79,11 +73,6 @@ export async function snippetTransformer(handoff: Handoff) {
               if (versionFile.endsWith('.html')) {
                 data = await processSnippet(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
                 versions[versionDirectory] = data;
-                if (!latest || semver.gt(versionDirectory, latest)) {
-                  latest = versionDirectory
-                  versions['latest'] = data;
-                  versions['version'] = versionDirectory;
-                }
               }
             }
           } else {
@@ -98,6 +87,15 @@ export async function snippetTransformer(handoff: Handoff) {
           componentData[name] = { ...componentData[name], ...versions };
         } else {
           componentData[name] = versions;
+        }
+        // find the latest version
+        let versionSet = Object.keys(componentData[name])
+          .filter((key) => semver.valid(key))
+          .sort(semver.rcompare);
+        if (versionSet.length > 0) {
+          let latest = versionSet[0];
+          componentData[name]['latest'] = componentData[name][latest];
+          componentData[name]['version'] = latest;
         }
       }
     }

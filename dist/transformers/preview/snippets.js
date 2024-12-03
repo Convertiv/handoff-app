@@ -72,7 +72,7 @@ var SlotType;
  */
 function snippetTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function () {
-        var custom, publicPath, publicAPIPath, sharedStyles, files, componentData, _i, files_1, file, latest, versions, data, versionDirectories, _a, versionDirectories_1, versionDirectory, versionFiles, _b, versionFiles_1, versionFile, name_1;
+        var custom, publicPath, publicAPIPath, sharedStyles, files, componentData, _i, files_1, file, versions, data, versionDirectories, _a, versionDirectories_1, versionDirectory, versionFiles, _b, versionFiles_1, versionFile, name_1, versionSet, latest;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
@@ -95,7 +95,6 @@ function snippetTransformer(handoff) {
                 case 2:
                     if (!(_i < files_1.length)) return [3 /*break*/, 14];
                     file = files_1[_i];
-                    latest = undefined;
                     versions = {};
                     data = undefined;
                     if (!file.endsWith('.html')) return [3 /*break*/, 4];
@@ -105,11 +104,6 @@ function snippetTransformer(handoff) {
                     // Write the API file
                     // we're in the root directory so this must be version 0.
                     versions['v0.0.0'] = data;
-                    if (!latest) {
-                        latest = 'v0.0.0';
-                        versions['latest'] = data;
-                        versions['version'] = 'v0.0.0';
-                    }
                     return [3 /*break*/, 12];
                 case 4:
                     if (!fs_extra_1.default.lstatSync(path_1.default.resolve(custom, file)).isDirectory()) return [3 /*break*/, 12];
@@ -132,11 +126,6 @@ function snippetTransformer(handoff) {
                 case 7:
                     data = _c.sent();
                     versions[versionDirectory] = data;
-                    if (!latest || semver_1.default.gt(versionDirectory, latest)) {
-                        latest = versionDirectory;
-                        versions['latest'] = data;
-                        versions['version'] = versionDirectory;
-                    }
                     _c.label = 8;
                 case 8:
                     _b++;
@@ -157,6 +146,14 @@ function snippetTransformer(handoff) {
                         }
                         else {
                             componentData[name_1] = versions;
+                        }
+                        versionSet = Object.keys(componentData[name_1])
+                            .filter(function (key) { return semver_1.default.valid(key); })
+                            .sort(semver_1.default.rcompare);
+                        if (versionSet.length > 0) {
+                            latest = versionSet[0];
+                            componentData[name_1]['latest'] = componentData[name_1][latest];
+                            componentData[name_1]['version'] = latest;
                         }
                     }
                     _c.label = 13;
