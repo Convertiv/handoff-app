@@ -1,4 +1,4 @@
-import { ReferenceObject } from "handoff/types";
+import { ReferenceObject } from "../types";
 export declare type FoundationType = 'colors' | 'typography' | 'effects';
 export declare type TokenType = 'css' | 'scss' | 'sd' | 'map' | 'default';
 export declare type TokenDict = {

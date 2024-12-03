@@ -1,4 +1,4 @@
-import { Token } from "../../../transformers/types";
+import { Token } from "@handoff/transformers/types";
 
 export const tokenReferenceFormat = (token: Token, type: 'css' | 'scss' | 'generic') => {
     let referenceObject = token.metadata.reference;

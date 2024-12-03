@@ -1,4 +1,4 @@
-import { ReferenceObject } from "handoff/types";
+import { ReferenceObject } from "../types";
 
 export type FoundationType = 'colors' | 'typography' | 'effects';
 
