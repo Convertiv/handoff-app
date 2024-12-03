@@ -38,7 +38,7 @@ var HandoffCliError = /** @class */ (function (_super) {
  * Show the help message
  */
 var showVersion = function () {
-    return 'Handoff App - 0.15.0';
+    return 'Handoff App - 0.15.1';
 };
 /**
  * Define a CLI error
