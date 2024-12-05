@@ -459,7 +459,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                     chokidar_1.default
                         .watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig)
                         .on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
-                        var _a;
+                        var _a, shared;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
                                 case 0:
@@ -469,40 +469,43 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 11];
+                                    return [3 /*break*/, 12];
                                 case 1:
-                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 10];
+                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 11];
                                     console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
-                                    if (!file.includes('snippet')) return [3 /*break*/, 3];
+                                    if (!file.includes('snippet')) return [3 /*break*/, 4];
                                     console.log(chalk_1.default.yellow("Processing snippet..."), file);
-                                    return [4 /*yield*/, (0, snippets_1.processSnippet)(handoff, path_1.default.parse(file).name + '.html', null)];
+                                    return [4 /*yield*/, (0, snippets_1.processSharedStyles)(handoff)];
                                 case 2:
-                                    _b.sent();
-                                    return [3 /*break*/, 9];
+                                    shared = _b.sent();
+                                    return [4 /*yield*/, (0, snippets_1.processSnippet)(handoff, path_1.default.parse(file).name + '.html', shared)];
                                 case 3:
-                                    if (!file.includes('scss')) return [3 /*break*/, 6];
+                                    _b.sent();
+                                    return [3 /*break*/, 10];
+                                case 4:
+                                    if (!file.includes('scss')) return [3 /*break*/, 7];
                                     // rebuild just the shared styles
                                     return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
-                                case 4:
+                                case 5:
                                     // rebuild just the shared styles
                                     _b.sent();
                                     return [4 /*yield*/, (0, snippets_1.processSharedStyles)(handoff)];
-                                case 5:
+                                case 6:
                                     _b.sent();
-                                    return [3 /*break*/, 9];
-                                case 6: return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
-                                case 7:
-                                    _b.sent();
-                                    return [4 /*yield*/, (0, pipeline_1.buildSnippets)(handoff)];
+                                    return [3 /*break*/, 10];
+                                case 7: return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
                                 case 8:
                                     _b.sent();
-                                    _b.label = 9;
+                                    return [4 /*yield*/, (0, pipeline_1.buildSnippets)(handoff)];
                                 case 9:
-                                    debounce = false;
+                                    _b.sent();
                                     _b.label = 10;
-                                case 10: return [3 /*break*/, 11];
-                                case 11: return [2 /*return*/];
+                                case 10:
+                                    debounce = false;
+                                    _b.label = 11;
+                                case 11: return [3 /*break*/, 12];
+                                case 12: return [2 /*return*/];
                             }
                         });
                     }); });

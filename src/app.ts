@@ -403,7 +403,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               debounce = true;
               if (file.includes('snippet')) {
                 console.log(chalk.yellow(`Processing snippet...`), file);
-                await processSnippet(handoff, path.parse(file).name + '.html', null);
+                const shared = await processSharedStyles(handoff);
+                await processSnippet(handoff, path.parse(file).name + '.html', shared);
               } else if (file.includes('scss')) {
                 // rebuild just the shared styles
                 await buildIntegrationOnly(handoff);
