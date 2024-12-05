@@ -134,7 +134,7 @@ export const ComponentDisplay: React.FC<{
           <ul className="c-component-preview-tabs">
             {Object.keys(component.previews).map((key) => (
               <li key={key} className="tab">
-                <button onClick={() => setPreviewUrl(component.previews[key].url)}>{component.previews[key].title}</button>
+                <button onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}>{component.previews[key].title}</button>
               </li>
             ))}
           </ul>
