@@ -85,10 +85,8 @@ export const createFrameSocket = async (handoff: Handoff) => {
 
   console.log('WebSocket server started on ws://localhost:3001');
   return function (message: string) {
-    console.log('Sending message to all clients', message);
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
-        console.log('sending message');
         client.send(message);
       }
     });

@@ -100,10 +100,8 @@ var createFrameSocket = function (handoff) { return __awaiter(void 0, void 0, vo
         });
         console.log('WebSocket server started on ws://localhost:3001');
         return [2 /*return*/, function (message) {
-                console.log('Sending message to all clients', message);
                 wss.clients.forEach(function each(client) {
                     if (client.readyState === ws_1.default.OPEN) {
-                        console.log('sending message');
                         client.send(message);
                     }
                 });
