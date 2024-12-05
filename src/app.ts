@@ -172,7 +172,7 @@ const performCleanup = async (handoff: Handoff): Promise<void> => {
   if (fs.existsSync(appPath)) {
     await fs.rm(appPath, { recursive: true });
   }
-}
+};
 
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
@@ -378,43 +378,48 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'add':
         case 'change':
         case 'unlink':
-          console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
-          await mergePublicDir(handoff);
-          sendMessageToSnippet('reload');
-          break;
-      }
-    });
-  }
-
-  if (fs.existsSync(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'), chokidarConfig).on('all', async (event, file) => {
-      switch (event) {
-        case 'add':
-        case 'change':
-        case 'unlink':
-          if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
-            console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
+          if (!debounce) {
             debounce = true;
-            if(file.includes('snippet')) {
-              console.log(chalk.yellow(`Processing snippet...`), file);
-              await processSnippet(handoff, path.parse(file).name + '.html', null);
-            } else if(file.includes('scss')) {
-              // rebuild just the shared styles
-              await buildIntegrationOnly(handoff);
-              await processSharedStyles(handoff);
-            } else {
-              await buildIntegrationOnly(handoff);
-              await buildSnippets(handoff);
-            }
+            console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
+            await mergePublicDir(handoff);
+            sendMessageToSnippet('reload');
             debounce = false;
           }
           break;
       }
     });
   }
+
+  if (fs.existsSync(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'))) {
+    chokidar
+      .watch(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'), chokidarConfig)
+      .on('all', async (event, file) => {
+        switch (event) {
+          case 'add':
+          case 'change':
+          case 'unlink':
+            if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
+              console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
+              debounce = true;
+              if (file.includes('snippet')) {
+                console.log(chalk.yellow(`Processing snippet...`), file);
+                await processSnippet(handoff, path.parse(file).name + '.html', null);
+              } else if (file.includes('scss')) {
+                // rebuild just the shared styles
+                await buildIntegrationOnly(handoff);
+                await processSharedStyles(handoff);
+              } else {
+                await buildIntegrationOnly(handoff);
+                await buildSnippets(handoff);
+              }
+              debounce = false;
+            }
+            break;
+        }
+      });
+  }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
-
       switch (event) {
         case 'add':
         case 'change':

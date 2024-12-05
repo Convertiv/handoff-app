@@ -438,21 +438,27 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 3];
+                                    return [3 /*break*/, 4];
                                 case 1:
+                                    if (!!debounce) return [3 /*break*/, 3];
+                                    debounce = true;
                                     console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
                                     return [4 /*yield*/, mergePublicDir(handoff)];
                                 case 2:
                                     _b.sent();
                                     sendMessageToSnippet('reload');
-                                    return [3 /*break*/, 3];
-                                case 3: return [2 /*return*/];
+                                    debounce = false;
+                                    _b.label = 3;
+                                case 3: return [3 /*break*/, 4];
+                                case 4: return [2 /*return*/];
                             }
                         });
                     }); });
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
+                    chokidar_1.default
+                        .watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig)
+                        .on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
                         var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
