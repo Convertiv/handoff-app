@@ -10,8 +10,8 @@ import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
-import { processSharedStyles, processSnippet } from './transformers/preview/snippets';
-import { buildIntegrationOnly } from './pipeline';
+import { createFrameSocket, processSharedStyles, processSnippet } from './transformers/preview/snippets';
+import { buildIntegrationOnly, buildSnippets } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -223,6 +223,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
 
   // If we are building the app, ensure the integration is built first
   await buildIntegrationOnly(handoff);
+  await buildSnippets(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -322,7 +323,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   if (fs.existsSync(moduleOutput)) {
     fs.removeSync(moduleOutput);
   }
-
   app.prepare().then(() => {
     createServer(async (req, res) => {
       try {
@@ -347,6 +347,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         console.log(`> Ready on http://${hostname}:${port}`);
       });
   });
+
+  const sendMessageToSnippet = await createFrameSocket(handoff);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -377,7 +379,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'change':
         case 'unlink':
           console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
-          mergePublicDir(handoff);
+          await mergePublicDir(handoff);
+          sendMessageToSnippet('reload');
           break;
       }
     });
@@ -393,10 +396,15 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
             debounce = true;
             if(file.includes('snippet')) {
-              const sharedStyles = await processSharedStyles(handoff);
-              await processSnippet(handoff, path.basename(file), sharedStyles);
-            }else{
-              await handoff.integration();
+              console.log(chalk.yellow(`Processing snippet...`), file);
+              await processSnippet(handoff, path.parse(file).name + '.html', null);
+            } else if(file.includes('scss')) {
+              // rebuild just the shared styles
+              await buildIntegrationOnly(handoff);
+              await processSharedStyles(handoff);
+            } else {
+              await buildIntegrationOnly(handoff);
+              await buildSnippets(handoff);
             }
             debounce = false;
           }

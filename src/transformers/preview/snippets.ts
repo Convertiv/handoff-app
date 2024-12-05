@@ -8,8 +8,24 @@ import Handoff from '../../index';
 import { TransformComponentTokensResult } from './types';
 import Handlebars from 'handlebars';
 import semver from 'semver';
-import { version } from 'yargs';
+import WebSocket from 'ws';
 
+const webSocketClientJS = `
+<script>
+const ws = new WebSocket('ws://localhost:3001');
+  ws.onopen = function (event) {
+    console.log('WebSocket connection opened');
+    ws.send('Hello from client!');
+  };
+
+  ws.onmessage = function (event) {
+    console.log('Message from server ', event.data);
+    if(event.data === 'reload'){
+      window.location.reload();
+    }
+  };
+</script>
+`;
 export interface SnippetMetadata {
   title: string;
   description: string;
@@ -29,6 +45,57 @@ export interface SlotMetadata {
   key?: string;
   validation?: string;
 }
+
+interface ExtWebSocket extends WebSocket {
+  isAlive: boolean;
+}
+
+/**
+ * In dev mode we want to watch the snippets folder for changes
+ * @param handoff
+ * @returns
+ * @returns
+ */
+export const createFrameSocket = async (handoff: Handoff) => {
+  const wss = new WebSocket.Server({ port: 3001 });
+  function heartbeat() {
+    this.isAlive = true;
+  }
+  wss.on('connection', function connection(ws) {
+    const extWs = ws as ExtWebSocket;
+    extWs.send('Welcome to the WebSocket server!');
+    extWs.isAlive = true;
+    extWs.on('error', console.error);
+    extWs.on('pong', heartbeat);
+  });
+
+  const interval = setInterval(function ping() {
+    wss.clients.forEach(function each(ws) {
+      const extWs = ws as ExtWebSocket;
+      if (extWs.isAlive === false) return ws.terminate();
+
+      extWs.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
+
+  wss.on('close', function close() {
+    clearInterval(interval);
+  });
+
+  console.log('WebSocket server started on ws://localhost:3001');
+  return function (message: string) {
+    console.log('Sending message to all clients', message);
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        console.log('sending message');
+        client.send(message);
+      }
+    });
+  };
+};
+
+//
 
 /**
  * Create a snippet transformer
@@ -59,7 +126,7 @@ export async function snippetTransformer(handoff: Handoff) {
         data = await processSnippet(handoff, file, sharedStyles);
         // Write the API file
         // we're in the root directory so this must be version 0.
-        versions['v0.0.0'] = data;
+        versions['0.0.0'] = data;
       } else if (fs.lstatSync(path.resolve(custom, file)).isDirectory()) {
         // this is a directory structure.  this should be the component name,
         // and each directory inside should be a version
@@ -133,7 +200,7 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
  */
 export async function processSharedStyles(handoff: Handoff): Promise<string | null> {
   const custom = path.resolve(handoff.workingPath, `integration/snippets`);
-  const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+  const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
 
   // Is there a scss file with the same name?
   const scssPath = path.resolve(custom, 'shared.scss');
@@ -155,6 +222,7 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
         // write the css to the public folder
         const css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
         const cssPath = path.resolve(publicPath, 'shared.css');
+        console.log(chalk.green(`Writing shared styles to ${cssPath}`));
         await fs.writeFile(cssPath, result.css);
         return css;
       }
@@ -238,6 +306,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
       if (js) {
         data.js = js;
         data['jsCompiled'] = compiled;
+        await fs.writeFile(path.resolve(publicPath, jsFile), compiled);
       }
     } catch (e) {
       console.log(chalk.red(`Error compiling JS for ${file}`));
@@ -263,10 +332,21 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
       if (result.css) {
         // @ts-ignore
         data['css'] = result.css;
+        // Split the CSS into shared styles and component styles
+        const splitCSS = data['css']?.split('/* COMPONENT STYLES*/');
+        // If there are two parts, the first part is the shared styles
+        if (splitCSS && splitCSS.length > 1) {
+          data['css'] = splitCSS[1];
+          data['sharedStyles'] = splitCSS[0];
+          await fs.writeFile(path.resolve(publicPath, `shared.css`), data['sharedStyles']);
+        } else {
+          await fs.writeFile(path.resolve(publicPath, `shared.css`), sharedStyles);
+        }
+        await fs.writeFile(path.resolve(publicPath, cssFile), data['css']);
       }
     } catch (e) {
       console.log(chalk.red(`Error compiling SCSS for ${file}`));
-      console.log(e);
+      throw e;
     }
 
     const scss = await fs.readFile(scssPath, 'utf8');
@@ -274,6 +354,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
       data['sass'] = scss;
     }
   }
+
   // Is there a css file with the same name?
   if (fs.existsSync(cssPath)) {
     const css = await fs.readFile(path.resolve(custom, cssFile), 'utf8');
@@ -290,13 +371,16 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
       const url = file.replace('.html', `-${previewKey}.html`);
       data.previews[previewKey].url = url;
       const publicFile = path.resolve(publicPath, url);
+      const jsCompiled = data['jsCompiled'] ? `<script src="/api/component/${jsFile}"></script>` : '';
+      let style = data['css'] ? `<link rel="stylesheet" href="/api/component/${cssFile}">` : '';
+      if (data['sharedStyles']) {
+        style = `<link rel="stylesheet" href="/api/component/shared.css">` + style;
+      }
       previews[previewKey] = Handlebars.compile(template)({
         config: handoff.config,
-        style: data['css'] ? `<style rel="stylesheet" type="text/css">${data['css']}</style>` : '',
-        script: data['jsCompiled']
-          ? `<script src="data:text/javascript;base64,${Buffer.from(data['jsCompiled']).toString('base64')}"></script>`
-          : '',
-        sharedStyles: sharedStyles ? `<style rel="stylesheet" type="text/css">${sharedStyles}</style>` : 'shared',
+        style: style,
+        script: jsCompiled + '\n' + webSocketClientJS,
+        sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
         slot: data.previews[previewKey]?.values || {},
       });
       await fs.writeFile(publicFile, previews[previewKey]);
@@ -312,13 +396,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     // write the preview to the public folder
     throw new Error('stop');
   }
-  // Split the CSS into shared styles and component styles
-  const splitCSS = data['css']?.split('/* COMPONENT STYLES*/');
-  // If there are two parts, the first part is the shared styles
-  if (splitCSS && splitCSS.length > 1) {
-    data['css'] = splitCSS[1];
-    data['sharedStyles'] = splitCSS[0];
-  }
+
   return data;
 }
 

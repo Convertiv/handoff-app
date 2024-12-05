@@ -553,7 +553,7 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
             case 0: return [4 /*yield*/, readPrevJSONFile(tokensFilePath(handoff))];
             case 1:
                 documentationObject = _a.sent();
-                if (!documentationObject) return [3 /*break*/, 5];
+                if (!documentationObject) return [3 /*break*/, 4];
                 // Ensure that the integration object is set if possible
                 handoff.integrationObject = (0, _1.initIntegrationObject)(handoff);
                 return [4 /*yield*/, buildIntegration(handoff, documentationObject)];
@@ -562,11 +562,8 @@ var buildIntegrationOnly = function (handoff) { return __awaiter(void 0, void 0,
                 return [4 /*yield*/, buildPreviews(handoff, documentationObject)];
             case 3:
                 _a.sent();
-                return [4 /*yield*/, (0, exports.buildSnippets)(handoff)];
-            case 4:
-                _a.sent();
-                _a.label = 5;
-            case 5: return [2 /*return*/];
+                _a.label = 4;
+            case 4: return [2 /*return*/];
         }
     });
 }); };

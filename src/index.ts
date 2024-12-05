@@ -126,6 +126,7 @@ class Handoff {
     this.preRunner();
     if (this.config) {
       await buildIntegrationOnly(this);
+      await buildSnippets(this);
     }
     return this;
   }

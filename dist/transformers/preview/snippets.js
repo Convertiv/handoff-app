@@ -50,7 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSnippet = exports.processSharedStyles = exports.renameSnippet = exports.snippetTransformer = void 0;
+exports.processSnippet = exports.processSharedStyles = exports.renameSnippet = exports.snippetTransformer = exports.createFrameSocket = void 0;
 var path_1 = __importDefault(require("path"));
 var fs_extra_1 = __importDefault(require("fs-extra"));
 var sass_1 = __importDefault(require("sass"));
@@ -59,11 +59,59 @@ var chalk_1 = __importDefault(require("chalk"));
 var node_html_parser_1 = require("node-html-parser");
 var handlebars_1 = __importDefault(require("handlebars"));
 var semver_1 = __importDefault(require("semver"));
+var ws_1 = __importDefault(require("ws"));
+var webSocketClientJS = "\n<script>\nconst ws = new WebSocket('ws://localhost:3001');\n  ws.onopen = function (event) {\n    console.log('WebSocket connection opened');\n    ws.send('Hello from client!');\n  };\n\n  ws.onmessage = function (event) {\n    console.log('Message from server ', event.data);\n    if(event.data === 'reload'){\n      window.location.reload();\n    }\n  };\n</script>\n";
 var SlotType;
 (function (SlotType) {
     SlotType["STRING"] = "string";
     SlotType["IMAGE"] = "image";
 })(SlotType || (SlotType = {}));
+/**
+ * In dev mode we want to watch the snippets folder for changes
+ * @param handoff
+ * @returns
+ * @returns
+ */
+var createFrameSocket = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
+    function heartbeat() {
+        this.isAlive = true;
+    }
+    var wss, interval;
+    return __generator(this, function (_a) {
+        wss = new ws_1.default.Server({ port: 3001 });
+        wss.on('connection', function connection(ws) {
+            var extWs = ws;
+            extWs.send('Welcome to the WebSocket server!');
+            extWs.isAlive = true;
+            extWs.on('error', console.error);
+            extWs.on('pong', heartbeat);
+        });
+        interval = setInterval(function ping() {
+            wss.clients.forEach(function each(ws) {
+                var extWs = ws;
+                if (extWs.isAlive === false)
+                    return ws.terminate();
+                extWs.isAlive = false;
+                ws.ping();
+            });
+        }, 30000);
+        wss.on('close', function close() {
+            clearInterval(interval);
+        });
+        console.log('WebSocket server started on ws://localhost:3001');
+        return [2 /*return*/, function (message) {
+                console.log('Sending message to all clients', message);
+                wss.clients.forEach(function each(client) {
+                    if (client.readyState === ws_1.default.OPEN) {
+                        console.log('sending message');
+                        client.send(message);
+                    }
+                });
+            }];
+    });
+}); };
+exports.createFrameSocket = createFrameSocket;
+//
 /**
  * Create a snippet transformer
  * @param handoff
@@ -103,7 +151,7 @@ function snippetTransformer(handoff) {
                     data = _c.sent();
                     // Write the API file
                     // we're in the root directory so this must be version 0.
-                    versions['v0.0.0'] = data;
+                    versions['0.0.0'] = data;
                     return [3 /*break*/, 12];
                 case 4:
                     if (!fs_extra_1.default.lstatSync(path_1.default.resolve(custom, file)).isDirectory()) return [3 /*break*/, 12];
@@ -215,7 +263,7 @@ function processSharedStyles(handoff) {
             switch (_a.label) {
                 case 0:
                     custom = path_1.default.resolve(handoff.workingPath, "integration/snippets");
-                    publicPath = path_1.default.resolve(handoff.workingPath, "public/snippets");
+                    publicPath = path_1.default.resolve(handoff.workingPath, "public/api/component");
                     scssPath = path_1.default.resolve(custom, 'shared.scss');
                     cssPath = path_1.default.resolve(custom, 'shared.css');
                     if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 7];
@@ -236,6 +284,7 @@ function processSharedStyles(handoff) {
                     if (!result.css) return [3 /*break*/, 4];
                     css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
                     cssPath_1 = path_1.default.resolve(publicPath, 'shared.css');
+                    console.log(chalk_1.default.green("Writing shared styles to ".concat(cssPath_1)));
                     return [4 /*yield*/, fs_extra_1.default.writeFile(cssPath_1, result.css)];
                 case 3:
                     _a.sent();
@@ -268,7 +317,7 @@ exports.processSharedStyles = processSharedStyles;
 function processSnippet(handoff, file, sharedStyles, sub) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function () {
-        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, e_3, scss, css, template, previews, _d, _e, _i, previewKey, url, publicFile, bodyEl, code, e_4, splitCSS;
+        var data, custom, publicPath, jsonFile, jsonPath, parsed, json, jsFile, jsPath, js, compiled, e_2, scssFile, scssPath, cssFile, cssPath, result, splitCSS, e_3, scss, css, template, previews, _d, _e, _i, previewKey, url, publicFile, jsCompiled, style, bodyEl, code, e_4;
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0:
@@ -326,11 +375,11 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                     _f.label = 2;
                 case 2:
                     jsFile = file.replace('.html', '.js');
-                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 7];
+                    if (!fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) return [3 /*break*/, 9];
                     console.log(chalk_1.default.green("Detected JS file for ".concat(file)));
                     _f.label = 3;
                 case 3:
-                    _f.trys.push([3, 6, , 7]);
+                    _f.trys.push([3, 8, , 9]);
                     jsPath = path_1.default.resolve(custom, jsFile);
                     return [4 /*yield*/, fs_extra_1.default.readFile(jsPath, 'utf8')];
                 case 4:
@@ -338,26 +387,29 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                     return [4 /*yield*/, (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development')];
                 case 5:
                     compiled = _f.sent();
-                    if (js) {
-                        data.js = js;
-                        data['jsCompiled'] = compiled;
-                    }
-                    return [3 /*break*/, 7];
+                    if (!js) return [3 /*break*/, 7];
+                    data.js = js;
+                    data['jsCompiled'] = compiled;
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, jsFile), compiled)];
                 case 6:
+                    _f.sent();
+                    _f.label = 7;
+                case 7: return [3 /*break*/, 9];
+                case 8:
                     e_2 = _f.sent();
                     console.log(chalk_1.default.red("Error compiling JS for ".concat(file)));
                     console.log(e_2);
-                    return [3 /*break*/, 7];
-                case 7:
+                    return [3 /*break*/, 9];
+                case 9:
                     scssFile = file.replace('.html', '.scss');
                     scssPath = path_1.default.resolve(custom, scssFile);
                     cssFile = file.replace('.html', '.css');
                     cssPath = path_1.default.resolve(custom, cssFile);
-                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 13];
+                    if (!(fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath))) return [3 /*break*/, 21];
                     console.log(chalk_1.default.green("Detected SCSS file for ".concat(file)));
-                    _f.label = 8;
-                case 8:
-                    _f.trys.push([8, 10, , 11]);
+                    _f.label = 10;
+                case 10:
+                    _f.trys.push([10, 18, , 19]);
                     return [4 /*yield*/, sass_1.default.compileAsync(scssPath, {
                             loadPaths: [
                                 path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
@@ -366,88 +418,98 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                                 path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                             ],
                         })];
-                case 9:
+                case 11:
                     result = _f.sent();
-                    if (result.css) {
-                        // @ts-ignore
-                        data['css'] = result.css;
-                    }
-                    return [3 /*break*/, 11];
-                case 10:
+                    if (!result.css) return [3 /*break*/, 17];
+                    // @ts-ignore
+                    data['css'] = result.css;
+                    splitCSS = (_b = data['css']) === null || _b === void 0 ? void 0 : _b.split('/* COMPONENT STYLES*/');
+                    if (!(splitCSS && splitCSS.length > 1)) return [3 /*break*/, 13];
+                    data['css'] = splitCSS[1];
+                    data['sharedStyles'] = splitCSS[0];
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, "shared.css"), data['sharedStyles'])];
+                case 12:
+                    _f.sent();
+                    return [3 /*break*/, 15];
+                case 13: return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, "shared.css"), sharedStyles)];
+                case 14:
+                    _f.sent();
+                    _f.label = 15;
+                case 15: return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, cssFile), data['css'])];
+                case 16:
+                    _f.sent();
+                    _f.label = 17;
+                case 17: return [3 /*break*/, 19];
+                case 18:
                     e_3 = _f.sent();
                     console.log(chalk_1.default.red("Error compiling SCSS for ".concat(file)));
-                    console.log(e_3);
-                    return [3 /*break*/, 11];
-                case 11: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
-                case 12:
+                    throw e_3;
+                case 19: return [4 /*yield*/, fs_extra_1.default.readFile(scssPath, 'utf8')];
+                case 20:
                     scss = _f.sent();
                     if (scss) {
                         data['sass'] = scss;
                     }
-                    _f.label = 13;
-                case 13:
-                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 15];
+                    _f.label = 21;
+                case 21:
+                    if (!fs_extra_1.default.existsSync(cssPath)) return [3 /*break*/, 23];
                     return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8')];
-                case 14:
+                case 22:
                     css = _f.sent();
                     if (css) {
                         data['css'] = css;
                     }
-                    _f.label = 15;
-                case 15: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
-                case 16:
+                    _f.label = 23;
+                case 23: return [4 /*yield*/, fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8')];
+                case 24:
                     template = _f.sent();
-                    _f.label = 17;
-                case 17:
-                    _f.trys.push([17, 22, , 23]);
+                    _f.label = 25;
+                case 25:
+                    _f.trys.push([25, 30, , 31]);
                     previews = {};
                     _d = [];
                     for (_e in data.previews)
                         _d.push(_e);
                     _i = 0;
-                    _f.label = 18;
-                case 18:
-                    if (!(_i < _d.length)) return [3 /*break*/, 21];
+                    _f.label = 26;
+                case 26:
+                    if (!(_i < _d.length)) return [3 /*break*/, 29];
                     previewKey = _d[_i];
                     url = file.replace('.html', "-".concat(previewKey, ".html"));
                     data.previews[previewKey].url = url;
                     publicFile = path_1.default.resolve(publicPath, url);
+                    jsCompiled = data['jsCompiled'] ? "<script src=\"/api/component/".concat(jsFile, "\"></script>") : '';
+                    style = data['css'] ? "<link rel=\"stylesheet\" href=\"/api/component/".concat(cssFile, "\">") : '';
+                    if (data['sharedStyles']) {
+                        style = "<link rel=\"stylesheet\" href=\"/api/component/shared.css\">" + style;
+                    }
                     previews[previewKey] = handlebars_1.default.compile(template)({
                         config: handoff.config,
-                        style: data['css'] ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(data['css'], "</style>") : '',
-                        script: data['jsCompiled']
-                            ? "<script src=\"data:text/javascript;base64,".concat(Buffer.from(data['jsCompiled']).toString('base64'), "\"></script>")
-                            : '',
-                        sharedStyles: sharedStyles ? "<style rel=\"stylesheet\" type=\"text/css\">".concat(sharedStyles, "</style>") : 'shared',
-                        slot: ((_b = data.previews[previewKey]) === null || _b === void 0 ? void 0 : _b.values) || {},
+                        style: style,
+                        script: jsCompiled + '\n' + webSocketClientJS,
+                        sharedStyles: data['css'] ? "<link rel=\"stylesheet\" href=\"/api/component/shared.css\">" : '',
+                        slot: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
                     });
                     return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, previews[previewKey])];
-                case 19:
+                case 27:
                     _f.sent();
-                    _f.label = 20;
-                case 20:
+                    _f.label = 28;
+                case 28:
                     _i++;
-                    return [3 /*break*/, 18];
-                case 21:
+                    return [3 /*break*/, 26];
+                case 29:
                     data.preview = '';
                     bodyEl = (0, node_html_parser_1.parse)(template).querySelector('body');
                     code = bodyEl ? bodyEl.innerHTML.trim() : template;
                     data['code'] = code;
                     data['sharedStyles'] = sharedStyles;
-                    return [3 /*break*/, 23];
-                case 22:
+                    return [3 /*break*/, 31];
+                case 30:
                     e_4 = _f.sent();
                     console.log(e_4);
                     // write the preview to the public folder
                     throw new Error('stop');
-                case 23:
-                    splitCSS = (_c = data['css']) === null || _c === void 0 ? void 0 : _c.split('/* COMPONENT STYLES*/');
-                    // If there are two parts, the first part is the shared styles
-                    if (splitCSS && splitCSS.length > 1) {
-                        data['css'] = splitCSS[1];
-                        data['sharedStyles'] = splitCSS[0];
-                    }
-                    return [2 /*return*/, data];
+                case 31: return [2 /*return*/, data];
             }
         });
     });

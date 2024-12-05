@@ -51,7 +51,7 @@ export const ComponentDisplay: React.FC<{
   defaultHeight?: string | undefined;
 }> = ({ component, breakpoints, defaultHeight }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = React.useState('100px');
+  const [height, setHeight] = React.useState('500px');
   const [previewUrl, setPreviewUrl] = React.useState('');
   const [width, setWidth] = React.useState('100%');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
@@ -73,6 +73,7 @@ export const ComponentDisplay: React.FC<{
         });
       }
     }
+    console.log('loading');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultHeight, ref, breakpoints]);
 
@@ -88,8 +89,8 @@ export const ComponentDisplay: React.FC<{
     if (component) {
       if (component.previews) {
         const keys = Object.keys(component.previews);
-        console.log('keys', keys, keys[0], component.previews[keys[0]]);
-        setPreviewUrl(component.previews[keys[0]].url);
+        // check the environment
+        setPreviewUrl(`/api/component/` + component.previews[keys[0]].url);
       }
     }
   }, [component]);
@@ -146,7 +147,7 @@ export const ComponentDisplay: React.FC<{
               minWidth: width,
               height: height,
             }}
-            src={`/api/component/${previewUrl}`}
+            src={previewUrl}
           />
         </>
       ) : (
@@ -238,7 +239,7 @@ export const ComponentSlots: React.FC<{ fields: SlotMetadata[] }> = ({ fields })
       default:
         return rule;
     }
-  }
+  };
   return (
     <div className="c-component-preview__slots">
       {fields.map((field) => {
@@ -246,11 +247,15 @@ export const ComponentSlots: React.FC<{ fields: SlotMetadata[] }> = ({ fields })
           <div key={field.key} className="c-component-preview__slot">
             <h4>{startCase(field.name)}</h4>
             <div className="c-component-preview__slot__content">
-              <p>This field is a {field.type}. {field.description}</p>
+              <p>
+                This field is a {field.type}. {field.description}
+              </p>
               {field.validation &&
                 Object.keys(field.validation).map((rule) => (
                   <div key={field.key + rule} className="c-component-preview__slot__content__example">
-                    <div className="c-component-preview__slot__content__example__label">{humanReadableRule(rule, field.validation[rule])}</div>
+                    <div className="c-component-preview__slot__content__example__label">
+                      {humanReadableRule(rule, field.validation[rule])}
+                    </div>
                   </div>
                 ))}
             </div>

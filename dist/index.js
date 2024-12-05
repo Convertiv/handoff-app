@@ -212,12 +212,15 @@ var Handoff = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         this.preRunner();
-                        if (!this.config) return [3 /*break*/, 2];
+                        if (!this.config) return [3 /*break*/, 3];
                         return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(this)];
                     case 1:
                         _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
+                        return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [2 /*return*/, this];
                 }
             });
         });

@@ -91,6 +91,9 @@ var makeIntegration = function (handoff) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
             case 1:
                 _a.sent();
+                return [4 /*yield*/, (0, pipeline_1.buildSnippets)(handoff)];
+            case 2:
+                _a.sent();
                 return [2 /*return*/, handoff];
         }
     });

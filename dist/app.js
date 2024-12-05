@@ -246,17 +246,20 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
             case 2:
                 // If we are building the app, ensure the integration is built first
                 _a.sent();
+                return [4 /*yield*/, (0, pipeline_1.buildSnippets)(handoff)];
+            case 3:
+                _a.sent();
                 // Build client preview styles
                 return [4 /*yield*/, (0, preview_1.buildClientFiles)(handoff)
                         .then(function (value) { return !!value && console.log(chalk_1.default.green(value)); })
                         .catch(function (error) {
                         throw new Error(error);
                     })];
-            case 3:
+            case 4:
                 // Build client preview styles
                 _a.sent();
                 return [4 /*yield*/, prepareProjectApp(handoff)];
-            case 4:
+            case 5:
                 appPath = _a.sent();
                 // Build app
                 return [4 /*yield*/, (0, next_build_1.nextBuild)({
@@ -267,7 +270,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         experimentalTurbo: false,
                         experimentalBuildMode: 'default',
                     }, appPath)];
-            case 5:
+            case 6:
                 // Build app
                 _a.sent();
                 outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -289,7 +292,7 @@ var buildApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
  * @param handoff
  */
 var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, function () {
-    var appPath, dev, hostname, port, app, handle, moduleOutput, chokidarConfig, debounce;
+    var appPath, dev, hostname, port, app, handle, moduleOutput, sendMessageToSnippet, chokidarConfig, debounce;
     var _a, _b;
     return __generator(this, function (_c) {
         switch (_c.label) {
@@ -386,6 +389,9 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                         console.log("> Ready on http://".concat(hostname, ":").concat(port));
                     });
                 });
+                return [4 /*yield*/, (0, snippets_1.createFrameSocket)(handoff)];
+            case 3:
+                sendMessageToSnippet = _c.sent();
                 chokidarConfig = {
                     ignored: /(^|[\/\\])\../,
                     persistent: true,
@@ -422,22 +428,7 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                 }
                 if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
                     chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', function (event, path) { return __awaiter(void 0, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (event) {
-                                case 'add':
-                                case 'change':
-                                case 'unlink':
-                                    console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
-                                    mergePublicDir(handoff);
-                                    break;
-                            }
-                            return [2 /*return*/];
-                        });
-                    }); });
-                }
-                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
-                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
-                        var _a, sharedStyles;
+                        var _a;
                         return __generator(this, function (_b) {
                             switch (_b.label) {
                                 case 0:
@@ -447,28 +438,65 @@ var watchApp = function (handoff) { return __awaiter(void 0, void 0, void 0, fun
                                         case 'change': return [3 /*break*/, 1];
                                         case 'unlink': return [3 /*break*/, 1];
                                     }
-                                    return [3 /*break*/, 8];
+                                    return [3 /*break*/, 3];
                                 case 1:
-                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 7];
+                                    console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
+                                    return [4 /*yield*/, mergePublicDir(handoff)];
+                                case 2:
+                                    _b.sent();
+                                    sendMessageToSnippet('reload');
+                                    return [3 /*break*/, 3];
+                                case 3: return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                }
+                if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration'))) {
+                    chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration'), chokidarConfig).on('all', function (event, file) { return __awaiter(void 0, void 0, void 0, function () {
+                        var _a;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _a = event;
+                                    switch (_a) {
+                                        case 'add': return [3 /*break*/, 1];
+                                        case 'change': return [3 /*break*/, 1];
+                                        case 'unlink': return [3 /*break*/, 1];
+                                    }
+                                    return [3 /*break*/, 11];
+                                case 1:
+                                    if (!((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce)) return [3 /*break*/, 10];
                                     console.log(chalk_1.default.yellow("Integration ".concat(event, "ed. Handoff will rerender the integrations...")), file);
                                     debounce = true;
-                                    if (!file.includes('snippet')) return [3 /*break*/, 4];
-                                    return [4 /*yield*/, (0, snippets_1.processSharedStyles)(handoff)];
+                                    if (!file.includes('snippet')) return [3 /*break*/, 3];
+                                    console.log(chalk_1.default.yellow("Processing snippet..."), file);
+                                    return [4 /*yield*/, (0, snippets_1.processSnippet)(handoff, path_1.default.parse(file).name + '.html', null)];
                                 case 2:
-                                    sharedStyles = _b.sent();
-                                    return [4 /*yield*/, (0, snippets_1.processSnippet)(handoff, path_1.default.basename(file), sharedStyles)];
-                                case 3:
                                     _b.sent();
-                                    return [3 /*break*/, 6];
-                                case 4: return [4 /*yield*/, handoff.integration()];
+                                    return [3 /*break*/, 9];
+                                case 3:
+                                    if (!file.includes('scss')) return [3 /*break*/, 6];
+                                    // rebuild just the shared styles
+                                    return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
+                                case 4:
+                                    // rebuild just the shared styles
+                                    _b.sent();
+                                    return [4 /*yield*/, (0, snippets_1.processSharedStyles)(handoff)];
                                 case 5:
                                     _b.sent();
-                                    _b.label = 6;
-                                case 6:
+                                    return [3 /*break*/, 9];
+                                case 6: return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(handoff)];
+                                case 7:
+                                    _b.sent();
+                                    return [4 /*yield*/, (0, pipeline_1.buildSnippets)(handoff)];
+                                case 8:
+                                    _b.sent();
+                                    _b.label = 9;
+                                case 9:
                                     debounce = false;
-                                    _b.label = 7;
-                                case 7: return [3 /*break*/, 8];
-                                case 8: return [2 /*return*/];
+                                    _b.label = 10;
+                                case 10: return [3 /*break*/, 11];
+                                case 11: return [2 /*return*/];
                             }
                         });
                     }); });

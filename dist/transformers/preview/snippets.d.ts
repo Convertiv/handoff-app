@@ -19,6 +19,13 @@ export interface SlotMetadata {
     validation?: string;
 }
 /**
+ * In dev mode we want to watch the snippets folder for changes
+ * @param handoff
+ * @returns
+ * @returns
+ */
+export declare const createFrameSocket: (handoff: Handoff) => Promise<(message: string) => void>;
+/**
  * Create a snippet transformer
  * @param handoff
  * @param documentationObject

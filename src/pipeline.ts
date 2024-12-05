@@ -445,7 +445,6 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
     handoff.integrationObject = initIntegrationObject(handoff);
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
-    await buildSnippets(handoff);
   }
 };
 
