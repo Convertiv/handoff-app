@@ -124,6 +124,10 @@ export default async function previewTransformer(handoff: Handoff, documentation
 const publishTokensAPI = async (handoff: Handoff, tokens: DocumentationObject) => {
   // get public api path
   const apiPath = path.resolve(path.join(handoff.workingPath, 'public/api'));
+  // create the api path if it doesn't exist
+  if (!fs.existsSync(apiPath)) {
+    fs.mkdirSync(apiPath, { recursive: true });
+  }
 
   // write tokens to the api path
   fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));

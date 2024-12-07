@@ -166,6 +166,10 @@ var publishTokensAPI = function (handoff, tokens) { return __awaiter(void 0, voi
     var apiPath, type, group;
     return __generator(this, function (_a) {
         apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
+        // create the api path if it doesn't exist
+        if (!fs_extra_1.default.existsSync(apiPath)) {
+            fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
+        }
         // write tokens to the api path
         fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
         if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
