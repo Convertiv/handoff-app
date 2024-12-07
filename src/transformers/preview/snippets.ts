@@ -338,6 +338,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
           data['sharedStyles'] = splitCSS[0];
           await fs.writeFile(path.resolve(publicPath, `shared.css`), data['sharedStyles']);
         } else {
+          if (!sharedStyles) sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
           await fs.writeFile(path.resolve(publicPath, `shared.css`), sharedStyles);
         }
         await fs.writeFile(path.resolve(publicPath, cssFile), data['css']);

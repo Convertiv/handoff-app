@@ -429,7 +429,10 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                 case 12:
                     _f.sent();
                     return [3 /*break*/, 15];
-                case 13: return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, "shared.css"), sharedStyles)];
+                case 13:
+                    if (!sharedStyles)
+                        sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
+                    return [4 /*yield*/, fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, "shared.css"), sharedStyles)];
                 case 14:
                     _f.sent();
                     _f.label = 15;
