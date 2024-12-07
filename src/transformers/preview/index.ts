@@ -7,6 +7,8 @@ import { getComponentTemplate } from './utils';
 import { ComponentInstance } from '../../exporters/components/types';
 import { TokenSets } from '../../exporters/components/types';
 import { TransformComponentTokensResult } from './types';
+import path from 'path';
+import fs from 'fs-extra';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -103,6 +105,8 @@ export default async function previewTransformer(handoff: Handoff, documentation
     })
   );
 
+  await publishTokensAPI(handoff, documentationObject);
+
   let previews = result.reduce((obj, el) => {
     obj[el[0]] = el[1];
     return obj;
@@ -112,3 +116,24 @@ export default async function previewTransformer(handoff: Handoff, documentation
     components: previews,
   };
 }
+
+/**
+ *
+ * @param tokens
+ */
+const publishTokensAPI = async (handoff: Handoff, tokens: DocumentationObject) => {
+  // get public api path
+  const apiPath = path.resolve(path.join(handoff.workingPath, 'public/api'));
+
+  // write tokens to the api path
+  fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
+  if(!fs.existsSync(path.join(apiPath, 'tokens'))) {
+    fs.mkdirSync(path.join(apiPath, 'tokens'));
+  }
+  for (const type in tokens) {
+    if(type === 'timestamp') continue;
+    for (const group in tokens[type]) {
+      fs.writeFileSync(path.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+    }
+  }
+};

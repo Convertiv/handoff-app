@@ -43,6 +43,8 @@ var handlebars_1 = __importDefault(require("handlebars"));
 var node_html_parser_1 = require("node-html-parser");
 var index_1 = require("../../utils/index");
 var utils_1 = require("./utils");
+var path_1 = __importDefault(require("path"));
+var fs_extra_1 = __importDefault(require("fs-extra"));
 function mergeTokenSets(tokenSetList) {
     var obj = {};
     tokenSetList.forEach(function (item) {
@@ -141,6 +143,9 @@ function previewTransformer(handoff, documentationObject) {
                         }); }))];
                 case 1:
                     result = _a.sent();
+                    return [4 /*yield*/, publishTokensAPI(handoff, documentationObject)];
+                case 2:
+                    _a.sent();
                     previews = result.reduce(function (obj, el) {
                         obj[el[0]] = el[1];
                         return obj;
@@ -153,3 +158,26 @@ function previewTransformer(handoff, documentationObject) {
     });
 }
 exports.default = previewTransformer;
+/**
+ *
+ * @param tokens
+ */
+var publishTokensAPI = function (handoff, tokens) { return __awaiter(void 0, void 0, void 0, function () {
+    var apiPath, type, group;
+    return __generator(this, function (_a) {
+        apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
+        // write tokens to the api path
+        fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
+        if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
+            fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'));
+        }
+        for (type in tokens) {
+            if (type === 'timestamp')
+                continue;
+            for (group in tokens[type]) {
+                fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', "".concat(group, ".json")), JSON.stringify(tokens[type][group], null, 2));
+            }
+        }
+        return [2 /*return*/];
+    });
+}); };
