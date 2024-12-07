@@ -121,3 +121,30 @@ iframe {
 		}
 	}
 }
+
+table.c-component-preview__properties {
+	thead {
+	}
+	tbody {
+		tr {
+			td {
+				font-size: 1rem;
+				vertical-align: top;
+				padding: rem(10px);
+				border-bottom: 1px solid #e3e3e3;
+				&:first-child {
+					font-weight: bold;
+				}
+				ul {
+					padding-left: 10px;
+					margin: 0;
+					li {
+						list-style: none;
+						margin-bottom: 0;
+						font-size: 0.8rem;
+					}
+				}
+			}
+		}
+	}
+}

@@ -134,7 +134,9 @@ export const ComponentDisplay: React.FC<{
           <ul className="c-component-preview-tabs">
             {Object.keys(component.previews).map((key) => (
               <li key={key} className="tab">
-                <button onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}>{component.previews[key].title}</button>
+                <button onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}>
+                  {component.previews[key].title}
+                </button>
               </li>
             ))}
           </ul>
@@ -203,37 +205,51 @@ export const SnippetPreview: React.FC<{
     <div id={preview.id}>
       {title ? <h2>{title}</h2> : preview.title ? <h2>{preview.title}</h2> : null}
       {children}
-      {preview?.slots && (
-        <ComponentSlots
-          fields={Object.keys(preview.slots).map((key) => {
-            return { ...preview.slots[key], key };
-          })}
-        />
-      )}
+
       <div className="c-component-preview">
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
       </div>
       <CodeHighlight data={preview} collapsible={true} />
+      {preview?.properties && (
+        <>
+        <h3>Properties</h3>
+        <ComponentProperties
+          fields={Object.keys(preview.properties).map((key) => {
+            return { ...preview.properties[key], key };
+          })}
+        /></>
+      )}
       <hr />
     </div>
   );
 };
 
-export const ComponentSlots: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
+export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
   const humanReadableRule = (rule: string, value: any) => {
     switch (rule) {
       case 'required':
-        return 'This field is required';
-      case 'minLength':
-        return 'This field must be at least ' + value + ' characters long';
-      case 'maxLength':
-        return 'This field must be at most ' + value + ' characters long';
+        return (value) ? 'Required' : 'Optional';
+      case 'content':
+        let type = 'characters';
+        if(value.type) { type = value.type; }
+        return `Contents should at least ${value.min} and at most ${value.max} ${type} long`;
       case 'minValue':
         return 'This field must be at least ' + value;
       case 'maxValue':
         return 'This field must be at most ' + value;
       case 'pattern':
         return 'This field must match the pattern ' + value;
+      case 'dimensions':
+        return `Use a minimum size of ${value.minW}x${value.minHeight} and a maximum size of ${value.maxWidth}x${value.maxHeight}`;
+      case 'maxSize':
+        // translate to human readable byte size
+        if(value < 1024) {
+          return `This field must be at most ${value} bytes`;
+        }
+        if(value < 1024*1024) {
+          return `This field must be at most ${Math.floor(value/1024)} KB`;
+        }
+        return `This field must be at most ${Math.floor(value/(1024*1024))} MB`;
       case 'enum':
         return 'Enumeration';
       default:
@@ -241,27 +257,38 @@ export const ComponentSlots: React.FC<{ fields: SlotMetadata[] }> = ({ fields })
     }
   };
   return (
-    <div className="c-component-preview__slots">
-      {fields.map((field) => {
-        return (
-          <div key={field.key} className="c-component-preview__slot">
-            <h4>{startCase(field.name)}</h4>
-            <div className="c-component-preview__slot__content">
-              <p>
-                This field is a {field.type}. {field.description}
-              </p>
-              {field.validation &&
-                Object.keys(field.validation).map((rule) => (
-                  <div key={field.key + rule} className="c-component-preview__slot__content__example">
-                    <div className="c-component-preview__slot__content__example__label">
-                      {humanReadableRule(rule, field.validation[rule])}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <table className="c-component-preview__properties">
+      <thead>
+        <tr>
+          <th>id</th>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Example</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {fields.map((field) => {
+          return (
+            <tr key={field.key} className="c-component-preview__slot">
+              <td>{field.key}</td>
+              <td>{startCase(field.name)}</td>
+              <td>{field.type}</td>
+              <td>
+                <span className="slot-description">{field.description}</span>
+                <ul className="c-component-preview__slot__content__example">
+                  {field.rules &&
+                    Object.keys(field.rules).map((rule) => (
+                      <li key={field.key + rule} className="c-component-preview__slot__content__example__label">
+                        {humanReadableRule(rule, field.rules[rule])}
+                      </li>
+                    ))}
+                </ul>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
