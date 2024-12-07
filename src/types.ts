@@ -134,7 +134,7 @@ export interface PreviewObject {
       url: string;
     };
   }
-  slots?: { [key: string]: SlotMetadata };
+  properties?: { [key: string]: SlotMetadata };
   code: string;
 }
 

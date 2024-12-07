@@ -10,7 +10,7 @@ export declare type TransformComponentTokensResult = {
     title?: string;
     description?: string;
     previews?: OptionalPreviewRender[];
-    slots?: {
+    properties?: {
         [key: string]: SlotMetadata;
     };
 } | null;

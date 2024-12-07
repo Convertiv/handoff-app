@@ -29,7 +29,7 @@ const ws = new WebSocket('ws://localhost:3001');
 export interface SnippetMetadata {
   title: string;
   description: string;
-  slots: { [key: string]: SlotMetadata };
+  properties: { [key: string]: SlotMetadata };
 }
 
 enum SlotType {
@@ -43,7 +43,7 @@ export interface SlotMetadata {
   generic: string;
   type: SlotType;
   key?: string;
-  validation?: string;
+  rules?: string;
 }
 
 interface ExtWebSocket extends WebSocket {
@@ -253,7 +253,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
         url: file,
       },
     ],
-    slots: {},
+    properties: {},
     code: '',
     js: null,
     css: null,
@@ -283,7 +283,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
         if (parsed) {
           data.title = parsed.title;
           data.description = parsed.description;
-          data.slots = parsed.slots;
+          data.properties = parsed.properties;
           data.previews = parsed.previews;
         }
       } catch (e) {
@@ -379,7 +379,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
         style: style,
         script: jsCompiled + '\n' + webSocketClientJS,
         sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
-        slot: data.previews[previewKey]?.values || {},
+        properties: data.previews[previewKey]?.values || {},
       });
       await fs.writeFile(publicFile, previews[previewKey]);
     }
@@ -398,6 +398,11 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
   return data;
 }
 
+/**
+ * Build the preview API from the component data
+ * @param handoff
+ * @param componentData
+ */
 const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
   const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
 
@@ -414,7 +419,7 @@ const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
         version: componentData[component]['version'],
         title: latest.title,
         description: latest.description,
-        slots: latest.slots,
+        properties: latest.properties,
       });
     } else {
       console.log(`No latest version found for ${component}`);

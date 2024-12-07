@@ -11,7 +11,7 @@ export type TransformComponentTokensResult = {
   title?: string;
   description?: string;
   previews?: OptionalPreviewRender[];
-  slots?: { [key: string]: SlotMetadata };
+  properties?: { [key: string]: SlotMetadata };
 } | null;
 
 export type OptionalPreviewRender = {

@@ -2,7 +2,7 @@ import Handoff from '../../index';
 export interface SnippetMetadata {
     title: string;
     description: string;
-    slots: {
+    properties: {
         [key: string]: SlotMetadata;
     };
 }
@@ -16,7 +16,7 @@ export interface SlotMetadata {
     generic: string;
     type: SlotType;
     key?: string;
-    validation?: string;
+    rules?: string;
 }
 /**
  * In dev mode we want to watch the snippets folder for changes
@@ -62,7 +62,7 @@ export declare function processSnippet(handoff: Handoff, file: string, sharedSty
     title?: string;
     description?: string;
     previews?: import("./types").OptionalPreviewRender[];
-    slots?: {
+    properties?: {
         [key: string]: SlotMetadata;
     };
 }>;

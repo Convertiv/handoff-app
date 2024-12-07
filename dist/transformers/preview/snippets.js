@@ -331,7 +331,7 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                                 url: file,
                             },
                         ],
-                        slots: {},
+                        properties: {},
                         code: '',
                         js: null,
                         css: null,
@@ -361,7 +361,7 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                             if (parsed) {
                                 data.title = parsed.title;
                                 data.description = parsed.description;
-                                data.slots = parsed.slots;
+                                data.properties = parsed.properties;
                                 data.previews = parsed.previews;
                             }
                         }
@@ -486,7 +486,7 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                         style: style,
                         script: jsCompiled + '\n' + webSocketClientJS,
                         sharedStyles: data['css'] ? "<link rel=\"stylesheet\" href=\"/api/component/shared.css\">" : '',
-                        slot: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
+                        properties: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
                     });
                     return [4 /*yield*/, fs_extra_1.default.writeFile(publicFile, previews[previewKey])];
                 case 27:
@@ -513,6 +513,11 @@ function processSnippet(handoff, file, sharedStyles, sub) {
     });
 }
 exports.processSnippet = processSnippet;
+/**
+ * Build the preview API from the component data
+ * @param handoff
+ * @param componentData
+ */
 var buildPreviewAPI = function (handoff, componentData) { return __awaiter(void 0, void 0, void 0, function () {
     var publicPath, files, output, _a, _b, _i, component, latest;
     return __generator(this, function (_c) {
@@ -537,7 +542,7 @@ var buildPreviewAPI = function (handoff, componentData) { return __awaiter(void 
                         version: componentData[component]['version'],
                         title: latest.title,
                         description: latest.description,
-                        slots: latest.slots,
+                        properties: latest.properties,
                     });
                 }
                 else {
