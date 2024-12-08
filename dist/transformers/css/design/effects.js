@@ -6,13 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @returns
  */
 function transformEffects(effects) {
-    var stringBuilder = [];
-    var validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(function (effect) { return effect.effects && effect.effects.length > 0; });
+    const stringBuilder = [];
+    const validEffects = effects === null || effects === void 0 ? void 0 : effects.filter(effect => effect.effects && effect.effects.length > 0);
     if (validEffects) {
-        validEffects.forEach(function (effect) {
-            stringBuilder.push("\t--effect-".concat(effect.group, "-").concat(effect.machineName, ": ").concat(effect.effects.map(function (effect) { return effect.value; }).join(', ') || 'none', ";"));
+        validEffects.forEach(effect => {
+            stringBuilder.push(`	--effect-${effect.group}-${effect.machineName}: ${effect.effects.map(effect => effect.value).join(', ') || 'none'};`);
         });
     }
-    return ":root {\n".concat(stringBuilder.join('\n'), "\n}\n");
+    return `:root {\n${stringBuilder.join('\n')}\n}\n`;
 }
 exports.default = transformEffects;

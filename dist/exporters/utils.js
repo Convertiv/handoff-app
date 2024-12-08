@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeNamePart = exports.isValidGradientType = exports.isShadowEffectType = exports.isValidEffectType = exports.isValidNodeType = exports.isExportable = exports.extractComponentInstanceVariantProps = exports.getComponentInstanceNamePart = exports.findChildNodeWithTypeAndName = exports.findChildNodeWithType = exports.isNodeType = exports.filterByNodeType = void 0;
 function filterByNodeType(type) {
-    return function (obj) { return (obj === null || obj === void 0 ? void 0 : obj.type) === type; };
+    return (obj) => (obj === null || obj === void 0 ? void 0 : obj.type) === type;
 }
 exports.filterByNodeType = filterByNodeType;
 function isNodeType(obj, type) {
@@ -17,9 +17,8 @@ function findChildNodeWithType(node, type) {
         return null;
     }
     if (node.children) {
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
-            var foundNode = findChildNodeWithType(child, type);
+        for (const child of node.children) {
+            const foundNode = findChildNodeWithType(child, type);
             if (foundNode) {
                 return foundNode;
             }
@@ -36,9 +35,8 @@ function findChildNodeWithTypeAndName(node, type, name) {
         return null;
     }
     if (node.children) {
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
-            var foundNode = findChildNodeWithTypeAndName(child, type, name);
+        for (const child of node.children) {
+            const foundNode = findChildNodeWithTypeAndName(child, type, name);
             if (foundNode) {
                 return foundNode;
             }
@@ -51,23 +49,23 @@ function getComponentInstanceNamePart(componentInstanceName, partKey) {
     var _a;
     return (_a = componentInstanceName
         .split(',')
-        .find(function (part) { return part.trim().startsWith("".concat(partKey, "=")); })) === null || _a === void 0 ? void 0 : _a.split('=')[1];
+        .find((part) => part.trim().startsWith(`${partKey}=`))) === null || _a === void 0 ? void 0 : _a.split('=')[1];
 }
 exports.getComponentInstanceNamePart = getComponentInstanceNamePart;
 function extractComponentInstanceVariantProps(componentInstanceName, supportedVariantProps) {
-    var componentVariantProps = new Map();
-    var supportedVariantPropNames = supportedVariantProps;
-    supportedVariantPropNames.forEach(function (supportedVariantPropName) {
+    const componentVariantProps = new Map();
+    const supportedVariantPropNames = supportedVariantProps;
+    supportedVariantPropNames.forEach((supportedVariantPropName) => {
         componentVariantProps.set(supportedVariantPropName, (0, exports.normalizeNamePart)(getComponentInstanceNamePart(componentInstanceName, supportedVariantPropName)));
     });
     return componentVariantProps;
 }
 exports.extractComponentInstanceVariantProps = extractComponentInstanceVariantProps;
-var isExportable = function (exportable) {
+const isExportable = (exportable) => {
     return ['BACKGROUND', 'BORDER', 'SPACING', 'TYPOGRAPHY', 'FILL', 'EFFECT', 'OPACITY', 'SIZE'].includes(exportable);
 };
 exports.isExportable = isExportable;
-var isValidNodeType = function (type) {
+const isValidNodeType = (type) => {
     return [
         'DOCUMENT',
         'CANVAS',
@@ -88,19 +86,19 @@ var isValidNodeType = function (type) {
     ].includes(type);
 };
 exports.isValidNodeType = isValidNodeType;
-var isValidEffectType = function (effect) {
+const isValidEffectType = (effect) => {
     return (0, exports.isShadowEffectType)(effect);
 };
 exports.isValidEffectType = isValidEffectType;
-var isShadowEffectType = function (effect) {
+const isShadowEffectType = (effect) => {
     return ['DROP_SHADOW', 'INNER_SHADOW'].includes(effect);
 };
 exports.isShadowEffectType = isShadowEffectType;
-var isValidGradientType = function (gradientType) {
+const isValidGradientType = (gradientType) => {
     return ['GRADIENT_LINEAR', 'GRADIENT_RADIAL'].includes(gradientType);
 };
 exports.isValidGradientType = isValidGradientType;
-var normalizeNamePart = function (namePart) {
+const normalizeNamePart = (namePart) => {
     return namePart
         .replace(/[^a-z0-9]+/gi, '-')
         .replace(/^-/g, '')

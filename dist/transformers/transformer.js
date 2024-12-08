@@ -1,46 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transform = void 0;
-var utils_1 = require("./utils");
-var tokens_1 = require("./tokens");
+const utils_1 = require("./utils");
+const tokens_1 = require("./tokens");
 /**
  * Performs the transformation of the component tokens.
  * @param component
  * @param options
  * @returns
  */
-var transform = function (tokenType, component, options) {
-    var tokens = [];
-    var _loop_1 = function (part) {
-        var tokenSets = component.parts[part];
+const transform = (tokenType, component, options) => {
+    let tokens = [];
+    for (const part in component.parts) {
+        const tokenSets = component.parts[part];
         if (!tokenSets || tokenSets.length === 0) {
-            return "continue";
+            continue;
         }
-        tokenSets.forEach(function (tokenSet) {
-            return tokens.push.apply(tokens, transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options, tokenSet.reference));
+        tokenSets.forEach((tokenSet) => {
+            return tokens.push(...transformTokens((0, tokens_1.getTokenSetTokens)(tokenSet), tokenType, component, part, options, tokenSet.reference));
         });
-    };
-    for (var part in component.parts) {
-        _loop_1(part);
     }
     return tokens;
 };
 exports.transform = transform;
-var transformTokens = function (tokens, tokenType, component, part, options, reference) {
+const transformTokens = (tokens, tokenType, component, part, options, reference) => {
     return tokens
-        ? Object.entries(tokens).map(function (_a) {
-            var cssProperty = _a[0], value = _a[1];
-            return ({
-                name: (0, utils_1.formatTokenName)(tokenType, component.name, component.variantProperties, part, cssProperty, options),
-                value: value instanceof Array ? value[0] : value,
-                metadata: {
-                    part: part,
-                    cssProperty: cssProperty,
-                    reference: reference,
-                    isSupportedCssProperty: value instanceof Array ? value[1] : true,
-                    nameSegments: (0, utils_1.getTokenNameSegments)(component.name, component.variantProperties, part, cssProperty, options),
-                },
-            });
-        })
+        ? Object.entries(tokens).map(([cssProperty, value]) => ({
+            name: (0, utils_1.formatTokenName)(tokenType, component.name, component.variantProperties, part, cssProperty, options),
+            value: value instanceof Array ? value[0] : value,
+            metadata: {
+                part,
+                cssProperty,
+                reference,
+                isSupportedCssProperty: value instanceof Array ? value[1] : true,
+                nameSegments: (0, utils_1.getTokenNameSegments)(component.name, component.variantProperties, part, cssProperty, options),
+            },
+        }))
         : [];
 };

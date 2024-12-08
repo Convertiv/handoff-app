@@ -1,48 +1,46 @@
 "use strict";
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var isEqual_1 = __importDefault(require("lodash/isEqual"));
-var generateChangelogObjectArr = function (prevArr, newArr, discriminator) {
-    return __spreadArray(__spreadArray(__spreadArray([], newArr
-        .filter(function (newItem) { return !prevArr.find(function (prevItem) { return prevItem[discriminator] === newItem[discriminator]; }); })
-        .map(function (newItem) { return ({ type: 'add', object: newItem }); }), true), prevArr
-        .filter(function (prevItem) { return !newArr.find(function (newItem) { return newItem[discriminator] === prevItem[discriminator]; }); })
-        .map(function (prevItem) { return ({ type: 'delete', object: prevItem }); }), true), newArr
-        .filter(function (newItem) { return prevArr.find(function (prevItem) { return prevItem[discriminator] === newItem[discriminator]; }); })
-        .map(function (newItem) {
-        var prevItem = prevArr.find(function (prevItem) { return prevItem[discriminator] === newItem[discriminator]; });
-        return { type: 'change', old: prevItem, new: newItem };
-    })
-        .filter(function (changeItem) {
-        return !(0, isEqual_1.default)(changeItem.old, changeItem.new);
-    }), true);
+const isEqual_1 = __importDefault(require("lodash/isEqual"));
+const generateChangelogObjectArr = (prevArr, newArr, discriminator) => {
+    return [
+        // find items that exist in newArr but do not in prevArr and mark them as added
+        ...newArr
+            .filter((newItem) => !prevArr.find((prevItem) => prevItem[discriminator] === newItem[discriminator]))
+            .map((newItem) => ({ type: 'add', object: newItem })),
+        // find items that exist in prevArr but do not in newArr and mark them as deleted
+        ...prevArr
+            .filter((prevItem) => !newArr.find((newItem) => newItem[discriminator] === prevItem[discriminator]))
+            .map((prevItem) => ({ type: 'delete', object: prevItem })),
+        // find items that exist both in prevArr and newArr, and filter out equals
+        ...newArr
+            .filter((newItem) => prevArr.find((prevItem) => prevItem[discriminator] === newItem[discriminator]))
+            .map((newItem) => {
+            const prevItem = prevArr.find((prevItem) => prevItem[discriminator] === newItem[discriminator]);
+            return { type: 'change', old: prevItem, new: newItem };
+        })
+            .filter((changeItem) => {
+            return !(0, isEqual_1.default)(changeItem.old, changeItem.new);
+        }),
+    ];
 };
-var generateChangelogRecord = function (prevDoc, newDoc) {
+const generateChangelogRecord = (prevDoc, newDoc) => {
     var _a, _b, _c, _d;
-    var colors = generateChangelogObjectArr((_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.color) !== null && _a !== void 0 ? _a : [], newDoc.design.color, 'sass');
-    var typography = generateChangelogObjectArr((_b = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.typography) !== null && _b !== void 0 ? _b : [], newDoc.design.typography, 'name');
-    var design = colors.length || typography.length
+    const colors = generateChangelogObjectArr((_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.color) !== null && _a !== void 0 ? _a : [], newDoc.design.color, 'sass');
+    const typography = generateChangelogObjectArr((_b = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.typography) !== null && _b !== void 0 ? _b : [], newDoc.design.typography, 'name');
+    const design = colors.length || typography.length
         ? { colors: colors.length ? colors : undefined, typography: typography.length ? typography : undefined }
         : undefined;
-    var icons = generateChangelogObjectArr((_c = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.icons) !== null && _c !== void 0 ? _c : [], newDoc.assets.icons, 'path');
-    var logos = generateChangelogObjectArr((_d = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.logos) !== null && _d !== void 0 ? _d : [], newDoc.assets.logos, 'path');
-    var assets = icons.length || logos.length ? { icons: icons.length ? icons : undefined, logos: logos.length ? logos : undefined } : undefined;
+    const icons = generateChangelogObjectArr((_c = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.icons) !== null && _c !== void 0 ? _c : [], newDoc.assets.icons, 'path');
+    const logos = generateChangelogObjectArr((_d = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.logos) !== null && _d !== void 0 ? _d : [], newDoc.assets.logos, 'path');
+    const assets = icons.length || logos.length ? { icons: icons.length ? icons : undefined, logos: logos.length ? logos : undefined } : undefined;
     if (assets || design) {
         return {
             timestamp: new Date().toISOString(),
-            design: design,
-            assets: assets,
+            design,
+            assets,
         };
     }
     return undefined;

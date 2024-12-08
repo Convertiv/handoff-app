@@ -8,48 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var handlebars_1 = __importDefault(require("handlebars"));
-var node_html_parser_1 = require("node-html-parser");
-var index_1 = require("../../utils/index");
-var utils_1 = require("./utils");
-var path_1 = __importDefault(require("path"));
-var fs_extra_1 = __importDefault(require("fs-extra"));
+const handlebars_1 = __importDefault(require("handlebars"));
+const node_html_parser_1 = require("node-html-parser");
+const index_1 = require("../../utils/index");
+const utils_1 = require("./utils");
+const path_1 = __importDefault(require("path"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
 function mergeTokenSets(tokenSetList) {
-    var obj = {};
-    tokenSetList.forEach(function (item) {
-        Object.entries(item).forEach(function (_a) {
-            var key = _a[0], value = _a[1];
+    const obj = {};
+    tokenSetList.forEach((item) => {
+        Object.entries(item).forEach(([key, value]) => {
             if (key !== 'name') {
                 obj[key] = value;
             }
@@ -57,104 +29,67 @@ function mergeTokenSets(tokenSetList) {
     });
     return obj;
 }
-var getComponentTemplateByComponentId = function (handoff, componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
-    var parts;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                parts = [];
-                component.variantProperties.forEach(function (_a) {
-                    var _ = _a[0], value = _a[1];
-                    return parts.push(value);
-                });
-                return [4 /*yield*/, (0, utils_1.getComponentTemplate)(handoff, componentId, parts)];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
+const getComponentTemplateByComponentId = (handoff, componentId, component) => __awaiter(void 0, void 0, void 0, function* () {
+    const parts = [];
+    component.variantProperties.forEach(([_, value]) => parts.push(value));
+    return yield (0, utils_1.getComponentTemplate)(handoff, componentId, parts);
+});
 /**
  * Transforms the component tokens into a preview and code
  */
-var transformComponentTokens = function (handoff, componentId, component) { return __awaiter(void 0, void 0, void 0, function () {
-    var template, renderableComponent, preview, bodyEl;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                if (!handoff) {
-                    throw Error('Handoff not initialized');
-                }
-                return [4 /*yield*/, getComponentTemplateByComponentId(handoff, componentId, component)];
-            case 1:
-                template = _a.sent();
-                if (!template) {
-                    return [2 /*return*/, null];
-                }
-                renderableComponent = { variant: {}, parts: {} };
-                component.variantProperties.forEach(function (_a) {
-                    var variantProp = _a[0], value = _a[1];
-                    renderableComponent.variant[variantProp] = value;
-                });
-                if (component.parts) {
-                    Object.keys(component.parts).forEach(function (part) {
-                        renderableComponent.parts[part] = mergeTokenSets(component.parts[part]);
-                    });
-                }
-                preview = handlebars_1.default.compile(template)(renderableComponent);
-                if (handoff.config.app.base_path) {
-                    preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, function (match, capturedGroup) {
-                        return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);
-                    });
-                }
-                bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
-                return [2 /*return*/, {
-                        id: component.id,
-                        preview: preview,
-                        code: bodyEl ? bodyEl.innerHTML.trim() : preview,
-                    }];
-        }
+const transformComponentTokens = (handoff, componentId, component) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!handoff) {
+        throw Error('Handoff not initialized');
+    }
+    const template = yield getComponentTemplateByComponentId(handoff, componentId, component);
+    if (!template) {
+        return null;
+    }
+    const renderableComponent = { variant: {}, parts: {} };
+    component.variantProperties.forEach(([variantProp, value]) => {
+        renderableComponent.variant[variantProp] = value;
     });
-}); };
+    if (component.parts) {
+        Object.keys(component.parts).forEach((part) => {
+            renderableComponent.parts[part] = mergeTokenSets(component.parts[part]);
+        });
+    }
+    let preview = handlebars_1.default.compile(template)(renderableComponent);
+    if (handoff.config.app.base_path) {
+        preview = preview.replace(/(?:href|src|ref)=["']([^"']+)["']/g, (match, capturedGroup) => {
+            return match.replace(capturedGroup, handoff.config.app.base_path + capturedGroup);
+        });
+    }
+    const bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+    return {
+        id: component.id,
+        preview,
+        code: bodyEl ? bodyEl.innerHTML.trim() : preview,
+    };
+});
 /**
  * Transforms the documentation object components into a preview and code
  */
 function previewTransformer(handoff, documentationObject) {
-    return __awaiter(this, void 0, void 0, function () {
-        var components, componentIds, result, previews;
-        var _this = this;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    components = documentationObject.components;
-                    componentIds = Object.keys(components);
-                    return [4 /*yield*/, Promise.all(componentIds.map(function (componentId) { return __awaiter(_this, void 0, void 0, function () {
-                            var _a;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0:
-                                        _a = [componentId];
-                                        return [4 /*yield*/, Promise.all(documentationObject.components[componentId].instances.map(function (instance) {
-                                                return transformComponentTokens(handoff, componentId, instance);
-                                            })).then(function (res) { return res.filter(index_1.filterOutNull); })];
-                                    case 1: return [2 /*return*/, _a.concat([
-                                            _b.sent()
-                                        ])];
-                                }
-                            });
-                        }); }))];
-                case 1:
-                    result = _a.sent();
-                    return [4 /*yield*/, publishTokensAPI(handoff, documentationObject)];
-                case 2:
-                    _a.sent();
-                    previews = result.reduce(function (obj, el) {
-                        obj[el[0]] = el[1];
-                        return obj;
-                    }, {});
-                    return [2 /*return*/, {
-                            components: previews,
-                        }];
-            }
-        });
+    return __awaiter(this, void 0, void 0, function* () {
+        const { components } = documentationObject;
+        const componentIds = Object.keys(components);
+        const result = yield Promise.all(componentIds.map((componentId) => __awaiter(this, void 0, void 0, function* () {
+            return [
+                componentId,
+                yield Promise.all(documentationObject.components[componentId].instances.map((instance) => {
+                    return transformComponentTokens(handoff, componentId, instance);
+                })).then((res) => res.filter(index_1.filterOutNull)),
+            ];
+        })));
+        yield publishTokensAPI(handoff, documentationObject);
+        let previews = result.reduce((obj, el) => {
+            obj[el[0]] = el[1];
+            return obj;
+        }, {});
+        return {
+            components: previews,
+        };
     });
 }
 exports.default = previewTransformer;
@@ -162,26 +97,23 @@ exports.default = previewTransformer;
  *
  * @param tokens
  */
-var publishTokensAPI = function (handoff, tokens) { return __awaiter(void 0, void 0, void 0, function () {
-    var apiPath, type, group;
-    return __generator(this, function (_a) {
-        apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
-        // create the api path if it doesn't exist
-        if (!fs_extra_1.default.existsSync(apiPath)) {
-            fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
+const publishTokensAPI = (handoff, tokens) => __awaiter(void 0, void 0, void 0, function* () {
+    // get public api path
+    const apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
+    // create the api path if it doesn't exist
+    if (!fs_extra_1.default.existsSync(apiPath)) {
+        fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
+    }
+    // write tokens to the api path
+    fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
+    if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
+        fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'));
+    }
+    for (const type in tokens) {
+        if (type === 'timestamp')
+            continue;
+        for (const group in tokens[type]) {
+            fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
         }
-        // write tokens to the api path
-        fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
-        if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
-            fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'));
-        }
-        for (type in tokens) {
-            if (type === 'timestamp')
-                continue;
-            for (group in tokens[type]) {
-                fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', "".concat(group, ".json")), JSON.stringify(tokens[type][group], null, 2));
-            }
-        }
-        return [2 /*return*/];
-    });
-}); };
+    }
+});

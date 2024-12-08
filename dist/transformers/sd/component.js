@@ -1,22 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.transformComponentsToStyleDictionary = void 0;
-var transformer_1 = require("../transformer");
-var component_1 = require("../css/component");
+const transformer_1 = require("../transformer");
+const component_1 = require("../css/component");
 /**
  * Transforms the component tokens into a style dictionary
  * @param alerts
  * @returns
  */
-var transformComponentsToStyleDictionary = function (_, component, handoff, integrationOptions) {
-    var sd = {};
-    component.instances.forEach(function (instance) {
-        var tokens = (0, transformer_1.transform)('sd', instance, integrationOptions);
-        tokens.forEach(function (token) {
-            var tokenNameSegments = token.metadata.nameSegments;
-            var lastIdx = tokenNameSegments.length - 1;
-            var ref = sd;
-            tokenNameSegments.forEach(function (tokenNameSegment, idx) {
+const transformComponentsToStyleDictionary = (_, component, handoff, integrationOptions) => {
+    const sd = {};
+    component.instances.forEach((instance) => {
+        const tokens = (0, transformer_1.transform)('sd', instance, integrationOptions);
+        tokens.forEach((token) => {
+            const tokenNameSegments = token.metadata.nameSegments;
+            const lastIdx = tokenNameSegments.length - 1;
+            let ref = sd;
+            tokenNameSegments.forEach((tokenNameSegment, idx) => {
                 var _a;
                 if (idx === lastIdx) {
                     return;
@@ -24,8 +24,8 @@ var transformComponentsToStyleDictionary = function (_, component, handoff, inte
                 (_a = ref[tokenNameSegment]) !== null && _a !== void 0 ? _a : (ref[tokenNameSegment] = {});
                 ref = ref[tokenNameSegment];
             });
-            var propParts = tokenNameSegments[lastIdx].split('-');
-            propParts.forEach(function (el) {
+            const propParts = tokenNameSegments[lastIdx].split('-');
+            propParts.forEach((el) => {
                 var _a;
                 (_a = ref[el]) !== null && _a !== void 0 ? _a : (ref[el] = {});
                 ref = ref[el];

@@ -45,9 +45,9 @@ exports.getIntersection = getIntersection;
  * @returns
  */
 function rotate(pivot, handle, angle) {
-    var radians = (Math.PI / 180) * angle;
-    var cos = Math.cos(radians);
-    var sin = Math.sin(radians);
+    const radians = (Math.PI / 180) * angle;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
     return {
         x: (cos * (handle.x - pivot.x)) + (sin * (handle.y - pivot.y)) + pivot.x,
         y: (cos * (handle.y - pivot.y)) - (sin * (handle.x - pivot.x)) + pivot.y
@@ -70,8 +70,8 @@ function rotateElipse(pivot, xRadius, yRadius, angle) {
     // rotates points[x, y] some degrees about an origin [cx, cy]
     xRadius = xRadius * 1.5;
     yRadius = yRadius * 1.5;
-    var cosAngle = Math.cos((Math.PI / 180) * (angle + 180));
-    var sinAngle = Math.sin((Math.PI / 180) * (angle + 180));
+    const cosAngle = Math.cos((Math.PI / 180) * (angle + 180));
+    const sinAngle = Math.sin((Math.PI / 180) * (angle + 180));
     return {
         x: (-xRadius * cosAngle) + pivot.x,
         y: (-yRadius * sinAngle) + pivot.y,

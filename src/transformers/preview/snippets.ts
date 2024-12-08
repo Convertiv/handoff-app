@@ -405,10 +405,11 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
  * @param componentData
  */
 const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
-  const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
+  const publicPath = path.resolve(handoff.workingPath, `public/api`);
 
   const files = fs.readdirSync(publicPath);
   const output = [];
+  const content = {};
 
   for (const component in componentData) {
     // find the latest
@@ -422,10 +423,33 @@ const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
         description: latest.description,
         properties: latest.properties,
       });
+      // iterate over the properties and add them to the content
+      for (const property in latest.properties) {
+        if (!content[property]) {
+          content[property] = {
+            id: property,
+            name: latest.properties[property].name,
+            description: latest.properties[property].description,
+            type: latest.properties[property].type,
+            components: [],
+          };
+        } else {
+          // merge the rules
+          // content[property].rules = [...new Set([...content[property].rules, ...latest.properties[property].rules])];
+        }
+        let previews = {};
+        for (const preview in latest.previews) {
+          previews[preview] = latest.previews[preview].values[property] ?? '';
+        }
+        content[property].components.push({ component, previews });
+      }
     } else {
       console.log(`No latest version found for ${component}`);
     }
-    await fs.writeFile(path.resolve(publicPath, `${component}.json`), JSON.stringify(componentData[component], null, 2));
+    await fs.writeFile(path.resolve(publicPath, 'component', `${component}.json`), JSON.stringify(componentData[component], null, 2));
   }
-  await fs.writeFile(publicPath + 's.json', JSON.stringify(output, null, 2));
+
+  // write the content file
+  await fs.writeFile(path.resolve(publicPath, 'content.json'), JSON.stringify(content, null, 2));
+  await fs.writeFile(path.resolve(publicPath, 'components.json'), JSON.stringify(output, null, 2));
 };

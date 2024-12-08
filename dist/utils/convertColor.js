@@ -1,29 +1,9 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.figmaColorToWebRGB = exports.transformFigmaEffectToCssBoxShadow = exports.transformFigmaTextCaseToCssTextTransform = exports.transformFigmaTextDecorationToCss = exports.transformFigmaTextAlignToCss = exports.transformFigmaFillsToCssColor = exports.transformFigmaPaintToCssColor = exports.transformFigmaColorToCssColor = exports.transformFigmaColorToHex = exports.transformFigmaPaintToGradient = exports.transformGradientToCss = void 0;
-var utils_1 = require("../exporters/utils");
-var gradients_1 = require("./gradients");
-var numbers_1 = require("./numbers");
+const utils_1 = require("../exporters/utils");
+const gradients_1 = require("./gradients");
+const numbers_1 = require("./numbers");
 /**
  * Generate a CSS gradient from a color gradient object
 
@@ -31,47 +11,42 @@ var numbers_1 = require("./numbers");
  * @param color
  * @returns
  */
-function transformGradientToCss(color, paintType) {
-    if (paintType === void 0) { paintType = 'GRADIENT_LINEAR'; }
+function transformGradientToCss(color, paintType = 'GRADIENT_LINEAR') {
     // generate the rgbs) {}
-    var params = [];
-    var colors = [];
+    let params = [];
+    let colors = [];
     if (paintType === 'SOLID') {
         params = (0, gradients_1.getLinearGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop) {
-            return "rgba(".concat(figmaColorToWebRGB(stop.color)
-                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
-                .join(', '), ")");
-        });
-        return "linear-gradient(".concat(params[0], "deg, ").concat(colors.join(', '), ")");
+        colors = color.stops.map((stop) => `rgba(${figmaColorToWebRGB(stop.color)
+            .map((val) => (0, numbers_1.normalizeCssNumber)(val))
+            .join(', ')})`);
+        return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
     }
     if (paintType === 'GRADIENT_LINEAR') {
         params = (0, gradients_1.getLinearGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop, i) {
-            return "rgba(".concat(figmaColorToWebRGB(stop.color)
-                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
-                .join(', '), ") ").concat(params[i + 1], "%");
-        });
-        return "linear-gradient(".concat(params[0], "deg, ").concat(colors.join(', '), ")");
+        colors = color.stops.map((stop, i) => `rgba(${figmaColorToWebRGB(stop.color)
+            .map((val) => (0, numbers_1.normalizeCssNumber)(val))
+            .join(', ')}) ${params[i + 1]}%`);
+        return `linear-gradient(${params[0]}deg, ${colors.join(', ')})`;
     }
     if (paintType === 'GRADIENT_RADIAL') {
-        var params_1 = (0, gradients_1.getRadialGradientParamsFromGradientObject)(color);
-        colors = color.stops.map(function (stop) {
+        const params = (0, gradients_1.getRadialGradientParamsFromGradientObject)(color);
+        colors = color.stops.map((stop) => {
             var _a;
-            return "rgba(".concat(figmaColorToWebRGB(stop.color)
-                .map(function (val) { return (0, numbers_1.normalizeCssNumber)(val); })
-                .join(', '), ") ").concat((0, numbers_1.normalizeCssNumber)(Number(Number(((_a = stop.position) !== null && _a !== void 0 ? _a : 0).toFixed(4)) * 100)), "%");
+            return `rgba(${figmaColorToWebRGB(stop.color)
+                .map((val) => (0, numbers_1.normalizeCssNumber)(val))
+                .join(', ')}) ${(0, numbers_1.normalizeCssNumber)(Number(Number(((_a = stop.position) !== null && _a !== void 0 ? _a : 0).toFixed(4)) * 100))}%`;
         });
-        return "radial-gradient(".concat((0, numbers_1.normalizeCssNumber)(params_1[0]), "% ").concat((0, numbers_1.normalizeCssNumber)(params_1[1]), "% at ").concat((0, numbers_1.normalizeCssNumber)(params_1[2]), "% ").concat((0, numbers_1.normalizeCssNumber)(params_1[3]), "%, ").concat(colors.join(', '), ")");
+        return `radial-gradient(${(0, numbers_1.normalizeCssNumber)(params[0])}% ${(0, numbers_1.normalizeCssNumber)(params[1])}% at ${(0, numbers_1.normalizeCssNumber)(params[2])}% ${(0, numbers_1.normalizeCssNumber)(params[3])}%, ${colors.join(', ')})`;
     }
-    return "";
+    return ``;
 }
 exports.transformGradientToCss = transformGradientToCss;
 function transformFigmaPaintToGradient(paint) {
     var _a, _b;
     if (paint.type === 'SOLID') {
         // Process solid as gradient
-        var gradientColor = paint.color && paint.opacity ? __assign(__assign({}, paint.color), { a: paint.opacity }) : paint.color;
+        const gradientColor = paint.color && paint.opacity ? Object.assign(Object.assign({}, paint.color), { a: paint.opacity }) : paint.color;
         return {
             blend: paint.blendMode,
             handles: [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 0 }],
@@ -99,11 +74,11 @@ exports.transformFigmaPaintToGradient = transformFigmaPaintToGradient;
  * figmaRGBToHex({ r: 0, g: 0.1, b: 1, a: 1 })
  */
 function transformFigmaColorToHex(color) {
-    var hex = '#';
-    var rgb = figmaColorToWebRGB(color);
+    let hex = '#';
+    const rgb = figmaColorToWebRGB(color);
     hex += ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
     if (rgb[3] !== undefined) {
-        var a = Math.round(rgb[3] * 255).toString(16);
+        const a = Math.round(rgb[3] * 255).toString(16);
         if (a.length == 1) {
             hex += '0' + a;
         }
@@ -115,41 +90,39 @@ function transformFigmaColorToHex(color) {
     return hex;
 }
 exports.transformFigmaColorToHex = transformFigmaColorToHex;
-var transformFigmaColorToCssColor = function (color) {
-    var r = color.r, g = color.g, b = color.b, a = color.a;
+const transformFigmaColorToCssColor = (color) => {
+    const { r, g, b, a } = color;
     if (a === 1) {
         // transform to hex
         return transformFigmaColorToHex(color);
     }
-    return "rgba(".concat((0, numbers_1.normalizeCssNumber)(r * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(g * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(b * 255), ", ").concat((0, numbers_1.normalizeCssNumber)(a), ")");
+    return `rgba(${(0, numbers_1.normalizeCssNumber)(r * 255)}, ${(0, numbers_1.normalizeCssNumber)(g * 255)}, ${(0, numbers_1.normalizeCssNumber)(b * 255)}, ${(0, numbers_1.normalizeCssNumber)(a)})`;
 };
 exports.transformFigmaColorToCssColor = transformFigmaColorToCssColor;
-function transformFigmaPaintToCssColor(paint, asLinearGradient) {
+function transformFigmaPaintToCssColor(paint, asLinearGradient = false) {
     var _a;
-    if (asLinearGradient === void 0) { asLinearGradient = false; }
     if (paint.type === 'SOLID' && !asLinearGradient) {
         if (!paint.color) {
             return null;
         }
-        var _b = paint.color || { r: 0, g: 0, b: 0, a: 0 }, r = _b.r, g = _b.g, b = _b.b, a = _b.a;
-        return (0, exports.transformFigmaColorToCssColor)({ r: r, g: g, b: b, a: a * ((_a = paint.opacity) !== null && _a !== void 0 ? _a : 1) });
+        const { r, g, b, a } = paint.color || { r: 0, g: 0, b: 0, a: 0 };
+        return (0, exports.transformFigmaColorToCssColor)({ r, g, b, a: a * ((_a = paint.opacity) !== null && _a !== void 0 ? _a : 1) });
     }
-    var gradient = transformFigmaPaintToGradient(paint);
+    const gradient = transformFigmaPaintToGradient(paint);
     return gradient ? transformGradientToCss(gradient, paint.type) : null;
 }
 exports.transformFigmaPaintToCssColor = transformFigmaPaintToCssColor;
-var transformFigmaFillsToCssColor = function (fills, forceHexOrRgbaValue) {
+const transformFigmaFillsToCssColor = (fills, forceHexOrRgbaValue = false) => {
     var _a;
-    if (forceHexOrRgbaValue === void 0) { forceHexOrRgbaValue = false; }
-    var count = (_a = fills === null || fills === void 0 ? void 0 : fills.length) !== null && _a !== void 0 ? _a : 0;
-    var hasLayers = count > 0;
-    var hasMultipleLayers = count > 1;
-    var shouldForceHexOrRgbaValue = forceHexOrRgbaValue && fills.filter(function (f) { return f.type !== 'SOLID'; }).length === 0;
-    var colorValue = 'transparent';
-    var blendValue = 'normal';
+    const count = (_a = fills === null || fills === void 0 ? void 0 : fills.length) !== null && _a !== void 0 ? _a : 0;
+    const hasLayers = count > 0;
+    const hasMultipleLayers = count > 1;
+    const shouldForceHexOrRgbaValue = forceHexOrRgbaValue && fills.filter((f) => f.type !== 'SOLID').length === 0;
+    let colorValue = 'transparent';
+    let blendValue = 'normal';
     if (hasLayers) {
         if (shouldForceHexOrRgbaValue && hasMultipleLayers) {
-            colorValue = (0, exports.transformFigmaColorToCssColor)(blendFigmaColors(fills.map(function (fill) {
+            colorValue = (0, exports.transformFigmaColorToCssColor)(blendFigmaColors(fills.map(fill => {
                 var _a;
                 return ({
                     r: fill.color.r,
@@ -160,9 +133,9 @@ var transformFigmaFillsToCssColor = function (fills, forceHexOrRgbaValue) {
             })));
         }
         else {
-            fills = __spreadArray([], fills, true).reverse();
-            colorValue = fills.map(function (fill, i) { return transformFigmaPaintToCssColor(fill, hasMultipleLayers && i !== (count - 1)); }).filter(Boolean).join(', ');
-            blendValue = fills.map(function (fill) { return fill.blendMode.toLowerCase().replaceAll('_', '-'); }).filter(Boolean).join(', ');
+            fills = [...fills].reverse();
+            colorValue = fills.map((fill, i) => transformFigmaPaintToCssColor(fill, hasMultipleLayers && i !== (count - 1))).filter(Boolean).join(', ');
+            blendValue = fills.map(fill => fill.blendMode.toLowerCase().replaceAll('_', '-')).filter(Boolean).join(', ');
         }
     }
     return {
@@ -171,11 +144,11 @@ var transformFigmaFillsToCssColor = function (fills, forceHexOrRgbaValue) {
     };
 };
 exports.transformFigmaFillsToCssColor = transformFigmaFillsToCssColor;
-var transformFigmaTextAlignToCss = function (textAlign) {
+const transformFigmaTextAlignToCss = (textAlign) => {
     return ['left', 'center', 'right', 'justify'].includes(textAlign.toLowerCase()) ? textAlign.toLowerCase() : 'left';
 };
 exports.transformFigmaTextAlignToCss = transformFigmaTextAlignToCss;
-var transformFigmaTextDecorationToCss = function (textDecoration) {
+const transformFigmaTextDecorationToCss = (textDecoration) => {
     if (textDecoration === 'UNDERLINE') {
         return 'underline';
     }
@@ -185,7 +158,7 @@ var transformFigmaTextDecorationToCss = function (textDecoration) {
     return 'none';
 };
 exports.transformFigmaTextDecorationToCss = transformFigmaTextDecorationToCss;
-var transformFigmaTextCaseToCssTextTransform = function (textCase) {
+const transformFigmaTextCaseToCssTextTransform = (textCase) => {
     if (textCase === 'UPPER') {
         return 'uppercase';
     }
@@ -198,14 +171,14 @@ var transformFigmaTextCaseToCssTextTransform = function (textCase) {
     return 'none';
 };
 exports.transformFigmaTextCaseToCssTextTransform = transformFigmaTextCaseToCssTextTransform;
-var transformFigmaEffectToCssBoxShadow = function (effect) {
-    var type = effect.type, color = effect.color, offset = effect.offset, radius = effect.radius, visible = effect.visible, spread = effect.spread;
+const transformFigmaEffectToCssBoxShadow = (effect) => {
+    const { type, color, offset, radius, visible, spread } = effect;
     if (!visible) {
         return '';
     }
     if ((0, utils_1.isShadowEffectType)(type) && color && offset) {
-        var x = offset.x, y = offset.y;
-        return "".concat(x, "px ").concat(y, "px ").concat(radius !== null && radius !== void 0 ? radius : 0, "px ").concat(spread ? spread + 'px ' : '').concat((0, exports.transformFigmaColorToCssColor)(color)).concat(type === 'INNER_SHADOW' ? ' inset' : '');
+        const { x, y } = offset;
+        return `${x}px ${y}px ${radius !== null && radius !== void 0 ? radius : 0}px ${spread ? spread + 'px ' : ''}${(0, exports.transformFigmaColorToCssColor)(color)}${type === 'INNER_SHADOW' ? ' inset' : ''}`;
     }
     return '';
 };
@@ -236,9 +209,9 @@ exports.figmaColorToWebRGB = figmaColorToWebRGB;
  */
 function blendFigmaColors(figmaColors) {
     var _a;
-    var base = [0, 0, 0, 0];
-    var mix, added;
-    var colors = figmaColors.map(function (color) { return figmaColorToWebRGB(color); });
+    let base = [0, 0, 0, 0];
+    let mix, added;
+    const colors = figmaColors.map(color => figmaColorToWebRGB(color));
     while (added = colors.shift()) {
         (_a = added[3]) !== null && _a !== void 0 ? _a : (added[3] = 1);
         if (base[3] && added[3]) {

@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -38,9 +27,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClientConfig = exports.defaultConfig = void 0;
-var fs = __importStar(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
-var defaultConfig = function () {
+const fs = __importStar(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
+const defaultConfig = () => {
     var _a, _b, _c, _d, _e;
     return ({
         dev_access_token: (_a = process.env.HANDOFF_DEV_ACCESS_TOKEN) !== null && _a !== void 0 ? _a : null,
@@ -85,24 +74,24 @@ exports.defaultConfig = defaultConfig;
  * Get the configuration formatted for the client, either from the root of the project or from the default config.
  * @returns Promise<Config>
  */
-var getClientConfig = function (configOverride) {
+const getClientConfig = (configOverride) => {
     // Check to see if there is a config in the root of the project
-    var config = {};
-    var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
+    let config = {};
+    let configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs.existsSync(configPath)) {
-        var defBuffer = fs.readFileSync(configPath);
+        const defBuffer = fs.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
     }
     if (configOverride) {
-        config = __assign(__assign({}, config), configOverride);
+        config = Object.assign(Object.assign({}, config), configOverride);
     }
-    var _a = __assign(__assign({}, (0, exports.defaultConfig)()), config), app = _a.app, exportsOutputDirectory = _a.exportsOutputDirectory, sitesOutputDirectory = _a.sitesOutputDirectory, _b = _a.assets_zip_links, assets_zip_links = _b === void 0 ? { icons: null, logos: null } : _b, useVariables = _a.useVariables;
+    const { app, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links = { icons: null, logos: null }, useVariables, } = Object.assign(Object.assign({}, (0, exports.defaultConfig)()), config);
     return {
-        app: app,
-        exportsOutputDirectory: exportsOutputDirectory,
-        sitesOutputDirectory: sitesOutputDirectory,
-        assets_zip_links: assets_zip_links,
-        useVariables: useVariables,
+        app,
+        exportsOutputDirectory,
+        sitesOutputDirectory,
+        assets_zip_links,
+        useVariables,
     };
 };
 exports.getClientConfig = getClientConfig;

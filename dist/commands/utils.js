@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSharedOptions = void 0;
-var getSharedOptions = function (yargs) {
+const getSharedOptions = (yargs) => {
     return yargs.options({
         config: {
             alias: 'c',
