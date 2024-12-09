@@ -14,6 +14,7 @@ interface IMdxContext {
 }
 interface IMdxContextProviderProps {
   children: React.ReactNode;
+  componentList?: Record<string, any>;
   defaultPreview?: PreviewJson;
   defaultMetadata?: Record<string, any>;
   defaultMenu?: Record<string, any>;
@@ -40,11 +41,12 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
     } else {
       // Try to load the component from the public json
       let data = await fetch(`/api/component/${name}.json`).then((res) => res.json());
-      
       return data.latest as PreviewObject;
     }
   };
+
   
+
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);
   return (

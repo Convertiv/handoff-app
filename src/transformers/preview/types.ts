@@ -1,7 +1,28 @@
 import { SlotMetadata } from './snippets';
 
+export enum ComponentType {
+  Element = 'element',
+  Block = 'block',
+  Navigation = 'navigation',
+  Utility = 'utility',
+}
+
+export type ComponentListObject = {
+  id: string;
+  version: string;
+  title: string;
+  type: string;
+  group: string;
+  tags: string[];
+  description: string;
+  properties: { [key: string]: SlotMetadata };
+};
+
 export type TransformComponentTokensResult = {
   id: string;
+  type?: ComponentType;
+  group?: string;
+  tags?: string[];
   code: string;
   preview: string;
   js?: string;

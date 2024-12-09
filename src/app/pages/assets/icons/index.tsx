@@ -13,7 +13,7 @@ import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
-const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
+export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
     // For SSR
     if (typeof window === 'undefined') {

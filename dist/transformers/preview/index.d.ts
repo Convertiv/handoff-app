@@ -7,6 +7,9 @@ export default function previewTransformer(handoff: Handoff, documentationObject
     components: {
         [key: string]: {
             id: string;
+            type?: import("./types").ComponentType;
+            group?: string;
+            tags?: string[];
             code: string;
             preview: string;
             js?: string;

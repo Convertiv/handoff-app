@@ -5,7 +5,7 @@ import { bundleJSWebpack } from '../../utils/preview';
 import chalk from 'chalk';
 import { parse } from 'node-html-parser';
 import Handoff from '../../index';
-import { TransformComponentTokensResult } from './types';
+import { ComponentListObject, ComponentType, TransformComponentTokensResult } from './types';
 import Handlebars from 'handlebars';
 import semver from 'semver';
 import WebSocket from 'ws';
@@ -246,6 +246,9 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     title: 'Untitled',
     description: 'No description provided',
     preview: 'No preview available',
+    type: ComponentType.Element,
+    group: 'default',
+    tags: [],
     previews: [
       {
         title: 'Default',
@@ -282,6 +285,9 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
         // The JSON file defines each of the fields
         if (parsed) {
           data.title = parsed.title;
+          data.type = parsed.type as ComponentType || ComponentType.Element;
+          data.group = parsed.group || 'default';
+          data.tags = parsed.tags || [];
           data.description = parsed.description;
           data.properties = parsed.properties;
           data.previews = parsed.previews;
@@ -408,7 +414,7 @@ const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
   const publicPath = path.resolve(handoff.workingPath, `public/api`);
 
   const files = fs.readdirSync(publicPath);
-  const output = [];
+  const output: ComponentListObject[] = [];
   const content = {};
 
   for (const component in componentData) {
@@ -420,6 +426,9 @@ const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
         id: component,
         version: componentData[component]['version'],
         title: latest.title,
+        type: latest.type,
+        group: latest.group,
+        tags: latest.tags,
         description: latest.description,
         properties: latest.properties,
       });

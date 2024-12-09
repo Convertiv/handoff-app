@@ -1,4 +1,5 @@
 import Handoff from '../../index';
+import { ComponentType } from './types';
 export interface SnippetMetadata {
     title: string;
     description: string;
@@ -53,6 +54,9 @@ export declare function processSharedStyles(handoff: Handoff): Promise<string | 
  */
 export declare function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string): Promise<{
     id: string;
+    type?: ComponentType;
+    group?: string;
+    tags?: string[];
     code: string;
     preview: string;
     js?: string;

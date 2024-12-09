@@ -19,6 +19,7 @@ const sass_1 = __importDefault(require("sass"));
 const preview_1 = require("../../utils/preview");
 const chalk_1 = __importDefault(require("chalk"));
 const node_html_parser_1 = require("node-html-parser");
+const types_1 = require("./types");
 const handlebars_1 = __importDefault(require("handlebars"));
 const semver_1 = __importDefault(require("semver"));
 const ws_1 = __importDefault(require("ws"));
@@ -241,6 +242,9 @@ function processSnippet(handoff, file, sharedStyles, sub) {
             title: 'Untitled',
             description: 'No description provided',
             preview: 'No preview available',
+            type: types_1.ComponentType.Element,
+            group: 'default',
+            tags: [],
             previews: [
                 {
                     title: 'Default',
@@ -276,6 +280,9 @@ function processSnippet(handoff, file, sharedStyles, sub) {
                     // The JSON file defines each of the fields
                     if (parsed) {
                         data.title = parsed.title;
+                        data.type = parsed.type || types_1.ComponentType.Element;
+                        data.group = parsed.group || 'default';
+                        data.tags = parsed.tags || [];
                         data.description = parsed.description;
                         data.properties = parsed.properties;
                         data.previews = parsed.previews;
@@ -414,6 +421,9 @@ const buildPreviewAPI = (handoff, componentData) => __awaiter(void 0, void 0, vo
                 id: component,
                 version: componentData[component]['version'],
                 title: latest.title,
+                type: latest.type,
+                group: latest.group,
+                tags: latest.tags,
                 description: latest.description,
                 properties: latest.properties,
             });
