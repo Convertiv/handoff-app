@@ -49,6 +49,7 @@ exports.toSDMachineName = toSDMachineName;
  * @returns GroupNameData
  */
 const fieldData = (name) => {
+    console.log(name);
     let nameArray = name.split('/');
     const data = {
         name: '',
@@ -57,7 +58,7 @@ const fieldData = (name) => {
     };
     if (nameArray[1]) {
         data.group = (0, exports.toMachineName)(nameArray[0]);
-        data.name = nameArray[1];
+        data.name = nameArray.splice(1).join(' ');
         data.machine_name = (0, exports.toMachineName)(data.name);
     }
     else {
