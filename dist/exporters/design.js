@@ -87,7 +87,6 @@ exports.toSDMachineName = toSDMachineName;
  * @returns GroupNameData
  */
 var fieldData = function (name) {
-    console.log(name);
     var nameArray = name.split('/');
     var data = {
         name: '',

@@ -42,7 +42,6 @@ export const toSDMachineName = (name: string): string => {
  * @returns GroupNameData
  */
 const fieldData = (name: string): GroupNameData => {
-  console.log(name);
   let nameArray = name.split('/');
   const data = {
     name: '',
