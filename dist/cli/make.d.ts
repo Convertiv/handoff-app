@@ -18,4 +18,4 @@ export declare const makePage: (handoff: Handoff, name: string, parent: string |
  * Make a new docs page
  * @param handoff
  */
-export declare const makeSnippet: (handoff: Handoff, name: string) => Promise<Handoff>;
+export declare const makeComponent: (handoff: Handoff, name: string) => Promise<Handoff>;

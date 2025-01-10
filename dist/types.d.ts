@@ -1,7 +1,7 @@
 import type { FileComponentsObject } from './exporters/components/types';
 import { BlendMode } from './figma/types';
 import { Effect } from './figma/types';
-import { SlotMetadata } from './transformers/preview/snippets';
+import { SlotMetadata } from './transformers/preview/component';
 export interface DesignObject {
     color: ColorObject[];
     typography: TypographyObject[];

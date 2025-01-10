@@ -26,7 +26,7 @@ const ws = new WebSocket('ws://localhost:3001');
   };
 </script>
 `;
-export interface SnippetMetadata {
+export interface ComponentMetadata {
   title: string;
   description: string;
   properties: { [key: string]: SlotMetadata };
@@ -51,7 +51,7 @@ interface ExtWebSocket extends WebSocket {
 }
 
 /**
- * In dev mode we want to watch the snippets folder for changes
+ * In dev mode we want to watch the components folder for changes
  * @param handoff
  * @returns
  * @returns
@@ -96,32 +96,32 @@ export const createFrameSocket = async (handoff: Handoff) => {
 //
 
 /**
- * Create a snippet transformer
+ * Create a component transformer
  * @param handoff
  * @param documentationObject
  * @returns
  */
-export async function snippetTransformer(handoff: Handoff) {
-  // Allow a user to create custom previews by putting templates in a snippets folder
+export async function componentTransformer(handoff: Handoff) {
+  // Allow a user to create custom previews by putting templates in a components folder
   // Iterate over the html files in that folder and render them as a preview
-  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
+  const custom = path.resolve(handoff.workingPath, `integration/components`);
 
-  const publicPath = path.resolve(handoff.workingPath, `public/snippets`);
+  const publicPath = path.resolve(handoff.workingPath, `public/components`);
   const publicAPIPath = path.resolve(handoff.workingPath, `public/api/component`);
   // ensure public path exists
   if (!fs.existsSync(publicPath)) {
     fs.mkdirSync(publicPath, { recursive: true });
   }
   if (fs.existsSync(custom)) {
-    console.log(chalk.green(`Rendering Snippet Previews in ${custom}`));
+    console.log(chalk.green(`Rendering Component Previews in ${custom}`));
     const sharedStyles = await processSharedStyles(handoff);
     const files = fs.readdirSync(custom);
     const componentData = {};
     for (const file of files) {
       let versions = {};
       let data = undefined;
-      if (file.endsWith('.html')) {
-        data = await processSnippet(handoff, file, sharedStyles);
+      if (file.endsWith('.hbs')) {
+        data = await processComponent(handoff, file, sharedStyles);
         // Write the API file
         // we're in the root directory so this must be version 0.
         versions['0.0.0'] = data;
@@ -135,8 +135,8 @@ export async function snippetTransformer(handoff: Handoff) {
             const versionFiles = fs.readdirSync(path.resolve(custom, file, versionDirectory));
             for (const versionFile of versionFiles) {
               console.log(`Processing version ${versionDirectory} for ${file}`);
-              if (versionFile.endsWith('.html')) {
-                data = await processSnippet(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
+              if (versionFile.endsWith('.hbs')) {
+                data = await processComponent(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
                 versions[versionDirectory] = data;
               }
             }
@@ -146,7 +146,7 @@ export async function snippetTransformer(handoff: Handoff) {
         }
       }
       if (data) {
-        let name = file.replace('.html', '');
+        let name = file.replace('.hbs', '');
         if (componentData[name]) {
           // merge the versions
           componentData[name] = { ...componentData[name], ...versions };
@@ -171,15 +171,15 @@ export async function snippetTransformer(handoff: Handoff) {
 }
 
 /**
- * A utility function to rename a snippet
+ * A utility function to rename a component
  * @param handoff
  * @param source
  * @param destination
  */
-export async function renameSnippet(handoff: Handoff, source: string, destination: string) {
-  source = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'snippets', source);
-  destination = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'snippets', destination);
-  ['html', 'js', 'scss', 'css'].forEach(async (ext) => {
+export async function renameComponent(handoff: Handoff, source: string, destination: string) {
+  source = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'components', source);
+  destination = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'components', destination);
+  ['hbs', 'js', 'scss', 'css'].forEach(async (ext) => {
     console.log(`Checking for ${source}.${ext}`);
     let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
     if (fs.existsSync(test)) {
@@ -187,7 +187,7 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
     }
   });
 
-  // find any references to the old snippet in the pages and replace them with the new snippet id
+  // find any references to the old component in the pages and replace them with the new component id
   // const pagesPath = path.resolve(this.workingPath, 'integration/pages');
 }
 
@@ -197,7 +197,7 @@ export async function renameSnippet(handoff: Handoff, source: string, destinatio
  * @returns
  */
 export async function processSharedStyles(handoff: Handoff): Promise<string | null> {
-  const custom = path.resolve(handoff.workingPath, `integration/snippets`);
+  const custom = path.resolve(handoff.workingPath, `integration/components`);
   const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
 
   // Is there a scss file with the same name?
@@ -235,14 +235,14 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
 }
 
 /**
- * Process process a specific snippet
+ * Process process a specific component
  * @param handoff
  * @param file
  * @param sharedStyles
  */
-export async function processSnippet(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string) {
+export async function processComponent(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string) {
   let data: TransformComponentTokensResult = {
-    id: file.replace('.html', ''),
+    id: file.replace('.hbs', ''),
     title: 'Untitled',
     description: 'No description provided',
     preview: 'No preview available',
@@ -263,9 +263,9 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     sass: null,
     sharedStyles: sharedStyles,
   };
-  console.log(chalk.green(`Processing snippet ${file}`));
+  console.log(chalk.green(`Processing component ${file}`));
   if (!sub) sub = '';
-  const custom = path.resolve(handoff.workingPath, `integration/snippets`, sub);
+  const custom = path.resolve(handoff.workingPath, `integration/components`, sub);
   const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
   // Ensure the public API path exists
   if (!fs.existsSync(publicPath)) {
@@ -273,7 +273,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
   }
 
   // Is there a JSON file with the same name?
-  const jsonFile = file.replace('.html', '.json');
+  const jsonFile = file.replace('.hbs', '.json');
   const jsonPath = path.resolve(custom, jsonFile);
 
   let parsed: any = {};
@@ -300,7 +300,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
   }
 
   // Is there a JS file with the same name?
-  const jsFile = file.replace('.html', '.js');
+  const jsFile = file.replace('.hbs', '.js');
   if (fs.existsSync(path.resolve(custom, jsFile))) {
     console.log(chalk.green(`Detected JS file for ${file}`));
     try {
@@ -318,9 +318,9 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     }
   }
   // Is there a scss file with the same name?
-  const scssFile = file.replace('.html', '.scss');
+  const scssFile = file.replace('.hbs', '.scss');
   const scssPath = path.resolve(custom, scssFile);
-  const cssFile = file.replace('.html', '.css');
+  const cssFile = file.replace('.hbs', '.css');
   const cssPath = path.resolve(custom, cssFile);
   if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
     console.log(chalk.green(`Detected SCSS file for ${file}`));
@@ -373,7 +373,7 @@ export async function processSnippet(handoff: Handoff, file: string, sharedStyle
     const previews = {};
 
     for (const previewKey in data.previews) {
-      const url = file.replace('.html', `-${previewKey}.html`);
+      const url = file.replace('.hbs', `-${previewKey}.html`);
       data.previews[previewKey].url = url;
       const publicFile = path.resolve(publicPath, url);
       const jsCompiled = data['jsCompiled'] ? `<script src="/api/component/${jsFile}"></script>` : '';

@@ -20,7 +20,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             description?: string;
             previews?: import("./types").OptionalPreviewRender[];
             properties?: {
-                [key: string]: import("./snippets").SlotMetadata;
+                [key: string]: import("./component").SlotMetadata;
             };
         }[];
     };

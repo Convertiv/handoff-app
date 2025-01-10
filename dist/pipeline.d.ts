@@ -5,7 +5,7 @@ import Handoff from '.';
  * @param documentationObject
  * @returns
  */
-export declare const buildSnippets: (handoff: Handoff) => Promise<void>;
+export declare const buildComponents: (handoff: Handoff) => Promise<void>;
 export declare const buildRecipe: (handoff: Handoff) => Promise<void>;
 /**
  * Build only integrations and previews

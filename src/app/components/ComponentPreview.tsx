@@ -6,7 +6,7 @@ import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { useMdxContext } from './context/MdxContext';
-import { SlotMetadata } from '@handoff/transformers/preview/snippets';
+import { SlotMetadata } from '@handoff/transformers/preview/components';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -169,7 +169,7 @@ export const ComponentDisplay: React.FC<{
   );
 };
 
-export const SnippetPreview: React.FC<{
+export const ComponentPreview: React.FC<{
   defaultPreview?: PreviewObject;
   id: string;
   code: string;

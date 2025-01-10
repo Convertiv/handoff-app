@@ -8,14 +8,14 @@ import { DocumentationObject } from './types';
 import { TransformedPreviewComponents } from './transformers/preview/types';
 import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildRecipe, buildSnippets } from './pipeline';
+import pipeline, { buildIntegrationOnly, buildRecipe, buildComponents } from './pipeline';
 import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeSnippet, makeTemplate } from './cli/make';
+import { makeExportable, makePage, makeComponent, makeTemplate } from './cli/make';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { TransformerOutput } from './transformers/types';
 import chalk from 'chalk';
 import { prepareIntegrationObject } from './utils/integration';
-import { processSharedStyles, processSnippet, renameSnippet } from './transformers/preview/snippets';
+import { processSharedStyles, processComponent, renameComponent } from './transformers/preview/component';
 
 class Handoff {
   config: Config | null;
@@ -100,25 +100,26 @@ class Handoff {
     }
     return this;
   }
-  async snippet(name: string | null): Promise<Handoff> {
+  async component(name: string | null): Promise<Handoff> {
     this.preRunner();
     if (this.config) {
       if (name) {
-        // Get snippet path
-        name = name.includes('.html') ? name : `${name}.html`;
-        const snippetPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'snippets', name);
+        // Get component path
+        name = name.includes('.hbs') ? name : `${name}.hbs`;
+        const componentPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'components', name);
         const sharedStyles = await processSharedStyles(this);
-        await processSnippet(this, snippetPath, sharedStyles);
+        //path.parse(file).name + '.hbs'
+        await processComponent(this, componentPath, sharedStyles);
       } else {
-        await buildSnippets(this);
+        await buildComponents(this);
       }
     }
     return this;
   }
-  async renameSnippet(oldName: string, target: string): Promise<Handoff> {
+  async renameComponent(oldName: string, target: string): Promise<Handoff> {
     this.preRunner();
     if (this.config) {
-      renameSnippet(this, oldName, target);
+      renameComponent(this, oldName, target);
     }
     return this;
   }
@@ -126,7 +127,7 @@ class Handoff {
     this.preRunner();
     if (this.config) {
       await buildIntegrationOnly(this);
-      await buildSnippets(this);
+      await buildComponents(this);
     }
     return this;
   }
@@ -186,9 +187,9 @@ class Handoff {
     }
     return this;
   }
-  async makeSnippet(name: string): Promise<Handoff> {
+  async makeComponent(name: string): Promise<Handoff> {
     if (this.config) {
-      await makeSnippet(this, name);
+      await makeComponent(this, name);
     }
     return this;
   }

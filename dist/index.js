@@ -47,7 +47,7 @@ const make_1 = require("./cli/make");
 const integration_1 = require("./transformers/integration");
 const chalk_1 = __importDefault(require("chalk"));
 const integration_2 = require("./utils/integration");
-const snippets_1 = require("./transformers/preview/snippets");
+const component_1 = require("./transformers/preview/component");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -114,30 +114,30 @@ class Handoff {
             return this;
         });
     }
-    snippet(name) {
+    component(name) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             if (this.config) {
                 if (name) {
-                    // Get snippet path
-                    name = name.includes('.html') ? name : `${name}.html`;
-                    const snippetPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', name);
-                    const sharedStyles = yield (0, snippets_1.processSharedStyles)(this);
-                    yield (0, snippets_1.processSnippet)(this, snippetPath, sharedStyles);
+                    // Get component path
+                    name = name.includes('.hbs') ? name : `${name}.hbs`;
+                    const componentPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'components', name);
+                    const sharedStyles = yield (0, component_1.processSharedStyles)(this);
+                    yield (0, component_1.processComponent)(this, componentPath, sharedStyles);
                 }
                 else {
-                    yield (0, pipeline_1.buildSnippets)(this);
+                    yield (0, pipeline_1.buildComponents)(this);
                 }
             }
             return this;
         });
     }
-    renameSnippet(oldName, target) {
+    renameComponent(oldName, target) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             if (this.config) {
-                (0, snippets_1.renameSnippet)(this, oldName, target);
+                (0, component_1.renameComponent)(this, oldName, target);
             }
             return this;
         });
@@ -147,7 +147,7 @@ class Handoff {
             this.preRunner();
             if (this.config) {
                 yield (0, pipeline_1.buildIntegrationOnly)(this);
-                yield (0, pipeline_1.buildSnippets)(this);
+                yield (0, pipeline_1.buildComponents)(this);
             }
             return this;
         });
@@ -226,10 +226,10 @@ class Handoff {
             return this;
         });
     }
-    makeSnippet(name) {
+    makeComponent(name) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config) {
-                yield (0, make_1.makeSnippet)(this, name);
+                yield (0, make_1.makeComponent)(this, name);
             }
             return this;
         });

@@ -27,7 +27,7 @@ import { filterOutNull, filterOutUndefined } from './utils';
 import { ComponentIntegrationRecipe, ComponentIntegrationRecipePart, ComponentIntegrations } from './types/recipes';
 import { findFilesByExtension } from './utils/fs';
 import { getTokenSetNameByProperty } from './transformers/tokens';
-import { snippetTransformer } from './transformers/preview/snippets';
+import { componentTransformer } from './transformers/preview/component';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -85,9 +85,9 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @param documentationObject
  * @returns
  */
-export const buildSnippets = async (handoff: Handoff) => {
+export const buildComponents = async (handoff: Handoff) => {
   await Promise.all([
-    snippetTransformer(handoff),
+    componentTransformer(handoff),
   ]);
 };
 
@@ -463,7 +463,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
   await buildPreviews(handoff, documentationObject);
-  await buildSnippets(handoff);
+  await buildComponents(handoff);
   if (build) {
     await buildApp(handoff);
   }

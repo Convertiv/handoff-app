@@ -152,38 +152,38 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
  * Make a new docs page
  * @param handoff
  */
-export const makeSnippet = async (handoff: Handoff, name: string) => {
+export const makeComponent = async (handoff: Handoff, name: string) => {
   const config = await handoff.config;
   if (!name) {
-    console.log(chalk.red(`Snippet name must be set`));
+    console.log(chalk.red(`Component name must be set`));
     return;
   }
   if (!/^[a-z0-9]+$/i.test(name)) {
-    console.log(chalk.red(`Snippet name must be alphanumeric and may contain dashes or underscores`));
+    console.log(chalk.red(`Component name must be alphanumeric and may contain dashes or underscores`));
     return;
   }
   name = name.replace('.html', '');
 
-  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/snippets`));
+  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components`));
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }
   const targetHtml = path.resolve(workingPath, `${name}.html`);
   if (fs.existsSync(targetHtml)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`'${name}' already exists as custom snippet.`));
+      console.log(chalk.yellow(`'${name}' already exists as custom component.`));
       return;
     }
   }
-  const htmlPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.html'));
+  const htmlPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.html'));
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);
-  console.log(chalk.green(`New snippet ${name}.html was created in ${workingPath}`));
+  console.log(chalk.green(`New component ${name}.html was created in ${workingPath}`));
 
   const writeJSFile = await prompt(chalk.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
   if (writeJSFile === 'y') {
     console.log(chalk.green(`Writing ${name}.js.\n`));
-    const jsPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.js'));
+    const jsPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.js'));
     const jsTemplate = fs.readFileSync(jsPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.js`), jsTemplate);
   }
@@ -191,7 +191,7 @@ export const makeSnippet = async (handoff: Handoff, name: string) => {
 
   if (writeSassFile === 'y') {
     console.log(chalk.green(`Writing ${name}.scss.\n`));
-    const scssPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.scss'));
+    const scssPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.scss'));
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }

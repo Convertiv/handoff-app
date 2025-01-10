@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
-const __1 = __importDefault(require("../../"));
+const __1 = __importDefault(require("../.."));
 const command = {
     command: 'rename:component <source> <destination>',
     describe: 'Rename a component from source to destination and update all references',

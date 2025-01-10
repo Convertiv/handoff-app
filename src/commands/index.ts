@@ -1,7 +1,7 @@
 import buildAppCommand from './build/app';
 import buildIntegrationCommand from './build/integration';
 import buildRecipeCommand from './build/recipe';
-import buildSnippetsCommand from './build/snippets';
+import buildComponentsCommand from './build/components';
 import devCommand from './dev';
 import ejectConfigCommand from './eject/config';
 import ejectExportablesCommand from './eject/exportables';
@@ -14,16 +14,16 @@ import makeExportableCommand from './make/exportable';
 import makeIntegrationCommand from './make/integration';
 import makePageCommand from './make/page';
 import makeSchemaCommand from './make/schema';
-import makeSnippetCommand from './make/snippet';
+import makeComponentCommand from './make/component';
 import makeTemplateCommand from './make/template';
-import renameSnippetCommand from './rename/snippet';
+import renameComponentCommand from './rename/component';
 import startCommand from './start';
 
 export const commands = [
   buildAppCommand,
   buildIntegrationCommand,
   buildRecipeCommand,
-  buildSnippetsCommand,
+  buildComponentsCommand,
   devCommand,
   ejectConfigCommand,
   ejectExportablesCommand,
@@ -36,8 +36,8 @@ export const commands = [
   makeIntegrationCommand,
   makePageCommand,
   makeSchemaCommand,
-  makeSnippetCommand,
+  makeComponentCommand,
   makeTemplateCommand,
-  renameSnippetCommand,
+  renameComponentCommand,
   startCommand,
 ];

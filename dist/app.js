@@ -24,7 +24,7 @@ const chokidar_1 = __importDefault(require("chokidar"));
 const chalk_1 = __importDefault(require("chalk"));
 const gray_matter_1 = __importDefault(require("gray-matter"));
 const preview_1 = require("./utils/preview");
-const snippets_1 = require("./transformers/preview/snippets");
+const component_1 = require("./transformers/preview/component");
 const pipeline_1 = require("./pipeline");
 const getWorkingPublicPath = (handoff) => {
     const paths = [
@@ -225,7 +225,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     yield performCleanup(handoff);
     // If we are building the app, ensure the integration is built first
     yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-    yield (0, pipeline_1.buildSnippets)(handoff);
+    yield (0, pipeline_1.buildComponents)(handoff);
     // Build client preview styles
     yield (0, preview_1.buildClientFiles)(handoff)
         .then((value) => !!value && console.log(chalk_1.default.green(value)))
@@ -336,7 +336,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    const sendMessageToSnippet = yield (0, snippets_1.createFrameSocket)(handoff);
+    const sendMessageToComponent = yield (0, component_1.createFrameSocket)(handoff);
     const chokidarConfig = {
         ignored: /(^|[\/\\])\../,
         persistent: true,
@@ -369,7 +369,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                         debounce = true;
                         console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
                         yield mergePublicDir(handoff);
-                        sendMessageToSnippet('reload');
+                        sendMessageToComponent('reload');
                         debounce = false;
                     }
                     break;
@@ -384,22 +384,22 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'add':
                 case 'change':
                 case 'unlink':
-                    if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
+                    if ((file.includes('json') || file.includes('hbs') || file.includes('js') || file.includes('scss')) && !debounce) {
                         console.log(chalk_1.default.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
                         debounce = true;
-                        if (file.includes('snippet')) {
-                            console.log(chalk_1.default.yellow(`Processing snippet...`), file);
-                            const shared = yield (0, snippets_1.processSharedStyles)(handoff);
-                            yield (0, snippets_1.processSnippet)(handoff, path_1.default.parse(file).name + '.html', shared);
+                        if (file.includes('component')) {
+                            console.log(chalk_1.default.yellow(`Processing component...`), file);
+                            const shared = yield (0, component_1.processSharedStyles)(handoff);
+                            yield (0, component_1.processComponent)(handoff, path_1.default.parse(file).name + '.hbs', shared);
                         }
                         else if (file.includes('scss')) {
                             // rebuild just the shared styles
                             yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                            yield (0, snippets_1.processSharedStyles)(handoff);
+                            yield (0, component_1.processSharedStyles)(handoff);
                         }
                         else {
                             yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                            yield (0, pipeline_1.buildSnippets)(handoff);
+                            yield (0, pipeline_1.buildComponents)(handoff);
                         }
                         debounce = false;
                     }

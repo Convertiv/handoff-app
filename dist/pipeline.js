@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = exports.buildRecipe = exports.buildSnippets = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = exports.buildComponents = void 0;
 const changelog_1 = __importDefault(require("./changelog"));
 const prompt_1 = require("./utils/prompt");
 const chalk_1 = __importDefault(require("chalk"));
@@ -59,7 +59,7 @@ const lodash_1 = require("lodash");
 const utils_1 = require("./utils");
 const fs_1 = require("./utils/fs");
 const tokens_1 = require("./transformers/tokens");
-const snippets_1 = require("./transformers/preview/snippets");
+const component_1 = require("./transformers/preview/component");
 let config;
 const outputPath = (handoff) => path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
 const tokensFilePath = (handoff) => path_1.default.join(outputPath(handoff), 'tokens.json');
@@ -112,12 +112,12 @@ const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0
  * @param documentationObject
  * @returns
  */
-const buildSnippets = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const buildComponents = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     yield Promise.all([
-        (0, snippets_1.snippetTransformer)(handoff),
+        (0, component_1.componentTransformer)(handoff),
     ]);
 });
-exports.buildSnippets = buildSnippets;
+exports.buildComponents = buildComponents;
 /**
  * Build only the styles pipeline
  * @param documentationObject
@@ -379,7 +379,7 @@ const pipeline = (handoff, build) => __awaiter(void 0, void 0, void 0, function*
     yield buildStyles(handoff, documentationObject);
     yield buildIntegration(handoff, documentationObject);
     yield buildPreviews(handoff, documentationObject);
-    yield (0, exports.buildSnippets)(handoff);
+    yield (0, exports.buildComponents)(handoff);
     if (build) {
         yield (0, app_1.default)(handoff);
     }

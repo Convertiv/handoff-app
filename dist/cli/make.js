@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeSnippet = exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
+exports.makeComponent = exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const chalk_1 = __importDefault(require("chalk"));
@@ -156,46 +156,46 @@ exports.makePage = makePage;
  * Make a new docs page
  * @param handoff
  */
-const makeSnippet = (handoff, name) => __awaiter(void 0, void 0, void 0, function* () {
+const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, function* () {
     const config = yield handoff.config;
     if (!name) {
-        console.log(chalk_1.default.red(`Snippet name must be set`));
+        console.log(chalk_1.default.red(`Component name must be set`));
         return;
     }
     if (!/^[a-z0-9]+$/i.test(name)) {
-        console.log(chalk_1.default.red(`Snippet name must be alphanumeric and may contain dashes or underscores`));
+        console.log(chalk_1.default.red(`Component name must be alphanumeric and may contain dashes or underscores`));
         return;
     }
     name = name.replace('.html', '');
-    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/snippets`));
+    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components`));
     if (!fs_extra_1.default.existsSync(workingPath)) {
         fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
     }
     const targetHtml = path_1.default.resolve(workingPath, `${name}.html`);
     if (fs_extra_1.default.existsSync(targetHtml)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`'${name}' already exists as custom snippet.`));
+            console.log(chalk_1.default.yellow(`'${name}' already exists as custom component.`));
             return;
         }
     }
-    const htmlPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.html'));
+    const htmlPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.html'));
     const htmlTemplate = fs_extra_1.default.readFileSync(htmlPath, 'utf8');
     fs_extra_1.default.writeFileSync(targetHtml, htmlTemplate);
-    console.log(chalk_1.default.green(`New snippet ${name}.html was created in ${workingPath}`));
+    console.log(chalk_1.default.green(`New component ${name}.html was created in ${workingPath}`));
     const writeJSFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
     if (writeJSFile === 'y') {
         console.log(chalk_1.default.green(`Writing ${name}.js.\n`));
-        const jsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.js'));
+        const jsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.js'));
         const jsTemplate = fs_extra_1.default.readFileSync(jsPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.js`), jsTemplate);
     }
     const writeSassFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
     if (writeSassFile === 'y') {
         console.log(chalk_1.default.green(`Writing ${name}.scss.\n`));
-        const scssPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'snippet.scss'));
+        const scssPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.scss'));
         const scssTemplate = fs_extra_1.default.readFileSync(scssPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.scss`), scssTemplate);
     }
     return handoff;
 });
-exports.makeSnippet = makeSnippet;
+exports.makeComponent = makeComponent;

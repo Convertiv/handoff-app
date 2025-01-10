@@ -57,7 +57,7 @@ const makeIntegration = (handoff) => __awaiter(void 0, void 0, void 0, function*
         handoff.force = false;
     console.log(chalk_1.default.green(`Integration has been successfully created! Path: ${workingPath}`));
     yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-    yield (0, pipeline_1.buildSnippets)(handoff);
+    yield (0, pipeline_1.buildComponents)(handoff);
     return handoff;
 });
 exports.makeIntegration = makeIntegration;

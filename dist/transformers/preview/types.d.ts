@@ -1,4 +1,4 @@
-import { SlotMetadata } from './snippets';
+import { SlotMetadata } from './component';
 export declare enum ComponentType {
     Element = "element",
     Block = "block",

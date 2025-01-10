@@ -1,4 +1,4 @@
-import { SlotMetadata } from './snippets';
+import { SlotMetadata } from './component';
 
 export enum ComponentType {
   Element = 'element',

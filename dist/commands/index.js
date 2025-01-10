@@ -7,7 +7,7 @@ exports.commands = void 0;
 const app_1 = __importDefault(require("./build/app"));
 const integration_1 = __importDefault(require("./build/integration"));
 const recipe_1 = __importDefault(require("./build/recipe"));
-const snippets_1 = __importDefault(require("./build/snippets"));
+const components_1 = __importDefault(require("./build/components"));
 const dev_1 = __importDefault(require("./dev"));
 const config_1 = __importDefault(require("./eject/config"));
 const exportables_1 = __importDefault(require("./eject/exportables"));
@@ -20,15 +20,15 @@ const exportable_1 = __importDefault(require("./make/exportable"));
 const integration_3 = __importDefault(require("./make/integration"));
 const page_1 = __importDefault(require("./make/page"));
 const schema_1 = __importDefault(require("./make/schema"));
-const snippet_1 = __importDefault(require("./make/snippet"));
+const component_1 = __importDefault(require("./make/component"));
 const template_1 = __importDefault(require("./make/template"));
-const snippet_2 = __importDefault(require("./rename/snippet"));
+const component_2 = __importDefault(require("./rename/component"));
 const start_1 = __importDefault(require("./start"));
 exports.commands = [
     app_1.default,
     integration_1.default,
     recipe_1.default,
-    snippets_1.default,
+    components_1.default,
     dev_1.default,
     config_1.default,
     exportables_1.default,
@@ -41,8 +41,8 @@ exports.commands = [
     integration_3.default,
     page_1.default,
     schema_1.default,
-    snippet_1.default,
+    component_1.default,
     template_1.default,
-    snippet_2.default,
+    component_2.default,
     start_1.default,
 ];

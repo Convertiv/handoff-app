@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
 const __1 = __importDefault(require("../../"));
 const command = {
-    command: 'make:snippet <name>',
-    describe: 'Create a new html code snippet that you can embed in your documentation',
+    command: 'make:component <name>',
+    describe: 'Create a new html code component that you can embed in your documentation',
     builder: (yargs) => {
         return (0, utils_1.getSharedOptions)(yargs).positional('name', {
             describe: '',
@@ -25,12 +25,12 @@ const command = {
     },
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
         const handoff = new __1.default(args.debug, args.force, { integrationPath: args.integration });
-        const snippetName = args.name;
-        if (!/^[a-z0-9]+$/i.test(snippetName)) {
-            console.error(`Snippet name must be alphanumeric and may contain dashes or underscores`);
+        const componentName = args.name;
+        if (!/^[a-z0-9]+$/i.test(componentName)) {
+            console.error(`Component name must be alphanumeric and may contain dashes or underscores`);
             return;
         }
-        yield handoff.makeSnippet(snippetName);
+        yield handoff.makeComponent(componentName);
     }),
 };
 exports.default = command;

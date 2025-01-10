@@ -10,8 +10,8 @@ import chokidar from 'chokidar';
 import chalk from 'chalk';
 import matter from 'gray-matter';
 import { buildClientFiles } from './utils/preview';
-import { createFrameSocket, processSharedStyles, processSnippet } from './transformers/preview/snippets';
-import { buildIntegrationOnly, buildSnippets } from './pipeline';
+import { createFrameSocket, processSharedStyles, processComponent } from './transformers/preview/component';
+import { buildIntegrationOnly, buildComponents } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -223,7 +223,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
 
   // If we are building the app, ensure the integration is built first
   await buildIntegrationOnly(handoff);
-  await buildSnippets(handoff);
+  await buildComponents(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -348,7 +348,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       });
   });
 
-  const sendMessageToSnippet = await createFrameSocket(handoff);
+  const sendMessageToComponent = await createFrameSocket(handoff);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -382,7 +382,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             debounce = true;
             console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
             await mergePublicDir(handoff);
-            sendMessageToSnippet('reload');
+            sendMessageToComponent('reload');
             debounce = false;
           }
           break;
@@ -398,20 +398,20 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
           case 'add':
           case 'change':
           case 'unlink':
-            if ((file.includes('json') || file.includes('html') || file.includes('js') || file.includes('scss')) && !debounce) {
+            if ((file.includes('json') || file.includes('hbs') || file.includes('js') || file.includes('scss')) && !debounce) {
               console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
               debounce = true;
-              if (file.includes('snippet')) {
-                console.log(chalk.yellow(`Processing snippet...`), file);
+              if (file.includes('component')) {
+                console.log(chalk.yellow(`Processing component...`), file);
                 const shared = await processSharedStyles(handoff);
-                await processSnippet(handoff, path.parse(file).name + '.html', shared);
+                await processComponent(handoff, file, shared);
               } else if (file.includes('scss')) {
                 // rebuild just the shared styles
                 await buildIntegrationOnly(handoff);
                 await processSharedStyles(handoff);
               } else {
                 await buildIntegrationOnly(handoff);
-                await buildSnippets(handoff);
+                await buildComponents(handoff);
               }
               debounce = false;
             }
