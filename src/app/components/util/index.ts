@@ -364,15 +364,50 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * @returns {string[]}
  */
 export const fetchComponents = () => {
+  let components = getTokens().components;
+  // get the path for the integration templates
+  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+  // find the path to the components
+  const templatesPath = path.resolve(integrationPath, 'components');
+  // Read the template directory and use it to populate the components with json files
+  fs.readdirSync(templatesPath).map((file) => {
+    // ok, the file should have either a json file or a semver directory
+    const metadata = getLatestComponentMetadata(file);
+    if (metadata) {
+      components[file] = metadata;
+    }
+  });
+  const items =
+    Object.entries(components).map(([id, obj]) => ({
+      id,
+      group: obj.group || '', // TODO
+      name: obj.name || '',
+      description: obj.description || '',
+    })) ?? [];
   try {
-    return (
-      Object.entries(getTokens().components).map(([id, obj]) => ({
-        id,
-        group: '', // TODO
-      })) ?? []
-    );
+    return items;
   } catch (e) {
     return [];
+  }
+};
+
+export const getLatestComponentMetadata = (id: string) => {
+  // get the path for the integration templates
+  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+  // find the path to the components
+  const templatesPath = path.resolve(integrationPath, 'components', id);
+  if (!fs.existsSync(templatesPath)) return false;
+  const versions = fs.readdirSync(templatesPath);
+  const latestVersion = versions.sort().pop();
+  const versionPath = path.resolve(templatesPath, latestVersion, `${id}.json`);
+  if (!fs.existsSync(versionPath)) return false;
+  try {
+    const data = fs.readFileSync(versionPath, 'utf-8');
+    console.log('Data', data);
+    return JSON.parse(data.toString());
+  } catch (e) {
+    console.log('Error', e, versionPath);
+    throw new Error(`Error reading ${versionPath}`);
   }
 };
 
@@ -552,6 +587,12 @@ export const titleString = (prefix: string | null): string => {
   return `${prefix}${config?.app?.client} Design System`;
 };
 
+/**
+ * Get the tokens for a component
+ * @param component
+ * @param type
+ * @returns
+ */
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
   const baseSearchPath = process.env.HANDOFF_EXPORT_PATH
@@ -579,4 +620,3 @@ export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'sty
   }
   return tokens;
 };
-

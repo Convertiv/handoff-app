@@ -52,7 +52,7 @@ export declare function processSharedStyles(handoff: Handoff): Promise<string | 
  * @param file
  * @param sharedStyles
  */
-export declare function processComponent(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string): Promise<{
+export declare function processComponent(handoff: Handoff, file: string, sharedStyles: string | null, version?: string): Promise<{
     id: string;
     type?: ComponentType;
     group?: string;

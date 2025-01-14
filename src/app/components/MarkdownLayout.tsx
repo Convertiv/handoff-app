@@ -5,7 +5,7 @@ import startCase from 'lodash/startCase';
 import Header from './Header';
 import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
-import { MdxContextProvider } from './context/MdxContext';
+import { PreviewContextProvider } from './context/PreviewContext';
 import { PreviewJson } from '@handoff/types';
 
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
@@ -27,9 +27,9 @@ const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPre
       <section className={`c-content${wide ? ' c-content__wide' : ''}`}>
         <div className="o-container-fluid o-container__markdown">
           {' '}
-          <MdxContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={allPreviews} defaultConfig={config}>
+          <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={allPreviews} defaultConfig={config}>
             {children}
-          </MdxContextProvider>
+          </PreviewContextProvider>
         </div>
       </section>
       <Footer config={config} />

@@ -5,8 +5,8 @@ import { ComponentInstance } from '@handoff/exporters/components/types';
 import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
-import { useMdxContext } from './context/MdxContext';
-import { SlotMetadata } from '@handoff/transformers/preview/components';
+import { usePreviewContext } from './context/PreviewContext';
+import { SlotMetadata } from '../../transformers/preview/component';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -73,7 +73,6 @@ export const ComponentDisplay: React.FC<{
         });
       }
     }
-    console.log('loading');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultHeight, ref, breakpoints]);
 
@@ -172,12 +171,12 @@ export const ComponentDisplay: React.FC<{
 export const ComponentPreview: React.FC<{
   defaultPreview?: PreviewObject;
   id: string;
-  code: string;
+  code?: string;
   title: string;
   children: React.ReactNode;
   height?: string;
 }> = ({ defaultPreview, title, children, id, height }) => {
-  const context = useMdxContext();
+  const context = usePreviewContext();
   const config = context.config;
   const [loaded, setLoaded] = React.useState(false);
   const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);

@@ -240,9 +240,10 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
  * @param file
  * @param sharedStyles
  */
-export async function processComponent(handoff: Handoff, file: string, sharedStyles: string | null, sub?: string) {
+export async function processComponent(handoff: Handoff, file: string, sharedStyles: string | null, version?: string) {
+  let id = path.basename(file).replace('.hbs', '');
   let data: TransformComponentTokensResult = {
-    id: file.replace('.hbs', ''),
+    id,
     title: 'Untitled',
     description: 'No description provided',
     preview: 'No preview available',
@@ -264,8 +265,21 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
     sharedStyles: sharedStyles,
   };
   console.log(chalk.green(`Processing component ${file}`));
-  if (!sub) sub = '';
-  const custom = path.resolve(handoff.workingPath, `integration/components`, sub);
+  const componentPath = path.resolve(handoff.workingPath, `integration/components`, id);
+  if (!version) {
+    // find latest version
+    const versions = fs.readdirSync(componentPath).filter((f) => fs.statSync(path.join(componentPath, f)).isDirectory());
+    const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
+    if (!latest) {
+      throw new Error(`No version found for ${id}`);
+    }
+    version = latest;
+  }
+  const custom = version ? path.resolve(componentPath, version) : componentPath;
+  if (!fs.existsSync(custom)) {
+    throw new Error(`No version found for ${id}`);
+  }
+
   const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
   // Ensure the public API path exists
   if (!fs.existsSync(publicPath)) {
@@ -273,9 +287,8 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
   }
 
   // Is there a JSON file with the same name?
-  const jsonFile = file.replace('.hbs', '.json');
+  const jsonFile = id + '.json';
   const jsonPath = path.resolve(custom, jsonFile);
-
   let parsed: any = {};
   if (fs.existsSync(jsonPath)) {
     const json = await fs.readFile(jsonPath, 'utf8');
@@ -285,7 +298,7 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
         // The JSON file defines each of the fields
         if (parsed) {
           data.title = parsed.title;
-          data.type = parsed.type as ComponentType || ComponentType.Element;
+          data.type = (parsed.type as ComponentType) || ComponentType.Element;
           data.group = parsed.group || 'default';
           data.tags = parsed.tags || [];
           data.description = parsed.description;
@@ -300,7 +313,7 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
   }
 
   // Is there a JS file with the same name?
-  const jsFile = file.replace('.hbs', '.js');
+  const jsFile = id + '.js';
   if (fs.existsSync(path.resolve(custom, jsFile))) {
     console.log(chalk.green(`Detected JS file for ${file}`));
     try {
@@ -318,9 +331,9 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
     }
   }
   // Is there a scss file with the same name?
-  const scssFile = file.replace('.hbs', '.scss');
+  const scssFile = id + '.scss';
   const scssPath = path.resolve(custom, scssFile);
-  const cssFile = file.replace('.hbs', '.css');
+  const cssFile = id + '.css';
   const cssPath = path.resolve(custom, cssFile);
   if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
     console.log(chalk.green(`Detected SCSS file for ${file}`));
@@ -353,7 +366,6 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
       console.log(chalk.red(`Error compiling SCSS for ${file}`));
       throw e;
     }
-
     const scss = await fs.readFile(scssPath, 'utf8');
     if (scss) {
       data['sass'] = scss;
@@ -367,13 +379,14 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
       data['css'] = css;
     }
   }
-  const template = await fs.readFile(path.resolve(custom, file), 'utf8');
+
+  const template = await fs.readFile(path.resolve(custom, `${id}.hbs`), 'utf8');
 
   try {
     const previews = {};
 
     for (const previewKey in data.previews) {
-      const url = file.replace('.hbs', `-${previewKey}.html`);
+      const url = id + `-${previewKey}.html`;
       data.previews[previewKey].url = url;
       const publicFile = path.resolve(publicPath, url);
       const jsCompiled = data['jsCompiled'] ? `<script src="/api/component/${jsFile}"></script>` : '';

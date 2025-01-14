@@ -18,8 +18,9 @@ const command = {
     command: 'build:components [component]',
     describe: 'Build the current integration components. Pass a name to build a specific component.',
     builder: (yargs) => {
-        return (0, utils_1.getSharedOptions)(yargs).positional('component', {
-            describe: '',
+        return (0, utils_1.getSharedOptions)(yargs)
+            .positional('component', {
+            describe: 'The name of the component',
             type: 'string',
         });
     },

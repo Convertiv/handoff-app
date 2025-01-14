@@ -28,9 +28,9 @@ class Handoff {
   integrationObject?: IntegrationObject | null;
   integrationHooks: HandoffIntegration;
   designMap: {
-    colors: {},
-    effects: {},
-    typography: {}
+    colors: {};
+    effects: {};
+    typography: {};
   };
   hooks: {
     init: (config: Config) => Config;
@@ -104,9 +104,8 @@ class Handoff {
     this.preRunner();
     if (this.config) {
       if (name) {
-        // Get component path
-        name = name.includes('.hbs') ? name : `${name}.hbs`;
-        const componentPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'components', name);
+        name = name.replace('.hbs', '');
+        let componentPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'components', name);
         const sharedStyles = await processSharedStyles(this);
         //path.parse(file).name + '.hbs'
         await processComponent(this, componentPath, sharedStyles);
@@ -262,7 +261,6 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
   const returnConfig = { ...defaultConfig(), ...config } as unknown as Config;
   return returnConfig;
 };
-
 
 export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
   const integrationPath = path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration');

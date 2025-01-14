@@ -234,11 +234,12 @@ exports.processSharedStyles = processSharedStyles;
  * @param file
  * @param sharedStyles
  */
-function processComponent(handoff, file, sharedStyles, sub) {
+function processComponent(handoff, file, sharedStyles, version) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
+        let id = path_1.default.basename(file).replace('.hbs', '');
         let data = {
-            id: file.replace('.hbs', ''),
+            id,
             title: 'Untitled',
             description: 'No description provided',
             preview: 'No preview available',
@@ -260,16 +261,27 @@ function processComponent(handoff, file, sharedStyles, sub) {
             sharedStyles: sharedStyles,
         };
         console.log(chalk_1.default.green(`Processing component ${file}`));
-        if (!sub)
-            sub = '';
-        const custom = path_1.default.resolve(handoff.workingPath, `integration/components`, sub);
+        const componentPath = path_1.default.resolve(handoff.workingPath, `integration/components`, id);
+        if (!version) {
+            // find latest version
+            const versions = fs_extra_1.default.readdirSync(componentPath).filter((f) => fs_extra_1.default.statSync(path_1.default.join(componentPath, f)).isDirectory());
+            const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
+            if (!latest) {
+                throw new Error(`No version found for ${id}`);
+            }
+            version = latest;
+        }
+        const custom = version ? path_1.default.resolve(componentPath, version) : componentPath;
+        if (!fs_extra_1.default.existsSync(custom)) {
+            throw new Error(`No version found for ${id}`);
+        }
         const publicPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
         // Ensure the public API path exists
         if (!fs_extra_1.default.existsSync(publicPath)) {
             fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
         }
         // Is there a JSON file with the same name?
-        const jsonFile = file.replace('.hbs', '.json');
+        const jsonFile = id + '.json';
         const jsonPath = path_1.default.resolve(custom, jsonFile);
         let parsed = {};
         if (fs_extra_1.default.existsSync(jsonPath)) {
@@ -295,7 +307,7 @@ function processComponent(handoff, file, sharedStyles, sub) {
             }
         }
         // Is there a JS file with the same name?
-        const jsFile = file.replace('.hbs', '.js');
+        const jsFile = id + '.js';
         if (fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) {
             console.log(chalk_1.default.green(`Detected JS file for ${file}`));
             try {
@@ -314,9 +326,9 @@ function processComponent(handoff, file, sharedStyles, sub) {
             }
         }
         // Is there a scss file with the same name?
-        const scssFile = file.replace('.hbs', '.scss');
+        const scssFile = id + '.scss';
         const scssPath = path_1.default.resolve(custom, scssFile);
-        const cssFile = file.replace('.hbs', '.css');
+        const cssFile = id + '.css';
         const cssPath = path_1.default.resolve(custom, cssFile);
         if (fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath)) {
             console.log(chalk_1.default.green(`Detected SCSS file for ${file}`));
@@ -364,11 +376,11 @@ function processComponent(handoff, file, sharedStyles, sub) {
                 data['css'] = css;
             }
         }
-        const template = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, file), 'utf8');
+        const template = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, `${id}.hbs`), 'utf8');
         try {
             const previews = {};
             for (const previewKey in data.previews) {
-                const url = file.replace('.hbs', `-${previewKey}.html`);
+                const url = id + `-${previewKey}.html`;
                 data.previews[previewKey].url = url;
                 const publicFile = path_1.default.resolve(publicPath, url);
                 const jsCompiled = data['jsCompiled'] ? `<script src="/api/component/${jsFile}"></script>` : '';

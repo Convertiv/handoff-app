@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { PreviewJson, PreviewObject } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
-interface IMdxContext {
+interface IPreviewContext {
   preview?: PreviewJson;
   setPreview: (preview: PreviewJson) => void;
   getPreview: (name: string) => Promise<PreviewObject>;
@@ -12,7 +12,7 @@ interface IMdxContext {
   config?: ClientConfig;
   setConfig?: (config: ClientConfig) => void;
 }
-interface IMdxContextProviderProps {
+interface IPreviewContextProviderProps {
   children: React.ReactNode;
   componentList?: Record<string, any>;
   defaultPreview?: PreviewJson;
@@ -21,9 +21,9 @@ interface IMdxContextProviderProps {
   defaultConfig?: ClientConfig;
 }
 
-export const MdxContext = createContext<IMdxContext | undefined>(undefined);
+export const PreviewContext = createContext<IPreviewContext | undefined>(undefined);
 
-export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
+export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   children,
   defaultMenu,
   defaultMetadata,
@@ -50,7 +50,7 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);
   return (
-    <MdxContext.Provider
+    <PreviewContext.Provider
       value={{
         preview,
         setPreview,
@@ -64,14 +64,14 @@ export const MdxContextProvider: React.FC<IMdxContextProviderProps> = ({
       }}
     >
       {children}
-    </MdxContext.Provider>
+    </PreviewContext.Provider>
   );
 };
 
-export const useMdxContext = () => {
-  const context = useContext(MdxContext);
+export const usePreviewContext = () => {
+  const context = useContext(PreviewContext);
   if (!context) {
-    throw new Error('useMdxContext must be used within a MdxContext.');
+    throw new Error('usePreviewContext must be used within a MdxContext.');
   }
   return context;
 };

@@ -120,10 +120,10 @@ class Handoff {
             this.preRunner();
             if (this.config) {
                 if (name) {
-                    // Get component path
-                    name = name.includes('.hbs') ? name : `${name}.hbs`;
-                    const componentPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'components', name);
+                    name = name.replace('.hbs', '');
+                    let componentPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'components', name);
                     const sharedStyles = yield (0, component_1.processSharedStyles)(this);
+                    //path.parse(file).name + '.hbs'
                     yield (0, component_1.processComponent)(this, componentPath, sharedStyles);
                 }
                 else {

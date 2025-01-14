@@ -389,8 +389,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                         debounce = true;
                         if (file.includes('component')) {
                             console.log(chalk_1.default.yellow(`Processing component...`), file);
-                            const shared = yield (0, component_1.processSharedStyles)(handoff);
-                            yield (0, component_1.processComponent)(handoff, path_1.default.parse(file).name + '.hbs', shared);
+                            // const shared = await processSharedStyles(handoff);
+                            // await processComponent(handoff, file, shared);
                         }
                         else if (file.includes('scss')) {
                             // rebuild just the shared styles

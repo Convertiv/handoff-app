@@ -403,8 +403,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               debounce = true;
               if (file.includes('component')) {
                 console.log(chalk.yellow(`Processing component...`), file);
-                const shared = await processSharedStyles(handoff);
-                await processComponent(handoff, file, shared);
+                // const shared = await processSharedStyles(handoff);
+                // await processComponent(handoff, file, shared);
               } else if (file.includes('scss')) {
                 // rebuild just the shared styles
                 await buildIntegrationOnly(handoff);

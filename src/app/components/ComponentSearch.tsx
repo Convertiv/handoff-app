@@ -20,7 +20,6 @@ type ComponentListObject = {
 export const getComponentList = async (): Promise<ComponentListObject[]> => {
   // Try to load the component from the public json
   let data = await fetch(`/api/components.json`).then((res) => res.json());
-  console.log(data);
   return data as ComponentListObject[];
 };
 
@@ -40,7 +39,6 @@ const ComponentSearch = ({}) => {
 
   React.useEffect(() => {
     getComponentList().then((data) => {
-      console.log(data);
       setList(data);
       setLoading(false);
     });
