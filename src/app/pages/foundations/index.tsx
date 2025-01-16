@@ -10,7 +10,7 @@ import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
-import Layout from '@/components/Layout/Main';
+import Layout from '../../components/Layout/Main';
 import HeaderH1 from '@/components/Typography/Headers';
 import { AnchorNav } from '@/components/Navigation/AnchorNavNew';
 import { Code2, Hexagon, Palette, PersonStanding, TypeOutline } from 'lucide-react';

@@ -90,7 +90,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { GetStaticProps } from 'next';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '@/components/util';
 import { getClientConfig } from '@handoff/config';
-import Layout from '@/components/Layout/Main';
 import { ConfigContextProvider } from '@/components/context/ConfigContext';
 
 /**
