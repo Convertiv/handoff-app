@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import {
   ArrowRight,
   BookType,
@@ -42,16 +42,16 @@ import {
   ArrowRightToLine,
 } from 'lucide-react';
 import { ThemeProvider } from '../components/util/theme-provider';
-import { Header } from '@/components/Layout/Header';
-import SideNav from '@/components/Navigation/SideNav';
-import { AnchorNav } from '@/components/Navigation/AnchorNavNew';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
+import { Header } from '../components/Layout/Header';
+import SideNav from '../components/Navigation/SideNav';
+import { AnchorNav } from '../components/Navigation/AnchorNavNew';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Separator } from '../components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '../components/ui/sidebar';
 
 import {
   Sheet,
@@ -62,7 +62,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from '../components/ui/sheet';
 
 import {
   DropdownMenu,
@@ -72,7 +72,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '../components/ui/dropdown-menu';
 
 import {
   Breadcrumb,
@@ -82,15 +82,15 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+} from '../components/ui/breadcrumb';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { GetStaticProps } from 'next';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '@/components/util';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 import { getClientConfig } from '@handoff/config';
-import { ConfigContextProvider } from '@/components/context/ConfigContext';
+import { ConfigContextProvider } from '../components/context/ConfigContext';
 
 /**
  * This statically renders the menu mixing markdown file links with the

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
-import { Layers, ChevronRight, Blend, Type, Sun, LayoutGrid, Shapes, Image, Hexagon } from "lucide-react"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../components/ui/collapsible';
+import { Layers, ChevronRight, Blend, Type, Sun, LayoutGrid, Shapes, Image, Hexagon } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -19,11 +19,11 @@ import {
   SidebarInset,
   SidebarMenuAction,
   SidebarHeader,
-} from "@/components/ui/sidebar"
+} from '../components/ui/sidebar';
 
 export function SideNav() {
   return (
-    <Sidebar className="left-auto sticky">
+    <Sidebar className="sticky left-auto">
       <SidebarContent className="px-4 pt-5">
         <SidebarGroup>
           <SidebarGroupLabel>Getting Started</SidebarGroupLabel>
@@ -149,7 +149,7 @@ export function SideNav() {
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
-                      <Sun className="text-slate-700"/>
+                      <Sun className="text-slate-700" />
                       <span>Effects</span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>

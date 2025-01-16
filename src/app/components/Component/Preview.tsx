@@ -1,12 +1,12 @@
 import React, { useCallback, useContext } from 'react';
-import { CodeHighlight } from './Markdown/CodeHighlight';
+import { CodeHighlight } from '../Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
 import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
-import { usePreviewContext } from './context/PreviewContext';
-import { SlotMetadata } from '../../transformers/preview/component';
+import { usePreviewContext } from '../context/PreviewContext';
+import { SlotMetadata } from '../../../transformers/preview/component';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -94,51 +94,36 @@ export const ComponentDisplay: React.FC<{
     }
   }, [component]);
   return (
-    <>
-      <div className="breakpoint-width">
-        {breakpoints &&
-          Object.keys(breakpoints).map((key) => (
-            <div
-              key={key}
-              className={['breakpoint-width__item', key === breakpoint ? 'active' : ''].join(' ')}
-              onClick={() => {
-                setBreakpoint(key);
-                setWidth(`${breakpoints[key].size}px`);
-              }}
-            >
-              {key}
-              <div className="breakpoint-width__item__label">
-                <span>{breakpoints[key].name}</span> - &nbsp;
-                <span>{breakpoints[key].size}px</span>
-              </div>
-            </div>
-          ))}
-        <div
-          className={['breakpoint-width__item', 'full' === breakpoint ? 'active' : ''].join(' ')}
-          onClick={() => {
-            setBreakpoint('full');
-            setWidth(`100%`);
-          }}
-        >
-          full
-          <div className="breakpoint-width__item__label">
-            <span>Full Width</span> - &nbsp;
-            <span>100%</span>
-          </div>
-        </div>
-      </div>
+    <div className="md:flex">
+      <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+        {component?.previews ? (
+          <>
+            <ul className="hidden rounded-lg text-center text-sm font-medium text-gray-500 shadow dark:divide-gray-700 dark:text-gray-400 sm:flex">
+              {Object.keys(component.previews).map((key) => (
+                <li key={key} className="w-full focus-within:z-10">
+                  <button
+                    className="active inline-block w-full rounded-s-lg border-r border-gray-200 bg-gray-100 p-4 text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                    onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}
+                  >
+                    {component.previews[key].title}
+                  </button>
+                </li>
+              ))}
+            </ul>
 
-      {component?.previews ? (
-        <>
-          <ul className="c-component-preview-tabs">
-            {Object.keys(component.previews).map((key) => (
-              <li key={key} className="tab">
-                <button onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}>
-                  {component.previews[key].title}
-                </button>
-              </li>
-            ))}
-          </ul>
+            <iframe
+              onLoad={onLoad}
+              ref={ref}
+              height={height}
+              style={{
+                width: '1px',
+                minWidth: width,
+                height: height,
+              }}
+              src={previewUrl}
+            />
+          </>
+        ) : (
           <iframe
             onLoad={onLoad}
             ref={ref}
@@ -148,23 +133,45 @@ export const ComponentDisplay: React.FC<{
               minWidth: width,
               height: height,
             }}
-            src={previewUrl}
+            srcDoc={component?.preview}
           />
-        </>
-      ) : (
-        <iframe
-          onLoad={onLoad}
-          ref={ref}
-          height={height}
-          style={{
-            width: '1px',
-            minWidth: width,
-            height: height,
+        )}
+      </div>
+      <ul className="flex-column space-y mb-4 space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:mb-0 md:me-4">
+        {breakpoints &&
+          Object.keys(breakpoints).map((key) => (
+            <li
+              key={key}
+              onClick={() => {
+                setBreakpoint(key);
+                setWidth(`${breakpoints[key].size}px`);
+              }}
+            >
+              <a
+                href="#"
+                aria-current="page"
+                className="active inline-flex w-full items-center rounded-lg bg-blue-700 px-4 py-3 text-white dark:bg-blue-600"
+              >
+                {breakpoints[key].name}
+              </a>
+            </li>
+          ))}
+        <li
+          onClick={() => {
+            setBreakpoint('full');
+            setWidth(`100%`);
           }}
-          srcDoc={component?.preview}
-        />
-      )}
-    </>
+        >
+          <a
+            href="#"
+            aria-current="page"
+            className="active inline-flex w-full items-center rounded-lg bg-blue-700 px-4 py-3 text-white dark:bg-blue-600"
+          >
+            Full
+          </a>
+        </li>
+      </ul>
+    </div>
   );
 };
 
@@ -202,21 +209,18 @@ export const ComponentPreview: React.FC<{
   }
   return (
     <div id={preview.id}>
-      {title ? <h2>{title}</h2> : preview.title ? <h2>{preview.title}</h2> : null}
-      {children}
-
-      <div className="c-component-preview">
+      <div>
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
       </div>
-      <CodeHighlight data={preview} collapsible={true} />
       {preview?.properties && (
         <>
-        <h3>Properties</h3>
-        <ComponentProperties
-          fields={Object.keys(preview.properties).map((key) => {
-            return { ...preview.properties[key], key };
-          })}
-        /></>
+          <h3>Properties</h3>
+          <ComponentProperties
+            fields={Object.keys(preview.properties).map((key) => {
+              return { ...preview.properties[key], key };
+            })}
+          />
+        </>
       )}
       <hr />
     </div>
@@ -227,10 +231,12 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
   const humanReadableRule = (rule: string, value: any) => {
     switch (rule) {
       case 'required':
-        return (value) ? 'Required' : 'Optional';
+        return value ? 'Required' : 'Optional';
       case 'content':
         let type = 'characters';
-        if(value.type) { type = value.type; }
+        if (value.type) {
+          type = value.type;
+        }
         return `Contents should at least ${value.min} and at most ${value.max} ${type} long`;
       case 'minValue':
         return 'This field must be at least ' + value;
@@ -242,13 +248,13 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
         return `Use a minimum size of ${value.minW}x${value.minHeight} and a maximum size of ${value.maxWidth}x${value.maxHeight}`;
       case 'maxSize':
         // translate to human readable byte size
-        if(value < 1024) {
+        if (value < 1024) {
           return `This field must be at most ${value} bytes`;
         }
-        if(value < 1024*1024) {
-          return `This field must be at most ${Math.floor(value/1024)} KB`;
+        if (value < 1024 * 1024) {
+          return `This field must be at most ${Math.floor(value / 1024)} KB`;
         }
-        return `This field must be at most ${Math.floor(value/(1024*1024))} MB`;
+        return `This field must be at most ${Math.floor(value / (1024 * 1024))} MB`;
       case 'enum':
         return 'Enumeration';
       default:
@@ -256,8 +262,8 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     }
   };
   return (
-    <table className="c-component-preview__properties">
-      <thead>
+    <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400 rtl:text-right">
+      <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
         <tr>
           <th>id</th>
           <th>Field</th>
@@ -269,7 +275,7 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
       <tbody>
         {fields.map((field) => {
           return (
-            <tr key={field.key} className="c-component-preview__slot">
+            <tr key={field.key}>
               <td>{field.key}</td>
               <td>{startCase(field.name)}</td>
               <td>{field.type}</td>

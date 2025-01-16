@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ModeToggle } from '@/components/ModeSwitcher';
-import { MainNav } from '@/components/Navigation/MainNav';
+import { ModeToggle } from '../../components/ModeSwitcher';
+import { MainNav } from '../../components/Navigation/MainNav';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 

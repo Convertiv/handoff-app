@@ -12,7 +12,7 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
   navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+} from '../../components/ui/navigation-menu';
 import { useConfigContext } from '../context/ConfigContext';
 
 export function MainNav() {

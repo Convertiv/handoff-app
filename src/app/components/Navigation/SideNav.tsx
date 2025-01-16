@@ -1,6 +1,6 @@
 'use client';
 
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../components/ui/collapsible';
 import { Layers, ChevronRight, Blend, Type, Sun, LayoutGrid, Shapes, Image, Hexagon } from 'lucide-react';
 
 import {
@@ -19,7 +19,7 @@ import {
   SidebarInset,
   SidebarMenuAction,
   SidebarHeader,
-} from '@/components/ui/sidebar';
+} from '../../components/ui/sidebar';
 import { SectionLink } from '../util';
 
 const NormalMenuItem = ({ title, icon, path }) => (

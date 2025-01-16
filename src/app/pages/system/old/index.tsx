@@ -32,7 +32,7 @@ import {
   ComponentPreviews,
   OverviewComponentPreview,
   getComponentPreviewTitle,
-} from '../../../components/ComponentPreview';
+} from '../../../components/Component/Preview';
 
 /**
  * Render all index pages

@@ -11,10 +11,10 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import Layout from '../../components/Layout/Main';
-import HeaderH1 from '@/components/Typography/Headers';
-import { AnchorNav } from '@/components/Navigation/AnchorNavNew';
+import HeaderH1 from '../../components/Typography/Headers';
+import { AnchorNav } from '../../components/Navigation/AnchorNavNew';
 import { Code2, Hexagon, Palette, PersonStanding, TypeOutline } from 'lucide-react';
-import CardsWithIcons from '@/components/cards/CardsWithIcons';
+import CardsWithIcons from '../../components/cards/CardsWithIcons';
 
 /**
  * This statically renders content from the markdown, creating menu and providing

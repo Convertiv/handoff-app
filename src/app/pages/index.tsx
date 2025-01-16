@@ -1,14 +1,14 @@
 import Layout from '../components/Layout/Main';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '@/components/util';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 import { GetStaticProps } from 'next';
 import { getClientConfig } from '@handoff/config';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '../components/ui/sidebar';
 import ReactMarkdown from 'react-markdown';
-import { MarkdownComponents } from '@/components/Markdown/MarkdownComponents';
+import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import HeaderH1 from '@/components/Typography/Headers';
+import HeaderH1 from '../components/Typography/Headers';
 
 /**
  * This statically renders the menu mixing markdown file links with the
