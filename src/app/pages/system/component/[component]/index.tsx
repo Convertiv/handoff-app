@@ -1,13 +1,13 @@
 import { getClientConfig } from '@handoff/config';
-import { ComponentDisplay, ComponentPreview } from '../../../components/ComponentPreview';
-import { Hero } from '../../../components/Hero';
-import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../components/util';
+import { ComponentDisplay, ComponentPreview } from '../../../../components/ComponentPreview';
+import { Hero } from '../../../../components/Hero';
+import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 import Head from 'next/head';
-import Header from '../../../components/old/Header';
-import Footer from '../../../components/Footer';
+import Header from '../../../../components/old/Header';
+import Footer from '../../../../components/Footer';
 import { startCase } from 'lodash';
-import CustomNav from '../../../components/SideNav/Custom';
-import { PreviewContextProvider } from '../../../components/context/PreviewContext';
+import CustomNav from '../../../../components/SideNav/Custom';
+import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 
 /**
  * Render all index pages

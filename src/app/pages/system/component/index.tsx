@@ -5,13 +5,19 @@ import { startCase } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { getClientConfig } from '@handoff/config';
-import { DocumentationProps, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, fetchComponents, Metadata } from '../../components/util';
-import Icon from '../../components/Icon';
-import Header from '../../components/old/Header';
-import Footer from '../../components/Footer';
-import CustomNav from '../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
-import ComponentSearch from '../../components/ComponentSearch';
+import {
+  DocumentationProps,
+  fetchDocPageMarkdown,
+  fetchDocPageMetadataAndContent,
+  fetchComponents,
+  Metadata,
+} from '../../../components/util';
+import Icon from '../../../components/Icon';
+import Header from '../../../components/old/Header';
+import Footer from '../../../components/Footer';
+import CustomNav from '../../../components/SideNav/Custom';
+import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import ComponentSearch from '../../../components/ComponentSearch';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };

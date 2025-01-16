@@ -2,14 +2,10 @@ import * as React from 'react';
 import type { GetStaticProps } from 'next';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
-import Icon from '../../components/Icon';
 import { lowerCase } from 'lodash';
-import Head from 'next/head';
 import * as util from '../../components/util';
-import Header from '../../components/old/Header';
 import { EffectParametersObject } from '@handoff/types';
 import { isShadowEffectType } from '@handoff/exporters/utils';
-import CustomNav from '../../components/SideNav/Custom';
 import AnchorNav from '../../components/Navigation/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
@@ -17,9 +13,8 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
 import { getClientConfig } from '@handoff/config';
-import Footer from '../../components/Footer';
-import Layout from '@/components/Layout/Main';
-import HeaderH1 from '@/components/Typography/Headers';
+import Layout from '../../components/Layout/Main';
+import HeaderH1 from '../../components/Typography/Headers';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {

@@ -148,7 +148,7 @@ export const preview = (name) => {
   return previews.components[name];
 };
 
-import MarkdownLayout from "handoff-app/src/app/components/MarkdownLayout";
+import MarkdownLayout from "handoff-app/src/app/components/Layout/Markdown";
 export default function Layout(props) {
   return (
     <MarkdownLayout

@@ -6,17 +6,13 @@ import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';
 import { FontFamily } from '@handoff/types/font';
-import Head from 'next/head';
-import Header from '../../components/old/Header';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
-import CustomNav from '../../components/SideNav/Custom';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
-import Footer from '../../components/Footer';
-import Layout from '@/components/Layout/Main';
-import HeaderH1 from '@/components/Typography/Headers';
+import Layout from '../../components/Layout/Main';
+import HeaderH1 from '../../components/Typography/Headers';
 
 const pluckStyle = (type: TypographyObject) => {
   return {

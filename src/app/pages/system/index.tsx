@@ -8,8 +8,8 @@ import { getClientConfig } from '@handoff/config';
 import { DocumentationProps, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, fetchComponents, Metadata } from '../../components/util';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import { ComponentsPageCard } from '../../components/ComponentLists';
-import HeaderH1 from '@/components/Typography/Headers';
-import Layout from '@/components/Layout/Main';
+import HeaderH1 from '../../components/Typography/Headers';
+import Layout from '../../components/Layout/Main';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };

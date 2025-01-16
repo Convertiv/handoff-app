@@ -12,9 +12,8 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
-import Layout from '@/components/Layout/Main';
-import HeaderH1 from '@/components/Typography/Headers';
-import { DownloadTokens } from '@/components/DownloadTokens';
+import Layout from '../../components/Layout/Main';
+import HeaderH1 from '../../components/Typography/Headers';
 
 const DisplayLogo: React.FC<{ logo: AssetObject; content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {

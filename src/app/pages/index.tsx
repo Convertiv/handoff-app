@@ -1,4 +1,4 @@
-import Layout from '@/components/Layout/Main';
+import Layout from '../components/Layout/Main';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '@/components/util';
 import { GetStaticProps } from 'next';
 import { getClientConfig } from '@handoff/config';

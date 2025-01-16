@@ -10,9 +10,9 @@ import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
-import Layout from '@/components/Layout/Main';
-import HeaderH1 from '@/components/Typography/Headers';
-import ColorGrid from '@/components/Foundations/ColorGrid';
+import Layout from '../../components/Layout/Main';
+import HeaderH1 from '../..//components/Typography/Headers';
+import ColorGrid from '../..//components/Foundations/ColorGrid';
 
 /**
  * This statically renders content from the markdown, creating menu and providing

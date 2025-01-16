@@ -299,7 +299,7 @@ const staticBuildComponentMenu = () => {
     const menuGroup = { title: group, menu: [] };
     groupedComponents[group].forEach((component) => {
       const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-      menuGroup.menu.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
+      menuGroup.menu.push({ path: `system/component/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
     });
     subSections = menuGroup;
   });
