@@ -1,5 +1,5 @@
+import { Copy, Download } from 'lucide-react';
 import * as React from 'react';
-import Icon from './Icon';
 
 export interface CopyCodeProps {
   code: string;
@@ -23,7 +23,7 @@ export const CopyCode: React.FC<CopyCodeProps> = ({ code }) => {
         }
       }}
     >
-      <Icon name="copy" width={15} height={15}/>
+      <Copy />
     </a>
   );
 };
@@ -44,7 +44,7 @@ export const DownloadCode: React.FC<DownloadCodeProps> = ({ code, filename }) =>
       data-download-state="download"
       onMouseEnter={(e) => setDownload('Download code as file')}
     >
-      <Icon name="download" width={15} height={15}/>
+      <Download />
     </a>
   );
 };

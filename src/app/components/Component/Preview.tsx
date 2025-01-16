@@ -7,6 +7,8 @@ import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { usePreviewContext } from '../context/PreviewContext';
 import { SlotMetadata } from '../../../transformers/preview/component';
+import { Button } from '../ui/button';
+import { RadioGroup, RadioGroupItem } from '@radix-ui/react-radio-group';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -98,18 +100,23 @@ export const ComponentDisplay: React.FC<{
       <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
         {component?.previews ? (
           <>
-            <ul className="hidden rounded-lg text-center text-sm font-medium text-gray-500 shadow dark:divide-gray-700 dark:text-gray-400 sm:flex">
-              {Object.keys(component.previews).map((key) => (
-                <li key={key} className="w-full focus-within:z-10">
-                  <button
-                    className="active inline-block w-full rounded-s-lg border-r border-gray-200 bg-gray-100 p-4 text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                    onClick={() => setPreviewUrl(`/api/component/` + component.previews[key].url)}
-                  >
-                    {component.previews[key].title}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="flex justify-end">
+              <div className="mt-3 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
+                <RadioGroup
+                  value={previewUrl}
+                  onValueChange={setPreviewUrl}
+                  className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-sm after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-[:focus-visible]:after:outline has-[:focus-visible]:after:outline-2 has-[:focus-visible]:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
+                  data-state={previewUrl}
+                >
+                  {Object.keys(component.previews).map((key) => (
+                    <label className="relative z-10 inline-flex h-full min-w-6 cursor-pointer select-none items-center justify-center whitespace-nowrap px-3 transition-colors group-data-[state=on]:text-muted-foreground/70">
+                      {component.previews[key].title}
+                      <RadioGroupItem value={`/api/component/` + component.previews[key].url} className="sr-only" />
+                    </label>
+                  ))}
+                </RadioGroup>
+              </div>
+            </div>
 
             <iframe
               onLoad={onLoad}
@@ -147,13 +154,7 @@ export const ComponentDisplay: React.FC<{
                 setWidth(`${breakpoints[key].size}px`);
               }}
             >
-              <a
-                href="#"
-                aria-current="page"
-                className="active inline-flex w-full items-center rounded-lg bg-blue-700 px-4 py-3 text-white dark:bg-blue-600"
-              >
-                {breakpoints[key].name}
-              </a>
+              <Button variant="outline">{breakpoints[key].name}</Button>
             </li>
           ))}
         <li
@@ -162,13 +163,7 @@ export const ComponentDisplay: React.FC<{
             setWidth(`100%`);
           }}
         >
-          <a
-            href="#"
-            aria-current="page"
-            className="active inline-flex w-full items-center rounded-lg bg-blue-700 px-4 py-3 text-white dark:bg-blue-600"
-          >
-            Full
-          </a>
+          <Button variant="outline">Full</Button>
         </li>
       </ul>
     </div>
@@ -211,6 +206,7 @@ export const ComponentPreview: React.FC<{
     <div id={preview.id}>
       <div>
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
+        <CodeHighlight data={preview} collapsible={true} />
       </div>
       {preview?.properties && (
         <>

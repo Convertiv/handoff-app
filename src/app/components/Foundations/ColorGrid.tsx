@@ -20,7 +20,7 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors }) => 
       <h3 className="mb-2 text-lg font-medium">{title}</h3>
       <p className="mb-8">{description}</p>
       {colors.length < 5 ? (
-        <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(200px,400px))] gap-6">
+        <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(150px,300px))] gap-6">
           {colors.map((color) => (
             <a href="#" className="flex flex-col items-start">
               <div

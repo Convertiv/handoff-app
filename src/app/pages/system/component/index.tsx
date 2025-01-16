@@ -12,7 +12,6 @@ import {
   fetchComponents,
   Metadata,
 } from '../../../components/util';
-import Icon from '../../../components/Icon';
 import Header from '../../../components/old/Header';
 import Footer from '../../../components/Footer';
 import CustomNav from '../../../components/SideNav/Custom';
@@ -75,7 +74,6 @@ const ComponentsListPage = ({ content, menu, metadata, current, components, conf
               <h1 className="c-title--extra-large">{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
           </div>
 
           <div className="o-row">

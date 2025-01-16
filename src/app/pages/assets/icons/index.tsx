@@ -1,16 +1,16 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import type { AssetObject } from '@handoff/types';
+import { Laptop, Search } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
-import rehypeRaw from 'rehype-raw';
+import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import type { AssetObject } from '@handoff/types';
-import { getClientConfig } from '@handoff/config';
-import Icon from '../../../components/Icon';
-import Header from '../../../components/old/Header';
+import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
-import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import Header from '../../../components/old/Header';
+import CustomNav from '../../../components/SideNav/Custom';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
@@ -96,7 +96,6 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                 </div>
               </div>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
@@ -104,7 +103,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
           <div className="c-form-element c-form-element--fullwidth c-form-element--big">
             <div className="c-form-element__field">
               <div className="c-form-element__icon">
-                <Icon name="search" className="o-icon" />
+                <Search />
               </div>
               <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
             </div>
@@ -119,7 +118,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                   icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
                 ) : (
                   <div className="c-search-results">
-                    <Icon name="search-laptop" className="o-icon" />
+                    <Laptop />
                     <h4>No icons found.</h4>
                   </div>
                 )}

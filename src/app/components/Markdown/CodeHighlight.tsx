@@ -48,23 +48,22 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   return (
-    <div className={`overflow-x w-full ${collapsible && collapsed ? ' collapsed' : ''}`}>
+    <div className={`max-w-[900px] ${collapsible && collapsed ? ' collapsed' : ''}`} style={{ maxWidth: 900 }}>
       <div className="c-code-block__title" data-language={activeState === 'code' ? type : activeState}>
         {title && <div>{title}</div>}
       </div>
-      <div className="w-2/4">
-        <SyntaxHighlighter
-          style={theme}
-          language={activeState === 'code' ? type : activeState}
-          PreTag="div"
-          showLineNumbers={true}
-          wrapLines={true}
-          wrapLongLines={true}
-          useInlineStyles={true}
-        >
-          {code}
-        </SyntaxHighlighter>
-      </div>
+
+      <SyntaxHighlighter
+        style={theme}
+        language={activeState === 'code' ? type : activeState}
+        PreTag="div"
+        showLineNumbers={true}
+        wrapLines={true}
+        wrapLongLines={true}
+        useInlineStyles={true}
+      >
+        {code}
+      </SyntaxHighlighter>
       <CopyCode code={code} />
       {states.length > 2 && (
         <select

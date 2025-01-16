@@ -1,8 +1,7 @@
 import { startCase } from 'lodash';
-import { Metadata } from './util';
-import Link from 'next/link';
-import Icon from '../components/Icon';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Metadata } from './util';
 
 interface ComponentMetadata extends Metadata {
   path?: string;
@@ -62,10 +61,7 @@ export const ComponentsPageCard = ({
       <Link href={available ? (absolute ? path : `/${path}/${component}`) : '#'}>
         <div className={`c-component-card ${!available && 'c-component-card--soon'}`}>
           {(icon || image) && (
-            <div className="c-component-card__img">
-              {icon && <Icon name={icon} />}
-              {image && <Image src={image} alt={title} width={170} height={135} />}
-            </div>
+            <div className="c-component-card__img">{image && <Image src={image} alt={title} width={170} height={135} />}</div>
           )}
           <h6>{title}</h6>
           <p>{descripton}</p>

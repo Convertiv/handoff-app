@@ -22,7 +22,6 @@ import { IParams, reduceSlugToString } from '../../../components/util';
 import Header from '../../../components/old/Header';
 import CustomNav from '../../../components/SideNav/Custom';
 import AnchorNav from '../../../components/Navigation/AnchorNav';
-import Icon from '../../../components/Icon';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import Footer from '../../../components/Footer';
@@ -135,7 +134,7 @@ const GenericComponentPage = ({
               <h1>{metadata.title ?? startCase(id)}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
+
             <div className="c-tabs">
               {hasPreviews && (
                 <button

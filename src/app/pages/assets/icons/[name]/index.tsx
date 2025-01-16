@@ -1,14 +1,14 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import { AssetObject } from '@handoff/types';
+import HtmlReactParser from 'html-react-parser';
+import { Code, Download, PlusCircle, Search, Share } from 'lucide-react';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import HtmlReactParser from 'html-react-parser';
-import { AssetObject } from '@handoff/types';
-import { getClientConfig } from '@handoff/config';
-import Icon from '../../../../components/Icon';
+import * as React from 'react';
+import Footer from '../../../../components/Footer';
 import Header from '../../../../components/old/Header';
 import CustomNav from '../../../../components/SideNav/Custom';
-import Footer from '../../../../components/Footer';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
@@ -111,19 +111,19 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                 <small>&bull;</small>
                 <small>
                   <a href="#">
-                    <Icon name="share" className="u-mr-1 o-icon" /> Share Asset
+                    <Share /> Share Asset
                   </a>
                 </small>
                 <small>&bull;</small>
                 <small>
                   <a href="#" onClick={copySvg}>
-                    <Icon name="code" className="u-mr-1 o-icon" /> Copy SVG
+                    <Code /> Copy SVG
                   </a>
                 </small>
                 <small>&bull;</small>
                 <small>
                   <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data)} download={icon.name}>
-                    <Icon name="download" className="u-mr-1 o-icon" /> Download SVG
+                    <Download /> Download SVG
                   </a>
                 </small>
               </div>
@@ -151,14 +151,14 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                   <div className="c-icon-live-preview__menu">
                     <ul>
                       <li>
-                        <Icon name="plus-circle" className="o-icon" /> <span>Add item</span>
+                        <PlusCircle /> <span>Add item</span>
                       </li>
                       <li className="c-icon-live-preview__menu--active">
                         <DisplayIcon icon={icon} />
                         <span>Menu label</span>
                       </li>
                       <li>
-                        <Icon name="search" className="o-icon" /> <span>Search items</span>
+                        <Search /> <span>Search items</span>
                         <small>6</small>
                       </li>
                     </ul>
@@ -182,7 +182,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                   <div className="c-icon-live-preview__nav">
                     <span>
                       <a href="#">
-                        <Icon name="plus-circle" className="o-icon" />
+                        <PlusCircle />
                       </a>
                     </span>
                     <span>
@@ -192,7 +192,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
                     </span>
                     <span>
                       <a href="#">
-                        <Icon name="search" className="o-icon" />
+                        <Search />
                       </a>
                     </span>
                   </div>

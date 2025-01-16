@@ -1,13 +1,13 @@
+import { getClientConfig } from '@handoff/config';
+import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
-import Header from '../../components/old/Header';
 import Footer from '../../components/Footer';
-import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import Header from '../../components/old/Header';
+import CustomNav from '../../components/SideNav/Custom';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**
@@ -43,7 +43,6 @@ const AssetsLogosPage = ({ content, menu, metadata, current, config }: Documenta
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           <div className="o-row u-justify-between">
             <div className="o-col-5@md">
@@ -51,7 +50,7 @@ const AssetsLogosPage = ({ content, menu, metadata, current, config }: Documenta
             </div>
             <div className="o-col-6@md">
               <div className="c-card">
-                <Icon name="file-zip" className="c-card__icon" />
+                <FileArchive />
                 <h4>{config?.app?.client} Logo</h4>
                 <p>Vector files of approved {config?.app?.client} logos.</p>
                 <p>

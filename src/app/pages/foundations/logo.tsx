@@ -3,17 +3,15 @@ import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import type { AssetObject } from '@handoff/types';
 import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
-import Head from 'next/head';
+
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../components/util';
-import Header from '../../components/old/Header';
-import CustomNav from '../../components/SideNav/Custom';
+
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import Footer from '../../components/Footer';
 import Layout from '../../components/Layout/Main';
 import HeaderH1 from '../../components/Typography/Headers';
+import { FileArchive } from 'lucide-react';
 
 const DisplayLogo: React.FC<{ logo: AssetObject; content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {
@@ -95,7 +93,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
           </div>
           <div className="o-col-6@md">
             <div className="c-card">
-              <Icon name="file-zip" className="c-card__icon" />
+              <FileArchive />
               <h4>Logos</h4>
               <p>Official logo used for all digital and offline materials.</p>
               <p>

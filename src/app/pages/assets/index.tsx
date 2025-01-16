@@ -1,14 +1,14 @@
+import { getClientConfig } from '@handoff/config';
+import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
+import Footer from '../../components/Footer';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import NavLink from '../../components/NavLink';
 import Header from '../../components/old/Header';
-import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**
@@ -44,13 +44,12 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
               <h1 className="c-title--extra-large">{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
           </div>
 
           <div className="o-row">
             <div className="o-col-6@md">
               <div className="c-card">
-                <Icon name="file-zip" className="c-card__icon" />
+                <FileArchive />
                 <h4>Logos</h4>
                 <p>Official logo used for all digital and offline materials.</p>
                 <p>
@@ -60,7 +59,7 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
             </div>
             <div className="o-col-6@md">
               <div className="c-card">
-                <Icon name="file-zip" className="c-card__icon" />
+                <FileArchive />
                 <h4>Fonts</h4>
                 <p>Font family and weights for all {config?.app?.client} visuals.</p>
                 <p>

@@ -3,7 +3,6 @@ import type * as next from 'next';
 import sortedUniq from 'lodash/sortedUniq';
 import type { TypographyObject } from '@handoff/types';
 import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';
 import { FontFamily } from '@handoff/types/font';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
@@ -13,6 +12,7 @@ import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
 import HeaderH1 from '../../components/Typography/Headers';
+import { Link2 } from 'lucide-react';
 
 const pluckStyle = (type: TypographyObject) => {
   return {
@@ -107,9 +107,7 @@ const Typography = ({
               <hr />
               <p>Primary font used, related assets can be found in the assets page.</p>
               <p>
-                <NavLink href="/assets/fonts">
-                  Download Fonts <Icon name="arrow-right" className="o-icon" />
-                </NavLink>
+                <NavLink href="/assets/fonts">Download Fonts</NavLink>
               </p>
             </div>
             <div className="o-col-7@md">
@@ -161,7 +159,7 @@ const Typography = ({
                   }}
                 >
                   <span>
-                    <Icon name="link" className="o-icon" />
+                    <Link2 />
                   </span>
                 </a>
               </h6>

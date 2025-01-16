@@ -1,17 +1,17 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import * as fs from 'fs-extra';
+import uniq from 'lodash/uniq';
+import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
-import rehypeRaw from 'rehype-raw';
 import path from 'path';
-import { getClientConfig } from '@handoff/config';
-import uniq from 'lodash/uniq';
-import * as fs from 'fs-extra';
-import Icon from '../../components/Icon';
-import Header from '../../components/old/Header';
-import Footer from '../../components/Footer';
-import CustomNav from '../../components/SideNav/Custom';
+import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import rehypeRaw from 'rehype-raw';
+import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import Header from '../../components/old/Header';
+import CustomNav from '../../components/SideNav/Custom';
 import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
 
 /**
@@ -72,7 +72,6 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           {fontFamilies.map((fontFamily, i) => (
             <React.Fragment key={fontFamily}>
@@ -82,7 +81,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
                 </div>
                 <div className="o-col-6@md">
                   <div className="c-card">
-                    <Icon name="file-zip" className="c-card__icon" />
+                    <FileArchive />
                     <h4>{fontFamily}</h4>
                     <p>Font files for installing on a local machine.</p>
                     <p>

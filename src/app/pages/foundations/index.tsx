@@ -1,20 +1,14 @@
-import type { GetStaticProps } from 'next';
-import Link from 'next/link';
 import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
-import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
-import Header from '../../components/old/Header';
+import { Hexagon, Palette, TypeOutline } from 'lucide-react';
+import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
-import CustomNav from '../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import Footer from '../../components/Footer';
-import Layout from '../../components/Layout/Main';
-import HeaderH1 from '../../components/Typography/Headers';
-import { AnchorNav } from '../../components/Navigation/AnchorNavNew';
-import { Code2, Hexagon, Palette, PersonStanding, TypeOutline } from 'lucide-react';
 import CardsWithIcons from '../../components/cards/CardsWithIcons';
+import Layout from '../../components/Layout/Main';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { AnchorNav } from '../../components/Navigation/AnchorNavNew';
+import HeaderH1 from '../../components/Typography/Headers';
+import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
