@@ -41,7 +41,7 @@ import {
   X,
   ArrowRightToLine,
 } from 'lucide-react';
-import { ThemeProvider } from '@/components/util/theme-provider';
+import { ThemeProvider } from '../components/util/theme-provider';
 import { Header } from '@/components/Layout/Header';
 import SideNav from '@/components/Navigation/SideNav';
 import { AnchorNav } from '@/components/Navigation/AnchorNavNew';

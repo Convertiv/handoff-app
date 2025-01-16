@@ -146,7 +146,6 @@
     "eslint-config-prettier": "^10.0.1",
     "np": "^8.0.4",
     "prettier": "^3.4.2",
-    "prettier-plugin-tailwindcss": "^0.4.1",
-    "tailwindcss": "^3.4.15"
+    "prettier-plugin-tailwindcss": "^0.4.1"
   }
 }

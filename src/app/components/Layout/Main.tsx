@@ -1,5 +1,5 @@
-import { ThemeProvider } from '@/components/util/theme-provider';
-import { Header } from '@/components/Layout/Header';
+import { ThemeProvider } from '../../components/util/theme-provider';
+import { Header } from '../../components/Layout/Header';
 import Footer from '../Footer';
 import { ConfigContextProvider } from '../context/ConfigContext';
 import { SidebarInset, SidebarProvider } from '../ui/sidebar';
