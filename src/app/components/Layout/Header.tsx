@@ -1,36 +1,32 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ModeToggle } from "@/components/ModeSwitcher";
-import { MainNav } from "@/components/MainNav";
-import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import Link from 'next/link';
+import { ModeToggle } from '@/components/ModeSwitcher';
+import { MainNav } from '@/components/Navigation/MainNav';
+import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
-    
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className={cn(
-        "container max-w-[1500px] mx-auto border-grid py-4 px-8 sticky top-0 z-50 w-full bg-transparent transition-all duration-300 shadow-[0_0_2px_0_rgba(0,0,0,0.1)]",
-        isScrolled && "backdrop-blur bg-background/80 py-3 shadow-[0_0_3px_0_rgba(0,0,0,0.1)]"
-      )}>
+    <header
+      className={cn(
+        'border-grid container sticky top-0 z-50 mx-auto w-full max-w-[1500px] bg-transparent px-8 py-4 shadow-[0_0_2px_0_rgba(0,0,0,0.1)] transition-all duration-300',
+        isScrolled && 'bg-background/80 py-3 shadow-[0_0_3px_0_rgba(0,0,0,0.1)] backdrop-blur'
+      )}
+    >
       <div className="mx-auto flex items-center justify-between">
-        <svg className="w-auto max-h-5"
-          xmlns="http://www.w3.org/2000/svg"
-          width="294"
-          height="49"
-          fill="none"
-          viewBox="0 0 294 49"
-        >
+        <svg className="max-h-5 w-auto" xmlns="http://www.w3.org/2000/svg" width="294" height="49" fill="none" viewBox="0 0 294 49">
           <g filter="url(#filter0_i_7830_99242)">
             <ellipse
               cx="10.679"
@@ -68,24 +64,11 @@ export function Header() {
               filterUnits="userSpaceOnUse"
             >
               <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
-              <feBlend
-                in="SourceGraphic"
-                in2="BackgroundImageFix"
-                result="shape"
-              ></feBlend>
-              <feColorMatrix
-                in="SourceAlpha"
-                result="hardAlpha"
-                values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-              ></feColorMatrix>
+              <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend>
+              <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"></feColorMatrix>
               <feOffset dy="1"></feOffset>
               <feGaussianBlur stdDeviation="1.5"></feGaussianBlur>
-              <feComposite
-                in2="hardAlpha"
-                k2="-1"
-                k3="1"
-                operator="arithmetic"
-              ></feComposite>
+              <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"></feComposite>
               <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"></feColorMatrix>
               <feBlend in2="shape" result="effect1_innerShadow_7830_99242"></feBlend>
             </filter>
@@ -99,23 +82,10 @@ export function Header() {
               filterUnits="userSpaceOnUse"
             >
               <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
-              <feBlend
-                in="SourceGraphic"
-                in2="BackgroundImageFix"
-                result="shape"
-              ></feBlend>
-              <feColorMatrix
-                in="SourceAlpha"
-                result="hardAlpha"
-                values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-              ></feColorMatrix>
+              <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"></feBlend>
+              <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"></feColorMatrix>
               <feOffset dy="1"></feOffset>
-              <feComposite
-                in2="hardAlpha"
-                k2="-1"
-                k3="1"
-                operator="arithmetic"
-              ></feComposite>
+              <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"></feComposite>
               <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"></feColorMatrix>
               <feBlend in2="shape" result="effect1_innerShadow_7830_99242"></feBlend>
             </filter>

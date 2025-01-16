@@ -3,10 +3,11 @@ import { Link } from 'react-scroll';
 
 export interface AnchorNavLinkProps {
   children: ReactNode;
+  className?: string;
   to: string;
 }
 
-export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, children }) => {
+export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, className, children }) => {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
@@ -18,7 +19,8 @@ export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, children }) =>
       {/* @ts-ignore */}
       <Link
         href="#"
-        activeClass="is-selected"
+        className={className}
+        activeClass="text-sky-500 dark:text-sky-400"
         smooth
         spy
         to={to}

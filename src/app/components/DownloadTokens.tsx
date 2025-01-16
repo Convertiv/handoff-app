@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from './Icon';
+import { ArrowRight, Download } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface DownloadTokensProps {
   componentId: string;
@@ -12,34 +14,26 @@ interface DownloadTokensProps {
 export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css, scss, styleDictionary, types }) => {
   return (
     <div>
-      <a
-        href={'data:text/plain;charset=utf-8,' + encodeURIComponent(css)}
-        download={`${componentId}.css`}
-        className="c-button c-button--outline c-button--small"
-      >
-        CSS Tokens <Icon name="download" className="o-icon" />
-      </a>
-      <a
-        href={'data:text/plain;charset=utf-8,' + encodeURIComponent(scss)}
-        download={`${componentId}.scss`}
-        className="c-button c-button--outline c-button--small u-ml-2"
-      >
-        SASS Tokens <Icon name="download" className="o-icon" />
-      </a>
-      <a
-        href={'data:text/plain;charset=utf-8,' + encodeURIComponent(styleDictionary)}
-        download={`${componentId}.tokens.json`}
-        className="c-button c-button--outline c-button--small u-ml-2"
-      >
-        Style Dictionary <Icon name="download" className="o-icon" />
-      </a>
-      <a
-        href={'data:text/plain;charset=utf-8,' + encodeURIComponent(types)}
-        download={`${componentId}.scss`}
-        className="c-button c-button--outline c-button--small u-ml-2"
-      >
-        Component Types <Icon name="download" className="o-icon" />
-      </a>
+      <Button>
+        <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(css)} download={`${componentId}.css`}>
+          CSS Tokens <Download className="inline-block transition-transform group-hover:translate-x-1" />
+        </a>
+      </Button>
+      <Button>
+        <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(scss)} download={`${componentId}.scss`}>
+          SASS Tokens <Download className="inline-block transition-transform group-hover:translate-x-1" />
+        </a>
+      </Button>
+      <Button>
+        <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(styleDictionary)} download={`${componentId}.tokens.json`}>
+          Style Dictionary <Download className="inline-block transition-transform group-hover:translate-x-1" />
+        </a>
+      </Button>
+      <Button>
+        <a href={'data:text/plain;charset=utf-8,' + encodeURIComponent(types)} download={`${componentId}.scss`}>
+          Component Types <Download className="inline-block transition-transform group-hover:translate-x-1" />
+        </a>
+      </Button>
     </div>
   );
 };

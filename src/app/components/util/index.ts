@@ -262,24 +262,15 @@ export const staticBuildMenu = () => {
         const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
         let subSections = [];
 
-        if (filepath === '/components') {
-          const components = fetchComponents();
-          // Build the submenu of exportables (components)
-          const groupedComponents = groupBy(components, (e) => e.group ?? '');
-          Object.keys(groupedComponents).forEach((group) => {
-            subSections.push({ path: '', title: group });
-            groupedComponents[group].forEach((component) => {
-              const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-              subSections.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
-            });
-          });
-        }
-
         if (metadata.menu) {
           // Build the submenu
           subSections = Object.keys(metadata.menu)
             .map((key) => {
               const sub = metadata.menu[key];
+              if (sub.components) {
+                // The user wants to inject the component menu here
+                return staticBuildComponentMenu();
+              }
               if (sub.enabled !== false) {
                 return sub;
               }
@@ -297,6 +288,22 @@ export const staticBuildMenu = () => {
     })
     .filter(filterOutUndefined);
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
+};
+
+const staticBuildComponentMenu = () => {
+  let subSections = undefined;
+  const components = fetchComponents();
+  // Build the submenu of exportables (components)
+  const groupedComponents = groupBy(components, (e) => e.type ?? '');
+  Object.keys(groupedComponents).forEach((group) => {
+    const menuGroup = { title: group, menu: [] };
+    groupedComponents[group].forEach((component) => {
+      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      menuGroup.menu.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
+    });
+    subSections = menuGroup;
+  });
+  return subSections;
 };
 
 /**
@@ -324,7 +331,7 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       content,
       options,
       menu,
-      current: getCurrentSection(menu, `${id}`) ?? [],
+      current: getCurrentSection(menu, `${id}`) ?? null,
     },
   };
 };
@@ -369,21 +376,26 @@ export const fetchComponents = () => {
   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
   // find the path to the components
   const templatesPath = path.resolve(integrationPath, 'components');
-  // Read the template directory and use it to populate the components with json files
-  fs.readdirSync(templatesPath).map((file) => {
-    // ok, the file should have either a json file or a semver directory
-    const metadata = getLatestComponentMetadata(file);
-    if (metadata) {
-      components[file] = metadata;
-    }
-  });
+  if (fs.existsSync(templatesPath)) {
+    // Read the template directory and use it to populate the components with json files
+    fs.readdirSync(templatesPath).map((file) => {
+      // ok, the file should have either a json file or a semver directory
+      const metadata = getLatestComponentMetadata(file);
+      if (metadata) {
+        components[file] = metadata;
+      }
+    });
+  }
+
   const items =
     Object.entries(components).map(([id, obj]) => ({
       id,
-      group: obj.group || '', // TODO
+      type: obj.type || 'Components',
+      group: obj.group || '',
       name: obj.name || '',
       description: obj.description || '',
     })) ?? [];
+
   try {
     return items;
   } catch (e) {

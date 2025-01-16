@@ -6,7 +6,7 @@ import HtmlReactParser from 'html-react-parser';
 import { AssetObject } from '@handoff/types';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../../../components/Icon';
-import Header from '../../../../components/Header';
+import Header from '../../../../components/old/Header';
 import CustomNav from '../../../../components/SideNav/Custom';
 import Footer from '../../../../components/Footer';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';

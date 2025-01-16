@@ -47,6 +47,9 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  eslint: {
+    dirs: ['pages', 'utils'],
+  },
   transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
     tsconfigPath: 'tsconfig.json',

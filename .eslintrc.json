@@ -1,4 +1,4 @@
 {
-  "extends": "next/core-web-vitals",
+  "extends": ["next", "prettier"],
   "ignorePatterns": ["./src/app/out/**/*", "**/*.js"]
 }

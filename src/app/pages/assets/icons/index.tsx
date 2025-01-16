@@ -7,7 +7,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import type { AssetObject } from '@handoff/types';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../../components/Icon';
-import Header from '../../../components/Header';
+import Header from '../../../components/old/Header';
 import Footer from '../../../components/Footer';
 import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
@@ -119,7 +119,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
                   icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
                 ) : (
                   <div className="c-search-results">
-                    <Icon name="search-laptop"  className="o-icon" />
+                    <Icon name="search-laptop" className="o-icon" />
                     <h4>No icons found.</h4>
                   </div>
                 )}

@@ -5,7 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
 import NavLink from '../../components/NavLink';
-import Header from '../../components/Header';
+import Header from '../../components/old/Header';
 import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';

@@ -19,14 +19,20 @@ import { ComponentInstance, FileComponentObject } from '@handoff/exporters/compo
 import { filterOutNull } from '@handoff/utils';
 import { ComponentTab } from '@handoff/types/tabs';
 import { IParams, reduceSlugToString } from '../../../components/util';
-import Header from '../../../components/Header';
+import Header from '../../../components/old/Header';
 import CustomNav from '../../../components/SideNav/Custom';
-import AnchorNav from '../../../components/AnchorNav';
+import AnchorNav from '../../../components/Navigation/AnchorNav';
 import Icon from '../../../components/Icon';
 import { DownloadTokens } from '../../../components/DownloadTokens';
 import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
 import Footer from '../../../components/Footer';
-import { ComponentDisplay, ComponentPreview, ComponentPreviews, OverviewComponentPreview, getComponentPreviewTitle } from '../../../components/ComponentPreview';
+import {
+  ComponentDisplay,
+  ComponentPreview,
+  ComponentPreviews,
+  OverviewComponentPreview,
+  getComponentPreviewTitle,
+} from '../../../components/ComponentPreview';
 
 /**
  * Render all index pages
@@ -206,9 +212,6 @@ const GenericComponentPage = ({
 
 export default GenericComponentPage;
 
-
-
-
 export const getComponentPreviews = (
   tab: 'overview' | 'tokens',
   component: FileComponentObject,
@@ -285,7 +288,6 @@ export const getComponentPreviews = (
   return tabComponents;
 };
 
-
 export const OverviewComponentClasses: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
@@ -327,7 +329,6 @@ export const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ cont
     </>
   );
 };
-
 
 function multiPropSort(properties: string[], array: ComponentPreview[]) {
   return array.sort((l, r) => {

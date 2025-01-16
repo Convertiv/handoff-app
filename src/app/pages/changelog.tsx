@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { format } from 'date-fns';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../components/Icon';
-import Header from '../components/Header';
+import Header from '../components/old/Header';
 import Footer from '../components/Footer';
 import CustomNav from '../components/SideNav/Custom';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
@@ -185,7 +185,7 @@ const ChangeLogPage = ({ content, menu, metadata, current, config, changelog }: 
                     {deleted.typography.length > 0 && (
                       <li>
                         <p>
-                          <Icon name="zap"  className="o-icon" /> Removed{' '}
+                          <Icon name="zap" className="o-icon" /> Removed{' '}
                           <strong>
                             {deleted.typography.length} {getCountLabel(deleted.typography.length, 'typography', 'typographies')}
                           </strong>

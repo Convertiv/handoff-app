@@ -1,9 +1,8 @@
 import Link from 'next/link';
-import NavLink from './NavLink';
-import { SectionLink } from './util';
+import NavLink from '../NavLink';
+import { SectionLink } from '../util';
 import React from 'react';
 import { ClientConfig } from '@handoff/types/config';
-
 
 interface HeaderProps {
   menu: SectionLink[];
@@ -35,8 +34,8 @@ function Header({ menu, config }: HeaderProps) {
               </div>
               <div className="c-site-title">
                 <Link href="/" className="c-site-logo c-site-logo--basic" title="" rel="home" aria-label="logo">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={config?.app?.title} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={config?.app?.title} />
                 </Link>
               </div>
 
@@ -68,11 +67,13 @@ function Header({ menu, config }: HeaderProps) {
                   <NavLink href={`${item.path}`}>{item.title}</NavLink>
                   {item.subSections.length > 0 && (
                     <ul className="c-mobilenav__submenu">
-                      {item.subSections.filter(sub => sub.path).map((sub) => (
-                        <li key={sub.path}>
-                          <NavLink href={`${sub.path}`}>{sub.title}</NavLink>
-                        </li>
-                      ))}
+                      {item.subSections
+                        .filter((sub) => sub.path)
+                        .map((sub) => (
+                          <li key={sub.path}>
+                            <NavLink href={`${sub.path}`}>{sub.title}</NavLink>
+                          </li>
+                        ))}
                     </ul>
                   )}
                 </li>

@@ -7,11 +7,10 @@ import rehypeRaw from 'rehype-raw';
 import { getClientConfig } from '@handoff/config';
 import { DocumentationProps, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, fetchComponents, Metadata } from '../../components/util';
 import Icon from '../../components/Icon';
-import Header from '../../components/Header';
+import Header from '../../components/old/Header';
 import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
-import { ComponentsPageCard } from '../../components/ComponentLists';
 import ComponentSearch from '../../components/ComponentSearch';
 
 type ComponentPageDocumentationProps = DocumentationProps & {

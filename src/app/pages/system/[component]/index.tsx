@@ -3,7 +3,7 @@ import { ComponentDisplay, ComponentPreview } from '../../../components/Componen
 import { Hero } from '../../../components/Hero';
 import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../components/util';
 import Head from 'next/head';
-import Header from '../../../components/Header';
+import Header from '../../../components/old/Header';
 import Footer from '../../../components/Footer';
 import { startCase } from 'lodash';
 import CustomNav from '../../../components/SideNav/Custom';
@@ -22,13 +22,11 @@ export async function getStaticPaths() {
 
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
-  console.log('component', component);
   // get previews for components on this page
   const previews = getPreview();
   const menu = staticBuildMenu();
   const config = getClientConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
-  console.log('metadata', metadata);
   return {
     props: {
       id: component,
@@ -52,7 +50,7 @@ const GenericComponentPage = ({ title, description, menu, metadata, current, id,
       </Head>
       <Header menu={menu} config={config} />
       {current.subSections && current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className={`c-content c-content__wide` }>
+      <section className={`c-content c-content__wide`}>
         <div className="o-container-fluid o-container__markdown">
           <Hero title={title} image={image}>
             <p>{description}</p>

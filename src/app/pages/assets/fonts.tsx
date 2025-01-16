@@ -7,7 +7,7 @@ import { getClientConfig } from '@handoff/config';
 import uniq from 'lodash/uniq';
 import * as fs from 'fs-extra';
 import Icon from '../../components/Icon';
-import Header from '../../components/Header';
+import Header from '../../components/old/Header';
 import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
@@ -23,7 +23,9 @@ import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../c
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  const fonts = fs.readdirSync(path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts'));
+  const fonts = fs.readdirSync(
+    path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts')
+  );
   const customFonts: string[] = [];
 
   fonts.map((font) => {
@@ -61,7 +63,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu}  config={config} />
+      <Header menu={menu} config={config} />
       {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">

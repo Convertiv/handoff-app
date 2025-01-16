@@ -4,7 +4,7 @@ import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { getClientConfig } from '@handoff/config';
 import Icon from '../../components/Icon';
-import Header from '../../components/Header';
+import Header from '../../components/old/Header';
 import Footer from '../../components/Footer';
 import CustomNav from '../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
@@ -23,8 +23,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'logos', `/assets`).props,
       config: getClientConfig(),
-    }
-  }
+    },
+  };
 };
 
 const AssetsLogosPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {

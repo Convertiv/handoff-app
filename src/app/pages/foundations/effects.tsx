@@ -6,11 +6,11 @@ import Icon from '../../components/Icon';
 import { lowerCase } from 'lodash';
 import Head from 'next/head';
 import * as util from '../../components/util';
-import Header from '../../components/Header';
+import Header from '../../components/old/Header';
 import { EffectParametersObject } from '@handoff/types';
 import { isShadowEffectType } from '@handoff/exporters/utils';
 import CustomNav from '../../components/SideNav/Custom';
-import AnchorNav from '../../components/AnchorNav';
+import AnchorNav from '../../components/Navigation/AnchorNav';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
@@ -18,6 +18,8 @@ import { DownloadTokens } from '../../components/DownloadTokens';
 import { getTokens } from '../../components/util';
 import { getClientConfig } from '@handoff/config';
 import Footer from '../../components/Footer';
+import Layout from '@/components/Layout/Main';
+import HeaderH1 from '@/components/Typography/Headers';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -70,82 +72,62 @@ const ColorsPage = ({
     })
   );
   return (
-    <div className="c-page">
-      <Head>
-        <title>{metadata.metaTitle}</title>
-        <meta name="description" content={metadata.metaDescription} />
-      </Head>
-      <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content">
-        <div className="o-container-fluid">
-          <div className="c-hero">
-            <div>
-              <h1 className="c-title--extra-large">{metadata.title}</h1>
-              <p className="u-mb-2">{metadata.description}</p>
-              <DownloadTokens componentId="effects" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
-            </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
-          </div>
-          <div className="o-row">
-            <div className="o-col-9 @md">
-              {Object.keys(effectGroups).map((group) => (
-                <div key={group} id={`${lowerCase(group)}-effects`}>
-                  <div className="o-row">
-                    <div className="o-col-10@md">
-                      <div>
-                        <h3 className="u-mb-4">{upperFirst(group)} Effects</h3>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="o-row">
-                    <div className="o-col-12@md">
-                      <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
-                        {effectGroups[group].map((effect) => {
-                          // initialize preview css properties
-                          const cssProperties: React.CSSProperties = {};
-                          // apply background color
-                          cssProperties.backgroundColor = '#FFF';
-                          // apply effects
-                          effect.effects.forEach((effect: EffectParametersObject) => {
-                            applyEffectToCssProperties(effect, cssProperties);
-                          });
-
-                          return (
-                            <div className="c-color-preview" key={`effect-${effect.group}-${effect.name}`}>
-                              <div className="c-color-preview__wrapper">
-                                <span className="c-color-preview__sample" style={cssProperties}></span>
-                                <h5>{effect.name}</h5>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <hr />
+    <Layout config={config} menu={menu} metadata={metadata} current={current}>
+      <div className="flex flex-col gap-2 pb-7">
+        <HeaderH1>{metadata.title}</HeaderH1>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
+      </div>
+      <div className="mt-10">
+        {Object.keys(effectGroups).map((group) => (
+          <div key={group} id={`${lowerCase(group)}-effects`}>
+            <div className="o-row">
+              <div className="o-col-10@md">
+                <div>
+                  <h3 className="u-mb-4">{upperFirst(group)} Effects</h3>
                 </div>
-              ))}
+              </div>
             </div>
-            <div className="o-col-3@xl u-visible@lg">
-              <AnchorNav
-                groups={[
-                  Object.assign(
-                    {},
-                    ...[...Object.keys(effectGroups).map((group) => ({ [`${group}-effects`]: `${upperFirst(group)} Effects` }))]
-                  ),
-                ]}
-              />
+            <div className="o-row">
+              <div className="o-col-12@md">
+                <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
+                  {effectGroups[group].map((effect) => {
+                    // initialize preview css properties
+                    const cssProperties: React.CSSProperties = {};
+                    // apply background color
+                    cssProperties.backgroundColor = '#FFF';
+                    // apply effects
+                    effect.effects.forEach((effect: EffectParametersObject) => {
+                      applyEffectToCssProperties(effect, cssProperties);
+                    });
+
+                    return (
+                      <div className="c-color-preview" key={`effect-${effect.group}-${effect.name}`}>
+                        <div className="c-color-preview__wrapper">
+                          <span className="c-color-preview__sample" style={cssProperties}></span>
+                          <h5>{effect.name}</h5>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+            <hr />
           </div>
-        </div>
+        ))}
+
+        <AnchorNav
+          groups={[
+            Object.assign({}, ...[...Object.keys(effectGroups).map((group) => ({ [`${group}-effects`]: `${upperFirst(group)} Effects` }))]),
+          ]}
+        />
 
         <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
-      </section>
-      <Footer config={config} />
-    </div>
+      </div>
+    </Layout>
   );
 };
 export default ColorsPage;
