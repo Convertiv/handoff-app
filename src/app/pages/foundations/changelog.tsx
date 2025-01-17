@@ -1,10 +1,10 @@
-import Layout from '@/components/Layout/Main';
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import { format } from 'date-fns';
 import { Activity, Paintbrush, Sun, Zap } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import * as React from 'react';
+import Layout from '../../components/Layout/Main';
+import HeadersType from '../../components/Typography/Headers';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../../components/util';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
