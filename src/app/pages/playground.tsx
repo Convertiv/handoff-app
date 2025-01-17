@@ -20,7 +20,6 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
 import { Header } from '../components/Layout/Header';
 import { AnchorNav } from '../components/Navigation/AnchorNavNew';
 import SideNav from '../components/Navigation/SideNav';
@@ -30,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Separator } from '../components/ui/separator';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { ThemeProvider } from '../components/util/theme-provider';
+import { cn } from '../lib/utils';
 
 import { SidebarInset, SidebarProvider } from '../components/ui/sidebar';
 
