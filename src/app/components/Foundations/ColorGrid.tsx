@@ -1,5 +1,5 @@
+import { ColorObject } from '@handoff/api';
 import startCase from 'lodash/startCase';
-import { ColorObject } from '../../../api';
 import HeadersType from '../Typography/Headers';
 type ColorGridProps = {
   title: string;
