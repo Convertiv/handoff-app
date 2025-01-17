@@ -301,6 +301,17 @@ const staticBuildComponentMenu = () => {
   return subSections;
 };
 
+const staticBuildTokenMenu = () => {
+  let subSections = {
+    title: 'Tokens',
+    path: 'system/tokens',
+    menu: [],
+  };
+  const tokens = getTokens();
+
+  return subSections;
+};
+
 /**
  * Filter the menus by the current path
  * @param menu
@@ -382,7 +393,6 @@ export const fetchComponents = () => {
       }
     });
   }
-  console.log('Components', components);
   const items =
     Object.entries(components).map(([id, obj]) => ({
       id,
@@ -411,10 +421,8 @@ export const getLatestComponentMetadata = (id: string) => {
   if (!fs.existsSync(versionPath)) return false;
   try {
     const data = fs.readFileSync(versionPath, 'utf-8');
-    console.log('Data', data);
     return JSON.parse(data.toString());
   } catch (e) {
-    console.log('Error', e, versionPath);
     throw new Error(`Error reading ${versionPath}`);
   }
 };

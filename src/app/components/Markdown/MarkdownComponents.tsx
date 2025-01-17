@@ -2,18 +2,17 @@ import React, { ReactElement } from 'react';
 import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
 
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-import yaml from 'refractor/lang/yaml';
-import json from 'refractor/lang/json';
-import markdown from 'refractor/lang/json';
 import bash from 'refractor/lang/bash';
+import { default as json, default as markdown } from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import html from 'refractor/lang/xml-doc';
+import yaml from 'refractor/lang/yaml';
 // @ts-ignore
 import highlight from 'react-syntax-highlighter/src/highlight';
-import refractor  from 'refractor/core';
+import refractor from 'refractor/core';
+import HeadersType from '../Typography/Headers';
 const SyntaxHighlighter = highlight(refractor, {});
-SyntaxHighlighter.registerLanguage = (_: string, language: any) =>
-  refractor.register(language);
+SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
@@ -32,6 +31,7 @@ export type CustomRenderers = {
   h4: (props: HeadingProps) => ReactElement;
   h5: (props: HeadingProps) => ReactElement;
   h6: (props: HeadingProps) => ReactElement;
+  paragraph: (props: { children: React.ReactNode }) => ReactElement;
 };
 
 /**
@@ -63,17 +63,17 @@ const Headings = ({ level, children }: HeadingProps) => {
 
     switch (level) {
       case 1:
-        return <h1>{container(children)}</h1>;
+        return <HeadersType.H1>{container(children)}</HeadersType.H1>;
       case 2:
-        return <h2>{container(children)}</h2>;
+        return <HeadersType.H2>{container(children)}</HeadersType.H2>;
       case 3:
-        return <h3>{container(children)}</h3>;
+        return <HeadersType.H3>{container(children)}</HeadersType.H3>;
       case 4:
-        return <h4>{container(children)}</h4>;
+        return <HeadersType.H4>{container(children)}</HeadersType.H4>;
       case 5:
-        return <h5>{container(children)}</h5>;
+        return <HeadersType.H5>{container(children)}</HeadersType.H5>;
       case 6:
-        return <h6>{container(children)}</h6>;
+        return <HeadersType.H6>{container(children)}</HeadersType.H6>;
 
       default:
         return <h6>{container(children)}</h6>;
@@ -93,6 +93,7 @@ export const MarkdownComponents: CustomRenderers = {
   h4: Headings,
   h5: Headings,
   h6: Headings,
+  paragraph: ({ children }) => <p className="py-5">{children}</p>,
   code(props) {
     const { className } = props;
     const match = /language-(\w+)/.exec(className || '');
@@ -108,7 +109,8 @@ export const MarkdownComponents: CustomRenderers = {
         showLineNumbers={true}
         wrapLines={true}
         useInlineStyles={true}
-        {...props}></SyntaxHighlighter>
+        {...props}
+      ></SyntaxHighlighter>
     ) : (
       <code {...props} />
     );

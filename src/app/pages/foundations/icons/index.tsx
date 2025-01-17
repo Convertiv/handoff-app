@@ -1,15 +1,15 @@
+import Layout from '@/components/Layout/Main';
+import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import type { AssetObject } from '@handoff/types';
 import { Laptop, Search } from 'lucide-react';
 import type { GetStaticProps } from 'next';
-import Head from 'next/head';
 import Link from 'next/link';
 import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import Header from '../../../components/old/Header';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
@@ -74,59 +74,44 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
   }, []);
 
   return (
-    <div className="c-page">
-      <Head>
-        <title>{metadata.metaTitle}</title>
-        <meta name="description" content={metadata.metaDescription} />
-      </Head>
-      <Header menu={menu} config={config} />
-      <section className="c-content">
-        <div className="o-container">
-          <div className="c-hero">
-            <div className="o-row">
-              <div className="o-col-10@md">
-                <div>
-                  <h1>{metadata.title}</h1>
-                  <p>{metadata.description}</p>
-                  <p>
-                    <a href={config?.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
-                  </p>
-                </div>
-              </div>
-            </div>
+    <Layout config={config} menu={menu} current={current} metadata={metadata}>
+      <div className="flex flex-col gap-2 pb-7">
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        <a href={config?.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
+      </div>
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
+
+      <div className="c-form-element c-form-element--fullwidth c-form-element--big">
+        <div className="c-form-element__field">
+          <div className="c-form-element__icon">
+            <Search />
           </div>
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
-          <div className="c-form-element c-form-element--fullwidth c-form-element--big">
-            <div className="c-form-element__field">
-              <div className="c-form-element__icon">
-                <Search />
+          <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
+        </div>
+      </div>
+      <p>
+        <strong>{icons.length}</strong> found
+      </p>
+      <div className="o-row">
+        <div className="o-col-12@md">
+          <div className="o-stack-3@md o-stack-5@lg">
+            {icons.length > 0 ? (
+              icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
+            ) : (
+              <div className="c-search-results">
+                <Laptop />
+                <h4>No icons found.</h4>
               </div>
-              <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
-            </div>
-          </div>
-          <p>
-            <strong>{icons.length}</strong> found
-          </p>
-          <div className="o-row">
-            <div className="o-col-12@md">
-              <div className="o-stack-3@md o-stack-5@lg">
-                {icons.length > 0 ? (
-                  icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
-                ) : (
-                  <div className="c-search-results">
-                    <Laptop />
-                    <h4>No icons found.</h4>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
-      </section>
+      </div>
+
       <Footer config={config} />
-    </div>
+    </Layout>
   );
 };
 export default IconsPage;

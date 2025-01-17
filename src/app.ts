@@ -102,6 +102,7 @@ const transformMdx = (src: string, dest: string, id: string) => {
   const title = data.title ?? '';
   const menu = data.menu ?? '';
   const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
+  console.log(description);
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
   const weight = data.weight ?? 0;
@@ -138,13 +139,13 @@ export const preview = (name) => {
   return previews.components[name];
 };
 
-import { Check, X } from 'lucide-react';
 import MarkdownLayout from "handoff-app/src/app/components/Layout/Markdown";
 export default function Layout(props) {
   return (
     <MarkdownLayout
       menu={props.menu}
       metadata={{
+        description: "${description}",
         metaDescription: "${metaDescription}",
         metaTitle: "${metaTitle}",
         title: "${title}",

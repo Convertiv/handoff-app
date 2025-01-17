@@ -1,45 +1,19 @@
+import TypographyExamples from '@/components/Foundations/TypeographyExample';
 import { getClientConfig } from '@handoff/config';
-import type { TypographyObject } from '@handoff/types';
 import { FontFamily } from '@handoff/types/font';
 import sortedUniq from 'lodash/sortedUniq';
-import { Link2 } from 'lucide-react';
 import type * as next from 'next';
-import * as React from 'react';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
-import NavLink from '../../components/NavLink';
 import HeadersType from '../../components/Typography/Headers';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
 
-const pluckStyle = (type: TypographyObject) => {
-  return {
-    fontFamily: type.values.fontFamily,
-    fontSize: type.values.fontSize,
-    fontWeight: type.values.fontWeight,
-    lineHeight: type.values.lineHeightPx + 'px',
-  };
-};
-
-interface typographyTypes {
+export interface typographyTypes {
   [key: string]: ReactElement;
 }
-
-const renderTypes: (type: TypographyObject, content: string) => typographyTypes = (type: TypographyObject, content: string) => ({
-  Subheading: <h1 style={pluckStyle(type)}></h1>,
-  'Heading 1': <h1 style={pluckStyle(type)}>{content}</h1>,
-  'Heading 2': <h2 style={pluckStyle(type)}>{content}</h2>,
-  'Heading 3': <h3 style={pluckStyle(type)}>{content}</h3>,
-  'Heading 4': <h4 style={pluckStyle(type)}>{content}</h4>,
-  'Heading 5': <h5 style={pluckStyle(type)}>{content}</h5>,
-  'Heading 6': <h6 style={pluckStyle(type)}>{content}</h6>,
-  'Input Labels': <label style={pluckStyle(type)}>{content}</label>,
-  Blockquote: <blockquote style={pluckStyle(type)}>{content}</blockquote>,
-  Link: <a style={pluckStyle(type)}>{content}</a>,
-  Paragraph: <p style={pluckStyle(type)}>{content}</p>,
-});
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -71,8 +45,6 @@ const Typography = ({
   config,
   design,
 }: FoundationDocumentationProps) => {
-  const [copy, setCopy] = React.useState('Copy link to clipboard');
-
   const typography = design.typography.slice().sort((a, b) => {
     const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
     const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;
@@ -98,7 +70,32 @@ const Typography = ({
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
-      {Object.keys(families).map((key) => (
+      <div className="pb-32">
+        <h2 className="mb-3 text-2xl font-medium">Typography</h2>
+        <p className="mb-8">Typographic system establishes scale, sizes and weight of text.</p>
+        <div className="rounded-lg bg-gray-50 p-7">
+          <p className="mb-3 text-sm font-medium">Typeface</p>
+          <p className="mb-8 text-sm leading-relaxed text-gray-600">Inter</p>
+          <p className="mb-8 text-sm leading-relaxed text-gray-600">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
+          <p>1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
+        </div>
+      </div>
+
+      <HeadersType.H2>Hierarchy</HeadersType.H2>
+      <p className="mb-8">Use for palette of colors containing many shades.</p>
+      <TypographyExamples types={typography} />
+
+      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
+    </Layout>
+  );
+};
+export default Typography;
+
+/**
+ *       
+ *       {Object.keys(families).map((key) => (
         <div className="c-typography__preview-big" key={`family-${key}`}>
           <div className="o-row u-justify-between">
             <div className="o-col-4@md u-mb-4 u-mb-0@md">
@@ -132,58 +129,7 @@ const Typography = ({
         </div>
       ))}
 
-      <h3>Type Scale</h3>
-      <p>
-        Nullam tempor nunc ut tempus vehicula. Duis dignissim sem id nulla tempus, eget cursus sapien efficitur. Suspendisse convallis odio
-        a dui congue vulputate.
-      </p>
-
-      {typography.map((type) => (
-        <div className="c-typography__preview" id={type.machine_name} key={type.machine_name}>
-          <div className="o-row">
-            <div className="o-col-3@md u-mb-4 u-mb-0@md">
-              <h6>
-                {type.name}
-                <a
-                  href={`#${type.machine_name}`}
-                  className="c-tooltip"
-                  data-tooltip={copy}
-                  onMouseEnter={(e) => setCopy('Copy link to clipboard')}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (window) {
-                      navigator.clipboard.writeText('https://' + window.location.host + window.location.pathname + '#' + type.machine_name);
-                      setCopy('Copied');
-                    }
-                    return false;
-                  }}
-                >
-                  <span>
-                    <Link2 />
-                  </span>
-                </a>
-              </h6>
-              <p>
-                {type.values.fontFamily} · {type.values.fontWeight}
-              </p>
-              <p>
-                {type.values.fontSize}px · {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
-              </p>
-            </div>
-            <div className="o-col-9@md">{renderTypes(type, copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}</div>
-          </div>
-        </div>
-      ))}
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
-    </Layout>
-  );
-};
-export default Typography;
-
-/**
- *         <div className="o-row">
+ *   <div className="o-row">
             <div className="o-col-10@md">
               <div>
                 <h3>Type Scale</h3>

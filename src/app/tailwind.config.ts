@@ -1,5 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-console.log('TAILWIND CONFIG');
 export default {
   content: ['./components/**/*.{js,ts,jsx,tsx,mdx}', './pages/**/*.{js,ts,jsx,tsx,mdx}'],
   darkMode: ['class'],

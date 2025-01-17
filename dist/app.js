@@ -13,19 +13,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.devApp = exports.watchApp = void 0;
+const chalk_1 = __importDefault(require("chalk"));
+const chokidar_1 = __importDefault(require("chokidar"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const gray_matter_1 = __importDefault(require("gray-matter"));
+const http_1 = require("http");
+const next_1 = __importDefault(require("next"));
 const next_build_1 = require("next/dist/cli/next-build");
 const next_dev_1 = require("next/dist/cli/next-dev");
 const path_1 = __importDefault(require("path"));
-const http_1 = require("http");
 const url_1 = require("url");
-const next_1 = __importDefault(require("next"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
-const chokidar_1 = __importDefault(require("chokidar"));
-const chalk_1 = __importDefault(require("chalk"));
-const gray_matter_1 = __importDefault(require("gray-matter"));
-const preview_1 = require("./utils/preview");
-const component_1 = require("./transformers/preview/component");
 const pipeline_1 = require("./pipeline");
+const component_1 = require("./transformers/preview/component");
+const preview_1 = require("./utils/preview");
 const getWorkingPublicPath = (handoff) => {
     const paths = [
         path_1.default.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
@@ -112,6 +112,7 @@ const transformMdx = (src, dest, id) => {
     const title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
     const menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
     const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
+    console.log(description);
     const metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
     const metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
     const weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
@@ -154,6 +155,7 @@ export default function Layout(props) {
     <MarkdownLayout
       menu={props.menu}
       metadata={{
+        description: "${description}",
         metaDescription: "${metaDescription}",
         metaTitle: "${metaTitle}",
         title: "${title}",

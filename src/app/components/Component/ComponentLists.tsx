@@ -12,15 +12,23 @@ interface ComponentMetadata extends Metadata {
   absolute?: boolean;
 }
 
-export const ComponentList = ({ components }: { components: { [id: string]: ComponentMetadata } }) => {
+export const ComponentList = ({
+  components,
+  title,
+  description,
+}: {
+  components: { [id: string]: ComponentMetadata };
+  title?: string;
+  description?: string;
+}) => {
   const [layout, setLayout] = React.useState<string>('grid');
+  if (!title) title = 'Components';
+  if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
     <div className="mx-auto w-full">
       <div className="flex flex-col gap-2 pb-7">
-        <HeadersType.H2>Components</HeadersType.H2>
-        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
-          Self-contained reusable UI elements that can be used to build larger blocks or design patterns.
-        </p>
+        <HeadersType.H2>{title}</HeadersType.H2>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
       </div>
       <div className="mb-4 flex justify-end">
         <ToggleGroup type="single" value={layout} onValueChange={(value) => value && setLayout(value)}>
