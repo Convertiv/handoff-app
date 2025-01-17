@@ -1,14 +1,18 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback } from 'react';
 import { CodeHighlight } from '../Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
-import { set, startCase } from 'lodash';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
-import { usePreviewContext } from '../context/PreviewContext';
+import { startCase } from 'lodash';
+import { PencilRuler } from 'lucide-react';
 import { SlotMetadata } from '../../../transformers/preview/component';
+import { usePreviewContext } from '../context/PreviewContext';
 import { Button } from '../ui/button';
-import { RadioGroup, RadioGroupItem } from '@radix-ui/react-radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '../ui/table';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -100,7 +104,22 @@ export const ComponentDisplay: React.FC<{
       <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
         {component?.previews ? (
           <>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between py-1 align-middle">
+              <Select
+                defaultValue={breakpoint}
+                onValueChange={(key) => {
+                  setBreakpoint(key);
+                  setWidth(`${breakpoints[key].size}px`);
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Breakpoint" />
+                </SelectTrigger>
+                <SelectContent>
+                  {breakpoints && Object.keys(breakpoints).map((key) => <SelectItem value={key}>{breakpoints[key].name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
               <div className="mt-3 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
                 <RadioGroup
                   value={previewUrl}
@@ -144,28 +163,6 @@ export const ComponentDisplay: React.FC<{
           />
         )}
       </div>
-      <ul className="flex-column space-y mb-4 space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:mb-0 md:me-4">
-        {breakpoints &&
-          Object.keys(breakpoints).map((key) => (
-            <li
-              key={key}
-              onClick={() => {
-                setBreakpoint(key);
-                setWidth(`${breakpoints[key].size}px`);
-              }}
-            >
-              <Button variant="outline">{breakpoints[key].name}</Button>
-            </li>
-          ))}
-        <li
-          onClick={() => {
-            setBreakpoint('full');
-            setWidth(`100%`);
-          }}
-        >
-          <Button variant="outline">Full</Button>
-        </li>
-      </ul>
     </div>
   );
 };
@@ -206,7 +203,7 @@ export const ComponentPreview: React.FC<{
     <div id={preview.id}>
       <div>
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
-        <CodeHighlight data={preview} collapsible={true} />
+        <CodeHighlight title={title} data={preview} collapsible={true} />
       </div>
       {preview?.properties && (
         <>
@@ -258,38 +255,53 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     }
   };
   return (
-    <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400 rtl:text-right">
-      <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
-        <tr>
-          <th>id</th>
-          <th>Field</th>
-          <th>Type</th>
-          <th>Example</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableCaption>These are the fields associated with the component</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Id</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Description</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {fields.map((field) => {
           return (
-            <tr key={field.key}>
-              <td>{field.key}</td>
-              <td>{startCase(field.name)}</td>
-              <td>{field.type}</td>
-              <td>
+            <TableRow key={field.key}>
+              <TableHead>{field.key}</TableHead>
+              <TableHead>{startCase(field.name)}</TableHead>
+              <TableHead>{field.type}</TableHead>
+              <TableHead>
                 <span className="slot-description">{field.description}</span>
-                <ul className="c-component-preview__slot__content__example">
-                  {field.rules &&
-                    Object.keys(field.rules).map((rule) => (
-                      <li key={field.key + rule} className="c-component-preview__slot__content__example__label">
-                        {humanReadableRule(rule, field.rules[rule])}
-                      </li>
-                    ))}
-                </ul>
-              </td>
-            </tr>
+              </TableHead>
+              <TableHead className="text-right">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost">
+                      <PencilRuler />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        {field.rules &&
+                          Object.keys(field.rules).map((rule) => (
+                            <>
+                              <h4 className="font-medium leading-none">{startCase(rule)}</h4>
+                              <p className="text-sm text-muted-foreground"> {humanReadableRule(rule, field.rules[rule])}</p>
+                            </>
+                          ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </TableHead>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 };

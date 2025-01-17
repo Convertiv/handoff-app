@@ -1,20 +1,20 @@
-import * as React from 'react';
-import type { GetStaticProps } from 'next';
+import HeadersType from '@/components/Typography/Headers';
+import { getClientConfig } from '@handoff/config';
+import { isShadowEffectType } from '@handoff/exporters/utils';
+import { EffectParametersObject } from '@handoff/types';
+import { lowerCase } from 'lodash';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
-import { lowerCase } from 'lodash';
-import * as util from '../../components/util';
-import { EffectParametersObject } from '@handoff/types';
-import { isShadowEffectType } from '@handoff/exporters/utils';
-import AnchorNav from '../../components/Navigation/AnchorNav';
+import type { GetStaticProps } from 'next';
+import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
-import { getTokens } from '../../components/util';
-import { getClientConfig } from '@handoff/config';
 import Layout from '../../components/Layout/Main';
-import HeaderH1 from '../../components/Typography/Headers';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import AnchorNav from '../../components/Navigation/AnchorNav';
+import * as util from '../../components/util';
+import { getTokens } from '../../components/util';
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -69,7 +69,7 @@ const ColorsPage = ({
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>

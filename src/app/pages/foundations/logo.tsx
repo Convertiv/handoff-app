@@ -1,17 +1,17 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import type { AssetObject } from '@handoff/types';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
-import type { AssetObject } from '@handoff/types';
-import { getClientConfig } from '@handoff/config';
+import * as React from 'react';
 
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../components/util';
 
+import HeadersType from '@/components/Typography/Headers';
+import { FileArchive } from 'lucide-react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../components/Layout/Main';
-import HeaderH1 from '../../components/Typography/Headers';
-import { FileArchive } from 'lucide-react';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 
 const DisplayLogo: React.FC<{ logo: AssetObject; content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {
@@ -63,7 +63,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="mt-10">

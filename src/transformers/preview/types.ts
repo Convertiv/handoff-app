@@ -24,6 +24,7 @@ export type TransformComponentTokensResult = {
   group?: string;
   tags?: string[];
   code: string;
+  html?: string;
   preview: string;
   js?: string;
   css?: string;

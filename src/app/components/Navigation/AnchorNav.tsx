@@ -1,6 +1,6 @@
+import { TextQuote } from 'lucide-react';
 import React from 'react';
 import AnchorNavLink from './AnchorNavLink';
-import { TextQuote } from 'lucide-react';
 
 export interface AnchorNavProps {
   title?: string;
@@ -29,23 +29,6 @@ export const AnchorNav: React.FC<AnchorNavProps> = ({ title, groups }) => {
               )}
             </React.Fragment>
           ))}
-          <li>
-            <a href="">Foundations</a>
-            <ul className="space-y-2 pl-4 pt-2">
-              <li>
-                <a href="">Typography</a>
-              </li>
-              <li>
-                <a href="">Colors</a>
-              </li>
-              <li>
-                <a href="">Icons</a>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <a href="">Sections</a>
-          </li>
         </ul>
       </div>
     </div>

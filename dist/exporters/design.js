@@ -49,15 +49,18 @@ exports.toSDMachineName = toSDMachineName;
  * @returns GroupNameData
  */
 const fieldData = (name) => {
-    console.log(name);
     let nameArray = name.split('/');
     const data = {
         name: '',
         machine_name: '',
         group: '',
+        subgroup: null,
+        groups: [...nameArray],
     };
     if (nameArray[1]) {
         data.group = (0, exports.toMachineName)(nameArray[0]);
+        if (nameArray[2])
+            data.subgroup = (0, exports.toMachineName)(nameArray[1]);
         data.name = nameArray.splice(1).join(' ');
         data.machine_name = (0, exports.toMachineName)(data.name);
     }
@@ -112,7 +115,7 @@ const getFigmaFileDesignTokens = (fileId, accessToken) => __awaiter(void 0, void
             }
             let document = node.document;
             if (document.type === 'RECTANGLE') {
-                let { name, machine_name, group } = fieldData(document.name);
+                let { name, machine_name, group, groups, subgroup } = fieldData(document.name);
                 if (isArray(document.effects) && document.effects.length > 0) {
                     effectsArray.push({
                         id: document.id,
@@ -136,6 +139,8 @@ const getFigmaFileDesignTokens = (fileId, accessToken) => __awaiter(void 0, void
                         id: document.id,
                         name,
                         group,
+                        subgroup,
+                        groups,
                         value: color.color,
                         blend: color.blend,
                         sass: `$color-${group}-${machine_name}`,

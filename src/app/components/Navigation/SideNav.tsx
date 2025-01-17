@@ -1,11 +1,10 @@
 'use client';
 
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../components/ui/collapsible';
-import { Layers, ChevronRight, Blend, Type, Sun, LayoutGrid, Shapes, Image, Hexagon } from 'lucide-react';
+import { Blend, ChevronRight, Grid, Hexagon, Image, Layers, Palette, Pickaxe, SquareChartGantt, TypeOutline } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
+import React from 'react';
 import {
-  SidebarProvider,
-  SidebarTrigger,
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -16,9 +15,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarSeparator,
-  SidebarInset,
-  SidebarMenuAction,
-  SidebarHeader,
 } from '../../components/ui/sidebar';
 import { SectionLink } from '../util';
 
@@ -26,7 +22,7 @@ const NormalMenuItem = ({ title, icon, path }) => (
   <SidebarMenuItem>
     <SidebarMenuButton asChild>
       <a href={`/${path}`}>
-        <Layers className="text-slate-700 opacity-50" strokeWidth={1.5} />
+        <MenuIcon icon={icon} />
         <span>{title}</span>
       </a>
     </SidebarMenuButton>
@@ -38,7 +34,7 @@ const CollapsibleMenuItem = ({ title, icon, path, menu }) => (
     <SidebarMenuItem>
       <CollapsibleTrigger asChild>
         <SidebarMenuButton>
-          <Blend className="text-slate-700 opacity-50" strokeWidth={1.5} />
+          <MenuIcon icon={icon} />
           <span>{title}</span>
           <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
         </SidebarMenuButton>
@@ -64,6 +60,33 @@ const MenuItem = ({ item }) => {
   }
 };
 
+const MenuIcon = ({ icon }) => {
+  switch (icon) {
+    case 'layers':
+      return <Layers className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'square-chart-gantt':
+      return <SquareChartGantt className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'pickaxe':
+      return <Pickaxe className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'hexagon':
+      return <Hexagon className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'palette':
+      return <Palette className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'type':
+      return <TypeOutline className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'grid':
+      return <Grid className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'effect':
+      return <Blend className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'blend':
+      return <Blend className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    case 'image':
+      return <Image className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+    default:
+      return null;
+  }
+};
+
 const SideNav = ({ menu }: { menu: SectionLink }) => {
   return (
     <Sidebar className="sticky left-auto">
@@ -71,7 +94,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
         {menu.subSections &&
           menu.subSections.length > 0 &&
           menu.subSections.map((section, index) => (
-            <>
+            <React.Fragment key={index}>
               <SidebarGroup>
                 {!section.path && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
                 {section.menu && section.menu.length > 0 && (
@@ -85,7 +108,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
                 )}
               </SidebarGroup>
               {index < menu.subSections.length && <SidebarSeparator className="mx-4" />}
-            </>
+            </React.Fragment>
           ))}
       </SidebarContent>
     </Sidebar>

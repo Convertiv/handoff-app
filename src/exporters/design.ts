@@ -8,6 +8,8 @@ interface GroupNameData {
   name: string;
   machine_name: string;
   group: string;
+  subgroup: string | null;
+  groups: string[];
 }
 
 /**
@@ -42,15 +44,17 @@ export const toSDMachineName = (name: string): string => {
  * @returns GroupNameData
  */
 const fieldData = (name: string): GroupNameData => {
-  console.log(name);
   let nameArray = name.split('/');
   const data = {
     name: '',
     machine_name: '',
     group: '',
+    subgroup: null,
+    groups: [...nameArray],
   };
   if (nameArray[1]) {
     data.group = toMachineName(nameArray[0]!);
+    if(nameArray[2]) data.subgroup = toMachineName(nameArray[1]!);
     data.name = nameArray.splice(1).join(' ');
     data.machine_name = toMachineName(data.name);
   } else {
@@ -116,7 +120,7 @@ export const getFigmaFileDesignTokens = async (
 
       let document = node.document;
       if (document.type === 'RECTANGLE') {
-        let { name, machine_name, group } = fieldData(document.name);
+        let { name, machine_name, group, groups, subgroup } = fieldData(document.name);
         if (isArray(document.effects) && document.effects.length > 0) {
           effectsArray.push({
             id: document.id,
@@ -141,6 +145,8 @@ export const getFigmaFileDesignTokens = async (
             id: document.id,
             name,
             group,
+            subgroup,
+            groups,
             value: color.color,
             blend: color.blend,
             sass: `$color-${group}-${machine_name}`,

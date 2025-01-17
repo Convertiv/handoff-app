@@ -1,15 +1,9 @@
-import { getClientConfig } from '@handoff/config';
-import { ComponentDisplay, ComponentPreview } from '../../../../components/Component/Preview';
-import { Hero } from '../../../../components/Hero';
-import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
-import Head from 'next/head';
-import Header from '../../../../components/old/Header';
-import Footer from '../../../../components/Footer';
-import { startCase } from 'lodash';
-import CustomNav from '../../../../components/SideNav/Custom';
-import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
-import HeaderH1 from '@/components/Typography/Headers';
 import Layout from '@/components/Layout/Main';
+import HeadersType from '@/components/Typography/Headers';
+import { getClientConfig } from '@handoff/config';
+import { ComponentPreview } from '../../../../components/Component/Preview';
+import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
+import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -50,7 +44,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">

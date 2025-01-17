@@ -1,22 +1,20 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
-import { startCase } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '@handoff/config';
+import ComponentSearch from '../../../components/ComponentSearch';
+import Footer from '../../../components/Footer';
+import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import Header from '../../../components/old/Header';
+import CustomNav from '../../../components/SideNav/Custom';
 import {
   DocumentationProps,
+  fetchComponents,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
-  fetchComponents,
   Metadata,
 } from '../../../components/util';
-import Header from '../../../components/old/Header';
-import Footer from '../../../components/Footer';
-import CustomNav from '../../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import ComponentSearch from '../../../components/ComponentSearch';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };

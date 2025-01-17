@@ -15,6 +15,7 @@ export interface SlotMetadata {
     name: string;
     description: string;
     generic: string;
+    default?: string;
     type: SlotType;
     key?: string;
     rules?: string;
@@ -58,6 +59,7 @@ export declare function processComponent(handoff: Handoff, file: string, sharedS
     group?: string;
     tags?: string[];
     code: string;
+    html?: string;
     preview: string;
     js?: string;
     css?: string;

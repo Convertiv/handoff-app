@@ -1,14 +1,14 @@
-import path from 'path';
-import fs from 'fs-extra';
-import sass from 'sass';
-import { bundleJSWebpack } from '../../utils/preview';
 import chalk from 'chalk';
-import { parse } from 'node-html-parser';
-import Handoff from '../../index';
-import { ComponentListObject, ComponentType, TransformComponentTokensResult } from './types';
+import fs from 'fs-extra';
 import Handlebars from 'handlebars';
+import { parse } from 'node-html-parser';
+import path from 'path';
+import sass from 'sass';
 import semver from 'semver';
 import WebSocket from 'ws';
+import Handoff from '../../index';
+import { bundleJSWebpack } from '../../utils/preview';
+import { ComponentListObject, ComponentType, TransformComponentTokensResult } from './types';
 
 const webSocketClientJS = `
 <script>
@@ -41,6 +41,7 @@ export interface SlotMetadata {
   name: string;
   description: string;
   generic: string;
+  default?: string;
   type: SlotType;
   key?: string;
   rules?: string;
@@ -136,7 +137,7 @@ export async function componentTransformer(handoff: Handoff) {
             for (const versionFile of versionFiles) {
               console.log(`Processing version ${versionDirectory} for ${file}`);
               if (versionFile.endsWith('.hbs')) {
-                data = await processComponent(handoff, versionFile, sharedStyles, path.join(file, versionDirectory));
+                data = await processComponent(handoff, versionFile, sharedStyles, versionDirectory);
                 versions[versionDirectory] = data;
               }
             }
@@ -259,25 +260,29 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
     ],
     properties: {},
     code: '',
+    html: '',
     js: null,
     css: null,
     sass: null,
     sharedStyles: sharedStyles,
   };
-  console.log(chalk.green(`Processing component ${file}`));
+  console.log(chalk.green(`Processing component ${file} ${version}`));
   const componentPath = path.resolve(handoff.workingPath, `integration/components`, id);
   if (!version) {
     // find latest version
+    console.log('componentPath', componentPath);
     const versions = fs.readdirSync(componentPath).filter((f) => fs.statSync(path.join(componentPath, f)).isDirectory());
     const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
+    console.log('versions', versions, latest);
     if (!latest) {
-      throw new Error(`No version found for ${id}`);
+      throw new Error(`No version found for ${id}0`);
     }
     version = latest;
   }
   const custom = version ? path.resolve(componentPath, version) : componentPath;
   if (!fs.existsSync(custom)) {
-    throw new Error(`No version found for ${id}`);
+    console.log('custom', custom);
+    throw new Error(`No version found for ${id}1`);
   }
 
   const publicPath = path.resolve(handoff.workingPath, `public/api/component`);
@@ -384,7 +389,7 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
 
   try {
     const previews = {};
-
+    let html;
     for (const previewKey in data.previews) {
       const url = id + `-${previewKey}.html`;
       data.previews[previewKey].url = url;
@@ -401,12 +406,16 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
         sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
         properties: data.previews[previewKey]?.values || {},
       });
+      if (!html) html = previews[previewKey];
       await fs.writeFile(publicFile, previews[previewKey]);
     }
     data.preview = '';
     const bodyEl = parse(template).querySelector('body');
     const code = bodyEl ? bodyEl.innerHTML.trim() : template;
     data['code'] = code;
+    const htmlEl = parse(html).querySelector('body');
+    html = htmlEl ? htmlEl.innerHTML.trim() : html;
+    data['html'] = html;
     data['sharedStyles'] = sharedStyles;
     // discard shared styles from the css output
   } catch (e) {

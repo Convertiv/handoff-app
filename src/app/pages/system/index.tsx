@@ -1,15 +1,12 @@
-import * as React from 'react';
+import HeadersType from '@/components/Typography/Headers';
+import { getClientConfig } from '@handoff/config';
 import type { GetStaticProps } from 'next';
-import Head from 'next/head';
-import { startCase } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { getClientConfig } from '@handoff/config';
-import { DocumentationProps, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, fetchComponents, Metadata } from '../../components/util';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
-import { ComponentsPageCard } from '../../components/ComponentLists';
-import HeaderH1 from '../../components/Typography/Headers';
+import { ComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -54,29 +51,14 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="mt-10">
-        <>
-          {Object.keys(components).map((componentId) => {
-            const component = components[componentId];
-
-            return (
-              <ComponentsPageCard
-                key={`component-${componentId}`}
-                component={componentId}
-                title={component.title ?? startCase(componentId)}
-                description={component.description}
-                icon={component.image}
-              />
-            );
-          })}
-        </>
-
         <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
+        <ComponentList components={components} />
       </div>
     </Layout>
   );

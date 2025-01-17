@@ -1,8 +1,6 @@
-import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import NavLink from '../NavLink';
 import { SectionLink } from '../util';
-import Icon from '../Icon';
-import { usePathname } from 'next/navigation';
 
 const CustomNav = ({ menu }: { menu: SectionLink }) => {
   const pathname = usePathname();
@@ -16,7 +14,6 @@ const CustomNav = ({ menu }: { menu: SectionLink }) => {
             ) : (
               <>
                 <NavLink href={`/${item.path}`}>
-                  {item.image && <Icon name={item.image} height={20} width={20} className="o-icon" />}
                   {item.title}
                 </NavLink>
                 {item.menu && (

@@ -13,16 +13,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processComponent = exports.processSharedStyles = exports.renameComponent = exports.componentTransformer = exports.createFrameSocket = void 0;
-const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
-const sass_1 = __importDefault(require("sass"));
-const preview_1 = require("../../utils/preview");
 const chalk_1 = __importDefault(require("chalk"));
-const node_html_parser_1 = require("node-html-parser");
-const types_1 = require("./types");
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
+const node_html_parser_1 = require("node-html-parser");
+const path_1 = __importDefault(require("path"));
+const sass_1 = __importDefault(require("sass"));
 const semver_1 = __importDefault(require("semver"));
 const ws_1 = __importDefault(require("ws"));
+const preview_1 = require("../../utils/preview");
+const types_1 = require("./types");
 const webSocketClientJS = `
 <script>
 const ws = new WebSocket('ws://localhost:3001');
@@ -127,7 +127,7 @@ function componentTransformer(handoff) {
                             for (const versionFile of versionFiles) {
                                 console.log(`Processing version ${versionDirectory} for ${file}`);
                                 if (versionFile.endsWith('.hbs')) {
-                                    data = yield processComponent(handoff, versionFile, sharedStyles, path_1.default.join(file, versionDirectory));
+                                    data = yield processComponent(handoff, versionFile, sharedStyles, versionDirectory);
                                     versions[versionDirectory] = data;
                                 }
                             }
@@ -255,25 +255,29 @@ function processComponent(handoff, file, sharedStyles, version) {
             ],
             properties: {},
             code: '',
+            html: '',
             js: null,
             css: null,
             sass: null,
             sharedStyles: sharedStyles,
         };
-        console.log(chalk_1.default.green(`Processing component ${file}`));
+        console.log(chalk_1.default.green(`Processing component ${file} ${version}`));
         const componentPath = path_1.default.resolve(handoff.workingPath, `integration/components`, id);
         if (!version) {
             // find latest version
+            console.log('componentPath', componentPath);
             const versions = fs_extra_1.default.readdirSync(componentPath).filter((f) => fs_extra_1.default.statSync(path_1.default.join(componentPath, f)).isDirectory());
             const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
+            console.log('versions', versions, latest);
             if (!latest) {
-                throw new Error(`No version found for ${id}`);
+                throw new Error(`No version found for ${id}0`);
             }
             version = latest;
         }
         const custom = version ? path_1.default.resolve(componentPath, version) : componentPath;
         if (!fs_extra_1.default.existsSync(custom)) {
-            throw new Error(`No version found for ${id}`);
+            console.log('custom', custom);
+            throw new Error(`No version found for ${id}1`);
         }
         const publicPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
         // Ensure the public API path exists
@@ -379,6 +383,7 @@ function processComponent(handoff, file, sharedStyles, version) {
         const template = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, `${id}.hbs`), 'utf8');
         try {
             const previews = {};
+            let html;
             for (const previewKey in data.previews) {
                 const url = id + `-${previewKey}.html`;
                 data.previews[previewKey].url = url;
@@ -395,12 +400,17 @@ function processComponent(handoff, file, sharedStyles, version) {
                     sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
                     properties: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
                 });
+                if (!html)
+                    html = previews[previewKey];
                 yield fs_extra_1.default.writeFile(publicFile, previews[previewKey]);
             }
             data.preview = '';
             const bodyEl = (0, node_html_parser_1.parse)(template).querySelector('body');
             const code = bodyEl ? bodyEl.innerHTML.trim() : template;
             data['code'] = code;
+            const htmlEl = (0, node_html_parser_1.parse)(html).querySelector('body');
+            html = htmlEl ? htmlEl.innerHTML.trim() : html;
+            data['html'] = html;
             data['sharedStyles'] = sharedStyles;
             // discard shared styles from the css output
         }

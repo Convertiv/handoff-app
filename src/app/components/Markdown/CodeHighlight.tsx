@@ -1,15 +1,21 @@
-import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+import { PreviewObject } from '@handoff/types';
 import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
-import html from 'refractor/lang/xml-doc';
+import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+import js from 'refractor/lang/javascript';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
-import js from 'refractor/lang/javascript';
-import { PreviewObject } from '@handoff/types';
-import CopyCode from '../CopyCode';
+import html from 'refractor/lang/xml-doc';
 // @ts-ignore
+import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
+import { Select } from '@radix-ui/react-select';
+import { ChevronsDown } from 'lucide-react';
+import { useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import { useState } from 'react';
+import CopyCode from '../CopyCode';
+import { Button } from '../ui/button';
+import { Collapsible } from '../ui/collapsible';
+import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
@@ -30,7 +36,7 @@ export const CodeHighlight: React.FC<{
   title?: string;
   language?: string;
 }> = ({ data, collapsible, type, title, dark }) => {
-  const [collapsed, setCollapsed] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
     data = { id: '', title: '', description: '', previews: {}, preview: '', code: '' };
@@ -39,7 +45,9 @@ export const CodeHighlight: React.FC<{
   }
   if (!type) type = 'html';
 
-  const states = Object.keys(data).filter((key) => ['id', 'preview'].indexOf(key) === -1);
+  const states = Object.keys(data)
+    .filter((key) => ['id', 'preview', 'title', 'description', 'type', 'group', 'tags', 'previews', 'properties'].indexOf(key) === -1)
+    .map((key) => key);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.code);
   const theme = dark ? oneDark : oneLight;
@@ -48,9 +56,45 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   return (
-    <div className={`max-w-[900px] ${collapsible && collapsed ? ' collapsed' : ''}`} style={{ maxWidth: 900 }}>
-      <div className="c-code-block__title" data-language={activeState === 'code' ? type : activeState}>
+    <Collapsible className="space-y-2" style={{ maxWidth: 1300 }} open={isOpen} onOpenChange={setIsOpen}>
+      <div
+        className="mt-5 flex items-center justify-between rounded-t-sm bg-gray-100 px-5 py-3"
+        data-language={activeState === 'code' ? type : activeState}
+      >
         {title && <div>{title}</div>}
+        {states.length > 2 && (
+          <Select
+            defaultValue={activeState}
+            onValueChange={(key) => {
+              setActiveState(key);
+              setCode(data[key]);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Breakpoint" />
+            </SelectTrigger>
+            <SelectContent>
+              {states
+                .filter((value) => ['code', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                .map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state === 'code'
+                      ? 'HTML'
+                      : state === 'css'
+                        ? 'CSS'
+                        : state === 'js'
+                          ? 'Javascript'
+                          : state === 'sass'
+                            ? 'SASS'
+                            : state === 'sharedStyles'
+                              ? 'Shared CSS'
+                              : state}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )}
+        <CopyCode code={code} />
       </div>
 
       <SyntaxHighlighter
@@ -64,40 +108,15 @@ export const CodeHighlight: React.FC<{
       >
         {code}
       </SyntaxHighlighter>
-      <CopyCode code={code} />
-      {states.length > 2 && (
-        <select
-          className="c-code-block__select"
-          value={activeState}
-          onChange={(e) => {
-            setActiveState(e.target.value);
-            setCode(data[e.target.value]);
-          }}
-        >
-          {states
-            .filter((value) => ['code', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
-            .map((state) => (
-              <option key={state} value={state}>
-                {state === 'code'
-                  ? 'HTML'
-                  : state === 'css'
-                    ? 'CSS'
-                    : state === 'js'
-                      ? 'Javascript'
-                      : state === 'sass'
-                        ? 'SASS'
-                        : state === 'sharedStyles'
-                          ? 'Shared CSS'
-                          : state}
-              </option>
-            ))}
-        </select>
-      )}
+
       {collapsible && (
-        <button className="c-code-block__toggle" onClick={(e) => setCollapsed(!collapsed)}>
-          {collapsed ? 'Show more' : 'Show less'}
-        </button>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="w-9 p-0">
+            <ChevronsDown className="h-4 w-4" />
+            <span className="sr-only">Toggle</span>
+          </Button>
+        </CollapsibleTrigger>
       )}
-    </div>
+    </Collapsible>
   );
 };

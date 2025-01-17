@@ -1,15 +1,10 @@
-import { ComponentDocumentationProps } from '../util';
-import * as React from 'react';
-import Head from 'next/head';
-import startCase from 'lodash/startCase';
-import Header from '../old/Header';
-import CustomNav from '../SideNav/Custom';
-import Footer from '../Footer';
-import { PreviewContextProvider } from '../context/PreviewContext';
 import { PreviewJson } from '@handoff/types';
-import Layout from './Main';
+import * as React from 'react';
+import { PreviewContextProvider } from '../context/PreviewContext';
 import { AnchorNav } from '../Navigation/AnchorNavNew';
-import HeaderH1 from '../Typography/Headers';
+import HeadersType from '../Typography/Headers';
+import { ComponentDocumentationProps } from '../util';
+import Layout from './Main';
 
 interface MarkdownLayoutProps extends ComponentDocumentationProps {
   children: React.ReactNode;
@@ -22,7 +17,7 @@ const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPre
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">

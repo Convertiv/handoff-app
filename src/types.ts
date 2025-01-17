@@ -1,6 +1,5 @@
 import type { FileComponentsObject } from './exporters/components/types';
-import { BlendMode } from './figma/types';
-import { Effect } from './figma/types';
+import { BlendMode, Effect } from './figma/types';
 import { SlotMetadata } from './transformers/preview/component';
 
 export interface DesignObject {
@@ -37,6 +36,8 @@ export interface ColorObject {
   value: string | null;
   blend: string | null;
   group: string;
+  subgroup: string | null;
+  groups: string[];
   sass: string;
   reference: string;
 }
@@ -133,7 +134,7 @@ export interface PreviewObject {
       values: { [key: string]: string };
       url: string;
     };
-  }
+  };
   properties?: { [key: string]: SlotMetadata };
   code: string;
 }
@@ -145,18 +146,18 @@ export type PreviewJson = {
 };
 
 export interface ComponentDefinition {
-  id: string,
-  name: string,
-  group?: string,
-  parts: ComponentPart[],
-  options?: ComponentDefinitionOptions,
+  id: string;
+  name: string;
+  group?: string;
+  parts: ComponentPart[];
+  options?: ComponentDefinitionOptions;
 }
 
 export interface ComponentPart {
-  id: string,
-  tokens: { from: string, export: Exportable[] }[],
-  condition?: string[][],
-};
+  id: string;
+  tokens: { from: string; export: Exportable[] }[];
+  condition?: string[][];
+}
 
 export interface ComponentDefinitionOptions {
   exporter?: {
@@ -170,16 +171,16 @@ export interface ComponentDocumentationOptions {
     [view: string]: {
       condition?: {
         [property: string]: ComponentViewFilterValue;
-      },
-      sort?: string[]
-      title?: string,
-    }
-  }
+      };
+      sort?: string[];
+      title?: string;
+    };
+  };
 }
 
-export type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
-export type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT"
-type ComponentViewFilterValue = string  | string[] | {[value: string]: {[prop: string]: string}}
+export type Exportable = 'BACKGROUND' | 'BORDER' | 'SPACING' | 'TYPOGRAPHY' | 'FILL' | 'EFFECT' | 'OPACITY' | 'SIZE';
+export type Side = 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT';
+type ComponentViewFilterValue = string | string[] | { [value: string]: { [prop: string]: string } };
 
 /**
  * @deprecated Will be removed before 1.0.0 release.
@@ -198,8 +199,8 @@ export interface LegacyComponentDefinitionOptions {
   exporter?: {
     search: string;
     supportedVariantProps: {
-        design: string[];
-        layout: string[];
+      design: string[];
+      layout: string[];
     };
   };
 }

@@ -1,6 +1,5 @@
-import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
-import { ExportResult, ClientConfig, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { getClientConfig } from '@handoff/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
 import {
   ComponentDocumentationOptions,
@@ -9,14 +8,15 @@ import {
   PreviewJson,
   PreviewObject,
 } from '@handoff/types';
-import { prepareIntegrationObject } from '@handoff/utils/integration';
+import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
+import { prepareIntegrationObject } from '@handoff/utils/integration';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
-import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
@@ -291,17 +291,21 @@ export const staticBuildMenu = () => {
 };
 
 const staticBuildComponentMenu = () => {
-  let subSections = undefined;
+  let subSections = {
+    title: 'Components',
+    path: 'system/component',
+    menu: [],
+  };
   const components = fetchComponents();
   // Build the submenu of exportables (components)
-  const groupedComponents = groupBy(components, (e) => e.type ?? '');
+  const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
     const menuGroup = { title: group, menu: [] };
     groupedComponents[group].forEach((component) => {
       const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
       menuGroup.menu.push({ path: `system/component/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
     });
-    subSections = menuGroup;
+    subSections.menu.push(menuGroup);
   });
   return subSections;
 };
@@ -383,10 +387,11 @@ export const fetchComponents = () => {
       const metadata = getLatestComponentMetadata(file);
       if (metadata) {
         components[file] = metadata;
+        components[file].name = metadata.title;
       }
     });
   }
-
+  console.log('Components', components);
   const items =
     Object.entries(components).map(([id, obj]) => ({
       id,

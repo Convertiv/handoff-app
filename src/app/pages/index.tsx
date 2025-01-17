@@ -1,14 +1,12 @@
-import Layout from '../components/Layout/Main';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
-import { GetStaticProps } from 'next';
+import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
+import { GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { SidebarInset, SidebarProvider } from '../components/ui/sidebar';
 import ReactMarkdown from 'react-markdown';
-import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import HeaderH1 from '../components/Typography/Headers';
+import Layout from '../components/Layout/Main';
+import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -33,9 +31,9 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
-      <HeaderH1>
+      <HeadersType.H1>
         <strong>{config?.app?.client} Design System</strong> for building better user experiences.
-      </HeaderH1>
+      </HeadersType.H1>
       <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>

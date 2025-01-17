@@ -1,18 +1,18 @@
-import * as React from 'react';
-import type * as next from 'next';
-import sortedUniq from 'lodash/sortedUniq';
-import type { TypographyObject } from '@handoff/types';
+import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
-import NavLink from '../../components/NavLink';
+import type { TypographyObject } from '@handoff/types';
 import { FontFamily } from '@handoff/types/font';
-import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
+import sortedUniq from 'lodash/sortedUniq';
+import { Link2 } from 'lucide-react';
+import type * as next from 'next';
+import * as React from 'react';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
-import HeaderH1 from '../../components/Typography/Headers';
-import { Link2 } from 'lucide-react';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import NavLink from '../../components/NavLink';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
 
 const pluckStyle = (type: TypographyObject) => {
   return {
@@ -94,7 +94,7 @@ const Typography = ({
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeaderH1>{metadata.title}</HeaderH1>
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>

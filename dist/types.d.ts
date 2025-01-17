@@ -1,6 +1,5 @@
 import type { FileComponentsObject } from './exporters/components/types';
-import { BlendMode } from './figma/types';
-import { Effect } from './figma/types';
+import { BlendMode, Effect } from './figma/types';
 import { SlotMetadata } from './transformers/preview/component';
 export interface DesignObject {
     color: ColorObject[];
@@ -32,6 +31,8 @@ export interface ColorObject {
     value: string | null;
     blend: string | null;
     group: string;
+    subgroup: string | null;
+    groups: string[];
     sass: string;
     reference: string;
 }
@@ -164,8 +165,8 @@ export interface ComponentDocumentationOptions {
         };
     };
 }
-export declare type Exportable = "BACKGROUND" | "BORDER" | "SPACING" | "TYPOGRAPHY" | "FILL" | "EFFECT" | "OPACITY" | "SIZE";
-export declare type Side = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
+export declare type Exportable = 'BACKGROUND' | 'BORDER' | 'SPACING' | 'TYPOGRAPHY' | 'FILL' | 'EFFECT' | 'OPACITY' | 'SIZE';
+export declare type Side = 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT';
 declare type ComponentViewFilterValue = string | string[] | {
     [value: string]: {
         [prop: string]: string;
