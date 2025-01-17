@@ -10,7 +10,6 @@ import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import Header from '../../../components/old/Header';
-import CustomNav from '../../../components/SideNav/Custom';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
@@ -81,7 +80,6 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container">
           <div className="c-hero">

@@ -106,18 +106,9 @@ export const knownPaths = [
   'foundations/effects',
   'foundations/logos',
   'foundations/typography',
-  'components',
+  'system',
+  'system/component',
   'changelog',
-  'components/button',
-  'components/alert',
-  'components/modal',
-  'components/pagination',
-  'components/tooltip',
-  'components/switch',
-  'components/input',
-  'components/radio',
-  'components/select',
-  'components/checkbox',
 ];
 
 /**

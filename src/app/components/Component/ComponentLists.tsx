@@ -92,9 +92,8 @@ export const ComponentsPageCard = ({
           className="mb-5 rounded-lg"
         />
         <div>
-          <a href="">
-            <h2 className="text-base font-medium">{title}</h2>
-          </a>
+          <h2 className="text-base font-medium">{title}</h2>
+
           <small className="font-mono text-xs font-light text-gray-400">{Math.floor(Math.random() * 20)} variations</small>
           <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>{descripton}</p>
         </div>

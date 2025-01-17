@@ -1,5 +1,5 @@
 import { getClientConfig } from '@handoff/config';
-import { FileArchive } from 'lucide-react';
+import { File, FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
@@ -8,7 +8,6 @@ import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import NavLink from '../../components/NavLink';
 import Header from '../../components/old/Header';
-import CustomNav from '../../components/SideNav/Custom';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**
@@ -36,7 +35,6 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero c-hero--boxed c-hero--bg-red">
@@ -69,7 +67,7 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
             </div>
             <div className="o-col-6@md">
               <div className="c-card">
-                <Icon name="file-svg" className="c-card__icon" />
+                <File />
                 <h4>Iconography</h4>
                 <p>Library of approved vector iconography.</p>
                 <p>

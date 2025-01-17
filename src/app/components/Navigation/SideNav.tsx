@@ -101,7 +101,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
                   <SidebarGroupContent>
                     <SidebarMenu>
                       {section.menu.map((item) => (
-                        <MenuItem key={item.path} item={item} />
+                        <MenuItem key={index + '-' + item.path} item={item} />
                       ))}
                     </SidebarMenu>
                   </SidebarGroupContent>

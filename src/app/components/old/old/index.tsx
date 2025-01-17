@@ -1,37 +1,37 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import { FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
+import { ComponentTab } from '@handoff/types/tabs';
+import { filterOutNull } from '@handoff/utils';
+import startCase from 'lodash/startCase';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
+import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
-import startCase from 'lodash/startCase';
-import {
-  ComponentDocumentationProps,
-  fetchCompDocPageMarkdown,
-  fetchComponents,
-  getIntegrationObject,
-  getLegacyDefinition,
-  getPreview,
-  getTokens,
-} from '../../../components/util';
-import { getClientConfig } from '@handoff/config';
-import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
-import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
-import { filterOutNull } from '@handoff/utils';
-import { ComponentTab } from '@handoff/types/tabs';
-import { IParams, reduceSlugToString } from '../../../components/util';
-import Header from '../../../components/old/Header';
-import CustomNav from '../../../components/SideNav/Custom';
-import AnchorNav from '../../../components/Navigation/AnchorNav';
-import { DownloadTokens } from '../../../components/DownloadTokens';
-import ComponentDesignTokens from '../../../components/ComponentDesignTokens';
-import Footer from '../../../components/Footer';
 import {
   ComponentDisplay,
   ComponentPreview,
   ComponentPreviews,
   OverviewComponentPreview,
   getComponentPreviewTitle,
-} from '../../../components/Component/Preview';
+} from '../../Component/Preview';
+import ComponentDesignTokens from '../../ComponentDesignTokens';
+import { DownloadTokens } from '../../DownloadTokens';
+import Footer from '../../Footer';
+import AnchorNav from '../../Navigation/AnchorNav';
+import {
+  ComponentDocumentationProps,
+  IParams,
+  fetchCompDocPageMarkdown,
+  fetchComponents,
+  getIntegrationObject,
+  getLegacyDefinition,
+  getPreview,
+  getTokens,
+  reduceSlugToString,
+} from '../../util';
+import Header from '../Header';
 
 /**
  * Render all index pages
@@ -126,7 +126,6 @@ const GenericComponentPage = ({
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">

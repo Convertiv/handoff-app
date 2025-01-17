@@ -1,5 +1,6 @@
 import { ColorObject } from '@handoff/api';
 import startCase from 'lodash/startCase';
+import React from 'react';
 import HeadersType from '../Typography/Headers';
 type ColorGridProps = {
   title: string;
@@ -11,7 +12,7 @@ type ColorGridProps = {
 const LargeColorGrid: React.FC<{ colors: ColorObject[] }> = ({ colors }) => (
   <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(150px,300px))] gap-6">
     {colors.map((color) => (
-      <a href="#" className="flex flex-col items-start">
+      <a href="#" className="flex flex-col items-start" key={color.group + '-' + color.name}>
         <div
           className="mb-2 block h-32 w-full rounded-lg"
           style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
@@ -38,11 +39,11 @@ const SmallColorGrid: React.FC<{ colors: ColorObject[] }> = ({ colors }) => {
   return (
     <>
       {Object.entries(groupedColors).map(([subgroup]) => (
-        <div className="mb-5">
+        <div className="mb-5" key={`group-${subgroup}`}>
           <HeadersType.H4 key={subgroup}>{startCase(subgroup.replaceAll('-', ' '))}</HeadersType.H4>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(60px,60px))] gap-6">
             {groupedColors[subgroup].map((color) => (
-              <>
+              <React.Fragment key={`group-${subgroup}-${color.name}`}>
                 <a href="" className="flex flex-col">
                   <div
                     className="mb-2 block h-14 rounded-lg"
@@ -51,7 +52,7 @@ const SmallColorGrid: React.FC<{ colors: ColorObject[] }> = ({ colors }) => {
                   <p className="mb-1 text-sm font-medium">{color.name}</p>
                   <small className="font-mono text-xs font-light text-gray-400">{color.value}</small>
                 </a>
-              </>
+              </React.Fragment>
             ))}
           </div>
         </div>

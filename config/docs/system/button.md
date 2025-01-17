@@ -13,7 +13,7 @@ Make it clear what this button does for the user.
 <div className="c-do-dont">
   <div className="c-do-dont__do">
 
-<Icon name="check" className="" /> DO
+<Check /> DO
 
 - Make it clear what this button does for the user.
 - Use at most two buttons in one group.
@@ -22,7 +22,7 @@ Make it clear what this button does for the user.
   </div>
   <div className="c-do-dont__dont">
 
-<Icon name="x" className="" /> DON&apos;T
+<X /> DON&apos;T
 
 - Use more than two words for call to action.
 - First letter of each sentence defaults to a capital letter.

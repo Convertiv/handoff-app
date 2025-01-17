@@ -11,7 +11,6 @@ import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
-import CustomNav from '../../components/SideNav/Custom';
 import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
 
 /**
@@ -64,7 +63,6 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">

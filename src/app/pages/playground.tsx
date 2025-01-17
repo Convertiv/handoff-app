@@ -1,96 +1,58 @@
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   ArrowRight,
+  ArrowRightToLine,
   BookType,
-  Box,
-  Calendar,
   Check,
-  ChevronRight,
   CircleCheck,
-  Contrast,
   Code2,
+  Contrast,
   Copy,
-  Command,
   FileCode2,
-  Home,
-  Image,
-  Inbox,
   Info,
-  Layers,
-  LayoutTemplate,
+  LayoutGrid,
   Link,
   OctagonX,
   PersonStanding,
-  Search,
-  Settings,
-  SquareChevronRight,
-  SwatchBook,
-  Type,
-  LayoutGrid,
   Rows,
+  SwatchBook,
   TriangleAlert,
-  Blend,
-  Sun,
-  Tangent,
-  TableCellsSplit,
-  Shapes,
-  SunMedium,
-  CornerDownRight,
-  TextQuote,
+  Type,
   X,
-  ArrowRightToLine,
 } from 'lucide-react';
-import { ThemeProvider } from '../components/util/theme-provider';
+import { useState } from 'react';
 import { Header } from '../components/Layout/Header';
-import SideNav from '../components/Navigation/SideNav';
 import { AnchorNav } from '../components/Navigation/AnchorNavNew';
-import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+import SideNav from '../components/Navigation/SideNav';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Separator } from '../components/ui/separator';
-import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+import { ThemeProvider } from '../components/util/theme-provider';
 
-import { SidebarProvider, SidebarInset } from '../components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '../components/ui/sidebar';
 
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '../components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../components/ui/sheet';
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 
-import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '../components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../components/ui/breadcrumb';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
-import { GetStaticProps } from 'next';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 import { getClientConfig } from '@handoff/config';
+import { GetStaticProps } from 'next';
 import { ConfigContextProvider } from '../components/context/ConfigContext';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { ChangelogDocumentationProps, getChangelog } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -538,8 +500,8 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                                     </div>
                                   </div>
                                   <SheetDescription className="leading-relaxed">
-                                    Color description coming from Figma variable or style description. Usually usage guideline like "Use for
-                                    background" or "Use for text".
+                                    Color description coming from Figma variable or style description. Usually usage guideline like
+                                    &quot;Use for background&quot; or &quot;Use for text&quot;.
                                   </SheetDescription>
                                   <div className="mt-2 flex items-center gap-2">
                                     <svg
@@ -781,7 +743,8 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                             </div>
                             <SheetTitle>Heading 1</SheetTitle>
                             <SheetDescription className="leading-relaxed">
-                              Description from Figma, usually usage guideline like "Use for background" or "Use for text".
+                              Description from Figma, usually usage guideline like &quot;Use for background&quot; or &quot;Use for
+                              text&quot;.
                             </SheetDescription>
                             <div className="mt-2 flex items-center gap-2 pt-3">
                               <svg className="h-2.5 w-2.5 text-slate-700" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -854,7 +817,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                     </div>
                     <Separator className="my-14" />
                     <div>
-                      <h2 className="mb-3 text-2xl font-medium">Do and Don't cards</h2>
+                      <h2 className="mb-3 text-2xl font-medium">Do and Don&apos;t cards</h2>
                       <p className="mb-8">Should be used to highlight best practices and common mistakes.</p>
                       <div className="grid grid-cols-[repeat(auto-fit,minmax(100%,1fr))] gap-6 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
                         <div className="relative rounded-lg bg-slate-50 p-6 text-gray-600 ring-1 ring-inset ring-slate-500/20">

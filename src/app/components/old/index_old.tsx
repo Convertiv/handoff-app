@@ -8,9 +8,9 @@ import { useRouter } from 'next/router';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import Footer from '../components/Footer';
-import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
+import Footer from '../Footer';
+import { MarkdownComponents } from '../Markdown/MarkdownComponents';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../util';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {

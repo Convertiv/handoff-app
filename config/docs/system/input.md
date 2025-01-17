@@ -14,14 +14,14 @@ Make it clear what this input does for the user.
 <div className="c-do-dont">
   <div className="c-do-dont__do">
 
-<Icon name="check" className="" /> DO
+<Check /> DO
 
 - What to do with inputs
 
   </div>
   <div className="c-do-dont__dont">
 
-<Icon name="x" className="" /> DON&apos;T
+<X /> DON&apos;T
 
 - What not to do with inputs
 

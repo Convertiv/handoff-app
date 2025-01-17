@@ -1,7 +1,6 @@
 import Head from 'next/head';
 import Footer from './Footer';
 import Header from './old/Header';
-import CustomNav from './SideNav/Custom';
 import * as util from './util';
 export interface ComponentNotFoundProps extends util.DocumentationProps {
   children?: JSX.Element;
@@ -14,7 +13,7 @@ export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, 
         <meta name="description" content={metadata.metaDescription} />
       </Head>
       <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
+
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">

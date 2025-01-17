@@ -1,17 +1,17 @@
+import chalk from 'chalk';
+import chokidar from 'chokidar';
+import fs from 'fs-extra';
+import matter from 'gray-matter';
+import { createServer } from 'http';
+import next from 'next';
 import { nextBuild } from 'next/dist/cli/next-build';
 import { nextDev } from 'next/dist/cli/next-dev';
-import Handoff from '.';
 import path from 'path';
-import { createServer } from 'http';
 import { parse } from 'url';
-import next from 'next';
-import fs from 'fs-extra';
-import chokidar from 'chokidar';
-import chalk from 'chalk';
-import matter from 'gray-matter';
+import Handoff from '.';
+import { buildComponents, buildIntegrationOnly } from './pipeline';
+import { createFrameSocket, processSharedStyles } from './transformers/preview/component';
 import { buildClientFiles } from './utils/preview';
-import { createFrameSocket, processSharedStyles, processComponent } from './transformers/preview/component';
-import { buildIntegrationOnly, buildComponents } from './pipeline';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -138,6 +138,7 @@ export const preview = (name) => {
   return previews.components[name];
 };
 
+import { Check, X } from 'lucide-react';
 import MarkdownLayout from "handoff-app/src/app/components/Layout/Markdown";
 export default function Layout(props) {
   return (

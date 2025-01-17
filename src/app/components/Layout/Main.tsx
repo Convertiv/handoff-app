@@ -1,13 +1,12 @@
-import { ThemeProvider } from '../../components/util/theme-provider';
+import { ComponentDocumentationOptions } from '@handoff/types';
+import { ClientConfig } from '@handoff/types/config';
+import Head from 'next/head';
 import { Header } from '../../components/Layout/Header';
-import Footer from '../Footer';
+import { ThemeProvider } from '../../components/util/theme-provider';
+import SideNav from '../Navigation/SideNav';
 import { ConfigContextProvider } from '../context/ConfigContext';
 import { SidebarInset, SidebarProvider } from '../ui/sidebar';
-import SideNav from '../Navigation/SideNav';
-import { ComponentDocumentationOptions } from '../../../types';
 import { SectionLink } from '../util';
-import { ClientConfig } from '../../../types/config';
-import Head from 'next/head';
 
 interface LayoutComponentProps {
   metadata: {
