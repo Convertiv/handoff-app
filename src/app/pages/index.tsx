@@ -1,4 +1,3 @@
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import { GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
@@ -6,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../components/Layout/Main';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
+import HeadersType from '../components/Typography/Headers';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 
 /**

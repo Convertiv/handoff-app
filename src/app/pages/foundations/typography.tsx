@@ -1,4 +1,3 @@
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import type { TypographyObject } from '@handoff/types';
 import { FontFamily } from '@handoff/types/font';
@@ -12,6 +11,7 @@ import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import NavLink from '../../components/NavLink';
+import HeadersType from '../../components/Typography/Headers';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
 
 const pluckStyle = (type: TypographyObject) => {

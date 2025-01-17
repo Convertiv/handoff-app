@@ -1,4 +1,3 @@
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import { Grid, Hexagon, Palette, Pickaxe, TypeOutline } from 'lucide-react';
 import type { GetStaticProps } from 'next';
@@ -7,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import CardsWithIcons from '../../components/cards/CardsWithIcons';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**

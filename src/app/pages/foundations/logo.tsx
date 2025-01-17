@@ -6,12 +6,12 @@ import * as React from 'react';
 
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../components/util';
 
-import HeadersType from '@/components/Typography/Headers';
 import { FileArchive } from 'lucide-react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
 
 const DisplayLogo: React.FC<{ logo: AssetObject; content?: string }> = ({ logo, content }) => {
   const htmlData = React.useMemo(() => {

@@ -1,4 +1,3 @@
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
@@ -10,6 +9,7 @@ import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../components/Navigation/AnchorNav';
+import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
 import { getTokens } from '../../components/util';
 

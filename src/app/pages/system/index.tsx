@@ -1,4 +1,3 @@
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
@@ -6,6 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import { ComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
 import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
