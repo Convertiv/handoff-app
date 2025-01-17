@@ -4,7 +4,7 @@ import { Grid, Hexagon, Palette, Pickaxe, TypeOutline } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import CardsWithIcons from '../../components/Cards/CardsWithIcons';
+import CardsWithIcons from '../../components/cards/CardsWithIcons';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
