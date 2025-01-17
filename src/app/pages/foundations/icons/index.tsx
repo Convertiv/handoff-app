@@ -1,5 +1,3 @@
-import Layout from '@/components/Layout/Main';
-import HeadersType from '@/components/Typography/Headers';
 import { getClientConfig } from '@handoff/config';
 import type { AssetObject } from '@handoff/types';
 import { Laptop, Search } from 'lucide-react';
@@ -9,7 +7,9 @@ import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
+import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../../components/Typography/Headers';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {

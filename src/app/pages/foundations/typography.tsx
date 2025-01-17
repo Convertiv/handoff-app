@@ -1,4 +1,3 @@
-import TypographyExamples from '@/components/Foundations/TypeographyExample';
 import { getClientConfig } from '@handoff/config';
 import { FontFamily } from '@handoff/types/font';
 import sortedUniq from 'lodash/sortedUniq';
@@ -6,6 +5,7 @@ import type * as next from 'next';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
+import TypographyExamples from '../../components/Foundations/TypeographyExample';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
