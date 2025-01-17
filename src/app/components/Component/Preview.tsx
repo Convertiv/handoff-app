@@ -2,11 +2,11 @@ import React, { useCallback } from 'react';
 import { CodeHighlight } from '../Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
+import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
 import { PencilRuler } from 'lucide-react';
-import { SlotMetadata } from '../../../transformers/preview/component';
 import { usePreviewContext } from '../context/PreviewContext';
 import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
