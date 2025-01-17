@@ -1,9 +1,9 @@
-import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@radix-ui/react-toggle-group';
 import { startCase } from 'lodash';
 import { LayoutGrid, Rows } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
+import { cn } from '../../lib/utils';
 import HeadersType from '../Typography/Headers';
 import { Metadata } from '../util';
 

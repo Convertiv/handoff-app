@@ -1,18 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import {
   NavigationMenu,
   NavigationMenuContent,
-  NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from '../../components/ui/navigation-menu';
+import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
 
 export function MainNav() {

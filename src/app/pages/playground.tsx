@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   ArrowRight,
   ArrowRightToLine,
@@ -21,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { cn } from '../../lib/utils';
 import { Header } from '../components/Layout/Header';
 import { AnchorNav } from '../components/Navigation/AnchorNavNew';
 import SideNav from '../components/Navigation/SideNav';
