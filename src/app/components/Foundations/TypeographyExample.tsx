@@ -1,8 +1,8 @@
 import { typographyTypes } from '@/pages/foundations/typography';
+import { TypographyObject } from '@handoff/api';
 import { Separator } from '@radix-ui/react-select';
 import { ArrowRightToLine, BookType, Check, Copy, Link, Type } from 'lucide-react';
 import React from 'react';
-import { TypographyObject } from '../../../api';
 import { cn } from '../../lib/utils';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
 import { Button } from '../ui/button';
