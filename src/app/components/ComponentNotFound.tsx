@@ -1,9 +1,8 @@
-import * as util from './util';
 import Head from 'next/head';
-import Header from './old/Header';
-import Icon from './Icon';
-import CustomNav from './SideNav/Custom';
 import Footer from './Footer';
+import Header from './old/Header';
+import CustomNav from './SideNav/Custom';
+import * as util from './util';
 export interface ComponentNotFoundProps extends util.DocumentationProps {
   children?: JSX.Element;
 }
@@ -30,7 +29,6 @@ export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, 
                 <a href="https://www.handoff.com/docs/tokens/not-found">Read More</a>
               </p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img" />}
           </div>
         </div>
       </section>

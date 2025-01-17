@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import Icon from './Icon';
+import { Laptop, Search } from 'lucide-react';
 import Link from 'next/link';
+import React from 'react';
 
 type ComponentListObject = {
   id: string;
@@ -57,7 +57,7 @@ const ComponentSearch = ({}) => {
       <div className="c-form-element c-form-element--fullwidth c-form-element--big">
         <div className="c-form-element__field">
           <div className="c-form-element__icon">
-            <Icon name="search" className="o-icon" />
+            <Search />
           </div>
           <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
         </div>
@@ -72,7 +72,7 @@ const ComponentSearch = ({}) => {
               list.map((component) => <DisplayComponent key={component.id} component={component} />)
             ) : (
               <div className="c-search-results">
-                <Icon name="search-laptop" className="o-icon" />
+                <Laptop />
                 <h4>No icons found.</h4>
               </div>
             )}
