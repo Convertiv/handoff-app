@@ -43,7 +43,12 @@ export const renderTypes: (type: TypographyObject, content: string) => typograph
 const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: string }> = ({ types, type_copy }) => {
   const [openType, setOpenType] = React.useState(false);
   const [copy, setCopy] = React.useState('Copy link to clipboard');
+  const [selectedType, setSelectedType] = React.useState<TypographyObject | undefined>(undefined);
   type_copy = type_copy ?? 'Almost before we knew it, we had left the ground.';
+  const openTypeSheet = (type: TypographyObject) => {
+    setSelectedType(type);
+    setOpenType(true);
+  };
 
   return (
     <>
@@ -57,7 +62,7 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
               <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Link className="h-3 w-3 text-gray-500" />
               </button>
-              <button onClick={() => setOpenType(true)} className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <button onClick={() => openTypeSheet(type)} className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -85,23 +90,24 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
           </div>
         </div>
       ))}
-      <TypographySheet types={types[0]} openType={openType} setOpenType={setOpenType} />
+      <TypographySheet type={selectedType} openType={openType} setOpenType={setOpenType} />
     </>
   );
 };
 
-const TypographySheet: React.FC<{ types: TypographyObject; openType: boolean; setOpenType: (boolean) => void }> = ({
-  types,
+const TypographySheet: React.FC<{ type: TypographyObject; openType: boolean; setOpenType: (boolean) => void }> = ({
+  type,
   openType,
   setOpenType,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [selectedValue, setSelectedValue] = React.useState('off');
   const handleCopy = () => {
-    navigator.clipboard.writeText('https://' + window.location.host + window.location.pathname + '#' + types.name);
+    navigator.clipboard.writeText('https://' + window.location.host + window.location.pathname + '#' + type.name);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  if (!type) return null;
   return (
     <Sheet open={openType} onOpenChange={setOpenType}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px]  [&>button:hover]:opacity-0 [&>button]:opacity-0">
@@ -136,9 +142,9 @@ const TypographySheet: React.FC<{ types: TypographyObject; openType: boolean; se
             </SheetClose>
           </div>
           <div className="mb-2 flex h-48 w-full items-center justify-center rounded-md bg-gray-50">
-            <span className="text-8xl font-medium">Ag</span>
+            {<span style={pluckStyle(type)}>Ag</span>}
           </div>
-          <SheetTitle>Heading 1</SheetTitle>
+          <SheetTitle>{type.name}</SheetTitle>
           <SheetDescription className="leading-relaxed">
             Description from Figma, usually usage guideline like &quot;Use for background&quot; or &quot;Use for text&quot;.
           </SheetDescription>
@@ -173,19 +179,19 @@ const TypographySheet: React.FC<{ types: TypographyObject; openType: boolean; se
           <ul className="flex flex-col gap-3">
             <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
               <p className="font-mono text-xs text-gray-400">Font Size</p>
-              <p className="font-mono text-xs">64px</p>
+              <p className="font-mono text-xs">{type.values.fontSize}px</p>
             </li>
             <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
               <p className="font-mono text-xs text-gray-400">Line Height</p>
-              <p className="font-mono text-xs">1.2</p>
+              <p className="font-mono text-xs">{(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}</p>
             </li>
             <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
               <p className="font-mono text-xs text-gray-400">Font Family</p>
-              <p className="font-mono text-xs">Inter</p>
+              <p className="font-mono text-xs">{type.values.fontFamily}</p>
             </li>
             <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
               <p className="font-mono text-xs text-gray-400">Font Weight</p>
-              <p className="font-mono text-xs">Medium</p>
+              <p className="font-mono text-xs">{type.values.fontWeight}</p>
             </li>
           </ul>
           <div className="flex hidden justify-end">
