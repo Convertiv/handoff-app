@@ -1,8 +1,8 @@
-import { cn } from '@/lib/utils';
 import { ColorObject } from '@handoff/api';
 import startCase from 'lodash/startCase';
 import { ArrowRightToLine, Check, Contrast, Copy, Link, SwatchBook } from 'lucide-react';
 import React from 'react';
+import { cn } from '../../lib/utils';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
