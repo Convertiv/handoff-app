@@ -33,7 +33,7 @@ export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
 
   return (
     <div>
-      <Link href={`/assets/icons/${icon.icon}`}>
+      <Link href={`/foundations/icons/${icon.icon}`}>
         <div className="c-card c-card--icon-preview">
           <div dangerouslySetInnerHTML={{ __html: htmlData }} />
           <p>{icon.icon}</p>
@@ -53,7 +53,7 @@ export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
 export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/assets/', 'icons', `/assets`).props,
+      ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
       config: getClientConfig(),
       assets: getTokens().assets,
     },

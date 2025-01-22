@@ -3,6 +3,7 @@
 import { Blend, ChevronRight, Grid, Hexagon, Image, Layers, Palette, Pickaxe, SquareChartGantt, TypeOutline } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
+import { useRouter } from 'next/router';
 import React from 'react';
 import {
   Sidebar,
@@ -29,28 +30,32 @@ const NormalMenuItem = ({ title, icon, path }) => (
   </SidebarMenuItem>
 );
 
-const CollapsibleMenuItem = ({ title, icon, path, menu }) => (
-  <Collapsible className="group/collapsible">
-    <SidebarMenuItem>
-      <CollapsibleTrigger asChild>
-        <SidebarMenuButton>
-          <MenuIcon icon={icon} />
-          <span>{title}</span>
-          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-        </SidebarMenuButton>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <SidebarMenuSub>
-          <SidebarMenu>
-            {menu.map((item) => (
-              <MenuItem key={item.path} item={item} />
-            ))}
-          </SidebarMenu>
-        </SidebarMenuSub>
-      </CollapsibleContent>
-    </SidebarMenuItem>
-  </Collapsible>
-);
+const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
+  const router = useRouter();
+  const isActive = ('/' + path).includes(router.pathname) || '/' + path === router.pathname;
+  return (
+    <Collapsible defaultOpen={isActive} className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton>
+            <MenuIcon icon={icon} />
+            <span>{title}</span>
+            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <SidebarMenu>
+              {menu.map((item) => (
+                <MenuItem key={item.path} item={item} />
+              ))}
+            </SidebarMenu>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+};
 
 const MenuItem = ({ item }) => {
   if (item.menu && item.menu.length > 0) {

@@ -3,11 +3,9 @@
 import Link from 'next/link';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '../../components/ui/navigation-menu';
 import { cn } from '../../lib/utils';
@@ -23,15 +21,19 @@ export function MainNav() {
             <NavigationMenuItem key={section.title}>
               {section.subSections && section.subSections.length > 0 ? (
                 <>
-                  <Link
-                    href={section.path}
-                    passHref
-                    className={cn(
-                      'block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-                    )}
-                  >
-                    <NavigationMenuTrigger>{section.title}</NavigationMenuTrigger>
-                  </Link>
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link
+                      href={section.path}
+                      passHref
+                      className={cn(
+                        'block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
+                      )}
+                    >
+                      {section.title}
+                    </Link>
+                  </NavigationMenuLink>
+                  {/* eslint-disable-next-line @next/next/no-html-link-for-pages 
+                  <NavigationMenuTrigger>{section.title}</NavigationMenuTrigger>
                   <NavigationMenuContent className="gap-1 p-2 md:w-[200px] lg:w-[200px]">
                     {section.subSections.map((child) => (
                       <NavigationMenuLink key={child.title}>
@@ -46,19 +48,19 @@ export function MainNav() {
                         </Link>
                       </NavigationMenuLink>
                     ))}
-                  </NavigationMenuContent>
+                  </NavigationMenuContent>*/}
                 </>
               ) : (
-                <Link
-                  href={section.path}
-                  passHref
-                  legacyBehavior
-                  className="block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                >
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link
+                    href={section.path}
+                    passHref
+                    legacyBehavior
+                    className="block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
                     <div className="text-sm leading-none">{section.title}</div>
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               )}
             </NavigationMenuItem>
           ))}

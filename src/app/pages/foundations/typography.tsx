@@ -73,12 +73,16 @@ const Typography = ({
       <div className="pb-32">
         <h2 className="mb-3 text-2xl font-medium">Typography</h2>
         <p className="mb-8">Typographic system establishes scale, sizes and weight of text.</p>
-        <div className="rounded-lg bg-gray-50 p-7">
-          <p className="mb-3 text-sm font-medium">Typeface</p>
-          <p className="mb-8 text-sm leading-relaxed text-gray-600">Inter</p>
-          <p className="mb-8 text-sm leading-relaxed text-gray-600">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
-          <p>1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
-        </div>
+        {Object.keys(families).map((key) => (
+          <div className="rounded-lg bg-gray-50 p-7">
+            <p className="mb-3 text-sm font-medium">Typeface</p>
+            <div style={{ fontFamily: key }}>
+              <p className="mb-8 text-sm leading-relaxed text-gray-600">{key}</p>
+              <p className="mb-8 text-sm leading-relaxed text-gray-600">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
+              <p>1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <HeadersType.H2>Hierarchy</HeadersType.H2>

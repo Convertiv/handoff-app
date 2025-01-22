@@ -70,7 +70,8 @@ export const ComponentList = ({
 export const ComponentsPageCard = ({
   component,
   title,
-  description: descripton,
+  description,
+  variations,
   icon,
   image,
   path,
@@ -87,6 +88,7 @@ export const ComponentsPageCard = ({
   layout?: string;
   available?: boolean;
   absolute?: boolean;
+  variations?: number;
 }) => {
   if (!path) path = 'components';
   return (
@@ -101,9 +103,8 @@ export const ComponentsPageCard = ({
         />
         <div>
           <h2 className="text-base font-medium">{title}</h2>
-
-          <small className="font-mono text-xs font-light text-gray-400">{Math.floor(Math.random() * 20)} variations</small>
-          <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>{descripton}</p>
+          {variations && <small className="font-mono text-xs font-light text-gray-400">{variations} variations</small>}
+          <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>{description}</p>
         </div>
       </Link>
     </div>
