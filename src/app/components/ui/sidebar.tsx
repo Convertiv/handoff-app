@@ -273,6 +273,7 @@ const SidebarInset = React.forwardRef<HTMLDivElement, React.ComponentProps<'main
         className
       )}
       {...props}
+      style={{ maxWidth: 'calc(100% - var(--sidebar-width))' }}
     />
   );
 });

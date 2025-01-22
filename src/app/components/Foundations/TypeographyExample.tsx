@@ -27,7 +27,6 @@ export const pluckStyle = (type: TypographyObject) => {
 };
 
 export const renderTypes: (type: TypographyObject, content: string) => typographyTypes = (type: TypographyObject, content: string) => ({
-  Subheading: <h1 style={pluckStyle(type)}></h1>,
   'Heading 1': <h1 style={pluckStyle(type)}>{content}</h1>,
   'Heading 2': <h2 style={pluckStyle(type)}>{content}</h2>,
   'Heading 3': <h3 style={pluckStyle(type)}>{content}</h3>,
@@ -82,11 +81,7 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
                 {type.values.fontSize}px / {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
               </small>
             </div>
-            <div>
-              <p className={`text-${3 - index}xl font-medium`}>
-                {renderTypes(type, type_copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}
-              </p>
-            </div>
+            <div>{renderTypes(type, type_copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}</div>
           </div>
         </div>
       ))}

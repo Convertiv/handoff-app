@@ -32,7 +32,7 @@ const NormalMenuItem = ({ title, icon, path }) => (
 
 const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
   const router = useRouter();
-  const isActive = ('/' + path).includes(router.pathname) || '/' + path === router.pathname;
+  const isActive = router.pathname.startsWith('/' + path) || '/' + path === router.pathname;
   return (
     <Collapsible defaultOpen={isActive} className="group/collapsible">
       <SidebarMenuItem>
@@ -105,8 +105,8 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
                 {section.menu && section.menu.length > 0 && (
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {section.menu.map((item) => (
-                        <MenuItem key={index + '-' + item.path} item={item} />
+                      {section.menu.map((item, subindex) => (
+                        <MenuItem key={index + '-mi-' + subindex} item={item} />
                       ))}
                     </SidebarMenu>
                   </SidebarGroupContent>

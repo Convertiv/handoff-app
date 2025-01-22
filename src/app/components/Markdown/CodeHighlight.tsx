@@ -56,7 +56,7 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   return (
-    <Collapsible className="space-y-2" style={{ maxWidth: 1300 }} open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible className="space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
       <div
         className="mt-5 flex items-center justify-between rounded-t-sm bg-gray-100 px-5 py-3"
         data-language={activeState === 'code' ? type : activeState}

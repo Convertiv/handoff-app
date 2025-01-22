@@ -116,7 +116,13 @@ export const ComponentDisplay: React.FC<{
                   <SelectValue placeholder="Breakpoint" />
                 </SelectTrigger>
                 <SelectContent>
-                  {breakpoints && Object.keys(breakpoints).map((key) => <SelectItem value={key}>{breakpoints[key].name}</SelectItem>)}
+                  {breakpoints &&
+                    Object.keys(breakpoints).map((key) => (
+                      <SelectItem key={'breakpoint_' + key} value={key}>
+                        {breakpoints[key].name}
+                      </SelectItem>
+                    ))}
+                  <SelectItem value="full">Full Width</SelectItem>
                 </SelectContent>
               </Select>
 

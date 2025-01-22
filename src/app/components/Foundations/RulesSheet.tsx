@@ -58,11 +58,11 @@ export type RuleObject = {
 const RulesSheet: React.FC<{ rule: RuleObject; open: boolean; setOpen: (boolean) => void }> = ({ rule, open, setOpen }) => {
   const [selectedValue, setSelectedValue] = React.useState('off');
   const [copied, setCopied] = React.useState(false);
-  // const handleCopy = () => {
-  //   navigator.clipboard.writeText(color.value);
-  //   setCopied(true);
-  //   setTimeout(() => setCopied(false), 2000);
-  // };
+  const handleCopy = () => {
+    navigator.clipboard.writeText('rule');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   if (!rule) return null;
   return (
     <Sheet open={open} onOpenChange={setOpen}>
