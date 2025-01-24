@@ -857,6 +857,52 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                         </div>
                       </div>
                     </div>
+                    <Separator className="my-14" />
+                    <div>
+                      <h2 className="mb-3 text-2xl font-medium">Effects</h2>
+                      <p className="mb-8">Effects are used to create visual effects on components.</p>
+                    </div>
+                    <Separator className="my-14" />
+                    <article className="prose">
+                      <h1>Use .prose class for content</h1>
+                      <p>
+                        Until now, trying to style an article, document, or blog post with Tailwind has been a tedious task that required a
+                        keen eye for typography and a lot of complex custom CSS.
+                      </p>
+                      <p>
+                        By default, Tailwind removes all of the default browser styling from paragraphs, headings, lists and more. This ends
+                        up being really useful for building application UIs because you spend less time undoing user-agent styles, but when
+                        you really are just trying to style some content that came from a rich-text editor in a CMS or a markdown file, it
+                        can be surprising and unintuitive.
+                      </p>
+                      <p>This is an example of an ordered list:</p>
+                      <ol>
+                        <li>We want everything to look good out of the box.</li>
+                        <li>Really just the first reason, that's the whole point of the plugin.</li>
+                        <li>
+                          Here's a third pretend reason though a list with three items looks more realistic than a list with two items.
+                        </li>
+                      </ol>
+                      <p>Now we're going to try out another header style.</p>
+                      <h3>Heading 3 sample</h3>
+                      <p>Let's test out some other styles.</p>
+                      <p>
+                        This is a paragraph with some <a href="#">inline links</a>. Let's also see what happens when we have a bit of added{' '}
+                        <strong>bold</strong> text in there.
+                      </p>
+                      <blockquote>
+                        <p>
+                          Typography is pretty important if you don't want your stuff to look like trash. Make it good then it won't be bad.
+                        </p>
+                      </blockquote>
+                      <p>Making an unordered list is easy too:</p>
+                      <ul>
+                        <li>So here is the first item in this list.</li>
+                        <li>In this example we're keeping the items short.</li>
+                        <li>Later, we'll use longer, more complex list items.</li>
+                      </ul>
+                      <p>And that's the end of this section.</p>
+                    </article>
                   </div>
                 </SidebarInset>
               </div>

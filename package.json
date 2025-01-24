@@ -145,6 +145,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "eslint-config-prettier": "^10.0.1",
     "np": "^8.0.4",
     "prettier": "^3.4.2",
