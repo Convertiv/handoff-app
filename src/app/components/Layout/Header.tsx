@@ -27,7 +27,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex items-center justify-between">
-        <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
+        <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
         <div className="flex items-center gap-4">
           <MainNav />
           <ModeToggle />
