@@ -92,7 +92,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
             </React.Fragment>
           ))}
 
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>

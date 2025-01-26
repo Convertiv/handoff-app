@@ -95,7 +95,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
       </div>
       <hr />
 
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
     </Layout>

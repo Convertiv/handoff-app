@@ -34,7 +34,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
       <HeadersType.H1>
         <strong>{config?.app?.client} Design System</strong> for building better user experiences.
       </HeadersType.H1>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
     </Layout>

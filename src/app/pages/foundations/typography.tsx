@@ -88,8 +88,8 @@ const Typography = ({
       <HeadersType.H2>Hierarchy</HeadersType.H2>
       <p className="mb-8">Use for palette of colors containing many shades.</p>
       <TypographyExamples types={typography} />
-
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
     </Layout>

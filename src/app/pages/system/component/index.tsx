@@ -8,11 +8,11 @@ import Footer from '../../../components/Footer';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import Header from '../../../components/old/Header';
 import {
-  DocumentationProps,
-  fetchComponents,
-  fetchDocPageMarkdown,
-  fetchDocPageMetadataAndContent,
-  Metadata,
+    DocumentationProps,
+    fetchComponents,
+    fetchDocPageMarkdown,
+    fetchDocPageMetadataAndContent,
+    Metadata,
 } from '../../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
@@ -77,7 +77,7 @@ const ComponentsListPage = ({ content, menu, metadata, current, components, conf
               <ComponentSearch />
             </div>
           </div>
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>

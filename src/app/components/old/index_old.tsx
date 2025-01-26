@@ -56,7 +56,7 @@ const Home = ({ content, menu, metadata, config, changelog }: ChangelogDocumenta
                 <strong>{config?.app?.client} Design System</strong> for building better user experiences.
               </h1>
             </div>
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
               {content}
             </ReactMarkdown>
           </div>

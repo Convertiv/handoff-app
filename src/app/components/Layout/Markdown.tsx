@@ -22,11 +22,11 @@ const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPre
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div ref={ref} className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
-        <div>
+        <article className="prose">
           <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={allPreviews} defaultConfig={config}>
             {children}
           </PreviewContextProvider>
-        </div>
+        </article>
         <PageTOC title={'On This Page'} body={ref} />
       </div>
     </Layout>

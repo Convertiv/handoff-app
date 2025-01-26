@@ -323,7 +323,7 @@ export const OverviewComponentClasses: React.FC<{ components: ComponentPreviews 
 export const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
   return (
     <>
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
+      <ReactMarkdown className="prose" rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
     </>
   );
 };

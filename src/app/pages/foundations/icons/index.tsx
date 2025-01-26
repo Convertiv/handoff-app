@@ -80,7 +80,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <a href={config?.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
       </div>
-      <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
 

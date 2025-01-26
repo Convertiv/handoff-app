@@ -57,7 +57,7 @@ const AssetsLogosPage = ({ content, menu, metadata, current, config }: Documenta
               </div>
             </div>
           </div>
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
           <hr />

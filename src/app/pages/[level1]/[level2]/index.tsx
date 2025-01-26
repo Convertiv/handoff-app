@@ -1,12 +1,12 @@
+import { getClientConfig } from '@handoff/config';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import rehypeRaw from 'rehype-raw';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { getClientConfig } from '@handoff/config';
-import Header from '../../../components/old/Header';
+import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
-import CustomNav from '../../../components/SideNav/Custom';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import Header from '../../../components/old/Header';
+import CustomNav from '../../../components/SideNav/Custom';
 import { buildL2StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../../components/util';
 
 export interface SubPageType {
@@ -71,7 +71,7 @@ export default function DocSubPage({ content, menu, metadata, current, config }:
                 <p>{metadata.description}</p>
               </div>
             </div>
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
               {content}
             </ReactMarkdown>
           </div>

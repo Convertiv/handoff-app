@@ -9,7 +9,7 @@ export interface ComponentGuidelinesProps {
 export const ComponentGuidelines: React.FC<ComponentGuidelinesProps> = ({ content }) => {
   return (
     <>
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
+      <ReactMarkdown className="prose" rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
     </>
   )
 };

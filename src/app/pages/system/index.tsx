@@ -55,7 +55,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="mt-10">
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
         <ComponentList components={components} />
