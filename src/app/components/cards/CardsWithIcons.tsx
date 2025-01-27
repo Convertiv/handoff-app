@@ -1,6 +1,6 @@
-import { ArrowRight, Code2, FileCode2, LucideProps, PersonStanding } from 'lucide-react';
-import { Button } from '../ui/button';
+import { ArrowRight, LucideProps } from 'lucide-react';
 import { ForwardRefExoticComponent, RefAttributes } from 'react';
+import { Button } from '../ui/button';
 
 type CardsWithIconsProps = {
   items: [
@@ -15,7 +15,7 @@ type CardsWithIconsProps = {
 };
 
 const CardsWithIcons = ({ items }) => (
-  <div className="grid grid-cols-[repeat(auto-fit,minmax(100%,1fr))] gap-6 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+  <div className="not-prose grid grid-cols-[repeat(auto-fit,minmax(100%,1fr))] gap-6 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
     {items.map((item, index) => (
       <a
         key={index}

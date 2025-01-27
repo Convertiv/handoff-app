@@ -10,7 +10,6 @@ import yaml from 'refractor/lang/yaml';
 // @ts-ignore
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import HeadersType from '../Typography/Headers';
 const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
@@ -63,17 +62,17 @@ const Headings = ({ level, children }: HeadingProps) => {
 
     switch (level) {
       case 1:
-        return <HeadersType.H1>{container(children)}</HeadersType.H1>;
+        return <h1>{container(children)}</h1>;
       case 2:
-        return <HeadersType.H2>{container(children)}</HeadersType.H2>;
+        return <h2>{container(children)}</h2>;
       case 3:
-        return <HeadersType.H3>{container(children)}</HeadersType.H3>;
+        return <h3>{container(children)}</h3>;
       case 4:
-        return <HeadersType.H4>{container(children)}</HeadersType.H4>;
+        return <h4>{container(children)}</h4>;
       case 5:
-        return <HeadersType.H5>{container(children)}</HeadersType.H5>;
+        return <h5>{container(children)}</h5>;
       case 6:
-        return <HeadersType.H6>{container(children)}</HeadersType.H6>;
+        return <h6>{container(children)}</h6>;
 
       default:
         return <h6>{container(children)}</h6>;
@@ -93,7 +92,7 @@ export const MarkdownComponents: CustomRenderers = {
   h4: Headings,
   h5: Headings,
   h6: Headings,
-  paragraph: ({ children }) => <p className="py-5">{children}</p>,
+  paragraph: ({ children }) => <p>{children}</p>,
   code(props) {
     const { className } = props;
     const match = /language-(\w+)/.exec(className || '');
