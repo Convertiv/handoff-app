@@ -18,8 +18,34 @@ export interface SlotMetadata {
     default?: string;
     type: SlotType;
     key?: string;
-    rules?: string;
+    rules?: RuleObject;
 }
+export declare type RuleObject = {
+    required?: boolean;
+    content?: {
+        min: number;
+        max: number;
+    };
+    dimension?: {
+        width: number;
+        height: number;
+        min: {
+            width: number;
+            height: number;
+        };
+        max: {
+            width: number;
+            height: number;
+        };
+        recommend: {
+            width: number;
+            height: number;
+        };
+    };
+    filesize?: number;
+    filetype?: string;
+    pattern?: string;
+};
 /**
  * In dev mode we want to watch the components folder for changes
  * @param handoff

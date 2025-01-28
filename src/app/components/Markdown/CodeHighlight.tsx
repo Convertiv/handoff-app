@@ -39,17 +39,18 @@ export const CodeHighlight: React.FC<{
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
-    data = { id: '', title: '', description: '', previews: {}, preview: '', code: '' };
+    data = { id: '', title: '', description: '', previews: {}, preview: '', html: '', code: '' };
   } else if (typeof data === 'string') {
-    data = data = { id: '', title: '', description: '', previews: {}, preview: '', code: data };
+    data = data = { id: '', title: '', description: '', previews: {}, preview: '', html: data, code: data };
   }
+  data.html = prettier
   if (!type) type = 'html';
 
   const states = Object.keys(data)
     .filter((key) => ['id', 'preview', 'title', 'description', 'type', 'group', 'tags', 'previews', 'properties'].indexOf(key) === -1)
     .map((key) => key);
   const [activeState, setActiveState] = useState<string>(states[0]);
-  const [code, setCode] = useState<string>(data.code);
+  const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
   theme['pre[class*="language-"]'].overflow = 'auto';
   theme['pre[class*="language-"]'].maxHeight = '450px';

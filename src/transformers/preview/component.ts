@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import { parse } from 'node-html-parser';
 import path from 'path';
+import * as prettier from "prettier";
 import sass from 'sass';
 import semver from 'semver';
 import WebSocket from 'ws';
@@ -44,8 +45,35 @@ export interface SlotMetadata {
   default?: string;
   type: SlotType;
   key?: string;
-  rules?: string;
+  rules?: RuleObject;
 }
+
+export type RuleObject = {
+  required?: boolean;
+  content?: {
+    min: number;
+    max: number;
+  };
+  dimension?: {
+    width: number;
+    height: number;
+    min: {
+      width: number;
+      height: number;
+    };
+    max: {
+      width: number;
+      height: number;
+    };
+    recommend: {
+      width: number;
+      height: number;
+    };
+  };
+  filesize?: number;
+  filetype?: string;
+  pattern?: string;
+};
 
 interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
@@ -399,13 +427,14 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
       if (data['sharedStyles']) {
         style = `<link rel="stylesheet" href="/api/component/shared.css">` + style;
       }
-      previews[previewKey] = Handlebars.compile(template)({
+      previews[previewKey] = await prettier.format(Handlebars.compile(template)({
         config: handoff.config,
         style: style,
         script: jsCompiled + '\n' + webSocketClientJS,
         sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
         properties: data.previews[previewKey]?.values || {},
-      });
+      }), { parser: 'html' });
+
       if (!html) html = previews[previewKey];
       await fs.writeFile(publicFile, previews[previewKey]);
     }

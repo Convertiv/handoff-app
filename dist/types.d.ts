@@ -123,6 +123,7 @@ export interface PreviewObject {
         [key: string]: SlotMetadata;
     };
     code: string;
+    html?: string;
 }
 export declare type PreviewJson = {
     components: {

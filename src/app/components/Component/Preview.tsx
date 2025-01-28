@@ -8,8 +8,8 @@ import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
 import { PencilRuler } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
+import RulesSheet from '../Foundations/RulesSheet';
 import { Button } from '../ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -56,12 +56,13 @@ export const ComponentDisplay: React.FC<{
   breakpoints?: Breakpoints;
   defaultHeight?: string | undefined;
 }> = ({ component, breakpoints, defaultHeight }) => {
+  const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('500px');
   const [previewUrl, setPreviewUrl] = React.useState('');
-  const [width, setWidth] = React.useState('100%');
-  const [breakpoint, setBreakpoint] = React.useState(breakpoints ? Object.keys(breakpoints)[0] : '');
-  const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
+  const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[0]].size + 'px');
+  const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[0] : '');
+  
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -70,14 +71,14 @@ export const ComponentDisplay: React.FC<{
       if (ref.current.contentWindow.document.body) {
         setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
       }
-      if (window.document.body.clientWidth) {
-        sortedBreakpoints.some((key, index) => {
-          if (window.document.body.clientWidth > breakpoints[key].size) {
-            setBreakpoint(key);
-            return true;
-          }
-        });
-      }
+      // if (window.document.body.clientWidth) {
+      //   sortedBreakpoints.some((key, index) => {
+      //     if (window.document.body.clientWidth > breakpoints[key].size) {
+      //       setBreakpoint(key);
+      //       return true;
+      //     }
+      //   });
+      // }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultHeight, ref, breakpoints]);
@@ -227,40 +228,14 @@ export const ComponentPreview: React.FC<{
 };
 
 export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
-  const humanReadableRule = (rule: string, value: any) => {
-    switch (rule) {
-      case 'required':
-        return value ? 'Required' : 'Optional';
-      case 'content':
-        let type = 'characters';
-        if (value.type) {
-          type = value.type;
-        }
-        return `Contents should at least ${value.min} and at most ${value.max} ${type} long`;
-      case 'minValue':
-        return 'This field must be at least ' + value;
-      case 'maxValue':
-        return 'This field must be at most ' + value;
-      case 'pattern':
-        return 'This field must match the pattern ' + value;
-      case 'dimensions':
-        return `Use a minimum size of ${value.minW}x${value.minHeight} and a maximum size of ${value.maxWidth}x${value.maxHeight}`;
-      case 'maxSize':
-        // translate to human readable byte size
-        if (value < 1024) {
-          return `This field must be at most ${value} bytes`;
-        }
-        if (value < 1024 * 1024) {
-          return `This field must be at most ${Math.floor(value / 1024)} KB`;
-        }
-        return `This field must be at most ${Math.floor(value / (1024 * 1024))} MB`;
-      case 'enum':
-        return 'Enumeration';
-      default:
-        return rule;
-    }
+const [open, setOpen] = React.useState(false);
+  const [selectedField, setSelectedField] = React.useState(null);
+  const openSheet = (field) => {
+    setSelectedField(field);
+    setOpen(true);
   };
-  return (
+  return (<>
+    <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
     <Table>
       <TableCaption>These are the fields associated with the component</TableCaption>
       <TableHeader>
@@ -283,31 +258,14 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
                 <span className="slot-description">{field.description}</span>
               </TableHead>
               <TableHead className="text-right">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost">
+                    <Button variant="ghost" onClick={() => openSheet(field)}>
                       <PencilRuler />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        {field.rules &&
-                          Object.keys(field.rules).map((rule) => (
-                            <>
-                              <h4 className="font-medium leading-none">{startCase(rule)}</h4>
-                              <p className="text-sm text-muted-foreground"> {humanReadableRule(rule, field.rules[rule])}</p>
-                            </>
-                          ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
               </TableHead>
             </TableRow>
           );
         })}
       </TableBody>
-    </Table>
+    </Table></>
   );
 };
