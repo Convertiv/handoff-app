@@ -5,7 +5,7 @@ import type * as next from 'next';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
-import TypographyExamples from '../../components/Foundations/TypeographyExample';
+import TypographyExamples from '../../components/Foundations/TypographyExample';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
@@ -88,7 +88,7 @@ const Typography = ({
       <HeadersType.H2>Hierarchy</HeadersType.H2>
       <p className="mb-8">Use for palette of colors containing many shades.</p>
       <TypographyExamples types={typography} />
-        
+
       <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
