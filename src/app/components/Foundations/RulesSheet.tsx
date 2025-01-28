@@ -1,8 +1,8 @@
-import { cn } from '@/lib/utils';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { startCase } from 'lodash';
 import { ArrowRightToLine, Check, Link, SwatchBook } from 'lucide-react';
 import React from 'react';
+import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader } from '../ui/sheet';
