@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] - 2024-12-11
+This release fixes a small bug when pulling foundation tokens with nested names.
+
+### Bugfixes
+- Figma's name schema delivers names as {group}/{name}. If your foundation 
+(color, shadow, etc) names include a slash `Blue/100` Handoff would only grab
+the first part of that name, and construct the token excluding the remaining
+data. This patch resolves that so instead of getting `primitive-blue` you will
+now get `primitive-blue-100` as your token.
+
 ## [0.15.1] - 2024-11-27
 This is a minor release to fix several small typing issues that cause problems 
 in the linter when running as a local NPM package.

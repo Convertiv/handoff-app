@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const yargs_1 = __importDefault(require("yargs/yargs"));
 const helpers_1 = require("yargs/helpers");
+const yargs_1 = __importDefault(require("yargs/yargs"));
 const commands_1 = require("./commands");
 class HandoffCliError extends Error {
     constructor(message) {
