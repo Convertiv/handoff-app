@@ -674,7 +674,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
 
                       {[1, 2, 3].map((_, index) => (
                         <div key={index} className="">
-                          <div className="group relative grid grid-cols-[200px,1fr] gap-4 rounded-lg py-8 duration-200 hover:bg-gray-50">
+                          <div className="group relative -mx-5 grid grid-cols-[200px,1fr] gap-4 rounded-lg p-5 duration-200 hover:bg-gray-50">
                             <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-sm transition-opacity duration-500 group-hover:opacity-100">
                               <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
                                 <Copy className="h-3 w-3 text-gray-500" />
@@ -693,13 +693,19 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                                 </TooltipProvider>
                               </button>
                             </div>
-                            <div>
-                              <h3 className="text-base font-semibold">Heading 1</h3>
-                              <small>Inter / Regular</small>
-                              <small>16px / 24px</small>
+                            <div className="flex flex-col gap-1">
+                              <h3 className="text-base font-semibold">Heading {index + 1}</h3>
+                              <small className="font-mono text-xs text-gray-500">
+                                Inter <span className="text-[10px] text-gray-400">/</span> Regular
+                              </small>
+                              <small className="font-mono text-xs text-gray-500">
+                                16px <span className="text-[10px] text-gray-400">/</span> 24px
+                              </small>
                             </div>
                             <div>
-                              <p className={`text-${3 - index}xl font-medium`}>Almost before we knew it, we had left the ground.</p>
+                              {index === 0 && <h1 className="text-3xl font-medium">Almost before we knew it, we had left the ground.</h1>}
+                              {index === 1 && <h2 className="text-2xl font-medium">Almost before we knew it, we had left the ground.</h2>}
+                              {index === 2 && <h3 className="text-xl font-medium">Almost before we knew it, we had left the ground.</h3>}
                             </div>
                           </div>
                         </div>
@@ -869,6 +875,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                         Until now, trying to style an article, document, or blog post with Tailwind has been a tedious task that required a
                         keen eye for typography and a lot of complex custom CSS.
                       </p>
+                      <h2 id="heading-2-sample">Heading 2 sample</h2>
                       <p>
                         By default, Tailwind removes all of the default browser styling from paragraphs, headings, lists and more. This ends
                         up being really useful for building application UIs because you spend less time undoing user-agent styles, but when

@@ -53,7 +53,7 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
     <>
       {types.map((type, index) => (
         <div key={`type-hier-${index}`} className="">
-          <div className="group relative grid grid-cols-[200px,1fr] gap-4 rounded-lg py-8 duration-200 hover:bg-gray-50">
+          <div className="group relative -mx-5 grid grid-cols-[200px,1fr] gap-4 rounded-lg p-5 duration-200 hover:bg-gray-50 ">
             <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-sm transition-opacity duration-500 group-hover:opacity-100">
               <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Copy className="h-3 w-3 text-gray-500" />
@@ -72,13 +72,14 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
                 </TooltipProvider>
               </button>
             </div>
-            <div>
+            <div className="flex flex-col gap-1">
               <h3 className="text-base font-semibold">{type.name}</h3>
-              <small>
-                {type.values.fontFamily} / {type.values.fontWeight}
+              <small className="font-mono text-xs text-gray-500">
+                {type.values.fontFamily} <span className="text-[10px] text-gray-400">/</span> {type.values.fontWeight}
               </small>
-              <small>
-                {type.values.fontSize}px / {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
+              <small className="font-mono text-xs text-gray-500">
+                {type.values.fontSize}px <span className="text-[10px] text-gray-400">/</span>{' '}
+                {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
               </small>
             </div>
             <div>{renderTypes(type, type_copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}</div>
