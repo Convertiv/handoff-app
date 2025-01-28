@@ -43,7 +43,6 @@ export const CodeHighlight: React.FC<{
   } else if (typeof data === 'string') {
     data = data = { id: '', title: '', description: '', previews: {}, preview: '', html: data, code: data };
   }
-  data.html = prettier
   if (!type) type = 'html';
 
   const states = Object.keys(data)
