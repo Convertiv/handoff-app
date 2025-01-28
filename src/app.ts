@@ -10,7 +10,7 @@ import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
 import { buildComponents, buildIntegrationOnly } from './pipeline';
-import { createFrameSocket, processSharedStyles } from './transformers/preview/component';
+import { processSharedStyles } from './transformers/preview/component';
 import { buildClientFiles } from './utils/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
@@ -350,7 +350,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       });
   });
 
-  const sendMessageToComponent = await createFrameSocket(handoff);
+  //const sendMessageToComponent = await createFrameSocket(handoff);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -384,7 +384,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             debounce = true;
             console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
             await mergePublicDir(handoff);
-            sendMessageToComponent('reload');
+            // sendMessageToComponent('reload');
             debounce = false;
           }
           break;

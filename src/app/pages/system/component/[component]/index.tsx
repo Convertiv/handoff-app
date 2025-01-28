@@ -43,7 +43,7 @@ export const getStaticProps = async (context) => {
 const GenericComponentPage = ({ menu, metadata, current, id, config, previews }) => {
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
-      <div className="flex flex-col gap-2 pb-7">
+      <div className="flex flex-col gap-2 pb-7">{JSON.stringify(metadata)}
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>

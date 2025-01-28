@@ -1,0 +1,797 @@
+/* =============================================================================
+   Variables - Bootstrap 5.3 (_variables.scss)
+   ========================================================================== */
+
+/* stylelint-disable */
+
+/**
+ * This is a copy of the Bootstrap variables file.
+ *
+ *  This file overwrites default Bootstrap variables.
+ */
+
+// Variables
+//
+// Variables should follow the `$component-state-property-size` formula for
+// consistent naming. Ex: $nav-link-disabled-color and $modal-content-box-shadow-xs.
+
+// Color system
+
+// scss-docs-start gray-color-variables
+$white:    #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black:    #000;
+// scss-docs-end gray-color-variables
+
+// fusv-disable
+// scss-docs-start gray-colors-map
+$grays: (
+  "100": $gray-100,
+  "200": $gray-200,
+  "300": $gray-300,
+  "400": $gray-400,
+  "500": $gray-500,
+  "600": $gray-600,
+  "700": $gray-700,
+  "800": $gray-800,
+  "900": $gray-900
+);
+// scss-docs-end gray-colors-map
+// fusv-enable
+
+// scss-docs-start color-variables
+$blue:    #0d6efd;
+$indigo:  #6610f2;
+$purple:  #6f42c1;
+$pink:    #d63384;
+$red:     #dc3545;
+$orange:  #fd7e14;
+$yellow:  #ffc107;
+$green:   #198754;
+$teal:    #20c997;
+$cyan:    #0dcaf0;
+// scss-docs-end color-variables
+
+// scss-docs-start colors-map
+$colors: (
+  "blue":       $blue,
+  "indigo":     $indigo,
+  "purple":     $purple,
+  "pink":       $pink,
+  "red":        $red,
+  "orange":     $orange,
+  "yellow":     $yellow,
+  "green":      $green,
+  "teal":       $teal,
+  "cyan":       $cyan,
+  "black":      $black,
+  "white":      $white,
+  "gray":       $gray-600,
+  "gray-dark":  $gray-800
+);
+// scss-docs-end colors-map
+
+// The contrast ratio to reach against white, to determine if color changes from "light" to "dark". Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
+// See https://www.w3.org/TR/WCAG20/#visual-audio-contrast-contrast
+$min-contrast-ratio:   4.5;
+
+// Customize the light and dark text colors for use in our color contrast function.
+$color-contrast-dark:      $black;
+$color-contrast-light:     $white;
+
+// fusv-disable
+$blue-100: tint-color($blue, 80%);
+$blue-200: tint-color($blue, 60%);
+$blue-300: tint-color($blue, 40%);
+$blue-400: tint-color($blue, 20%);
+$blue-500: $blue;
+$blue-600: shade-color($blue, 20%);
+$blue-700: shade-color($blue, 40%);
+$blue-800: shade-color($blue, 60%);
+$blue-900: shade-color($blue, 80%);
+
+$indigo-100: tint-color($indigo, 80%);
+$indigo-200: tint-color($indigo, 60%);
+$indigo-300: tint-color($indigo, 40%);
+$indigo-400: tint-color($indigo, 20%);
+$indigo-500: $indigo;
+$indigo-600: shade-color($indigo, 20%);
+$indigo-700: shade-color($indigo, 40%);
+$indigo-800: shade-color($indigo, 60%);
+$indigo-900: shade-color($indigo, 80%);
+
+$purple-100: tint-color($purple, 80%);
+$purple-200: tint-color($purple, 60%);
+$purple-300: tint-color($purple, 40%);
+$purple-400: tint-color($purple, 20%);
+$purple-500: $purple;
+$purple-600: shade-color($purple, 20%);
+$purple-700: shade-color($purple, 40%);
+$purple-800: shade-color($purple, 60%);
+$purple-900: shade-color($purple, 80%);
+
+$pink-100: tint-color($pink, 80%);
+$pink-200: tint-color($pink, 60%);
+$pink-300: tint-color($pink, 40%);
+$pink-400: tint-color($pink, 20%);
+$pink-500: $pink;
+$pink-600: shade-color($pink, 20%);
+$pink-700: shade-color($pink, 40%);
+$pink-800: shade-color($pink, 60%);
+$pink-900: shade-color($pink, 80%);
+
+$red-100: tint-color($red, 80%);
+$red-200: tint-color($red, 60%);
+$red-300: tint-color($red, 40%);
+$red-400: tint-color($red, 20%);
+$red-500: $red;
+$red-600: shade-color($red, 20%);
+$red-700: shade-color($red, 40%);
+$red-800: shade-color($red, 60%);
+$red-900: shade-color($red, 80%);
+
+$orange-100: tint-color($orange, 80%);
+$orange-200: tint-color($orange, 60%);
+$orange-300: tint-color($orange, 40%);
+$orange-400: tint-color($orange, 20%);
+$orange-500: $orange;
+$orange-600: shade-color($orange, 20%);
+$orange-700: shade-color($orange, 40%);
+$orange-800: shade-color($orange, 60%);
+$orange-900: shade-color($orange, 80%);
+
+$yellow-100: tint-color($yellow, 80%);
+$yellow-200: tint-color($yellow, 60%);
+$yellow-300: tint-color($yellow, 40%);
+$yellow-400: tint-color($yellow, 20%);
+$yellow-500: $yellow;
+$yellow-600: shade-color($yellow, 20%);
+$yellow-700: shade-color($yellow, 40%);
+$yellow-800: shade-color($yellow, 60%);
+$yellow-900: shade-color($yellow, 80%);
+
+$green-100: tint-color($green, 80%);
+$green-200: tint-color($green, 60%);
+$green-300: tint-color($green, 40%);
+$green-400: tint-color($green, 20%);
+$green-500: $green;
+$green-600: shade-color($green, 20%);
+$green-700: shade-color($green, 40%);
+$green-800: shade-color($green, 60%);
+$green-900: shade-color($green, 80%);
+
+$teal-100: tint-color($teal, 80%);
+$teal-200: tint-color($teal, 60%);
+$teal-300: tint-color($teal, 40%);
+$teal-400: tint-color($teal, 20%);
+$teal-500: $teal;
+$teal-600: shade-color($teal, 20%);
+$teal-700: shade-color($teal, 40%);
+$teal-800: shade-color($teal, 60%);
+$teal-900: shade-color($teal, 80%);
+
+$cyan-100: tint-color($cyan, 80%);
+$cyan-200: tint-color($cyan, 60%);
+$cyan-300: tint-color($cyan, 40%);
+$cyan-400: tint-color($cyan, 20%);
+$cyan-500: $cyan;
+$cyan-600: shade-color($cyan, 20%);
+$cyan-700: shade-color($cyan, 40%);
+$cyan-800: shade-color($cyan, 60%);
+$cyan-900: shade-color($cyan, 80%);
+
+$blues: (
+  "blue-100": $blue-100,
+  "blue-200": $blue-200,
+  "blue-300": $blue-300,
+  "blue-400": $blue-400,
+  "blue-500": $blue-500,
+  "blue-600": $blue-600,
+  "blue-700": $blue-700,
+  "blue-800": $blue-800,
+  "blue-900": $blue-900
+);
+
+$indigos: (
+  "indigo-100": $indigo-100,
+  "indigo-200": $indigo-200,
+  "indigo-300": $indigo-300,
+  "indigo-400": $indigo-400,
+  "indigo-500": $indigo-500,
+  "indigo-600": $indigo-600,
+  "indigo-700": $indigo-700,
+  "indigo-800": $indigo-800,
+  "indigo-900": $indigo-900
+);
+
+$purples: (
+  "purple-100": $purple-100,
+  "purple-200": $purple-200,
+  "purple-300": $purple-300,
+  "purple-400": $purple-400,
+  "purple-500": $purple-500,
+  "purple-600": $purple-600,
+  "purple-700": $purple-700,
+  "purple-800": $purple-800,
+  "purple-900": $purple-900
+);
+
+$pinks: (
+  "pink-100": $pink-100,
+  "pink-200": $pink-200,
+  "pink-300": $pink-300,
+  "pink-400": $pink-400,
+  "pink-500": $pink-500,
+  "pink-600": $pink-600,
+  "pink-700": $pink-700,
+  "pink-800": $pink-800,
+  "pink-900": $pink-900
+);
+
+$reds: (
+  "red-100": $red-100,
+  "red-200": $red-200,
+  "red-300": $red-300,
+  "red-400": $red-400,
+  "red-500": $red-500,
+  "red-600": $red-600,
+  "red-700": $red-700,
+  "red-800": $red-800,
+  "red-900": $red-900
+);
+
+$oranges: (
+  "orange-100": $orange-100,
+  "orange-200": $orange-200,
+  "orange-300": $orange-300,
+  "orange-400": $orange-400,
+  "orange-500": $orange-500,
+  "orange-600": $orange-600,
+  "orange-700": $orange-700,
+  "orange-800": $orange-800,
+  "orange-900": $orange-900
+);
+
+$yellows: (
+  "yellow-100": $yellow-100,
+  "yellow-200": $yellow-200,
+  "yellow-300": $yellow-300,
+  "yellow-400": $yellow-400,
+  "yellow-500": $yellow-500,
+  "yellow-600": $yellow-600,
+  "yellow-700": $yellow-700,
+  "yellow-800": $yellow-800,
+  "yellow-900": $yellow-900
+);
+
+$greens: (
+  "green-100": $green-100,
+  "green-200": $green-200,
+  "green-300": $green-300,
+  "green-400": $green-400,
+  "green-500": $green-500,
+  "green-600": $green-600,
+  "green-700": $green-700,
+  "green-800": $green-800,
+  "green-900": $green-900
+);
+
+$teals: (
+  "teal-100": $teal-100,
+  "teal-200": $teal-200,
+  "teal-300": $teal-300,
+  "teal-400": $teal-400,
+  "teal-500": $teal-500,
+  "teal-600": $teal-600,
+  "teal-700": $teal-700,
+  "teal-800": $teal-800,
+  "teal-900": $teal-900
+);
+
+$cyans: (
+  "cyan-100": $cyan-100,
+  "cyan-200": $cyan-200,
+  "cyan-300": $cyan-300,
+  "cyan-400": $cyan-400,
+  "cyan-500": $cyan-500,
+  "cyan-600": $cyan-600,
+  "cyan-700": $cyan-700,
+  "cyan-800": $cyan-800,
+  "cyan-900": $cyan-900
+);
+// fusv-enable
+
+// scss-docs-start theme-color-variables
+$primary:       $blue;
+$secondary:     $gray-600;
+$success:       $green;
+$info:          $cyan;
+$warning:       $yellow;
+$danger:        $red;
+$light:         $gray-100;
+$dark:          $gray-900;
+// scss-docs-end theme-color-variables
+
+// scss-docs-start theme-colors-map
+$theme-colors: (
+  "primary":    $primary,
+  "secondary":  $secondary,
+  "success":    $success,
+  "info":       $info,
+  "warning":    $warning,
+  "danger":     $danger,
+  "light":      $light,
+  "dark":       $dark
+);
+// scss-docs-end theme-colors-map
+
+
+// scss-docs-start theme-text-variables
+$primary-text-emphasis:   shade-color($primary, 60%);
+$secondary-text-emphasis: shade-color($secondary, 60%);
+$success-text-emphasis:   shade-color($success, 60%);
+$info-text-emphasis:      shade-color($info, 60%);
+$warning-text-emphasis:   shade-color($warning, 60%);
+$danger-text-emphasis:    shade-color($danger, 60%);
+$light-text-emphasis:     $gray-700;
+$dark-text-emphasis:      $gray-700;
+// scss-docs-end theme-text-variables
+
+// scss-docs-start theme-bg-subtle-variables
+$primary-bg-subtle:       tint-color($primary, 80%);
+$secondary-bg-subtle:     tint-color($secondary, 80%);
+$success-bg-subtle:       tint-color($success, 80%);
+$info-bg-subtle:          tint-color($info, 80%);
+$warning-bg-subtle:       tint-color($warning, 80%);
+$danger-bg-subtle:        tint-color($danger, 80%);
+$light-bg-subtle:         mix($gray-100, $white);
+$dark-bg-subtle:          $gray-400;
+// scss-docs-end theme-bg-subtle-variables
+
+// scss-docs-start theme-border-subtle-variables
+$primary-border-subtle:   tint-color($primary, 60%);
+$secondary-border-subtle: tint-color($secondary, 60%);
+$success-border-subtle:   tint-color($success, 60%);
+$info-border-subtle:      tint-color($info, 60%);
+$warning-border-subtle:   tint-color($warning, 60%);
+$danger-border-subtle:    tint-color($danger, 60%);
+$light-border-subtle:     $gray-200;
+$dark-border-subtle:      $gray-500;
+// scss-docs-end theme-border-subtle-variables
+
+// Characters which are escaped by the escape-svg function
+$escaped-characters: (
+  ("<", "%3c"),
+  (">", "%3e"),
+  ("#", "%23"),
+  ("(", "%28"),
+  (")", "%29"),
+);
+
+// Options
+//
+// Quickly modify global styling by enabling or disabling optional features.
+
+$enable-caret:                true;
+$enable-rounded:              true;
+$enable-shadows:              true;
+$enable-gradients:            false;
+$enable-transitions:          true;
+$enable-reduced-motion:       true;
+$enable-smooth-scroll:        true;
+$enable-grid-classes:         true;
+$enable-container-classes:    true;
+$enable-cssgrid:              false;
+$enable-button-pointers:      true;
+$enable-rfs:                  true;
+$enable-validation-icons:     true;
+$enable-negative-margins:     true;
+$enable-deprecation-messages: true;
+$enable-important-utilities:  true;
+
+$enable-dark-mode:            false;
+$color-mode-type:             data; // `data` or `media-query`
+
+// Prefix for :root CSS variables
+
+$variable-prefix:             bs-; // Deprecated in v5.2.0 for the shorter `$prefix`
+$prefix:                      $variable-prefix;
+
+// Gradient
+//
+// The gradient which is added to components if `$enable-gradients` is `true`
+// This gradient is also added to elements with `.bg-gradient`
+// scss-docs-start variable-gradient
+$gradient: linear-gradient(180deg, rgba($white, .15), rgba($white, 0));
+// scss-docs-end variable-gradient
+
+// Spacing
+//
+// Control the default styling of most Bootstrap elements by modifying these
+// variables. Mostly focused on spacing.
+// You can add more entries to the $spacers map, should you need more variation.
+
+// scss-docs-start spacer-variables-maps
+$spacer: 1rem;
+$spacers: (
+  0: 0,
+  1: $spacer * .25,
+  2: $spacer * .5,
+  3: $spacer,
+  4: $spacer * 1.5,
+  5: $spacer * 3,
+);
+// scss-docs-end spacer-variables-maps
+
+// Position
+//
+// Define the edge positioning anchors of the position utilities.
+
+// scss-docs-start position-map
+$position-values: (
+  0: 0,
+  50: 50%,
+  100: 100%
+);
+// scss-docs-end position-map
+
+// Body
+//
+// Settings for the `<body>` element.
+
+$body-text-align:           null;
+$body-color:                $gray-900;
+$body-bg:                   $white;
+
+$body-secondary-color:      rgba($body-color, .75);
+$body-secondary-bg:         $gray-200;
+
+$body-tertiary-color:       rgba($body-color, .5);
+$body-tertiary-bg:          $gray-100;
+
+$body-emphasis-color:       $black;
+
+// Links
+//
+// Style anchor elements.
+
+$link-color:                              $primary;
+$link-decoration:                         underline;
+$link-shade-percentage:                   20%;
+$link-hover-color:                        shift-color($link-color, $link-shade-percentage);
+$link-hover-decoration:                   null;
+
+$stretched-link-pseudo-element:           after;
+$stretched-link-z-index:                  1;
+
+// Icon links
+// scss-docs-start icon-link-variables
+$icon-link-gap:               .375rem;
+$icon-link-underline-offset:  .25em;
+$icon-link-icon-size:         1em;
+$icon-link-icon-transition:   .2s ease-in-out transform;
+$icon-link-icon-transform:    translate3d(.25em, 0, 0);
+// scss-docs-end icon-link-variables
+
+// Paragraphs
+//
+// Style p element.
+
+$paragraph-margin-bottom:   1rem;
+
+
+// Grid breakpoints
+//
+// Define the minimum dimensions at which your layout will change,
+// adapting to different screen sizes, for use in media queries.
+
+// scss-docs-start grid-breakpoints
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);
+// scss-docs-end grid-breakpoints
+
+@include _assert-ascending($grid-breakpoints, "$grid-breakpoints");
+@include _assert-starts-at-zero($grid-breakpoints, "$grid-breakpoints");
+
+
+// Grid containers
+//
+// Define the maximum width of `.container` for different screen sizes.
+
+// scss-docs-start container-max-widths
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px
+);
+// scss-docs-end container-max-widths
+
+@include _assert-ascending($container-max-widths, "$container-max-widths");
+
+
+// Grid columns
+//
+// Set the number of columns and specify the width of the gutters.
+
+$grid-columns:                12;
+$grid-gutter-width:           1.5rem;
+$grid-row-columns:            6;
+
+// Container padding
+
+$container-padding-x: $grid-gutter-width;
+
+
+// Components
+//
+// Define common padding and border radius sizes and more.
+
+// scss-docs-start border-variables
+$border-width:                1px;
+$border-widths: (
+  1: 1px,
+  2: 2px,
+  3: 3px,
+  4: 4px,
+  5: 5px
+);
+
+$border-style:                solid;
+$border-color:                $gray-300; // TODO
+$border-color-translucent:    rgba($black, .175);
+// scss-docs-end border-variables
+
+// scss-docs-start border-radius-variables
+$border-radius:               .375rem;
+$border-radius-xs:            .125rem;
+$border-radius-sm:            .25rem;
+$border-radius-lg:            .5rem;
+$border-radius-xl:            1rem;
+$border-radius-xxl:           2rem;
+$border-radius-pill:          50rem;
+// scss-docs-end border-radius-variables
+
+// scss-docs-start box-shadow-variables
+$box-shadow:                  0 .1875rem .375rem rgba($black, .08);
+$box-shadow-sm:               0 .125rem .25rem rgba($black, .08);
+$box-shadow-lg:               0 .375rem .75rem rgba($black, .08);
+$box-shadow-inset:            inset 0 1px 2px rgba($black, .08);
+// scss-docs-end box-shadow-variables
+
+$component-active-color:      $white;
+$component-active-bg:         $primary;
+
+// scss-docs-start focus-ring-variables
+$focus-ring-width:      .25rem;
+$focus-ring-opacity:    .25;
+$focus-ring-color:      rgba($primary, $focus-ring-opacity);
+$focus-ring-blur:       0;
+$focus-ring-box-shadow: 0 0 $focus-ring-blur $focus-ring-width $focus-ring-color;
+// scss-docs-end focus-ring-variables
+
+// scss-docs-start caret-variables
+$caret-width:                 .3em;
+$caret-vertical-align:        $caret-width * .85;
+$caret-spacing:               $caret-width * .85;
+// scss-docs-end caret-variables
+
+$transition-base:             all .2s ease-in-out;
+$transition-fade:             opacity .15s linear;
+// scss-docs-start collapse-transition
+$transition-collapse:         height .35s ease;
+$transition-collapse-width:   width .35s ease;
+// scss-docs-end collapse-transition
+
+// stylelint-disable function-disallowed-list
+// scss-docs-start aspect-ratios
+$aspect-ratios: (
+  "1x1": 100%,
+  "4x3": calc(3 / 4 * 100%),
+  "16x9": calc(9 / 16 * 100%),
+  "21x9": calc(9 / 21 * 100%)
+);
+// scss-docs-end aspect-ratios
+// stylelint-enable function-disallowed-list
+
+// Typography
+//
+// Font, line-height, and color for body text, headings, and more.
+
+// scss-docs-start font-variables
+// stylelint-disable value-keyword-case
+$font-family-sans-serif:      system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji' !default;
+$font-family-monospace:       SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !default;
+// stylelint-enable value-keyword-case
+$font-family-base:            var(--typography-paragraph-font-family, var(--typography-p-font-family, $font-family-sans-serif));
+$font-family-code:            var(--#{$prefix}font-monospace);
+
+// $font-size-root affects the value of `rem`, which is used for as well font sizes, paddings, and margins
+// $font-size-base affects the font size of the body text
+$font-size-root:              null;
+$font-size-base:              1rem; // Assumes the browser default, typically `16px`
+$font-size-xxs:               $font-size-base * .625;
+$font-size-xs:                $font-size-base * .75;
+$font-size-sm:                $font-size-base * .875;
+$font-size-md:                $font-size-base * 1.125;
+$font-size-lg:                $font-size-base * 1.25;
+$font-size-xl:                $font-size-base * 1.375;
+
+$font-weight-lighter:         lighter;
+$font-weight-light:           300;
+$font-weight-normal:          400;
+$font-weight-medium:          500;
+$font-weight-semibold:        600;
+$font-weight-bold:            700;
+$font-weight-bolder:          bolder;
+
+$font-weight-base:            $font-weight-normal;
+
+$line-height-base:            1.5;
+$line-height-sm:              1.25;
+$line-height-lg:              2;
+
+$h1-font-size:                var(--typography-heading-1-font-size, var(--typography-h1-font-size, $font-size-base * 2.5));
+$h2-font-size:                var(--typography-heading-2-font-size, var(--typography-h2-font-size, $font-size-base * 2));
+$h3-font-size:                var(--typography-heading-3-font-size, var(--typography-h3-font-size, $font-size-base * 1.75));
+$h4-font-size:                var(--typography-heading-4-font-size, var(--typography-h4-font-size, $font-size-base * 1.5));
+$h5-font-size:                var(--typography-heading-5-font-size, var(--typography-h5-font-size, $font-size-base * 1.25));
+$h6-font-size:                var(--typography-heading-6-font-size, var(--typography-h6-font-size, $font-size-base));
+// scss-docs-end font-variables
+
+// scss-docs-start font-sizes
+$font-sizes: (
+  1: $h1-font-size,
+  2: $h2-font-size,
+  3: $h3-font-size,
+  4: $h4-font-size,
+  5: $h5-font-size,
+  6: $h6-font-size,
+  base: $font-size-base,
+  xxs: $font-size-xxs,
+  xs: $font-size-xs,
+  sm: $font-size-sm,
+  md: $font-size-md,
+  lg: $font-size-lg,
+  xl: $font-size-xl,
+);
+// scss-docs-end font-sizes
+
+// scss-docs-start headings-variables
+$headings-margin-bottom:      $spacer;
+$headings-font-family:        null;
+$headings-font-style:         null;
+$headings-font-weight:        500;
+$headings-line-height:        1.2;
+$headings-color:              inherit;
+// scss-docs-end headings-variables
+
+// scss-docs-start display-headings
+$display-font-sizes: (
+  1: 5rem,
+  2: 4.5rem,
+  3: 4rem,
+  4: 3.5rem,
+  5: 3rem,
+  6: 2.5rem
+);
+
+$display-font-family: null;
+$display-font-style:  null;
+$display-font-weight: 300;
+$display-line-height: $headings-line-height;
+// scss-docs-end display-headings
+
+// scss-docs-start type-variables
+$lead-font-size:              $font-size-xl;
+$lead-font-weight:            null;
+
+$small-font-size:             .75em;
+
+$sub-sup-font-size:           .75em;
+
+$text-muted:                  $color-text-muted;
+
+$initialism-font-size:        $small-font-size;
+
+$blockquote-margin-y:         $spacer;
+$blockquote-font-size:        $font-size-base * 1.25;
+$blockquote-footer-color:     $gray-600;
+$blockquote-footer-font-size: $small-font-size;
+
+$hr-margin-y:                 $spacer;
+$hr-color:                    $border-color;
+
+// fusv-disable
+$hr-bg-color:                 null; // Deprecated in v5.2.0
+$hr-height:                   null; // Deprecated in v5.2.0
+// fusv-enable
+
+$hr-border-color:             null; // Allows for inherited colors
+$hr-border-width:             $border-width;
+$hr-opacity:                  1;
+
+$legend-margin-bottom:        .5rem;
+$legend-font-size:            1.5rem;
+$legend-font-weight:          null;
+
+$dt-font-weight:              $font-weight-bold;
+
+$list-inline-padding:         .5rem;
+
+$mark-padding:                .1875em;
+$mark-bg:                     $yellow-100;
+// scss-docs-end type-variables
+
+
+// Tables
+//
+// Customizes the `.table` component with basic values, each used across all table variations.
+
+// scss-docs-start table-variables
+$table-cell-padding-y:        .5rem;
+$table-cell-padding-x:        .5rem;
+$table-cell-padding-y-sm:     .25rem;
+$table-cell-padding-x-sm:     .25rem;
+
+$table-cell-vertical-align:   top;
+
+$table-color:                 var(--#{$prefix}body-color);
+$table-bg:                    transparent;
+$table-accent-bg:             transparent;
+
+$table-th-font-weight:        null;
+
+$table-striped-color:         $table-color;
+$table-striped-bg-factor:     .05;
+$table-striped-bg:            rgba($black, $table-striped-bg-factor);
+
+$table-active-color:          $table-color;
+$table-active-bg-factor:      .1;
+$table-active-bg:             rgba($black, $table-active-bg-factor);
+
+$table-hover-color:           $table-color;
+$table-hover-bg-factor:       .075;
+$table-hover-bg:              rgba($black, $table-hover-bg-factor);
+
+$table-border-factor:         .1;
+$table-border-width:          $border-width;
+$table-border-color:          var(--#{$prefix}border-color);
+
+$table-striped-order:         odd;
+$table-striped-columns-order: even;
+
+$table-group-separator-color: currentcolor;
+
+$table-caption-color:         $text-muted;
+
+$table-bg-scale:              -80%;
+// scss-docs-end table-variables
+
+// scss-docs-start table-loop
+$table-variants: (
+  "primary":    shift-color($primary, $table-bg-scale),
+  "secondary":  shift-color($secondary, $table-bg-scale),
+  "success":    shift-color($success, $table-bg-scale),
+  "info":       shift-color($info, $table-bg-scale),
+  "warning":    shift-color($warning, $table-bg-scale),
+  "danger":     shift-color($danger, $table-bg-scale),
+  "light":      $light,
+  "dark":       $dark,
+);
+// scss-docs-end table-loop

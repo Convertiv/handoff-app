@@ -6,27 +6,26 @@ import path from 'path';
 import * as prettier from "prettier";
 import sass from 'sass';
 import semver from 'semver';
-import WebSocket from 'ws';
 import Handoff from '../../index';
 import { bundleJSWebpack } from '../../utils/preview';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from './types';
 
-const webSocketClientJS = `
-<script>
-const ws = new WebSocket('ws://localhost:3001');
-  ws.onopen = function (event) {
-    console.log('WebSocket connection opened');
-    ws.send('Hello from client!');
-  };
+// const webSocketClientJS = `
+// <script>
+// const ws = new WebSocket('ws://localhost:3001');
+//   ws.onopen = function (event) {
+//     console.log('WebSocket connection opened');
+//     ws.send('Hello from client!');
+//   };
 
-  ws.onmessage = function (event) {
-    console.log('Message from server ', event.data);
-    if(event.data === 'reload'){
-      window.location.reload();
-    }
-  };
-</script>
-`;
+//   ws.onmessage = function (event) {
+//     console.log('Message from server ', event.data);
+//     if(event.data === 'reload'){
+//       window.location.reload();
+//     }
+//   };
+// </script>
+// `;
 export interface ComponentMetadata {
   title: string;
   description: string;
@@ -86,40 +85,40 @@ interface ExtWebSocket extends WebSocket {
  * @returns
  */
 export const createFrameSocket = async (handoff: Handoff) => {
-  const wss = new WebSocket.Server({ port: 3001 });
-  function heartbeat() {
-    this.isAlive = true;
-  }
-  wss.on('connection', function connection(ws) {
-    const extWs = ws as ExtWebSocket;
-    extWs.send('Welcome to the WebSocket server!');
-    extWs.isAlive = true;
-    extWs.on('error', console.error);
-    extWs.on('pong', heartbeat);
-  });
+  // const wss = new WebSocket.Server({ port: 3001 });
+  // function heartbeat() {
+  //   this.isAlive = true;
+  // }
+  // wss.on('connection', function connection(ws) {
+  //   const extWs = ws as ExtWebSocket;
+  //   extWs.send('Welcome to the WebSocket server!');
+  //   extWs.isAlive = true;
+  //   extWs.on('error', console.error);
+  //   extWs.on('pong', heartbeat);
+  // });
 
-  const interval = setInterval(function ping() {
-    wss.clients.forEach(function each(ws) {
-      const extWs = ws as ExtWebSocket;
-      if (extWs.isAlive === false) return ws.terminate();
+  // const interval = setInterval(function ping() {
+  //   wss.clients.forEach(function each(ws) {
+  //     const extWs = ws as ExtWebSocket;
+  //     if (extWs.isAlive === false) return ws.terminate();
 
-      extWs.isAlive = false;
-      ws.ping();
-    });
-  }, 30000);
+  //     extWs.isAlive = false;
+  //     ws.ping();
+  //   });
+  // }, 30000);
 
-  wss.on('close', function close() {
-    clearInterval(interval);
-  });
+  // wss.on('close', function close() {
+  //   clearInterval(interval);
+  // });
 
-  console.log('WebSocket server started on ws://localhost:3001');
-  return function (message: string) {
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  };
+  // console.log('WebSocket server started on ws://localhost:3001');
+  // return function (message: string) {
+  //   wss.clients.forEach(function each(client) {
+  //     if (client.readyState === WebSocket.OPEN) {
+  //       client.send(message);
+  //     }
+  //   });
+  // };
 };
 
 //
@@ -430,7 +429,7 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
       previews[previewKey] = await prettier.format(Handlebars.compile(template)({
         config: handoff.config,
         style: style,
-        script: jsCompiled + '\n' + webSocketClientJS,
+        script: jsCompiled,// + '\n' + webSocketClientJS,
         sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
         properties: data.previews[previewKey]?.values || {},
       }), { parser: 'html' });

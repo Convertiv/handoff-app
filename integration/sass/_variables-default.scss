@@ -1,0 +1,255 @@
+/* =============================================================================
+   Default Variables - Bootstrap 5.3 (_variables-default.scss)
+   ========================================================================== */
+
+/* stylelint-disable */
+
+// Default Variables
+//
+// Set of default variables to ensure build doesn't break if some are not
+// exported by Handoff
+
+// Config
+
+
+// Color system
+
+// Typography
+$typography-heading-1-font-size: null;
+$typography-heading-2-font-size: null;
+$typography-heading-3-font-size: null;
+$typography-heading-4-font-size: null;
+$typography-heading-5-font-size: null;
+$typography-heading-6-font-size: null;
+
+$typography-h1-font-size: null;
+$typography-h2-font-size: null;
+$typography-h3-font-size: null;
+$typography-h4-font-size: null;
+$typography-h5-font-size: null;
+$typography-h6-font-size: null;
+
+
+// Alerts
+$alert-variants: null;
+
+$alert-horizontal-padding-top: null;
+$alert-horizontal-padding-right: null;
+$alert-horizontal-border-radius: null;
+$alert-horizontal-border-width: null;
+
+
+// Buttons
+$button-variants: null;
+$button-sizes: null;
+$button-themes: null;
+$button-states: null;
+
+$button-md-padding-top: null;
+$button-md-border-width: null;
+$button-md-padding-left: null;
+$button-md-font-family: null;
+$button-md-font-size: null;
+$button-md-line-height: null;
+
+$button-sm-padding-top: null;
+$button-sm-border-width: null;
+$button-sm-padding-left: null;
+$button-sm-font-size: null;
+
+$button-lg-padding-top: null;
+$button-lg-border-width: null;
+$button-lg-padding-left: null;
+$button-lg-font-size: null;
+
+$button-md-border-width: null;
+$button-md-font-weight: null;
+$button-primary-box-shadow: null;
+$button-primary-hover-box-shadow: null;
+$button-primary-hover-box-shadow: null;
+
+$button-md-border-radius: null;
+$button-sm-border-radius: null;
+$button-lg-border-radius: null;
+
+// Checkbox
+$checkbox-sizes: null;
+$checkbox-themes: null;
+$checkbox-states: null;
+
+$checkbox-label-off-font-size: null;
+$checkbox-label-off-line-height: null;
+$checkbox-label-off-color: null;
+$checkbox-off-width: 16px;
+$checkbox-off-height: 16px;
+$checkbox-off-box-shadow: null;
+$checkbox-icon-on-width: null;
+$checkbox-off-background: null;
+$checkbox-off-border-width: 1px;
+$checkbox-off-border-color: null;
+$checkbox-off-border-style: none;
+$checkbox-on-border-style: none;
+$checkbox-off-box-shadow: null;
+$checkbox-off-spacing: 12px;
+$checkbox-off-color: null;
+$checkbox-off-border-radius: null;
+$checkbox-hover-off-background: null;
+$checkbox-hover-off-color: null;
+$checkbox-hover-off-border-color: null;
+$checkbox-hover-off-box-shadow: null;
+$checkbox-disabled-off-background: null;
+$checkbox-disabled-off-border-color: null;
+$checkbox-disabled-off-box-shadow: null;
+$checkbox-on-background: null;
+$checkbox-on-border-color: null;
+$checkbox-on-box-shadow: null;
+$checkbox-on-background: null;
+$checkbox-on-border-color: null;
+$checkbox-on-box-shadow: null;
+$checkbox-icon-on-color: null;
+$checkbox-on-icon-color: null;
+$checkbox-hover-on-background: null;
+$checkbox-hover-on-border-color: null;
+$checkbox-hover-on-box-shadow: null;
+$checkbox-disabled-on-background: null;
+$checkbox-disabled-on-border-color: null;
+$checkbox-disabled-off-opacity: null;
+$checkbox-disabled-off-color: null;
+$checkbox-on-color: null;
+$checkbox-disabled-on-color: null;
+$checkbox-disabled-on-color: null;
+$checkbox-disabled-off-border-style: none;
+$checkbox-hover-on-border-style: none;
+$checkbox-hover-on-color: null;
+$checkbox-disabled-label-off-opacity: null;
+$checkbox-disabled-on-box-shadow: null;
+$checkbox-disabled-on-border-style: none;
+
+$checkbox-label-off-font-family: null;
+$checkbox-label-off-font-size: 1rem;
+$checkbox-label-off-font-weight: null;
+$checkbox-label-off-line-height: 1.5;
+$checkbox-label-off-letter-spacing: null;
+$checkbox-label-off-text-decoration: null;
+$checkbox-label-off-text-transform: null;
+$checkbox-hover-label-off-color: null;
+$checkbox-disabled-label-off-color: null;
+$checkbox-label-on-color: null;
+$checkbox-hover-label-on-color: null;
+$checkbox-disabled-label-on-color: null;
+$checkbox-hover-off-border-style: none;
+
+// Input
+
+// Modal
+$modal-background: null;
+$modal-border-color: null;
+$modal-border-width: null;
+$modal-border-radius: null;
+$modal-box-shadow: null;
+
+$modal-header-padding-y: null;
+$modal-header-padding-x: null;
+
+$modal-footer-background: null;
+$modal-footer-border-color: null;
+$modal-footer-border-width: null;
+
+// Pagination
+
+// Radio
+$radio-sizes: null;
+$radio-themes: null;
+$radio-states: null;
+
+$radio-off-width: 1em;
+$radio-off-height: 1em;
+$radio-label-off-font-size: 1rem;
+$radio-label-off-line-height: 1.5;
+
+
+// Select
+$select-sizes: null;
+$select-themes: null;
+$select-states: null;
+
+$select-md-padding-top: 16px;
+$select-md-border-width: 1px;
+$select-md-padding-left: 16px;
+$select-md-option-font-family: null;
+$select-md-option-font-size: null;
+$select-md-icon-width: 16px;
+$select-option-active-font-weight: null;
+$select-md-option-line-height: null;
+$select-option-active-color: null;
+$select-background: null;
+$select-option-disabled-color: null;
+$select-disabled-background: null;
+$select-disabled-border-color: null;
+$select-md-icon-color: #343a40;
+
+$select-border-color: null;
+$select-md-border-radius: null;
+$select-box-shadow: null;
+
+$select-hover-background: null;
+$select-hover-border-color: null;
+$select-hover-box-shadow: null;
+
+$select-option-active-color: null;
+$select-active-background: null;
+$select-active-border-color: null;
+$select-active-border-width: null;
+$select-active-box-shadow: null;
+
+$select-option-disabled-color: null;
+$select-disabled-background: null;
+$select-disabled-border-color: null;
+$select-disabled-box-shadow: null;
+
+$select-option-error-color: null;
+$select-error-background: null;
+$select-error-background: null;
+$select-error-border-color: null;
+$select-error-box-shadow: null;
+
+$select-sm-padding-top: null;
+$select-sm-border-width: null;
+$select-sm-padding-left: null;
+$select-sm-option-font-size: null;
+$select-sm-border-radius: null;
+
+$select-lg-padding-top: null;
+$select-lg-border-width: null;
+$select-lg-padding-left: null;
+$select-lg-option-font-size: null;
+$select-lg-border-radius: null;
+
+$select-sm-option-line-height: null;
+$select-sm-border-width: null;
+$select-lg-option-line-height: null;
+$select-lg-border-width: null;
+
+
+// Switch
+$switch-sizes: null;
+$switch-themes: null;
+$switch-states: null;
+
+$switch-off-width: 32px;
+$switch-off-height: 16px;
+$switch-label-off-font-size: 16px;
+$switch-label-off-line-height: 1.5;
+$switch-thumb-off-color: null;
+$switch-thumb-on-color: null;
+$switch-off-padding-start: null;
+
+
+// Tooltips
+$tooltip-background: null;
+$tooltip-border-radius: null;
+$tooltip-padding-y: null;
+$tooltip-padding-x: null;
+$tooltip-padding-right: null;
+$tooltip-font-size: null;
+$tooltip-opacity: null;

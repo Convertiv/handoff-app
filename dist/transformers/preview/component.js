@@ -44,25 +44,8 @@ const path_1 = __importDefault(require("path"));
 const prettier = __importStar(require("prettier"));
 const sass_1 = __importDefault(require("sass"));
 const semver_1 = __importDefault(require("semver"));
-const ws_1 = __importDefault(require("ws"));
 const preview_1 = require("../../utils/preview");
 const types_1 = require("./types");
-const webSocketClientJS = `
-<script>
-const ws = new WebSocket('ws://localhost:3001');
-  ws.onopen = function (event) {
-    console.log('WebSocket connection opened');
-    ws.send('Hello from client!');
-  };
-
-  ws.onmessage = function (event) {
-    console.log('Message from server ', event.data);
-    if(event.data === 'reload'){
-      window.location.reload();
-    }
-  };
-</script>
-`;
 var SlotType;
 (function (SlotType) {
     SlotType["STRING"] = "string";
@@ -75,37 +58,36 @@ var SlotType;
  * @returns
  */
 const createFrameSocket = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const wss = new ws_1.default.Server({ port: 3001 });
-    function heartbeat() {
-        this.isAlive = true;
-    }
-    wss.on('connection', function connection(ws) {
-        const extWs = ws;
-        extWs.send('Welcome to the WebSocket server!');
-        extWs.isAlive = true;
-        extWs.on('error', console.error);
-        extWs.on('pong', heartbeat);
-    });
-    const interval = setInterval(function ping() {
-        wss.clients.forEach(function each(ws) {
-            const extWs = ws;
-            if (extWs.isAlive === false)
-                return ws.terminate();
-            extWs.isAlive = false;
-            ws.ping();
-        });
-    }, 30000);
-    wss.on('close', function close() {
-        clearInterval(interval);
-    });
-    console.log('WebSocket server started on ws://localhost:3001');
-    return function (message) {
-        wss.clients.forEach(function each(client) {
-            if (client.readyState === ws_1.default.OPEN) {
-                client.send(message);
-            }
-        });
-    };
+    // const wss = new WebSocket.Server({ port: 3001 });
+    // function heartbeat() {
+    //   this.isAlive = true;
+    // }
+    // wss.on('connection', function connection(ws) {
+    //   const extWs = ws as ExtWebSocket;
+    //   extWs.send('Welcome to the WebSocket server!');
+    //   extWs.isAlive = true;
+    //   extWs.on('error', console.error);
+    //   extWs.on('pong', heartbeat);
+    // });
+    // const interval = setInterval(function ping() {
+    //   wss.clients.forEach(function each(ws) {
+    //     const extWs = ws as ExtWebSocket;
+    //     if (extWs.isAlive === false) return ws.terminate();
+    //     extWs.isAlive = false;
+    //     ws.ping();
+    //   });
+    // }, 30000);
+    // wss.on('close', function close() {
+    //   clearInterval(interval);
+    // });
+    // console.log('WebSocket server started on ws://localhost:3001');
+    // return function (message: string) {
+    //   wss.clients.forEach(function each(client) {
+    //     if (client.readyState === WebSocket.OPEN) {
+    //       client.send(message);
+    //     }
+    //   });
+    // };
 });
 exports.createFrameSocket = createFrameSocket;
 //
@@ -420,7 +402,7 @@ function processComponent(handoff, file, sharedStyles, version) {
                 previews[previewKey] = yield prettier.format(handlebars_1.default.compile(template)({
                     config: handoff.config,
                     style: style,
-                    script: jsCompiled + '\n' + webSocketClientJS,
+                    script: jsCompiled,
                     sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
                     properties: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
                 }), { parser: 'html' });

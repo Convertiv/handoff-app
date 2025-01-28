@@ -52,7 +52,7 @@ export declare type RuleObject = {
  * @returns
  * @returns
  */
-export declare const createFrameSocket: (handoff: Handoff) => Promise<(message: string) => void>;
+export declare const createFrameSocket: (handoff: Handoff) => Promise<void>;
 /**
  * Create a component transformer
  * @param handoff
