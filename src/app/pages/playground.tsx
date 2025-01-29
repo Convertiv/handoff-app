@@ -904,6 +904,59 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                           </div>
                         </div>
                       </div>
+                      <p className="mb-8">
+                        There is a smaller version of the usage card as well, to be used when more than two columns are needed. They could
+                        be defined as <code>small</code> and <code>base</code> in the final component.
+                      </p>
+                      <div className="mb-8 grid grid-cols-3 gap-6">
+                        <div className="flex flex-col gap-4">
+                          <img
+                            src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-correct.png`}
+                            alt="Usage Cards"
+                            className="rounded-xl"
+                          />
+                          <div className="flex flex-row gap-3">
+                            <img
+                              src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/check-circle.svg`}
+                              alt="Do"
+                              className="mt-0.5 h-4 w-4"
+                            />
+                            <p className="text-sm leading-normal text-gray-500">
+                              Do keep the logo horizontal and on a light background while using light logo.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                          <img
+                            src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
+                            alt="Usage Cards"
+                            className="rounded-xl"
+                          />
+                          <div className="flex flex-row gap-3">
+                            <img
+                              src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
+                              alt="Do"
+                              className="mt-0.5 h-4 w-4"
+                            />
+                            <p className="text-sm leading-normal text-gray-500">Do not tilt the logo or mirror it in any way.</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                          <img
+                            src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
+                            alt="Usage Cards"
+                            className="rounded-xl"
+                          />
+                          <div className="flex flex-row gap-3">
+                            <img
+                              src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
+                              alt="Do"
+                              className="mt-0.5 h-4 w-4"
+                            />
+                            <p className="text-sm leading-normal text-gray-500">Do not tilt the logo or mirror it in any way.</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <Separator className="my-14" />
                     <div>
