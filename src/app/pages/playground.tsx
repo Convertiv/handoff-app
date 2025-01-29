@@ -865,6 +865,48 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                     </div>
                     <Separator className="my-14" />
                     <div>
+                      <h2 className="mb-3 text-2xl font-medium">Usage Cards</h2>
+                      <p className="mb-8">
+                        Usage cards are used to highlight how to apply the component. Two variants are available, one for correct usage and
+                        one for incorrect usage. Examples are provided below.
+                      </p>
+                      <div className="mb-8 grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-5">
+                          <img
+                            src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-correct.png`}
+                            alt="Usage Cards"
+                            className="rounded-3xl"
+                          />
+                          <div className="flex flex-row gap-4">
+                            <img
+                              src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/check-circle.svg`}
+                              alt="Do"
+                              className="h-6 w-6"
+                            />
+                            <p className="leading-normal text-gray-500">
+                              Do keep the logo horizontal and on a light background while using light logo.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-5">
+                          <img
+                            src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
+                            alt="Usage Cards"
+                            className="rounded-3xl"
+                          />
+                          <div className="flex flex-row gap-4">
+                            <img
+                              src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
+                              alt="Do"
+                              className="h-6 w-6"
+                            />
+                            <p className="leading-normal text-gray-500">Do not tilt the logo or mirror it in any way.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <Separator className="my-14" />
+                    <div>
                       <h2 className="mb-3 text-2xl font-medium">Effects</h2>
                       <p className="mb-8">Effects are used to create visual effects on components.</p>
                     </div>
