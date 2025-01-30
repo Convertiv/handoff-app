@@ -986,30 +986,30 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                       <p>This is an example of an ordered list:</p>
                       <ol>
                         <li>We want everything to look good out of the box.</li>
-                        <li>Really just the first reason, that's the whole point of the plugin.</li>
+                        <li>Really just the first reason, that&lsquo;s the whole point of the plugin.</li>
                         <li>
-                          Here's a third pretend reason though a list with three items looks more realistic than a list with two items.
+                          Here&lsquo;s a third pretend reason though a list with three items looks more realistic than a list with two items.
                         </li>
                       </ol>
-                      <p>Now we're going to try out another header style.</p>
+                      <p>Now we&lsquo;re going to try out another header style.</p>
                       <h3>Heading 3 sample</h3>
-                      <p>Let's test out some other styles.</p>
+                      <p>Let&lsquo;s test out some other styles.</p>
                       <p>
-                        This is a paragraph with some <a href="#">inline links</a>. Let's also see what happens when we have a bit of added{' '}
+                        This is a paragraph with some <a href="#">inline links</a>. Let&lsquo;s also see what happens when we have a bit of added{' '}
                         <strong>bold</strong> text in there.
                       </p>
                       <blockquote>
                         <p>
-                          Typography is pretty important if you don't want your stuff to look like trash. Make it good then it won't be bad.
+                          Typography is pretty important if you don&lsquo;t want your stuff to look like trash. Make it good then it won&lsquo;t be bad.
                         </p>
                       </blockquote>
                       <p>Making an unordered list is easy too:</p>
                       <ul>
                         <li>So here is the first item in this list.</li>
-                        <li>In this example we're keeping the items short.</li>
-                        <li>Later, we'll use longer, more complex list items.</li>
+                        <li>In this example we&lsquo;re keeping the items short.</li>
+                        <li>Later, we&lsquo;ll use longer, more complex list items.</li>
                       </ul>
-                      <p>And that's the end of this section.</p>
+                      <p>And that&lsquo;s the end of this section.</p>
                     </article>
                   </div>
                 </SidebarInset>

@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
-import Handoff from 'handoff/index';
 import path from 'path';
 import sass from 'sass';
+import Handoff from '../../../index';
 import { bundleJSWebpack } from '../../../utils/preview';
 import { ComponentType, TransformComponentTokensResult } from '../types';
 import buildPreviews from './html';

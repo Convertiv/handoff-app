@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import Handoff from 'handoff/index';
 import path from 'path';
+import Handoff from '../../../index';
 
 /**
  * A utility function to rename a component

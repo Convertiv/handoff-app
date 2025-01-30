@@ -1,9 +1,9 @@
 import fs from 'fs-extra';
 import Handlebars from 'handlebars';
-import Handoff from 'handoff/index';
 import { parse } from 'node-html-parser';
 import path from 'path';
 import * as prettier from 'prettier';
+import Handoff from '../../../index';
 import { SlotMetadata } from '../component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from '../types';
 

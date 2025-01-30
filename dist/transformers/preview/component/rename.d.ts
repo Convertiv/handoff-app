@@ -1,4 +1,4 @@
-import Handoff from 'handoff/index';
+import Handoff from '../../../index';
 /**
  * A utility function to rename a component
  * @param handoff

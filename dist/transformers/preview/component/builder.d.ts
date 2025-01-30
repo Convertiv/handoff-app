@@ -1,4 +1,4 @@
-import Handoff from 'handoff/index';
+import Handoff from '../../../index';
 import { ComponentType } from '../types';
 /**
  * Process process a specific component
