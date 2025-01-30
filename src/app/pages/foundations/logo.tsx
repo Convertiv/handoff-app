@@ -4,14 +4,14 @@ import Link from 'next/link';
 
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../components/util';
 
-import { DisplayLogo } from '@/components/Foundations/DisplayLogo';
-import { buttonVariants } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import rehypeRaw from 'rehype-raw';
+import { DisplayLogo } from '../../components/Foundations/DisplayLogo';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
+import { buttonVariants } from '../../components/ui/button';
 
 /**
  *         <div className="flex flex-col gap-5">
