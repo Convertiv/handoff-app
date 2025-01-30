@@ -1,11 +1,10 @@
-import { Config, IntegrationObject } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
-import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { HookReturn } from './types';
 import { HandoffIntegration } from './transformers/integration';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
+import { DocumentationObject, HookReturn } from './types';
+import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
     debug: boolean;

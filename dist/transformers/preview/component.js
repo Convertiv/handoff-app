@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,22 +12,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processComponent = exports.processSharedStyles = exports.renameComponent = exports.componentTransformer = exports.createFrameSocket = void 0;
+exports.processSharedStyles = exports.componentTransformer = exports.createFrameSocket = exports.SlotType = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const handlebars_1 = __importDefault(require("handlebars"));
-const node_html_parser_1 = require("node-html-parser");
 const path_1 = __importDefault(require("path"));
-const prettier = __importStar(require("prettier"));
 const sass_1 = __importDefault(require("sass"));
 const semver_1 = __importDefault(require("semver"));
-const preview_1 = require("../../utils/preview");
-const types_1 = require("./types");
+const builder_1 = __importDefault(require("./component/builder"));
 var SlotType;
 (function (SlotType) {
-    SlotType["STRING"] = "string";
+    SlotType["TEXT"] = "text";
     SlotType["IMAGE"] = "image";
-})(SlotType || (SlotType = {}));
+    SlotType["BUTTON"] = "button";
+    SlotType["ARRAY"] = "array";
+    SlotType["NUMBER"] = "number";
+    SlotType["BOOLEAN"] = "boolean";
+    SlotType["OBJECT"] = "object";
+})(SlotType = exports.SlotType || (exports.SlotType = {}));
 /**
  * In dev mode we want to watch the components folder for changes
  * @param handoff
@@ -117,7 +95,7 @@ function componentTransformer(handoff) {
                 let versions = {};
                 let data = undefined;
                 if (file.endsWith('.hbs')) {
-                    data = yield processComponent(handoff, file, sharedStyles);
+                    data = yield (0, builder_1.default)(handoff, file, sharedStyles);
                     // Write the API file
                     // we're in the root directory so this must be version 0.
                     versions['0.0.0'] = data;
@@ -133,7 +111,7 @@ function componentTransformer(handoff) {
                             for (const versionFile of versionFiles) {
                                 console.log(`Processing version ${versionDirectory} for ${file}`);
                                 if (versionFile.endsWith('.hbs')) {
-                                    data = yield processComponent(handoff, versionFile, sharedStyles, versionDirectory);
+                                    data = yield (0, builder_1.default)(handoff, versionFile, sharedStyles, versionDirectory);
                                     versions[versionDirectory] = data;
                                 }
                             }
@@ -169,27 +147,6 @@ function componentTransformer(handoff) {
     });
 }
 exports.componentTransformer = componentTransformer;
-/**
- * A utility function to rename a component
- * @param handoff
- * @param source
- * @param destination
- */
-function renameComponent(handoff, source, destination) {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
-        source = path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'components', source);
-        destination = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'components', destination);
-        ['hbs', 'js', 'scss', 'css'].forEach((ext) => __awaiter(this, void 0, void 0, function* () {
-            console.log(`Checking for ${source}.${ext}`);
-            let test = source.includes(`.${ext}`) ? source : `${source}.${ext}`;
-            if (fs_extra_1.default.existsSync(test)) {
-                yield fs_extra_1.default.rename(test, destination.includes(`.${ext}`) ? destination : `${destination}.${ext}`);
-            }
-        }));
-    });
-}
-exports.renameComponent = renameComponent;
 /**
  * Process the shared styles with sass compileAsync
  * @param handoff
@@ -234,201 +191,6 @@ function processSharedStyles(handoff) {
     });
 }
 exports.processSharedStyles = processSharedStyles;
-/**
- * Process process a specific component
- * @param handoff
- * @param file
- * @param sharedStyles
- */
-function processComponent(handoff, file, sharedStyles, version) {
-    var _a, _b, _c;
-    return __awaiter(this, void 0, void 0, function* () {
-        let id = path_1.default.basename(file).replace('.hbs', '');
-        let data = {
-            id,
-            title: 'Untitled',
-            description: 'No description provided',
-            preview: 'No preview available',
-            type: types_1.ComponentType.Element,
-            group: 'default',
-            tags: [],
-            previews: [
-                {
-                    title: 'Default',
-                    values: {},
-                    url: file,
-                },
-            ],
-            properties: {},
-            code: '',
-            html: '',
-            js: null,
-            css: null,
-            sass: null,
-            sharedStyles: sharedStyles,
-        };
-        console.log(chalk_1.default.green(`Processing component ${file} ${version}`));
-        const componentPath = path_1.default.resolve(handoff.workingPath, `integration/components`, id);
-        if (!version) {
-            // find latest version
-            console.log('componentPath', componentPath);
-            const versions = fs_extra_1.default.readdirSync(componentPath).filter((f) => fs_extra_1.default.statSync(path_1.default.join(componentPath, f)).isDirectory());
-            const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
-            console.log('versions', versions, latest);
-            if (!latest) {
-                throw new Error(`No version found for ${id}0`);
-            }
-            version = latest;
-        }
-        const custom = version ? path_1.default.resolve(componentPath, version) : componentPath;
-        if (!fs_extra_1.default.existsSync(custom)) {
-            console.log('custom', custom);
-            throw new Error(`No version found for ${id}1`);
-        }
-        const publicPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
-        // Ensure the public API path exists
-        if (!fs_extra_1.default.existsSync(publicPath)) {
-            fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
-        }
-        // Is there a JSON file with the same name?
-        const jsonFile = id + '.json';
-        const jsonPath = path_1.default.resolve(custom, jsonFile);
-        let parsed = {};
-        if (fs_extra_1.default.existsSync(jsonPath)) {
-            const json = yield fs_extra_1.default.readFile(jsonPath, 'utf8');
-            if (json) {
-                try {
-                    parsed = JSON.parse(json);
-                    // The JSON file defines each of the fields
-                    if (parsed) {
-                        data.title = parsed.title;
-                        data.type = parsed.type || types_1.ComponentType.Element;
-                        data.group = parsed.group || 'default';
-                        data.tags = parsed.tags || [];
-                        data.description = parsed.description;
-                        data.properties = parsed.properties;
-                        data.previews = parsed.previews;
-                    }
-                }
-                catch (e) {
-                    console.log(chalk_1.default.red(`Error parsing JSON for ${file}`));
-                    console.log(e);
-                }
-            }
-        }
-        // Is there a JS file with the same name?
-        const jsFile = id + '.js';
-        if (fs_extra_1.default.existsSync(path_1.default.resolve(custom, jsFile))) {
-            console.log(chalk_1.default.green(`Detected JS file for ${file}`));
-            try {
-                const jsPath = path_1.default.resolve(custom, jsFile);
-                const js = yield fs_extra_1.default.readFile(jsPath, 'utf8');
-                const compiled = yield (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development');
-                if (js) {
-                    data.js = js;
-                    data['jsCompiled'] = compiled;
-                    yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, jsFile), compiled);
-                }
-            }
-            catch (e) {
-                console.log(chalk_1.default.red(`Error compiling JS for ${file}`));
-                console.log(e);
-            }
-        }
-        // Is there a scss file with the same name?
-        const scssFile = id + '.scss';
-        const scssPath = path_1.default.resolve(custom, scssFile);
-        const cssFile = id + '.css';
-        const cssPath = path_1.default.resolve(custom, cssFile);
-        if (fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath)) {
-            console.log(chalk_1.default.green(`Detected SCSS file for ${file}`));
-            try {
-                const result = yield sass_1.default.compileAsync(scssPath, {
-                    loadPaths: [
-                        path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
-                        path_1.default.resolve(handoff.workingPath, 'node_modules'),
-                        path_1.default.resolve(handoff.workingPath),
-                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-                    ],
-                });
-                if (result.css) {
-                    // @ts-ignore
-                    data['css'] = result.css;
-                    // Split the CSS into shared styles and component styles
-                    const splitCSS = (_b = data['css']) === null || _b === void 0 ? void 0 : _b.split('/* COMPONENT STYLES*/');
-                    // If there are two parts, the first part is the shared styles
-                    if (splitCSS && splitCSS.length > 1) {
-                        data['css'] = splitCSS[1];
-                        data['sharedStyles'] = splitCSS[0];
-                        yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, `shared.css`), data['sharedStyles']);
-                    }
-                    else {
-                        if (!sharedStyles)
-                            sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
-                        yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, `shared.css`), sharedStyles);
-                    }
-                    yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, cssFile), data['css']);
-                }
-            }
-            catch (e) {
-                console.log(chalk_1.default.red(`Error compiling SCSS for ${file}`));
-                throw e;
-            }
-            const scss = yield fs_extra_1.default.readFile(scssPath, 'utf8');
-            if (scss) {
-                data['sass'] = scss;
-            }
-        }
-        // Is there a css file with the same name?
-        if (fs_extra_1.default.existsSync(cssPath)) {
-            const css = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, cssFile), 'utf8');
-            if (css) {
-                data['css'] = css;
-            }
-        }
-        const template = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, `${id}.hbs`), 'utf8');
-        try {
-            const previews = {};
-            let html;
-            for (const previewKey in data.previews) {
-                const url = id + `-${previewKey}.html`;
-                data.previews[previewKey].url = url;
-                const publicFile = path_1.default.resolve(publicPath, url);
-                const jsCompiled = data['jsCompiled'] ? `<script src="/api/component/${jsFile}"></script>` : '';
-                let style = data['css'] ? `<link rel="stylesheet" href="/api/component/${cssFile}">` : '';
-                if (data['sharedStyles']) {
-                    style = `<link rel="stylesheet" href="/api/component/shared.css">` + style;
-                }
-                previews[previewKey] = yield prettier.format(handlebars_1.default.compile(template)({
-                    config: handoff.config,
-                    style: style,
-                    script: jsCompiled,
-                    sharedStyles: data['css'] ? `<link rel="stylesheet" href="/api/component/shared.css">` : '',
-                    properties: ((_c = data.previews[previewKey]) === null || _c === void 0 ? void 0 : _c.values) || {},
-                }), { parser: 'html' });
-                if (!html)
-                    html = previews[previewKey];
-                yield fs_extra_1.default.writeFile(publicFile, previews[previewKey]);
-            }
-            data.preview = '';
-            const bodyEl = (0, node_html_parser_1.parse)(template).querySelector('body');
-            const code = bodyEl ? bodyEl.innerHTML.trim() : template;
-            data['code'] = code;
-            const htmlEl = (0, node_html_parser_1.parse)(html).querySelector('body');
-            html = htmlEl ? htmlEl.innerHTML.trim() : html;
-            data['html'] = html;
-            data['sharedStyles'] = sharedStyles;
-            // discard shared styles from the css output
-        }
-        catch (e) {
-            console.log(e);
-            // write the preview to the public folder
-            throw new Error('stop');
-        }
-        return data;
-    });
-}
-exports.processComponent = processComponent;
 /**
  * Build the preview API from the component data
  * @param handoff

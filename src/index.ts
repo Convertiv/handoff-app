@@ -1,21 +1,22 @@
-import { defaultConfig } from './config';
-import { Config, IntegrationObject } from './types/config';
+import chalk from 'chalk';
+import 'dotenv/config';
 import fs from 'fs-extra';
 import path from 'path';
-import 'dotenv/config';
 import webpack from 'webpack';
-import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildRecipe, buildComponents } from './pipeline';
-import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeComponent, makeTemplate } from './cli/make';
+import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
+import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
+import { defaultConfig } from './config';
+import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
+import { processSharedStyles } from './transformers/preview/component';
+import processComponent from './transformers/preview/component/builder';
+import { renameComponent } from './transformers/preview/component/rename';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
-import chalk from 'chalk';
+import { DocumentationObject, HookReturn } from './types';
+import { Config, IntegrationObject } from './types/config';
 import { prepareIntegrationObject } from './utils/integration';
-import { processSharedStyles, processComponent, renameComponent } from './transformers/preview/component';
 
 class Handoff {
   config: Config | null;

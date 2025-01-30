@@ -8,7 +8,6 @@ import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
-import { ChevronsDown } from 'lucide-react';
 import { useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
@@ -112,7 +111,6 @@ export const CodeHighlight: React.FC<{
       {collapsible && (
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="w-9 p-0">
-            <ChevronsDown className="h-4 w-4" />
             <span className="sr-only">Toggle</span>
           </Button>
         </CollapsibleTrigger>

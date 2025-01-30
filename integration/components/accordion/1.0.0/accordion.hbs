@@ -12,12 +12,12 @@
           <div class="accordion-item">
             <h3 class="accordion-header" id="{{../properties.id}}-heading-{{this.id}}">
               <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#{{../properties.id}}-collapse-{{this.id}}" aria-expanded="true" aria-controls="{{../properties.id}}-collapse-{{this.id}}">
-               {{this.title}}
+               {{#field ../fields.items.items.properties.title }}{{this.title}}{{/field}}
               </button>
             </h3>
             <div id="{{../properties.id}}-collapse-{{this.id}}" class="accordion-collapse collapse" aria-labelledby="{{this.id}}" data-bs-parent="#{{../properties.id}}-heading-{{this.id}}">
               <div class="accordion-body w-lg-90 mx-lg-auto fs-lg">
-                <p>{{this.paragraph}}</p>
+                <p>{{#field ../fields.items.items.properties.paragraph }}{{this.paragraph}}{{/field}}</p>
               </div>
             </div>
           </div>

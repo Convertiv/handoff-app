@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { CodeHighlight } from '../Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
@@ -62,7 +62,6 @@ export const ComponentDisplay: React.FC<{
   const [previewUrl, setPreviewUrl] = React.useState('');
   const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[0]].size + 'px');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[0] : '');
-  
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -228,44 +227,101 @@ export const ComponentPreview: React.FC<{
 };
 
 export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
-const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
   const [selectedField, setSelectedField] = React.useState(null);
   const openSheet = (field) => {
     setSelectedField(field);
     setOpen(true);
   };
-  return (<>
-    <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
-    <Table>
-      <TableCaption>These are the fields associated with the component</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Id</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {fields.map((field) => {
+  const openFromHash = () => {
+    if (window.location.hash) {
+      const field = fields.find((field) => field.key === window.location.hash.replace('#', ''));
+      if (field) {
+        setSelectedField(field);
+        setOpen(true);
+      }
+    }
+  };
+  useEffect(() => {
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+  }, [fields]);
+  return (
+    <>
+      <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
+      <Table>
+        <TableCaption>These are the fields associated with the component</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Id</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRows rows={fields} openSheet={openSheet} />
+        </TableBody>
+      </Table>
+    </>
+  );
+};
+
+const TableRows: React.FC<{ rows: SlotMetadata[]; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
+  rows,
+  openSheet,
+  hasParent,
+}) => {
+  return (
+    <>
+      {rows.map((row, i) => {
+        console.log(row);
+        if (!row) return null;
+        if (row.type === 'array') {
           return (
-            <TableRow key={field.key}>
-              <TableHead>{field.key}</TableHead>
-              <TableHead>{startCase(field.name)}</TableHead>
-              <TableHead>{field.type}</TableHead>
-              <TableHead>
-                <span className="slot-description">{field.description}</span>
-              </TableHead>
-              <TableHead className="text-right">
-                    <Button variant="ghost" onClick={() => openSheet(field)}>
-                      <PencilRuler />
-                    </Button>
-              </TableHead>
-            </TableRow>
+            <>
+              <TableRowInstance row={row} openSheet={openSheet} hasParent={hasParent} key={`row-${i}`} />
+              {row.items && row.items.properties && (
+                <TableRows
+                  rows={Object.keys(row.items.properties).map((key) => {
+                    return { ...row.items.properties[key], key };
+                  })}
+                  openSheet={openSheet}
+                  hasParent={true}
+                  key={`row-${i}-items`}
+                />
+              )}
+            </>
           );
-        })}
-      </TableBody>
-    </Table></>
+        }
+        return <TableRowInstance row={row} openSheet={openSheet} hasParent={hasParent} key={`row-${i}`} />;
+      })}
+    </>
+  );
+};
+
+const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
+  row,
+  openSheet,
+  hasParent,
+}) => {
+  return (
+    <TableRow>
+      <TableHead>
+        {hasParent && '- '}
+        {row.key}
+      </TableHead>
+      <TableHead>{startCase(row.name)}</TableHead>
+      <TableHead>{row.type}</TableHead>
+      <TableHead>
+        <span className="slot-description">{row.description}</span>
+      </TableHead>
+      <TableHead className="text-right">
+        <Button variant="ghost" onClick={() => openSheet(row)}>
+          <PencilRuler />
+        </Button>
+      </TableHead>
+    </TableRow>
   );
 };

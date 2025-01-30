@@ -81,7 +81,7 @@ export const AnchorNav: React.FC<AnchorNavProps> = ({ title, groups }) => {
           {groups?.map((linkGroup, i) => (
             <React.Fragment key={`link-group-${i}`}>
               {Object.entries(linkGroup).map(([key, value]) => (
-                <li>
+                <li key={key}>
                   <AnchorNavLink to={key}>{value}</AnchorNavLink>
                 </li>
               ))}

@@ -1,0 +1,8 @@
+.handoff-field{
+    background-color: rgba(0, 0, 0, 0);
+    border-radius: 5px;
+}
+.handoff-field:hover {
+  background-color: rgba(0, 0, 0, .1);
+  transition: background-color .5s;
+}
