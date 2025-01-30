@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import { parse } from 'node-html-parser';
@@ -26,8 +27,32 @@ const buildPreviews = async (
     let injectFieldWrappers = false;
     Handlebars.registerHelper('field', function (field, options) {
       if (injectFieldWrappers) {
+        if (!field) {
+          console.log(chalk.red(`When processing previews for ${id}, a field block is declared but no field is provided`));
+          return options.fn(this);
+        }
+
+        let parts = field.split('.');
+        // iterate through the parts and find the field
+        let current = data.properties as any;
+        for (const part of parts) {
+          if (current) {
+            if (current.type && current.type === 'object') {
+              current = current.properties;
+            } else if (current.type && current.type === 'array') {
+              current = current.items.properties;
+            }
+          }
+          if (current[part]) {
+            current = current[part];
+          }
+        }
+        if (!current) {
+          console.log(chalk.red(`When processing previews for ${id}, a field block is declared but undefined`));
+          return options.fn(this);
+        }
         return new Handlebars.SafeString(
-          `<span class="handoff-field handoff-field-${field?.type ? field.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(field))}">` +
+          `<span class="handoff-field handoff-field-${current?.type ? current.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
             options.fn(this) +
             '</span>'
         );
@@ -41,9 +66,9 @@ const buildPreviews = async (
       data.previews[previewKey].url = id + `-${previewKey}.html`;
       previews[previewKey] = await buildPreview(id, template, data.previews[previewKey], data);
       const publicFile = path.resolve(publicPath, id + '-' + previewKey + '.html');
-      console.log('Writing preview to', publicFile);
       await fs.writeFile(publicFile, previews[previewKey]);
     }
+
     data.preview = '';
     data.code = trimPreview(template);
     data.html = trimPreview(html);

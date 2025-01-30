@@ -1,6 +1,6 @@
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { startCase } from 'lodash';
-import { ArrowRightToLine, Check, Link, SwatchBook } from 'lucide-react';
+import { ArrowRightToLine, Check, Link, SwatchBook, Text } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -62,9 +62,15 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  const onOpenChange = (open) => {
+    if (open === 'off') {
+      window.location.hash = '';
+    }
+    setOpen(open);
+  };
   if (!field) return null;
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
         <div className="-mt-1 px-2">
           <div className="mb-4 flex justify-between">
@@ -100,9 +106,14 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
         <SheetHeader className="space-y-2 px-2">
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{field.name}</p>
-            <p className="font-mono text-xs">{humanReadableType(field.type)}</p>
           </div>
+          <Separator className="mb-4 mt-6" />
+          <Text className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
           <SheetDescription className="leading-relaxed">{field.description}</SheetDescription>
+          <Separator className="mb-4 mt-6" />
+          <p className="font-mono text-xs">
+            This is a {field.type} field. {humanReadableType(field.type)}
+          </p>
         </SheetHeader>
         <div className="px-2">
           <Separator className="mb-4 mt-6" />
@@ -117,11 +128,11 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
 export const RuleDisplay: React.FC<{ rule: string; value: any }> = ({ rule, value }) => {
   return (
     <>
-      <p className="mb-3 flex items-center gap-3">
+      <p className="flex items-center gap-3">
         <SwatchBook className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
         <span className="text-sm font-normal">{startCase(rule)}</span>
       </p>
-      <p className="text-sm text-muted-foreground"> {humanReadableRule(rule, value)}</p>
+      <p className="mb-3 text-sm text-muted-foreground "> {humanReadableRule(rule, value)}</p>
     </>
   );
 };

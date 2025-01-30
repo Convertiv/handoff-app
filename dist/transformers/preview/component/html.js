@@ -35,6 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const node_html_parser_1 = require("node-html-parser");
@@ -52,7 +53,31 @@ const buildPreviews = (data, id, custom, publicPath, handoff) => __awaiter(void 
         let injectFieldWrappers = false;
         handlebars_1.default.registerHelper('field', function (field, options) {
             if (injectFieldWrappers) {
-                return new handlebars_1.default.SafeString(`<span class="handoff-field handoff-field-${(field === null || field === void 0 ? void 0 : field.type) ? field.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(field))}">` +
+                if (!field) {
+                    console.log(chalk_1.default.red(`When processing previews for ${id}, a field block is declared but no field is provided`));
+                    return options.fn(this);
+                }
+                let parts = field.split('.');
+                // iterate through the parts and find the field
+                let current = data.properties;
+                for (const part of parts) {
+                    if (current) {
+                        if (current.type && current.type === 'object') {
+                            current = current.properties;
+                        }
+                        else if (current.type && current.type === 'array') {
+                            current = current.items.properties;
+                        }
+                    }
+                    if (current[part]) {
+                        current = current[part];
+                    }
+                }
+                if (!current) {
+                    console.log(chalk_1.default.red(`When processing previews for ${id}, a field block is declared but undefined`));
+                    return options.fn(this);
+                }
+                return new handlebars_1.default.SafeString(`<span class="handoff-field handoff-field-${(current === null || current === void 0 ? void 0 : current.type) ? current.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
                     options.fn(this) +
                     '</span>');
             }
@@ -66,7 +91,6 @@ const buildPreviews = (data, id, custom, publicPath, handoff) => __awaiter(void 
             data.previews[previewKey].url = id + `-${previewKey}.html`;
             previews[previewKey] = yield buildPreview(id, template, data.previews[previewKey], data);
             const publicFile = path_1.default.resolve(publicPath, id + '-' + previewKey + '.html');
-            console.log('Writing preview to', publicFile);
             yield fs_extra_1.default.writeFile(publicFile, previews[previewKey]);
         }
         data.preview = '';

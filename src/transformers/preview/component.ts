@@ -168,7 +168,6 @@ export async function componentTransformer(handoff: Handoff) {
           if (semver.valid(versionDirectory)) {
             const versionFiles = fs.readdirSync(path.resolve(custom, file, versionDirectory));
             for (const versionFile of versionFiles) {
-              console.log(`Processing version ${versionDirectory} for ${file}`);
               if (versionFile.endsWith('.hbs')) {
                 data = await processComponent(handoff, versionFile, sharedStyles, versionDirectory);
                 versions[versionDirectory] = data;

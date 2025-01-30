@@ -37,6 +37,8 @@ function processComponent(handoff, file, sharedStyles, version) {
             preview: 'No preview available',
             type: types_1.ComponentType.Element,
             group: 'default',
+            should_do: [],
+            should_not_do: [],
             tags: [],
             previews: [
                 {
@@ -57,10 +59,8 @@ function processComponent(handoff, file, sharedStyles, version) {
         const componentPath = path_1.default.resolve(handoff.workingPath, `integration/components`, id);
         if (!version) {
             // find latest version
-            console.log('componentPath', componentPath);
             const versions = fs_extra_1.default.readdirSync(componentPath).filter((f) => fs_extra_1.default.statSync(path_1.default.join(componentPath, f)).isDirectory());
             const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
-            console.log('versions', versions, latest);
             if (!latest) {
                 throw new Error(`No version found for ${id}0`);
             }
@@ -68,7 +68,6 @@ function processComponent(handoff, file, sharedStyles, version) {
         }
         const custom = version ? path_1.default.resolve(componentPath, version) : componentPath;
         if (!fs_extra_1.default.existsSync(custom)) {
-            console.log('custom', custom);
             throw new Error(`No version found for ${id}1`);
         }
         const publicPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
@@ -88,6 +87,8 @@ function processComponent(handoff, file, sharedStyles, version) {
                     // The JSON file defines each of the fields
                     if (parsed) {
                         data.title = parsed.title;
+                        data.should_do = parsed.should_do || [];
+                        data.should_not_do = parsed.should_not_do || [];
                         data.type = parsed.type || types_1.ComponentType.Element;
                         data.group = parsed.group || 'default';
                         data.tags = parsed.tags || [];

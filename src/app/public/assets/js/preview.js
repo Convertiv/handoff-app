@@ -1,23 +1,55 @@
+const ucWords = (str) =>
+  str
+    .toLowerCase()
+    .replace(/\b[a-z]/g, function (letter) {
+      return letter.toUpperCase();
+    })
+    .replaceAll('_', ' ');
+
 window.addEventListener('DOMContentLoaded', (event) => {
   const preview = document.getElementsByClassName('handoff-field');
+
+  const charCountDiv = document.createElement('div');
+  charCountDiv.setAttribute('class', 'handoff-char-count');
+  document.body.appendChild(charCountDiv);
+  const updateCharCount = (field, type, count) => {
+    charCountDiv.classList.add('visible');
+    charCountDiv.innerText = `${ucWords(field)} - Type: ${ucWords(type)} Count: ${count}`;
+  };
+  const setPosition = (element) => {
+    const rect = element.getBoundingClientRect();
+    const top = rect.top + window.scrollY;
+    const left = rect.left + window.scrollX;
+    charCountDiv.style.top = `${top}px`;
+    charCountDiv.style.left = `${left}px`;
+  };
+
   for (let i = 0; i < preview.length; i++) {
+    const element = preview[i];
     // get data model from the data-handoff attribute
-    const dataModel = JSON.parse(decodeURIComponent(preview[i].getAttribute('data-handoff')));
-    const charCount = preview[i].innerText.length;
-    console.log(dataModel);
-    // build a div with the current character count
-    // bind doubleclick to enable contenteditable
-    preview[i].addEventListener(
+    const data = element.getAttribute('data-handoff');
+    let dataModel = {};
+    if (data) {
+      dataModel = JSON.parse(decodeURIComponent(data));
+    }
+    const charCount = element.innerText.length;
+    element.addEventListener(
       'click',
-      function () {
+      function (event) {
+        event.preventDefault();
         this.setAttribute('contenteditable', true);
         this.focus();
-        // append a div with the current character count
       },
       false
     );
+
+    element.addEventListener('mouseover', function () {
+      setPosition(this);
+      updateCharCount(dataModel.id, dataModel.type, charCount);
+    });
+
     // bind blur to disable contenteditable
-    preview[i].addEventListener(
+    element.addEventListener(
       'blur',
       function () {
         this.removeAttribute('contenteditable');
@@ -26,21 +58,18 @@ window.addEventListener('DOMContentLoaded', (event) => {
     );
 
     // On single click add a character count element
-    preview[i].addEventListener(
+    element.addEventListener(
       'dblclick',
       function () {
-        // tell the frame parent to go to a hash id
-        console.log(dataModel.id);
         window.parent.location.hash = dataModel.id;
       },
       false
     );
     // bind keyup to update the character count
-    preview[i].addEventListener(
+    element.addEventListener(
       'keyup',
       function () {
-        const charCount = this.innerText.length;
-        this.nextElementSibling.innerText = charCount + ' characters';
+        charCount = this.innerText.length;
       },
       false
     );

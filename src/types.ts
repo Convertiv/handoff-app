@@ -127,6 +127,8 @@ export interface PreviewObject {
   id: string;
   title: string;
   description: string;
+  should_do: string[];
+  should_not_do: string[];
   preview: string;
   previews: {
     [key: string]: {

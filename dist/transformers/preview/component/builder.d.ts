@@ -11,6 +11,8 @@ export declare function processComponent(handoff: Handoff, file: string, sharedS
     type?: ComponentType;
     group?: string;
     tags?: string[];
+    should_do?: string[];
+    should_not_do?: string[];
     code: string;
     html?: string;
     preview: string;

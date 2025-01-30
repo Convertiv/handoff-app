@@ -109,7 +109,6 @@ function componentTransformer(handoff) {
                         if (semver_1.default.valid(versionDirectory)) {
                             const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(custom, file, versionDirectory));
                             for (const versionFile of versionFiles) {
-                                console.log(`Processing version ${versionDirectory} for ${file}`);
                                 if (versionFile.endsWith('.hbs')) {
                                     data = yield (0, builder_1.default)(handoff, versionFile, sharedStyles, versionDirectory);
                                     versions[versionDirectory] = data;

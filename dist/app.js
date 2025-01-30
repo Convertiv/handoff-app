@@ -112,7 +112,6 @@ const transformMdx = (src, dest, id) => {
     const title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
     const menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
     const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
-    console.log(description);
     const metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
     const metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
     const weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;

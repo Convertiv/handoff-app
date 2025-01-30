@@ -102,7 +102,6 @@ const transformMdx = (src: string, dest: string, id: string) => {
   const title = data.title ?? '';
   const menu = data.menu ?? '';
   const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
-  console.log(description);
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
   const weight = data.weight ?? 0;

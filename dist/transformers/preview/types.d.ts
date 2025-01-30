@@ -22,6 +22,8 @@ export declare type TransformComponentTokensResult = {
     type?: ComponentType;
     group?: string;
     tags?: string[];
+    should_do?: string[];
+    should_not_do?: string[];
     code: string;
     html?: string;
     preview: string;

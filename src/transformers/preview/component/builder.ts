@@ -22,6 +22,8 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
     preview: 'No preview available',
     type: ComponentType.Element,
     group: 'default',
+    should_do: [],
+    should_not_do: [],
     tags: [],
     previews: [
       {
@@ -42,10 +44,8 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
   const componentPath = path.resolve(handoff.workingPath, `integration/components`, id);
   if (!version) {
     // find latest version
-    console.log('componentPath', componentPath);
     const versions = fs.readdirSync(componentPath).filter((f) => fs.statSync(path.join(componentPath, f)).isDirectory());
     const latest = versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).pop();
-    console.log('versions', versions, latest);
     if (!latest) {
       throw new Error(`No version found for ${id}0`);
     }
@@ -53,7 +53,6 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
   }
   const custom = version ? path.resolve(componentPath, version) : componentPath;
   if (!fs.existsSync(custom)) {
-    console.log('custom', custom);
     throw new Error(`No version found for ${id}1`);
   }
 
@@ -75,6 +74,8 @@ export async function processComponent(handoff: Handoff, file: string, sharedSty
         // The JSON file defines each of the fields
         if (parsed) {
           data.title = parsed.title;
+          data.should_do = parsed.should_do || [];
+          data.should_not_do = parsed.should_not_do || [];
           data.type = (parsed.type as ComponentType) || ComponentType.Element;
           data.group = parsed.group || 'default';
           data.tags = parsed.tags || [];

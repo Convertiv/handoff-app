@@ -9,10 +9,11 @@ import { startCase } from 'lodash';
 import { PencilRuler } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
+import HeadersType from '../Typography/Headers';
 import { Button } from '../ui/button';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '../ui/table';
+import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
   component: ComponentInstance;
@@ -60,8 +61,8 @@ export const ComponentDisplay: React.FC<{
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('500px');
   const [previewUrl, setPreviewUrl] = React.useState('');
-  const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[0]].size + 'px');
-  const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[0] : '');
+  const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[1]].size + 'px');
+  const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[1] : '');
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -101,7 +102,7 @@ export const ComponentDisplay: React.FC<{
   }, [component]);
   return (
     <div className="md:flex">
-      <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="text-medium rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
         {component?.previews ? (
           <>
             <div className="flex items-center justify-between py-1 align-middle">
@@ -126,21 +127,21 @@ export const ComponentDisplay: React.FC<{
                 </SelectContent>
               </Select>
 
-              <div className="mt-3 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
-                <RadioGroup
-                  value={previewUrl}
-                  onValueChange={setPreviewUrl}
-                  className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-sm after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-[:focus-visible]:after:outline has-[:focus-visible]:after:outline-2 has-[:focus-visible]:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
-                  data-state={previewUrl}
-                >
+              <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Preview" />
+                </SelectTrigger>
+                <SelectContent>
                   {Object.keys(component.previews).map((key) => (
-                    <label className="relative z-10 inline-flex h-full min-w-6 cursor-pointer select-none items-center justify-center whitespace-nowrap px-3 transition-colors group-data-[state=on]:text-muted-foreground/70">
+                    <SelectItem
+                      key={`/api/component/` + component.previews[key].url}
+                      value={`/api/component/` + component.previews[key].url}
+                    >
                       {component.previews[key].title}
-                      <RadioGroupItem value={`/api/component/` + component.previews[key].url} className="sr-only" />
-                    </label>
+                    </SelectItem>
                   ))}
-                </RadioGroup>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             <iframe
@@ -208,12 +209,13 @@ export const ComponentPreview: React.FC<{
   return (
     <div id={preview.id}>
       <div>
+        <BestPracticesCard component={preview} />
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
         <CodeHighlight title={title} data={preview} collapsible={true} />
       </div>
       {preview?.properties && (
         <>
-          <h3>Properties</h3>
+          <HeadersType.H3>Properties</HeadersType.H3>
           <ComponentProperties
             fields={Object.keys(preview.properties).map((key) => {
               return { ...preview.properties[key], key };
@@ -276,7 +278,6 @@ const TableRows: React.FC<{ rows: SlotMetadata[]; openSheet: (SlotMetadata) => v
   return (
     <>
       {rows.map((row, i) => {
-        console.log(row);
         if (!row) return null;
         if (row.type === 'array') {
           return (
