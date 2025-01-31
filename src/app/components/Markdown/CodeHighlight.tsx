@@ -55,7 +55,23 @@ export const CodeHighlight: React.FC<{
   if (!type) type = 'html';
 
   const states = Object.keys(data)
-    .filter((key) => ['id', 'preview', 'title', 'description', 'type', 'group', 'tags', 'previews', 'properties'].indexOf(key) === -1)
+    .filter(
+      (key) =>
+        [
+          'id',
+          'preview',
+          'title',
+          'code',
+          'description',
+          'type',
+          'group',
+          'tags',
+          'previews',
+          'properties',
+          'should_do',
+          'should_not_do',
+        ].indexOf(key) === -1
+    )
     .map((key) => key);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.html);
@@ -68,7 +84,7 @@ export const CodeHighlight: React.FC<{
     <Collapsible className="space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
       <div
         className="mt-5 flex items-center justify-between rounded-t-sm bg-gray-100 px-5 py-3"
-        data-language={activeState === 'code' ? type : activeState}
+        data-language={activeState === 'html' ? type : activeState}
       >
         {title && <div>{title}</div>}
         {states.length > 2 && (
@@ -84,10 +100,10 @@ export const CodeHighlight: React.FC<{
             </SelectTrigger>
             <SelectContent>
               {states
-                .filter((value) => ['code', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
                 .map((state) => (
                   <SelectItem key={state} value={state}>
-                    {state === 'code'
+                    {state === 'html'
                       ? 'HTML'
                       : state === 'css'
                         ? 'CSS'
@@ -108,7 +124,7 @@ export const CodeHighlight: React.FC<{
 
       <SyntaxHighlighter
         style={theme}
-        language={activeState === 'code' ? type : activeState}
+        language={activeState === 'html' ? type : activeState}
         PreTag="div"
         showLineNumbers={true}
         wrapLines={true}

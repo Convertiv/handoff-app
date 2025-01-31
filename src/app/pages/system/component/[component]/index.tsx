@@ -50,7 +50,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
           <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
-            <ComponentPreview title="Form" id={id}>
+            <ComponentPreview title={metadata.title} id={id}>
               <p>Define a simple contact form</p>
             </ComponentPreview>
           </PreviewContextProvider>

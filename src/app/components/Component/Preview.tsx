@@ -59,7 +59,7 @@ export const ComponentDisplay: React.FC<{
 }> = ({ component, breakpoints, defaultHeight }) => {
   const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
   const ref = React.useRef<HTMLIFrameElement>(null);
-  const [height, setHeight] = React.useState('500px');
+  const [height, setHeight] = React.useState('100px');
   const [previewUrl, setPreviewUrl] = React.useState('');
   const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[1]].size + 'px');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[1] : '');
@@ -102,7 +102,7 @@ export const ComponentDisplay: React.FC<{
   }, [component]);
   return (
     <div className="md:flex">
-      <div className="text-medium rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
         {component?.previews ? (
           <>
             <div className="flex items-center justify-between py-1 align-middle">
@@ -207,7 +207,7 @@ export const ComponentPreview: React.FC<{
     return <div id={preview.id}>Loading Previews</div>;
   }
   return (
-    <div id={preview.id}>
+    <div id={preview.id} style={{ maxWidth: 'calc(100% - var(--sidebar-width))' }}>
       <div>
         <BestPracticesCard component={preview} />
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />

@@ -85,6 +85,7 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
                     aria-label={copied ? 'Copied' : 'Copy Link'}
                     disabled={copied}
                   >
+                    test template changef
                     <div className={cn('transition-all', copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0')}>
                       <Check className="stroke-emerald-500" size={12} strokeWidth={1.5} aria-hidden="true" />
                     </div>
