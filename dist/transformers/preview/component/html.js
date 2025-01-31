@@ -77,7 +77,7 @@ const buildPreviews = (data, id, custom, publicPath, handoff) => __awaiter(void 
                     console.log(chalk_1.default.red(`When processing previews for ${id}, a field block is declared but undefined`));
                     return options.fn(this);
                 }
-                return new handlebars_1.default.SafeString(`<span class="handoff-field handoff-field-${(current === null || current === void 0 ? void 0 : current.type) ? current.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
+                return new handlebars_1.default.SafeString(`<span class="handoff-field handoff-field-${(current === null || current === void 0 ? void 0 : current.type) ? current.type : 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
                     options.fn(this) +
                     '</span>');
             }

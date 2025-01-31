@@ -236,7 +236,28 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     setOpen(true);
   };
   const openFromHash = () => {
+    console.log('openFromHash', window.location.hash, fields);
     if (window.location.hash) {
+      const parts = window.location.hash.replace('#', '').split('.');
+      if (parts.length > 1) {
+        const field = fields.find((field) => field.key === parts[0]);
+        if (field && field.properties) {
+          const subField = field.properties[parts[1]];
+          if (subField) {
+            setSelectedField(subField);
+            setOpen(true);
+          }
+        } else if (field && field.items && field.items.properties) {
+          const subField = field.items.properties[parts[1]];
+          if (subField) {
+            setSelectedField(subField);
+            setOpen(true);
+          }
+        } else {
+          setSelectedField(field);
+          setOpen(true);
+        }
+      }
       const field = fields.find((field) => field.key === window.location.hash.replace('#', ''));
       if (field) {
         setSelectedField(field);

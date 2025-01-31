@@ -28,6 +28,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
     const element = preview[i];
     // get data model from the data-handoff attribute
     const data = element.getAttribute('data-handoff');
+    const target = element.getAttribute('data-handoff-field');
     let dataModel = {};
     if (data) {
       dataModel = JSON.parse(decodeURIComponent(data));
@@ -61,7 +62,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
     element.addEventListener(
       'dblclick',
       function () {
-        window.parent.location.hash = dataModel.id;
+        window.parent.location.hash = target ? target : dataModel.id;
       },
       false
     );

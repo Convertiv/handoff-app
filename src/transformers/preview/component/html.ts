@@ -52,7 +52,7 @@ const buildPreviews = async (
           return options.fn(this);
         }
         return new Handlebars.SafeString(
-          `<span class="handoff-field handoff-field-${current?.type ? current.type : 'unknown'}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
+          `<span class="handoff-field handoff-field-${current?.type ? current.type : 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
             options.fn(this) +
             '</span>'
         );

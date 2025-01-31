@@ -63,7 +63,8 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
     setTimeout(() => setCopied(false), 2000);
   };
   const onOpenChange = (open) => {
-    if (open === 'off') {
+    console.log(open);
+    if (!open) {
       window.location.hash = '';
     }
     setOpen(open);
@@ -85,7 +86,6 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
                     aria-label={copied ? 'Copied' : 'Copy Link'}
                     disabled={copied}
                   >
-                    test template changef
                     <div className={cn('transition-all', copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0')}>
                       <Check className="stroke-emerald-500" size={12} strokeWidth={1.5} aria-hidden="true" />
                     </div>
