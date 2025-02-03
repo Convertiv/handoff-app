@@ -276,11 +276,11 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
         <TableCaption>These are the fields associated with the component</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead></TableHead>
+            <TableHead className="text-xs">Name</TableHead>
+            <TableHead className="px-6 text-xs">ID</TableHead>
+            <TableHead className="text-xs">Type</TableHead>
+            <TableHead className="text-xs">Description</TableHead>
+            <TableHead className="text-xs"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -344,12 +344,12 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
   return (
     <TableRow>
       <TableCell>{startCase(row.name)}</TableCell>
-      <TableCell>
+      <TableCell className="px-6 font-mono text-xs tracking-tight text-gray-600 dark:text-gray-300">
         {hasParent && '- '}
         {row.key}
       </TableCell>
       <TableCell>
-        <Badge variant={getVariantForType(row.type)} className="px-1.5 py-0.5 text-[11px]">
+        <Badge variant={getVariantForType(row.type)} className="rounded-xl">
           {row.type}
         </Badge>
       </TableCell>

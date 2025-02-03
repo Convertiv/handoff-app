@@ -4,7 +4,7 @@
 
 @layer base {
 	:root {
-				--background: 0 0% 100%;
+		--background: 0 0% 100%;
 		--foreground: 222.2 47.4% 11.2%;
 		--muted: 210 40% 96.1%;
 		--muted-foreground: 215.4 16.3% 46.9%;
@@ -23,7 +23,7 @@
 		--destructive: 0 100% 50%;
 		--destructive-foreground: 210 40% 98%;
 		--ring: 215 20.2% 65.1%;
-		--radius: .5rem;
+		--radius: 0.5rem;
 		--sidebar-background: 0 0% 98%;
 		--sidebar-foreground: 240 5.3% 26.1%;
 		--sidebar-primary: 240 5.9% 10%;
@@ -71,10 +71,11 @@
 	}
 
 	body {
-		@apply font-sans antialiased bg-background text-foreground;
+		@apply bg-background font-sans text-foreground antialiased;
 	}
 
-	p, li {
+	p,
+	li {
 		@apply text-gray-600;
 		@apply dark:text-gray-400;
 		@apply leading-relaxed;
