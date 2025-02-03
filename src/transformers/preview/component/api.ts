@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import Handoff from 'handoff/index';
 import path from 'path';
+import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 
 export const getAPIPath = (handoff: Handoff) => {
