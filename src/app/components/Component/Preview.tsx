@@ -10,6 +10,7 @@ import { PencilRuler } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -275,8 +276,8 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
         <TableCaption>These are the fields associated with the component</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>Id</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>ID</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Description</TableHead>
             <TableHead></TableHead>
@@ -288,6 +289,19 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
       </Table>
     </>
   );
+};
+
+export const getVariantForType = (type: string) => {
+  switch (type.toLowerCase()) {
+    case 'text':
+      return 'green';
+    case 'image':
+      return 'info';
+    case 'video_file':
+      return 'warning';
+    default:
+      return 'default';
+  }
 };
 
 const TableRows: React.FC<{ rows: SlotMetadata[]; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
@@ -329,12 +343,16 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
 }) => {
   return (
     <TableRow>
+      <TableCell>{startCase(row.name)}</TableCell>
       <TableCell>
         {hasParent && '- '}
         {row.key}
       </TableCell>
-      <TableCell>{startCase(row.name)}</TableCell>
-      <TableCell>{row.type}</TableCell>
+      <TableCell>
+        <Badge variant={getVariantForType(row.type)} className="px-1.5 py-0.5 text-[11px]">
+          {row.type}
+        </Badge>
+      </TableCell>
       <TableCell>
         <span className="slot-description">{row.description}</span>
       </TableCell>
