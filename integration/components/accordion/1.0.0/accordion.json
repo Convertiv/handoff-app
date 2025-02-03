@@ -4,6 +4,15 @@
   "type": "block",
   "group": "Accordion",
   "tags": ["accordion"],
+  "should_do": ["Show a list of items in an accordion format.", "Allow users to expand and collapse each item individually."],
+  "should_not_do": ["Use this component for a large number of items."],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2021-01-01",
+      "changes": ["Initial version."]
+    }
+  ],
   "previews": {
     "generic": {
       "title": "Generic",

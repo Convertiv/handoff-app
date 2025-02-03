@@ -9,7 +9,6 @@ import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/mak
 import { defaultConfig } from './config';
 import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
-import { processSharedStyles } from './transformers/preview/component';
 import processComponent from './transformers/preview/component/builder';
 import { renameComponent } from './transformers/preview/component/rename';
 import { TransformedPreviewComponents } from './transformers/preview/types';
@@ -106,10 +105,7 @@ class Handoff {
     if (this.config) {
       if (name) {
         name = name.replace('.hbs', '');
-        let componentPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'components', name);
-        const sharedStyles = await processSharedStyles(this);
-        //path.parse(file).name + '.hbs'
-        await processComponent(this, componentPath, sharedStyles);
+        await processComponent(this, name);
       } else {
         await buildComponents(this);
       }

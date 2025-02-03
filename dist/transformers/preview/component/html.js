@@ -41,13 +41,15 @@ const handlebars_1 = __importDefault(require("handlebars"));
 const node_html_parser_1 = require("node-html-parser");
 const path_1 = __importDefault(require("path"));
 const prettier = __importStar(require("prettier"));
+const component_1 = require("../component");
 const trimPreview = (preview) => {
     const bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
     return code;
 };
-const buildPreviews = (data, id, custom, publicPath, handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const template = yield fs_extra_1.default.readFile(path_1.default.resolve(custom, `${id}.hbs`), 'utf8');
+const buildPreviews = (id, location, data, handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    const outputPath = (0, component_1.getComponentOutputPath)(handoff);
+    const template = yield fs_extra_1.default.readFile(path_1.default.resolve(location, `${id}.hbs`), 'utf8');
     try {
         const previews = {};
         let injectFieldWrappers = false;
@@ -90,7 +92,7 @@ const buildPreviews = (data, id, custom, publicPath, handoff) => __awaiter(void 
         for (const previewKey in data.previews) {
             data.previews[previewKey].url = id + `-${previewKey}.html`;
             previews[previewKey] = yield buildPreview(id, template, data.previews[previewKey], data);
-            const publicFile = path_1.default.resolve(publicPath, id + '-' + previewKey + '.html');
+            const publicFile = path_1.default.resolve(outputPath, id + '-' + previewKey + '.html');
             yield fs_extra_1.default.writeFile(publicFile, previews[previewKey]);
         }
         data.preview = '';

@@ -25,6 +25,7 @@ const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
 const pipeline_1 = require("./pipeline");
 const component_1 = require("./transformers/preview/component");
+const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
 const preview_1 = require("./utils/preview");
 const getWorkingPublicPath = (handoff) => {
     const paths = [
@@ -389,9 +390,10 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                         console.log(chalk_1.default.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
                         debounce = true;
                         if (file.includes('component')) {
-                            console.log(chalk_1.default.yellow(`Processing component...`), file);
-                            // const shared = await processSharedStyles(handoff);
-                            // await processComponent(handoff, file, shared);
+                            // find the component id, it should be the parent folder name
+                            file = path_1.default.dirname(path_1.default.dirname(file));
+                            console.log(chalk_1.default.yellow(`Processing component...`), file, path_1.default.basename(file));
+                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
                         }
                         else if (file.includes('scss')) {
                             // rebuild just the shared styles

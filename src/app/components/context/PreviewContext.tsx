@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
 import { PreviewJson, PreviewObject } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
+import React, { createContext, useContext, useState } from 'react';
 interface IPreviewContext {
   preview?: PreviewJson;
   setPreview: (preview: PreviewJson) => void;
@@ -40,12 +40,10 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
       return components[name] ? components[name][0] : null;
     } else {
       // Try to load the component from the public json
-      let data = await fetch(`/api/component/${name}.json`).then((res) => res.json());
-      return data.latest as PreviewObject;
+      let data = await fetch(`/api/component/${name}/latest.json`).then((res) => res.json());
+      return data as PreviewObject;
     }
   };
-
-  
 
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);

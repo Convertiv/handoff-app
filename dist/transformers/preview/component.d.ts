@@ -1,6 +1,8 @@
 import Handoff from '../../index';
 export interface ComponentMetadata {
     title: string;
+    type?: string;
+    group?: string;
     description: string;
     properties: {
         [key: string]: SlotMetadata;
@@ -67,6 +69,8 @@ export declare type RuleObject = {
  * @returns
  */
 export declare const createFrameSocket: (handoff: Handoff) => Promise<void>;
+export declare const getComponentPath: (handoff: Handoff) => string;
+export declare const getComponentOutputPath: (handoff: Handoff) => string;
 /**
  * Create a component transformer
  * @param handoff

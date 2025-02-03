@@ -2,7 +2,7 @@ import { getClientConfig } from '@handoff/config';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { ComponentList } from '../../components/Component/ComponentLists';
+import { APIComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
@@ -48,6 +48,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * @returns
  */
 const ComponentsPage = ({ content, menu, metadata, current, components, config }: ComponentPageDocumentationProps) => {
+  // Fetch components from api
+
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
@@ -58,7 +60,8 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
         <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
-        <ComponentList components={components} />
+
+        <APIComponentList />
       </div>
     </Layout>
   );

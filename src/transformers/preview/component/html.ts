@@ -5,7 +5,7 @@ import { parse } from 'node-html-parser';
 import path from 'path';
 import * as prettier from 'prettier';
 import Handoff from '../../../index';
-import { SlotMetadata } from '../component';
+import { getComponentOutputPath, SlotMetadata } from '../component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from '../types';
 
 const trimPreview = (preview: string) => {
@@ -15,13 +15,13 @@ const trimPreview = (preview: string) => {
 };
 
 const buildPreviews = async (
-  data: TransformComponentTokensResult,
   id: string,
-  custom: string,
-  publicPath: string,
+  location: string,
+  data: TransformComponentTokensResult,
   handoff: Handoff
 ): Promise<TransformComponentTokensResult> => {
-  const template = await fs.readFile(path.resolve(custom, `${id}.hbs`), 'utf8');
+  const outputPath = getComponentOutputPath(handoff);
+  const template = await fs.readFile(path.resolve(location, `${id}.hbs`), 'utf8');
   try {
     const previews = {};
     let injectFieldWrappers = false;
@@ -65,7 +65,7 @@ const buildPreviews = async (
     for (const previewKey in data.previews) {
       data.previews[previewKey].url = id + `-${previewKey}.html`;
       previews[previewKey] = await buildPreview(id, template, data.previews[previewKey], data);
-      const publicFile = path.resolve(publicPath, id + '-' + previewKey + '.html');
+      const publicFile = path.resolve(outputPath, id + '-' + previewKey + '.html');
       await fs.writeFile(publicFile, previews[previewKey]);
     }
 

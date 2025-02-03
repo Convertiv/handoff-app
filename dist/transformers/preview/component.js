@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,12 +35,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSharedStyles = exports.componentTransformer = exports.createFrameSocket = exports.SlotType = void 0;
+exports.processSharedStyles = exports.componentTransformer = exports.getComponentOutputPath = exports.getComponentPath = exports.createFrameSocket = exports.SlotType = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const sass_1 = __importDefault(require("sass"));
-const semver_1 = __importDefault(require("semver"));
+const api_1 = __importStar(require("./component/api"));
 const builder_1 = __importDefault(require("./component/builder"));
 var SlotType;
 (function (SlotType) {
@@ -69,6 +92,10 @@ const createFrameSocket = (handoff) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.createFrameSocket = createFrameSocket;
 //
+const getComponentPath = (handoff) => path_1.default.resolve(handoff.workingPath, `integration/components`);
+exports.getComponentPath = getComponentPath;
+const getComponentOutputPath = (handoff) => path_1.default.resolve((0, api_1.getAPIPath)(handoff), 'component');
+exports.getComponentOutputPath = getComponentOutputPath;
 /**
  * Create a component transformer
  * @param handoff
@@ -79,68 +106,16 @@ function componentTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function* () {
         // Allow a user to create custom previews by putting templates in a components folder
         // Iterate over the html files in that folder and render them as a preview
-        const custom = path_1.default.resolve(handoff.workingPath, `integration/components`);
-        const publicPath = path_1.default.resolve(handoff.workingPath, `public/components`);
-        const publicAPIPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
-        // ensure public path exists
-        if (!fs_extra_1.default.existsSync(publicPath)) {
-            fs_extra_1.default.mkdirSync(publicPath, { recursive: true });
-        }
-        if (fs_extra_1.default.existsSync(custom)) {
-            console.log(chalk_1.default.green(`Rendering Component Previews in ${custom}`));
+        const componentPath = (0, exports.getComponentPath)(handoff);
+        if (fs_extra_1.default.existsSync(componentPath)) {
+            console.log(chalk_1.default.green(`Rendering Component Previews in ${componentPath}`));
             const sharedStyles = yield processSharedStyles(handoff);
-            const files = fs_extra_1.default.readdirSync(custom);
-            const componentData = {};
+            const files = fs_extra_1.default.readdirSync(componentPath);
+            const componentData = [];
             for (const file of files) {
-                let versions = {};
-                let data = undefined;
-                if (file.endsWith('.hbs')) {
-                    data = yield (0, builder_1.default)(handoff, file, sharedStyles);
-                    // Write the API file
-                    // we're in the root directory so this must be version 0.
-                    versions['0.0.0'] = data;
-                }
-                else if (fs_extra_1.default.lstatSync(path_1.default.resolve(custom, file)).isDirectory()) {
-                    // this is a directory structure.  this should be the component name,
-                    // and each directory inside should be a version
-                    const versionDirectories = fs_extra_1.default.readdirSync(path_1.default.resolve(custom, file));
-                    // The directory name must be a semver
-                    for (const versionDirectory of versionDirectories) {
-                        if (semver_1.default.valid(versionDirectory)) {
-                            const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(custom, file, versionDirectory));
-                            for (const versionFile of versionFiles) {
-                                if (versionFile.endsWith('.hbs')) {
-                                    data = yield (0, builder_1.default)(handoff, versionFile, sharedStyles, versionDirectory);
-                                    versions[versionDirectory] = data;
-                                }
-                            }
-                        }
-                        else {
-                            console.error(`Invalid version directory ${versionDirectory}`);
-                        }
-                    }
-                }
-                if (data) {
-                    let name = file.replace('.hbs', '');
-                    if (componentData[name]) {
-                        // merge the versions
-                        componentData[name] = Object.assign(Object.assign({}, componentData[name]), versions);
-                    }
-                    else {
-                        componentData[name] = versions;
-                    }
-                    // find the latest version
-                    let versionSet = Object.keys(componentData[name])
-                        .filter((key) => semver_1.default.valid(key))
-                        .sort(semver_1.default.rcompare);
-                    if (versionSet.length > 0) {
-                        let latest = versionSet[0];
-                        componentData[name]['latest'] = componentData[name][latest];
-                        componentData[name]['version'] = latest;
-                    }
-                }
+                componentData.push(yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles));
             }
-            buildPreviewAPI(handoff, componentData);
+            (0, api_1.default)(handoff, componentData);
         }
         return;
     });
@@ -190,60 +165,3 @@ function processSharedStyles(handoff) {
     });
 }
 exports.processSharedStyles = processSharedStyles;
-/**
- * Build the preview API from the component data
- * @param handoff
- * @param componentData
- */
-const buildPreviewAPI = (handoff, componentData) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const publicPath = path_1.default.resolve(handoff.workingPath, `public/api`);
-    const files = fs_extra_1.default.readdirSync(publicPath);
-    const output = [];
-    const content = {};
-    for (const component in componentData) {
-        // find the latest
-        let latest = componentData[component]['latest'];
-        if (latest) {
-            // read the file
-            output.push({
-                id: component,
-                version: componentData[component]['version'],
-                title: latest.title,
-                type: latest.type,
-                group: latest.group,
-                tags: latest.tags,
-                description: latest.description,
-                properties: latest.properties,
-            });
-            // iterate over the properties and add them to the content
-            for (const property in latest.properties) {
-                if (!content[property]) {
-                    content[property] = {
-                        id: property,
-                        name: latest.properties[property].name,
-                        description: latest.properties[property].description,
-                        type: latest.properties[property].type,
-                        components: [],
-                    };
-                }
-                else {
-                    // merge the rules
-                    // content[property].rules = [...new Set([...content[property].rules, ...latest.properties[property].rules])];
-                }
-                let previews = {};
-                for (const preview in latest.previews) {
-                    previews[preview] = (_a = latest.previews[preview].values[property]) !== null && _a !== void 0 ? _a : '';
-                }
-                content[property].components.push({ component, previews });
-            }
-        }
-        else {
-            console.log(`No latest version found for ${component}`);
-        }
-        yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, 'component', `${component}.json`), JSON.stringify(componentData[component], null, 2));
-    }
-    // write the content file
-    yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, 'content.json'), JSON.stringify(content, null, 2));
-    yield fs_extra_1.default.writeFile(path_1.default.resolve(publicPath, 'components.json'), JSON.stringify(output, null, 2));
-});

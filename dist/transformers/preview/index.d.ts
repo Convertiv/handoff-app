@@ -21,7 +21,9 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             sharedStyles?: string;
             title?: string;
             description?: string;
-            previews?: import("./types").OptionalPreviewRender[];
+            previews?: {
+                [key: string]: import("./types").OptionalPreviewRender;
+            };
             properties?: {
                 [key: string]: import("./component").SlotMetadata;
             };

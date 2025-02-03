@@ -46,7 +46,6 @@ const make_1 = require("./cli/make");
 const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const integration_1 = require("./transformers/integration");
-const component_1 = require("./transformers/preview/component");
 const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
 const rename_1 = require("./transformers/preview/component/rename");
 const integration_2 = require("./utils/integration");
@@ -117,16 +116,12 @@ class Handoff {
         });
     }
     component(name) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             if (this.config) {
                 if (name) {
                     name = name.replace('.hbs', '');
-                    let componentPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'components', name);
-                    const sharedStyles = yield (0, component_1.processSharedStyles)(this);
-                    //path.parse(file).name + '.hbs'
-                    yield (0, builder_1.default)(this, componentPath, sharedStyles);
+                    yield (0, builder_1.default)(this, name);
                 }
                 else {
                     yield (0, pipeline_1.buildComponents)(this);

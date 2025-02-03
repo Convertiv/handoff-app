@@ -16,6 +16,11 @@ export declare type ComponentListObject = {
     properties: {
         [key: string]: SlotMetadata;
     };
+    versions: string[];
+    previews: {
+        [key: string]: OptionalPreviewRender;
+    };
+    paths: string[];
 };
 export declare type TransformComponentTokensResult = {
     id: string;
@@ -33,7 +38,9 @@ export declare type TransformComponentTokensResult = {
     sharedStyles?: string;
     title?: string;
     description?: string;
-    previews?: OptionalPreviewRender[];
+    previews?: {
+        [key: string]: OptionalPreviewRender;
+    };
     properties?: {
         [key: string]: SlotMetadata;
     };

@@ -1,17 +1,7 @@
+import { ComponentListObject } from '@handoff/transformers/preview/types';
 import { Laptop, Search } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
-
-type ComponentListObject = {
-  id: string;
-  version: string;
-  title: string;
-  type: string;
-  group: string;
-  tags: string[];
-  description: string;
-  properties: { [key: string]: any };
-};
 
 /**
  * Get the Component List

@@ -16,6 +16,9 @@ export type ComponentListObject = {
   tags: string[];
   description: string;
   properties: { [key: string]: SlotMetadata };
+  versions: string[];
+  previews: { [key: string]: OptionalPreviewRender };
+  paths: string[];
 };
 
 export type TransformComponentTokensResult = {
@@ -34,7 +37,7 @@ export type TransformComponentTokensResult = {
   sharedStyles?: string;
   title?: string;
   description?: string;
-  previews?: OptionalPreviewRender[];
+  previews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
 } | null;
 

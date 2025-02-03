@@ -2,10 +2,9 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
-import semver from 'semver';
 import Handoff from '../../index';
+import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponent from './component/builder';
-import { ComponentListObject } from './types';
 
 // const webSocketClientJS = `
 // <script>
@@ -25,6 +24,8 @@ import { ComponentListObject } from './types';
 // `;
 export interface ComponentMetadata {
   title: string;
+  type?: string;
+  group?: string;
   description: string;
   properties: { [key: string]: SlotMetadata };
 }
@@ -129,6 +130,8 @@ export const createFrameSocket = async (handoff: Handoff) => {
 
 //
 
+export const getComponentPath = (handoff: Handoff) => path.resolve(handoff.workingPath, `integration/components`);
+export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 /**
  * Create a component transformer
  * @param handoff
@@ -138,67 +141,17 @@ export const createFrameSocket = async (handoff: Handoff) => {
 export async function componentTransformer(handoff: Handoff) {
   // Allow a user to create custom previews by putting templates in a components folder
   // Iterate over the html files in that folder and render them as a preview
-  const custom = path.resolve(handoff.workingPath, `integration/components`);
-
-  const publicPath = path.resolve(handoff.workingPath, `public/components`);
-  const publicAPIPath = path.resolve(handoff.workingPath, `public/api/component`);
-  // ensure public path exists
-  if (!fs.existsSync(publicPath)) {
-    fs.mkdirSync(publicPath, { recursive: true });
-  }
-  if (fs.existsSync(custom)) {
-    console.log(chalk.green(`Rendering Component Previews in ${custom}`));
+  const componentPath = getComponentPath(handoff);
+  if (fs.existsSync(componentPath)) {
+    console.log(chalk.green(`Rendering Component Previews in ${componentPath}`));
     const sharedStyles = await processSharedStyles(handoff);
-    const files = fs.readdirSync(custom);
-    const componentData = {};
+    const files = fs.readdirSync(componentPath);
+    const componentData = [];
     for (const file of files) {
-      let versions = {};
-      let data = undefined;
-      if (file.endsWith('.hbs')) {
-        data = await processComponent(handoff, file, sharedStyles);
-        // Write the API file
-        // we're in the root directory so this must be version 0.
-        versions['0.0.0'] = data;
-      } else if (fs.lstatSync(path.resolve(custom, file)).isDirectory()) {
-        // this is a directory structure.  this should be the component name,
-        // and each directory inside should be a version
-        const versionDirectories = fs.readdirSync(path.resolve(custom, file));
-        // The directory name must be a semver
-        for (const versionDirectory of versionDirectories) {
-          if (semver.valid(versionDirectory)) {
-            const versionFiles = fs.readdirSync(path.resolve(custom, file, versionDirectory));
-            for (const versionFile of versionFiles) {
-              if (versionFile.endsWith('.hbs')) {
-                data = await processComponent(handoff, versionFile, sharedStyles, versionDirectory);
-                versions[versionDirectory] = data;
-              }
-            }
-          } else {
-            console.error(`Invalid version directory ${versionDirectory}`);
-          }
-        }
-      }
-      if (data) {
-        let name = file.replace('.hbs', '');
-        if (componentData[name]) {
-          // merge the versions
-          componentData[name] = { ...componentData[name], ...versions };
-        } else {
-          componentData[name] = versions;
-        }
-        // find the latest version
-        let versionSet = Object.keys(componentData[name])
-          .filter((key) => semver.valid(key))
-          .sort(semver.rcompare);
-        if (versionSet.length > 0) {
-          let latest = versionSet[0];
-          componentData[name]['latest'] = componentData[name][latest];
-          componentData[name]['version'] = latest;
-        }
-      }
+      componentData.push(await processComponent(handoff, path.basename(file), sharedStyles));
     }
 
-    buildPreviewAPI(handoff, componentData);
+    writeComponentSummaryAPI(handoff, componentData);
   }
   return;
 }
@@ -245,61 +198,3 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
     return css;
   }
 }
-
-/**
- * Build the preview API from the component data
- * @param handoff
- * @param componentData
- */
-const buildPreviewAPI = async (handoff: Handoff, componentData: any) => {
-  const publicPath = path.resolve(handoff.workingPath, `public/api`);
-
-  const files = fs.readdirSync(publicPath);
-  const output: ComponentListObject[] = [];
-  const content = {};
-
-  for (const component in componentData) {
-    // find the latest
-    let latest = componentData[component]['latest'];
-    if (latest) {
-      // read the file
-      output.push({
-        id: component,
-        version: componentData[component]['version'],
-        title: latest.title,
-        type: latest.type,
-        group: latest.group,
-        tags: latest.tags,
-        description: latest.description,
-        properties: latest.properties,
-      });
-      // iterate over the properties and add them to the content
-      for (const property in latest.properties) {
-        if (!content[property]) {
-          content[property] = {
-            id: property,
-            name: latest.properties[property].name,
-            description: latest.properties[property].description,
-            type: latest.properties[property].type,
-            components: [],
-          };
-        } else {
-          // merge the rules
-          // content[property].rules = [...new Set([...content[property].rules, ...latest.properties[property].rules])];
-        }
-        let previews = {};
-        for (const preview in latest.previews) {
-          previews[preview] = latest.previews[preview].values[property] ?? '';
-        }
-        content[property].components.push({ component, previews });
-      }
-    } else {
-      console.log(`No latest version found for ${component}`);
-    }
-    await fs.writeFile(path.resolve(publicPath, 'component', `${component}.json`), JSON.stringify(componentData[component], null, 2));
-  }
-
-  // write the content file
-  await fs.writeFile(path.resolve(publicPath, 'content.json'), JSON.stringify(content, null, 2));
-  await fs.writeFile(path.resolve(publicPath, 'components.json'), JSON.stringify(output, null, 2));
-};

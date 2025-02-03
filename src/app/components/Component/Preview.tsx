@@ -207,7 +207,7 @@ export const ComponentPreview: React.FC<{
     return <div id={preview.id}>Loading Previews</div>;
   }
   return (
-    <div id={preview.id} style={{ maxWidth: 'calc(100% - var(--sidebar-width))' }}>
+    <div id={preview.id}>
       <div>
         <BestPracticesCard component={preview} />
         <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />

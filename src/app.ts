@@ -11,6 +11,7 @@ import { parse } from 'url';
 import Handoff from '.';
 import { buildComponents, buildIntegrationOnly } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
+import processComponent from './transformers/preview/component/builder';
 import { buildClientFiles } from './utils/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
@@ -403,9 +404,10 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
               debounce = true;
               if (file.includes('component')) {
-                console.log(chalk.yellow(`Processing component...`), file);
-                // const shared = await processSharedStyles(handoff);
-                // await processComponent(handoff, file, shared);
+                // find the component id, it should be the parent folder name
+                file = path.dirname(path.dirname(file));
+                console.log(chalk.yellow(`Processing component...`), file, path.basename(file));
+                await processComponent(handoff, path.basename(file));
               } else if (file.includes('scss')) {
                 // rebuild just the shared styles
                 await buildIntegrationOnly(handoff);

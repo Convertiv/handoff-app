@@ -1,8 +1,8 @@
+import { PreviewObject } from '@handoff/types';
 import { ToggleGroup, ToggleGroupItem } from '@radix-ui/react-toggle-group';
-import { startCase } from 'lodash';
 import { LayoutGrid, Rows } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import HeadersType from '../Typography/Headers';
 import { Metadata } from '../util';
@@ -12,16 +12,30 @@ interface ComponentMetadata extends Metadata {
   absolute?: boolean;
 }
 
+export const APIComponentList = ({ title, description }: { title?; description? }) => {
+  const [components, setComponents] = React.useState<PreviewObject[]>([]);
+  const fetchComponents = async () => {
+    let data = await fetch(`/api/components.json`).then((res) => res.json());
+    setComponents(data as PreviewObject[]);
+  };
+  useEffect(() => {
+    fetchComponents();
+  }, []);
+  if (components.length === 0) return <p>Loading...</p>;
+  return <ComponentList components={components} title={title} description={description} />;
+};
+
 export const ComponentList = ({
   components,
   title,
   description,
 }: {
-  components: { [id: string]: ComponentMetadata };
+  components: PreviewObject[];
   title?: string;
   description?: string;
 }) => {
   const [layout, setLayout] = React.useState<string>('grid');
+
   if (!title) title = 'Components';
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
@@ -46,29 +60,27 @@ export const ComponentList = ({
           layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
         )}
       >
-        {Object.keys(components).map((componentId) => {
-          const component = components[componentId];
-
-          return (
-            <ComponentsPageCard
-              key={`component-${componentId}`}
-              component={componentId}
-              title={component.title ?? startCase(componentId)}
-              description={component.description}
-              image={component.image}
-              layout={layout}
-              path={component.path}
-              absolute={component.absolute}
-            />
-          );
+        {components.map((component) => {
+          return <ComponentsPageCard key={`component-${component.id}`} component={component} />;
         })}
       </div>
     </div>
   );
 };
 
-export const ComponentsPageCard = ({
-  component,
+const ComponentsPageCard = ({ component }: { component: PreviewObject }) => {
+  return (
+    <AbstractComponentsPageCard
+      id={component.id}
+      title={component.title}
+      description={component.description}
+      variations={component.previews ? Object.keys(component.previews).length : 0}
+    />
+  );
+};
+
+export const AbstractComponentsPageCard = ({
+  id,
   title,
   description,
   variations,
@@ -79,7 +91,7 @@ export const ComponentsPageCard = ({
   available = true,
   absolute = false,
 }: {
-  component: string;
+  id: string;
   title: string;
   description: string;
   icon?: string;
@@ -93,7 +105,7 @@ export const ComponentsPageCard = ({
   if (!path) path = 'components';
   return (
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
-      <Link href={available ? (absolute ? path : `/system/component/${component}`) : '#'}>
+      <Link href={available ? (absolute ? path : `/system/component/${id}`) : '#'}>
         <img
           src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`}
           width={1528}
