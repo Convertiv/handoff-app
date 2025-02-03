@@ -12,7 +12,7 @@ import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
@@ -329,20 +329,20 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
 }) => {
   return (
     <TableRow>
-      <TableHead>
+      <TableCell>
         {hasParent && '- '}
         {row.key}
-      </TableHead>
-      <TableHead>{startCase(row.name)}</TableHead>
-      <TableHead>{row.type}</TableHead>
-      <TableHead>
+      </TableCell>
+      <TableCell>{startCase(row.name)}</TableCell>
+      <TableCell>{row.type}</TableCell>
+      <TableCell>
         <span className="slot-description">{row.description}</span>
-      </TableHead>
-      <TableHead className="text-right">
+      </TableCell>
+      <TableCell className="text-right">
         <Button variant="ghost" onClick={() => openSheet(row)}>
           <PencilRuler />
         </Button>
-      </TableHead>
+      </TableCell>
     </TableRow>
   );
 };
