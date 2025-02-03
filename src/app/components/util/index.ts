@@ -294,7 +294,6 @@ const staticBuildComponentMenu = () => {
     const menuGroup = { title: group, menu: [] };
     groupedComponents[group].forEach((component) => {
       const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-      console.log(component);
       let title = startCase(component.id);
       if (docs.metadata.title) {
         title = docs.metadata.title;

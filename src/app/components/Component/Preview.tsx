@@ -236,7 +236,6 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     setOpen(true);
   };
   const openFromHash = () => {
-    console.log('openFromHash', window.location.hash, fields);
     if (window.location.hash) {
       const parts = window.location.hash.replace('#', '').split('.');
       if (parts.length > 1) {

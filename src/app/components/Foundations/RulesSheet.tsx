@@ -63,7 +63,6 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
     setTimeout(() => setCopied(false), 2000);
   };
   const onOpenChange = (open) => {
-    console.log(open);
     if (!open) {
       window.location.hash = '';
     }
