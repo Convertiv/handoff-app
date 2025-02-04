@@ -6,7 +6,7 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
-import { PencilRuler } from 'lucide-react';
+import { Component, Database, File, PencilRuler, Text } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
@@ -274,12 +274,24 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
       <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
       <Table>
         <TableCaption>These are the fields associated with the component</TableCaption>
-        <TableHeader>
+        <TableHeader className="bg-gray-50 dark:bg-gray-800">
           <TableRow>
-            <TableHead className="text-xs">Name</TableHead>
-            <TableHead className="px-6 text-xs">ID</TableHead>
-            <TableHead className="text-xs">Type</TableHead>
-            <TableHead className="text-xs">Description</TableHead>
+            <TableHead className="text-xs font-normal">
+              <Component className="stroke-1.5 float-left mr-2 mt-0.5 h-3 w-3 opacity-60" />
+              Name
+            </TableHead>
+            <TableHead className="px-6 text-xs font-normal">
+              <Database className="stroke-1.5 float-left mr-2 mt-0.5 h-3 w-3 opacity-60" />
+              ID
+            </TableHead>
+            <TableHead className="text-xs font-normal">
+              <File className="stroke-1.5 float-left mr-2 mt-0.5 h-3 w-3 opacity-60" />
+              Type
+            </TableHead>
+            <TableHead className="text-xs font-normal">
+              <Text className="stroke-1.5 float-left mr-2 mt-0.5 h-3 w-3 opacity-60" />
+              Description
+            </TableHead>
             <TableHead className="text-xs"></TableHead>
           </TableRow>
         </TableHeader>
@@ -343,20 +355,20 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
 }) => {
   return (
     <TableRow>
-      <TableCell>{startCase(row.name)}</TableCell>
-      <TableCell className="px-6 font-mono text-xs tracking-tight text-gray-600 dark:text-gray-300">
+      <TableCell className="border-l border-r px-4 py-1">{startCase(row.name)}</TableCell>
+      <TableCell className="border-r px-4 py-1 font-mono text-xs tracking-tight text-gray-600 dark:text-gray-300">
         {hasParent && '- '}
         {row.key}
       </TableCell>
-      <TableCell>
-        <Badge variant={getVariantForType(row.type)} className="rounded-xl">
+      <TableCell className="border-r px-4 py-1">
+        <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
           {row.type}
         </Badge>
       </TableCell>
-      <TableCell>
-        <span className="slot-description">{row.description}</span>
+      <TableCell className="px-4 py-1 text-gray-600 dark:text-gray-300">
+        <span className="slot-description line-clamp-1">{row.description}</span>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="border-r px-4 py-1 text-right">
         <Button variant="ghost" onClick={() => openSheet(row)}>
           <PencilRuler />
         </Button>
