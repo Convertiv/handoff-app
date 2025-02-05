@@ -36,30 +36,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildIntegrationOnly = exports.buildRecipe = exports.buildComponents = void 0;
-const changelog_1 = __importDefault(require("./changelog"));
-const prompt_1 = require("./utils/prompt");
 const chalk_1 = __importDefault(require("chalk"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
-const path_1 = __importDefault(require("path"));
 require("dotenv/config");
-const stream = __importStar(require("node:stream"));
-const api_1 = require("./figma/api");
-const documentation_object_1 = require("./documentation-object");
-const api_2 = require("./api");
-const index_1 = __importStar(require("./transformers/scss/index"));
-const index_2 = __importDefault(require("./transformers/css/index"));
-const index_3 = __importStar(require("./transformers/integration/index"));
-const index_4 = __importDefault(require("./transformers/font/index"));
-const index_5 = __importDefault(require("./transformers/preview/index"));
-const app_1 = __importDefault(require("./app"));
-const _1 = require(".");
-const sd_1 = __importDefault(require("./transformers/sd"));
-const map_1 = __importDefault(require("./transformers/map"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const lodash_1 = require("lodash");
+const stream = __importStar(require("node:stream"));
+const path_1 = __importDefault(require("path"));
+const _1 = require(".");
+const api_1 = require("./api");
+const app_1 = __importDefault(require("./app"));
+const changelog_1 = __importDefault(require("./changelog"));
+const documentation_object_1 = require("./documentation-object");
+const api_2 = require("./figma/api");
+const index_1 = __importDefault(require("./transformers/css/index"));
+const index_2 = __importDefault(require("./transformers/font/index"));
+const index_3 = __importStar(require("./transformers/integration/index"));
+const map_1 = __importDefault(require("./transformers/map"));
+const component_1 = require("./transformers/preview/component");
+const index_4 = __importDefault(require("./transformers/preview/index"));
+const index_5 = __importStar(require("./transformers/scss/index"));
+const sd_1 = __importDefault(require("./transformers/sd"));
+const tokens_1 = require("./transformers/tokens");
 const utils_1 = require("./utils");
 const fs_1 = require("./utils/fs");
-const tokens_1 = require("./transformers/tokens");
-const component_1 = require("./transformers/preview/component");
+const prompt_1 = require("./utils/prompt");
 let config;
 const outputPath = (handoff) => path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
 const tokensFilePath = (handoff) => path_1.default.join(outputPath(handoff), 'tokens.json');
@@ -87,7 +87,7 @@ const readPrevJSONFile = (path) => __awaiter(void 0, void 0, void 0, function* (
  * @returns
  */
 const buildCustomFonts = (handoff, documentationObject) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield (0, index_4.default)(handoff, documentationObject);
+    return yield (0, index_2.default)(handoff, documentationObject);
 });
 /**
  * Build integration
@@ -104,7 +104,7 @@ const buildIntegration = (handoff, documentationObject) => __awaiter(void 0, voi
  */
 const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0, void 0, function* () {
     yield Promise.all([
-        (0, index_5.default)(handoff, documentationObject).then((out) => fs_extra_1.default.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+        (0, index_4.default)(handoff, documentationObject).then((out) => fs_extra_1.default.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
     ]);
 });
 /**
@@ -113,9 +113,7 @@ const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0
  * @returns
  */
 const buildComponents = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    yield Promise.all([
-        (0, component_1.componentTransformer)(handoff),
-    ]);
+    yield Promise.all([(0, component_1.componentTransformer)(handoff)]);
 });
 exports.buildComponents = buildComponents;
 /**
@@ -123,11 +121,11 @@ exports.buildComponents = buildComponents;
  * @param documentationObject
  */
 const buildStyles = (handoff, documentationObject) => __awaiter(void 0, void 0, void 0, function* () {
-    let typeFiles = (0, index_1.scssTypesTransformer)(documentationObject, handoff.integrationObject);
+    let typeFiles = (0, index_5.scssTypesTransformer)(documentationObject, handoff.integrationObject);
     typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-    let cssFiles = (0, index_2.default)(documentationObject, handoff, handoff.integrationObject);
+    let cssFiles = (0, index_1.default)(documentationObject, handoff, handoff.integrationObject);
     cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-    let scssFiles = (0, index_1.default)(documentationObject, handoff, handoff.integrationObject);
+    let scssFiles = (0, index_5.default)(documentationObject, handoff, handoff.integrationObject);
     scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
     let sdFiles = (0, sd_1.default)(documentationObject, handoff, handoff.integrationObject);
     sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
@@ -218,7 +216,7 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
                     console.log(chalk_1.default.green(`\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`));
                 }
                 else {
-                    yield fs_extra_1.default.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ""));
+                    yield fs_extra_1.default.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
                     console.log(chalk_1.default.green(`\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`));
                 }
             }
@@ -247,8 +245,8 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         fs_extra_1.default.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
         ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
             ? [
-                (0, api_2.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
-                (0, api_2.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(logosZipFilePath(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, api_1.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, api_1.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(logosZipFilePath(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
             ]
             : []),
     ]);
@@ -379,12 +377,12 @@ const pipeline = (handoff, build) => __awaiter(void 0, void 0, void 0, function*
     yield buildStyles(handoff, documentationObject);
     yield buildIntegration(handoff, documentationObject);
     yield buildPreviews(handoff, documentationObject);
-    yield (0, exports.buildComponents)(handoff);
+    // await buildComponents(handoff);
     if (build) {
         yield (0, app_1.default)(handoff);
     }
     // (await pluginTransformer()).postBuild(documentationObject);
-    console.log(chalk_1.default.green(`Figma pipeline complete:`, `${(0, api_1.getRequestCount)()} requests`));
+    console.log(chalk_1.default.green(`Figma pipeline complete:`, `${(0, api_2.getRequestCount)()} requests`));
 });
 exports.default = pipeline;
 /**

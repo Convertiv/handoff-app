@@ -111,6 +111,7 @@ export interface PreviewObject {
     description: string;
     should_do: string[];
     should_not_do: string[];
+    tags?: string[];
     preview: string;
     previews: {
         [key: string]: {

@@ -1,33 +1,29 @@
-import generateChangelogRecord, { ChangelogRecord } from './changelog';
-import { maskPrompt, prompt } from './utils/prompt';
 import chalk from 'chalk';
-import fs from 'fs-extra';
-import path from 'path';
 import 'dotenv/config';
-import * as stream from 'node:stream';
-import { getRequestCount } from './figma/api';
-import {
-  DocumentationObject,
-  LegacyComponentDefinition,
-  LegacyComponentDefinitionOptions,
-} from './types';
-import { createDocumentationObject } from './documentation-object';
-import { zipAssets } from './api';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
-import cssTransformer from './transformers/css/index';
-import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
-import fontTransformer from './transformers/font/index';
-import previewTransformer from './transformers/preview/index';
-import buildApp from './app';
-import Handoff, { initIntegrationObject } from '.';
-import sdTransformer from './transformers/sd';
-import mapTransformer from './transformers/map';
+import fs from 'fs-extra';
 import { merge } from 'lodash';
-import { filterOutNull, filterOutUndefined } from './utils';
-import { ComponentIntegrationRecipe, ComponentIntegrationRecipePart, ComponentIntegrations } from './types/recipes';
-import { findFilesByExtension } from './utils/fs';
-import { getTokenSetNameByProperty } from './transformers/tokens';
+import * as stream from 'node:stream';
+import path from 'path';
+import Handoff, { initIntegrationObject } from '.';
+import { zipAssets } from './api';
+import buildApp from './app';
+import generateChangelogRecord, { ChangelogRecord } from './changelog';
+import { createDocumentationObject } from './documentation-object';
+import { getRequestCount } from './figma/api';
+import cssTransformer from './transformers/css/index';
+import fontTransformer from './transformers/font/index';
+import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
+import mapTransformer from './transformers/map';
 import { componentTransformer } from './transformers/preview/component';
+import previewTransformer from './transformers/preview/index';
+import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
+import sdTransformer from './transformers/sd';
+import { getTokenSetNameByProperty } from './transformers/tokens';
+import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
+import { ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
+import { filterOutNull, filterOutUndefined } from './utils';
+import { findFilesByExtension } from './utils/fs';
+import { maskPrompt, prompt } from './utils/prompt';
 
 let config;
 const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
@@ -86,9 +82,7 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @returns
  */
 export const buildComponents = async (handoff: Handoff) => {
-  await Promise.all([
-    componentTransformer(handoff),
-  ]);
+  await Promise.all([componentTransformer(handoff)]);
 };
 
 /**
@@ -115,51 +109,69 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sass`))
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens`))
       .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/maps`))
-      .then(() => Promise.all(
-        Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`))
-      ))
+      .then(() =>
+        Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`)))
+      )
 
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content))
+          Object.entries(typeFiles.components).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
+          )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content))
+          Object.entries(typeFiles.design).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
+          )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content))
-        )
-      )
-      .then(() =>
-        Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content)))
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content))
+          Object.entries(cssFiles.components).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content)
+          )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(scssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content))
+          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(sdFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content))
+          Object.entries(scssFiles.components).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
+          )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(sdFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content))
+          Object.entries(scssFiles.design).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
+          )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(mapFiles.components).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
+          Object.entries(sdFiles.components).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content)
+          )
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(sdFiles.design).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content)
+          )
+        )
+      )
+      .then(() =>
+        Promise.all(
+          Object.entries(mapFiles.components).map(([name, content]) =>
+            fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content)
+          )
         )
       )
       .then(() =>
@@ -265,7 +277,7 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
             )
           );
         } else {
-          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, "") );
+          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
           console.log(
             chalk.green(
               `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
@@ -463,7 +475,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   await buildStyles(handoff, documentationObject);
   await buildIntegration(handoff, documentationObject);
   await buildPreviews(handoff, documentationObject);
-  await buildComponents(handoff);
+  // await buildComponents(handoff);
   if (build) {
     await buildApp(handoff);
   }
@@ -478,7 +490,6 @@ export default pipeline;
  */
 const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[] | null> => {
   try {
-
     const sourcePath = path.resolve(handoff.workingPath, 'exportables');
 
     if (!fs.existsSync(sourcePath)) {
