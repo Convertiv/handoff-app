@@ -1,4 +1,4 @@
-import Handoff from 'handoff/index';
+import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 export declare const getAPIPath: (handoff: Handoff) => string;
 /**

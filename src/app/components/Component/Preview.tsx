@@ -298,6 +298,7 @@ export const getVariantForType = (type: string) => {
     case 'image':
       return 'info';
     case 'video_file':
+    case 'video_embed':
       return 'warning';
     default:
       return 'default';

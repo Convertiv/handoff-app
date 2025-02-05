@@ -1,4 +1,12 @@
+'use client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getClientConfig } from '@handoff/config';
+import { PreviewObject } from '@handoff/types';
+import { SelectItem } from '@radix-ui/react-select';
+import { Webhook } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -41,11 +49,51 @@ export const getStaticProps = async (context) => {
 };
 
 const GenericComponentPage = ({ menu, metadata, current, id, config, previews }) => {
+  const [component, setComponent] = useState<PreviewObject>(undefined);
+  const fetchComponents = async () => {
+    let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
+    setComponent(data as PreviewObject);
+  };
+  useEffect(() => {
+    fetchComponents();
+  }, []);
+  if (!component) return <p>Loading...</p>;
+  console.log(component.tags);
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
-        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        <div className="mt-3 flex flex-row justify-between gap-3">
+          <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+          <div>
+            <Select
+            // defaultValue={breakpoint}
+            // onValueChange={(key) => {
+            //   setBreakpoint(key);
+            //   setWidth(`${breakpoints[key].size}px`);
+            // }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Version" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Latest</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant={'outline'}>
+              API <Webhook strokeWidth={1.5} />
+            </Button>
+            <div>
+              {component.tags &&
+                component.tags.map((tag) => (
+                  <Badge variant={'default'} className="px-2 py-0 text-[11px]">
+                    {tag}
+                  </Badge>
+                ))}
+            </div>
+          </div>
+        </div>
       </div>
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>

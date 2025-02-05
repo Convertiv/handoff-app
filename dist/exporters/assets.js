@@ -35,12 +35,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipAssets = void 0;
-const axios_1 = __importDefault(require("axios"));
+exports.zipAssets = exports.writeAssets = void 0;
 const archiver_1 = __importDefault(require("archiver"));
-const api_1 = require("../figma/api");
-const Utils = __importStar(require("../utils/index"));
+const axios_1 = __importDefault(require("axios"));
 const chalk_1 = __importDefault(require("chalk"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const api_1 = require("../figma/api");
+const api_2 = require("../transformers/preview/component/api");
+const Utils = __importStar(require("../utils/index"));
 const defaultExtension = 'svg';
 const assetsExporter = (fileId, accessToken, component) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -109,6 +112,20 @@ const assetsExporter = (fileId, accessToken, component) => __awaiter(void 0, voi
         return [];
     }
 });
+const writeAssets = (handoff, assets, type) => __awaiter(void 0, void 0, void 0, function* () {
+    const assetPath = path_1.default.join((0, api_2.getAPIPath)(handoff), 'assets');
+    if (!fs_1.default.existsSync(assetPath))
+        fs_1.default.mkdirSync(assetPath, { recursive: true });
+    // write json file
+    fs_1.default.writeFileSync(path_1.default.join(assetPath, `${type}.json`), JSON.stringify(assets, null, 2));
+    const assetFolder = path_1.default.join(assetPath, type);
+    if (!fs_1.default.existsSync(assetFolder))
+        fs_1.default.mkdirSync(assetFolder, { recursive: true });
+    assets.forEach((asset) => {
+        fs_1.default.writeFileSync(path_1.default.join(assetFolder, asset.path), asset.data);
+    });
+});
+exports.writeAssets = writeAssets;
 const zipAssets = (assets, destination) => __awaiter(void 0, void 0, void 0, function* () {
     const archive = (0, archiver_1.default)('zip', {
         zlib: { level: 9 }, // Sets the compression level.

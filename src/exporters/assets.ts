@@ -1,10 +1,14 @@
-import * as stream from 'node:stream';
-import axios from 'axios';
 import archiver from 'archiver';
-import { getAssetURL, getFileComponent } from '../figma/api';
-import * as Utils from '../utils/index';
-import { AssetObject } from '../types';
+import axios from 'axios';
 import chalk from 'chalk';
+import fs from 'fs';
+import * as stream from 'node:stream';
+import path from 'path';
+import Handoff from '..';
+import { getAssetURL, getFileComponent } from '../figma/api';
+import { getAPIPath } from '../transformers/preview/component/api';
+import { AssetObject } from '../types';
+import * as Utils from '../utils/index';
 const defaultExtension: string = 'svg';
 
 const assetsExporter = async (fileId: string, accessToken: string, component: string) => {
@@ -82,6 +86,18 @@ const assetsExporter = async (fileId: string, accessToken: string, component: st
     console.error(err);
     return [];
   }
+};
+
+export const writeAssets = async (handoff: Handoff, assets: AssetObject[], type: 'logos' | 'icons') => {
+  const assetPath = path.join(getAPIPath(handoff), 'assets');
+  if (!fs.existsSync(assetPath)) fs.mkdirSync(assetPath, { recursive: true });
+  // write json file
+  fs.writeFileSync(path.join(assetPath, `${type}.json`), JSON.stringify(assets, null, 2));
+  const assetFolder = path.join(assetPath, type);
+  if (!fs.existsSync(assetFolder)) fs.mkdirSync(assetFolder, { recursive: true });
+  assets.forEach((asset) => {
+    fs.writeFileSync(path.join(assetFolder, asset.path), asset.data);
+  });
 };
 
 export const zipAssets = async (assets: AssetObject[], destination: stream.Writable) => {

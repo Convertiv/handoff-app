@@ -26,7 +26,7 @@ const buildComponentJs = (id, location, data, handoff) => __awaiter(void 0, void
         try {
             const jsPath = path_1.default.resolve(location, jsFile);
             const js = yield fs_extra_1.default.readFile(jsPath, 'utf8');
-            const compiled = yield (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'development');
+            const compiled = yield (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'production');
             if (js) {
                 data.js = js;
                 data['jsCompiled'] = compiled;

@@ -20,7 +20,7 @@ const buildComponentJs = async (
     try {
       const jsPath = path.resolve(location, jsFile);
       const js = await fs.readFile(jsPath, 'utf8');
-      const compiled = await bundleJSWebpack(jsPath, handoff, 'development');
+      const compiled = await bundleJSWebpack(jsPath, handoff, 'production');
       if (js) {
         data.js = js;
         data['jsCompiled'] = compiled;

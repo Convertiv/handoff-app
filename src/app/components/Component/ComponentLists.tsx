@@ -61,20 +61,21 @@ export const ComponentList = ({
         )}
       >
         {components.map((component) => {
-          return <ComponentsPageCard key={`component-${component.id}`} component={component} />;
+          return <ComponentsPageCard key={`component-${component.id}`} component={component} layout={layout} />;
         })}
       </div>
     </div>
   );
 };
 
-const ComponentsPageCard = ({ component }: { component: PreviewObject }) => {
+const ComponentsPageCard = ({ component, layout }: { component: PreviewObject; layout: string }) => {
   return (
     <AbstractComponentsPageCard
       id={component.id}
       title={component.title}
       description={component.description}
       variations={component.previews ? Object.keys(component.previews).length : 0}
+      layout={layout}
     />
   );
 };
