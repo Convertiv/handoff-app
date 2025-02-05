@@ -106,6 +106,7 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
         <SheetHeader className="space-y-2 px-2">
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{field.name}</p>
+            <p className="font-mono text-xs text-muted-foreground">{field.id}</p>
           </div>
           <Separator className="mb-4 mt-6" />
           <Text className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />

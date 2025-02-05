@@ -6,14 +6,13 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
-import { PencilRuler } from 'lucide-react';
+import { Component, File, MoveHorizontal, Text } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
@@ -272,15 +271,26 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
   return (
     <>
       <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
-      <Table>
-        <TableCaption>These are the fields associated with the component</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead></TableHead>
+      <p className="mb-5">These are the properties associated with the component.</p>
+      <Table className="border-b-[0.5px]">
+        <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
+          <TableRow className="!border-b-[0.5px]">
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+              <Component className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+              Name
+            </TableHead>
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+              <File className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+              Type
+            </TableHead>
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+              <MoveHorizontal className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+              Size
+            </TableHead>
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+              <Text className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+              Description
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -337,30 +347,62 @@ const TableRows: React.FC<{ rows: SlotMetadata[]; openSheet: (SlotMetadata) => v
   );
 };
 
+const humanReadableSizeRule = (rule: string, value: any) => {
+  switch (rule) {
+    case 'required':
+      return value ? 'Required' : 'Optional';
+    case 'content':
+      return `${value.min || '-'} - ${value.max || '-'} characters`;
+    case 'dimensions':
+      if (!value || !value.minW || !value.minHeight || !value.maxWidth || !value.maxHeight) {
+        return 'Not specified.';
+      }
+      return `${value.minW}x${value.minHeight} - ${value.maxWidth}x${value.maxHeight}`;
+    case 'maxSize':
+      if (value < 1024) {
+        return `${value} bytes`;
+      }
+      if (value < 1024 * 1024) {
+        return `${Math.floor(value / 1024)} KB`;
+      }
+      return `${Math.floor(value / (1024 * 1024))} MB`;
+    default:
+      return '-';
+  }
+};
+
 const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
   row,
   openSheet,
   hasParent,
 }) => {
+  const getSizeDisplay = (row: SlotMetadata) => {
+    if (!row.rules) return '-';
+
+    // Find the first applicable size rule
+    const sizeRules = ['dimensions', 'content', 'maxSize'];
+    const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
+
+    return rule ? humanReadableSizeRule(rule, row.rules[rule]) : '-';
+  };
+
   return (
-    <TableRow>
-      <TableCell>{startCase(row.name)}</TableCell>
-      <TableCell>
+    <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={() => openSheet(row)}>
+      <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">{startCase(row.name)}</TableCell>
+      {/* <TableCell className="border-r-[0.5px] px-4 py-1 font-mono text-xs tracking-tight text-gray-600 dark:text-gray-300">
         {hasParent && '- '}
         {row.key}
-      </TableCell>
-      <TableCell>
-        <Badge variant={getVariantForType(row.type)} className="px-1.5 py-0.5 text-[11px]">
+      </TableCell> */}
+      <TableCell className="border-r-[0.5px] px-3.5 py-1">
+        <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
           {row.type}
         </Badge>
       </TableCell>
-      <TableCell>
-        <span className="slot-description">{row.description}</span>
+      <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+        {getSizeDisplay(row)}
       </TableCell>
-      <TableCell className="text-right">
-        <Button variant="ghost" onClick={() => openSheet(row)}>
-          <PencilRuler />
-        </Button>
+      <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+        <span className="slot-description line-clamp-1">{row.description}</span>
       </TableCell>
     </TableRow>
   );
