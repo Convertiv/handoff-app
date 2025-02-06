@@ -1,7 +1,7 @@
+import chalk from 'chalk';
+import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
-import fs from 'fs-extra';
-import chalk from 'chalk';
 import { prompt } from '../utils/prompt';
 
 /**
@@ -162,28 +162,36 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
     console.log(chalk.red(`Component name must be alphanumeric and may contain dashes or underscores`));
     return;
   }
+
+  const version = '1.0.0';
+
   name = name.replace('.html', '');
 
-  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components`));
+  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components/${name}/${version}`));
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }
-  const targetHtml = path.resolve(workingPath, `${name}.html`);
+  const targetHtml = path.resolve(workingPath, `${name}.hbs`);
   if (fs.existsSync(targetHtml)) {
     if (!handoff.force) {
       console.log(chalk.yellow(`'${name}' already exists as custom component.`));
       return;
     }
   }
-  const htmlPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.html'));
+  const templatePath = path.join(handoff.modulePath, 'config', 'templates/integration/components/template/1.0.0');
+  const htmlPath = path.resolve(templatePath, 'template.hbs');
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);
-  console.log(chalk.green(`New component ${name}.html was created in ${workingPath}`));
+  console.log(chalk.green(`New component ${name}.hbs was created in ${workingPath}`));
+
+  const jsonpath = path.resolve(templatePath, 'template.json');
+  const jsonTemplate = fs.readFileSync(jsonpath, 'utf8');
+  fs.writeFileSync(path.resolve(workingPath, `${name}.json`), jsonTemplate);
 
   const writeJSFile = await prompt(chalk.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
   if (writeJSFile === 'y') {
     console.log(chalk.green(`Writing ${name}.js.\n`));
-    const jsPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.js'));
+    const jsPath = path.resolve(templatePath, 'template.js');
     const jsTemplate = fs.readFileSync(jsPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.js`), jsTemplate);
   }
@@ -191,7 +199,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
   if (writeSassFile === 'y') {
     console.log(chalk.green(`Writing ${name}.scss.\n`));
-    const scssPath = path.resolve(path.join(handoff.modulePath, 'config', 'component.scss'));
+    const scssPath = path.resolve(templatePath, 'template.scss');
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }

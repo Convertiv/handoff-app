@@ -1,9 +1,11 @@
 {
-  "title": "button",
+  "title": "",
   "description": "",
-  "type": "Block",
-  "group": "Buttons",
+  "type": "",
+  "group": "",
   "tags": [],
+  "should_do": [],
+  "should_not_do": [],
   "previews": {
     "generic": {
       "title": "Generic",

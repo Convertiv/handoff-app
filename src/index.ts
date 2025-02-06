@@ -52,8 +52,8 @@ class Handoff {
     this.force = force ?? false;
     this.hooks = {
       init: (config: Config): Config => config,
-      fetch: () => {},
-      build: (documentationObject) => {},
+      fetch: () => { },
+      build: (documentationObject) => { },
       typeTransformer: (documentationObject, types) => types,
       integration: (documentationObject, data: HookReturn[]) => data,
       cssTransformer: (documentationObject, css) => css,

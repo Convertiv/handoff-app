@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeComponent = exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
-const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
 const chalk_1 = __importDefault(require("chalk"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
 const prompt_1 = require("../utils/prompt");
 /**
  * Make a new exportable component
@@ -166,33 +166,38 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
         console.log(chalk_1.default.red(`Component name must be alphanumeric and may contain dashes or underscores`));
         return;
     }
+    const version = '1.0.0';
     name = name.replace('.html', '');
-    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components`));
+    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components/${name}/${version}`));
     if (!fs_extra_1.default.existsSync(workingPath)) {
         fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
     }
-    const targetHtml = path_1.default.resolve(workingPath, `${name}.html`);
+    const targetHtml = path_1.default.resolve(workingPath, `${name}.hbs`);
     if (fs_extra_1.default.existsSync(targetHtml)) {
         if (!handoff.force) {
             console.log(chalk_1.default.yellow(`'${name}' already exists as custom component.`));
             return;
         }
     }
-    const htmlPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.html'));
+    const templatePath = path_1.default.join(handoff.modulePath, 'config', 'templates/integration/components/template/1.0.0');
+    const htmlPath = path_1.default.resolve(templatePath, 'template.hbs');
     const htmlTemplate = fs_extra_1.default.readFileSync(htmlPath, 'utf8');
     fs_extra_1.default.writeFileSync(targetHtml, htmlTemplate);
-    console.log(chalk_1.default.green(`New component ${name}.html was created in ${workingPath}`));
+    console.log(chalk_1.default.green(`New component ${name}.hbs was created in ${workingPath}`));
+    const jsonpath = path_1.default.resolve(templatePath, 'template.json');
+    const jsonTemplate = fs_extra_1.default.readFileSync(jsonpath, 'utf8');
+    fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.json`), jsonTemplate);
     const writeJSFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
     if (writeJSFile === 'y') {
         console.log(chalk_1.default.green(`Writing ${name}.js.\n`));
-        const jsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.js'));
+        const jsPath = path_1.default.resolve(templatePath, 'template.js');
         const jsTemplate = fs_extra_1.default.readFileSync(jsPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.js`), jsTemplate);
     }
     const writeSassFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
     if (writeSassFile === 'y') {
         console.log(chalk_1.default.green(`Writing ${name}.scss.\n`));
-        const scssPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config', 'component.scss'));
+        const scssPath = path_1.default.resolve(templatePath, 'template.scss');
         const scssTemplate = fs_extra_1.default.readFileSync(scssPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.scss`), scssTemplate);
     }
