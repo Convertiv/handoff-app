@@ -1,6 +1,6 @@
-import Document, { Html, Head, Main, NextScript } from 'next/document';
-import Script from 'next/script';
 import { getClientConfig } from '@handoff/config';
+import Document, { Head, Html, Main, NextScript } from 'next/document';
+import Script from 'next/script';
 
 const config = getClientConfig();
 

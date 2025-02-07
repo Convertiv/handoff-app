@@ -104,6 +104,10 @@ export const AbstractComponentsPageCard = ({
   variations?: number;
 }) => {
   if (!path) path = 'components';
+  // trim description to 200 characters at a word boundary
+  if (description.length > 85) {
+    description = description.substring(0, description.lastIndexOf(' ', 85)) + '...';
+  }
   return (
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
       <Link href={available ? (absolute ? path : `/system/component/${id}`) : '#'}>

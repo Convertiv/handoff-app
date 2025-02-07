@@ -1,7 +1,4 @@
 'use client';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { SelectItem } from '@radix-ui/react-select';
@@ -11,6 +8,9 @@ import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import HeadersType from '../../../../components/Typography/Headers';
+import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**

@@ -23,7 +23,7 @@ const command: CommandModule<{}, MakeComponentArgs> = {
     const componentName = args.name;
     const version = args.version;
 
-    if (!/^[a-z0-9]+$/i.test(componentName)) {
+    if (!/^[a-z0-9_-]+$/i.test(componentName)) {
       console.error(`Component name must be alphanumeric and may contain dashes or underscores`);
       return;
     }

@@ -109,7 +109,11 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
     return;
   }
 
-  const checkType = await prompt(chalk.green(`By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `));
+  const checkType = await prompt(
+    chalk.green(
+      `By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `
+    )
+  );
   if (checkType === 'markdown') {
     type = 'md';
   }
@@ -156,10 +160,6 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   const config = await handoff.config;
   if (!name) {
     console.log(chalk.red(`Component name must be set`));
-    return;
-  }
-  if (!/^[a-z0-9]+$/i.test(name)) {
-    console.log(chalk.red(`Component name must be alphanumeric and may contain dashes or underscores`));
     return;
   }
 

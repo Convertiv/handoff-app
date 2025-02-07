@@ -162,10 +162,6 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
         console.log(chalk_1.default.red(`Component name must be set`));
         return;
     }
-    if (!/^[a-z0-9]+$/i.test(name)) {
-        console.log(chalk_1.default.red(`Component name must be alphanumeric and may contain dashes or underscores`));
-        return;
-    }
     const version = '1.0.0';
     name = name.replace('.html', '');
     let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components/${name}/${version}`));
