@@ -70,16 +70,16 @@ const Typography = ({
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
-      <div className="pb-32">
+      <div className="mb-10">
         <h2 className="mb-3 text-2xl font-medium">Typography</h2>
         <p className="mb-8">Typographic system establishes scale, sizes and weight of text.</p>
         {Object.keys(families).map((key) => (
-          <div className="rounded-lg bg-gray-50 p-7" key={key}>
-            <p className="mb-3 text-sm font-medium">Typeface</p>
-            <div style={{ fontFamily: key }}>
-              <p className="mb-8 text-sm leading-relaxed text-gray-600">{key}</p>
-              <p className="mb-8 text-sm leading-relaxed text-gray-600">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
-              <p>1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
+          <div className="rounded-lg bg-gray-50 p-10" key={key}>
+            <p className="mb-1 text-sm">Typeface</p>
+            <div className="" style={{ fontFamily: key }}>
+              <p className="mb-3 text-3xl leading-relaxed text-gray-900 dark:text-gray-100">{key}</p>
+              <p className="mb-2 text-xs tracking-[0.3em]  text-gray-400">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
+              <p className=" text-xs tracking-[0.3em]  text-gray-400">1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
             </div>
           </div>
         ))}
