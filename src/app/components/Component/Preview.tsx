@@ -272,7 +272,7 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     <>
       <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
       <p className="mb-5">These are the properties associated with the component.</p>
-      <Table className="border-b-[0.5px]">
+      <Table>
         <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
           <TableRow className="!border-b-[0.5px]">
             <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
@@ -389,10 +389,6 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
   return (
     <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={() => openSheet(row)}>
       <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">{startCase(row.name)}</TableCell>
-      {/* <TableCell className="border-r-[0.5px] px-4 py-1 font-mono text-xs tracking-tight text-gray-600 dark:text-gray-300">
-        {hasParent && '- '}
-        {row.key}
-      </TableCell> */}
       <TableCell className="border-r-[0.5px] px-3.5 py-1">
         <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
           {row.type}
