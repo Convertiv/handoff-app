@@ -315,26 +315,7 @@ const staticBuildComponentMenu = () => {
 };
 
 const staticBuildTokensMenu = () => {
-  const menu = [];
-
-  const components = fetchComponents(false);
-  // Build the submenu of exportables (components)
-  const groupedComponents = groupBy(components, (e) => e.group ?? '');
-  Object.keys(groupedComponents).forEach((group) => {
-    groupedComponents[group].forEach((component) => {
-      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-      let title = startCase(component.id);
-      if (docs.metadata.title) {
-        title = docs.metadata.title;
-      }
-      if (component.name) {
-        title = component.name;
-      }
-      menu.push({ path: `system/tokens/components/${component.id}`, title });
-    });
-  });
-
-  return [
+  const menu = [
     {
       title: `Foundations`,
       path: `system/tokens/foundations`,
@@ -353,12 +334,35 @@ const staticBuildTokensMenu = () => {
         },
       ],
     },
-    {
+  ];
+
+  const componentMenuItems = [];
+  const components = fetchComponents(false);
+  // Build the submenu of exportables (components)
+  const groupedComponents = groupBy(components, (e) => e.group ?? '');
+  Object.keys(groupedComponents).forEach((group) => {
+    groupedComponents[group].forEach((component) => {
+      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      let title = startCase(component.id);
+      if (docs.metadata.title) {
+        title = docs.metadata.title;
+      }
+      if (component.name) {
+        title = component.name;
+      }
+      componentMenuItems.push({ path: `system/tokens/components/${component.id}`, title });
+    });
+  });
+
+  if (componentMenuItems.length > 0) {
+    menu.push({
       title: `Components`,
       path: `system/tokens/components`,
-      menu,
-    },
-  ];
+      menu: componentMenuItems,
+    });
+  }
+
+  return menu;
 };
 
 const staticBuildTokenMenu = () => {
