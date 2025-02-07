@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
+import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableRow } from '../../../../components/ui/table';
 import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../../../components/util';
@@ -51,11 +52,16 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
-      <div className="mt-10">
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-        <FontsTable types={typography} />
+      <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+        <div>
+          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+          <FontsTable types={typography} />
+        </div>
+        <AnchorNav
+          groups={[Object.assign({}, ...[...typography.map((type) => ({ [`${type.name}-typography`]: `${upperFirst(type.name)}` }))])]}
+        />
       </div>
     </Layout>
   );
@@ -67,31 +73,33 @@ const FontsTable = ({ types }: { types: TypographyObject[] }) => {
     return (
       <React.Fragment key={`type-hier-${index}`}>
         <h3 className="mb-4 text-lg font-medium">{upperFirst(type.name)}</h3>
-        <Table className="mb-8">
+        <Table className="mb-8 border-b-[0.5px] border-l-[0.5px] border-r-[0.5px] border-t-[0.5px]">
           <TableBody>
-            <TableRow className="h-12">
-              <TableCell>{reference}-font-family</TableCell>
-              <TableCell className="text-right">{type.values.fontFamily}</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-family</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontFamily}</TableCell>
             </TableRow>
-            <TableRow className="h-12">
-              <TableCell>{reference}-font-size</TableCell>
-              <TableCell className="text-right">{type.values.fontSize}px</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-size</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontSize}px</TableCell>
             </TableRow>
-            <TableRow className="h-12">
-              <TableCell>{reference}-font-weight</TableCell>
-              <TableCell className="text-right">{type.values.fontWeight}</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-weight</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontWeight}</TableCell>
             </TableRow>
-            <TableRow className="h-12">
-              <TableCell>{reference}-font-height</TableCell>
-              <TableCell className="text-right">{(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-height</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">
+                {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
+              </TableCell>
             </TableRow>
-            <TableRow className="h-12">
-              <TableCell>{reference}-letter-spacing</TableCell>
-              <TableCell className="text-right">{type.values.letterSpacing}</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-letter-spacing</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.letterSpacing}</TableCell>
             </TableRow>
-            <TableRow className="h-12">
-              <TableCell>{reference}-paragraph-spacing</TableCell>
-              <TableCell className="text-right">{type.values.paragraphSpacing | 20}px</TableCell>
+            <TableRow className="h-10 border-b-[0.5px]">
+              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-paragraph-spacing</TableCell>
+              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.paragraphSpacing | 20}px</TableCell>
             </TableRow>
           </TableBody>
         </Table>
