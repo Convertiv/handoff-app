@@ -260,7 +260,17 @@ export const staticBuildMenu = () => {
               const sub = metadata.menu[key];
               if (sub.components) {
                 // The user wants to inject the component menu here
-                return staticBuildComponentMenu();
+                return {
+                  title: 'Components',
+                  menu: staticBuildComponentMenu(),
+                };
+              }
+              if (sub.tokens) {
+                // The user wants to inject the component menu here
+                return {
+                  title: 'Tokens',
+                  menu: staticBuildTokensMenu(),
+                };
               }
               if (sub.enabled !== false) {
                 return sub;
@@ -282,11 +292,7 @@ export const staticBuildMenu = () => {
 };
 
 const staticBuildComponentMenu = () => {
-  let subSections = {
-    title: 'Components',
-    path: 'system/component',
-    menu: [],
-  };
+  let menu = [];
   const components = fetchComponents();
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
@@ -303,9 +309,56 @@ const staticBuildComponentMenu = () => {
       }
       menuGroup.menu.push({ path: `system/component/${component.id}`, title });
     });
-    subSections.menu.push(menuGroup);
+    menu.push(menuGroup);
   });
-  return subSections;
+  return menu;
+};
+
+const staticBuildTokensMenu = () => {
+  const menu = [];
+
+  const components = fetchComponents(false);
+  // Build the submenu of exportables (components)
+  const groupedComponents = groupBy(components, (e) => e.group ?? '');
+  Object.keys(groupedComponents).forEach((group) => {
+    groupedComponents[group].forEach((component) => {
+      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      let title = startCase(component.id);
+      if (docs.metadata.title) {
+        title = docs.metadata.title;
+      }
+      if (component.name) {
+        title = component.name;
+      }
+      menu.push({ path: `system/tokens/components/${component.id}`, title });
+    });
+  });
+
+  return [
+    {
+      title: `Foundations`,
+      path: `system/tokens/foundations`,
+      menu: [
+        {
+          title: `Colors`,
+          path: `system/tokens/foundations/colors`,
+        },
+        {
+          title: `Effects`,
+          path: `system/tokens/foundations/effects`,
+        },
+        {
+          title: `Typography`,
+          path: `system/tokens/foundations/typography`,
+        },
+      ],
+    },
+    {
+      title: `Components`,
+      path: `system/tokens/components`,
+      menu,
+    },
+  ];
 };
 
 const staticBuildTokenMenu = () => {
@@ -383,23 +436,27 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * Fetch exportables id's from the JSON files in the exportables directory
  * @returns {string[]}
  */
-export const fetchComponents = () => {
+export const fetchComponents = (fetchAll: boolean = true) => {
   let components = getTokens().components;
-  // get the path for the integration templates
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-  // find the path to the components
-  const templatesPath = path.resolve(integrationPath, 'components');
-  if (fs.existsSync(templatesPath)) {
-    // Read the template directory and use it to populate the components with json files
-    fs.readdirSync(templatesPath).map((file) => {
-      // ok, the file should have either a json file or a semver directory
-      const metadata = getLatestComponentMetadata(file);
-      if (metadata) {
-        components[file] = metadata;
-        components[file].name = metadata.title;
-      }
-    });
+
+  if (fetchAll) {
+    // get the path for the integration templates
+    const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+    // find the path to the components
+    const templatesPath = path.resolve(integrationPath, 'components');
+    if (fs.existsSync(templatesPath)) {
+      // Read the template directory and use it to populate the components with json files
+      fs.readdirSync(templatesPath).map((file) => {
+        // ok, the file should have either a json file or a semver directory
+        const metadata = getLatestComponentMetadata(file);
+        if (metadata) {
+          components[file] = metadata;
+          components[file].name = metadata.title;
+        }
+      });
+    }
   }
+
   const items =
     Object.entries(components).map(([id, obj]) => ({
       id,
@@ -634,7 +691,7 @@ export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'sty
     if (fs.existsSync(sdSearchPath)) {
       // Foundations
       tokens = fs.readFileSync(sdSearchPath).toString();
-    } else {
+    } else if (fs.existsSync(sdAltSearchPath)) {
       // Components
       tokens = fs.readFileSync(sdAltSearchPath).toString();
     }

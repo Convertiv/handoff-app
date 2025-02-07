@@ -1,10 +1,10 @@
 ---
-title: Design System
-description: Element that represents a control that provides a menu of options, collection of UI components used.
+title: Typography
+description: Lorem ipsum dolor sit amet
 weight: 5
 image: hero-components
-menuTitle: 'Design System'
-metaTitle: 'Design System | Handoff Design System'
+menuTitle: 'Typography'
+metaTitle: 'Typography | Handoff Design System'
 metaDescription: 'Element that represents a control that provides a menu of options, collection of UI components used.'
 enabled: true
 menu:
