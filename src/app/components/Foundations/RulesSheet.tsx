@@ -64,7 +64,7 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
   };
   const onOpenChange = (open) => {
     if (!open) {
-      window.location.hash = '';
+      history.pushState ? history.replaceState(null, null, document.location.pathname + '') : (location.hash = `#`);
     }
     setOpen(open);
   };
