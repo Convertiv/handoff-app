@@ -2,6 +2,7 @@ import { PreviewObject } from '@handoff/types';
 import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 import js from 'refractor/lang/javascript';
+import json from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
 import html from 'refractor/lang/xml-doc';
@@ -19,6 +20,7 @@ const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('js', js);
+SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('scss', scss);
 
@@ -34,7 +36,8 @@ export const CodeHighlight: React.FC<{
   dark?: boolean;
   title?: string;
   language?: string;
-}> = ({ data, collapsible, type, title, dark }) => {
+  height?: string;
+}> = ({ data, collapsible, type, title, dark, height }) => {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
@@ -77,7 +80,7 @@ export const CodeHighlight: React.FC<{
   const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
   theme['pre[class*="language-"]'].overflow = 'auto';
-  theme['pre[class*="language-"]'].maxHeight = '450px';
+  theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
   theme['pre[class*="language-"]'].margin = '0';
 
   return (

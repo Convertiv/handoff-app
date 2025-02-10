@@ -1,12 +1,20 @@
 import { getClientConfig } from '@handoff/config';
+import { PreviewObject } from '@handoff/types';
 import type { GetStaticProps } from 'next';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { APIComponentList } from '../../../components/Component/ComponentLists';
 import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../../components/Typography/Headers';
-import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../../components/util';
+import {
+  DocumentationProps,
+  fetchComponents,
+  fetchDocPageMarkdown,
+  fetchDocPageMetadataAndContent,
+  Metadata,
+} from '../../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -47,9 +55,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
  * @param param0
  * @returns
  */
-const ComponentsPage = ({ content, menu, metadata, current, components, config }: ComponentPageDocumentationProps) => {
+const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentPageDocumentationProps) => {
   // Fetch components from api
-
+  const [components, setComponents] = useState<PreviewObject[]>(undefined);
+  const fetchComponents = async () => {
+    let data = await fetch(`/api/components.json`).then((res) => res.json());
+    setComponents(data as PreviewObject[]);
+  };
+  useEffect(() => {
+    fetchComponents();
+  }, []);
+  if (!components) return <p>Loading...</p>;
+  const apiUrl = (window.location.origin && window.location.origin) + `/api/components.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
@@ -61,7 +78,7 @@ const ComponentsPage = ({ content, menu, metadata, current, components, config }
           {content}
         </ReactMarkdown>
 
-        <APIComponentList />
+        <APIComponentList components={components} />
       </div>
     </Layout>
   );

@@ -1,7 +1,12 @@
 'use client';
+import { CodeHighlight } from '@/components/Markdown/CodeHighlight';
+import { Button } from '@/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { SelectItem } from '@radix-ui/react-select';
+import { TooltipContent } from '@radix-ui/react-tooltip';
 import { Webhook } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
@@ -9,7 +14,6 @@ import { PreviewContextProvider } from '../../../../components/context/PreviewCo
 import Layout from '../../../../components/Layout/Main';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Badge } from '../../../../components/ui/badge';
-import { Button } from '../../../../components/ui/button';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 
@@ -58,13 +62,25 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
     fetchComponents();
   }, []);
   if (!component) return <p>Loading...</p>;
-  console.log(component.tags);
+  const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="mt-3 flex flex-row justify-between gap-3">
-          <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+          <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+            {metadata.description}
+            {component.tags &&
+              Array.isArray(component.tags) &&
+              component.tags.map((tag) => (
+                <>
+                  &nbsp;
+                  <Badge variant={'default'} className="px-2 py-0 text-[11px]">
+                    {tag}
+                  </Badge>
+                </>
+              ))}
+          </p>
           <div>
             <Select
             // defaultValue={breakpoint}
@@ -81,17 +97,39 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
               </SelectContent>
             </Select>
 
-            <Button variant={'outline'}>
-              API <Webhook strokeWidth={1.5} />
-            </Button>
-            <div>
-              {component.tags &&
-                component.tags.map((tag) => (
-                  <Badge variant={'default'} className="px-2 py-0 text-[11px]">
-                    {tag}
-                  </Badge>
-                ))}
-            </div>
+            <Drawer direction="right">
+              <DrawerTrigger>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        Component API <Webhook strokeWidth={1.5} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <Badge>{apiUrl}</Badge>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </DrawerTrigger>
+              <DrawerContent>
+                <div className="w-md mx-5">
+                  <DrawerHeader>
+                    <DrawerTitle>API Response</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="w-full">
+                    <CodeHighlight
+                      title={apiUrl}
+                      language="json"
+                      type="json"
+                      data={JSON.stringify(component, null, 2)}
+                      dark={true}
+                      height="80vh"
+                    />
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>

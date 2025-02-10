@@ -2,7 +2,7 @@ import { PreviewObject } from '@handoff/types';
 import { ToggleGroup, ToggleGroupItem } from '@radix-ui/react-toggle-group';
 import { LayoutGrid, Rows } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { cn } from '../../lib/utils';
 import HeadersType from '../Typography/Headers';
 import { Metadata } from '../util';
@@ -12,15 +12,7 @@ interface ComponentMetadata extends Metadata {
   absolute?: boolean;
 }
 
-export const APIComponentList = ({ title, description }: { title?; description? }) => {
-  const [components, setComponents] = React.useState<PreviewObject[]>([]);
-  const fetchComponents = async () => {
-    let data = await fetch(`/api/components.json`).then((res) => res.json());
-    setComponents(data as PreviewObject[]);
-  };
-  useEffect(() => {
-    fetchComponents();
-  }, []);
+export const APIComponentList = ({ components, title, description }: { components; title?; description? }) => {
   if (components.length === 0) return <p>Loading...</p>;
   return <ComponentList components={components} title={title} description={description} />;
 };
