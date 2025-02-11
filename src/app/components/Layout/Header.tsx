@@ -18,19 +18,21 @@ export function Header() {
   }, []);
 
   return (
-    <header
+    <div
       className={cn(
-        'border-grid container sticky top-0 z-50 mx-auto w-full max-w-[1500px] bg-transparent px-8 py-4 shadow-[0_0_2px_0_rgba(0,0,0,0.1)] transition-all duration-300',
-        isScrolled && 'bg-background/80 py-3 shadow-[0_0_3px_0_rgba(0,0,0,0.1)] backdrop-blur'
+        'sticky top-0 z-50 py-4 shadow-[0_0_2px_0_rgba(0,0,0,0.1)] backdrop-blur transition-all duration-300',
+        isScrolled && 'bg-background/80 py-3'
       )}
     >
-      <div className="mx-auto flex items-center justify-between">
-        <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
-        <div className="flex items-center gap-4">
-          <MainNav />
-          <ModeToggle />
+      <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
+        <div className="mx-auto flex items-center justify-between">
+          <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
+          <div className="flex items-center gap-4">
+            <MainNav />
+            <ModeToggle />
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </div>
   );
 }
