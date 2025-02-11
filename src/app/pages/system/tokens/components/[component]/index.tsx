@@ -52,9 +52,9 @@ export const getStaticProps = async (context) => {
   return {
     props: {
       id: component,
-      component: componentObject,
+      component: componentObject || {},
       legacyDefinition: getLegacyDefinition(componentSlug!),
-      previews: componentPreviews,
+      previews: componentPreviews || [],
       menu,
       config,
       ...fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props,
@@ -74,7 +74,7 @@ const GenericComponentPage = ({
   componentOptions,
 }: ComponentDocumentationProps) => {
   const tokensTabComponents = getComponentPreviews('tokens', component, options, previews);
-
+  if (!tokensTabComponents) return <p>Loading...</p>;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
@@ -113,6 +113,7 @@ export const getComponentPreviews = (
   const viewFilters = view.condition ?? {};
   const viewSort = view.sort ?? [];
 
+  if (!instances) return [];
   let tabComponents: ComponentPreview[] = instances
     .map((componentInstance) => {
       const filterProps = Object.keys(viewFilters);
