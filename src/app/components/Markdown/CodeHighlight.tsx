@@ -90,39 +90,42 @@ export const CodeHighlight: React.FC<{
         data-language={activeState === 'html' ? type : activeState}
       >
         {title && <div>{title}</div>}
-        {states.length > 2 && (
-          <Select
-            defaultValue={activeState}
-            onValueChange={(key) => {
-              setActiveState(key);
-              setCode(data[key]);
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Breakpoint" />
-            </SelectTrigger>
-            <SelectContent>
-              {states
-                .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
-                .map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state === 'html'
-                      ? 'HTML'
-                      : state === 'css'
-                        ? 'CSS'
-                        : state === 'js'
-                          ? 'Javascript'
-                          : state === 'sass'
-                            ? 'SASS'
-                            : state === 'sharedStyles'
-                              ? 'Shared CSS'
-                              : state}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        )}
-        <CopyCode code={code} />
+        <div className="flex items-center gap-2">
+          {states.length > 2 && (
+            <Select
+              defaultValue={activeState}
+              onValueChange={(key) => {
+                setActiveState(key);
+                setCode(data[key]);
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Breakpoint" />
+              </SelectTrigger>
+              <SelectContent>
+                {states
+                  .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                  .map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state === 'html'
+                        ? 'HTML'
+                        : state === 'css'
+                          ? 'CSS'
+                          : state === 'js'
+                            ? 'Javascript'
+                            : state === 'sass'
+                              ? 'SASS'
+                              : state === 'sharedStyles'
+                                ? 'Shared CSS'
+                                : state}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <CopyCode code={code} />
+        </div>
       </div>
 
       <SyntaxHighlighter

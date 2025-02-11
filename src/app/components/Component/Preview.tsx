@@ -6,11 +6,12 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
-import { Component, File, MoveHorizontal, Text } from 'lucide-react';
+import { Component, File, FolderOpenIcon, Fullscreen, MoveHorizontal, RefreshCcw, Text } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import BestPracticesCard from './BestPracticesCard';
@@ -126,22 +127,54 @@ export const ComponentDisplay: React.FC<{
                   <SelectItem value="full">Full Width</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Preview" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(component.previews).map((key) => (
+                      <SelectItem
+                        key={`/api/component/` + component.previews[key].url}
+                        value={`/api/component/` + component.previews[key].url}
+                      >
+                        {component.previews[key].title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Preview" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.keys(component.previews).map((key) => (
-                    <SelectItem
-                      key={`/api/component/` + component.previews[key].url}
-                      value={`/api/component/` + component.previews[key].url}
-                    >
-                      {component.previews[key].title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Button
+                  onClick={() => {
+                    if (ref.current) {
+                      ref.current.contentWindow.location.reload();
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <RefreshCcw />
+                </Button>
+                <Button
+                  onClick={() => {
+                    // make div fullscreen
+                    if (ref.current) {
+                      ref.current.requestFullscreen();
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <Fullscreen />
+                </Button>
+                <Button
+                  onClick={() => {
+                    // open in new tab
+                    window.open(previewUrl, '_blank');
+                  }}
+                  variant="outline"
+                >
+                  <FolderOpenIcon />
+                </Button>
+              </div>
             </div>
 
             <iframe
@@ -354,10 +387,10 @@ const humanReadableSizeRule = (rule: string, value: any) => {
     case 'content':
       return `${value.min || '-'} - ${value.max || '-'} characters`;
     case 'dimensions':
-      if (!value || !value.minW || !value.minHeight || !value.maxWidth || !value.maxHeight) {
+      if (!value || !value.min || !value.max) {
         return 'Not specified.';
       }
-      return `${value.minW}x${value.minHeight} - ${value.maxWidth}x${value.maxHeight}`;
+      return `${value.min.width}x${value.min.height} - ${value.max.width}x${value.max.height}`;
     case 'maxSize':
       if (value < 1024) {
         return `${value} bytes`;

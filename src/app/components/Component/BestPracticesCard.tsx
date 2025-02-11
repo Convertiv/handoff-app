@@ -20,8 +20,8 @@ const BestPracticesCard: React.FC<{ component: PreviewObject }> = ({ component }
           <div className="relative rounded-lg bg-slate-50 p-6 text-gray-600 ring-1 ring-inset ring-slate-500/20">
             <h2 className="mb-3 font-medium text-green-700">Best Practices</h2>
             <ul className="space-y-3 text-emerald-800">
-              {component.should_do.map((rule) => (
-                <PracticeLine rule={rule} yes={true} />
+              {component.should_do.map((rule, index) => (
+                <PracticeLine rule={rule} yes={true} key={`do-rule-${index}`} />
               ))}
             </ul>
           </div>
@@ -30,8 +30,8 @@ const BestPracticesCard: React.FC<{ component: PreviewObject }> = ({ component }
           <div className="relative rounded-lg bg-slate-50 p-6 text-gray-600 ring-1 ring-inset ring-slate-500/20">
             <h2 className="mb-3 font-medium text-red-900">Common Mistakes</h2>
             <ul className="space-y-3 text-red-800">
-              {component.should_not_do.map((rule) => (
-                <PracticeLine rule={rule} yes={false} />
+              {component.should_not_do.map((rule, index) => (
+                <PracticeLine rule={rule} yes={false} key={`dont-rule-${index}`} />
               ))}
             </ul>
           </div>

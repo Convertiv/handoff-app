@@ -1,5 +1,4 @@
 import { CodeHighlight } from '@/components/Markdown/CodeHighlight';
-import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getClientConfig } from '@handoff/config';
@@ -77,9 +76,9 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" className="w-full">
+                    <>
                       Component API <Webhook strokeWidth={1.5} />
-                    </Button>
+                    </>
                   </TooltipTrigger>
                   <TooltipContent side="left">
                     <Badge>{apiUrl}</Badge>

@@ -12,10 +12,12 @@ window.addEventListener('DOMContentLoaded', (event) => {
   const charCountDiv = document.createElement('div');
   charCountDiv.setAttribute('class', 'handoff-char-count');
   document.body.appendChild(charCountDiv);
+
   const updateCharCount = (field, type, count) => {
     charCountDiv.classList.add('visible');
     charCountDiv.innerText = `${ucWords(field)} - Type: ${ucWords(type)} Count: ${count}`;
   };
+
   const setPosition = (element) => {
     const rect = element.getBoundingClientRect();
     const top = rect.top + window.scrollY;
@@ -71,8 +73,20 @@ window.addEventListener('DOMContentLoaded', (event) => {
       'keyup',
       function () {
         charCount = this.innerText.length;
+        updateCharCount(dataModel.id, dataModel.type, charCount);
       },
       false
     );
+  }
+
+  // disable all links
+  const links = document.getElementsByTagName('a');
+  console.log('links', links);
+  for (let i = 0; i < links.length; i++) {
+    console.log('link', links[i]);
+    links[i].addEventListener('click', function (event) {
+      console.log('link clicked');
+      event.preventDefault();
+    });
   }
 });
