@@ -68,44 +68,48 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
 };
 
 const FontsTable = ({ types }: { types: TypographyObject[] }) => {
-  return types.map((type, index) => {
-    const reference = type.reference.replace(/-+/g, '-');
-    return (
-      <React.Fragment key={`type-hier-${index}`}>
-        <h3 className="mb-4 text-lg font-medium">{upperFirst(type.name)}</h3>
-        <Table className="mb-8 border-b-[0.5px] border-l-[0.5px] border-r-[0.5px] border-t-[0.5px]">
-          <TableBody>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-family</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontFamily}</TableCell>
-            </TableRow>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-size</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontSize}px</TableCell>
-            </TableRow>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-weight</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontWeight}</TableCell>
-            </TableRow>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-height</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">
-                {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
-              </TableCell>
-            </TableRow>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-letter-spacing</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.letterSpacing}</TableCell>
-            </TableRow>
-            <TableRow className="h-10 border-b-[0.5px]">
-              <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-paragraph-spacing</TableCell>
-              <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.paragraphSpacing | 20}px</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </React.Fragment>
-    );
-  });
+  return (
+    <>
+      {types.map((type, index) => {
+        const reference = type.reference.replace(/-+/g, '-');
+        return (
+          <React.Fragment key={`type-hier-${index}`}>
+            <h3 className="mb-4 text-lg font-medium">{upperFirst(type.name)}</h3>
+            <Table className="mb-8 border-b-[0.5px] border-l-[0.5px] border-r-[0.5px] border-t-[0.5px]">
+              <TableBody>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-family</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontFamily}</TableCell>
+                </TableRow>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-size</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontSize}px</TableCell>
+                </TableRow>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-weight</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.fontWeight}</TableCell>
+                </TableRow>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-font-height</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">
+                    {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-letter-spacing</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.letterSpacing}</TableCell>
+                </TableRow>
+                <TableRow className="h-10 border-b-[0.5px]">
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1">{reference}-paragraph-spacing</TableCell>
+                  <TableCell className="border-r-[0.5px] px-3.5 py-1 text-right">{type.values.paragraphSpacing | 20}px</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
 };
 
 export const pluckStyle = (type: TypographyObject) => {
