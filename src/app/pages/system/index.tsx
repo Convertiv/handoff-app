@@ -1,6 +1,3 @@
-import { CodeHighlight } from '@/components/Markdown/CodeHighlight';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { Badge, Webhook } from 'lucide-react';
@@ -10,8 +7,11 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { APIComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
+import { CodeHighlight } from '../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../components/ui/drawer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {

@@ -1,7 +1,4 @@
 'use client';
-import { CodeHighlight } from '@/components/Markdown/CodeHighlight';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { SelectItem } from '@radix-ui/react-select';
@@ -11,9 +8,12 @@ import { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
+import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Badge } from '../../../../components/ui/badge';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
