@@ -6,14 +6,16 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
-import { Component, File, FolderOpenIcon, Fullscreen, MoveHorizontal, RefreshCcw, Text } from 'lucide-react';
+import { Component, File, Fullscreen, MoveHorizontal, RefreshCcw, SquareArrowOutUpRight, Text } from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Separator } from '../ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
@@ -103,10 +105,10 @@ export const ComponentDisplay: React.FC<{
   }, [component]);
   return (
     <div className="md:flex">
-      <div className="text-medium w-full rounded-lg bg-gray-50 p-6 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="text-medium flex w-full flex-col items-center rounded-lg border">
         {component?.previews ? (
           <>
-            <div className="flex items-center justify-between py-1 align-middle">
+            <div className="flex w-full items-center justify-between border-b px-6 py-2 align-middle">
               <Select
                 defaultValue={breakpoint}
                 onValueChange={(key) => {
@@ -114,7 +116,7 @@ export const ComponentDisplay: React.FC<{
                   setWidth(`${breakpoints[key].size}px`);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="h-8 w-[180px] text-xs">
                   <SelectValue placeholder="Breakpoint" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,37 +145,61 @@ export const ComponentDisplay: React.FC<{
                     ))}
                   </SelectContent>
                 </Select>
-
-                <Button
-                  onClick={() => {
-                    if (ref.current) {
-                      ref.current.contentWindow.location.reload();
-                    }
-                  }}
-                  variant="outline"
-                >
-                  <RefreshCcw />
-                </Button>
-                <Button
-                  onClick={() => {
-                    // make div fullscreen
-                    if (ref.current) {
-                      ref.current.requestFullscreen();
-                    }
-                  }}
-                  variant="outline"
-                >
-                  <Fullscreen />
-                </Button>
-                <Button
-                  onClick={() => {
-                    // open in new tab
-                    window.open(previewUrl, '_blank');
-                  }}
-                  variant="outline"
-                >
-                  <FolderOpenIcon />
-                </Button>
+                <Separator orientation="vertical" className="h-6" />
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="[&_svg]:size-3"
+                        onClick={() => {
+                          if (ref.current) {
+                            ref.current.contentWindow.location.reload();
+                          }
+                        }}
+                        variant="ghost"
+                      >
+                        <RefreshCcw />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="px-2 py-1 text-xs">Refresh Preview</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="[&_svg]:size-3"
+                        onClick={() => {
+                          // make div fullscreen
+                          if (ref.current) {
+                            ref.current.requestFullscreen();
+                          }
+                        }}
+                        variant="ghost"
+                      >
+                        <Fullscreen />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="px-2 py-1 text-xs">Fullscreen Preview</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="[&_svg]:size-3"
+                        onClick={() => {
+                          // open in new tab
+                          window.open(previewUrl, '_blank');
+                        }}
+                        variant="ghost"
+                      >
+                        <SquareArrowOutUpRight />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="px-2 py-1 text-xs">Open in New Tab</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
