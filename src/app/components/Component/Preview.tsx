@@ -108,7 +108,7 @@ export const ComponentDisplay: React.FC<{
       <div className="text-medium flex w-full flex-col items-center rounded-lg border">
         {component?.previews ? (
           <>
-            <div className="flex w-full items-center justify-between border-b px-6 py-2 align-middle">
+            <div className="flex w-full items-center justify-between rounded-t-lg border-b bg-gray-50 px-6 py-2 align-middle dark:bg-gray-800">
               <Select
                 defaultValue={breakpoint}
                 onValueChange={(key) => {
