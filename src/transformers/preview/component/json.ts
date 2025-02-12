@@ -20,11 +20,13 @@ const parseComponentJson = async (
         // The JSON file defines each of the fields
         if (parsed) {
           data.title = parsed.title;
+          data.image = parsed.image;
           data.should_do = parsed.should_do || [];
           data.should_not_do = parsed.should_not_do || [];
           data.type = (parsed.type as ComponentType) || ComponentType.Element;
           data.group = parsed.group || 'default';
           data.tags = parsed.tags || [];
+          data.categories = parsed.categories || [];
           data.description = parsed.description;
           data.properties = parsed.properties;
           data.previews = parsed.previews;

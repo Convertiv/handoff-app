@@ -1,8 +1,10 @@
 {
   "title": "Accordion",
+  "image": "https://placehold.co/1360x900",
   "description": "A simple accordion component. Use it for ",
   "type": "block",
   "group": "Accordion",
+  "categories": ["Components"],
   "tags": ["accordion"],
   "should_do": ["Show a list of items in an accordion format.", "Allow users to expand and collapse each item individually."],
   "should_not_do": ["Use this component for a large number of items."],

@@ -108,9 +108,11 @@ export interface HookReturn {
 export interface PreviewObject {
     id: string;
     title: string;
+    image: string;
     description: string;
     should_do: string[];
     should_not_do: string[];
+    categories?: string[];
     tags?: string[];
     preview: string;
     previews: {

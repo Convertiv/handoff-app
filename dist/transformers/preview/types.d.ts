@@ -8,9 +8,11 @@ export declare enum ComponentType {
 export declare type ComponentListObject = {
     id: string;
     version: string;
+    image: string;
     title: string;
     type: string;
     group: string;
+    categories: string[];
     tags: string[];
     description: string;
     properties: {
@@ -25,7 +27,9 @@ export declare type ComponentListObject = {
 export declare type TransformComponentTokensResult = {
     id: string;
     type?: ComponentType;
+    image?: string;
     group?: string;
+    categories?: string[];
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];

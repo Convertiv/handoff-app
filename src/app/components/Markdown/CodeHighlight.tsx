@@ -41,11 +41,27 @@ export const CodeHighlight: React.FC<{
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
-    data = { id: '', title: '', description: '', should_do: [], should_not_do: [], previews: {}, preview: '', html: '', code: '' };
+    data = {
+      id: '',
+      image: '',
+      tags: [],
+      categories: [],
+      title: '',
+      description: '',
+      should_do: [],
+      should_not_do: [],
+      previews: {},
+      preview: '',
+      html: '',
+      code: '',
+    };
   } else if (typeof data === 'string') {
     data = data = {
       id: '',
       title: '',
+      categories: [],
+      tags: [],
+      image: '',
       description: '',
       previews: {},
       should_do: [],
@@ -63,6 +79,8 @@ export const CodeHighlight: React.FC<{
         [
           'id',
           'preview',
+          'image',
+          'categories',
           'title',
           'code',
           'description',

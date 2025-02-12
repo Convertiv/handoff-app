@@ -13,12 +13,14 @@ import getVersionsForComponent, { getLatestVersionForComponent } from './version
 const defaultComponent: TransformComponentTokensResult = {
   id: '',
   title: 'Untitled',
+  image: '',
   description: 'No description provided',
   preview: 'No preview available',
   type: ComponentType.Element,
   group: 'default',
   should_do: [],
   should_not_do: [],
+  categories: [],
   tags: [],
   previews: {
     generic: {
@@ -79,7 +81,9 @@ const buildComponentSummary = (id: string, latest: TransformComponentTokensResul
     description: latest.description,
     type: latest.type,
     group: latest.group,
-    tags: latest.tags,
+    image: latest.image ? latest.image : '',
+    categories: latest.categories ? latest.categories : [],
+    tags: latest.tags ? latest.tags : [],
     properties: latest.properties,
     previews: latest.previews,
     versions,

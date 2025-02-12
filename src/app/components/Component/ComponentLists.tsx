@@ -65,6 +65,7 @@ const ComponentsPageCard = ({ component, layout }: { component: PreviewObject; l
     <AbstractComponentsPageCard
       id={component.id}
       title={component.title}
+      image={component.image}
       description={component.description}
       variations={component.previews ? Object.keys(component.previews).length : 0}
       layout={layout}
@@ -77,7 +78,6 @@ export const AbstractComponentsPageCard = ({
   title,
   description,
   variations,
-  icon,
   image,
   path,
   layout = 'grid',
@@ -87,7 +87,6 @@ export const AbstractComponentsPageCard = ({
   id: string;
   title: string;
   description: string;
-  icon?: string;
   image?: string;
   path?: string;
   layout?: string;
@@ -100,16 +99,13 @@ export const AbstractComponentsPageCard = ({
   if (description.length > 85) {
     description = description.substring(0, description.lastIndexOf(' ', 85)) + '...';
   }
+  if (!image) {
+    image = `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`;
+  }
   return (
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
       <Link href={available ? (absolute ? path : `/system/component/${id}`) : '#'}>
-        <img
-          src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`}
-          width={1528}
-          height={1250}
-          alt="Components"
-          className="mb-5 rounded-lg"
-        />
+        <img src={image} width={1528} height={1250} alt="Components" className="mb-5 rounded-lg" />
         <div>
           <h2 className="text-base font-medium">{title}</h2>
           {variations && <small className="font-mono text-xs font-light text-gray-400">{variations} variations</small>}

@@ -10,9 +10,11 @@ export enum ComponentType {
 export type ComponentListObject = {
   id: string;
   version: string;
+  image: string;
   title: string;
   type: string;
   group: string;
+  categories: string[];
   tags: string[];
   description: string;
   properties: { [key: string]: SlotMetadata };
@@ -24,7 +26,9 @@ export type ComponentListObject = {
 export type TransformComponentTokensResult = {
   id: string;
   type?: ComponentType;
+  image?: string;
   group?: string;
+  categories?: string[];
   tags?: string[];
   should_do?: string[];
   should_not_do?: string[];

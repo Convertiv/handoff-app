@@ -49,12 +49,14 @@ const versions_1 = __importStar(require("./versions"));
 const defaultComponent = {
     id: '',
     title: 'Untitled',
+    image: '',
     description: 'No description provided',
     preview: 'No preview available',
     type: types_1.ComponentType.Element,
     group: 'default',
     should_do: [],
     should_not_do: [],
+    categories: [],
     tags: [],
     previews: {
         generic: {
@@ -115,7 +117,9 @@ const buildComponentSummary = (id, latest, versions) => {
         description: latest.description,
         type: latest.type,
         group: latest.group,
-        tags: latest.tags,
+        image: latest.image ? latest.image : '',
+        categories: latest.categories ? latest.categories : [],
+        tags: latest.tags ? latest.tags : [],
         properties: latest.properties,
         previews: latest.previews,
         versions,
