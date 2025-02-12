@@ -38,9 +38,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
               className="rounded-lg mb-5"
             /> */}
           </div>
-          <div className="sticky top-0 z-50">
-            <Header />
-          </div>
+          <Header />
 
           <div className="container mx-auto min-h-screen max-w-[1500px]">
             {current ? (
