@@ -20,8 +20,8 @@ export function Header() {
   return (
     <div
       className={cn(
-        'sticky top-0 z-50 py-4 shadow-[0_0_2px_0_rgba(0,0,0,0.1)] backdrop-blur transition-all duration-300',
-        isScrolled && 'bg-background/80 py-3'
+        'sticky top-0 z-50 py-4 shadow-[0_0_3px_0_rgba(0,0,0,0.15)] backdrop-blur transition-all duration-300',
+        isScrolled && 'bg-background/70 py-3 shadow-[0_0_4px_0_rgba(0,0,0,0.15)]'
       )}
     >
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">

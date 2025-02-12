@@ -28,7 +28,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
             <title>{metadata.metaTitle}</title>
             <meta name="description" content={metadata.metaDescription} />
           </Head>
-          <div className="absolute left-[-200px] top-[-200px] z-[-1] h-[400px] w-[600px] bg-[#FD3146] opacity-[0.07] blur-[280px]">
+          <div className="absolute left-[-200px] top-[-200px] z-[-1] h-[400px] w-[600px] bg-[#111111] opacity-[0.05] blur-[350px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {/* <img
               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/back.png`}

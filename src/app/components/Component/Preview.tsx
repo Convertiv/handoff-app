@@ -131,7 +131,7 @@ export const ComponentDisplay: React.FC<{
               </Select>
               <div className="flex items-center gap-2">
                 <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-8 w-[180px] text-xs">
                     <SelectValue placeholder="Preview" />
                   </SelectTrigger>
                   <SelectContent>

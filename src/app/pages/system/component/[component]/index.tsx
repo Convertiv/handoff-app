@@ -69,7 +69,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
         <div className="mt-3 flex flex-row justify-between gap-3">
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
             {metadata.description}
-            {component.tags &&
+            {/* {component.tags &&
               Array.isArray(component.tags) &&
               component.tags.map((tag) => (
                 <>
@@ -78,7 +78,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
                     {tag}
                   </Badge>
                 </>
-              ))}
+              ))} */}
           </p>
           <div>
             <Select
@@ -132,7 +132,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
           </div>
         </div>
       </div>
-      <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+      <div className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
           <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
             <ComponentPreview title={metadata.title} id={id}>
