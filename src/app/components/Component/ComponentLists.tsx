@@ -26,8 +26,11 @@ export const ComponentList = ({
   title?: string;
   description?: string;
 }) => {
-  const [layout, setLayout] = React.useState<string>('grid');
-
+  const [layout, setLayout] = React.useState<string>(window.localStorage.getItem('handoff-grid-layout') || 'grid');
+  const storeLayout = (value) => {
+    setLayout(value);
+    window.localStorage.setItem('handoff-grid-layout', value);
+  };
   if (!title) title = 'Components';
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
@@ -37,7 +40,7 @@ export const ComponentList = ({
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
       </div>
       <div className="mb-4 flex justify-end">
-        <ToggleGroup type="single" value={layout} onValueChange={(value) => value && setLayout(value)}>
+        <ToggleGroup type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
           <ToggleGroupItem value="grid" aria-label="Grid layout">
             <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
           </ToggleGroupItem>
@@ -96,9 +99,10 @@ export const AbstractComponentsPageCard = ({
 }) => {
   if (!path) path = 'components';
   // trim description to 200 characters at a word boundary
-  if (description.length > 85) {
-    description = description.substring(0, description.lastIndexOf(' ', 85)) + '...';
-  }
+
+  const short = description.length > 85 ? description.substring(0, description.lastIndexOf(' ', 85)) + '...' : description;
+  const long = description.length > 500 ? description.substring(0, description.lastIndexOf(' ', 500)) + '...' : description;
+
   if (!image) {
     image = `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`;
   }
@@ -106,12 +110,14 @@ export const AbstractComponentsPageCard = ({
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
       <Link href={available ? (absolute ? path : `/system/component/${id}`) : '#'}>
         <img src={image} width={1528} height={1250} alt="Components" className="mb-5 rounded-lg" />
-        <div>
-          <h2 className="text-base font-medium">{title}</h2>
-          {variations && <small className="font-mono text-xs font-light text-gray-400">{variations} variations</small>}
-          <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>{description}</p>
-        </div>
       </Link>
+      <div>
+        <h2 className="text-base font-medium">{title}</h2>
+        {variations && <small className="font-mono text-xs font-light text-gray-400">{variations} variations</small>}
+        <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>
+          {layout === 'grid' ? short : long}
+        </p>
+      </div>
     </div>
   );
 };

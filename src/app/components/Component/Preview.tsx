@@ -208,7 +208,6 @@ export const ComponentDisplay: React.FC<{
               ref={ref}
               height={height}
               style={{
-                width: '1px',
                 minWidth: width,
                 height: height,
               }}
@@ -221,7 +220,6 @@ export const ComponentDisplay: React.FC<{
             ref={ref}
             height={height}
             style={{
-              width: '1px',
               minWidth: width,
               height: height,
             }}
