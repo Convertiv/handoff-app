@@ -16,6 +16,7 @@
 		--card-foreground: 222.2 47.4% 11.2%;
 		--primary: 222.2 47.4% 11.2%;
 		--primary-foreground: 210 40% 98%;
+		--primary-foreground: 0 0% 100%;
 		--secondary: 210 40% 96.1%;
 		--secondary-foreground: 222.2 47.4% 11.2%;
 		--accent: 210 40% 96.1%;
@@ -95,6 +96,18 @@
 			@apply border-gray-200;
 			@apply dark:border-gray-700;
 		}
+	}
+
+	.dotted-bg {
+		--dot-bg: #fff;
+		--dot-color: #ebebeb;
+		--dot-size: 1.5px;
+		--dot-space: 14px;
+		background:
+			linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space)
+				var(--dot-space),
+			linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+			var(--dot-color);
 	}
 }
 

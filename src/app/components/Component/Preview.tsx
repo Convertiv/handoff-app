@@ -6,12 +6,24 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
 import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
-import { Component, File, Fullscreen, MoveHorizontal, RefreshCcw, SquareArrowOutUpRight, Text } from 'lucide-react';
+import {
+  Component,
+  File,
+  Monitor,
+  MousePointerClick,
+  MoveHorizontal,
+  RefreshCcw,
+  Smartphone,
+  SquareArrowOutUpRight,
+  Tablet,
+  Text,
+} from 'lucide-react';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -105,33 +117,35 @@ export const ComponentDisplay: React.FC<{
   }, [component]);
   return (
     <div className="md:flex">
-      <div className="text-medium flex w-full flex-col items-center rounded-lg border">
+      <div className="text-medium flex w-full flex-col items-center rounded-lg border border-gray-200 dark:border-gray-900">
         {component?.previews ? (
           <>
-            <div className="flex w-full items-center justify-between rounded-t-lg border-b bg-gray-50 px-6 py-2 align-middle dark:bg-gray-800">
-              <Select
-                defaultValue={breakpoint}
-                onValueChange={(key) => {
-                  setBreakpoint(key);
-                  setWidth(`${breakpoints[key].size}px`);
-                }}
-              >
-                <SelectTrigger className="h-8 w-[180px] text-xs">
-                  <SelectValue placeholder="Breakpoint" />
-                </SelectTrigger>
-                <SelectContent>
-                  {breakpoints &&
-                    Object.keys(breakpoints).map((key) => (
-                      <SelectItem key={'breakpoint_' + key} value={key}>
-                        {breakpoints[key].name}
-                      </SelectItem>
-                    ))}
-                  <SelectItem value="full">Full Width</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800">
               <div className="flex items-center gap-2">
-                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                <p className="font-monospace text-[11px] text-accent-foreground">Component Name</p>
+                <Separator orientation="vertical" className="mx-2 h-3" />
+                {/* <Select
+                  defaultValue={breakpoint}
+                  onValueChange={(key) => {
+                    setBreakpoint(key);
+                    setWidth(`${breakpoints[key].size}px`);
+                  }}
+                >
                   <SelectTrigger className="h-8 w-[180px] text-xs">
+                    <SelectValue placeholder="Breakpoint" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {breakpoints &&
+                      Object.keys(breakpoints).map((key) => (
+                        <SelectItem key={'breakpoint_' + key} value={key}>
+                          {breakpoints[key].name}
+                        </SelectItem>
+                      ))}
+                    <SelectItem value="full">Full Width</SelectItem>
+                  </SelectContent>
+                </Select> */}
+                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                  <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
                     <SelectValue placeholder="Preview" />
                   </SelectTrigger>
                   <SelectContent>
@@ -145,12 +159,30 @@ export const ComponentDisplay: React.FC<{
                     ))}
                   </SelectContent>
                 </Select>
-                <Separator orientation="vertical" className="h-6" />
+              </div>
+              <div className="flex items-center gap-0">
+                <p className="font-monospace text-[11px] text-accent-foreground">80%</p>
+                <Separator orientation="vertical" className="mx-3 h-6" />
+                <RadioGroup className="flex items-center gap-0" defaultValue="1100" onValueChange={(value) => setWidth(`${value}px`)}>
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-gray-300 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 [&_svg]:size-3">
+                    <RadioGroupItem value="1100" className="sr-only after:absolute after:inset-0" />
+                    <Monitor />
+                  </label>
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-gray-300 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 [&_svg]:size-3">
+                    <RadioGroupItem value="800" className="sr-only after:absolute after:inset-0" />
+                    <Tablet />
+                  </label>
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-gray-300 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 [&_svg]:size-2.5">
+                    <RadioGroupItem value="400" className="sr-only after:absolute after:inset-0" />
+                    <Smartphone />
+                  </label>
+                </RadioGroup>
+                <Separator orientation="vertical" className="mx-3 h-6" />
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        className="[&_svg]:size-3"
+                        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           if (ref.current) {
                             ref.current.contentWindow.location.reload();
@@ -161,10 +193,10 @@ export const ComponentDisplay: React.FC<{
                         <RefreshCcw />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="px-2 py-1 text-xs">Refresh Preview</TooltipContent>
+                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <TooltipProvider delayDuration={0}>
+                {/* <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -182,12 +214,31 @@ export const ComponentDisplay: React.FC<{
                     </TooltipTrigger>
                     <TooltipContent className="px-2 py-1 text-xs">Fullscreen Preview</TooltipContent>
                   </Tooltip>
+                </TooltipProvider> */}
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-4"
+                        onClick={() => {
+                          // make div fullscreen
+                          if (ref.current) {
+                            ref.current.requestFullscreen();
+                          }
+                        }}
+                        variant="ghost"
+                      >
+                        <MousePointerClick strokeWidth={1.5} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Inspect Component</TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        className="[&_svg]:size-3"
+                        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
                           window.open(previewUrl, '_blank');
@@ -197,13 +248,13 @@ export const ComponentDisplay: React.FC<{
                         <SquareArrowOutUpRight />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="px-2 py-1 text-xs">Open in New Tab</TooltipContent>
+                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Open in New Tab</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
             </div>
 
-            <div className="flex w-full justify-center">
+            <div className="dotted-bg flex w-full justify-center p-8">
               <iframe
                 onLoad={onLoad}
                 ref={ref}
@@ -211,13 +262,14 @@ export const ComponentDisplay: React.FC<{
                 style={{
                   minWidth: width,
                   height: height,
+                  transition: 'min-width 0.1s ease-in-out',
                 }}
                 src={previewUrl}
               />
             </div>
           </>
         ) : (
-          <div className="flex w-full justify-center">
+          <div className="dotted-bg flex w-full justify-center">
             <iframe
               onLoad={onLoad}
               ref={ref}
