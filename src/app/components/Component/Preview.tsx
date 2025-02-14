@@ -203,6 +203,21 @@ export const ComponentDisplay: React.FC<{
               </div>
             </div>
 
+            <div className="flex w-full justify-center">
+              <iframe
+                onLoad={onLoad}
+                ref={ref}
+                height={height}
+                style={{
+                  minWidth: width,
+                  height: height,
+                }}
+                src={previewUrl}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex w-full justify-center">
             <iframe
               onLoad={onLoad}
               ref={ref}
@@ -211,20 +226,9 @@ export const ComponentDisplay: React.FC<{
                 minWidth: width,
                 height: height,
               }}
-              src={previewUrl}
+              srcDoc={component?.preview}
             />
-          </>
-        ) : (
-          <iframe
-            onLoad={onLoad}
-            ref={ref}
-            height={height}
-            style={{
-              minWidth: width,
-              height: height,
-            }}
-            srcDoc={component?.preview}
-          />
+          </div>
         )}
       </div>
     </div>
