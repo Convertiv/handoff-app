@@ -40,10 +40,9 @@ export const defaultConfig = (): Config => ({
     component_sort: ['primary', 'secondary', 'transparent'],
     base_path: '',
     breakpoints: {
-      sm: { size: 576, name: 'Small' },
-      md: { size: 768, name: 'Medium' },
-      lg: { size: 992, name: 'Large' },
-      xl: { size: 1200, name: 'Extra Large' },
+      mobile: { size: 400, name: 'Mobile' },
+      tablet: { size: 800, name: 'Medium' },
+      desktop: { size: 1100, name: 'Large' },
     },
   },
 });

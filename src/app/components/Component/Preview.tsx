@@ -4,7 +4,6 @@ import { CodeHighlight } from '../Markdown/CodeHighlight';
 import { ComponentInstance } from '@handoff/exporters/components/types';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
-import { Breakpoints } from '@handoff/types/config';
 import { startCase } from 'lodash';
 import {
   Component,
@@ -43,10 +42,7 @@ export const getComponentPreviewTitle = (previewableComponent: ComponentPreview)
   return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
 };
 
-export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews; breakpoints?: Breakpoints }> = ({
-  components,
-  breakpoints,
-}) => {
+export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
   return (
     <>
       {components.map((previewableComponent) => {
@@ -56,7 +52,7 @@ export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews;
             <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
             <p>{component.description}</p>
             <div className="c-component-preview">
-              <ComponentDisplay component={previewableComponent.preview} breakpoints={breakpoints} />
+              <ComponentDisplay component={previewableComponent.preview} />
             </div>
             <CodeHighlight data={previewableComponent.preview} />
             <hr />
@@ -69,15 +65,13 @@ export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews;
 
 export const ComponentDisplay: React.FC<{
   component: PreviewObject | undefined;
-  breakpoints?: Breakpoints;
   defaultHeight?: string | undefined;
-}> = ({ component, breakpoints, defaultHeight }) => {
-  const sortedBreakpoints = breakpoints ? Object.keys(breakpoints).sort((a, b) => breakpoints[b].size - breakpoints[a].size) : [];
+}> = ({ component, defaultHeight }) => {
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
   const [previewUrl, setPreviewUrl] = React.useState('');
-  const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[1]].size + 'px');
-  const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[1] : '');
+  const [width, setWidth] = React.useState('1100px');
+  const [inspect, setInspect] = React.useState(false);
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -86,17 +80,9 @@ export const ComponentDisplay: React.FC<{
       if (ref.current.contentWindow.document.body) {
         setHeight(ref.current.contentWindow.document.body.scrollHeight + 'px');
       }
-      // if (window.document.body.clientWidth) {
-      //   sortedBreakpoints.some((key, index) => {
-      //     if (window.document.body.clientWidth > breakpoints[key].size) {
-      //       setBreakpoint(key);
-      //       return true;
-      //     }
-      //   });
-      // }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultHeight, ref, breakpoints]);
+  }, [defaultHeight, ref]);
 
   React.useEffect(() => {
     onLoad();
@@ -106,12 +92,26 @@ export const ComponentDisplay: React.FC<{
     };
   }, [onLoad]);
 
+  const transformPreviewUrl = (url: string) => {
+    let target = url;
+    if (inspect) {
+      target = url.split('.html')[0] + '-inspect.html';
+    } else {
+      target = url.split('-inspect.html')[0] + '.html';
+    }
+    setPreviewUrl(target);
+  };
+
+  React.useEffect(() => {
+    transformPreviewUrl(previewUrl);
+  }, [inspect]);
+
   React.useEffect(() => {
     if (component) {
       if (component.previews) {
         const keys = Object.keys(component.previews);
         // check the environment
-        setPreviewUrl(`/api/component/` + component.previews[keys[0]].url);
+        setPreviewUrl(component.previews[keys[0]].url);
       }
     }
   }, [component]);
@@ -124,36 +124,13 @@ export const ComponentDisplay: React.FC<{
               <div className="flex items-center gap-2">
                 <p className="font-monospace text-[11px] text-accent-foreground">Component Name</p>
                 <Separator orientation="vertical" className="mx-2 h-3" />
-                {/* <Select
-                  defaultValue={breakpoint}
-                  onValueChange={(key) => {
-                    setBreakpoint(key);
-                    setWidth(`${breakpoints[key].size}px`);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[180px] text-xs">
-                    <SelectValue placeholder="Breakpoint" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {breakpoints &&
-                      Object.keys(breakpoints).map((key) => (
-                        <SelectItem key={'breakpoint_' + key} value={key}>
-                          {breakpoints[key].name}
-                        </SelectItem>
-                      ))}
-                    <SelectItem value="full">Full Width</SelectItem>
-                  </SelectContent>
-                </Select> */}
-                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                <Select defaultValue={previewUrl} onValueChange={transformPreviewUrl}>
                   <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
                     <SelectValue placeholder="Preview" />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.keys(component.previews).map((key) => (
-                      <SelectItem
-                        key={`/api/component/` + component.previews[key].url}
-                        value={`/api/component/` + component.previews[key].url}
-                      >
+                      <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
                         {component.previews[key].title}
                       </SelectItem>
                     ))}
@@ -221,12 +198,9 @@ export const ComponentDisplay: React.FC<{
                       <Button
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-4"
                         onClick={() => {
-                          // make div fullscreen
-                          if (ref.current) {
-                            ref.current.requestFullscreen();
-                          }
+                          setInspect(!inspect);
                         }}
-                        variant="ghost"
+                        variant={inspect ? 'default' : 'ghost'}
                       >
                         <MousePointerClick strokeWidth={1.5} />
                       </Button>
@@ -264,7 +238,7 @@ export const ComponentDisplay: React.FC<{
                   height: height,
                   transition: 'min-width 0.1s ease-in-out',
                 }}
-                src={previewUrl}
+                src={`/api/component/` + previewUrl}
               />
             </div>
           </>
@@ -323,7 +297,7 @@ export const ComponentPreview: React.FC<{
     <div id={preview.id}>
       <div>
         <BestPracticesCard component={preview} />
-        <ComponentDisplay component={preview} breakpoints={config.app.breakpoints} defaultHeight={height} />
+        <ComponentDisplay component={preview} defaultHeight={height} />
         <CodeHighlight title={title} data={preview} collapsible={true} />
       </div>
       {preview?.properties && (

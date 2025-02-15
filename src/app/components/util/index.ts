@@ -261,8 +261,8 @@ export const staticBuildMenu = () => {
               if (sub.components) {
                 // The user wants to inject the component menu here
                 return {
-                  title: 'Components',
-                  menu: staticBuildComponentMenu(),
+                  title: sub.title,
+                  menu: staticBuildComponentMenu(sub.components),
                 };
               }
               if (sub.tokens) {
@@ -291,9 +291,12 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
-const staticBuildComponentMenu = () => {
+const staticBuildComponentMenu = (type?: string) => {
   let menu = [];
-  const components = fetchComponents();
+  let components = fetchComponents();
+  if (type) {
+    components = components.filter((c) => c.type === type);
+  }
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -309,8 +312,12 @@ const staticBuildComponentMenu = () => {
       }
       menuGroup.menu.push({ path: `system/component/${component.id}`, title });
     });
+    // sort the menu group by name alphabetical
+    menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
     menu.push(menuGroup);
   });
+  // sort the menu by name alphabetical
+  menu = menu.sort((a, b) => a.title.localeCompare(b.title));
   return menu;
 };
 

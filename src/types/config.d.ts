@@ -1,6 +1,6 @@
 export default config;
 import { FileComponentsObject } from '../exporters/components/types';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from '../types';
+import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
 
 export interface ImageStyle {
   name: string;
@@ -34,10 +34,9 @@ export interface ExportResult {
 }
 
 export interface Breakpoints {
-  [key: string]: {
-    size: number;
-    name: string;
-  };
+  mobile: { size: number; name: string };
+  tablet: { size: number; name: string };
+  desktop: { size: number; name: string };
 }
 
 interface NextAppConfig {
@@ -89,8 +88,7 @@ export interface IntegrationObjectComponentOptions {
     [variantProperty: string]: string;
   };
   replace: { [variantProperty: string]: { [source: string]: string } };
-};
-
+}
 
 export interface IntegrationObject {
   name: string;
@@ -98,7 +96,7 @@ export interface IntegrationObject {
     integration?: string;
     templates?: string;
     bundle?: string;
-  }
+  };
   options: {
     [key: string]: IntegrationObjectComponentOptions;
   };

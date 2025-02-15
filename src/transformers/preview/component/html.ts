@@ -61,11 +61,20 @@ const buildPreviews = async (
       }
     });
     const html = data.previews['generic'] ? await buildPreview(id, template, data.previews['generic'], data) : '';
-    injectFieldWrappers = true;
+    // Generate a set of previews without the inspection field wrappers
+    injectFieldWrappers = false;
     for (const previewKey in data.previews) {
       data.previews[previewKey].url = id + `-${previewKey}.html`;
       previews[previewKey] = await buildPreview(id, template, data.previews[previewKey], data);
       const publicFile = path.resolve(outputPath, id + '-' + previewKey + '.html');
+      await fs.writeFile(publicFile, previews[previewKey]);
+    }
+    // Generate a set of previews with the inspection field wrappers suffixed with -inspect
+    injectFieldWrappers = true;
+    for (const previewKey in data.previews) {
+      data.previews[previewKey].url = id + `-${previewKey}.html`;
+      previews[previewKey] = await buildPreview(id, template, data.previews[previewKey], data);
+      const publicFile = path.resolve(outputPath, id + '-' + previewKey + '-inspect.html');
       await fs.writeFile(publicFile, previews[previewKey]);
     }
 
