@@ -78,6 +78,7 @@ export const ComponentDisplay: React.FC<{
   const [previewUrl, setPreviewUrl] = React.useState('');
   const [width, setWidth] = React.useState(breakpoints[sortedBreakpoints[1]].size + 'px');
   const [breakpoint, setBreakpoint] = React.useState(breakpoints ? sortedBreakpoints[1] : '');
+  const [scale, setScale] = React.useState(0.8);
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -161,7 +162,20 @@ export const ComponentDisplay: React.FC<{
                 </Select>
               </div>
               <div className="flex items-center gap-0">
-                <p className="font-monospace text-[11px] text-accent-foreground">80%</p>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-7 px-3 font-mono text-[11px] hover:bg-gray-300"
+                        onClick={() => setScale(scale === 1 ? 0.8 : 1)}
+                        variant="ghost"
+                      >
+                        {scale === 1 ? '100%' : '80%'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Toggle Scale</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Separator orientation="vertical" className="mx-3 h-6" />
                 <RadioGroup className="flex items-center gap-0" defaultValue="1100" onValueChange={(value) => setWidth(`${value}px`)}>
                   <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-gray-300 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 [&_svg]:size-3">
@@ -262,7 +276,9 @@ export const ComponentDisplay: React.FC<{
                 style={{
                   minWidth: width,
                   height: height,
-                  transition: 'min-width 0.1s ease-in-out',
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'center top',
+                  transition: 'all 0.2s ease-in-out',
                 }}
                 src={previewUrl}
               />
