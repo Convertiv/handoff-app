@@ -4,9 +4,9 @@ import { Check, X } from 'lucide-react';
 const PracticeLine: React.FC<{ rule: string; yes: boolean }> = ({ rule, yes }) => (
   <li className="flex items-start gap-3">
     {yes ? (
-      <Check className="mt-[5px] h-3 w-3 text-emerald-600" strokeWidth={3} />
+      <Check className="mt-[5px] h-3 w-3 flex-shrink-0 text-emerald-600" strokeWidth={3} />
     ) : (
-      <X className="mt-[5px] h-3 w-3 text-gray-400" strokeWidth={3} />
+      <X className="mt-[5px] h-3 w-3 flex-shrink-0 text-gray-400" strokeWidth={3} />
     )}
     <p className="text-sm">{rule}</p>
   </li>
