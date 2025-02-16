@@ -105,6 +105,7 @@ export const ComponentDisplay: React.FC<{
 
   React.useEffect(() => {
     transformPreviewUrl(previewUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inspect]);
 
   React.useEffect(() => {
@@ -125,7 +126,7 @@ export const ComponentDisplay: React.FC<{
               <div className="flex items-center gap-2">
                 <p className="font-monospace text-[11px] text-accent-foreground">Component Name</p>
                 <Separator orientation="vertical" className="mx-2 h-3" />
-                <Select defaultValue={previewUrl} onValueChange={transformPreviewUrl}>
+                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
                   <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
                     <SelectValue placeholder="Preview" />
                   </SelectTrigger>
