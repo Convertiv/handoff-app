@@ -1,8 +1,9 @@
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { startCase } from 'lodash';
-import { ArrowRightToLine, Check, Link, SwatchBook, Text } from 'lucide-react';
+import { ArrowRightToLine, Check, CircleCheck, File, Image, Link, MoveHorizontal, SwatchBook } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader } from '../ui/sheet';
@@ -51,6 +52,20 @@ const humanReadableType = (type: string) => {
     case 'object':
     default:
       return type;
+  }
+};
+
+const getVariantForType = (type: string) => {
+  switch (type.toLowerCase()) {
+    case 'text':
+      return 'green';
+    case 'image':
+      return 'info';
+    case 'video_file':
+    case 'video_embed':
+      return 'warning';
+    default:
+      return 'default';
   }
 };
 
@@ -104,20 +119,61 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
           </div>
         </div>
         <SheetHeader className="space-y-2 px-2">
+          {field.type === 'image' && (
+            <div className="flex h-[200px] items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-500">
+              <p>
+                {field.rules?.dimension
+                  ? `${field.rules.dimension.min.width}x${field.rules.dimension.min.height} - ${field.rules.dimension.max.width}x${field.rules.dimension.max.height}`
+                  : 'No dimensions specified'}
+              </p>
+              <Image className="pointer-events-none absolute h-[100px] w-[100px] stroke-1 opacity-5" />
+            </div>
+          )}
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{field.name}</p>
-            <p className="font-mono text-xs text-muted-foreground">{field.id}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-xs text-muted-foreground">{field.id}</p>
+            </div>
           </div>
-          <Separator className="mb-4 mt-6" />
-          <Text className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
+          <Separator className="!mb-4 mt-6" />
           <SheetDescription className="leading-relaxed">{field.description}</SheetDescription>
-          <Separator className="mb-4 mt-6" />
-          <p className="font-mono text-xs">
+          {/* <p className="font-mono text-xs">
             This is a {field.type} field. {humanReadableType(field.type)}
-          </p>
+          </p> */}
         </SheetHeader>
         <div className="px-2">
           <Separator className="mb-4 mt-6" />
+          <ul className="mb-10 flex flex-col gap-2">
+            <li className="flex w-full justify-between py-1">
+              <div className="flex items-center gap-3">
+                <File className="h-3.5 w-3.5 stroke-2 opacity-60" />
+                <p className="text-[13px]">Type</p>
+              </div>
+              <Badge variant={getVariantForType(field.type)} className="rounded-xl px-2.5">
+                {field.type}
+              </Badge>
+            </li>
+            <li className="flex w-full justify-between py-1">
+              <div className="flex items-center gap-3">
+                <MoveHorizontal className="h-3.5 w-3.5 stroke-2 opacity-60" />
+                <p className="text-[13px]">Size</p>
+              </div>
+              <div>
+                <p className="font-mono text-xs text-gray-400">
+                  {field.rules?.content?.min || '-'} - {field.rules?.content?.max || '-'}
+                </p>
+              </div>
+            </li>
+            <li className="flex w-full justify-between py-1">
+              <div className="flex items-center gap-3">
+                <CircleCheck className="h-3.5 w-3.5 stroke-2 opacity-60" />
+                <p className="text-[13px]">Required</p>
+              </div>
+              <div>
+                <p className="font-mono text-xs text-gray-400">{field.rules?.required ? 'Required' : 'Optional'}</p>
+              </div>
+            </li>
+          </ul>
 
           {field.rules && Object.keys(field.rules).map((rule) => <RuleDisplay key={rule} rule={rule} value={field.rules[rule]} />)}
         </div>
