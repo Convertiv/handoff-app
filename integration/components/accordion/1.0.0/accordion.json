@@ -1,7 +1,7 @@
 {
   "title": "Accordion",
   "image": "https://placehold.co/1360x900",
-  "description": "A simple accordion component. Use it for ",
+  "description": "Collapsible sections for toggling sections of content on and off.",
   "figma": "https://www.figma.com/design/0gKWw8gYChpItKWzh8o23N/SS%26C-Design-System?node-id=301-598&t=qoaWE7Tx8sH4njGu-4",
   "type": "block",
   "group": "Accordion",

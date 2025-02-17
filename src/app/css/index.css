@@ -103,6 +103,7 @@
 		--dot-color: #ebebeb;
 		--dot-size: 1.5px;
 		--dot-space: 14px;
+		overflow: auto;
 		background:
 			linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space)
 				var(--dot-space),

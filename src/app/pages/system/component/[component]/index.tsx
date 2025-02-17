@@ -2,8 +2,6 @@
 import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { SelectItem } from '@radix-ui/react-select';
-import { TooltipContent } from '@radix-ui/react-tooltip';
-import { Webhook } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
@@ -11,11 +9,9 @@ import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import { PageTOC } from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
-import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
@@ -85,12 +81,37 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
               ))} */}
           </p>
           <div className="flex flex-row gap-3">
-            <Button variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
-              Figma Reference
-            </Button>
-            <Button variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
-              API Reference
-            </Button>
+            {component.figma && (
+              <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
+                <a href={component.figma} target="_blank">
+                  Figma Reference
+                </a>
+              </Button>
+            )}
+            <Drawer direction="right">
+              <DrawerTrigger>
+                <Button variant="outline" size={'sm'} className="font-normal [&_svg]:!size-3">
+                  API Reference
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <div className="w-md mx-5">
+                  <DrawerHeader>
+                    <DrawerTitle>API Response</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="w-full">
+                    <CodeHighlight
+                      title={apiUrl}
+                      language="json"
+                      type="json"
+                      data={JSON.stringify(component, null, 2)}
+                      dark={true}
+                      height="80vh"
+                    />
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>
@@ -116,47 +137,6 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
                 <SelectItem value="full">Latest</SelectItem>
               </SelectContent>
             </Select>
-            {component.figma && (
-              <Button asChild variant="outline">
-                <a href={component.figma} target="_blank">
-                  Figma
-                </a>
-              </Button>
-            )}
-
-            <Drawer direction="right">
-              <DrawerTrigger>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline">
-                        API <Webhook strokeWidth={1.5} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                      <Badge>{apiUrl}</Badge>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </DrawerTrigger>
-              <DrawerContent>
-                <div className="w-md mx-5">
-                  <DrawerHeader>
-                    <DrawerTitle>API Response</DrawerTitle>
-                  </DrawerHeader>
-                  <div className="w-full">
-                    <CodeHighlight
-                      title={apiUrl}
-                      language="json"
-                      type="json"
-                      data={JSON.stringify(component, null, 2)}
-                      dark={true}
-                      height="80vh"
-                    />
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
           </div>
         </div>
         <PageTOC title={'On This Page'} body={ref} />

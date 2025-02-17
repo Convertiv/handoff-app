@@ -243,7 +243,7 @@ export const ComponentDisplay: React.FC<{
               </div>
             </div>
 
-            <div className="dotted-bg flex w-full justify-center p-8">
+            <div className="dotted-bg w-full p-8">
               <iframe
                 onLoad={onLoad}
                 ref={ref}
@@ -254,6 +254,8 @@ export const ComponentDisplay: React.FC<{
                   transform: `scale(${scale})`,
                   transformOrigin: 'center top',
                   transition: 'all 0.2s ease-in-out',
+                  display: 'block',
+                  margin: '0 auto',
                 }}
                 src={`/api/component/` + previewUrl}
               />
