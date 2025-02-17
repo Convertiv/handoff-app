@@ -11,6 +11,7 @@ import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
@@ -95,15 +96,22 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
                 <SelectItem value="full">Latest</SelectItem>
               </SelectContent>
             </Select>
+            {component.figma && (
+              <Button asChild variant="outline">
+                <a href={component.figma} target="_blank">
+                  Figma
+                </a>
+              </Button>
+            )}
 
             <Drawer direction="right">
               <DrawerTrigger>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <>
-                        Component API <Webhook strokeWidth={1.5} />
-                      </>
+                      <Button variant="outline">
+                        API <Webhook strokeWidth={1.5} />
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left">
                       <Badge>{apiUrl}</Badge>

@@ -15,6 +15,7 @@ export declare type ComponentListObject = {
     categories: string[];
     tags: string[];
     description: string;
+    figma: string;
     properties: {
         [key: string]: SlotMetadata;
     };
@@ -30,6 +31,7 @@ export declare type TransformComponentTokensResult = {
     image?: string;
     group?: string;
     categories?: string[];
+    figma?: string;
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];

@@ -10,6 +10,7 @@ import Layout from '../../components/Layout/Main';
 import { CodeHighlight } from '../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
+import { Button } from '../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../components/ui/drawer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../components/util';
@@ -76,9 +77,9 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <>
-                      Component API <Webhook strokeWidth={1.5} />
-                    </>
+                    <Button variant="outline">
+                      API <Webhook strokeWidth={1.5} />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent side="left">
                     <Badge>{apiUrl}</Badge>

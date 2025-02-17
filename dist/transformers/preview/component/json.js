@@ -36,6 +36,7 @@ const parseComponentJson = (id, location, data) => __awaiter(void 0, void 0, voi
                     data.group = parsed.group || 'default';
                     data.tags = parsed.tags || [];
                     data.categories = parsed.categories || [];
+                    data.figma = parsed.figma || '';
                     data.description = parsed.description;
                     data.properties = parsed.properties;
                     data.previews = parsed.previews;

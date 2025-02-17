@@ -49,6 +49,7 @@ const versions_1 = __importStar(require("./versions"));
 const defaultComponent = {
     id: '',
     title: 'Untitled',
+    figma: '',
     image: '',
     description: 'No description provided',
     preview: 'No preview available',
@@ -118,6 +119,7 @@ const buildComponentSummary = (id, latest, versions) => {
         type: latest.type,
         group: latest.group,
         image: latest.image ? latest.image : '',
+        figma: latest.figma ? latest.figma : '',
         categories: latest.categories ? latest.categories : [],
         tags: latest.tags ? latest.tags : [],
         properties: latest.properties,

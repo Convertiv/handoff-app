@@ -110,6 +110,7 @@ export interface PreviewObject {
     title: string;
     image: string;
     description: string;
+    figma: string;
     should_do: string[];
     should_not_do: string[];
     categories?: string[];

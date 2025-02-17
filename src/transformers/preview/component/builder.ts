@@ -13,6 +13,7 @@ import getVersionsForComponent, { getLatestVersionForComponent } from './version
 const defaultComponent: TransformComponentTokensResult = {
   id: '',
   title: 'Untitled',
+  figma: '',
   image: '',
   description: 'No description provided',
   preview: 'No preview available',
@@ -82,6 +83,7 @@ const buildComponentSummary = (id: string, latest: TransformComponentTokensResul
     type: latest.type,
     group: latest.group,
     image: latest.image ? latest.image : '',
+    figma: latest.figma ? latest.figma : '',
     categories: latest.categories ? latest.categories : [],
     tags: latest.tags ? latest.tags : [],
     properties: latest.properties,

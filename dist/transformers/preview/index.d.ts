@@ -11,6 +11,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             image?: string;
             group?: string;
             categories?: string[];
+            figma?: string;
             tags?: string[];
             should_do?: string[];
             should_not_do?: string[];
