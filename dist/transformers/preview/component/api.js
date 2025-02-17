@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
+exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const getAPIPath = (handoff) => {
@@ -31,6 +31,7 @@ exports.getAPIPath = getAPIPath;
  * @param componentData
  */
 const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, void 0, void 0, function* () {
+    componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
 const writeComponentApi = (id, component, version, handoff) => __awaiter(void 0, void 0, void 0, function* () {
@@ -45,4 +46,22 @@ const writeComponentMetadataApi = (id, summary, handoff) => __awaiter(void 0, vo
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', `${id}.json`), JSON.stringify(summary, null, 2));
 });
 exports.writeComponentMetadataApi = writeComponentMetadataApi;
+/**
+ * Update the main component summary API with the new component data
+ * @param handoff
+ * @param componentData
+ */
+const updateComponentSummaryApi = (handoff, componentData) => __awaiter(void 0, void 0, void 0, function* () {
+    const apiPath = path_1.default.resolve(handoff.workingPath, `public/api/components.json`);
+    let newComponentData = [componentData], existingData = [];
+    if (fs_extra_1.default.existsSync(apiPath)) {
+        const existing = yield fs_extra_1.default.readFile(apiPath, 'utf8');
+        if (existing) {
+            existingData = JSON.parse(existing);
+            existingData = existingData.filter((component) => component.id !== componentData.id);
+        }
+    }
+    yield writeComponentSummaryAPI(handoff, newComponentData.concat(existingData));
+});
+exports.updateComponentSummaryApi = updateComponentSummaryApi;
 exports.default = writeComponentSummaryAPI;

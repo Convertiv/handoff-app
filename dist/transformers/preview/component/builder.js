@@ -104,12 +104,20 @@ function processComponent(handoff, id, sharedStyles) {
             (0, api_1.writeComponentApi)(id, latestVersion, 'latest', handoff);
             const summary = yield buildComponentSummary(id, latestVersion, versions);
             (0, api_1.writeComponentMetadataApi)(id, summary, handoff);
+            (0, api_1.updateComponentSummaryApi)(handoff, summary);
             return summary;
         }
         throw new Error(`No latest version found for ${id}`);
     });
 }
 exports.processComponent = processComponent;
+/**
+ * Build a summary for the component list
+ * @param id
+ * @param latest
+ * @param versions
+ * @returns
+ */
 const buildComponentSummary = (id, latest, versions) => {
     return {
         id,

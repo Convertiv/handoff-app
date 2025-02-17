@@ -3,7 +3,7 @@ import path from 'path';
 import Handoff from '../../../index';
 import { getComponentPath, processSharedStyles } from '../component';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
-import { writeComponentApi, writeComponentMetadataApi } from './api';
+import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
 import buildPreviews from './html';
 import buildComponentJs from './javascript';
@@ -69,11 +69,19 @@ export async function processComponent(handoff: Handoff, id: string, sharedStyle
     writeComponentApi(id, latestVersion, 'latest', handoff);
     const summary = await buildComponentSummary(id, latestVersion, versions);
     writeComponentMetadataApi(id, summary, handoff);
+    updateComponentSummaryApi(handoff, summary);
     return summary;
   }
   throw new Error(`No latest version found for ${id}`);
 }
 
+/**
+ * Build a summary for the component list
+ * @param id
+ * @param latest
+ * @param versions
+ * @returns
+ */
 const buildComponentSummary = (id: string, latest: TransformComponentTokensResult, versions: string[]): ComponentListObject => {
   return {
     id,
