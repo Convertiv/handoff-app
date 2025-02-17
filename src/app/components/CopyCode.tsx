@@ -10,10 +10,10 @@ export const CopyCode: React.FC<CopyCodeProps> = ({ code }) => {
   const [copy, setCopy] = React.useState('Copy code to clipboard');
 
   return (
-    <Button variant="outline" asChild>
+    <Button variant="ghost" size={'sm'} asChild>
       <a
         href="#"
-        className="c-code-block__button c-tooltip"
+        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
         data-tooltip={copy}
         data-copy-state="copy"
         onMouseEnter={(e) => setCopy('Copy code to clipboard')}
