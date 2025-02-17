@@ -70,7 +70,7 @@ export const ComponentDisplay: React.FC<{
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
   const [previewUrl, setPreviewUrl] = React.useState('');
-  const [width, setWidth] = React.useState('870px');
+  const [width, setWidth] = React.useState('1100px');
   const [inspect, setInspect] = React.useState(false);
   const [scale, setScale] = React.useState(0.8);
 
