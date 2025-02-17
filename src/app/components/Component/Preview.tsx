@@ -319,7 +319,7 @@ export const ComponentPreview: React.FC<{
       </div>
       {preview?.properties && (
         <>
-          <HeadersType.H3>Properties</HeadersType.H3>
+          <HeadersType.H3 id="properties">Properties</HeadersType.H3>
           <ComponentProperties
             fields={Object.keys(preview.properties).map((key) => {
               return { ...preview.properties[key], key };

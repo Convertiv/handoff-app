@@ -4,11 +4,12 @@ import { PreviewObject } from '@handoff/types';
 import { SelectItem } from '@radix-ui/react-select';
 import { TooltipContent } from '@radix-ui/react-tooltip';
 import { Webhook } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
+import { PageTOC } from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
@@ -54,6 +55,8 @@ export const getStaticProps = async (context) => {
 
 const GenericComponentPage = ({ menu, metadata, current, id, config, previews }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
+  const ref = React.useRef<HTMLDivElement>(null);
+
   const fetchComponents = async () => {
     let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
@@ -65,10 +68,10 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
   const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
-      <div className="flex flex-col gap-2 pb-7">
+      <div className="flex flex-col gap-2 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
-        <div className="mt-3 flex flex-row justify-between gap-3">
-          <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+        <div className="flex flex-row justify-between gap-4 md:flex-col">
+          <p className="text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
             {metadata.description}
             {/* {component.tags &&
               Array.isArray(component.tags) &&
@@ -81,7 +84,24 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
                 </>
               ))} */}
           </p>
-          <div>
+          <div className="flex flex-row gap-3">
+            <Button variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
+              Figma Reference
+            </Button>
+            <Button variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
+              API Reference
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="max-w-[900px]">
+          <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
+            <ComponentPreview title={metadata.title} id={id}>
+              <p>Define a simple contact form</p>
+            </ComponentPreview>
+          </PreviewContextProvider>
+          <div className="mt-8">
             <Select
             // defaultValue={breakpoint}
             // onValueChange={(key) => {
@@ -139,15 +159,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
             </Drawer>
           </div>
         </div>
-      </div>
-      <div className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[1fr_280px]">
-        <div>
-          <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
-            <ComponentPreview title={metadata.title} id={id}>
-              <p>Define a simple contact form</p>
-            </ComponentPreview>
-          </PreviewContextProvider>
-        </div>
+        <PageTOC title={'On This Page'} body={ref} />
       </div>
     </Layout>
   );
