@@ -93,6 +93,7 @@ export const CodeHighlight: React.FC<{
           'properties',
           'should_do',
           'should_not_do',
+          'figma',
         ].indexOf(key) === -1
     )
     .map((key) => key);
