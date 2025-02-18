@@ -230,7 +230,7 @@ export const ComponentDisplay: React.FC<{
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
-                          window.open(previewUrl, '_blank');
+                          window.open('/api/component/' + previewUrl, '_blank');
                         }}
                         variant="ghost"
                       >
