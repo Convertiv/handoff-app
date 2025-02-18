@@ -244,21 +244,23 @@ export const ComponentDisplay: React.FC<{
             </div>
 
             <div className="dotted-bg w-full p-8">
-              <iframe
-                onLoad={onLoad}
-                ref={ref}
-                height={height}
-                style={{
-                  minWidth: width,
-                  height: height,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'center top',
-                  transition: 'all 0.2s ease-in-out',
-                  display: 'block',
-                  margin: '0 auto',
-                }}
-                src={`/api/component/` + previewUrl}
-              />
+              <div>
+                <iframe
+                  onLoad={onLoad}
+                  ref={ref}
+                  height={height}
+                  style={{
+                    minWidth: width,
+                    height: height,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'left top',
+                    transition: 'all 0.2s ease-in-out',
+                    display: 'block',
+                    margin: '0 auto',
+                  }}
+                  src={`/api/component/` + previewUrl}
+                />
+              </div>
             </div>
           </>
         ) : (
