@@ -30,6 +30,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             properties?: {
                 [key: string]: import("./component").SlotMetadata;
             };
+            variant?: Record<string, string>;
         }[];
     };
 }>;

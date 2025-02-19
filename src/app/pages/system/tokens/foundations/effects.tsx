@@ -97,7 +97,7 @@ const EffectsTable = ({ group, effects }: { group: string; effects: EffectObject
       <TableBody>
         {effects.map((effect) => (
           <TableRow key={effect.id} className="h-10 border-b-[0.5px]">
-            <TableCell className="border-r-[0.5px] px-3.5 py-1">{effect.reference}</TableCell>
+            <TableCell className="border-r-[0.5px] px-3.5 py-1">{effect.reference.replace(/-+/g, '-')}</TableCell>
             <TableCell className="border-r-[0.5px] px-3.5 py-1">
               {effect.effects.map((effect) => effect.value).join(', ') || 'none'}
             </TableCell>

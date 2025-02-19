@@ -50,6 +50,7 @@ export declare type TransformComponentTokensResult = {
     properties?: {
         [key: string]: SlotMetadata;
     };
+    variant?: Record<string, string>;
 } | null;
 export declare type OptionalPreviewRender = {
     title: string;

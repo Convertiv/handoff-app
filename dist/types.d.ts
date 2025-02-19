@@ -130,6 +130,7 @@ export interface PreviewObject {
     };
     code: string;
     html?: string;
+    variant?: Record<string, string>;
 }
 export declare type PreviewJson = {
     components: {

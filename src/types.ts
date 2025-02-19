@@ -144,6 +144,7 @@ export interface PreviewObject {
   properties?: { [key: string]: SlotMetadata };
   code: string;
   html?: string;
+  variant?: Record<string, string>;
 }
 
 export type PreviewJson = {
