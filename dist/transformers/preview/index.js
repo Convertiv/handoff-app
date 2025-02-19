@@ -12,12 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const node_html_parser_1 = require("node-html-parser");
+const path_1 = __importDefault(require("path"));
 const index_1 = require("../../utils/index");
 const utils_1 = require("./utils");
-const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
 function mergeTokenSets(tokenSetList) {
     const obj = {};
     tokenSetList.forEach((item) => {
@@ -61,9 +61,11 @@ const transformComponentTokens = (handoff, componentId, component) => __awaiter(
         });
     }
     const bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
+    const variant = Object.fromEntries(component.variantProperties);
     return {
         id: component.id,
         preview,
+        variant,
         code: bodyEl ? bodyEl.innerHTML.trim() : preview,
     };
 });

@@ -25,5 +25,6 @@ declare const buildComponentCss: (id: string, location: string, data: TransformC
     properties?: {
         [key: string]: import("../component").SlotMetadata;
     };
+    variant?: Record<string, string>;
 }>;
 export default buildComponentCss;

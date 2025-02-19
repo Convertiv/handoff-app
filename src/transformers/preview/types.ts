@@ -45,6 +45,7 @@ export type TransformComponentTokensResult = {
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
+  variant?: Record<string, string>;
 } | null;
 
 export type OptionalPreviewRender = {

@@ -1,7 +1,6 @@
 'use client';
 import { getClientConfig } from '@handoff/config';
-import { PreviewObject } from '@handoff/types';
-import { SelectItem } from '@radix-ui/react-select';
+import { PreviewJson, PreviewObject } from '@handoff/types';
 import React, { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
@@ -11,8 +10,16 @@ import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
-import { Select, SelectContent, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { fetchComponents, getCurrentSection, getPreview, IParams, staticBuildMenu } from '../../../../components/util';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import {
+  fetchComponents,
+  getCurrentSection,
+  getPreview,
+  getTokens,
+  IParams,
+  reduceSlugToString,
+  staticBuildMenu,
+} from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -25,16 +32,47 @@ export async function getStaticPaths() {
   };
 }
 
+type GroupedPreviews = [string, PreviewObject[]][];
+
+const groupPreviewsByVariantProperty = (items: PreviewObject[], variantProperty: string): GroupedPreviews => {
+  const grouped: GroupedPreviews = [];
+
+  for (const item of items) {
+    const typeProperty = item.variant[variantProperty];
+
+    if (!typeProperty) continue;
+
+    const typeValue = typeProperty;
+    const groupIndex = grouped.findIndex((el) => el[0] === typeValue);
+
+    const itemToAdd = { ...item };
+    itemToAdd.variant = Object.fromEntries(Object.entries(itemToAdd.variant).filter(([key]) => key !== variantProperty));
+
+    if (groupIndex === -1) {
+      grouped.push([typeValue, [itemToAdd]]);
+    } else {
+      grouped[groupIndex][1].push(itemToAdd);
+    }
+  }
+
+  return grouped;
+};
+
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
   const previews = getPreview();
+
+  const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
+  const isFigmaComponent = !!componentObject;
+
   const menu = staticBuildMenu();
   const config = getClientConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
   return {
     props: {
       id: component,
+      isFigmaComponent,
       previews,
       menu,
       config,
@@ -49,9 +87,10 @@ export const getStaticProps = async (context) => {
   };
 };
 
-const GenericComponentPage = ({ menu, metadata, current, id, config, previews }) => {
+const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, config, previews }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
+  const [componentPreviews, setComponentPreviews] = useState<PreviewJson | PreviewJson[]>(previews);
 
   const fetchComponents = async () => {
     let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
@@ -60,7 +99,24 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
 
   useEffect(() => {
     fetchComponents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!component || !isFigmaComponent) return;
+
+    if (component.id !== 'button') return; // TODO: WIP, currently hardcoded to work with buttons only. Implement configuration support through .json files
+
+    const groups = groupPreviewsByVariantProperty((previews as PreviewJson).components[component.id], 'Type');
+
+    setComponentPreviews(
+      groups.map((group) => ({
+        components: {
+          [component.id]: group[1],
+        },
+      }))
+    );
+  }, [component, isFigmaComponent, previews]);
 
   if (!component) return <p>Loading...</p>;
   const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
@@ -119,11 +175,33 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
       </div>
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
-          <PreviewContextProvider defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
-            <ComponentPreview title={metadata.title} id={id}>
-              <p>Define a simple contact form</p>
-            </ComponentPreview>
-          </PreviewContextProvider>
+          {!isFigmaComponent && (
+            <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
+              <ComponentPreview title={metadata.title}>
+                <p>Define a simple contact form</p>
+              </ComponentPreview>
+            </PreviewContextProvider>
+          )}
+          {isFigmaComponent && Array.isArray(componentPreviews) && (
+            <>
+              {componentPreviews.map((cp, cpi) => (
+                <PreviewContextProvider
+                  key={`component_${cpi}`}
+                  id={id}
+                  isFigmaComponent={true}
+                  defaultMetadata={metadata}
+                  defaultMenu={menu}
+                  defaultPreview={cp}
+                  defaultConfig={config}
+                >
+                  <ComponentPreview title={metadata.title}>
+                    <p>Define a simple contact form</p>
+                  </ComponentPreview>
+                </PreviewContextProvider>
+              ))}
+            </>
+          )}
+
           <div className="mt-8">
             <Select
             // defaultValue={breakpoint}

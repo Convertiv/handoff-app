@@ -1,14 +1,13 @@
+import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import { parse } from 'node-html-parser';
-import Handoff from '../../index';
-import { DocumentationObject, ComponentDefinitionOptions } from '../../types';
-import { filterOutNull } from '../../utils/index';
-import { getComponentTemplate } from './utils';
-import { ComponentInstance } from '../../exporters/components/types';
-import { TokenSets } from '../../exporters/components/types';
-import { TransformComponentTokensResult } from './types';
 import path from 'path';
-import fs from 'fs-extra';
+import { ComponentInstance, TokenSets } from '../../exporters/components/types';
+import Handoff from '../../index';
+import { DocumentationObject } from '../../types';
+import { filterOutNull } from '../../utils/index';
+import { TransformComponentTokensResult } from './types';
+import { getComponentTemplate } from './utils';
 
 type GetComponentTemplateByComponentIdResult = string | null;
 
@@ -77,10 +76,12 @@ const transformComponentTokens = async (
   }
 
   const bodyEl = parse(preview).querySelector('body');
+  const variant: Record<string, string> = Object.fromEntries(component.variantProperties);
 
   return {
     id: component.id,
     preview,
+    variant,
     code: bodyEl ? bodyEl.innerHTML.trim() : preview,
   };
 };
@@ -107,10 +108,13 @@ export default async function previewTransformer(handoff: Handoff, documentation
 
   await publishTokensAPI(handoff, documentationObject);
 
-  let previews = result.reduce((obj, el) => {
-    obj[el[0]] = el[1];
-    return obj;
-  }, {} as { [key: string]: TransformComponentTokensResult[] });
+  let previews = result.reduce(
+    (obj, el) => {
+      obj[el[0]] = el[1];
+      return obj;
+    },
+    {} as { [key: string]: TransformComponentTokensResult[] }
+  );
 
   return {
     components: previews,
@@ -131,11 +135,11 @@ const publishTokensAPI = async (handoff: Handoff, tokens: DocumentationObject) =
 
   // write tokens to the api path
   fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
-  if(!fs.existsSync(path.join(apiPath, 'tokens'))) {
+  if (!fs.existsSync(path.join(apiPath, 'tokens'))) {
     fs.mkdirSync(path.join(apiPath, 'tokens'));
   }
   for (const type in tokens) {
-    if(type === 'timestamp') continue;
+    if (type === 'timestamp') continue;
     for (const group in tokens[type]) {
       fs.writeFileSync(path.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
     }
