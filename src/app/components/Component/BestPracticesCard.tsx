@@ -14,7 +14,7 @@ const PracticeLine: React.FC<{ rule: string; yes: boolean }> = ({ rule, yes }) =
 
 const BestPracticesCard: React.FC<{ component: PreviewObject }> = ({ component }) => {
   return (
-    <div className="flex flex-col gap-2 pb-7">
+    <div id="best-practices" className="flex flex-col gap-2 pb-7">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(100%,1fr))] gap-6 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
         {component.should_do && component.should_do.length > 0 && (
           <div className="relative rounded-lg border bg-gray-50 p-8 text-gray-600 dark:bg-gray-800">

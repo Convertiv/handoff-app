@@ -118,7 +118,7 @@ export const ComponentDisplay: React.FC<{
     }
   }, [component]);
   return (
-    <div className="md:flex">
+    <div className="md:flex" id="preview">
       <div className="text-medium flex w-full flex-col items-center rounded-lg border border-gray-200 dark:border-gray-900">
         {component?.previews ? (
           <>
@@ -319,6 +319,7 @@ export const ComponentPreview: React.FC<{
       <div>
         <BestPracticesCard component={preview} />
         <ComponentDisplay component={preview} defaultHeight={height} />
+        <a id="code-highlight" />
         <CodeHighlight title={title} data={preview} collapsible={true} />
       </div>
       {preview?.properties && (

@@ -7,7 +7,7 @@ import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
-import { PageTOC } from '../../../../components/Navigation/AnchorNav';
+import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
@@ -57,9 +57,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
     let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
+
   useEffect(() => {
     fetchComponents();
   }, []);
+
   if (!component) return <p>Loading...</p>;
   const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
   return (
@@ -139,7 +141,16 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, previews })
             </Select>
           </div>
         </div>
-        <PageTOC title={'On This Page'} body={ref} />
+        <AnchorNav
+          groups={[
+            {
+              'best-practices': 'Best Practices',
+              preview: 'Previews',
+              'code-highlight': 'Code Samples',
+              properties: 'Properties',
+            },
+          ]}
+        />
       </div>
     </Layout>
   );
