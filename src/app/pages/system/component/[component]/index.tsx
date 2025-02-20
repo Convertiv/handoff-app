@@ -122,10 +122,10 @@ const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, c
   const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
-      <div className="flex flex-col gap-2 pb-14">
+      <div className="flex flex-col gap-3 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
-          <p className="text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+          <p className="max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
             {metadata.description}
             {/* {component.tags &&
               Array.isArray(component.tags) &&
