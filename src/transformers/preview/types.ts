@@ -21,7 +21,7 @@ export type ComponentListObject = {
   properties: { [key: string]: SlotMetadata };
   versions: string[];
   previews: { [key: string]: OptionalPreviewRender };
-  previewOptions?: { group_by: boolean };
+  preview_options?: { group_by: boolean };
   paths: string[];
 };
 
@@ -46,7 +46,7 @@ export type TransformComponentTokensResult = {
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
-  previewOptions?: { group_by: boolean };
+  preview_options?: { group_by: boolean };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
 } | null;

@@ -125,7 +125,7 @@ export interface PreviewObject {
             url: string;
         };
     };
-    previewOptions?: {
+    preview_options?: {
         group_by: string;
     };
     properties?: {

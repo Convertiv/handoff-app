@@ -107,8 +107,8 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
   useEffect(() => {
     if (!component) return;
 
-    if (!!component.previewOptions?.group_by) {
-      const groups = groupPreviewsByVariantProperty(component.previews, component.previewOptions.group_by);
+    if (!!component.preview_options?.group_by) {
+      const groups = groupPreviewsByVariantProperty(component.previews, component.preview_options.group_by);
       setComponentPreviews(
         groups.map(([group, previewObjects]) => [
           toTitleCase(`${group} ${id}`),

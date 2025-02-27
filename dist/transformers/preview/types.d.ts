@@ -23,7 +23,7 @@ export declare type ComponentListObject = {
     previews: {
         [key: string]: OptionalPreviewRender;
     };
-    previewOptions?: {
+    preview_options?: {
         group_by: boolean;
     };
     paths: string[];
@@ -51,7 +51,7 @@ export declare type TransformComponentTokensResult = {
     previews?: {
         [key: string]: OptionalPreviewRender;
     };
-    previewOptions?: {
+    preview_options?: {
         group_by: boolean;
     };
     properties?: {

@@ -23,7 +23,7 @@ declare const buildComponentCss: (id: string, location: string, data: TransformC
     previews?: {
         [key: string]: import("../types").OptionalPreviewRender;
     };
-    previewOptions?: {
+    preview_options?: {
         group_by: boolean;
     };
     properties?: {
