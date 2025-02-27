@@ -9,9 +9,10 @@ import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
+import { usePreviewContext } from '../context/PreviewContext';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { Collapsible } from '../ui/collapsible';
@@ -38,6 +39,7 @@ export const CodeHighlight: React.FC<{
   language?: string;
   height?: string;
 }> = ({ data, collapsible, type, title, dark, height }) => {
+  const context = usePreviewContext();
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
@@ -103,6 +105,10 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].overflow = 'auto';
   theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
   theme['pre[class*="language-"]'].margin = '0';
+
+  useEffect(() => {
+    setCode(data.html);
+  }, [data]);
 
   return (
     <Collapsible className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>

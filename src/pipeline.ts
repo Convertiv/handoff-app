@@ -82,7 +82,8 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @returns
  */
 export const buildComponents = async (handoff: Handoff) => {
-  await Promise.all([componentTransformer(handoff)]);
+  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
+  await Promise.all([componentTransformer(handoff, documentationObject.components)]);
 };
 
 /**

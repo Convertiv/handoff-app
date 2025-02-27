@@ -21,11 +21,13 @@ export type ComponentListObject = {
   properties: { [key: string]: SlotMetadata };
   versions: string[];
   previews: { [key: string]: OptionalPreviewRender };
+  previewOptions?: { group_by: boolean };
   paths: string[];
 };
 
 export type TransformComponentTokensResult = {
   id: string;
+  source?: 'figma' | 'custom';
   type?: ComponentType;
   image?: string;
   group?: string;
@@ -44,13 +46,14 @@ export type TransformComponentTokensResult = {
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
+  previewOptions?: { group_by: boolean };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
 } | null;
 
 export type OptionalPreviewRender = {
   title: string;
-  values: { [key: string]: string | string[] };
+  values: { [key: string]: string | string[] | any };
   url: string;
 };
 export interface TransformedPreviewComponents {

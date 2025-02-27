@@ -4,6 +4,7 @@ import Handlebars from 'handlebars';
 import { parse } from 'node-html-parser';
 import path from 'path';
 import * as prettier from 'prettier';
+import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
 import { getComponentOutputPath, SlotMetadata } from '../component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from '../types';
@@ -18,7 +19,8 @@ const buildPreviews = async (
   id: string,
   location: string,
   data: TransformComponentTokensResult,
-  handoff: Handoff
+  handoff: Handoff,
+  components?: FileComponentsObject
 ): Promise<TransformComponentTokensResult> => {
   const outputPath = getComponentOutputPath(handoff);
   const template = await fs.readFile(path.resolve(location, `${id}.hbs`), 'utf8');
@@ -60,6 +62,26 @@ const buildPreviews = async (
         return options.fn(this);
       }
     });
+
+    const componentDocumentation = components[data.id];
+
+    if (!!componentDocumentation) {
+      for (const instance of componentDocumentation.instances) {
+        const variantDefinition = Object.fromEntries(instance.variantProperties);
+        const vairationId = instance.id;
+
+        const variationValues = {
+          ...variantDefinition,
+        };
+
+        data.previews[vairationId] = {
+          title: instance.id,
+          url: '',
+          values: variationValues,
+        } as OptionalPreviewRender;
+      }
+    }
+
     const html = data.previews['generic'] ? await buildPreview(id, template, data.previews['generic'], data) : '';
     // Generate a set of previews without the inspection field wrappers
     injectFieldWrappers = false;
@@ -92,6 +114,10 @@ const buildPreviews = async (
 };
 
 const buildPreview = async (id: string, template: string, preview: OptionalPreviewRender, data: TransformComponentTokensResult) => {
+  Handlebars.registerHelper('eq', function (a, b) {
+    return a === b;
+  });
+
   const rendered = await prettier.format(
     Handlebars.compile(template)({
       style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,

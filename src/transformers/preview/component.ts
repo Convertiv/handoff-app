@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
+import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponent from './component/builder';
@@ -138,7 +139,7 @@ export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIP
  * @param documentationObject
  * @returns
  */
-export async function componentTransformer(handoff: Handoff) {
+export async function componentTransformer(handoff: Handoff, components?: FileComponentsObject) {
   // Allow a user to create custom previews by putting templates in a components folder
   // Iterate over the html files in that folder and render them as a preview
   const componentPath = getComponentPath(handoff);
@@ -148,7 +149,7 @@ export async function componentTransformer(handoff: Handoff) {
     const files = fs.readdirSync(componentPath);
     const componentData = [];
     for (const file of files) {
-      componentData.push(await processComponent(handoff, path.basename(file), sharedStyles));
+      componentData.push(await processComponent(handoff, path.basename(file), sharedStyles, components));
     }
 
     writeComponentSummaryAPI(handoff, componentData);

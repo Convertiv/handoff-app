@@ -23,10 +23,14 @@ export declare type ComponentListObject = {
     previews: {
         [key: string]: OptionalPreviewRender;
     };
+    previewOptions?: {
+        group_by: boolean;
+    };
     paths: string[];
 };
 export declare type TransformComponentTokensResult = {
     id: string;
+    source?: 'figma' | 'custom';
     type?: ComponentType;
     image?: string;
     group?: string;
@@ -47,6 +51,9 @@ export declare type TransformComponentTokensResult = {
     previews?: {
         [key: string]: OptionalPreviewRender;
     };
+    previewOptions?: {
+        group_by: boolean;
+    };
     properties?: {
         [key: string]: SlotMetadata;
     };
@@ -55,7 +62,7 @@ export declare type TransformComponentTokensResult = {
 export declare type OptionalPreviewRender = {
     title: string;
     values: {
-        [key: string]: string | string[];
+        [key: string]: string | string[] | any;
     };
     url: string;
 };

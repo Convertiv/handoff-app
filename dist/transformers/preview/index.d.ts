@@ -7,6 +7,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
     components: {
         [key: string]: {
             id: string;
+            source?: "figma" | "custom";
             type?: import("./types").ComponentType;
             image?: string;
             group?: string;
@@ -26,6 +27,9 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             description?: string;
             previews?: {
                 [key: string]: import("./types").OptionalPreviewRender;
+            };
+            previewOptions?: {
+                group_by: boolean;
             };
             properties?: {
                 [key: string]: import("./component").SlotMetadata;

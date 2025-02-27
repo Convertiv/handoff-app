@@ -1,3 +1,4 @@
+import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 export interface ComponentMetadata {
     title: string;
@@ -77,7 +78,7 @@ export declare const getComponentOutputPath: (handoff: Handoff) => string;
  * @param documentationObject
  * @returns
  */
-export declare function componentTransformer(handoff: Handoff): Promise<void>;
+export declare function componentTransformer(handoff: Handoff, components?: FileComponentsObject): Promise<void>;
 /**
  * Process the shared styles with sass compileAsync
  * @param handoff

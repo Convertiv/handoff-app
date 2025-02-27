@@ -79,7 +79,7 @@ const defaultComponent = {
  * @param file
  * @param sharedStyles
  */
-function processComponent(handoff, id, sharedStyles) {
+function processComponent(handoff, id, sharedStyles, components) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!sharedStyles)
             sharedStyles = yield (0, component_1.processSharedStyles)(handoff);
@@ -93,7 +93,7 @@ function processComponent(handoff, id, sharedStyles) {
             data = yield (0, json_1.default)(id, componentPath, data);
             data = yield (0, javascript_1.default)(id, componentPath, data, handoff);
             data = yield (0, css_1.default)(id, componentPath, data, handoff, sharedStyles);
-            data = yield (0, html_1.default)(id, componentPath, data, handoff);
+            data = yield (0, html_1.default)(id, componentPath, data, handoff, components);
             data.sharedStyles = sharedStyles;
             yield (0, api_1.writeComponentApi)(id, data, version, handoff);
             if (version === latest) {

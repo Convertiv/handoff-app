@@ -1,3 +1,4 @@
+import { FileComponentsObject } from 'handoff/exporters/components/types';
 import Handoff from '../../../index';
 import { ComponentListObject } from '../types';
 /**
@@ -6,5 +7,5 @@ import { ComponentListObject } from '../types';
  * @param file
  * @param sharedStyles
  */
-export declare function processComponent(handoff: Handoff, id: string, sharedStyles?: string): Promise<ComponentListObject>;
+export declare function processComponent(handoff: Handoff, id: string, sharedStyles?: string, components?: FileComponentsObject): Promise<ComponentListObject>;
 export default processComponent;

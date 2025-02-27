@@ -102,7 +102,7 @@ exports.getComponentOutputPath = getComponentOutputPath;
  * @param documentationObject
  * @returns
  */
-function componentTransformer(handoff) {
+function componentTransformer(handoff, components) {
     return __awaiter(this, void 0, void 0, function* () {
         // Allow a user to create custom previews by putting templates in a components folder
         // Iterate over the html files in that folder and render them as a preview
@@ -113,7 +113,7 @@ function componentTransformer(handoff) {
             const files = fs_extra_1.default.readdirSync(componentPath);
             const componentData = [];
             for (const file of files) {
-                componentData.push(yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles));
+                componentData.push(yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, components));
             }
             (0, api_1.default)(handoff, componentData);
         }
