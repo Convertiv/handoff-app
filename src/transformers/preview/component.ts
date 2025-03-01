@@ -5,6 +5,7 @@ import sass from 'sass';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponent from './component/builder';
+import { buildMainJS } from './component/javascript';
 
 // const webSocketClientJS = `
 // <script>
@@ -150,8 +151,8 @@ export async function componentTransformer(handoff: Handoff) {
     for (const file of files) {
       componentData.push(await processComponent(handoff, path.basename(file), sharedStyles));
     }
-
     writeComponentSummaryAPI(handoff, componentData);
+    buildMainJS(handoff);
   }
   return;
 }
