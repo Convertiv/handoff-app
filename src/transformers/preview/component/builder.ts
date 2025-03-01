@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { FileComponentsObject } from 'handoff/exporters/components/types';
 import path from 'path';
 import Handoff from '../../../index';
 import { getComponentPath, processSharedStyles } from '../component';
@@ -44,7 +45,12 @@ const defaultComponent: TransformComponentTokensResult = {
  * @param file
  * @param sharedStyles
  */
-export async function processComponent(handoff: Handoff, id: string, sharedStyles?: string): Promise<ComponentListObject> {
+export async function processComponent(
+  handoff: Handoff,
+  id: string,
+  sharedStyles?: string,
+  components?: FileComponentsObject
+): Promise<ComponentListObject> {
   if (!sharedStyles) sharedStyles = await processSharedStyles(handoff);
   const versions = await getVersionsForComponent(handoff, id);
   const latest = getLatestVersionForComponent(versions);
@@ -57,7 +63,7 @@ export async function processComponent(handoff: Handoff, id: string, sharedStyle
       data = await parseComponentJson(id, componentPath, data);
       data = await buildComponentJs(id, componentPath, data, handoff);
       data = await buildComponentCss(id, componentPath, data, handoff, sharedStyles);
-      data = await buildPreviews(id, componentPath, data, handoff);
+      data = await buildPreviews(id, componentPath, data, handoff, components);
       data.sharedStyles = sharedStyles;
       await writeComponentApi(id, data, version, handoff);
       if (version === latest) {

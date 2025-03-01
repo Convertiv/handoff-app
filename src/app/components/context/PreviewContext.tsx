@@ -1,10 +1,9 @@
-import { PreviewJson, PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 interface IPreviewContext {
-  preview?: PreviewJson;
-  setPreview: (preview: PreviewJson) => void;
-  getPreview: () => Promise<PreviewObject>;
+  preview?: PreviewObject;
+  setPreview: (preview: PreviewObject) => void;
   variants?: Record<string, string[]>;
   variantFilter?: Record<string, string>;
   updateVariantFilter: (key: string, value: string) => void;
@@ -20,27 +19,25 @@ interface IPreviewContextProviderProps {
   id: string;
   isFigmaComponent?: boolean;
   componentList?: Record<string, any>;
-  defaultPreview?: PreviewJson;
+  defaultPreview?: PreviewObject;
   defaultMetadata?: Record<string, any>;
   defaultMenu?: Record<string, any>;
   defaultConfig?: ClientConfig;
 }
 
-type VariantItem = {
-  id: string;
-  variant?: Record<string, string>;
-};
-
-function groupVariantProperties(items: VariantItem[]): Record<string, string[]> {
+function groupVariantProperties(items: Record<string, string>[]): Record<string, string[]> {
   const grouped: Record<string, Set<string>> = {};
 
   for (const item of items) {
-    for (const [key, value] of Object.entries(item.variant)) {
+    for (const [key, value] of Object.entries(item)) {
       (grouped[key] ||= new Set()).add(value);
     }
   }
 
-  return Object.fromEntries(Object.entries(grouped).map(([key, set]) => [key, Array.from(set)]));
+  return Object.fromEntries(
+    Object.entries(grouped).map(([key, set]) => [key, Array.from(set)])
+    // .filter((i) => i[1].length > 1)
+  );
 }
 
 export const PreviewContext = createContext<IPreviewContext | undefined>(undefined);
@@ -54,16 +51,14 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   defaultPreview,
   defaultConfig,
 }) => {
-  const [preview, setPreview] = useState<PreviewJson>(defaultPreview);
+  const [preview, setPreview] = useState<PreviewObject>(defaultPreview);
   const [config, setConfig] = useState<ClientConfig>(defaultConfig);
   const [variants, setVariants] = useState<Record<string, string[]> | undefined>(null);
   const [variantFilter, setVariantFilter] = useState<Record<string, string> | undefined>(undefined);
 
   useEffect(() => {
-    if (id && preview && isFigmaComponent) {
-      setVariants(groupVariantProperties(preview.components[id]));
-    }
-  }, [id, preview, isFigmaComponent]);
+    setPreview(defaultPreview);
+  }, [defaultPreview]);
 
   useEffect(() => {
     if (!variants) {
@@ -81,31 +76,24 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
     setVariantFilter(initialSelection);
   }, [isFigmaComponent, variants]); // Re-run when items change
 
-  const getPreview = useCallback(async () => {
-    if (!preview) return null;
-    const components = preview.components;
-
-    if (components[id]) {
-      if (variantFilter) {
-        return components[id].filter((item) => Object.entries(variantFilter).every(([key, value]) => item.variant[key] === value))[0];
-      }
-
-      return components[id]?.[0] ?? null;
-    }
-
-    try {
-      const response = await fetch(`/api/component/${id}/latest.json`);
-      const data = await response.json();
-      return data as PreviewObject;
-    } catch (error) {
-      console.error('Error fetching preview:', error);
-      return null;
-    }
-  }, [id, preview, variantFilter]);
-
   const updateVariantFilter = useCallback((key: string, value: string) => {
     setVariantFilter((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  useEffect(() => {
+    if (!preview) return;
+
+    if (!preview.preview_options?.group_by) return;
+
+    const foo = Object.values(preview.previews).map((p) => {
+      return Object.keys(p.values).reduce((acc, next) => {
+        acc[next] = p.values[next];
+        return acc;
+      }, {});
+    });
+
+    setVariants(groupVariantProperties(foo));
+  }, [preview]);
 
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);
@@ -115,7 +103,6 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
       value={{
         preview,
         setPreview,
-        getPreview,
         variants,
         variantFilter,
         updateVariantFilter,

@@ -31,6 +31,7 @@ const parseComponentJson = async (
           data.description = parsed.description;
           data.properties = parsed.properties;
           data.previews = parsed.previews;
+          data.preview_options = parsed.preview_options;
         }
       } catch (e) {
         console.log(chalk.red(`Error parsing JSON for ${id}`));

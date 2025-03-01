@@ -141,6 +141,7 @@ export interface PreviewObject {
       url: string;
     };
   };
+  preview_options?: { group_by: string };
   properties?: { [key: string]: SlotMetadata };
   code: string;
   html?: string;

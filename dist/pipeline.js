@@ -113,7 +113,8 @@ const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0
  * @returns
  */
 const buildComponents = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    yield Promise.all([(0, component_1.componentTransformer)(handoff)]);
+    const documentationObject = yield readPrevJSONFile(tokensFilePath(handoff));
+    yield Promise.all([(0, component_1.componentTransformer)(handoff, documentationObject.components)]);
 });
 exports.buildComponents = buildComponents;
 /**

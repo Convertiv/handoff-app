@@ -1,6 +1,7 @@
 'use client';
 import { getClientConfig } from '@handoff/config';
-import { PreviewJson, PreviewObject } from '@handoff/types';
+import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
+import { PreviewObject } from '@handoff/types';
 import React, { useEffect, useState } from 'react';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
@@ -11,15 +12,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import {
-  fetchComponents,
-  getCurrentSection,
-  getPreview,
-  getTokens,
-  IParams,
-  reduceSlugToString,
-  staticBuildMenu,
-} from '../../../../components/util';
+import { fetchComponents, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -32,39 +25,48 @@ export async function getStaticPaths() {
   };
 }
 
-type GroupedPreviews = [string, PreviewObject[]][];
+type GroupedPreviews = [string, Record<string, OptionalPreviewRender>][];
 
-const groupPreviewsByVariantProperty = (items: PreviewObject[], variantProperty: string): GroupedPreviews => {
+const groupPreviewsByVariantProperty = (items: Record<string, OptionalPreviewRender>, variantProperty: string): GroupedPreviews => {
   const grouped: GroupedPreviews = [];
 
-  for (const item of items) {
-    const typeProperty = item.variant[variantProperty];
+  for (const itemId of Object.keys(items)) {
+    const item = items[itemId];
+    const typeProperty = item.values[variantProperty];
 
     if (!typeProperty) continue;
 
     const typeValue = typeProperty;
     const groupIndex = grouped.findIndex((el) => el[0] === typeValue);
 
-    const itemToAdd = { ...item };
-    itemToAdd.variant = Object.fromEntries(Object.entries(itemToAdd.variant).filter(([key]) => key !== variantProperty));
+    // const itemToAdd = { ...item };
+    // itemToAdd.values = Object.fromEntries(Object.entries(itemToAdd.values).filter(([key]) => key !== variantProperty));
 
     if (groupIndex === -1) {
-      grouped.push([typeValue, [itemToAdd]]);
+      grouped.push([typeValue, { [itemId]: item }]);
     } else {
-      grouped[groupIndex][1].push(itemToAdd);
+      grouped[groupIndex][1][itemId] = item;
     }
   }
 
   return grouped;
 };
 
+const toTitleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  const previews = getPreview();
+  // const previews = getPreview();
 
-  const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
-  const isFigmaComponent = !!componentObject;
+  // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
+  // const isFigmaComponent = false;
 
   const menu = staticBuildMenu();
   const config = getClientConfig();
@@ -72,8 +74,8 @@ export const getStaticProps = async (context) => {
   return {
     props: {
       id: component,
-      isFigmaComponent,
-      previews,
+      // isFigmaComponent: true,
+      previews: { components: {} },
       menu,
       config,
       current: getCurrentSection(menu, '/system') ?? [],
@@ -87,10 +89,10 @@ export const getStaticProps = async (context) => {
   };
 };
 
-const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, config, previews }) => {
+const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
-  const [componentPreviews, setComponentPreviews] = useState<PreviewJson | PreviewJson[]>(previews);
+  const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
 
   const fetchComponents = async () => {
     let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
@@ -103,20 +105,20 @@ const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, c
   }, []);
 
   useEffect(() => {
-    if (!component || !isFigmaComponent) return;
+    if (!component) return;
 
-    if (component.id !== 'button') return; // TODO: WIP, currently hardcoded to work with buttons only. Implement configuration support through .json files
-
-    const groups = groupPreviewsByVariantProperty((previews as PreviewJson).components[component.id], 'Type');
-
-    setComponentPreviews(
-      groups.map((group) => ({
-        components: {
-          [component.id]: group[1],
-        },
-      }))
-    );
-  }, [component, isFigmaComponent, previews]);
+    if (!!component.preview_options?.group_by) {
+      const groups = groupPreviewsByVariantProperty(component.previews, component.preview_options.group_by);
+      setComponentPreviews(
+        groups.map(([group, previewObjects]) => [
+          toTitleCase(`${group} ${id}`),
+          { ...component, id: `${id}-${group}`, previews: previewObjects } as PreviewObject,
+        ])
+      );
+    } else {
+      setComponentPreviews(component);
+    }
+  }, [component, id]);
 
   if (!component) return <p>Loading...</p>;
   const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
@@ -175,33 +177,33 @@ const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, c
       </div>
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
-          {!isFigmaComponent && (
-            <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={previews} defaultConfig={config}>
-              <ComponentPreview title={metadata.title}>
-                <p>Define a simple contact form</p>
-              </ComponentPreview>
-            </PreviewContextProvider>
-          )}
-          {isFigmaComponent && Array.isArray(componentPreviews) && (
+          {Array.isArray(componentPreviews) ? (
             <>
-              {componentPreviews.map((cp, cpi) => (
-                <PreviewContextProvider
-                  key={`component_${cpi}`}
-                  id={id}
-                  isFigmaComponent={true}
-                  defaultMetadata={metadata}
-                  defaultMenu={menu}
-                  defaultPreview={cp}
-                  defaultConfig={config}
-                >
-                  <ComponentPreview title={metadata.title}>
-                    <p>Define a simple contact form</p>
-                  </ComponentPreview>
-                </PreviewContextProvider>
+              {componentPreviews.map(([title, cp], cpi) => (
+                <>
+                  <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
+                    <ComponentPreview title={title} bestPracticesCard={cpi === 0} properties={cpi === componentPreviews.length - 1}>
+                      <p>Define a simple contact form</p>
+                    </ComponentPreview>
+                  </PreviewContextProvider>
+                </>
               ))}
             </>
+          ) : (
+            <>
+              <PreviewContextProvider
+                id={id}
+                defaultMetadata={metadata}
+                defaultMenu={menu}
+                defaultPreview={componentPreviews}
+                defaultConfig={config}
+              >
+                <ComponentPreview title={metadata.title}>
+                  <p>Define a simple contact form</p>
+                </ComponentPreview>
+              </PreviewContextProvider>
+            </>
           )}
-
           <div className="mt-8">
             <Select
             // defaultValue={breakpoint}
@@ -219,16 +221,29 @@ const GenericComponentPage = ({ menu, metadata, current, id, isFigmaComponent, c
             </Select>
           </div>
         </div>
-        <AnchorNav
-          groups={[
-            {
-              'best-practices': 'Best Practices',
-              preview: 'Previews',
-              'code-highlight': 'Code Samples',
-              properties: 'Properties',
-            },
-          ]}
-        />
+        {Array.isArray(componentPreviews) ? (
+          <AnchorNav
+            groups={[
+              {
+                'best-practices': 'Best Practices',
+                ...componentPreviews.reduce((acc, [title, previewObject]) => ({ ...acc, [previewObject.id]: title }), {}),
+                'code-highlight': 'Code Samples',
+                properties: 'Properties',
+              },
+            ]}
+          />
+        ) : (
+          <AnchorNav
+            groups={[
+              {
+                'best-practices': 'Best Practices',
+                preview: 'Previews',
+                'code-highlight': 'Code Samples',
+                properties: 'Properties',
+              },
+            ]}
+          />
+        )}
       </div>
     </Layout>
   );

@@ -66,7 +66,8 @@ export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews 
 export const ComponentDisplay: React.FC<{
   component: PreviewObject | undefined;
   defaultHeight?: string | undefined;
-}> = ({ component, defaultHeight }) => {
+  title?: string;
+}> = ({ component, defaultHeight, title }) => {
   const context = usePreviewContext();
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
@@ -110,35 +111,83 @@ export const ComponentDisplay: React.FC<{
   }, [inspect]);
 
   React.useEffect(() => {
-    if (component) {
-      if (component.previews) {
-        const keys = Object.keys(component.previews);
-        // check the environment
-        setPreviewUrl(component.previews[keys[0]].url);
+    if (component && component.previews) {
+      const keys = Object.keys(component.previews);
+      if (keys.length === 0) {
+        return;
       }
+      // check the environment
+      setPreviewUrl(component.previews[keys[0]].url);
     }
   }, [component]);
+
+  React.useEffect(() => {
+    if (!component) return;
+    if (!context.variantFilter) return;
+
+    const previewFilterResult = Object.values(component.previews).filter((item) =>
+      Object.entries(context.variantFilter).every(([key, value]) => item.values[key] === value)
+    );
+
+    if (!!previewFilterResult && previewFilterResult.length > 0) {
+      setPreviewUrl(previewFilterResult[0].url);
+    }
+  }, [context.variantFilter, component]);
+
   return (
     <div className="md:flex" id="preview">
       <div className="text-medium flex w-full flex-col items-center rounded-lg border border-gray-200 dark:border-gray-900">
-        {component?.previews ? (
+        {component?.previews && (
           <>
             <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800">
               <div className="flex items-center gap-2">
-                <p className="font-monospace text-[11px] text-accent-foreground">Component Name</p>
-                <Separator orientation="vertical" className="mx-2 h-3" />
-                <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
-                  <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
-                    <SelectValue placeholder="Preview" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(component.previews).map((key) => (
-                      <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
-                        {component.previews[key].title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {context.variants ? (
+                  <>
+                    {Object.keys(context.variants).length > 0 && (
+                      <>
+                        <p className="font-monospace text-[11px] text-accent-foreground">{title ?? 'Variant'}</p>
+                        <Separator orientation="vertical" className="mx-2 h-3" />
+                        {Object.keys(context.variants)
+                          .filter((variantProperty) => context.variants[variantProperty].length > 1)
+                          .map((variantProperty) => (
+                            <Select
+                              key={variantProperty}
+                              defaultValue={context.variantFilter ? context.variantFilter[variantProperty] : undefined}
+                              onValueChange={(value) => context.updateVariantFilter(variantProperty, value)}
+                            >
+                              <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
+                                <SelectValue placeholder={variantProperty} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {context.variants[variantProperty].map((variantPropertyValue) => (
+                                  <SelectItem key={variantPropertyValue} value={variantPropertyValue}>
+                                    {variantPropertyValue}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ))}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="font-monospace text-[11px] text-accent-foreground">Component Name</p>
+                    <Separator orientation="vertical" className="mx-2 h-3" />
+                    <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                      <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
+                        <SelectValue placeholder="Preview" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(component.previews).map((key) => (
+                          <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
+                            {component.previews[key].title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-0">
                 <TooltipProvider delayDuration={0}>
@@ -264,103 +313,6 @@ export const ComponentDisplay: React.FC<{
               </div>
             </div>
           </>
-        ) : (
-          <>
-            <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800">
-              <div className="flex items-center gap-2">
-                {Object.keys(context.variants).map((variantProp) => (
-                  <>
-                    <p className="font-monospace text-[11px] text-accent-foreground">{variantProp}</p>
-                    <Separator orientation="vertical" className="mx-2 h-3" />
-                    <div key={`select_${variantProp}`}>
-                      <Select
-                        defaultValue={!!context.variantFilter ? (context.variantFilter[variantProp] ?? undefined) : undefined}
-                        onValueChange={(value) => context.updateVariantFilter(variantProp, value)}
-                      >
-                        <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
-                          <SelectValue placeholder={variantProp} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {context.variants[variantProp].map((variantPropVal) => (
-                            <SelectItem key={variantPropVal} value={variantPropVal}>
-                              {variantPropVal}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                ))}
-              </div>
-              <div className="flex items-center gap-0">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-7 px-3 font-mono text-[11px] hover:bg-gray-300"
-                        onClick={() => setScale(scale === 1 ? 0.8 : 1)}
-                        variant="ghost"
-                      >
-                        {scale === 1 ? '100%' : '80%'}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Toggle Scale</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <Separator orientation="vertical" className="mx-3 h-6" />
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
-                        onClick={() => {
-                          if (ref.current) {
-                            ref.current.contentWindow.location.reload();
-                          }
-                        }}
-                        variant="ghost"
-                      >
-                        <RefreshCcw />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
-                        onClick={() => {
-                          // open in new tab
-                          window.open(previewUrl, '_blank');
-                        }}
-                        variant="ghost"
-                      >
-                        <SquareArrowOutUpRight />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Open in New Tab</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-            <div className="dotted-bg flex w-full justify-center">
-              <iframe
-                onLoad={onLoad}
-                ref={ref}
-                height={height}
-                style={{
-                  minWidth: width,
-                  height: height,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'center top',
-                  transition: 'all 0.2s ease-in-out',
-                }}
-                srcDoc={component?.preview}
-              />
-            </div>
-          </>
         )}
       </div>
     </div>
@@ -373,41 +325,24 @@ export const ComponentPreview: React.FC<{
   title: string;
   children: React.ReactNode;
   height?: string;
-}> = ({ defaultPreview, title, children, height }) => {
+  bestPracticesCard?: boolean;
+  codeHighlight?: boolean;
+  properties?: boolean;
+}> = ({ defaultPreview, title, children, height, bestPracticesCard = true, codeHighlight = true, properties = true }) => {
   const context = usePreviewContext();
-  const config = context.config;
   const [loaded, setLoaded] = React.useState(false);
   const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
   React.useEffect(() => {
-    async function loadPreview() {
-      if (!preview && context) {
-        const previewData = await context.getPreview();
-        if (previewData) {
-          setPreview(previewData);
-        }
-      }
+    if (context.preview) {
+      setPreview(context.preview);
       setLoaded(true);
     }
-    loadPreview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, setLoaded]);
+  }, [loaded, setLoaded, context.preview]);
 
   useEffect(() => {
     setPreview(defaultPreview);
   }, [defaultPreview]);
-
-  useEffect(() => {
-    async function loadPreview() {
-      const previewData = await context.getPreview();
-      if (previewData) {
-        setPreview(previewData);
-      }
-    }
-
-    if (context.variantFilter) {
-      loadPreview();
-    }
-  }, [context.variantFilter]);
 
   if (!preview) {
     return <div>No preview available</div>;
@@ -416,14 +351,18 @@ export const ComponentPreview: React.FC<{
     return <div id={preview.id}>Loading Previews</div>;
   }
   return (
-    <div id={preview.id}>
-      <div>
-        <BestPracticesCard component={preview} />
-        <ComponentDisplay component={preview} defaultHeight={height} />
-        <a id="code-highlight" />
-        <CodeHighlight title={title} data={preview.code} collapsible={true} />
+    <>
+      {bestPracticesCard && <BestPracticesCard component={preview} />}
+      <div id={preview.id}>
+        <ComponentDisplay title={title} component={preview} defaultHeight={height} />
+        {codeHighlight && (
+          <>
+            <a id="code-highlight" />
+            <CodeHighlight title={title} data={preview.code} collapsible={true} />
+          </>
+        )}
       </div>
-      {preview?.properties && (
+      {properties && preview?.properties && (
         <>
           <HeadersType.H3 id="properties">Properties</HeadersType.H3>
           <ComponentProperties
@@ -434,7 +373,7 @@ export const ComponentPreview: React.FC<{
         </>
       )}
       <hr />
-    </div>
+    </>
   );
 };
 

@@ -47,7 +47,7 @@ const trimPreview = (preview) => {
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
     return code;
 };
-const buildPreviews = (id, location, data, handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const buildPreviews = (id, location, data, handoff, components) => __awaiter(void 0, void 0, void 0, function* () {
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const template = yield fs_extra_1.default.readFile(path_1.default.resolve(location, `${id}.hbs`), 'utf8');
     try {
@@ -87,6 +87,19 @@ const buildPreviews = (id, location, data, handoff) => __awaiter(void 0, void 0,
                 return options.fn(this);
             }
         });
+        const componentDocumentation = components[data.id];
+        if (!!componentDocumentation) {
+            for (const instance of componentDocumentation.instances) {
+                const variantDefinition = Object.fromEntries(instance.variantProperties);
+                const vairationId = instance.id;
+                const variationValues = Object.assign({}, variantDefinition);
+                data.previews[vairationId] = {
+                    title: instance.id,
+                    url: '',
+                    values: variationValues,
+                };
+            }
+        }
         const html = data.previews['generic'] ? yield buildPreview(id, template, data.previews['generic'], data) : '';
         // Generate a set of previews without the inspection field wrappers
         injectFieldWrappers = false;
@@ -117,6 +130,9 @@ const buildPreviews = (id, location, data, handoff) => __awaiter(void 0, void 0,
     return data;
 });
 const buildPreview = (id, template, preview, data) => __awaiter(void 0, void 0, void 0, function* () {
+    handlebars_1.default.registerHelper('eq', function (a, b) {
+        return a === b;
+    });
     const rendered = yield prettier.format(handlebars_1.default.compile(template)({
         style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
         script: `<script src="/api/component/${id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
