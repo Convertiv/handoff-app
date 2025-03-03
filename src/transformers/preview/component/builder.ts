@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { FileComponentsObject } from 'handoff/exporters/components/types';
 import path from 'path';
+import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
 import { getComponentPath, processSharedStyles } from '../component';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';

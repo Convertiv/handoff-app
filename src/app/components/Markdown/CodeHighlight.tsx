@@ -107,7 +107,16 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   useEffect(() => {
-    if (data.html) setCode(data.html);
+    // check if data is a string
+    if (typeof data === 'string') {
+      setCode(data);
+      return;
+    }
+    // check if data is an object with an html key
+    if ('html' in data) {
+      setCode(data.html);
+      return;
+    }
   }, [data]);
 
   return (
