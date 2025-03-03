@@ -122,8 +122,8 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
 export const usePreviewContext = () => {
   const context = useContext(PreviewContext);
   // Need to rewrite this so we don't have to manage the context as agressively
-  // if (!context) {
-  //   throw new Error('usePreviewContext must be used within a MdxContext.');
-  // }
+  if (!context) {
+    throw new Error('usePreviewContext must be used within a MdxContext.');
+  }
   return context;
 };

@@ -12,7 +12,6 @@ import { Select } from '@radix-ui/react-select';
 import { useEffect, useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import { usePreviewContext } from '../context/PreviewContext';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { Collapsible } from '../ui/collapsible';
@@ -39,7 +38,6 @@ export const CodeHighlight: React.FC<{
   language?: string;
   height?: string;
 }> = ({ data, collapsible, type, title, dark, height }) => {
-  const context = usePreviewContext();
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
