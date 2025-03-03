@@ -55,26 +55,26 @@ const buildPreviews = async (
         }
         return new Handlebars.SafeString(
           `<span class="handoff-field handoff-field-${current?.type ? current.type : 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
-            options.fn(this) +
-            '</span>'
+          options.fn(this) +
+          '</span>'
         );
       } else {
         return options.fn(this);
       }
     });
-
+    if (!components) components = {};
     const componentDocumentation = components[data.id];
 
     if (!!componentDocumentation) {
       for (const instance of componentDocumentation.instances) {
         const variantDefinition = Object.fromEntries(instance.variantProperties);
-        const vairationId = instance.id;
+        const variationId = instance.id;
 
         const variationValues = {
           ...variantDefinition,
         };
 
-        data.previews[vairationId] = {
+        data.previews[variationId] = {
           title: instance.id,
           url: '',
           values: variationValues,
@@ -120,7 +120,7 @@ const buildPreview = async (id: string, template: string, preview: OptionalPrevi
 
   const rendered = await prettier.format(
     Handlebars.compile(template)({
-      style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
+      style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
       script: `<script src="/api/component/${id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
       properties: preview.values || {},
       fields: ensureIds(data.properties),

@@ -87,13 +87,15 @@ const buildPreviews = (id, location, data, handoff, components) => __awaiter(voi
                 return options.fn(this);
             }
         });
+        if (!components)
+            components = {};
         const componentDocumentation = components[data.id];
         if (!!componentDocumentation) {
             for (const instance of componentDocumentation.instances) {
                 const variantDefinition = Object.fromEntries(instance.variantProperties);
-                const vairationId = instance.id;
+                const variationId = instance.id;
                 const variationValues = Object.assign({}, variantDefinition);
-                data.previews[vairationId] = {
+                data.previews[variationId] = {
                     title: instance.id,
                     url: '',
                     values: variationValues,
@@ -134,7 +136,7 @@ const buildPreview = (id, template, preview, data) => __awaiter(void 0, void 0, 
         return a === b;
     });
     const rendered = yield prettier.format(handlebars_1.default.compile(template)({
-        style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
+        style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
         script: `<script src="/api/component/${id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
         properties: preview.values || {},
         fields: ensureIds(data.properties),
