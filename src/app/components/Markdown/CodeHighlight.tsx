@@ -134,7 +134,15 @@ export const CodeHighlight: React.FC<{
               defaultValue={activeState}
               onValueChange={(key) => {
                 setActiveState(key);
-                setCode(key === 'html' ? data.html || data.code : data[key]);
+                if (key === 'html') {
+                  if ('html' in data && !!data.html) {
+                    setCode(data.html);
+                  } else {
+                    setCode(data.code);
+                  }
+                } else {
+                  setCode(data[key]);
+                }
               }}
             >
               <SelectTrigger className="w-[180px]">
