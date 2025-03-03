@@ -12,7 +12,6 @@ import { Select } from '@radix-ui/react-select';
 import { useEffect, useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import { usePreviewContext } from '../context/PreviewContext';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { Collapsible } from '../ui/collapsible';
@@ -39,7 +38,6 @@ export const CodeHighlight: React.FC<{
   language?: string;
   height?: string;
 }> = ({ data, collapsible, type, title, dark, height }) => {
-  const context = usePreviewContext();
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
@@ -107,7 +105,20 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   useEffect(() => {
-    setCode(data.html);
+    // check if data is a string
+    if (typeof data === 'string') {
+      setCode(data);
+      return;
+    }
+    // check if data is an object with an html key
+    if ('html' in data && !!data.html) {
+      setCode(data.html);
+      return;
+    }
+    if ('code' in data && !!data.code) {
+      setCode(data.code);
+      return;
+    }
   }, [data]);
 
   return (
@@ -123,7 +134,7 @@ export const CodeHighlight: React.FC<{
               defaultValue={activeState}
               onValueChange={(key) => {
                 setActiveState(key);
-                setCode(data[key]);
+                setCode(key === 'html' ? data.html || data.code : data[key]);
               }}
             >
               <SelectTrigger className="w-[180px]">

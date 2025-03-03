@@ -358,7 +358,7 @@ export const ComponentPreview: React.FC<{
         {codeHighlight && (
           <>
             <a id="code-highlight" />
-            <CodeHighlight title={title} data={preview.code} collapsible={true} />
+            <CodeHighlight title={title} data={preview} collapsible={true} />
           </>
         )}
       </div>

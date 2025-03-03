@@ -23,13 +23,7 @@ const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPre
       </div>
       <div ref={ref} className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <article className="prose">
-          <PreviewContextProvider
-            id={'button'}
-            defaultMetadata={metadata}
-            defaultMenu={menu}
-            defaultPreview={allPreviews}
-            defaultConfig={config}
-          >
+          <PreviewContextProvider id={'button'} defaultMetadata={metadata} defaultMenu={menu} defaultConfig={config}>
             {children}
           </PreviewContextProvider>
         </article>

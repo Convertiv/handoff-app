@@ -1,4 +1,4 @@
-import { FileComponentsObject } from 'handoff/exporters/components/types';
+import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
 import { ComponentListObject } from '../types';
 /**
