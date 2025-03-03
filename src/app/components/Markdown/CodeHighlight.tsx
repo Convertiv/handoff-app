@@ -107,7 +107,7 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   useEffect(() => {
-    setCode(data.html);
+    if (data.html) setCode(data.html);
   }, [data]);
 
   return (
