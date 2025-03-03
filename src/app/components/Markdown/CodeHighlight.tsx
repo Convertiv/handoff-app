@@ -134,7 +134,10 @@ export const CodeHighlight: React.FC<{
               defaultValue={activeState}
               onValueChange={(key) => {
                 setActiveState(key);
-                if (key === 'html') {
+                if (typeof data === 'string') {
+                  setCode(data);
+                  return;
+                } else if (key === 'html') {
                   if ('html' in data && !!data.html) {
                     setCode(data.html);
                   } else {
