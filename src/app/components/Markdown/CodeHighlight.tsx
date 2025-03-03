@@ -111,8 +111,12 @@ export const CodeHighlight: React.FC<{
       return;
     }
     // check if data is an object with an html key
-    if ('html' in data) {
+    if ('html' in data && !!data.html) {
       setCode(data.html);
+      return;
+    }
+    if ('code' in data && !!data.code) {
+      setCode(data.code);
       return;
     }
   }, [data]);
@@ -130,7 +134,7 @@ export const CodeHighlight: React.FC<{
               defaultValue={activeState}
               onValueChange={(key) => {
                 setActiveState(key);
-                setCode(data[key]);
+                setCode(key === 'html' ? data.html || data.code : data[key]);
               }}
             >
               <SelectTrigger className="w-[180px]">
