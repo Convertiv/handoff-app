@@ -96,6 +96,7 @@ export interface IntegrationObject {
     integration?: string;
     templates?: string;
     bundle?: string;
+    styles?: string;
   };
   options: {
     [key: string]: IntegrationObjectComponentOptions;

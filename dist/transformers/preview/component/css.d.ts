@@ -31,4 +31,10 @@ declare const buildComponentCss: (id: string, location: string, data: TransformC
     };
     variant?: Record<string, string>;
 }>;
+/**
+ * Check to see if there's an entry point for the main JS file
+ * build that javascript and write it to the output folder
+ * @param handoff
+ */
+export declare const buildMainCss: (handoff: Handoff) => Promise<void>;
 export default buildComponentCss;

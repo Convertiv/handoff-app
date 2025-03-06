@@ -6,6 +6,7 @@ import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponent from './component/builder';
+import { buildMainCss } from './component/css';
 import { buildMainJS } from './component/javascript';
 
 // const webSocketClientJS = `
@@ -154,6 +155,7 @@ export async function componentTransformer(handoff: Handoff, components?: FileCo
     }
     writeComponentSummaryAPI(handoff, componentData);
     buildMainJS(handoff);
+    buildMainCss(handoff);
   }
   return;
 }

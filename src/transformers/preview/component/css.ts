@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
-import Handoff from '../../../index';
+import Handoff, { initIntegrationObject } from '../../../index';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
@@ -64,5 +64,33 @@ const buildComponentCss = async (
     }
   }
   return data;
+};
+
+/**
+ * Check to see if there's an entry point for the main JS file
+ * build that javascript and write it to the output folder
+ * @param handoff
+ */
+export const buildMainCss = async (handoff: Handoff): Promise<void> => {
+  const outputPath = getComponentOutputPath(handoff);
+  const integration = initIntegrationObject(handoff);
+  if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
+    console.log(chalk.green(`Detected main CSS file`));
+    try {
+      const scssPath = path.resolve(integration.entries.styles);
+      const result = await sass.compileAsync(scssPath, {
+        loadPaths: [
+          path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
+          path.resolve(handoff.workingPath, 'node_modules'),
+          path.resolve(handoff.workingPath),
+          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+        ],
+      });
+      await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
+    } catch (e) {
+      console.log(chalk.red(`Error compiling main CSS`));
+      console.log(e);
+    }
+  }
 };
 export default buildComponentCss;

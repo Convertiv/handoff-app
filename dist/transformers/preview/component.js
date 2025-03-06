@@ -42,6 +42,7 @@ const path_1 = __importDefault(require("path"));
 const sass_1 = __importDefault(require("sass"));
 const api_1 = __importStar(require("./component/api"));
 const builder_1 = __importDefault(require("./component/builder"));
+const css_1 = require("./component/css");
 const javascript_1 = require("./component/javascript");
 var SlotType;
 (function (SlotType) {
@@ -118,6 +119,7 @@ function componentTransformer(handoff, components) {
             }
             (0, api_1.default)(handoff, componentData);
             (0, javascript_1.buildMainJS)(handoff);
+            (0, css_1.buildMainCss)(handoff);
         }
         return;
     });
