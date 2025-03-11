@@ -13,10 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateWebpackConfig = exports.bundleJSWebpack = exports.buildClientFiles = void 0;
-const webpack_1 = __importDefault(require("webpack"));
+const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-const chalk_1 = __importDefault(require("chalk"));
+const webpack_1 = __importDefault(require("webpack"));
 const index_1 = require("../transformers/integration/index");
 const { createFsFromVolume, Volume } = require('memfs');
 const buildClientFiles = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
@@ -32,7 +32,8 @@ const buildClientFiles = (handoff) => __awaiter(void 0, void 0, void 0, function
         compile.run((err, stats) => {
             var _a, _b;
             if (err) {
-                let error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\n  The integration sass expects a token that isn\'t found in your Figma component.\n';
+                let error = chalk_1.default.red('Errors encountered trying to build preview styles.') +
+                    "\n  The integration sass expects a token that isn't found in your Figma component.\n";
                 if (handoff.debug) {
                     error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + err.stack || err;
                 }
@@ -44,7 +45,8 @@ const buildClientFiles = (handoff) => __awaiter(void 0, void 0, void 0, function
             if (stats) {
                 if (stats.hasErrors()) {
                     let buildErrors = (_a = stats.compilation.errors) === null || _a === void 0 ? void 0 : _a.map((err) => err.message);
-                    let error = chalk_1.default.red('Errors encountered trying to build preview styles.') + '\nThe integration sass expects a token that isn\'t found in your Figma component.\n';
+                    let error = chalk_1.default.red('Errors encountered trying to build preview styles.') +
+                        "\nThe integration sass expects a token that isn't found in your Figma component.\n";
                     if (handoff.debug) {
                         error += chalk_1.default.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + buildErrors;
                     }

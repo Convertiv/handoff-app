@@ -9,6 +9,7 @@ import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
+import Handlebars from 'handlebars';
 import { useEffect, useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
@@ -37,7 +38,8 @@ export const CodeHighlight: React.FC<{
   title?: string;
   language?: string;
   height?: string;
-}> = ({ data, collapsible, type, title, dark, height }) => {
+  currentValues?: Record<string, string>;
+}> = ({ data, collapsible, type, title, dark, height, currentValues }) => {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
@@ -105,21 +107,27 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].margin = '0';
 
   useEffect(() => {
+    Handlebars.registerHelper('eq', (a, b) => a === b);
+  }, [data]);
+
+  useEffect(() => {
     // check if data is a string
     if (typeof data === 'string') {
       setCode(data);
       return;
     }
+
     // check if data is an object with an html key
     if ('html' in data && !!data.html) {
       setCode(data.html);
       return;
     }
+
     if ('code' in data && !!data.code) {
-      setCode(data.code);
+      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
       return;
     }
-  }, [data]);
+  }, [currentValues, data]);
 
   return (
     <Collapsible className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
@@ -141,7 +149,7 @@ export const CodeHighlight: React.FC<{
                   if ('html' in data && !!data.html) {
                     setCode(data.html);
                   } else {
-                    setCode(data.code);
+                    setCode(Handlebars.compile(data.code)({ properties: currentValues }));
                   }
                 } else {
                   setCode(data[key]);

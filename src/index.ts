@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import path from 'path';
+import semver from 'semver';
 import webpack from 'webpack';
 import buildApp, { devApp, watchApp } from './app';
 import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
@@ -9,15 +10,14 @@ import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/mak
 import { defaultConfig } from './config';
 import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
-import processComponent from './transformers/preview/component/builder';
+import processComponents from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
 import { renameComponent } from './transformers/preview/component/rename';
-import { TransformedPreviewComponents } from './transformers/preview/types';
+import { ComponentListObject, TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
 import { DocumentationObject, HookReturn } from './types';
 import { Config, IntegrationObject } from './types/config';
-import { prepareIntegrationObject } from './utils/integration';
 
 class Handoff {
   config: Config | null;
@@ -54,8 +54,8 @@ class Handoff {
     this.force = force ?? false;
     this.hooks = {
       init: (config: Config): Config => config,
-      fetch: () => { },
-      build: (documentationObject) => { },
+      fetch: () => {},
+      build: (documentationObject) => {},
       typeTransformer: (documentationObject, types) => types,
       integration: (documentationObject, data: HookReturn[]) => data,
       cssTransformer: (documentationObject, css) => css,
@@ -107,7 +107,7 @@ class Handoff {
     if (this.config) {
       if (name) {
         name = name.replace('.hbs', '');
-        await processComponent(this, name);
+        await processComponents(this, name);
       } else {
         await buildComponents(this);
       }
@@ -269,24 +269,65 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
 };
 
 export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
-  const integrationPath = path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
+  const result: IntegrationObject = {
+    name: '',
+    options: {},
+    entries: {
+      components: {},
+    },
+  };
 
-  if (!fs.existsSync(integrationPath)) {
-    return null;
+  if (!!handoff.config.entries?.scss) {
+    result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
 
-  const integrationConfigPath = path.resolve(
-    path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'integration.config.json')
-  );
+  if (!!handoff.config.entries?.components) {
+    for (const componentPath of handoff.config.entries.components) {
+      const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
+      const componentBaseName = path.basename(resolvedComponentPath);
+      const versions = getVersionsForComponent(resolvedComponentPath);
+      const latest = getLatestVersionForComponent(versions);
 
-  if (!fs.existsSync(integrationConfigPath)) {
-    return null;
+      for (const componentVersion of versions) {
+        const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
+        const componentJson = fs.readFileSync(path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`), 'utf8');
+        const component = JSON.parse(componentJson) as ComponentListObject;
+
+        if (component.entries) {
+          for (const entryType in component.entries) {
+            if (component.entries[entryType]) {
+              component.entries[entryType] = path.resolve(resolvedComponentVersionPath, component.entries[entryType]);
+            }
+          }
+        }
+
+        component.options ||= {
+          transformer: { defaults: {}, replace: {} },
+        };
+
+        component.options.transformer.cssRootClass ||= null;
+        component.options.transformer.tokenNameSegments ||= null;
+
+        component.options.transformer.defaults = toLowerCaseKeysAndValues({
+          ...component.options.transformer.defaults,
+        });
+
+        component.options.transformer.replace = toLowerCaseKeysAndValues({
+          ...component.options.transformer.replace,
+        });
+
+        if (componentVersion === latest) {
+          result.options[component.id] = component.options.transformer;
+        }
+
+        result.entries.components[component.id] = {
+          [componentVersion]: component,
+        };
+      }
+    }
   }
 
-  const buffer = fs.readFileSync(integrationConfigPath);
-  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
-
-  return prepareIntegrationObject(integration, integrationPath);
+  return result;
 };
 
 const validateConfig = (config: Config): Config => {
@@ -302,4 +343,49 @@ const validateConfig = (config: Config): Config => {
   }
   return config;
 };
+
+const getVersionsForComponent = (componentPath: string): string[] => {
+  const versionDirectories = fs.readdirSync(componentPath);
+  const versions: string[] = [];
+  // The directory name must be a semver
+  if (fs.lstatSync(componentPath).isDirectory()) {
+    // this is a directory structure.  this should be the component name,
+    // and each directory inside should be a version
+    for (const versionDirectory of versionDirectories) {
+      if (semver.valid(versionDirectory)) {
+        const versionFiles = fs.readdirSync(path.resolve(componentPath, versionDirectory));
+        for (const versionFile of versionFiles) {
+          if (versionFile.endsWith('.hbs')) {
+            versions.push(versionDirectory);
+            break;
+          }
+        }
+      } else {
+        console.error(`Invalid version directory ${versionDirectory}`);
+      }
+    }
+  }
+  versions.sort(semver.rcompare);
+  return versions;
+};
+
+export const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
+
+const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any> => {
+  const loweredObj: Record<string, any> = {};
+  for (const key in obj) {
+    const lowerKey = key.toLowerCase();
+    const value = obj[key];
+
+    if (typeof value === 'string') {
+      loweredObj[lowerKey] = value.toLowerCase();
+    } else if (typeof value === 'object' && value !== null) {
+      loweredObj[lowerKey] = toLowerCaseKeysAndValues(value);
+    } else {
+      loweredObj[lowerKey] = value; // For non-string values
+    }
+  }
+  return loweredObj;
+};
+
 export default Handoff;

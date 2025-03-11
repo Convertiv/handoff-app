@@ -35,11 +35,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initIntegrationObject = void 0;
+exports.getLatestVersionForComponent = exports.initIntegrationObject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
+const semver_1 = __importDefault(require("semver"));
 const app_1 = __importStar(require("./app"));
 const eject_1 = require("./cli/eject");
 const make_1 = require("./cli/make");
@@ -50,7 +51,6 @@ const builder_1 = __importDefault(require("./transformers/preview/component/buil
 const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
 const rename_1 = require("./transformers/preview/component/rename");
-const integration_2 = require("./utils/integration");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -312,18 +312,52 @@ const initConfig = (configOverride) => {
     return returnConfig;
 };
 const initIntegrationObject = (handoff) => {
-    var _a, _b;
-    const integrationPath = path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration');
-    if (!fs_extra_1.default.existsSync(integrationPath)) {
-        return null;
+    var _a, _b, _c;
+    var _d, _e;
+    const result = {
+        name: '',
+        options: {},
+        entries: {
+            components: {},
+        },
+    };
+    if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
+        result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
-    const integrationConfigPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'integration.config.json'));
-    if (!fs_extra_1.default.existsSync(integrationConfigPath)) {
-        return null;
+    if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.components)) {
+        for (const componentPath of handoff.config.entries.components) {
+            const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
+            const componentBaseName = path_1.default.basename(resolvedComponentPath);
+            const versions = getVersionsForComponent(resolvedComponentPath);
+            const latest = (0, exports.getLatestVersionForComponent)(versions);
+            for (const componentVersion of versions) {
+                const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
+                const componentJson = fs_extra_1.default.readFileSync(path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`), 'utf8');
+                const component = JSON.parse(componentJson);
+                if (component.entries) {
+                    for (const entryType in component.entries) {
+                        if (component.entries[entryType]) {
+                            component.entries[entryType] = path_1.default.resolve(resolvedComponentVersionPath, component.entries[entryType]);
+                        }
+                    }
+                }
+                component.options || (component.options = {
+                    transformer: { defaults: {}, replace: {} },
+                });
+                (_d = component.options.transformer).cssRootClass || (_d.cssRootClass = null);
+                (_e = component.options.transformer).tokenNameSegments || (_e.tokenNameSegments = null);
+                component.options.transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.defaults));
+                component.options.transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.replace));
+                if (componentVersion === latest) {
+                    result.options[component.id] = component.options.transformer;
+                }
+                result.entries.components[component.id] = {
+                    [componentVersion]: component,
+                };
+            }
+        }
     }
-    const buffer = fs_extra_1.default.readFileSync(integrationConfigPath);
-    const integration = JSON.parse(buffer.toString());
-    return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
+    return result;
 };
 exports.initIntegrationObject = initIntegrationObject;
 const validateConfig = (config) => {
@@ -338,5 +372,49 @@ const validateConfig = (config) => {
         throw new Error('Cannot initialize configuration');
     }
     return config;
+};
+const getVersionsForComponent = (componentPath) => {
+    const versionDirectories = fs_extra_1.default.readdirSync(componentPath);
+    const versions = [];
+    // The directory name must be a semver
+    if (fs_extra_1.default.lstatSync(componentPath).isDirectory()) {
+        // this is a directory structure.  this should be the component name,
+        // and each directory inside should be a version
+        for (const versionDirectory of versionDirectories) {
+            if (semver_1.default.valid(versionDirectory)) {
+                const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(componentPath, versionDirectory));
+                for (const versionFile of versionFiles) {
+                    if (versionFile.endsWith('.hbs')) {
+                        versions.push(versionDirectory);
+                        break;
+                    }
+                }
+            }
+            else {
+                console.error(`Invalid version directory ${versionDirectory}`);
+            }
+        }
+    }
+    versions.sort(semver_1.default.rcompare);
+    return versions;
+};
+const getLatestVersionForComponent = (versions) => versions.sort(semver_1.default.rcompare)[0];
+exports.getLatestVersionForComponent = getLatestVersionForComponent;
+const toLowerCaseKeysAndValues = (obj) => {
+    const loweredObj = {};
+    for (const key in obj) {
+        const lowerKey = key.toLowerCase();
+        const value = obj[key];
+        if (typeof value === 'string') {
+            loweredObj[lowerKey] = value.toLowerCase();
+        }
+        else if (typeof value === 'object' && value !== null) {
+            loweredObj[lowerKey] = toLowerCaseKeysAndValues(value);
+        }
+        else {
+            loweredObj[lowerKey] = value; // For non-string values
+        }
+    }
+    return loweredObj;
 };
 exports.default = Handoff;

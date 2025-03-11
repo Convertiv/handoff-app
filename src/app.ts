@@ -9,9 +9,10 @@ import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
-import { buildComponents, buildIntegrationOnly } from './pipeline';
+import { buildComponents, buildIntegrationOnly, readPrevJSONFile, tokensFilePath } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
-import processComponent from './transformers/preview/component/builder';
+import processComponents from './transformers/preview/component/builder';
+import { DocumentationObject } from './types';
 import { buildClientFiles } from './utils/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
@@ -271,9 +272,14 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+  const tokensJsonFilePath = tokensFilePath(handoff);
+
+  if (!fs.existsSync(tokensJsonFilePath)) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
+
+  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensJsonFilePath);
+  const sharedStyles = await processSharedStyles(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -281,6 +287,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     .catch((error) => {
       throw new Error(error);
     });
+
+  // Initial processing of the components
+  await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
 
   const appPath = await prepareProjectApp(handoff);
   // Include any changes made within the app source during watch
@@ -392,36 +401,60 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
   }
 
-  if (fs.existsSync(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'))) {
-    chokidar
-      .watch(path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration'), chokidarConfig)
-      .on('all', async (event, file) => {
-        switch (event) {
-          case 'add':
-          case 'change':
-          case 'unlink':
-            if ((file.includes('json') || file.includes('hbs') || file.includes('js') || file.includes('scss')) && !debounce) {
-              console.log(chalk.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
-              debounce = true;
-              if (file.includes('component')) {
-                // find the component id, it should be the parent folder name
-                file = path.dirname(path.dirname(file));
-                console.log(chalk.yellow(`Processing component...`), file, path.basename(file));
-                await processComponent(handoff, path.basename(file));
-              } else if (file.includes('scss')) {
-                // rebuild just the shared styles
-                await buildIntegrationOnly(handoff);
-                await processSharedStyles(handoff);
-              } else {
-                await buildIntegrationOnly(handoff);
-                await buildComponents(handoff);
-              }
-              debounce = false;
-            }
-            break;
+  const runtimeComponentPathsToWatch: Set<string> = new Set<string>();
+  for (const runtimeComponentId of Object.keys(handoff.integrationObject?.entries.components ?? {})) {
+    for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
+      const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
+      for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries)) {
+        const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
+        if (fs.existsSync(normalizedComponentEntryPath)) {
+          if (fs.statSync(normalizedComponentEntryPath).isFile()) {
+            runtimeComponentPathsToWatch.add(path.dirname(normalizedComponentEntryPath));
+          } else {
+            runtimeComponentPathsToWatch.add(normalizedComponentEntryPath);
+          }
         }
-      });
+      }
+    }
   }
+
+  if (runtimeComponentPathsToWatch.size > 0) {
+    chokidar.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true }).on('all', async (event, file) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if (!debounce) {
+            debounce = true;
+            const extension = path.extname(file);
+            file = path.dirname(path.dirname(file));
+            console.log(chalk.yellow(`Processing component...`), file, path.basename(file));
+            const segmentToUpdate =
+              extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
+            await processComponents(handoff, path.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
+            debounce = false;
+          }
+          break;
+      }
+    });
+  }
+
+  if (handoff.integrationObject?.entries?.integration && fs.existsSync(handoff.integrationObject?.entries?.integration)) {
+    chokidar.watch(handoff.integrationObject?.entries?.integration, chokidarConfig).on('all', async (event, file) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if (!debounce) {
+            debounce = true;
+            await buildIntegrationOnly(handoff);
+            await processSharedStyles(handoff);
+            debounce = false;
+          }
+      }
+    });
+  }
+
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
       switch (event) {

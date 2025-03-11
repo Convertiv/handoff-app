@@ -1,5 +1,18 @@
 import 'dotenv/config';
 import Handoff from '.';
+export declare const outputPath: (handoff: Handoff) => string;
+export declare const tokensFilePath: (handoff: Handoff) => string;
+export declare const previewFilePath: (handoff: Handoff) => string;
+export declare const changelogFilePath: (handoff: Handoff) => string;
+export declare const variablesFilePath: (handoff: Handoff) => string;
+export declare const iconsZipFilePath: (handoff: Handoff) => string;
+export declare const logosZipFilePath: (handoff: Handoff) => string;
+/**
+ * Read Previous Json File
+ * @param path
+ * @returns
+ */
+export declare const readPrevJSONFile: (path: string) => Promise<any>;
 /**
  * Build previews
  * @param documentationObject

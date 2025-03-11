@@ -13,13 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
-const handlebars_1 = __importDefault(require("handlebars"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
-const path_1 = __importDefault(require("path"));
 const archiver_1 = __importDefault(require("archiver"));
-const utils_1 = require("../utils");
-const tokens_1 = require("../tokens");
 const chalk_1 = __importDefault(require("chalk"));
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const handlebars_1 = __importDefault(require("handlebars"));
+const path_1 = __importDefault(require("path"));
+const tokens_1 = require("../tokens");
+const utils_1 = require("../utils");
 class HandoffIntegration {
     constructor(name) {
         this.name = name;
@@ -180,7 +180,7 @@ function integrationTransformer(handoff, documentationObject) {
         if (!(handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject)) {
             return;
         }
-        console.log(chalk_1.default.green(`Integration build started (using: ${handoff.integrationObject.name})...`));
+        console.log(chalk_1.default.green(`Integration build started...`));
         const outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
         if (!fs_extra_1.default.existsSync(outputFolder)) {
             yield fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true });

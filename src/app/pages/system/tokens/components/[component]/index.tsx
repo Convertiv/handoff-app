@@ -16,7 +16,6 @@ import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
   fetchComponents,
-  getIntegrationObject,
   getLegacyDefinition,
   getPreview,
   getTokens,
@@ -44,7 +43,6 @@ export const getStaticProps = async (context) => {
   const config = getClientConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
 
-  const integrationObject = getIntegrationObject();
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
   const componentPreviews = getPreview().components[componentSlug!];

@@ -19,20 +19,23 @@ const path_1 = __importDefault(require("path"));
 const index_1 = require("../../../index");
 const preview_1 = require("../../../utils/preview");
 const component_1 = require("../component");
-const buildComponentJs = (id, location, data, handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const buildComponentJs = (data, handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const id = data.id;
+    const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.js;
+    if (!entry) {
+        return data;
+    }
     // Is there a JS file with the same name?
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const jsFile = id + '.js';
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(location, jsFile))) {
-        console.log(chalk_1.default.green(`Detected JS file for ${id}`));
+    if (fs_extra_1.default.existsSync(path_1.default.resolve(entry))) {
         try {
-            const jsPath = path_1.default.resolve(location, jsFile);
-            const js = yield fs_extra_1.default.readFile(jsPath, 'utf8');
-            const compiled = yield (0, preview_1.bundleJSWebpack)(jsPath, handoff, 'production');
+            const js = yield fs_extra_1.default.readFile(entry, 'utf8');
+            const compiled = yield (0, preview_1.bundleJSWebpack)(entry, handoff, 'production');
             if (js) {
                 data.js = js;
                 data['jsCompiled'] = compiled;
-                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, jsFile), compiled);
+                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, path_1.default.basename(entry)), compiled);
             }
         }
         catch (e) {

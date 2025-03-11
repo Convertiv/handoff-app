@@ -263,16 +263,21 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f;
-    if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
+    var _e, _f, _g, _h, _j, _k, _l, _m;
+    const tokensJsonFilePath = (0, pipeline_1.tokensFilePath)(handoff);
+    if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
+    const documentationObject = yield (0, pipeline_1.readPrevJSONFile)(tokensJsonFilePath);
+    const sharedStyles = yield (0, component_1.processSharedStyles)(handoff);
     // Build client preview styles
     yield (0, preview_1.buildClientFiles)(handoff)
         .then((value) => !!value && console.log(chalk_1.default.green(value)))
         .catch((error) => {
         throw new Error(error);
     });
+    // Initial processing of the components
+    yield (0, builder_1.default)(handoff, undefined, sharedStyles, documentationObject.components);
     const appPath = yield prepareProjectApp(handoff);
     // Include any changes made within the app source during watch
     chokidar_1.default
@@ -378,35 +383,54 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             }
         }));
     }
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, (_e = handoff.config.integrationPath) !== null && _e !== void 0 ? _e : 'integration'))) {
-        chokidar_1.default
-            .watch(path_1.default.resolve(handoff.workingPath, (_f = handoff.config.integrationPath) !== null && _f !== void 0 ? _f : 'integration'), chokidarConfig)
-            .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+    const runtimeComponentPathsToWatch = new Set();
+    for (const runtimeComponentId of Object.keys((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries.components) !== null && _f !== void 0 ? _f : {})) {
+        for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
+            const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
+            for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries)) {
+                const normalizedComponentEntryPath = runtimeComponentEntryPath;
+                if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
+                    if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
+                        runtimeComponentPathsToWatch.add(path_1.default.dirname(normalizedComponentEntryPath));
+                    }
+                    else {
+                        runtimeComponentPathsToWatch.add(normalizedComponentEntryPath);
+                    }
+                }
+            }
+        }
+    }
+    if (runtimeComponentPathsToWatch.size > 0) {
+        chokidar_1.default.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true }).on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':
                 case 'unlink':
-                    if ((file.includes('json') || file.includes('hbs') || file.includes('js') || file.includes('scss')) && !debounce) {
-                        console.log(chalk_1.default.yellow(`Integration ${event}ed. Handoff will rerender the integrations...`), file);
+                    if (!debounce) {
                         debounce = true;
-                        if (file.includes('component')) {
-                            // find the component id, it should be the parent folder name
-                            file = path_1.default.dirname(path_1.default.dirname(file));
-                            console.log(chalk_1.default.yellow(`Processing component...`), file, path_1.default.basename(file));
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
-                        }
-                        else if (file.includes('scss')) {
-                            // rebuild just the shared styles
-                            yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                            yield (0, component_1.processSharedStyles)(handoff);
-                        }
-                        else {
-                            yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                            yield (0, pipeline_1.buildComponents)(handoff);
-                        }
+                        const extension = path_1.default.extname(file);
+                        file = path_1.default.dirname(path_1.default.dirname(file));
+                        console.log(chalk_1.default.yellow(`Processing component...`), file, path_1.default.basename(file));
+                        const segmentToUpdate = extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
+                        yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
                         debounce = false;
                     }
                     break;
+            }
+        }));
+    }
+    if (((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration) && fs_extra_1.default.existsSync((_k = (_j = handoff.integrationObject) === null || _j === void 0 ? void 0 : _j.entries) === null || _k === void 0 ? void 0 : _k.integration)) {
+        chokidar_1.default.watch((_m = (_l = handoff.integrationObject) === null || _l === void 0 ? void 0 : _l.entries) === null || _m === void 0 ? void 0 : _m.integration, chokidarConfig).on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    if (!debounce) {
+                        debounce = true;
+                        yield (0, pipeline_1.buildIntegrationOnly)(handoff);
+                        yield (0, component_1.processSharedStyles)(handoff);
+                        debounce = false;
+                    }
             }
         }));
     }

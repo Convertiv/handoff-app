@@ -15,6 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
+function updateObject(target, source) {
+    return Object.entries(source).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+            acc[key] = value;
+        }
+        return acc;
+    }, Object.assign({}, target));
+}
 const getAPIPath = (handoff) => {
     const apiPath = path_1.default.resolve(handoff.workingPath, `public/api`);
     const componentPath = path_1.default.resolve(handoff.workingPath, `public/api/component`);
@@ -34,12 +42,24 @@ const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, v
     componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
-const writeComponentApi = (id, component, version, handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const outputPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
-    if (!fs_extra_1.default.existsSync(outputPath)) {
-        fs_extra_1.default.mkdirSync(outputPath, { recursive: true });
+const writeComponentApi = (id, component, version, handoff, isPartialUpdate = false) => __awaiter(void 0, void 0, void 0, function* () {
+    const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
+    if (isPartialUpdate) {
+        const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
+        if (fs_extra_1.default.existsSync(outputFilePath)) {
+            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+            if (existingJson) {
+                const existingData = JSON.parse(existingJson);
+                const mergedData = updateObject(existingData, component);
+                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+                return;
+            }
+        }
     }
-    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, `${version}.json`), JSON.stringify(component, null, 2));
+    if (!fs_extra_1.default.existsSync(outputDirPath)) {
+        fs_extra_1.default.mkdirSync(outputDirPath, { recursive: true });
+    }
+    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(component, null, 2));
 });
 exports.writeComponentApi = writeComponentApi;
 const writeComponentMetadataApi = (id, summary, handoff) => __awaiter(void 0, void 0, void 0, function* () {

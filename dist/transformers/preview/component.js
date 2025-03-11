@@ -106,21 +106,11 @@ exports.getComponentOutputPath = getComponentOutputPath;
  */
 function componentTransformer(handoff, components) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Allow a user to create custom previews by putting templates in a components folder
-        // Iterate over the html files in that folder and render them as a preview
-        const componentPath = (0, exports.getComponentPath)(handoff);
-        if (fs_extra_1.default.existsSync(componentPath)) {
-            console.log(chalk_1.default.green(`Rendering Component Previews in ${componentPath}`));
-            const sharedStyles = yield processSharedStyles(handoff);
-            const files = fs_extra_1.default.readdirSync(componentPath);
-            const componentData = [];
-            for (const file of files) {
-                componentData.push(yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, components));
-            }
-            yield (0, api_1.default)(handoff, componentData);
-            yield (0, javascript_1.buildMainJS)(handoff);
-            yield (0, css_1.buildMainCss)(handoff);
-        }
+        const sharedStyles = yield processSharedStyles(handoff);
+        const componentData = yield (0, builder_1.default)(handoff, undefined, sharedStyles, components);
+        yield (0, api_1.default)(handoff, componentData);
+        yield (0, javascript_1.buildMainJS)(handoff);
+        yield (0, css_1.buildMainCss)(handoff);
         return;
     });
 }

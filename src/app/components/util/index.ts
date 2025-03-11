@@ -1,6 +1,7 @@
 import { ChangelogRecord } from '@handoff/changelog';
 import { getClientConfig } from '@handoff/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentListObject } from '@handoff/transformers/preview/types';
 import {
   ComponentDocumentationOptions,
   LegacyComponentDefinition,
@@ -451,20 +452,32 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   let components = getTokens().components;
 
   if (fetchAll) {
-    // get the path for the integration templates
-    const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-    // find the path to the components
-    const templatesPath = path.resolve(integrationPath, 'components');
-    if (fs.existsSync(templatesPath)) {
-      // Read the template directory and use it to populate the components with json files
-      fs.readdirSync(templatesPath).map((file) => {
-        // ok, the file should have either a json file or a semver directory
-        const metadata = getLatestComponentMetadata(file);
-        if (metadata) {
-          components[file] = metadata;
-          components[file].name = metadata.title;
-        }
-      });
+    const componentIds = Array.from(
+      new Set<string>(
+        (
+          JSON.parse(
+            fs.readFileSync(
+              path.resolve(
+                process.env.HANDOFF_MODULE_PATH ?? '',
+                '.handoff',
+                `${process.env.HANDOFF_PROJECT_ID}`,
+                'public',
+                'api',
+                'components.json'
+              ),
+              'utf-8'
+            )
+          ) as ComponentListObject[]
+        ).map((c) => c.id)
+      )
+    );
+
+    for (const componentId of componentIds) {
+      const metadata = getLatestComponentMetadata(componentId);
+      if (metadata) {
+        components[componentId] = metadata;
+        components[componentId].name = metadata.title;
+      }
     }
   }
 

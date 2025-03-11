@@ -19,20 +19,24 @@ const path_1 = __importDefault(require("path"));
 const sass_1 = __importDefault(require("sass"));
 const index_1 = require("../../../index");
 const component_1 = require("../component");
-const buildComponentCss = (id, location, data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    const id = data.id;
+    const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
+    if (!entry) {
+        return data;
+    }
+    const extension = path_1.default.extname(entry);
+    if (!extension) {
+        return data;
+    }
     // Is there a scss file with the same name?
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const scssFile = id + '.scss';
-    const scssPath = path_1.default.resolve(location, scssFile);
-    const cssFile = id + '.css';
-    const cssPath = path_1.default.resolve(location, cssFile);
-    if (fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath)) {
-        console.log(chalk_1.default.green(`Detected SCSS file for ${id}`));
+    if (extension === '.scss') {
         try {
-            const result = yield sass_1.default.compileAsync(scssPath, {
+            const result = yield sass_1.default.compileAsync(entry, {
                 loadPaths: [
-                    path_1.default.resolve(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'sass'),
+                    path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'sass'),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                     path_1.default.resolve(handoff.workingPath),
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
@@ -42,7 +46,7 @@ const buildComponentCss = (id, location, data, handoff, sharedStyles) => __await
                 // @ts-ignore
                 data['css'] = result.css;
                 // Split the CSS into shared styles and component styles
-                const splitCSS = (_b = data['css']) === null || _b === void 0 ? void 0 : _b.split('/* COMPONENT STYLES*/');
+                const splitCSS = (_c = data['css']) === null || _c === void 0 ? void 0 : _c.split('/* COMPONENT STYLES*/');
                 // If there are two parts, the first part is the shared styles
                 if (splitCSS && splitCSS.length > 1) {
                     data['css'] = splitCSS[1];
@@ -54,21 +58,21 @@ const buildComponentCss = (id, location, data, handoff, sharedStyles) => __await
                         sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
                     yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, `shared.css`), sharedStyles);
                 }
-                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, cssFile), data['css']);
+                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, path_1.default.basename(entry).replace('.scss', '.css')), data['css']);
             }
         }
         catch (e) {
             console.log(chalk_1.default.red(`Error compiling SCSS for ${id}`));
             throw e;
         }
-        const scss = yield fs_extra_1.default.readFile(scssPath, 'utf8');
+        const scss = yield fs_extra_1.default.readFile(entry, 'utf8');
         if (scss) {
             data['sass'] = scss;
         }
     }
     // Is there a css file with the same name?
-    if (fs_extra_1.default.existsSync(cssPath)) {
-        const css = yield fs_extra_1.default.readFile(path_1.default.resolve(location, cssFile), 'utf8');
+    if (extension === 'css') {
+        const css = yield fs_extra_1.default.readFile(path_1.default.resolve(entry), 'utf8');
         if (css) {
             data['css'] = css;
         }
@@ -81,7 +85,7 @@ const buildComponentCss = (id, location, data, handoff, sharedStyles) => __await
  * @param handoff
  */
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
+    var _d;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const integration = (0, index_1.initIntegrationObject)(handoff);
     if (integration && integration.entries.bundle && fs_extra_1.default.existsSync(path_1.default.resolve(integration.entries.bundle))) {
@@ -90,7 +94,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
             const scssPath = path_1.default.resolve(integration.entries.styles);
             const result = yield sass_1.default.compileAsync(scssPath, {
                 loadPaths: [
-                    path_1.default.resolve(handoff.workingPath, (_c = handoff.config.integrationPath) !== null && _c !== void 0 ? _c : 'integration', 'sass'),
+                    path_1.default.resolve(handoff.workingPath, (_d = handoff.config.integrationPath) !== null && _d !== void 0 ? _d : 'integration', 'sass'),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                     path_1.default.resolve(handoff.workingPath),
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),

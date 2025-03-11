@@ -5,7 +5,7 @@ import sass from 'sass';
 import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
-import processComponent from './component/builder';
+import processComponents from './component/builder';
 import { buildMainCss } from './component/css';
 import { buildMainJS } from './component/javascript';
 
@@ -142,21 +142,11 @@ export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIP
  * @returns
  */
 export async function componentTransformer(handoff: Handoff, components?: FileComponentsObject) {
-  // Allow a user to create custom previews by putting templates in a components folder
-  // Iterate over the html files in that folder and render them as a preview
-  const componentPath = getComponentPath(handoff);
-  if (fs.existsSync(componentPath)) {
-    console.log(chalk.green(`Rendering Component Previews in ${componentPath}`));
-    const sharedStyles = await processSharedStyles(handoff);
-    const files = fs.readdirSync(componentPath);
-    const componentData = [];
-    for (const file of files) {
-      componentData.push(await processComponent(handoff, path.basename(file), sharedStyles, components));
-    }
-    await writeComponentSummaryAPI(handoff, componentData);
-    await buildMainJS(handoff);
-    await buildMainCss(handoff);
-  }
+  const sharedStyles = await processSharedStyles(handoff);
+  const componentData = await processComponents(handoff, undefined, sharedStyles, components);
+  await writeComponentSummaryAPI(handoff, componentData);
+  await buildMainJS(handoff);
+  await buildMainCss(handoff);
   return;
 }
 

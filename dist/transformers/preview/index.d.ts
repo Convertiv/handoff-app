@@ -35,6 +35,11 @@ export default function previewTransformer(handoff: Handoff, documentationObject
                 [key: string]: import("./component").SlotMetadata;
             };
             variant?: Record<string, string>;
+            entries?: {
+                js?: string;
+                scss?: string;
+                template?: string;
+            };
         }[];
     };
 }>;

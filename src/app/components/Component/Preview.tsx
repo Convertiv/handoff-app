@@ -67,7 +67,8 @@ export const ComponentDisplay: React.FC<{
   component: PreviewObject | undefined;
   defaultHeight?: string | undefined;
   title?: string;
-}> = ({ component, defaultHeight, title }) => {
+  onValuesChange?: (values: Record<string, string>) => void;
+}> = ({ component, defaultHeight, title, onValuesChange }) => {
   const context = usePreviewContext();
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
@@ -118,8 +119,9 @@ export const ComponentDisplay: React.FC<{
       }
       // check the environment
       setPreviewUrl(component.previews[keys[0]].url);
+      !!onValuesChange && onValuesChange(component.previews[keys[0]].values);
     }
-  }, [component]);
+  }, [component, onValuesChange]);
 
   React.useEffect(() => {
     if (!component) return;
@@ -131,8 +133,9 @@ export const ComponentDisplay: React.FC<{
 
     if (!!previewFilterResult && previewFilterResult.length > 0) {
       setPreviewUrl(previewFilterResult[0].url);
+      !!onValuesChange && onValuesChange(previewFilterResult[0].values);
     }
-  }, [context.variantFilter, component]);
+  }, [context.variantFilter, component, onValuesChange]);
 
   return (
     <div className="md:flex" id="preview">
@@ -332,6 +335,7 @@ export const ComponentPreview: React.FC<{
   const context = usePreviewContext();
   const [loaded, setLoaded] = React.useState(false);
   const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
+  const [currentValues, setCurrentValues] = React.useState<Record<string, string> | undefined>();
   React.useEffect(() => {
     if (context.preview) {
       setPreview(context.preview);
@@ -354,11 +358,18 @@ export const ComponentPreview: React.FC<{
     <>
       {bestPracticesCard && <BestPracticesCard component={preview} />}
       <div id={preview.id}>
-        <ComponentDisplay title={title} component={preview} defaultHeight={height} />
+        <ComponentDisplay
+          title={title}
+          component={preview}
+          defaultHeight={height}
+          onValuesChange={(vals) => {
+            setCurrentValues(vals);
+          }}
+        />
         {codeHighlight && (
           <>
             <a id="code-highlight" />
-            <CodeHighlight title={title} data={preview} collapsible={true} />
+            <CodeHighlight title={title} data={preview} collapsible={true} currentValues={currentValues} />
           </>
         )}
       </div>

@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import { merge } from 'lodash';
 import * as stream from 'node:stream';
 import path from 'path';
-import Handoff, { initIntegrationObject } from '.';
+import Handoff from '.';
 import { zipAssets } from './api';
 import buildApp from './app';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
@@ -26,20 +26,21 @@ import { findFilesByExtension } from './utils/fs';
 import { maskPrompt, prompt } from './utils/prompt';
 
 let config;
-const outputPath = (handoff: Handoff) => path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
-const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
-const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
-const variablesFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens');
-const iconsZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'icons.zip');
-const logosZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'logos.zip');
+export const outputPath = (handoff: Handoff) =>
+  path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
+export const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
+export const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
+export const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
+export const variablesFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens');
+export const iconsZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'icons.zip');
+export const logosZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'logos.zip');
 
 /**
  * Read Previous Json File
  * @param path
  * @returns
  */
-const readPrevJSONFile = async (path: string) => {
+export const readPrevJSONFile = async (path: string) => {
   try {
     return await fs.readJSON(path);
   } catch (e) {
@@ -455,7 +456,7 @@ export const buildIntegrationOnly = async (handoff: Handoff) => {
   const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   if (documentationObject) {
     // Ensure that the integration object is set if possible
-    handoff.integrationObject = initIntegrationObject(handoff);
+    // handoff.integrationObject = initIntegrationObject(handoff);
     await buildIntegration(handoff, documentationObject);
     await buildPreviews(handoff, documentationObject);
   }

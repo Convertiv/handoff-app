@@ -23,6 +23,19 @@ export type ComponentListObject = {
   previews: { [key: string]: OptionalPreviewRender };
   preview_options?: { group_by: boolean };
   paths: string[];
+  entries?: {
+    template?: string;
+  };
+  options?: {
+    transformer: {
+      cssRootClass?: string;
+      tokenNameSegments?: string[];
+      defaults: {
+        [variantProperty: string]: string;
+      };
+      replace: { [variantProperty: string]: { [source: string]: string } };
+    };
+  };
 };
 
 export type TransformComponentTokensResult = {
@@ -49,6 +62,11 @@ export type TransformComponentTokensResult = {
   preview_options?: { group_by: boolean };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
+  entries?: {
+    js?: string;
+    scss?: string;
+    template?: string;
+  };
 } | null;
 
 export type OptionalPreviewRender = {

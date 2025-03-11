@@ -7,5 +7,5 @@ import { ComponentListObject } from '../types';
  * @param file
  * @param sharedStyles
  */
-export declare function processComponent(handoff: Handoff, id: string, sharedStyles?: string, components?: FileComponentsObject): Promise<ComponentListObject>;
-export default processComponent;
+export declare function processComponents(handoff: Handoff, id?: string, sharedStyles?: string, components?: FileComponentsObject, segmentToUpdate?: 'js' | 'css' | 'previews'): Promise<ComponentListObject[]>;
+export default processComponents;

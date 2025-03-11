@@ -65,4 +65,5 @@ declare class Handoff {
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => IntegrationObject;
+export declare const getLatestVersionForComponent: (versions: string[]) => string;
 export default Handoff;

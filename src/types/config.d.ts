@@ -1,4 +1,5 @@
 export default config;
+import { ComponentListObject } from 'handoff/transformers/preview/types';
 import { FileComponentsObject } from '../exporters/components/types';
 import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
 
@@ -61,6 +62,10 @@ export interface Config {
   sitesOutputDirectory?: string;
   useVariables?: boolean;
   app?: NextAppConfig;
+  entries?: {
+    scss?: string;
+    components?: string[];
+  };
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
@@ -97,6 +102,11 @@ export interface IntegrationObject {
     templates?: string;
     bundle?: string;
     styles?: string;
+    components: {
+      [id: string]: {
+        [version: string]: ComponentListObject;
+      };
+    };
   };
   options: {
     [key: string]: IntegrationObjectComponentOptions;
