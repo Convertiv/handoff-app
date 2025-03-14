@@ -99,7 +99,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
             yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'main.css'), result.css);
         }
         catch (e) {
-            console.log(chalk_1.default.red(`Error compiling main JS`));
+            console.log(chalk_1.default.red(`Error compiling main CSS`));
             console.log(e);
         }
     }
