@@ -10,6 +10,8 @@ import { defaultConfig } from './config';
 import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import processComponent from './transformers/preview/component/builder';
+import { buildMainCss } from './transformers/preview/component/css';
+import { buildMainJS } from './transformers/preview/component/javascript';
 import { renameComponent } from './transformers/preview/component/rename';
 import { TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
@@ -192,6 +194,13 @@ class Handoff {
   async makeIntegration(): Promise<Handoff> {
     if (this.config) {
       await makeIntegration(this);
+    }
+    return this;
+  }
+  async makeIntegrationStyles(): Promise<Handoff> {
+    if (this.config) {
+      await buildMainJS(this);
+      await buildMainCss(this);
     }
     return this;
   }

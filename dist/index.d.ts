@@ -52,6 +52,7 @@ declare class Handoff {
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
     makeIntegration(): Promise<Handoff>;
+    makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;

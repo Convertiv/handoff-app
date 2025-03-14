@@ -81,9 +81,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
   // disable all links
   const links = document.getElementsByTagName('a');
-  console.log('links', links);
   for (let i = 0; i < links.length; i++) {
-    console.log('link', links[i]);
     links[i].addEventListener('click', function (event) {
       console.log('link clicked');
       event.preventDefault();

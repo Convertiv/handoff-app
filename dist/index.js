@@ -47,6 +47,8 @@ const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const integration_1 = require("./transformers/integration");
 const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
+const css_1 = require("./transformers/preview/component/css");
+const javascript_1 = require("./transformers/preview/component/javascript");
 const rename_1 = require("./transformers/preview/component/rename");
 const integration_2 = require("./utils/integration");
 class Handoff {
@@ -235,6 +237,15 @@ class Handoff {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config) {
                 yield (0, eject_1.makeIntegration)(this);
+            }
+            return this;
+        });
+    }
+    makeIntegrationStyles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, javascript_1.buildMainJS)(this);
+                yield (0, css_1.buildMainCss)(this);
             }
             return this;
         });
