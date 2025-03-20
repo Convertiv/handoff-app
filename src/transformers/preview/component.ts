@@ -153,9 +153,9 @@ export async function componentTransformer(handoff: Handoff, components?: FileCo
     for (const file of files) {
       componentData.push(await processComponent(handoff, path.basename(file), sharedStyles, components));
     }
-    writeComponentSummaryAPI(handoff, componentData);
-    buildMainJS(handoff);
-    buildMainCss(handoff);
+    await writeComponentSummaryAPI(handoff, componentData);
+    await buildMainJS(handoff);
+    await buildMainCss(handoff);
   }
   return;
 }
