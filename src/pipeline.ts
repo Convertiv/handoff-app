@@ -434,8 +434,9 @@ export const buildRecipe = async (handoff: Handoff) => {
   }
 
   const componentRecords: ComponentIntegrations = { components: [] };
+  const stat = await fs.stat(directoryToTraverse);
 
-  traverseDirectory(directoryToTraverse, componentRecords);
+  traverseDirectory(stat.isDirectory() ? directoryToTraverse : path.dirname(directoryToTraverse), componentRecords);
 
   componentRecords.components.forEach((component) => {
     component.common.parts.sort();

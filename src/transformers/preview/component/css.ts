@@ -77,22 +77,26 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
   const integration = initIntegrationObject(handoff);
-  if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
-    console.log(chalk.green(`Detected main CSS file`));
-    try {
-      const scssPath = path.resolve(integration.entries.styles);
-      const result = await sass.compileAsync(scssPath, {
-        loadPaths: [
-          path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
-          path.resolve(handoff.workingPath, 'node_modules'),
-          path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-        ],
-      });
-      await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
-    } catch (e) {
-      console.log(chalk.red(`Error compiling main CSS`));
-      console.log(e);
+  if (integration && integration.entries.integration && fs.existsSync(integration.entries.integration)) {
+    const stat = await fs.stat(integration.entries.integration);
+    const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
+    if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
+      console.log(chalk.green(`Detected main CSS file`));
+      try {
+        const scssPath = path.resolve(integration.entries.integration);
+        const result = await sass.compileAsync(scssPath, {
+          loadPaths: [
+            path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
+            path.resolve(handoff.workingPath, 'node_modules'),
+            path.resolve(handoff.workingPath),
+            path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          ],
+        });
+        await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
+      } catch (e) {
+        console.log(chalk.red(`Error compiling main CSS`));
+        console.log(e);
+      }
     }
   }
 };

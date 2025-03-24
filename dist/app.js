@@ -263,7 +263,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g, _h, _j, _k, _l, _m;
+    var _e, _f, _g, _h, _j, _k;
     const tokensJsonFilePath = (0, pipeline_1.tokensFilePath)(handoff);
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -420,7 +420,10 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         }));
     }
     if (((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration) && fs_extra_1.default.existsSync((_k = (_j = handoff.integrationObject) === null || _j === void 0 ? void 0 : _j.entries) === null || _k === void 0 ? void 0 : _k.integration)) {
-        chokidar_1.default.watch((_m = (_l = handoff.integrationObject) === null || _l === void 0 ? void 0 : _l.entries) === null || _m === void 0 ? void 0 : _m.integration, chokidarConfig).on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+        const stat = yield fs_extra_1.default.stat(handoff.integrationObject.entries.integration);
+        chokidar_1.default
+            .watch(stat.isDirectory() ? handoff.integrationObject.entries.integration : path_1.default.dirname(handoff.integrationObject.entries.integration), chokidarConfig)
+            .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':

@@ -312,19 +312,24 @@ const initConfig = (configOverride) => {
     return returnConfig;
 };
 const initIntegrationObject = (handoff) => {
-    var _a, _b, _c;
-    var _d, _e;
+    var _a, _b, _c, _d, _e;
+    var _f, _g;
     const result = {
         name: '',
         options: {},
         entries: {
+            integration: undefined,
+            bundle: undefined,
             components: {},
         },
     };
     if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
         result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
-    if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.components)) {
+    if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
+        result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
+    }
+    if (!!((_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components)) {
         for (const componentPath of handoff.config.entries.components) {
             const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
             const componentBaseName = path_1.default.basename(resolvedComponentPath);
@@ -344,8 +349,8 @@ const initIntegrationObject = (handoff) => {
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
-                (_d = component.options.transformer).cssRootClass || (_d.cssRootClass = null);
-                (_e = component.options.transformer).tokenNameSegments || (_e.tokenNameSegments = null);
+                (_f = component.options.transformer).cssRootClass || (_f.cssRootClass = null);
+                (_g = component.options.transformer).tokenNameSegments || (_g.tokenNameSegments = null);
                 component.options.transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.defaults));
                 component.options.transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.replace));
                 if (componentVersion === latest) {

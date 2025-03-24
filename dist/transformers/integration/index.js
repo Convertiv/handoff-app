@@ -120,10 +120,12 @@ const zipTokens = (dirPath, destination) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.zipTokens = zipTokens;
 const buildIntegration = (sourcePath, destPath, documentationObject, rootPath, rootReturnPath) => __awaiter(void 0, void 0, void 0, function* () {
+    if ((yield fs_extra_1.default.stat(sourcePath)).isFile()) {
+        sourcePath = path_1.default.dirname(sourcePath);
+    }
     rootPath !== null && rootPath !== void 0 ? rootPath : (rootPath = sourcePath);
     const items = yield fs_extra_1.default.readdir(sourcePath);
     const components = Object.keys(documentationObject.components);
-    const componentsWithInstances = components.filter((component) => documentationObject.components[component].instances.length > 0);
     for (const item of items) {
         const sourceItemPath = path_1.default.join(sourcePath, item);
         const destItemPath = path_1.default.join(destPath, item);

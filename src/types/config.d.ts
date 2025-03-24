@@ -64,6 +64,7 @@ export interface Config {
   app?: NextAppConfig;
   entries?: {
     scss?: string;
+    js?: string;
     components?: string[];
   };
   /**
@@ -98,10 +99,10 @@ export interface IntegrationObjectComponentOptions {
 export interface IntegrationObject {
   name: string;
   entries?: {
-    integration?: string;
+    integration?: string; // scss
+    bundle?: string; // js
     templates?: string;
-    bundle?: string;
-    styles?: string;
+    // styles?: string;
     components: {
       [id: string]: {
         [version: string]: ComponentListObject;

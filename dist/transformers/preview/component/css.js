@@ -88,23 +88,27 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
     var _d;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const integration = (0, index_1.initIntegrationObject)(handoff);
-    if (integration && integration.entries.bundle && fs_extra_1.default.existsSync(path_1.default.resolve(integration.entries.bundle))) {
-        console.log(chalk_1.default.green(`Detected main CSS file`));
-        try {
-            const scssPath = path_1.default.resolve(integration.entries.styles);
-            const result = yield sass_1.default.compileAsync(scssPath, {
-                loadPaths: [
-                    path_1.default.resolve(handoff.workingPath, (_d = handoff.config.integrationPath) !== null && _d !== void 0 ? _d : 'integration', 'sass'),
-                    path_1.default.resolve(handoff.workingPath, 'node_modules'),
-                    path_1.default.resolve(handoff.workingPath),
-                    path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-                ],
-            });
-            yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'main.css'), result.css);
-        }
-        catch (e) {
-            console.log(chalk_1.default.red(`Error compiling main CSS`));
-            console.log(e);
+    if (integration && integration.entries.integration && fs_extra_1.default.existsSync(integration.entries.integration)) {
+        const stat = yield fs_extra_1.default.stat(integration.entries.integration);
+        const entryPath = stat.isDirectory() ? path_1.default.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
+        if (entryPath === integration.entries.integration || fs_extra_1.default.existsSync(entryPath)) {
+            console.log(chalk_1.default.green(`Detected main CSS file`));
+            try {
+                const scssPath = path_1.default.resolve(integration.entries.integration);
+                const result = yield sass_1.default.compileAsync(scssPath, {
+                    loadPaths: [
+                        path_1.default.resolve(handoff.workingPath, (_d = handoff.config.integrationPath) !== null && _d !== void 0 ? _d : 'integration', 'sass'),
+                        path_1.default.resolve(handoff.workingPath, 'node_modules'),
+                        path_1.default.resolve(handoff.workingPath),
+                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                    ],
+                });
+                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'main.css'), result.css);
+            }
+            catch (e) {
+                console.log(chalk_1.default.red(`Error compiling main CSS`));
+                console.log(e);
+            }
         }
     }
 });

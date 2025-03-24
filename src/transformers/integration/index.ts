@@ -131,11 +131,14 @@ const buildIntegration = async (
   rootPath?: string,
   rootReturnPath?: string
 ): Promise<void> => {
-  rootPath ??= sourcePath;
-  const items = await fs.readdir(sourcePath);
+  if ((await fs.stat(sourcePath)).isFile()) {
+    sourcePath = path.dirname(sourcePath);
+  }
 
+  rootPath ??= sourcePath;
+
+  const items = await fs.readdir(sourcePath);
   const components = Object.keys(documentationObject.components);
-  const componentsWithInstances = components.filter((component) => documentationObject.components[component].instances.length > 0);
 
   for (const item of items) {
     const sourceItemPath = path.join(sourcePath, item);

@@ -347,7 +347,8 @@ const buildRecipe = (handoff) => __awaiter(void 0, void 0, void 0, function* () 
         return;
     }
     const componentRecords = { components: [] };
-    traverseDirectory(directoryToTraverse, componentRecords);
+    const stat = yield fs_extra_1.default.stat(directoryToTraverse);
+    traverseDirectory(stat.isDirectory() ? directoryToTraverse : path_1.default.dirname(directoryToTraverse), componentRecords);
     componentRecords.components.forEach((component) => {
         component.common.parts.sort();
     });

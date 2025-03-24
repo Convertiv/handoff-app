@@ -440,19 +440,25 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
 
   if (handoff.integrationObject?.entries?.integration && fs.existsSync(handoff.integrationObject?.entries?.integration)) {
-    chokidar.watch(handoff.integrationObject?.entries?.integration, chokidarConfig).on('all', async (event, file) => {
-      switch (event) {
-        case 'add':
-        case 'change':
-        case 'unlink':
-          if (!debounce) {
-            debounce = true;
-            await buildIntegrationOnly(handoff);
-            await processSharedStyles(handoff);
-            debounce = false;
-          }
-      }
-    });
+    const stat = await fs.stat(handoff.integrationObject.entries.integration);
+    chokidar
+      .watch(
+        stat.isDirectory() ? handoff.integrationObject.entries.integration : path.dirname(handoff.integrationObject.entries.integration),
+        chokidarConfig
+      )
+      .on('all', async (event, file) => {
+        switch (event) {
+          case 'add':
+          case 'change':
+          case 'unlink':
+            if (!debounce) {
+              debounce = true;
+              await buildIntegrationOnly(handoff);
+              await processSharedStyles(handoff);
+              debounce = false;
+            }
+        }
+      });
   }
 
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {

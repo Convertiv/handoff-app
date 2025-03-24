@@ -273,12 +273,18 @@ export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
     name: '',
     options: {},
     entries: {
+      integration: undefined, // scss
+      bundle: undefined, // js
       components: {},
     },
   };
 
   if (!!handoff.config.entries?.scss) {
     result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
+  }
+
+  if (!!handoff.config.entries?.js) {
+    result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
 
   if (!!handoff.config.entries?.components) {
