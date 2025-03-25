@@ -50,10 +50,14 @@ export const writeComponentApi = async (
     if (fs.existsSync(outputFilePath)) {
       const existingJson = await fs.readFile(outputFilePath, 'utf8');
       if (existingJson) {
-        const existingData = JSON.parse(existingJson) as TransformComponentTokensResult;
-        const mergedData = updateObject(existingData, component);
-        await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
-        return;
+        try {
+          const existingData = JSON.parse(existingJson) as TransformComponentTokensResult;
+          const mergedData = updateObject(existingData, component);
+          await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+          return;
+        } catch (_) {
+          // Unable to parse existing file
+        }
       }
     }
   }
@@ -81,8 +85,12 @@ export const updateComponentSummaryApi = async (handoff: Handoff, componentData:
   if (fs.existsSync(apiPath)) {
     const existing = await fs.readFile(apiPath, 'utf8');
     if (existing) {
-      existingData = JSON.parse(existing);
-      existingData = existingData.filter((component) => component.id !== componentData.id);
+      try {
+        existingData = JSON.parse(existing);
+        existingData = existingData.filter((component) => component.id !== componentData.id);
+      } catch (_) {
+        // Unable to parse existing file
+      }
     }
   }
   await writeComponentSummaryAPI(handoff, newComponentData.concat(existingData));

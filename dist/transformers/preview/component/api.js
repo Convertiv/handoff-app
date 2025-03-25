@@ -49,10 +49,15 @@ const writeComponentApi = (id, component, version, handoff, isPartialUpdate = fa
         if (fs_extra_1.default.existsSync(outputFilePath)) {
             const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
             if (existingJson) {
-                const existingData = JSON.parse(existingJson);
-                const mergedData = updateObject(existingData, component);
-                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
-                return;
+                try {
+                    const existingData = JSON.parse(existingJson);
+                    const mergedData = updateObject(existingData, component);
+                    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+                    return;
+                }
+                catch (_) {
+                    // Unable to parse existing file
+                }
             }
         }
     }
@@ -77,8 +82,13 @@ const updateComponentSummaryApi = (handoff, componentData) => __awaiter(void 0, 
     if (fs_extra_1.default.existsSync(apiPath)) {
         const existing = yield fs_extra_1.default.readFile(apiPath, 'utf8');
         if (existing) {
-            existingData = JSON.parse(existing);
-            existingData = existingData.filter((component) => component.id !== componentData.id);
+            try {
+                existingData = JSON.parse(existing);
+                existingData = existingData.filter((component) => component.id !== componentData.id);
+            }
+            catch (_) {
+                // Unable to parse existing file
+            }
         }
     }
     yield writeComponentSummaryAPI(handoff, newComponentData.concat(existingData));
