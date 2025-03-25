@@ -263,7 +263,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g, _h, _j, _k;
+    var _e, _f, _g, _h, _j, _k, _l;
     const tokensJsonFilePath = (0, pipeline_1.tokensFilePath)(handoff);
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -387,7 +387,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     for (const runtimeComponentId of Object.keys((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries.components) !== null && _f !== void 0 ? _f : {})) {
         for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
             const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
-            for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries)) {
+            for (const [_, runtimeComponentEntryPath] of Object.entries((_g = runtimeComponent.entries) !== null && _g !== void 0 ? _g : {})) {
                 const normalizedComponentEntryPath = runtimeComponentEntryPath;
                 if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
                     if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
@@ -419,7 +419,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             }
         }));
     }
-    if (((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration) && fs_extra_1.default.existsSync((_k = (_j = handoff.integrationObject) === null || _j === void 0 ? void 0 : _j.entries) === null || _k === void 0 ? void 0 : _k.integration)) {
+    if (((_j = (_h = handoff.integrationObject) === null || _h === void 0 ? void 0 : _h.entries) === null || _j === void 0 ? void 0 : _j.integration) && fs_extra_1.default.existsSync((_l = (_k = handoff.integrationObject) === null || _k === void 0 ? void 0 : _k.entries) === null || _l === void 0 ? void 0 : _l.integration)) {
         const stat = yield fs_extra_1.default.stat(handoff.integrationObject.entries.integration);
         chokidar_1.default
             .watch(stat.isDirectory() ? handoff.integrationObject.entries.integration : path_1.default.dirname(handoff.integrationObject.entries.integration), chokidarConfig)

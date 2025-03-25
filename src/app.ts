@@ -405,7 +405,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   for (const runtimeComponentId of Object.keys(handoff.integrationObject?.entries.components ?? {})) {
     for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
       const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
-      for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries)) {
+      for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
         const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
         if (fs.existsSync(normalizedComponentEntryPath)) {
           if (fs.statSync(normalizedComponentEntryPath).isFile()) {
