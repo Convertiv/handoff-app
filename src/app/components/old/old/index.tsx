@@ -25,7 +25,6 @@ import {
   IParams,
   fetchCompDocPageMarkdown,
   fetchComponents,
-  getIntegrationObject,
   getLegacyDefinition,
   getPreview,
   getTokens,
@@ -55,12 +54,13 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   const config = getClientConfig();
   const { component } = context.params as IParams;
-  const integrationObject = getIntegrationObject();
+  // const integrationObject = getIntegrationObject();
 
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
   const componentPreviews = getPreview().components[componentSlug!];
-  const componentOptions = (integrationObject?.options ?? {})[componentSlug] ?? {};
+  // const componentOptions = (integrationObject?.options ?? {})[componentSlug] ?? {};
+  const componentOptions = {};
 
   return {
     props: {
@@ -69,7 +69,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       legacyDefinition: getLegacyDefinition(componentSlug!),
       previews: componentPreviews,
       integration: componentOptions,
-      ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`, integrationObject).props,
+      ...fetchCompDocPageMarkdown('docs/components/', componentSlug, `/components`, /*integrationObject*/ undefined).props,
       config,
     },
   };
@@ -323,7 +323,9 @@ export const OverviewComponentClasses: React.FC<{ components: ComponentPreviews 
 export const OverviewComponentGuidlines: React.FC<{ content: string }> = ({ content }) => {
   return (
     <>
-      <ReactMarkdown className="prose" rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
+      <ReactMarkdown className="prose" rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
     </>
   );
 };

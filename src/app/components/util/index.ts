@@ -11,7 +11,6 @@ import {
 } from '@handoff/types';
 import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
-import { prepareIntegrationObject } from '@handoff/utils/integration';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
@@ -562,30 +561,30 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-export const getIntegrationObject = (): IntegrationObject => {
-  const defaultObject = null as IntegrationObject;
+// export const getIntegrationObject = (): IntegrationObject => {
+//   const defaultObject = null as IntegrationObject;
 
-  if (!process.env.HANDOFF_WORKING_PATH) {
-    return defaultObject;
-  }
+//   if (!process.env.HANDOFF_WORKING_PATH) {
+//     return defaultObject;
+//   }
 
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+//   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
 
-  if (!fs.existsSync(integrationPath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationPath)) {
+//     return defaultObject;
+//   }
 
-  const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
+//   const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
 
-  if (!fs.existsSync(integrationFilePath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationFilePath)) {
+//     return defaultObject;
+//   }
 
-  const buffer = fs.readFileSync(integrationFilePath);
-  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+//   const buffer = fs.readFileSync(integrationFilePath);
+//   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
 
-  return prepareIntegrationObject(integration, integrationPath);
-};
+//   return prepareIntegrationObject(integration, integrationPath);
+// };
 
 export const getTokens = (): ExportResult => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
