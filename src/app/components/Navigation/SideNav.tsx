@@ -19,20 +19,30 @@ import {
 } from '../../components/ui/sidebar';
 import { SectionLink } from '../util';
 
-const NormalMenuItem = ({ title, icon, path }) => (
-  <SidebarMenuItem>
-    <SidebarMenuButton asChild>
-      <a href={`/${path}`}>
-        <MenuIcon icon={icon} />
-        <span>{title}</span>
-      </a>
-    </SidebarMenuButton>
-  </SidebarMenuItem>
-);
+const trimSlashes = (input: string): string => {
+  return input.replace(/^\/+|\/+$/g, '');
+};
+
+const NormalMenuItem = ({ title, icon, path }) => {
+  const router = useRouter();
+  const isActive = trimSlashes(path) === trimSlashes(router.asPath);
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={isActive}>
+        <a href={`/${path}`}>
+          <MenuIcon icon={icon} />
+          <span>{title}</span>
+        </a>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+};
 
 const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
   const router = useRouter();
-  const isActive = router.pathname.startsWith('/' + path) || '/' + path === router.pathname;
+  const isActive = menu.some(
+    (item) => trimSlashes(router.asPath).startsWith(trimSlashes(item.path)) || trimSlashes(item.path) === trimSlashes(router.asPath)
+  );
   return (
     <Collapsible defaultOpen={isActive} className="group/collapsible">
       <SidebarMenuItem>
