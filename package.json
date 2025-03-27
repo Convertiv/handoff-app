@@ -133,7 +133,7 @@
     "react-scroll": "^1.8.9",
     "react-syntax-highlighter": "^15.5.0",
     "rehype-raw": "^6.1.1",
-    "sass": "1.64.2",
+    "sass": "^1.85.0",
     "sass-loader": "^13.2.0",
     "semver": "^7.6.3",
     "style-loader": "^3.3.1",
