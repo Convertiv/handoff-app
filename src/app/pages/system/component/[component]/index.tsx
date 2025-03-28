@@ -1,5 +1,4 @@
 'use client';
-import { MarkdownComponents } from '@/components/Markdown/MarkdownComponents';
 import { getClientConfig } from '@handoff/config';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
@@ -10,6 +9,7 @@ import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
+import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
