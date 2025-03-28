@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Footer from './Footer';
-import Header from './old/Header';
 import * as util from './util';
 export interface ComponentNotFoundProps extends util.DocumentationProps {
   children?: JSX.Element;
@@ -12,7 +11,6 @@ export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, 
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} config={config} />
 
       <section className="c-content">
         <div className="o-container-fluid">
