@@ -1,8 +1,11 @@
 'use client';
+import { MarkdownComponents } from '@/components/Markdown/MarkdownComponents';
 import { getClientConfig } from '@handoff/config';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import React, { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -127,9 +130,15 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
       <div className="flex flex-col gap-3 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
-          <p className="max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
+          <ReactMarkdown
+            className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300"
+            components={MarkdownComponents}
+            rehypePlugins={[rehypeRaw]}
+          >
             {metadata.description}
-            {/* {component.tags &&
+          </ReactMarkdown>
+          {/*<p className="">
+             {component.tags &&
               Array.isArray(component.tags) &&
               component.tags.map((tag) => (
                 <>
@@ -138,8 +147,8 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                     {tag}
                   </Badge>
                 </>
-              ))} */}
-          </p>
+              ))} 
+          </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
