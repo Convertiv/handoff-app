@@ -32,19 +32,21 @@ function hexToRgb(hex) {
 }
 
 const LargeColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => (
-  <div className="container-type-inline-size mb-6 grid grid-cols-1 gap-6 @container sm:grid-cols-2">
-    {colors.map((color) => (
-      <a href="#" className="flex flex-col items-start" key={color.group + '-' + color.name}>
-        <div
-          className="group relative mb-2 block h-32 w-full rounded-lg"
-          style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
-        >
-          <ColorDropdown color={color} openSheet={setOpen} />
-        </div>
-        <p className="mb-1 text-sm font-medium">{color.name}</p>
-        <small className="font-mono text-xs font-light text-gray-400">{color.value}</small>
-      </a>
-    ))}
+  <div className="@container">
+    <div className="mb-6 grid grid-cols-1 gap-6 @md:grid-cols-2">
+      {colors.map((color) => (
+        <a href="#" className="flex flex-col items-start" key={color.group + '-' + color.name}>
+          <div
+            className="group relative mb-2 block h-32 w-full rounded-lg"
+            style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
+          >
+            <ColorDropdown color={color} openSheet={setOpen} />
+          </div>
+          <p className="mb-1 text-sm font-medium">{color.name}</p>
+          <small className="font-mono text-xs font-light text-gray-400">{color.value}</small>
+        </a>
+      ))}
+    </div>
   </div>
 );
 

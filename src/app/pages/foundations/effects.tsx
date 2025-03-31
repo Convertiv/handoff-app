@@ -42,7 +42,7 @@ export const getStaticProps: GetStaticProps = async () => {
   };
 };
 
-const ColorsPage = ({
+const EffectsPage = ({
   content,
   menu,
   metadata,
@@ -73,19 +73,14 @@ const ColorsPage = ({
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
-      <div className="mt-10">
-        {Object.keys(effectGroups).map((group) => (
-          <div key={group} id={`${lowerCase(group)}-effects`}>
-            <div className="o-row">
-              <div className="o-col-10@md">
-                <div>
-                  <h3 className="u-mb-4">{upperFirst(group)} Effects</h3>
-                </div>
-              </div>
-            </div>
-            <div className="o-row">
-              <div className="o-col-12@md">
-                <div className="o-stack-2@md o-stack-2@lg u-mb-n-4">
+
+      <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+        <div>
+          {Object.keys(effectGroups).map((group) => (
+            <div key={group} id={`${lowerCase(group)}-effects`}>
+              <h3 className="u-mb-4">{upperFirst(group)} Effects</h3>
+              <div className="@container">
+                <div className="mb-6 grid grid-cols-1 gap-6 @md:grid-cols-2">
                   {effectGroups[group].map((effect) => {
                     // initialize preview css properties
                     const cssProperties: React.CSSProperties = {};
@@ -97,24 +92,34 @@ const ColorsPage = ({
                     });
 
                     return (
-                      <div className="c-color-preview" key={`effect-${effect.group}-${effect.name}`}>
-                        <div className="c-color-preview__wrapper">
-                          <span className="c-color-preview__sample" style={cssProperties}></span>
-                          <h5>{effect.name}</h5>
-                        </div>
+                      <div key={`effect-${effect.group}-${effect.name}`}>
+                        <span className="group relative mb-2 block h-32 w-full rounded-lg" style={cssProperties}></span>
+                        <p className="mb-1 text-sm font-medium">{effect.name}</p>
+                        <small className="font-mono text-xs font-light text-gray-400">{effect.reference}</small>
+                        <small className="block font-mono text-xs font-light text-gray-400">
+                          {effect.effects.map((e, i) => (
+                            <span key={i}>
+                              {e.value}
+                              {i < effect.effects.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </small>
                       </div>
                     );
                   })}
                 </div>
               </div>
+              <hr />
             </div>
-            <hr />
-          </div>
-        ))}
+          ))}
+        </div>
 
         <AnchorNav
           groups={[
-            Object.assign({}, ...[...Object.keys(effectGroups).map((group) => ({ [`${group}-effects`]: `${upperFirst(group)} Effects` }))]),
+            Object.assign(
+              {},
+              ...[...Object.keys(effectGroups).map((group) => ({ [`${lowerCase(group)}-effects`]: `${upperFirst(group)} Effects` }))]
+            ),
           ]}
         />
 
@@ -125,4 +130,4 @@ const ColorsPage = ({
     </Layout>
   );
 };
-export default ColorsPage;
+export default EffectsPage;
