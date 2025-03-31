@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ModeToggle } from '../../components/ModeSwitcher';
 import { MainNav } from '../../components/Navigation/MainNav';
@@ -26,7 +27,9 @@ export function Header() {
     >
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
         <div className="mx-auto flex items-center justify-between">
-          <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
+          <Link href="/">
+            <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
+          </Link>
           <div className="flex items-center gap-4">
             <MainNav />
             <ModeToggle />

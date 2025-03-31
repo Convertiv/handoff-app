@@ -1,6 +1,6 @@
 import { getClientConfig } from '@handoff/config';
 import type { AssetObject } from '@handoff/types';
-import { Laptop, Search } from 'lucide-react';
+import { Download } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import * as React from 'react';
@@ -10,6 +10,8 @@ import Footer from '../../../components/Footer';
 import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../../components/Typography/Headers';
+import { buttonVariants } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
@@ -26,18 +28,18 @@ export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
 
     if (!svgElement) return '';
 
-    svgElement.classList.add('o-icon');
-
     return svgElement.outerHTML;
   }, [icon.data]);
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <Link href={`/foundations/icons/${icon.icon}`}>
-        <div className="c-card c-card--icon-preview">
+        <div className="flex flex-col items-center gap-6 rounded-lg border border-gray-100/80 bg-gray-100/80 py-12 transition-all hover:border-gray-300 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700 dark:hover:bg-gray-900">
           <div dangerouslySetInnerHTML={{ __html: htmlData }} />
-          <p>{icon.icon}</p>
         </div>
+      </Link>
+      <Link href={`/foundations/icons/${icon.icon}`}>
+        <p className="font-mono text-[11px]">{icon.icon}</p>
       </Link>
     </div>
   );
@@ -62,6 +64,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
   const [search, setSearch] = React.useState('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const icons = search
     ? assets.icons.filter((icon) => {
@@ -73,42 +76,57 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
     setSearch(event.currentTarget.value.toLowerCase().replace(/[\W_]+/g, ' '));
   }, []);
 
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      setSearch('');
+      // Prevent the default ESC behavior (which can blur input in some browsers)
+      event.preventDefault();
+    }
+  }, []);
+
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
-        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
-        <a href={config?.assets_zip_links?.icons ?? '/icons.zip'}>Download All Icons</a>
+        <p className="max-w-[800px] text-lg font-light text-gray-500 dark:text-gray-300">{metadata.description}</p>
+        <div className="mt-3 flex flex-row gap-3">
+          <Link
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+            href={config?.assets_zip_links?.icons ?? '/icons.zip'}
+          >
+            Download Icons <Download strokeWidth={1.5} />
+          </Link>
+        </div>
       </div>
+      <hr className="mb-10" />
       <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
         {content}
       </ReactMarkdown>
 
-      <div className="c-form-element c-form-element--fullwidth c-form-element--big">
-        <div className="c-form-element__field">
-          <div className="c-form-element__icon">
-            <Search />
-          </div>
-          <input type="text" className="c-form-element__text" placeholder="Search icons..." onChange={filterList} />
-        </div>
-      </div>
-      <p>
-        <strong>{icons.length}</strong> found
+      <Input
+        type="text"
+        placeholder="Search icons..."
+        onChange={filterList}
+        onKeyDown={handleKeyDown}
+        value={search}
+        ref={inputRef}
+        className="px-5 py-6 text-lg"
+      />
+      <p className="my-5 text-sm text-gray-600 dark:text-gray-300">
+        <span className="font-medium text-gray-900 dark:text-gray-100">{icons.length}</span> found
       </p>
-      <div className="o-row">
-        <div className="o-col-12@md">
-          <div className="o-stack-3@md o-stack-5@lg">
-            {icons.length > 0 ? (
-              icons.map((icon) => <DisplayIcon key={icon.path} icon={icon} />)
-            ) : (
-              <div className="c-search-results">
-                <Laptop />
-                <h4>No icons found.</h4>
-              </div>
-            )}
-          </div>
+
+      {icons.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {icons.map((icon) => (
+            <DisplayIcon key={icon.path} icon={icon} />
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <h4 className="text-lg font-light text-gray-600 dark:text-gray-300">No icons found.</h4>
+        </div>
+      )}
 
       <Footer config={config} />
     </Layout>

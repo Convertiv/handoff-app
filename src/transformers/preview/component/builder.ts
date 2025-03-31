@@ -100,10 +100,10 @@ export async function processComponents(
     );
 
     if (latestVersion) {
-      writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
-      const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
-      writeComponentMetadataApi(runtimeComponentId, summary, handoff);
-      updateComponentSummaryApi(handoff, summary);
+      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
+      const summary = await buildComponentSummary(runtimeComponentId, latestVersion, versions);
+      await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
+      await updateComponentSummaryApi(handoff, summary);
       result.push(summary);
     } else {
       throw new Error(`No latest version found for ${runtimeComponentId}`);

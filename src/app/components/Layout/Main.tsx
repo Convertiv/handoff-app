@@ -18,8 +18,9 @@ interface LayoutComponentProps {
   current: any[] | SectionLink;
   config: ClientConfig;
   children: React.ReactNode;
+  fullWidthHero?: boolean;
 }
-export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current }) {
+export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current, fullWidthHero = false }) {
   return (
     <div>
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
@@ -41,11 +42,17 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
           <Header />
 
           <div className="container mx-auto min-h-screen max-w-[1500px]">
-            {current ? (
+            {fullWidthHero ? (
+              <div className="w-full">
+                <div className="relative bg-transparent px-0 lg:gap-10 xl:grid">
+                  <div className="mx-auto w-full">{children}</div>
+                </div>
+              </div>
+            ) : current ? (
               <SidebarProvider>
                 <div className="flex w-full">
                   <SideNav menu={current} />
-                  <SidebarInset className="relative bg-transparent py-8 pl-16 pr-8 lg:gap-10 lg:py-16">
+                  <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
                     <div className="mx-auto w-full">{children}</div>
                   </SidebarInset>
                 </div>

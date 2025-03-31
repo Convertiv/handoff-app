@@ -100,10 +100,10 @@ function processComponents(handoff, id, sharedStyles, components, segmentToUpdat
                 }
             })));
             if (latestVersion) {
-                (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
-                const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
-                (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
-                (0, api_1.updateComponentSummaryApi)(handoff, summary);
+                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
+                const summary = yield buildComponentSummary(runtimeComponentId, latestVersion, versions);
+                yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
+                yield (0, api_1.updateComponentSummaryApi)(handoff, summary);
                 result.push(summary);
             }
             else {

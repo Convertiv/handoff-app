@@ -32,6 +32,8 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
           path.resolve(handoff.workingPath),
           path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
         ],
+        quietDeps: true,
+        silenceDeprecations: ['import'],
       });
       if (result.css) {
         // @ts-ignore
@@ -91,6 +93,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
             path.resolve(handoff.workingPath),
             path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
           ],
+          quietDeps: true,
         });
         await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
       } catch (e) {
