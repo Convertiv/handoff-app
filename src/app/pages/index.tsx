@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { getClientConfig } from '@handoff/config';
 import { ArrowRight, Code2 } from 'lucide-react';
 import { GetStaticProps } from 'next';
@@ -8,6 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import Layout from '../components/Layout/Main';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
+import { Button } from '../components/ui/button';
 import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
 
 /**

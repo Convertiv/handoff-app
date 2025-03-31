@@ -1,5 +1,3 @@
-import { buttonVariants } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { getClientConfig } from '@handoff/config';
 import type { AssetObject } from '@handoff/types';
 import { Download } from 'lucide-react';
@@ -12,6 +10,8 @@ import Footer from '../../../components/Footer';
 import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../../components/Typography/Headers';
+import { buttonVariants } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {

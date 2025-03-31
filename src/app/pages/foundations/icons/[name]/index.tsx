@@ -1,4 +1,3 @@
-import { buttonVariants } from '@/components/ui/button';
 import { getClientConfig } from '@handoff/config';
 import { AssetObject } from '@handoff/types';
 import HtmlReactParser from 'html-react-parser';
@@ -10,6 +9,7 @@ import * as React from 'react';
 import Footer from '../../../../components/Footer';
 import Layout from '../../../../components/Layout/Main';
 import HeadersType from '../../../../components/Typography/Headers';
+import { buttonVariants } from '../../../../components/ui/button';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../../components/util';
 
 const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
