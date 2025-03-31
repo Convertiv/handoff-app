@@ -70,7 +70,7 @@ const SmallColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void
               <React.Fragment key={`group-${subgroup}-${color.name}`}>
                 <a href="" className="flex flex-col">
                   <div
-                    className="group relative  mb-2 block h-14 rounded-lg"
+                    className="group relative mb-2 block h-14 rounded-lg"
                     style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
                   >
                     <ColorDropdown color={color} openSheet={setOpen} />

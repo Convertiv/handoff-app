@@ -78,8 +78,12 @@ const Typography = ({
             <p className="mb-1 text-sm">Typeface</p>
             <div className="" style={{ fontFamily: key }}>
               <p className="mb-3 text-3xl leading-relaxed text-gray-900 dark:text-gray-100">{key}</p>
-              <p className="mb-2 text-xs tracking-[0.3em]  text-gray-400">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
-              <p className=" text-xs tracking-[0.3em]  text-gray-400">1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*</p>
+              <p className="mb-2 break-words text-xs  tracking-[0.3em] text-gray-400">
+                ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+              </p>
+              <p className=" break-words text-xs  tracking-[0.3em] text-gray-400">
+                1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*
+              </p>
             </div>
           </div>
         ))}
