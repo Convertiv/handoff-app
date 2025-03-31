@@ -87,7 +87,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _d;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const integration = (0, index_1.initIntegrationObject)(handoff);
+    const integration = (0, index_1.initIntegrationObject)(handoff)[0];
     if (integration && integration.entries.integration && fs_extra_1.default.existsSync(integration.entries.integration)) {
         const stat = yield fs_extra_1.default.stat(integration.entries.integration);
         const entryPath = stat.isDirectory() ? path_1.default.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;

@@ -59,6 +59,12 @@ class Handoff {
         this.workingPath = process.cwd();
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
+        this._initialArgs = {};
+        this._configs = [];
+        this._initialArgs = { debug, force, config };
+        this.construct(debug, force, config);
+    }
+    construct(debug, force, config) {
         this.config = null;
         this.debug = debug !== null && debug !== void 0 ? debug : false;
         this.force = force !== null && force !== void 0 ? force : false;
@@ -86,7 +92,11 @@ class Handoff {
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = (0, exports.initIntegrationObject)(this);
+        [this.integrationObject, this._configs] = (0, exports.initIntegrationObject)(this);
+        return this;
+    }
+    reload() {
+        this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
         return this;
     }
     preRunner(validate) {
@@ -314,6 +324,7 @@ const initConfig = (configOverride) => {
 const initIntegrationObject = (handoff) => {
     var _a, _b, _c, _d, _e;
     var _f, _g;
+    const configFiles = [];
     const result = {
         name: '',
         options: {},
@@ -337,7 +348,9 @@ const initIntegrationObject = (handoff) => {
             const latest = (0, exports.getLatestVersionForComponent)(versions);
             for (const componentVersion of versions) {
                 const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
-                const componentJson = fs_extra_1.default.readFileSync(path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`), 'utf8');
+                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+                configFiles.push(resolvedComponentVersionConfigPath);
+                const componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
                 const component = JSON.parse(componentJson);
                 if (component.entries) {
                     for (const entryType in component.entries) {
@@ -362,7 +375,7 @@ const initIntegrationObject = (handoff) => {
             }
         }
     }
-    return result;
+    return [result, Array.from(configFiles)];
 };
 exports.initIntegrationObject = initIntegrationObject;
 const validateConfig = (config) => {

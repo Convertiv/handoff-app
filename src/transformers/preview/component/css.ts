@@ -76,7 +76,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
  */
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff);
+  const integration = initIntegrationObject(handoff)[0];
   if (integration && integration.entries.integration && fs.existsSync(integration.entries.integration)) {
     const stat = await fs.stat(integration.entries.integration);
     const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;

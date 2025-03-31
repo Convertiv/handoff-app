@@ -52,7 +52,7 @@ const buildComponentJs = (data, handoff) => __awaiter(void 0, void 0, void 0, fu
  */
 const buildMainJS = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const integration = (0, index_1.initIntegrationObject)(handoff);
+    const integration = (0, index_1.initIntegrationObject)(handoff)[0];
     if (integration && integration.entries.bundle && fs_extra_1.default.existsSync(path_1.default.resolve(integration.entries.bundle))) {
         console.log(chalk_1.default.green(`Detected main JS file`));
         try {

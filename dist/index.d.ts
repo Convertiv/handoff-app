@@ -33,8 +33,16 @@ declare class Handoff {
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
+    _initialArgs: {
+        debug?: boolean;
+        force?: boolean;
+        config?: Partial<Config>;
+    };
+    _configs: string[];
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
+    private construct;
     init(configOverride?: Partial<Config>): Handoff;
+    reload(): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     recipe(): Promise<Handoff>;
@@ -64,6 +72,6 @@ declare class Handoff {
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
-export declare const initIntegrationObject: (handoff: Handoff) => IntegrationObject;
+export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
 export declare const getLatestVersionForComponent: (versions: string[]) => string;
 export default Handoff;

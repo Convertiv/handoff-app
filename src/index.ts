@@ -47,8 +47,15 @@ class Handoff {
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
+  _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  _configs: string[] = [];
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
+    this._initialArgs = { debug, force, config };
+    this.construct(debug, force, config);
+  }
+
+  private construct(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
@@ -75,7 +82,11 @@ class Handoff {
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    this.integrationObject = initIntegrationObject(this);
+    [this.integrationObject, this._configs] = initIntegrationObject(this);
+    return this;
+  }
+  reload(): Handoff {
+    this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -268,7 +279,8 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
   return returnConfig;
 };
 
-export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
+export const initIntegrationObject = (handoff: Handoff): [integrationObject: IntegrationObject, configs: string[]] => {
+  const configFiles: string[] = [];
   const result: IntegrationObject = {
     name: '',
     options: {},
@@ -296,7 +308,9 @@ export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
 
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
-        const componentJson = fs.readFileSync(path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`), 'utf8');
+        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+        configFiles.push(resolvedComponentVersionConfigPath);
+        const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
         const component = JSON.parse(componentJson) as ComponentListObject;
 
         if (component.entries) {
@@ -333,7 +347,7 @@ export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
     }
   }
 
-  return result;
+  return [result, Array.from(configFiles)];
 };
 
 const validateConfig = (config: Config): Config => {

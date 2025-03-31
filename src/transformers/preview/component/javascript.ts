@@ -40,7 +40,7 @@ const buildComponentJs = async (data: TransformComponentTokensResult, handoff: H
  */
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff);
+  const integration = initIntegrationObject(handoff)[0];
   if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
     console.log(chalk.green(`Detected main JS file`));
     try {
