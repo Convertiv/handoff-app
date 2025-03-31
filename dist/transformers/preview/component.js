@@ -117,7 +117,6 @@ function componentTransformer(handoff, components) {
             for (const file of files) {
                 componentData.push(yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, components));
             }
-            console.log(chalk_1.default.green(`Writing component API with ${componentData.length} components`));
             yield (0, api_1.default)(handoff, componentData);
             yield (0, javascript_1.buildMainJS)(handoff);
             yield (0, css_1.buildMainCss)(handoff);
