@@ -309,9 +309,12 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
         const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+
         configFiles.push(resolvedComponentVersionConfigPath);
+
         const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
         const component = JSON.parse(componentJson) as ComponentListObject;
+        component.id = componentBaseName; // Use component basename as the id
 
         if (component.entries) {
           for (const entryType in component.entries) {

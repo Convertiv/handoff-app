@@ -6,7 +6,7 @@ export declare enum ComponentType {
     Utility = "utility"
 }
 export declare type ComponentListObject = {
-    id: string;
+    id?: string;
     version: string;
     image: string;
     title: string;
@@ -28,7 +28,9 @@ export declare type ComponentListObject = {
     };
     paths: string[];
     entries?: {
-        template?: string;
+        js?: string;
+        scss?: string;
+        templates?: string;
     };
     options?: {
         transformer: {

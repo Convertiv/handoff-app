@@ -8,7 +8,7 @@ export enum ComponentType {
 }
 
 export type ComponentListObject = {
-  id: string;
+  id?: string;
   version: string;
   image: string;
   title: string;
@@ -24,7 +24,9 @@ export type ComponentListObject = {
   preview_options?: { group_by: boolean };
   paths: string[];
   entries?: {
-    template?: string;
+    js?: string;
+    scss?: string;
+    templates?: string;
   };
   options?: {
     transformer: {

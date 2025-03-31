@@ -352,6 +352,7 @@ const initIntegrationObject = (handoff) => {
                 configFiles.push(resolvedComponentVersionConfigPath);
                 const componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
                 const component = JSON.parse(componentJson);
+                component.id = componentBaseName; // Use component basename as the id
                 if (component.entries) {
                     for (const entryType in component.entries) {
                         if (component.entries[entryType]) {
