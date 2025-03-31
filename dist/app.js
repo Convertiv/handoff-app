@@ -408,7 +408,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                             debounce = true;
                             file = path_1.default.dirname(path_1.default.dirname(file));
                             const extension = path_1.default.extname(file);
-                            console.log(chalk_1.default.yellow(`Processing component...`), file, path_1.default.basename(file));
                             const segmentToUpdate = extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
                             yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
                             debounce = false;

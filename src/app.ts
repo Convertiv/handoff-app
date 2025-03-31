@@ -431,7 +431,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               debounce = true;
               file = path.dirname(path.dirname(file));
               const extension = path.extname(file);
-              console.log(chalk.yellow(`Processing component...`), file, path.basename(file));
               const segmentToUpdate =
                 extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
               await processComponents(handoff, path.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
