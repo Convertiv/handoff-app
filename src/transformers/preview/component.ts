@@ -153,6 +153,7 @@ export async function componentTransformer(handoff: Handoff, components?: FileCo
     for (const file of files) {
       componentData.push(await processComponent(handoff, path.basename(file), sharedStyles, components));
     }
+    console.log(chalk.green(`Writing component API with ${componentData.length} components`));
     await writeComponentSummaryAPI(handoff, componentData);
     await buildMainJS(handoff);
     await buildMainCss(handoff);
