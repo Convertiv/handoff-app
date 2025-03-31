@@ -26,11 +26,11 @@ export function Header() {
       )}
     >
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
-        <div className="mx-auto flex items-center justify-between">
+        <div className="mx-auto flex items-center justify-between @container">
           <Link href="/">
             <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
           </Link>
-          <div className="flex items-center gap-4">
+          <div className=" hidden items-center gap-4 @2xl:flex">
             <MainNav />
             <ModeToggle />
           </div>
