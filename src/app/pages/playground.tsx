@@ -254,6 +254,37 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                               </p>
                             </div>
                           </a>
+                          <a
+                            href=""
+                            className="group rounded-lg border border-gray-200 p-7 transition-colors hover:border-gray-300 hover:bg-gray-50/50 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+                          >
+                            <div className="flex flex-col items-start gap-2">
+                              <div className="h-20 w-full overflow-hidden">
+                                <div className="grid h-full grid-cols-4 gap-1.5">
+                                  <div className="relative block rounded bg-[#0077C8]" title="#0077C8">
+                                    <div className="absolute bottom-0 left-0 flex flex-col gap-0.5 px-4 py-4">
+                                      <p className="text-[8px] font-medium text-white">Blue 900</p>
+                                      <p className="font-mono text-[8px] text-white">#003152</p>
+                                    </div>
+                                  </div>
+                                  <div className="block rounded bg-[#33FF57]" title="#33FF57" />
+                                  <div className="block rounded bg-[#3357FF]" title="#3357FF" />
+                                  <div className="block rounded bg-[#F133FF]" title="#F133FF" />
+                                </div>
+                              </div>
+                              <h3 className="text-base font-medium">Colors</h3>
+                              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                                Official SS&C color palette used for all digital products.
+                              </p>
+                              <Button
+                                variant="link"
+                                className="px-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100"
+                              >
+                                View Colors
+                                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+                              </Button>
+                            </div>
+                          </a>
                         </div>
                       </div>
                       <AnchorNav />
@@ -361,6 +392,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                       <Separator className="my-14" />
                       <h2 className="mb-3 text-2xl font-medium">Colors</h2>
                       <p className="mb-8">Color system built out of main brand colors and adjusted for variety of interfaces.</p>
+
                       <h3 className="mb-2 text-lg font-medium">Standard List</h3>
                       <p className="mb-8">Use for palette of colors containing many shades.</p>
                       <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(200px,400px))] gap-6">
@@ -988,19 +1020,21 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                         <li>We want everything to look good out of the box.</li>
                         <li>Really just the first reason, that&lsquo;s the whole point of the plugin.</li>
                         <li>
-                          Here&lsquo;s a third pretend reason though a list with three items looks more realistic than a list with two items.
+                          Here&lsquo;s a third pretend reason though a list with three items looks more realistic than a list with two
+                          items.
                         </li>
                       </ol>
                       <p>Now we&lsquo;re going to try out another header style.</p>
                       <h3>Heading 3 sample</h3>
                       <p>Let&lsquo;s test out some other styles.</p>
                       <p>
-                        This is a paragraph with some <a href="#">inline links</a>. Let&lsquo;s also see what happens when we have a bit of added{' '}
-                        <strong>bold</strong> text in there.
+                        This is a paragraph with some <a href="#">inline links</a>. Let&lsquo;s also see what happens when we have a bit of
+                        added <strong>bold</strong> text in there.
                       </p>
                       <blockquote>
                         <p>
-                          Typography is pretty important if you don&lsquo;t want your stuff to look like trash. Make it good then it won&lsquo;t be bad.
+                          Typography is pretty important if you don&lsquo;t want your stuff to look like trash. Make it good then it
+                          won&lsquo;t be bad.
                         </p>
                       </blockquote>
                       <p>Making an unordered list is easy too:</p>

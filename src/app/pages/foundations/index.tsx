@@ -1,5 +1,5 @@
 import { getClientConfig } from '@handoff/config';
-import { Blend, Grid, Hexagon, Palette, Pickaxe, TypeOutline } from 'lucide-react';
+import { Grid, Hexagon, Palette, Shapes, Sun, TypeOutline } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -70,16 +70,16 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
             {
               title: 'Icons',
               description: 'Downloadable icon set for use in digital and offline materials.',
-              icon: Pickaxe,
+              icon: Shapes,
               link: '/foundations/icons',
-              cta: 'Explore Grid',
+              cta: 'View Library',
             },
             {
               title: 'Effects',
               description: 'Shadows, blurs, and other effects used in the design system.',
-              icon: Blend,
+              icon: Sun,
               link: '/foundations/effects',
-              cta: 'Explore Grid',
+              cta: 'View Effects',
             },
           ]}
         />
