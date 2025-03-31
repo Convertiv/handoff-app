@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
 import webpack from 'webpack';
