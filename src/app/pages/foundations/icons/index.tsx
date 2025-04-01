@@ -117,10 +117,12 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
       </p>
 
       {icons.length > 0 ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {icons.map((icon) => (
-            <DisplayIcon key={icon.path} icon={icon} />
-          ))}
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-5 @sm:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 @5xl:grid-cols-5">
+            {icons.map((icon) => (
+              <DisplayIcon key={icon.path} icon={icon} />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="flex min-h-[200px] items-center justify-center">
