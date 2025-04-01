@@ -23,7 +23,7 @@ const CardsWithIcons = ({ items }) => (
         className="group rounded-lg border border-gray-200 p-7 transition-colors hover:border-gray-300 hover:bg-gray-50/50 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
       >
         <div className="flex flex-col items-start gap-2">
-          <item.icon className="h-5 w-5 text-gray-500 dark:text-gray-400 " strokeWidth={1.5} />
+          <item.icon className="mb-3 h-5 w-5 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
           <h3 className="text-base font-medium">{item.title}</h3>
           <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">{item.description}</p>
           <Button variant="link" className="px-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
