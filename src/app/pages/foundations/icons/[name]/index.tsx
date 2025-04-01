@@ -92,10 +92,10 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
       {!icon ? (
         <div>404 Icon Not Found</div>
       ) : (
-        <div className="o-container">
+        <div>
           <div className="flex flex-row justify-between gap-2">
             <HeadersType.H1 className="font-mono text-xl">{icon.name}</HeadersType.H1>
-            <div className="flex flex-row items-center gap-4">
+            <div className="flex flex-row flex-wrap items-center gap-4">
               <small className="font-mono">{icon.size}b</small>
               <small>/</small>
               <Link className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'} href="#">
@@ -122,19 +122,21 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
 
           <hr className="my-10" />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="dotted-bg flex items-center justify-center py-12 md:min-h-60">
-              <div className="scale-[4]">
-                <DisplayIcon icon={icon} />
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
+              <div className="dotted-bg flex items-center justify-center py-12 md:min-h-60">
+                <div className="scale-[4]">
+                  <DisplayIcon icon={icon} />
+                </div>
               </div>
-            </div>
 
-            <div className="flex h-full flex-col gap-4">
-              <div className="flex flex-1 items-center justify-center rounded-md border-gray-200 bg-gray-100 p-4">
-                <DisplayIcon icon={icon} />
-              </div>
-              <div className="flex flex-1 items-center justify-center rounded-md border-gray-800 bg-gray-900 p-4">
-                <DisplayIcon icon={icon} />
+              <div className="flex h-full flex-col gap-4">
+                <div className="flex flex-1 items-center justify-center rounded-md border-gray-200 bg-gray-100 p-4">
+                  <DisplayIcon icon={icon} />
+                </div>
+                <div className="flex flex-1 items-center justify-center rounded-md border-gray-800 bg-gray-900 p-4">
+                  <DisplayIcon icon={icon} />
+                </div>
               </div>
             </div>
           </div>
