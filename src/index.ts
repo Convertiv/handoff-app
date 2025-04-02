@@ -299,23 +299,48 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
     result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
 
-  if (!!handoff.config.entries?.components) {
-    for (const componentPath of handoff.config.entries.components) {
+  if (handoff.config.entries?.components?.length) {
+    const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
+
+    for (const componentPath of componentPaths) {
       const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
       const componentBaseName = path.basename(resolvedComponentPath);
       const versions = getVersionsForComponent(resolvedComponentPath);
+
+      if (!versions.length) {
+        console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+        continue;
+      }
+
       const latest = getLatestVersionForComponent(versions);
 
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
         const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
 
+        // Skip if config file does not exist
+        if (!fs.existsSync(resolvedComponentVersionConfigPath)) {
+          console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+          continue;
+        }
+
         configFiles.push(resolvedComponentVersionConfigPath);
 
-        const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-        const component = JSON.parse(componentJson) as ComponentListObject;
-        component.id = componentBaseName; // Use component basename as the id
+        let componentJson: string;
+        let component: ComponentListObject;
 
+        try {
+          componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+          component = JSON.parse(componentJson) as ComponentListObject;
+        } catch (err) {
+          console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+          continue;
+        }
+
+        // Use component basename as the id
+        component.id = componentBaseName;
+
+        // Resolve entry paths relative to component version directory
         if (component.entries) {
           for (const entryType in component.entries) {
             if (component.entries[entryType]) {
@@ -324,26 +349,32 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
           }
         }
 
+        // Initialize options with safe defaults
         component.options ||= {
           transformer: { defaults: {}, replace: {} },
         };
 
-        component.options.transformer.cssRootClass ||= null;
-        component.options.transformer.tokenNameSegments ||= null;
+        const transformer = component.options.transformer;
+        transformer.cssRootClass ??= null;
+        transformer.tokenNameSegments ??= null;
 
-        component.options.transformer.defaults = toLowerCaseKeysAndValues({
-          ...component.options.transformer.defaults,
+        // Normalize keys and values to lowercase
+        transformer.defaults = toLowerCaseKeysAndValues({
+          ...transformer.defaults,
         });
 
-        component.options.transformer.replace = toLowerCaseKeysAndValues({
-          ...component.options.transformer.replace,
+        transformer.replace = toLowerCaseKeysAndValues({
+          ...transformer.replace,
         });
 
+        // Save transformer config for latest version
         if (componentVersion === latest) {
-          result.options[component.id] = component.options.transformer;
+          result.options[component.id] = transformer;
         }
 
+        // Save full component entry under its version
         result.entries.components[component.id] = {
+          ...result.entries.components[component.id],
           [componentVersion]: component,
         };
       }
@@ -351,6 +382,37 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
   }
 
   return [result, Array.from(configFiles)];
+};
+
+/**
+ * Returns a list of component directories for a given path.
+ *
+ * This function inspects the immediate subdirectories of the provided `searchPath`.
+ * - If **any** subdirectory is **not** a valid semantic version (e.g. "header", "button"),
+ *   the function assumes `searchPath` contains multiple component directories, and returns their full paths.
+ * - If **all** subdirectories are valid semantic versions (e.g. "1.0.0", "2.1.3"),
+ *   the function assumes `searchPath` itself is a component directory, and returns it as a single-element array.
+ *
+ * @param searchPath - The absolute path to check for components or versioned directories.
+ * @returns An array of string paths to component directories.
+ */
+const getComponentsForPath = (searchPath: string): string[] => {
+  // Read all entries in the given path and keep only directories
+  const components = fs
+    .readdirSync(searchPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  // If there's any non-semver-named directory, this is a directory full of components
+  const containsComponents = components.some((name) => !semver.valid(name));
+
+  if (containsComponents) {
+    // Return full paths to each component directory
+    return components.map((component) => path.join(searchPath, component));
+  }
+
+  // All subdirectories are semver versions – treat this as a single component directory
+  return [searchPath];
 };
 
 const validateConfig = (config: Config): Config => {

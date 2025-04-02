@@ -322,8 +322,7 @@ const initConfig = (configOverride) => {
     return returnConfig;
 };
 const initIntegrationObject = (handoff) => {
-    var _a, _b, _c, _d, _e;
-    var _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const configFiles = [];
     const result = {
         name: '',
@@ -340,19 +339,39 @@ const initIntegrationObject = (handoff) => {
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
         result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    if (!!((_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components)) {
-        for (const componentPath of handoff.config.entries.components) {
+    if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
+        const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
+        for (const componentPath of componentPaths) {
             const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
             const componentBaseName = path_1.default.basename(resolvedComponentPath);
             const versions = getVersionsForComponent(resolvedComponentPath);
+            if (!versions.length) {
+                console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+                continue;
+            }
             const latest = (0, exports.getLatestVersionForComponent)(versions);
             for (const componentVersion of versions) {
                 const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
                 const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+                // Skip if config file does not exist
+                if (!fs_extra_1.default.existsSync(resolvedComponentVersionConfigPath)) {
+                    console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+                    continue;
+                }
                 configFiles.push(resolvedComponentVersionConfigPath);
-                const componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-                const component = JSON.parse(componentJson);
-                component.id = componentBaseName; // Use component basename as the id
+                let componentJson;
+                let component;
+                try {
+                    componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+                    component = JSON.parse(componentJson);
+                }
+                catch (err) {
+                    console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+                    continue;
+                }
+                // Use component basename as the id
+                component.id = componentBaseName;
+                // Resolve entry paths relative to component version directory
                 if (component.entries) {
                     for (const entryType in component.entries) {
                         if (component.entries[entryType]) {
@@ -360,25 +379,55 @@ const initIntegrationObject = (handoff) => {
                         }
                     }
                 }
+                // Initialize options with safe defaults
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
-                (_f = component.options.transformer).cssRootClass || (_f.cssRootClass = null);
-                (_g = component.options.transformer).tokenNameSegments || (_g.tokenNameSegments = null);
-                component.options.transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.defaults));
-                component.options.transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, component.options.transformer.replace));
+                const transformer = component.options.transformer;
+                (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
+                (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);
+                // Normalize keys and values to lowercase
+                transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, transformer.defaults));
+                transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, transformer.replace));
+                // Save transformer config for latest version
                 if (componentVersion === latest) {
-                    result.options[component.id] = component.options.transformer;
+                    result.options[component.id] = transformer;
                 }
-                result.entries.components[component.id] = {
-                    [componentVersion]: component,
-                };
+                // Save full component entry under its version
+                result.entries.components[component.id] = Object.assign(Object.assign({}, result.entries.components[component.id]), { [componentVersion]: component });
             }
         }
     }
     return [result, Array.from(configFiles)];
 };
 exports.initIntegrationObject = initIntegrationObject;
+/**
+ * Returns a list of component directories for a given path.
+ *
+ * This function inspects the immediate subdirectories of the provided `searchPath`.
+ * - If **any** subdirectory is **not** a valid semantic version (e.g. "header", "button"),
+ *   the function assumes `searchPath` contains multiple component directories, and returns their full paths.
+ * - If **all** subdirectories are valid semantic versions (e.g. "1.0.0", "2.1.3"),
+ *   the function assumes `searchPath` itself is a component directory, and returns it as a single-element array.
+ *
+ * @param searchPath - The absolute path to check for components or versioned directories.
+ * @returns An array of string paths to component directories.
+ */
+const getComponentsForPath = (searchPath) => {
+    // Read all entries in the given path and keep only directories
+    const components = fs_extra_1.default
+        .readdirSync(searchPath, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+    // If there's any non-semver-named directory, this is a directory full of components
+    const containsComponents = components.some((name) => !semver_1.default.valid(name));
+    if (containsComponents) {
+        // Return full paths to each component directory
+        return components.map((component) => path_1.default.join(searchPath, component));
+    }
+    // All subdirectories are semver versions – treat this as a single component directory
+    return [searchPath];
+};
 const validateConfig = (config) => {
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env
