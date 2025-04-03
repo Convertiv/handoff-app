@@ -1,6 +1,7 @@
 import { getClientConfig } from '@handoff/config';
 import { ArrowRight, Component, Hexagon, Layers, Shapes } from 'lucide-react';
 import { GetStaticProps } from 'next';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -57,22 +58,31 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
             <h3 className="text-2xl font-medium">Foundations that define the brand across every experience</h3>
             <p className="mb-4 leading-relaxed">A set of design principles and visual guidelines, like color and typography.</p>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Hexagon className="size-3 stroke-[1.5]" />
-              Logo
-              <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              <Link href="/foundations/logo">
+                <Hexagon className="size-3 stroke-[1.5]" />
+                Logo
+                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Shapes className="size-3 stroke-[1.5]" />
-              Icon Library
-              <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              <Link href="/foundations/icons">
+                <Shapes className="size-3 stroke-[1.5]" />
+                Icon Library
+                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
             <hr className="my-2 w-28" />
             <Button className="">
-              View Foundations
-              <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              <Link href="/foundations">
+                View Foundations
+                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
-          <a href="" className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900">
+          <Link
+            href="/foundations/colors"
+            className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+          >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
@@ -86,8 +96,11 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
-          </a>
-          <a href="" className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900">
+          </Link>
+          <Link
+            href="/foundations/typography"
+            className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+          >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/typography.svg`} alt="Typography" />
@@ -101,7 +114,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
-          </a>
+          </Link>
         </div>
         <hr />
       </div>
@@ -118,11 +131,16 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
               Components, guidelines, and resources to help teams build consistent, accessible, and beautiful digital experiences.
             </p>
             <Button className="">
-              View Components
-              <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              <Link href="/system">
+                View Components
+                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
-          <a href="" className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900">
+          <Link
+            href="/system"
+            className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+          >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
@@ -134,8 +152,11 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
-          </a>
-          <a href="" className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900">
+          </Link>
+          <Link
+            href="/system"
+            className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
+          >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
@@ -147,7 +168,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
-          </a>
+          </Link>
         </div>
         <hr />
         <ReactMarkdown className="prose mt-16 hidden" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
