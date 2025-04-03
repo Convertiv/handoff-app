@@ -72,10 +72,10 @@ export async function processComponent(
     })
   );
   if (latestVersion) {
-    writeComponentApi(id, latestVersion, 'latest', handoff);
+    await writeComponentApi(id, latestVersion, 'latest', handoff);
     const summary = await buildComponentSummary(id, latestVersion, versions);
-    writeComponentMetadataApi(id, summary, handoff);
-    updateComponentSummaryApi(handoff, summary);
+    await writeComponentMetadataApi(id, summary, handoff);
+    await updateComponentSummaryApi(handoff, summary);
     return summary;
   }
   throw new Error(`No latest version found for ${id}`);

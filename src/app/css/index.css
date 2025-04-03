@@ -100,7 +100,7 @@
 
 	.dotted-bg {
 		--dot-bg: #fff;
-		--dot-color: #ebebeb;
+		--dot-color: #dbdbdb;
 		--dot-size: 1.5px;
 		--dot-space: 14px;
 		overflow: auto;

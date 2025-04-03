@@ -13,7 +13,7 @@ interface DownloadTokensProps {
 
 export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css, scss, styleDictionary, types }) => {
   return (
-    <div className="mt-3 flex flex-row gap-3">
+    <div className="mt-3 flex flex-row flex-wrap gap-3">
       <Link
         className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
         href={'data:text/plain;charset=utf-8,' + encodeURIComponent(css)}

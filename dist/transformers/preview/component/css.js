@@ -37,6 +37,8 @@ const buildComponentCss = (id, location, data, handoff, sharedStyles) => __await
                     path_1.default.resolve(handoff.workingPath),
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                 ],
+                quietDeps: true,
+                silenceDeprecations: ['import'],
             });
             if (result.css) {
                 // @ts-ignore
@@ -95,6 +97,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                     path_1.default.resolve(handoff.workingPath),
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                 ],
+                quietDeps: true,
             });
             yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'main.css'), result.css);
         }
