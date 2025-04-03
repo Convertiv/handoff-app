@@ -141,7 +141,7 @@ class Handoff {
     return this;
   }
   async build(): Promise<Handoff> {
-    this.preRunner(true);
+    this.preRunner();
     if (this.config) {
       await buildApp(this);
     }
@@ -217,14 +217,14 @@ class Handoff {
   }
   async start(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner(true);
+      this.preRunner();
       await watchApp(this);
     }
     return this;
   }
   async dev(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner(true);
+      this.preRunner();
       await devApp(this);
     }
     return this;
