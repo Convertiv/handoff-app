@@ -163,7 +163,7 @@ class Handoff {
     }
     build() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner(true);
+            this.preRunner();
             if (this.config) {
                 yield (0, app_1.default)(this);
             }
@@ -263,7 +263,7 @@ class Handoff {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config) {
-                this.preRunner(true);
+                this.preRunner();
                 yield (0, app_1.watchApp)(this);
             }
             return this;
@@ -272,7 +272,7 @@ class Handoff {
     dev() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config) {
-                this.preRunner(true);
+                this.preRunner();
                 yield (0, app_1.devApp)(this);
             }
             return this;

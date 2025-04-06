@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { CodeHighlight } from '../Markdown/CodeHighlight';
 
 import { ComponentInstance } from '@handoff/exporters/components/types';
@@ -17,6 +17,7 @@ import {
   Tablet,
   Text,
 } from 'lucide-react';
+import { HotReloadContext } from '../context/HotReloadProvider';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
 import HeadersType from '../Typography/Headers';
@@ -136,6 +137,8 @@ export const ComponentDisplay: React.FC<{
       !!onValuesChange && onValuesChange(previewFilterResult[0].values);
     }
   }, [context.variantFilter, component, onValuesChange]);
+
+  const { reloadCounter } = useContext(HotReloadContext);
 
   return (
     <div className="md:flex" id="preview">
@@ -299,6 +302,7 @@ export const ComponentDisplay: React.FC<{
             <div className="dotted-bg w-full p-8">
               <div>
                 <iframe
+                  key={`${previewUrl}-${reloadCounter}`}
                   onLoad={onLoad}
                   ref={ref}
                   height={height}

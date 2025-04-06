@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { ComponentPreview } from '../../../../components/Component/Preview';
+import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
@@ -74,6 +75,8 @@ export const getStaticProps = async (context) => {
   const menu = staticBuildMenu();
   const config = getClientConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
+  const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
+
   return {
     props: {
       id: component,
@@ -88,11 +91,12 @@ export const getStaticProps = async (context) => {
         description: metadata.description,
         image: 'hero-brand-assets',
       },
+      componentHotReloadIsAvailable,
     },
   };
 };
 
-const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
+const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
@@ -147,7 +151,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                     {tag}
                   </Badge>
                 </>
-              ))} 
+              ))}
           </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
@@ -187,7 +191,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
           {Array.isArray(componentPreviews) ? (
-            <>
+            <HotReloadProvider connect={componentHotReloadIsAvailable}>
               {componentPreviews.map(([title, cp], cpi) => (
                 <>
                   <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
@@ -197,9 +201,9 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                   </PreviewContextProvider>
                 </>
               ))}
-            </>
+            </HotReloadProvider>
           ) : (
-            <>
+            <HotReloadProvider connect={componentHotReloadIsAvailable}>
               <PreviewContextProvider
                 id={id}
                 defaultMetadata={metadata}
@@ -211,7 +215,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
-            </>
+            </HotReloadProvider>
           )}
           <div className="mt-8">
             <Select

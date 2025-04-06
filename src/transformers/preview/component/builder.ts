@@ -101,7 +101,7 @@ export async function processComponents(
 
     if (latestVersion) {
       await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
-      const summary = await buildComponentSummary(runtimeComponentId, latestVersion, versions);
+      const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
       await updateComponentSummaryApi(handoff, summary);
       result.push(summary);
@@ -111,34 +111,6 @@ export async function processComponents(
   }
 
   return result;
-
-  // const versions = await getVersionsForComponent(handoff, id);
-  // const latest = getLatestVersionForComponent(versions);
-  // console.log(chalk.green(`Processing component ${id} `));
-  // let latestVersion: TransformComponentTokensResult | undefined = undefined;
-  // await Promise.all(
-  //   versions.map(async (version) => {
-  //     let data: TransformComponentTokensResult = { ...defaultComponent, id };
-  //     const componentPath = path.join(getComponentPath(handoff), id, version);
-  //     data = await parseComponentJson(id, componentPath, data);
-  //     data = await buildComponentJs(id, componentPath, data, handoff);
-  //     data = await buildComponentCss(id, componentPath, data, handoff, sharedStyles);
-  //     data = await buildPreviews(data, handoff, components);
-  //     data.sharedStyles = sharedStyles;
-  //     await writeComponentApi(id, data, version, handoff);
-  //     if (version === latest) {
-  //       latestVersion = data;
-  //     }
-  //   })
-  // );
-  // if (latestVersion) {
-  //   writeComponentApi(id, latestVersion, 'latest', handoff);
-  //   const summary = await buildComponentSummary(id, latestVersion, versions);
-  //   writeComponentMetadataApi(id, summary, handoff);
-  //   updateComponentSummaryApi(handoff, summary);
-  //   return summary;
-  // }
-  // throw new Error(`No latest version found for ${id}`);
 }
 
 /**

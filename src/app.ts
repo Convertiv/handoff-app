@@ -10,7 +10,7 @@ import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
 import { buildComponents, buildIntegrationOnly, readPrevJSONFile, tokensFilePath } from './pipeline';
-import { processSharedStyles } from './transformers/preview/component';
+import { createWebSocketServer, processSharedStyles } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
 import { DocumentationObject } from './types';
 import { buildClientFiles } from './utils/preview';
@@ -327,6 +327,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     port,
     // conf: config,
   });
+
   const handle = app.getRequestHandler();
 
   // purge out cache
@@ -359,7 +360,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       });
   });
 
-  //const sendMessageToComponent = await createFrameSocket(handoff);
+  const wss = await createWebSocketServer(3001);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -393,7 +394,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             debounce = true;
             console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
             await mergePublicDir(handoff);
-            // sendMessageToComponent('reload');
+            wss(JSON.stringify({ type: 'reload' }));
             debounce = false;
           }
           break;

@@ -343,7 +343,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    //const sendMessageToComponent = await createFrameSocket(handoff);
+    const wss = yield (0, component_1.createWebSocketServer)(3001);
     const chokidarConfig = {
         ignored: /(^|[\/\\])\../,
         persistent: true,
@@ -376,7 +376,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                         debounce = true;
                         console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
                         yield mergePublicDir(handoff);
-                        // sendMessageToComponent('reload');
+                        wss(JSON.stringify({ type: 'reload' }));
                         debounce = false;
                     }
                     break;
