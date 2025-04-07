@@ -19,17 +19,13 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader } from '../ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { calculateContrastRatio, hexToRgb } from '../util/colors';
 type ColorGridProps = {
   title: string;
   group: string;
   description: string;
   colors: ColorObject[];
 };
-
-function hexToRgb(hex) {
-  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? `Red: ${parseInt(result[1], 16)}, Green: ${parseInt(result[2], 16)}, Blue: ${parseInt(result[3], 16)}` : null;
-}
 
 const LargeColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => (
   <div className="@container">
@@ -148,6 +144,7 @@ const ColorSheet: React.FC<{ color: ColorObject; open: boolean; setOpen: (boolea
     setTimeout(() => setCopied(false), 2000);
   };
   if (!color) return null;
+  const contrast = calculateContrastRatio(color.value, '#FFFFFF');
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
@@ -292,7 +289,7 @@ const ColorSheet: React.FC<{ color: ColorObject; open: boolean; setOpen: (boolea
           <Separator className="mb-4 mt-6" />
           <p className="mb-3 flex items-center gap-3">
             <Contrast className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
-            <span className="text-sm font-normal">Contrast</span>
+            <span className="text-sm font-normal">Contrast against white background</span>
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-md border border-input bg-transparent p-4">
@@ -302,7 +299,7 @@ const ColorSheet: React.FC<{ color: ColorObject; open: boolean; setOpen: (boolea
                 <span className="text-xs text-gray-500">Required</span>
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <Badge variant="green">7.2:1</Badge>
+                <Badge variant={contrast >= 4.5 ? 'green' : 'default'}>{contrast.toFixed(1)}:1</Badge>
                 <span className="text-xs text-gray-500">Current</span>
               </div>
             </div>
@@ -313,7 +310,7 @@ const ColorSheet: React.FC<{ color: ColorObject; open: boolean; setOpen: (boolea
                 <span className="text-xs text-gray-500">Required</span>
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <Badge variant="green">7.2:1</Badge>
+                <Badge variant={contrast >= 3 ? 'green' : 'default'}>{contrast.toFixed(1)}:1</Badge>
                 <span className="text-xs text-gray-500">Current</span>
               </div>
             </div>
