@@ -416,6 +416,7 @@ const getComponentsForPath = (searchPath: string): string[] => {
 };
 
 const validateConfig = (config: Config): Config => {
+  // TODO: Check to see if the exported folder exists before we run start
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
     // check to see if we can get this from the env
     console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
