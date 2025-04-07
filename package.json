@@ -145,10 +145,10 @@
     "webpack": "^5.75.0",
     "webpack-dev-server": "^5.1.0",
     "ws": "^8.18.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "@tailwindcss/container-queries": "^0.1.1"
   },
   "devDependencies": {
-    "@tailwindcss/container-queries": "^0.1.1",
     "eslint-config-prettier": "^10.0.2",
     "np": "^8.0.4"
   }
