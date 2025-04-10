@@ -125,7 +125,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           <a href="" className="group mt-2 transition-colors dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900">
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.svg`} alt="Components" />
               </div>
               <h3 className="text-base font-medium">Components</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Atomic reusable components.</p>
