@@ -491,6 +491,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     return result;
   };
 
+  /*
   if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
       console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
@@ -504,6 +505,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     });
   }
+    */
 
   watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
   watchRuntimeConfiguration();

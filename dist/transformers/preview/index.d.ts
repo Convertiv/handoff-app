@@ -28,9 +28,6 @@ export default function previewTransformer(handoff: Handoff, documentationObject
             previews?: {
                 [key: string]: import("./types").OptionalPreviewRender;
             };
-            preview_options?: {
-                group_by: boolean;
-            };
             properties?: {
                 [key: string]: import("./component").SlotMetadata;
             };
@@ -39,6 +36,11 @@ export default function previewTransformer(handoff: Handoff, documentationObject
                 js?: string;
                 scss?: string;
                 template?: string;
+            };
+            options?: {
+                preview?: {
+                    groupBy?: string;
+                };
             };
         }[];
     };

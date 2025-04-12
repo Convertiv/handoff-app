@@ -259,13 +259,26 @@ class Handoff {
 
 const initConfig = (configOverride?: Partial<Config>): Config => {
   let config = {};
-  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
 
-  if (fs.existsSync(configPath)) {
-    const defBuffer = fs.readFileSync(configPath);
-    config = JSON.parse(defBuffer.toString()) as Config;
+  const possibleConfigFiles = ['handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'];
+
+  // Find the first existing config file
+  const configFile = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(process.cwd(), file)));
+
+  if (configFile) {
+    const configPath = path.resolve(process.cwd(), configFile);
+    if (configFile.endsWith('.json')) {
+      const defBuffer = fs.readFileSync(configPath);
+      config = JSON.parse(defBuffer.toString()) as Config;
+    } else if (configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
+      // Invalidate require cache to ensure fresh read
+      delete require.cache[require.resolve(configPath)];
+      const importedConfig = require(configPath);
+      config = importedConfig.default || importedConfig;
+    }
   }
 
+  // Apply overrides if provided
   if (configOverride) {
     Object.keys(configOverride).forEach((key) => {
       const value = configOverride[key as keyof Config];
@@ -316,22 +329,30 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
 
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
-        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+        const possibleConfigFiles = [`${componentBaseName}.js`, `${componentBaseName}.cjs`, `${componentBaseName}.json`];
 
-        // Skip if config file does not exist
-        if (!fs.existsSync(resolvedComponentVersionConfigPath)) {
-          console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+        const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentVersionPath, file)));
+
+        if (!configFileName) {
+          console.warn(`Missing config: ${path.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
           continue;
         }
 
+        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, configFileName);
         configFiles.push(resolvedComponentVersionConfigPath);
 
-        let componentJson: string;
         let component: ComponentListObject;
 
         try {
-          componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-          component = JSON.parse(componentJson) as ComponentListObject;
+          if (configFileName.endsWith('.json')) {
+            const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+            component = JSON.parse(componentJson) as ComponentListObject;
+          } else {
+            // Invalidate require cache to ensure fresh read
+            delete require.cache[require.resolve(resolvedComponentVersionConfigPath)];
+            const importedComponent = require(resolvedComponentVersionConfigPath);
+            component = importedComponent.default || importedComponent;
+          }
         } catch (err) {
           console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
           continue;
@@ -455,7 +476,7 @@ const getVersionsForComponent = (componentPath: string): string[] => {
   return versions;
 };
 
-export const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
+const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
 
 const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any> => {
   const loweredObj: Record<string, any> = {};
@@ -473,5 +494,8 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
   }
   return loweredObj;
 };
+
+export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { Config } from './types/config';
 
 export default Handoff;

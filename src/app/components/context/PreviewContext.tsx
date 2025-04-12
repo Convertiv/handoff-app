@@ -83,7 +83,7 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   useEffect(() => {
     if (!preview) return;
 
-    if (!preview.preview_options?.group_by) return;
+    if (!preview.options?.preview?.groupBy) return;
 
     const foo = Object.values(preview.previews).map((p) => {
       return Object.keys(p.values).reduce((acc, next) => {

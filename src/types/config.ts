@@ -1,4 +1,3 @@
-export default config;
 import { ComponentListObject } from 'handoff/transformers/preview/types';
 import { FileComponentsObject } from '../exporters/components/types';
 import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';

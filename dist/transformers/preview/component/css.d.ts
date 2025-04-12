@@ -23,9 +23,6 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
     previews?: {
         [key: string]: import("../types").OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     properties?: {
         [key: string]: import("../component").SlotMetadata;
     };
@@ -34,6 +31,11 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
         js?: string;
         scss?: string;
         template?: string;
+    };
+    options?: {
+        preview?: {
+            groupBy?: string;
+        };
     };
 }>;
 /**
