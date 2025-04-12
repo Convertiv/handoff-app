@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLatestVersionForComponent = exports.initIntegrationObject = void 0;
+exports.initIntegrationObject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -305,11 +305,23 @@ class Handoff {
 }
 const initConfig = (configOverride) => {
     let config = {};
-    let configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
-    if (fs_extra_1.default.existsSync(configPath)) {
-        const defBuffer = fs_extra_1.default.readFileSync(configPath);
-        config = JSON.parse(defBuffer.toString());
+    const possibleConfigFiles = ['handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'];
+    // Find the first existing config file
+    const configFile = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(process.cwd(), file)));
+    if (configFile) {
+        const configPath = path_1.default.resolve(process.cwd(), configFile);
+        if (configFile.endsWith('.json')) {
+            const defBuffer = fs_extra_1.default.readFileSync(configPath);
+            config = JSON.parse(defBuffer.toString());
+        }
+        else if (configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
+            // Invalidate require cache to ensure fresh read
+            delete require.cache[require.resolve(configPath)];
+            const importedConfig = require(configPath);
+            config = importedConfig.default || importedConfig;
+        }
     }
+    // Apply overrides if provided
     if (configOverride) {
         Object.keys(configOverride).forEach((key) => {
             const value = configOverride[key];
@@ -349,21 +361,29 @@ const initIntegrationObject = (handoff) => {
                 console.warn(`No versions found for component at: ${resolvedComponentPath}`);
                 continue;
             }
-            const latest = (0, exports.getLatestVersionForComponent)(versions);
+            const latest = getLatestVersionForComponent(versions);
             for (const componentVersion of versions) {
                 const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
-                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
-                // Skip if config file does not exist
-                if (!fs_extra_1.default.existsSync(resolvedComponentVersionConfigPath)) {
-                    console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+                const possibleConfigFiles = [`${componentBaseName}.js`, `${componentBaseName}.cjs`, `${componentBaseName}.json`];
+                const configFileName = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(resolvedComponentVersionPath, file)));
+                if (!configFileName) {
+                    console.warn(`Missing config: ${path_1.default.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
                     continue;
                 }
+                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, configFileName);
                 configFiles.push(resolvedComponentVersionConfigPath);
-                let componentJson;
                 let component;
                 try {
-                    componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-                    component = JSON.parse(componentJson);
+                    if (configFileName.endsWith('.json')) {
+                        const componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+                        component = JSON.parse(componentJson);
+                    }
+                    else {
+                        // Invalidate require cache to ensure fresh read
+                        delete require.cache[require.resolve(resolvedComponentVersionConfigPath)];
+                        const importedComponent = require(resolvedComponentVersionConfigPath);
+                        component = importedComponent.default || importedComponent;
+                    }
                 }
                 catch (err) {
                     console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
@@ -468,7 +488,6 @@ const getVersionsForComponent = (componentPath) => {
     return versions;
 };
 const getLatestVersionForComponent = (versions) => versions.sort(semver_1.default.rcompare)[0];
-exports.getLatestVersionForComponent = getLatestVersionForComponent;
 const toLowerCaseKeysAndValues = (obj) => {
     const loweredObj = {};
     for (const key in obj) {
