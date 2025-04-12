@@ -23,9 +23,6 @@ export declare type ComponentListObject = {
     previews: {
         [key: string]: OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     paths: string[];
     entries?: {
         js?: string;
@@ -33,6 +30,9 @@ export declare type ComponentListObject = {
         templates?: string;
     };
     options?: {
+        preview?: {
+            groupBy?: string;
+        };
         transformer: {
             cssRootClass?: string;
             tokenNameSegments?: string[];
@@ -70,9 +70,6 @@ export declare type TransformComponentTokensResult = {
     previews?: {
         [key: string]: OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     properties?: {
         [key: string]: SlotMetadata;
     };
@@ -81,6 +78,11 @@ export declare type TransformComponentTokensResult = {
         js?: string;
         scss?: string;
         template?: string;
+    };
+    options?: {
+        preview?: {
+            groupBy?: string;
+        };
     };
 } | null;
 export declare type OptionalPreviewRender = {

@@ -462,19 +462,21 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         }
         return result;
     };
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
-            if (!debounce) {
-                debounce = true;
-                handoff.reload();
-                watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-                watchRuntimeConfiguration();
-                yield (0, builder_1.default)(handoff, undefined, sharedStyles, documentationObject.components);
-                debounce = false;
-            }
-        }));
+    /*
+    if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
+      chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
+        console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
+        if (!debounce) {
+          debounce = true;
+          handoff.reload();
+          watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
+          watchRuntimeConfiguration();
+          await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
+          debounce = false;
+        }
+      });
     }
+      */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
     if (((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration)) {

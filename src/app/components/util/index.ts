@@ -16,6 +16,7 @@ import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import semver from 'semver';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
@@ -496,22 +497,57 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   }
 };
 
-export const getLatestComponentMetadata = (id: string) => {
-  // get the path for the integration templates
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-  // find the path to the components
-  const templatesPath = path.resolve(integrationPath, 'components', id);
-  if (!fs.existsSync(templatesPath)) return false;
-  const versions = fs.readdirSync(templatesPath);
-  const latestVersion = versions.sort().pop();
-  const versionPath = path.resolve(templatesPath, latestVersion, `${id}.json`);
-  if (!fs.existsSync(versionPath)) return false;
-  try {
-    const data = fs.readFileSync(versionPath, 'utf-8');
-    return JSON.parse(data.toString());
-  } catch (e) {
-    throw new Error(`Error reading ${versionPath}`);
+let cachedRuntimeCache: IntegrationObject | null = null;
+
+const loadRuntimeCache = (): IntegrationObject => {
+  if (cachedRuntimeCache) {
+    return cachedRuntimeCache;
   }
+
+  const runtimeCachePath = path.resolve(process.env.HANDOFF_EXPORT_PATH, 'runtime.cache.json');
+
+  console.log(`Loading runtime cache from: ${runtimeCachePath}`);
+
+  if (!fs.existsSync(runtimeCachePath)) {
+    console.error(`Runtime cache not found at: ${runtimeCachePath}`);
+    throw new Error(`Runtime cache not found at: ${runtimeCachePath}`);
+  }
+
+  try {
+    const cacheContent = fs.readFileSync(runtimeCachePath, 'utf-8');
+    cachedRuntimeCache = JSON.parse(cacheContent) as IntegrationObject;
+    return cachedRuntimeCache;
+  } catch (e) {
+    console.error(`Error reading runtime cache: ${runtimeCachePath}`, e);
+    throw new Error(`Error reading runtime cache: ${runtimeCachePath}`);
+  }
+};
+
+export const getLatestComponentMetadata = (id: string) => {
+  const runtimeCache = loadRuntimeCache();
+
+  const components = runtimeCache.entries?.components;
+
+  if (!components || !components[id]) {
+    return false;
+  }
+
+  const versions = Object.keys(components[id]);
+
+  if (!versions.length) {
+    return false;
+  }
+
+  // Use natural version sorting (optional improvement below!)
+  const latestVersion = semver.rsort(versions).shift();
+
+  if (!latestVersion) {
+    return false;
+  }
+
+  const latestComponent = components[id][latestVersion];
+
+  return latestComponent || false;
 };
 
 /**

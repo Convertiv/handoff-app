@@ -73,5 +73,6 @@ declare class Handoff {
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
-export declare const getLatestVersionForComponent: (versions: string[]) => string;
+export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { Config } from './types/config';
 export default Handoff;
