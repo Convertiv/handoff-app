@@ -81,17 +81,24 @@ function processComponents(handoff, id, sharedStyles, components, segmentToUpdat
             let latestVersion = undefined;
             console.log(chalk_1.default.green(`Processing component ${runtimeComponentId} `));
             yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
+                var _d;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
                 let { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
                 let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
-                if (!segmentToUpdate || segmentToUpdate === 'js') {
+                if (!segmentToUpdate || segmentToUpdate === 'js' || segmentToUpdate === 'validation') {
                     data = yield (0, javascript_1.default)(data, handoff);
                 }
-                if (!segmentToUpdate || segmentToUpdate === 'css') {
+                if (!segmentToUpdate || segmentToUpdate === 'css' || segmentToUpdate === 'validation') {
                     data = yield (0, css_1.default)(data, handoff, sharedStyles);
                 }
-                if (!segmentToUpdate || segmentToUpdate === 'previews') {
+                if (!segmentToUpdate || segmentToUpdate === 'previews' || segmentToUpdate === 'validation') {
                     data = yield (0, html_1.default)(data, handoff, components);
+                }
+                if (!segmentToUpdate || segmentToUpdate === 'validation') {
+                    if (((_d = handoff.config) === null || _d === void 0 ? void 0 : _d.validate) && data) {
+                        const validationResults = yield handoff.config.validate(data);
+                        data.validations = validationResults;
+                    }
                 }
                 data.sharedStyles = sharedStyles;
                 yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, !!segmentToUpdate);

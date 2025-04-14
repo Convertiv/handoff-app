@@ -37,6 +37,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
             groupBy?: string;
         };
     };
+    validations?: Record<string, boolean>;
 }>;
 /**
  * Check to see if there's an entry point for the main JS file
