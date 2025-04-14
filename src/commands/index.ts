@@ -19,6 +19,7 @@ import makeSchemaCommand from './make/schema';
 import makeTemplateCommand from './make/template';
 import renameComponentCommand from './rename/component';
 import startCommand from './start';
+import validateComponentsCommand from './validate/components';
 
 export const commands = [
   buildAppCommand,
@@ -42,4 +43,5 @@ export const commands = [
   renameComponentCommand,
   makeIntegrationStylesCommand,
   startCommand,
+  validateComponentsCommand,
 ];

@@ -75,6 +75,11 @@ export type TransformComponentTokensResult = {
       groupBy?: string;
     };
   };
+  /**
+   * Validation results for the component
+   * Each key represents a validation type and the boolean indicates if the validation passed
+   */
+  validations?: Record<string, boolean>;
 } | null;
 
 export type OptionalPreviewRender = {

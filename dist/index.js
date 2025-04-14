@@ -278,6 +278,15 @@ class Handoff {
             return this;
         });
     }
+    validateComponents() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                yield (0, builder_1.default)(this, undefined, undefined, undefined, 'validation');
+            }
+            return this;
+        });
+    }
     postInit(callback) {
         this.hooks.init = callback;
     }
@@ -305,7 +314,7 @@ class Handoff {
 }
 const initConfig = (configOverride) => {
     let config = {};
-    const possibleConfigFiles = ['handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'];
+    const possibleConfigFiles = ['handoff.config.json', 'handoff.config.js', 'handoff.config.cjs'];
     // Find the first existing config file
     const configFile = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(process.cwd(), file)));
     if (configFile) {
@@ -335,6 +344,7 @@ const initConfig = (configOverride) => {
 };
 const initIntegrationObject = (handoff) => {
     var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _j;
     const configFiles = [];
     const result = {
         name: '',
@@ -364,7 +374,7 @@ const initIntegrationObject = (handoff) => {
             const latest = getLatestVersionForComponent(versions);
             for (const componentVersion of versions) {
                 const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
-                const possibleConfigFiles = [`${componentBaseName}.js`, `${componentBaseName}.cjs`, `${componentBaseName}.json`];
+                const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
                 const configFileName = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(resolvedComponentVersionPath, file)));
                 if (!configFileName) {
                     console.warn(`Missing config: ${path_1.default.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
@@ -403,6 +413,7 @@ const initIntegrationObject = (handoff) => {
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
+                (_j = component.options).transformer || (_j.transformer = { defaults: {}, replace: {} });
                 const transformer = component.options.transformer;
                 (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
                 (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);

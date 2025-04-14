@@ -48,7 +48,7 @@ export async function processComponents(
   id?: string,
   sharedStyles?: string,
   components?: FileComponentsObject,
-  segmentToUpdate?: 'js' | 'css' | 'previews'
+  segmentToUpdate?: 'js' | 'css' | 'previews' | 'validation'
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
@@ -77,16 +77,23 @@ export async function processComponents(
           type: (type as ComponentType) || ComponentType.Element,
         };
 
-        if (!segmentToUpdate || segmentToUpdate === 'js') {
+        if (!segmentToUpdate || segmentToUpdate === 'js' || segmentToUpdate === 'validation') {
           data = await buildComponentJs(data, handoff);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'css') {
+        if (!segmentToUpdate || segmentToUpdate === 'css' || segmentToUpdate === 'validation') {
           data = await buildComponentCss(data, handoff, sharedStyles);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'previews') {
+        if (!segmentToUpdate || segmentToUpdate === 'previews' || segmentToUpdate === 'validation') {
           data = await buildPreviews(data, handoff, components);
+        }
+
+        if (!segmentToUpdate || segmentToUpdate === 'validation') {
+          if (handoff.config?.validate && data) {
+            const validationResults = await handoff.config.validate(data);
+            data.validations = validationResults;
+          }
         }
 
         data.sharedStyles = sharedStyles;
