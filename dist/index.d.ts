@@ -63,6 +63,7 @@ declare class Handoff {
     makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
+    validateComponents(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;
     postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
     postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;

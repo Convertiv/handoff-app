@@ -25,6 +25,7 @@ const schema_1 = __importDefault(require("./make/schema"));
 const template_1 = __importDefault(require("./make/template"));
 const component_2 = __importDefault(require("./rename/component"));
 const start_1 = __importDefault(require("./start"));
+const components_2 = __importDefault(require("./validate/components"));
 exports.commands = [
     app_1.default,
     integration_1.default,
@@ -47,4 +48,5 @@ exports.commands = [
     component_2.default,
     integrationStyles_1.default,
     start_1.default,
+    components_2.default,
 ];

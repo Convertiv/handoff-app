@@ -42,6 +42,7 @@ export default function previewTransformer(handoff: Handoff, documentationObject
                     groupBy?: string;
                 };
             };
+            validations?: Record<string, boolean>;
         }[];
     };
 }>;

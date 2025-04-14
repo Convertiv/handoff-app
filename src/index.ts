@@ -229,6 +229,13 @@ class Handoff {
     }
     return this;
   }
+  async validateComponents(): Promise<Handoff> {
+    this.preRunner();
+    if (this.config) {
+      await processComponents(this, undefined, undefined, undefined, 'validation');
+    }
+    return this;
+  }
   postInit(callback: (config: Config) => Config) {
     this.hooks.init = callback;
   }
@@ -260,7 +267,7 @@ class Handoff {
 const initConfig = (configOverride?: Partial<Config>): Config => {
   let config = {};
 
-  const possibleConfigFiles = ['handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'];
+  const possibleConfigFiles = ['handoff.config.json', 'handoff.config.js', 'handoff.config.cjs'];
 
   // Find the first existing config file
   const configFile = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(process.cwd(), file)));
@@ -329,7 +336,7 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
 
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
-        const possibleConfigFiles = [`${componentBaseName}.js`, `${componentBaseName}.cjs`, `${componentBaseName}.json`];
+        const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
 
         const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentVersionPath, file)));
 
@@ -374,6 +381,7 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
         component.options ||= {
           transformer: { defaults: {}, replace: {} },
         };
+        component.options.transformer ||= { defaults: {}, replace: {} };
 
         const transformer = component.options.transformer;
         transformer.cssRootClass ??= null;

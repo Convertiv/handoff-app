@@ -1,5 +1,5 @@
-import { ComponentListObject } from 'handoff/transformers/preview/types';
 import { FileComponentsObject } from '../exporters/components/types';
+import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
 
 export interface ImageStyle {
@@ -79,6 +79,20 @@ export interface Config {
      */
     logos?: string;
   };
+  /**
+   * Optional validation callback for components
+   * @param component - The component instance to validate
+   * @returns A record of validation results where keys are validation types and values are boolean results
+   * @example
+   * ```typescript
+   * validate: async (component) => ({
+   *   a11y: true,
+   *   responsive: true,
+   *   performance: false
+   * })
+   * ```
+   */
+  validate?: (component: TransformComponentTokensResult) => Promise<Record<string, boolean>>;
 }
 
 export type ClientConfig = Pick<
