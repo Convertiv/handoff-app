@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Separator } from '../ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { ValidationResults } from '../Validation/ValidationResults';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
@@ -316,7 +317,17 @@ export const ComponentPreview: React.FC<{
   bestPracticesCard?: boolean;
   codeHighlight?: boolean;
   properties?: boolean;
-}> = ({ defaultPreview, title, children, height, bestPracticesCard = true, codeHighlight = true, properties = true }) => {
+  validations?: boolean;
+}> = ({
+  defaultPreview,
+  title,
+  children,
+  height,
+  bestPracticesCard = true,
+  codeHighlight = true,
+  properties = true,
+  validations = true,
+}) => {
   const context = usePreviewContext();
   const [loaded, setLoaded] = React.useState(false);
   const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
@@ -358,6 +369,23 @@ export const ComponentPreview: React.FC<{
           </>
         )}
       </div>
+      {validations && preview?.validations && (
+        <div className="mb-5">
+          <HeadersType.H3 id="validations">Validation results</HeadersType.H3>
+          <ValidationResults
+            validations={Object.fromEntries(
+              Object.entries(preview.validations).map(([key, value]) => [
+                key,
+                {
+                  ...value,
+                  description: value.description || '',
+                  passed: value.passed,
+                },
+              ])
+            )}
+          />
+        </div>
+      )}
       {properties && preview?.properties && (
         <>
           <HeadersType.H3 id="properties">Properties</HeadersType.H3>

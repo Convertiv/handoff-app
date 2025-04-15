@@ -195,7 +195,12 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               {componentPreviews.map(([title, cp], cpi) => (
                 <>
                   <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
-                    <ComponentPreview title={title} bestPracticesCard={cpi === 0} properties={cpi === componentPreviews.length - 1}>
+                    <ComponentPreview
+                      title={title}
+                      bestPracticesCard={cpi === 0}
+                      properties={cpi === componentPreviews.length - 1}
+                      validations={cpi === componentPreviews.length - 1}
+                    >
                       <p>Define a simple contact form</p>
                     </ComponentPreview>
                   </PreviewContextProvider>
@@ -211,7 +216,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 defaultPreview={componentPreviews}
                 defaultConfig={config}
               >
-                <ComponentPreview title={metadata.title}>
+                <ComponentPreview title={metadata.title} properties={true} validations={true}>
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
@@ -242,6 +247,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 ...componentPreviews.reduce((acc, [title, previewObject]) => ({ ...acc, [previewObject.id]: title }), {}),
                 'code-highlight': 'Code Samples',
                 properties: 'Properties',
+                validations: 'Validations',
               },
             ]}
           />
@@ -253,6 +259,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 preview: 'Previews',
                 'code-highlight': 'Code Samples',
                 properties: 'Properties',
+                validations: 'Validations',
               },
             ]}
           />

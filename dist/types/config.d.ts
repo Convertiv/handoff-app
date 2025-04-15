@@ -1,6 +1,27 @@
 import { FileComponentsObject } from '../exporters/components/types';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
+/**
+ * Represents the result of a single validation check
+ */
+export interface ValidationResult {
+    /**
+     * Description of what this validation check does
+     */
+    description: string;
+    /**
+     * Whether the validation passed or failed
+     */
+    passed: boolean;
+    /**
+     * Optional messages providing more details about the validation result
+     */
+    messages?: string[];
+    /**
+     * Optional timestamp of when the validation was performed
+     */
+    timestamp?: string;
+}
 export interface ImageStyle {
     name: string;
     style: string;
@@ -82,19 +103,31 @@ export interface Config {
         logos?: string;
     };
     /**
-     * Optional validation callback for components
-     * @param component - The component instance to validate
-     * @returns A record of validation results where keys are validation types and values are boolean results
-     * @example
-     * ```typescript
-     * validate: async (component) => ({
-     *   a11y: true,
-     *   responsive: true,
-     *   performance: false
-     * })
-     * ```
+     * Configuration hooks for extending functionality
      */
-    validate?: (component: TransformComponentTokensResult) => Promise<Record<string, boolean>>;
+    hooks?: {
+        /**
+         * Optional validation callback for components
+         * @param component - The component instance to validate
+         * @returns A record of validation results where keys are validation types and values are detailed validation results
+         * @example
+         * ```typescript
+         * validateComponent: async (component) => ({
+         *   a11y: {
+         *     description: 'Accessibility validation check',
+         *     passed: true,
+         *     messages: ['All interactive elements have proper ARIA labels']
+         *   },
+         *   responsive: {
+         *     description: 'Responsive design validation',
+         *     passed: false,
+         *     messages: ['Component breaks at mobile breakpoint']
+         *   }
+         * })
+         * ```
+         */
+        validateComponent?: (component: TransformComponentTokensResult) => Promise<Record<string, ValidationResult>>;
+    };
 }
 export declare type ClientConfig = Pick<Config, 'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
 export interface IntegrationObjectComponentOptions {

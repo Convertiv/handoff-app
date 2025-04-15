@@ -8,8 +8,9 @@ import buildApp, { devApp, watchApp } from './app';
 import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
 import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
-import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
+import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe, readPrevJSONFile, tokensFilePath } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
+import { processSharedStyles } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
@@ -232,7 +233,9 @@ class Handoff {
   async validateComponents(): Promise<Handoff> {
     this.preRunner();
     if (this.config) {
-      await processComponents(this, undefined, undefined, undefined, 'validation');
+      const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(this));
+      const sharedStyles = await processSharedStyles(this);
+      await processComponents(this, undefined, sharedStyles, documentationObject.components, 'validation');
     }
     return this;
   }

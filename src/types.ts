@@ -1,3 +1,4 @@
+import { ValidationResult } from './components/Validation/types';
 import type { FileComponentsObject } from './exporters/components/types';
 import { BlendMode, Effect } from './figma/types';
 import { SlotMetadata } from './transformers/preview/component';
@@ -150,6 +151,11 @@ export interface PreviewObject {
       groupBy?: string;
     };
   };
+  /**
+   * Validation results for the component
+   * Each key represents a validation type and the value contains detailed validation results
+   */
+  validations?: Record<string, ValidationResult>;
 }
 
 export type PreviewJson = {
