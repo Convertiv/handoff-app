@@ -98,7 +98,7 @@ export async function processComponents(
 
         data.sharedStyles = sharedStyles;
 
-        await writeComponentApi(runtimeComponentId, data, version, handoff, !!segmentToUpdate);
+        await writeComponentApi(runtimeComponentId, data, version, handoff, true);
 
         if (version === latest) {
           latestVersion = data;
@@ -107,7 +107,7 @@ export async function processComponents(
     );
 
     if (latestVersion) {
-      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
+      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, true);
       const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
       await updateComponentSummaryApi(handoff, summary);
