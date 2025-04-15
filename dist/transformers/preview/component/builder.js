@@ -101,13 +101,13 @@ function processComponents(handoff, id, sharedStyles, components, segmentToUpdat
                     }
                 }
                 data.sharedStyles = sharedStyles;
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, !!segmentToUpdate);
+                yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, true);
                 if (version === latest) {
                     latestVersion = data;
                 }
             })));
             if (latestVersion) {
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
+                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, true);
                 const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
                 yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
                 yield (0, api_1.updateComponentSummaryApi)(handoff, summary);
