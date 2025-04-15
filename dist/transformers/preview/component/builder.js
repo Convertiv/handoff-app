@@ -81,7 +81,7 @@ function processComponents(handoff, id, sharedStyles, components, segmentToUpdat
             let latestVersion = undefined;
             console.log(chalk_1.default.green(`Processing component ${runtimeComponentId} `));
             yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
-                var _d;
+                var _d, _e;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
                 let { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
                 let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
@@ -94,9 +94,9 @@ function processComponents(handoff, id, sharedStyles, components, segmentToUpdat
                 if (!segmentToUpdate || segmentToUpdate === 'previews' || segmentToUpdate === 'validation') {
                     data = yield (0, html_1.default)(data, handoff, components);
                 }
-                if (!segmentToUpdate || segmentToUpdate === 'validation') {
-                    if (((_d = handoff.config) === null || _d === void 0 ? void 0 : _d.validate) && data) {
-                        const validationResults = yield handoff.config.validate(data);
+                if (segmentToUpdate === 'validation') {
+                    if (((_e = (_d = handoff.config) === null || _d === void 0 ? void 0 : _d.hooks) === null || _e === void 0 ? void 0 : _e.validateComponent) && data) {
+                        const validationResults = yield handoff.config.hooks.validateComponent(data);
                         data.validations = validationResults;
                     }
                 }

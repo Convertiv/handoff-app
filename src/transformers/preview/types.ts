@@ -1,3 +1,4 @@
+import { ValidationResult } from '../../types/config';
 import { SlotMetadata } from './component';
 
 export enum ComponentType {
@@ -77,9 +78,9 @@ export type TransformComponentTokensResult = {
   };
   /**
    * Validation results for the component
-   * Each key represents a validation type and the boolean indicates if the validation passed
+   * Each key represents a validation type and the value contains detailed validation results
    */
-  validations?: Record<string, boolean>;
+  validations?: Record<string, ValidationResult>;
 } | null;
 
 export type OptionalPreviewRender = {
