@@ -89,9 +89,9 @@ export async function processComponents(
           data = await buildPreviews(data, handoff, components);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'validation') {
-          if (handoff.config?.validate && data) {
-            const validationResults = await handoff.config.validate(data);
+        if (segmentToUpdate === 'validation') {
+          if (handoff.config?.hooks?.validateComponent && data) {
+            const validationResults = await handoff.config.hooks.validateComponent(data);
             data.validations = validationResults;
           }
         }

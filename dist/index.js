@@ -47,6 +47,7 @@ const make_1 = require("./cli/make");
 const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const integration_1 = require("./transformers/integration");
+const component_1 = require("./transformers/preview/component");
 const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
 const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
@@ -282,7 +283,9 @@ class Handoff {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             if (this.config) {
-                yield (0, builder_1.default)(this, undefined, undefined, undefined, 'validation');
+                const documentationObject = yield (0, pipeline_1.readPrevJSONFile)((0, pipeline_1.tokensFilePath)(this));
+                const sharedStyles = yield (0, component_1.processSharedStyles)(this);
+                yield (0, builder_1.default)(this, undefined, sharedStyles, documentationObject.components, 'validation');
             }
             return this;
         });
