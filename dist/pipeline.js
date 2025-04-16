@@ -129,16 +129,11 @@ exports.buildComponents = buildComponents;
  * @param documentationObject
  */
 const buildStyles = (handoff, documentationObject) => __awaiter(void 0, void 0, void 0, function* () {
-    let typeFiles = (0, index_5.scssTypesTransformer)(documentationObject, handoff.integrationObject);
-    typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-    let cssFiles = (0, index_1.default)(documentationObject, handoff, handoff.integrationObject);
-    cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-    let scssFiles = (0, index_5.default)(documentationObject, handoff, handoff.integrationObject);
-    scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-    let sdFiles = (0, sd_1.default)(documentationObject, handoff, handoff.integrationObject);
-    sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-    let mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
-    mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
+    const typeFiles = (0, index_5.scssTypesTransformer)(documentationObject, handoff.integrationObject);
+    const cssFiles = (0, index_1.default)(documentationObject, handoff, handoff.integrationObject);
+    const scssFiles = (0, index_5.default)(documentationObject, handoff, handoff.integrationObject);
+    const sdFiles = (0, sd_1.default)(documentationObject, handoff, handoff.integrationObject);
+    const mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
     yield Promise.all([
         fs_extra_1.default
             .ensureDir((0, exports.variablesFilePath)(handoff))
@@ -247,7 +242,6 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
     if (changelogRecord) {
         changelog = [changelogRecord, ...changelog];
     }
-    handoff.hooks.build(documentationObject);
     yield Promise.all([
         fs_extra_1.default.writeJSON((0, exports.tokensFilePath)(handoff), documentationObject, { spaces: 2 }),
         fs_extra_1.default.writeJSON((0, exports.changelogFilePath)(handoff), changelog, { spaces: 2 }),

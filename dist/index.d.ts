@@ -1,9 +1,4 @@
 import 'dotenv/config';
-import webpack from 'webpack';
-import { HandoffIntegration } from './transformers/integration';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { TransformerOutput } from './transformers/types';
-import { DocumentationObject, HookReturn } from './types';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -14,24 +9,10 @@ declare class Handoff {
     exportsDirectory: string;
     sitesDirectory: string;
     integrationObject?: IntegrationObject | null;
-    integrationHooks: HandoffIntegration;
     designMap: {
         colors: {};
         effects: {};
         typography: {};
-    };
-    hooks: {
-        init: (config: Config) => Config;
-        fetch: () => void;
-        build: (documentationObject: DocumentationObject) => void;
-        integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
-        typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
-        cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
-        scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
-        styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-        mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-        webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
-        preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
     _initialArgs: {
         debug?: boolean;
@@ -64,14 +45,6 @@ declare class Handoff {
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     validateComponents(): Promise<Handoff>;
-    postInit(callback: (config: Config) => Config): void;
-    postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
-    postBuild(callback: (documentationObject: DocumentationObject) => void): void;
-    postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
-    modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
 export type { ComponentListObject as Component } from './transformers/preview/types';

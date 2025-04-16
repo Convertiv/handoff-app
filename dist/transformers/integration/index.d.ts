@@ -1,22 +1,8 @@
 /// <reference types="node" />
 import archiver from 'archiver';
 import * as stream from 'node:stream';
-import webpack from 'webpack';
 import Handoff from '../../index';
-import { DocumentationObject, HookReturn } from '../../types';
-import { TransformedPreviewComponents } from '../preview/types';
-export declare class HandoffIntegration {
-    name?: string;
-    hooks: {
-        integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
-        webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
-        preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-    };
-    constructor(name?: string);
-    postIntegration(callback: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[]): void;
-    modifyWebpackConfig(callback: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration): void;
-    postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
-}
+import { DocumentationObject } from '../../types';
 /**
  * Derive the path to the integration.
  */
@@ -26,7 +12,6 @@ export declare const getPathToIntegration: (handoff: Handoff, resolveTemplatePat
  * @returns string
  */
 export declare const getIntegrationEntryPoint: (handoff: Handoff) => string | null;
-export declare const instantiateIntegration: (handoff: Handoff) => HandoffIntegration;
 /**
  * A recusrive function for building a zip of the tokens
  * @param directory

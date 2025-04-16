@@ -92,16 +92,11 @@ export const buildComponents = async (handoff: Handoff) => {
  * @param documentationObject
  */
 const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  let typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
-  typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-  let cssFiles = cssTransformer(documentationObject, handoff, handoff.integrationObject);
-  cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-  let scssFiles = scssTransformer(documentationObject, handoff, handoff.integrationObject);
-  scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-  let sdFiles = sdTransformer(documentationObject, handoff, handoff.integrationObject);
-  sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-  let mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
-  mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
+  const typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
+  const cssFiles = cssTransformer(documentationObject, handoff, handoff.integrationObject);
+  const scssFiles = scssTransformer(documentationObject, handoff, handoff.integrationObject);
+  const sdFiles = sdTransformer(documentationObject, handoff, handoff.integrationObject);
+  const mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
 
   await Promise.all([
     fs
@@ -298,16 +293,20 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 
 const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   console.log(chalk.green(`Starting Figma data extraction.`));
+
   let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
   let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
+
   await fs.emptyDir(outputPath(handoff));
+
   const legacyDefinitions = await getLegacyDefinitions(handoff);
   const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
+
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
   }
-  handoff.hooks.build(documentationObject);
+  
   await Promise.all([
     fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
     fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
@@ -322,21 +321,26 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
         ]
       : []),
   ]);
+
   // define the output folder
   const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
+
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
     await fs.promises.mkdir(outputFolder, { recursive: true });
   }
+
   // copy assets to output folder
   fs.copyFileSync(
     iconsZipFilePath(handoff),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
   );
+
   fs.copyFileSync(
     logosZipFilePath(handoff),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
   );
+  
   return documentationObject;
 };
 
