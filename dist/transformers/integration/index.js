@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipTokens = exports.addFileToZip = exports.instantiateIntegration = exports.getIntegrationEntryPoint = exports.getPathToIntegration = exports.HandoffIntegration = void 0;
+exports.zipTokens = exports.addFileToZip = exports.getIntegrationEntryPoint = exports.getPathToIntegration = void 0;
 const archiver_1 = __importDefault(require("archiver"));
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -20,26 +20,6 @@ const handlebars_1 = __importDefault(require("handlebars"));
 const path_1 = __importDefault(require("path"));
 const tokens_1 = require("../tokens");
 const utils_1 = require("../utils");
-class HandoffIntegration {
-    constructor(name) {
-        this.name = name;
-        this.hooks = {
-            integration: (documentationObject, artifacts) => artifacts,
-            webpack: (handoff, webpackConfig) => webpackConfig,
-            preview: (webpackConfig, preview) => preview,
-        };
-    }
-    postIntegration(callback) {
-        this.hooks.integration = callback;
-    }
-    modifyWebpackConfig(callback) {
-        this.hooks.webpack = callback;
-    }
-    postPreview(callback) {
-        this.hooks.preview = callback;
-    }
-}
-exports.HandoffIntegration = HandoffIntegration;
 /**
  * Derive the path to the integration.
  */
@@ -69,13 +49,6 @@ const getIntegrationEntryPoint = (handoff) => {
     return (_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.bundle;
 };
 exports.getIntegrationEntryPoint = getIntegrationEntryPoint;
-const instantiateIntegration = (handoff) => {
-    if (!handoff || !(handoff === null || handoff === void 0 ? void 0 : handoff.config)) {
-        throw Error('Handoff not initialized');
-    }
-    return new HandoffIntegration(handoff.integrationObject ? handoff.integrationObject.name : undefined);
-};
-exports.instantiateIntegration = instantiateIntegration;
 /**
  * A recusrive function for building a zip of the tokens
  * @param directory
@@ -268,13 +241,6 @@ function integrationTransformer(handoff, documentationObject) {
         }
         // zip the tokens
         yield (0, exports.zipTokens)(exportPath, fs_extra_1.default.createWriteStream(path_1.default.join(outputFolder, `tokens.zip`)));
-        let data = handoff.integrationHooks.hooks.integration(documentationObject, []);
-        data = handoff.hooks.integration(documentationObject, data);
-        if (data.length > 0) {
-            data.map((artifact) => {
-                fs_extra_1.default.writeFileSync(path_1.default.join(exportIntegrationPath, artifact.filename), artifact.data);
-            });
-        }
     });
 }
 exports.default = integrationTransformer;

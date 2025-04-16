@@ -83,20 +83,38 @@ export interface Config {
   sitesOutputDirectory?: string;
   useVariables?: boolean;
   app?: NextAppConfig;
+  /**
+   * Configuration for entry points to assets and components that will be built
+   */
   entries?: {
+    /**
+     * Path to the main SCSS entry file
+     * @example "styles/main.scss"
+     */
     scss?: string;
+    /**
+     * Path to the main JavaScript entry file
+     * @example "scripts/main.js"
+     */
     js?: string;
+    /**
+     * Array of component paths to be included in the build
+     * @example ["components/button", "components/input"]
+     */
     components?: string[];
   };
   /**
+   * Configuration for asset zip file download links
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
   assets_zip_links?: {
     /**
+     * Path to the icons zip file
      * @default "/icons.zip"
      */
     icons?: string;
     /**
+     * Path to the logos zip file
      * @default "/logos.zip"
      */
     logos?: string;
@@ -115,7 +133,7 @@ export interface Config {
      *   a11y: {
      *     description: 'Accessibility validation check',
      *     passed: true,
-     *     messages: ['All interactive elements have proper ARIA labels']
+     *     messages: ['No accessibility issues found']
      *   },
      *   responsive: {
      *     description: 'Responsive design validation',
@@ -144,7 +162,6 @@ export interface IntegrationObjectComponentOptions {
 }
 
 export interface IntegrationObject {
-  name: string;
   entries?: {
     integration?: string; // scss
     bundle?: string; // js

@@ -4,41 +4,11 @@ import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import * as stream from 'node:stream';
 import path from 'path';
-import webpack from 'webpack';
 import Handoff from '../../index';
-import { DocumentationObject, HookReturn } from '../../types';
-import { TransformedPreviewComponents } from '../preview/types';
+import { DocumentationObject } from '../../types';
 import { getTokenSetTokens } from '../tokens';
 import { TokenDict, TokenType } from '../types';
 import { formatTokenName } from '../utils';
-
-export class HandoffIntegration {
-  name?: string;
-  hooks: {
-    integration: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[];
-    webpack: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration;
-    preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-  };
-  constructor(name?: string) {
-    this.name = name;
-    this.hooks = {
-      integration: (documentationObject, artifacts) => artifacts,
-      webpack: (handoff, webpackConfig) => webpackConfig,
-      preview: (webpackConfig, preview) => preview,
-    };
-  }
-  postIntegration(callback: (documentationObject: DocumentationObject, artifact: HookReturn[]) => HookReturn[]) {
-    this.hooks.integration = callback;
-  }
-  modifyWebpackConfig(callback: (handoff: Handoff, webpackConfig: webpack.Configuration) => webpack.Configuration) {
-    this.hooks.webpack = callback;
-  }
-  postPreview(
-    callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents
-  ) {
-    this.hooks.preview = callback;
-  }
-}
 
 /**
  * Derive the path to the integration.
@@ -69,14 +39,6 @@ export const getPathToIntegration = (handoff: Handoff, resolveTemplatePath: bool
  */
 export const getIntegrationEntryPoint = (handoff: Handoff): string | null => {
   return handoff?.integrationObject?.entries?.bundle;
-};
-
-export const instantiateIntegration = (handoff: Handoff): HandoffIntegration => {
-  if (!handoff || !handoff?.config) {
-    throw Error('Handoff not initialized');
-  }
-
-  return new HandoffIntegration(handoff.integrationObject ? handoff.integrationObject.name : undefined);
 };
 
 /**
@@ -335,13 +297,6 @@ export default async function integrationTransformer(handoff: Handoff, documenta
 
   // zip the tokens
   await zipTokens(exportPath, fs.createWriteStream(path.join(outputFolder, `tokens.zip`)));
-  let data = handoff.integrationHooks.hooks.integration(documentationObject, []);
-  data = handoff.hooks.integration(documentationObject, data);
-  if (data.length > 0) {
-    data.map((artifact) => {
-      fs.writeFileSync(path.join(exportIntegrationPath, artifact.filename), artifact.data);
-    });
-  }
 }
 
 interface IntegrationTemplateContext {
