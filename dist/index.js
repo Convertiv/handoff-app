@@ -46,7 +46,6 @@ const eject_1 = require("./cli/eject");
 const make_1 = require("./cli/make");
 const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
-const integration_1 = require("./transformers/integration");
 const component_1 = require("./transformers/preview/component");
 const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
 const css_1 = require("./transformers/preview/component/css");
@@ -69,28 +68,13 @@ class Handoff {
         this.config = null;
         this.debug = debug !== null && debug !== void 0 ? debug : false;
         this.force = force !== null && force !== void 0 ? force : false;
-        this.hooks = {
-            init: (config) => config,
-            fetch: () => { },
-            build: (documentationObject) => { },
-            typeTransformer: (documentationObject, types) => types,
-            integration: (documentationObject, data) => data,
-            cssTransformer: (documentationObject, css) => css,
-            scssTransformer: (documentationObject, scss) => scss,
-            styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
-            mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
-            webpack: (webpackConfig) => webpackConfig,
-            preview: (webpackConfig, preview) => preview,
-        };
         this.init(config);
-        this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
     init(configOverride) {
         var _a, _b;
         const config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
-        this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
         [this.integrationObject, this._configs] = (0, exports.initIntegrationObject)(this);
@@ -114,7 +98,6 @@ class Handoff {
             if (this.config) {
                 this.preRunner();
                 yield (0, pipeline_1.default)(this);
-                this.hooks.fetch();
             }
             return this;
         });
@@ -290,30 +273,6 @@ class Handoff {
             return this;
         });
     }
-    postInit(callback) {
-        this.hooks.init = callback;
-    }
-    postTypeTransformer(callback) {
-        this.hooks.typeTransformer = callback;
-    }
-    postCssTransformer(callback) {
-        this.hooks.cssTransformer = callback;
-    }
-    postScssTransformer(callback) {
-        this.hooks.scssTransformer = callback;
-    }
-    postPreview(callback) {
-        this.hooks.preview = callback;
-    }
-    postBuild(callback) {
-        this.hooks.build = callback;
-    }
-    postIntegration(callback) {
-        this.hooks.integration = callback;
-    }
-    modifyWebpackConfig(callback) {
-        this.hooks.webpack = callback;
-    }
 }
 const initConfig = (configOverride) => {
     let config = {};
@@ -350,7 +309,6 @@ const initIntegrationObject = (handoff) => {
     var _j;
     const configFiles = [];
     const result = {
-        name: '',
         options: {},
         entries: {
             integration: undefined,

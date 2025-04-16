@@ -3,21 +3,18 @@ import 'dotenv/config';
 import fs from 'fs-extra';
 import path from 'path';
 import semver from 'semver';
-import webpack from 'webpack';
 import buildApp, { devApp, watchApp } from './app';
 import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
 import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
 import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe, readPrevJSONFile, tokensFilePath } from './pipeline';
-import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
 import { processSharedStyles } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
 import { renameComponent } from './transformers/preview/component/rename';
-import { ComponentListObject, TransformedPreviewComponents } from './transformers/preview/types';
-import { TransformerOutput } from './transformers/types';
-import { DocumentationObject, HookReturn } from './types';
+import { ComponentListObject } from './transformers/preview/types';
+import { DocumentationObject } from './types';
 import { Config, IntegrationObject } from './types/config';
 
 class Handoff {
@@ -29,24 +26,10 @@ class Handoff {
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
   integrationObject?: IntegrationObject | null;
-  integrationHooks: HandoffIntegration;
   designMap: {
     colors: {};
     effects: {};
     typography: {};
-  };
-  hooks: {
-    init: (config: Config) => Config;
-    fetch: () => void;
-    build: (documentationObject: DocumentationObject) => void;
-    integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
-    typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
-    cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
-    scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
-    styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-    mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-    webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
-    preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
   _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
   _configs: string[] = [];
@@ -60,27 +43,12 @@ class Handoff {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
-    this.hooks = {
-      init: (config: Config): Config => config,
-      fetch: () => {},
-      build: (documentationObject) => {},
-      typeTransformer: (documentationObject, types) => types,
-      integration: (documentationObject, data: HookReturn[]) => data,
-      cssTransformer: (documentationObject, css) => css,
-      scssTransformer: (documentationObject, scss) => scss,
-      styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
-      mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
-      webpack: (webpackConfig) => webpackConfig,
-      preview: (webpackConfig, preview) => preview,
-    };
     this.init(config);
-    this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
   init(configOverride?: Partial<Config>): Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
-    this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.integrationObject, this._configs] = initIntegrationObject(this);
@@ -103,7 +71,6 @@ class Handoff {
     if (this.config) {
       this.preRunner();
       await pipeline(this);
-      this.hooks.fetch();
     }
     return this;
   }
@@ -239,32 +206,6 @@ class Handoff {
     }
     return this;
   }
-  postInit(callback: (config: Config) => Config) {
-    this.hooks.init = callback;
-  }
-  postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.typeTransformer = callback;
-  }
-  postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.cssTransformer = callback;
-  }
-  postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.scssTransformer = callback;
-  }
-  postPreview(
-    callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents
-  ) {
-    this.hooks.preview = callback;
-  }
-  postBuild(callback: (documentationObject: DocumentationObject) => void) {
-    this.hooks.build = callback;
-  }
-  postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]) {
-    this.hooks.integration = callback;
-  }
-  modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
-    this.hooks.webpack = callback;
-  }
 }
 
 const initConfig = (configOverride?: Partial<Config>): Config => {
@@ -305,7 +246,6 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
 export const initIntegrationObject = (handoff: Handoff): [integrationObject: IntegrationObject, configs: string[]] => {
   const configFiles: string[] = [];
   const result: IntegrationObject = {
-    name: '',
     options: {},
     entries: {
       integration: undefined, // scss

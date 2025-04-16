@@ -104,10 +104,12 @@ export const generateWebpackConfig = (
       filename: 'bundle.js',
     };
   }
+  
   if (!mode) {
     mode = 'production';
   }
-  let config: webpack.Configuration = {
+
+  const config: webpack.Configuration = {
     mode,
     entry,
     resolve: {
@@ -178,7 +180,6 @@ export const generateWebpackConfig = (
       ],
     },
   };
-  config = handoff.integrationHooks.hooks.webpack(handoff, config);
-  config = handoff.hooks.webpack(config);
+
   return config;
 };
