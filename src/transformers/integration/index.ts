@@ -1,17 +1,16 @@
-import Handlebars from 'handlebars';
-import fs from 'fs-extra';
-import path from 'path';
 import archiver from 'archiver';
-import * as stream from 'node:stream';
-import { DocumentationObject } from '../../types';
-import { TransformedPreviewComponents } from '../preview/types';
-import webpack from 'webpack';
-import { HookReturn } from '../../types';
-import Handoff from '../../index';
-import { formatTokenName } from '../utils';
-import { TokenDict, TokenType } from '../types';
-import { getTokenSetTokens } from '../tokens';
 import chalk from 'chalk';
+import fs from 'fs-extra';
+import Handlebars from 'handlebars';
+import * as stream from 'node:stream';
+import path from 'path';
+import webpack from 'webpack';
+import Handoff from '../../index';
+import { DocumentationObject, HookReturn } from '../../types';
+import { TransformedPreviewComponents } from '../preview/types';
+import { getTokenSetTokens } from '../tokens';
+import { TokenDict, TokenType } from '../types';
+import { formatTokenName } from '../utils';
 
 export class HandoffIntegration {
   name?: string;
@@ -132,11 +131,14 @@ const buildIntegration = async (
   rootPath?: string,
   rootReturnPath?: string
 ): Promise<void> => {
-  rootPath ??= sourcePath;
-  const items = await fs.readdir(sourcePath);
+  if ((await fs.stat(sourcePath)).isFile()) {
+    sourcePath = path.dirname(sourcePath);
+  }
 
+  rootPath ??= sourcePath;
+
+  const items = await fs.readdir(sourcePath);
   const components = Object.keys(documentationObject.components);
-  const componentsWithInstances = components.filter((component) => documentationObject.components[component].instances.length > 0);
 
   for (const item of items) {
     const sourceItemPath = path.join(sourcePath, item);
@@ -199,7 +201,7 @@ export default async function integrationTransformer(handoff: Handoff, documenta
     return;
   }
 
-  console.log(chalk.green(`Integration build started (using: ${handoff.integrationObject.name})...`));
+  console.log(chalk.green(`Integration build started...`));
 
   const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
 

@@ -47,9 +47,14 @@ const trimPreview = (preview) => {
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
     return code;
 };
-const buildPreviews = (id, location, data, handoff, components) => __awaiter(void 0, void 0, void 0, function* () {
+const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (!((_a = data.entries) === null || _a === void 0 ? void 0 : _a.template)) {
+        return data;
+    }
+    const id = data.id;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const template = yield fs_extra_1.default.readFile(path_1.default.resolve(location, `${id}.hbs`), 'utf8');
+    const template = yield fs_extra_1.default.readFile(path_1.default.resolve(data.entries.template), 'utf8');
     try {
         const previews = {};
         let injectFieldWrappers = false;
@@ -90,6 +95,7 @@ const buildPreviews = (id, location, data, handoff, components) => __awaiter(voi
         if (!components)
             components = {};
         const componentDocumentation = components[data.id];
+        let html = '';
         if (!!componentDocumentation) {
             for (const instance of componentDocumentation.instances) {
                 const variantDefinition = Object.fromEntries(instance.variantProperties);
@@ -102,7 +108,9 @@ const buildPreviews = (id, location, data, handoff, components) => __awaiter(voi
                 };
             }
         }
-        const html = data.previews['generic'] ? yield buildPreview(id, template, data.previews['generic'], data) : '';
+        else {
+            html = data.previews['generic'] ? yield buildPreview(id, template, data.previews['generic'], data) : '';
+        }
         // Generate a set of previews without the inspection field wrappers
         injectFieldWrappers = false;
         for (const previewKey in data.previews) {

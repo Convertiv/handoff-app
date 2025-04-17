@@ -1,6 +1,6 @@
 import Handoff from '../../../index';
 import { TransformComponentTokensResult } from '../types';
-declare const buildComponentCss: (id: string, location: string, data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => Promise<{
+declare const buildComponentCss: (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => Promise<{
     id: string;
     source?: "figma" | "custom";
     type?: import("../types").ComponentType;
@@ -30,6 +30,11 @@ declare const buildComponentCss: (id: string, location: string, data: TransformC
         [key: string]: import("../component").SlotMetadata;
     };
     variant?: Record<string, string>;
+    entries?: {
+        js?: string;
+        scss?: string;
+        template?: string;
+    };
 }>;
 /**
  * Check to see if there's an entry point for the main JS file

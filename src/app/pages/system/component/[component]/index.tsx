@@ -3,10 +3,14 @@ import { getClientConfig } from '@handoff/config';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import React, { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { ComponentPreview } from '../../../../components/Component/Preview';
+import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
+import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
@@ -71,6 +75,8 @@ export const getStaticProps = async (context) => {
   const menu = staticBuildMenu();
   const config = getClientConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
+  const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
+
   return {
     props: {
       id: component,
@@ -85,11 +91,12 @@ export const getStaticProps = async (context) => {
         description: metadata.description,
         image: 'hero-brand-assets',
       },
+      componentHotReloadIsAvailable,
     },
   };
 };
 
-const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
+const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
@@ -127,9 +134,15 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
       <div className="flex flex-col gap-3 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
-          <p className="max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
+          <ReactMarkdown
+            className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300"
+            components={MarkdownComponents}
+            rehypePlugins={[rehypeRaw]}
+          >
             {metadata.description}
-            {/* {component.tags &&
+          </ReactMarkdown>
+          {/*<p className="">
+             {component.tags &&
               Array.isArray(component.tags) &&
               component.tags.map((tag) => (
                 <>
@@ -138,8 +151,8 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                     {tag}
                   </Badge>
                 </>
-              ))} */}
-          </p>
+              ))}
+          </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
@@ -178,7 +191,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
           {Array.isArray(componentPreviews) ? (
-            <>
+            <HotReloadProvider connect={componentHotReloadIsAvailable}>
               {componentPreviews.map(([title, cp], cpi) => (
                 <>
                   <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
@@ -188,9 +201,9 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                   </PreviewContextProvider>
                 </>
               ))}
-            </>
+            </HotReloadProvider>
           ) : (
-            <>
+            <HotReloadProvider connect={componentHotReloadIsAvailable}>
               <PreviewContextProvider
                 id={id}
                 defaultMetadata={metadata}
@@ -202,7 +215,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config }) => {
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
-            </>
+            </HotReloadProvider>
           )}
           <div className="mt-8">
             <Select

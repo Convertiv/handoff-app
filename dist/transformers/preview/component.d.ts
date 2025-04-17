@@ -64,12 +64,13 @@ export declare type RuleObject = {
     pattern?: string;
 };
 /**
- * In dev mode we want to watch the components folder for changes
- * @param handoff
- * @returns
- * @returns
+ * Creates a WebSocket server that broadcasts messages to connected clients.
+ * Designed for development mode to help with hot-reloading.
+ *
+ * @param port - Optional port number for the WebSocket server; defaults to 3001.
+ * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
-export declare const createFrameSocket: (handoff: Handoff) => Promise<void>;
+export declare const createWebSocketServer: (port?: number) => Promise<(message: string) => void>;
 export declare const getComponentPath: (handoff: Handoff) => string;
 export declare const getComponentOutputPath: (handoff: Handoff) => string;
 /**

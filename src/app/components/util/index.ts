@@ -1,6 +1,7 @@
 import { ChangelogRecord } from '@handoff/changelog';
 import { getClientConfig } from '@handoff/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentListObject } from '@handoff/transformers/preview/types';
 import {
   ComponentDocumentationOptions,
   LegacyComponentDefinition,
@@ -10,7 +11,6 @@ import {
 } from '@handoff/types';
 import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
-import { prepareIntegrationObject } from '@handoff/utils/integration';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
@@ -451,20 +451,32 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   let components = getTokens().components;
 
   if (fetchAll) {
-    // get the path for the integration templates
-    const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-    // find the path to the components
-    const templatesPath = path.resolve(integrationPath, 'components');
-    if (fs.existsSync(templatesPath)) {
-      // Read the template directory and use it to populate the components with json files
-      fs.readdirSync(templatesPath).map((file) => {
-        // ok, the file should have either a json file or a semver directory
-        const metadata = getLatestComponentMetadata(file);
-        if (metadata) {
-          components[file] = metadata;
-          components[file].name = metadata.title;
-        }
-      });
+    const componentIds = Array.from(
+      new Set<string>(
+        (
+          JSON.parse(
+            fs.readFileSync(
+              path.resolve(
+                process.env.HANDOFF_MODULE_PATH ?? '',
+                '.handoff',
+                `${process.env.HANDOFF_PROJECT_ID}`,
+                'public',
+                'api',
+                'components.json'
+              ),
+              'utf-8'
+            )
+          ) as ComponentListObject[]
+        ).map((c) => c.id)
+      )
+    );
+
+    for (const componentId of componentIds) {
+      const metadata = getLatestComponentMetadata(componentId);
+      if (metadata) {
+        components[componentId] = metadata;
+        components[componentId].name = metadata.title;
+      }
     }
   }
 
@@ -549,30 +561,30 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-export const getIntegrationObject = (): IntegrationObject => {
-  const defaultObject = null as IntegrationObject;
+// export const getIntegrationObject = (): IntegrationObject => {
+//   const defaultObject = null as IntegrationObject;
 
-  if (!process.env.HANDOFF_WORKING_PATH) {
-    return defaultObject;
-  }
+//   if (!process.env.HANDOFF_WORKING_PATH) {
+//     return defaultObject;
+//   }
 
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+//   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
 
-  if (!fs.existsSync(integrationPath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationPath)) {
+//     return defaultObject;
+//   }
 
-  const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
+//   const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
 
-  if (!fs.existsSync(integrationFilePath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationFilePath)) {
+//     return defaultObject;
+//   }
 
-  const buffer = fs.readFileSync(integrationFilePath);
-  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+//   const buffer = fs.readFileSync(integrationFilePath);
+//   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
 
-  return prepareIntegrationObject(integration, integrationPath);
-};
+//   return prepareIntegrationObject(integration, integrationPath);
+// };
 
 export const getTokens = (): ExportResult => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH

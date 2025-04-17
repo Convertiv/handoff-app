@@ -6,23 +6,26 @@ import Handoff, { initIntegrationObject } from '../../../index';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
-const buildComponentCss = async (
-  id: string,
-  location: string,
-  data: TransformComponentTokensResult,
-  handoff: Handoff,
-  sharedStyles: string
-) => {
+const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => {
+  const id = data.id;
+  const entry = data.entries?.scss;
+
+  if (!entry) {
+    return data;
+  }
+
+  const extension = path.extname(entry);
+
+  if (!extension) {
+    return data;
+  }
+
   // Is there a scss file with the same name?
   const outputPath = getComponentOutputPath(handoff);
-  const scssFile = id + '.scss';
-  const scssPath = path.resolve(location, scssFile);
-  const cssFile = id + '.css';
-  const cssPath = path.resolve(location, cssFile);
-  if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
-    console.log(chalk.green(`Detected SCSS file for ${id}`));
+
+  if (extension === '.scss') {
     try {
-      const result = await sass.compileAsync(scssPath, {
+      const result = await sass.compileAsync(entry, {
         loadPaths: [
           path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
           path.resolve(handoff.workingPath, 'node_modules'),
@@ -46,21 +49,21 @@ const buildComponentCss = async (
           if (!sharedStyles) sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
           await fs.writeFile(path.resolve(outputPath, `shared.css`), sharedStyles);
         }
-        await fs.writeFile(path.resolve(outputPath, cssFile), data['css']);
+        await fs.writeFile(path.resolve(outputPath, path.basename(entry).replace('.scss', '.css')), data['css']);
       }
     } catch (e) {
       console.log(chalk.red(`Error compiling SCSS for ${id}`));
       throw e;
     }
-    const scss = await fs.readFile(scssPath, 'utf8');
+    const scss = await fs.readFile(entry, 'utf8');
     if (scss) {
       data['sass'] = scss;
     }
   }
 
   // Is there a css file with the same name?
-  if (fs.existsSync(cssPath)) {
-    const css = await fs.readFile(path.resolve(location, cssFile), 'utf8');
+  if (extension === 'css') {
+    const css = await fs.readFile(path.resolve(entry), 'utf8');
     if (css) {
       data['css'] = css;
     }
@@ -75,24 +78,28 @@ const buildComponentCss = async (
  */
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff);
-  if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
-    console.log(chalk.green(`Detected main CSS file`));
-    try {
-      const scssPath = path.resolve(integration.entries.styles);
-      const result = await sass.compileAsync(scssPath, {
-        loadPaths: [
-          path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
-          path.resolve(handoff.workingPath, 'node_modules'),
-          path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-        ],
-        quietDeps: true,
-      });
-      await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
-    } catch (e) {
-      console.log(chalk.red(`Error compiling main CSS`));
-      console.log(e);
+  const integration = initIntegrationObject(handoff)[0];
+  if (integration && integration.entries.integration && fs.existsSync(integration.entries.integration)) {
+    const stat = await fs.stat(integration.entries.integration);
+    const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
+    if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
+      console.log(chalk.green(`Detected main CSS file`));
+      try {
+        const scssPath = path.resolve(integration.entries.integration);
+        const result = await sass.compileAsync(scssPath, {
+          loadPaths: [
+            path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
+            path.resolve(handoff.workingPath, 'node_modules'),
+            path.resolve(handoff.workingPath),
+            path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          ],
+          quietDeps: true,
+        });
+        await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
+      } catch (e) {
+        console.log(chalk.red(`Error compiling main CSS`));
+        console.log(e);
+      }
     }
   }
 };

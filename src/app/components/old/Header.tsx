@@ -1,8 +1,8 @@
+import { ClientConfig } from '@handoff/types/config';
 import Link from 'next/link';
+import React from 'react';
 import NavLink from '../NavLink';
 import { SectionLink } from '../util';
-import React from 'react';
-import { ClientConfig } from '@handoff/types/config';
 
 interface HeaderProps {
   menu: SectionLink[];

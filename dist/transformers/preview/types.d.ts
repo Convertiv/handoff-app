@@ -6,7 +6,7 @@ export declare enum ComponentType {
     Utility = "utility"
 }
 export declare type ComponentListObject = {
-    id: string;
+    id?: string;
     version: string;
     image: string;
     title: string;
@@ -27,6 +27,25 @@ export declare type ComponentListObject = {
         group_by: boolean;
     };
     paths: string[];
+    entries?: {
+        js?: string;
+        scss?: string;
+        templates?: string;
+    };
+    options?: {
+        transformer: {
+            cssRootClass?: string;
+            tokenNameSegments?: string[];
+            defaults: {
+                [variantProperty: string]: string;
+            };
+            replace: {
+                [variantProperty: string]: {
+                    [source: string]: string;
+                };
+            };
+        };
+    };
 };
 export declare type TransformComponentTokensResult = {
     id: string;
@@ -58,6 +77,11 @@ export declare type TransformComponentTokensResult = {
         [key: string]: SlotMetadata;
     };
     variant?: Record<string, string>;
+    entries?: {
+        js?: string;
+        scss?: string;
+        template?: string;
+    };
 } | null;
 export declare type OptionalPreviewRender = {
     title: string;

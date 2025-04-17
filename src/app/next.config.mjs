@@ -1,7 +1,7 @@
+import mdx from '@next/mdx';
+import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import chalk from 'chalk';
-import mdx from '@next/mdx';
 import { visit } from 'unist-util-visit';
 
 const CodeTransform = () => {

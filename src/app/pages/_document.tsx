@@ -11,6 +11,7 @@ class MyDocument extends Document {
         <Head>
           <link rel="shortcut icon" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
           <link rel="icon" sizes="16x16 32x32 64x64" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
+          <link rel="stylesheet" type="text/css" href="/theme.css" />
           {config?.app?.google_tag_manager && (
             <Script id="google-tag-manager" strategy="afterInteractive">
               {`

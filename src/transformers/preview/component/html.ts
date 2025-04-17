@@ -16,14 +16,17 @@ const trimPreview = (preview: string) => {
 };
 
 const buildPreviews = async (
-  id: string,
-  location: string,
   data: TransformComponentTokensResult,
   handoff: Handoff,
   components?: FileComponentsObject
 ): Promise<TransformComponentTokensResult> => {
+  if (!data.entries?.template) {
+    return data;
+  }
+
+  const id = data.id;
   const outputPath = getComponentOutputPath(handoff);
-  const template = await fs.readFile(path.resolve(location, `${id}.hbs`), 'utf8');
+  const template = await fs.readFile(path.resolve(data.entries.template), 'utf8');
   try {
     const previews = {};
     let injectFieldWrappers = false;
@@ -55,8 +58,8 @@ const buildPreviews = async (
         }
         return new Handlebars.SafeString(
           `<span class="handoff-field handoff-field-${current?.type ? current.type : 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">` +
-          options.fn(this) +
-          '</span>'
+            options.fn(this) +
+            '</span>'
         );
       } else {
         return options.fn(this);
@@ -64,6 +67,8 @@ const buildPreviews = async (
     });
     if (!components) components = {};
     const componentDocumentation = components[data.id];
+
+    let html: string = '';
 
     if (!!componentDocumentation) {
       for (const instance of componentDocumentation.instances) {
@@ -80,9 +85,10 @@ const buildPreviews = async (
           values: variationValues,
         } as OptionalPreviewRender;
       }
+    } else {
+      html = data.previews['generic'] ? await buildPreview(id, template, data.previews['generic'], data) : '';
     }
 
-    const html = data.previews['generic'] ? await buildPreview(id, template, data.previews['generic'], data) : '';
     // Generate a set of previews without the inspection field wrappers
     injectFieldWrappers = false;
     for (const previewKey in data.previews) {
