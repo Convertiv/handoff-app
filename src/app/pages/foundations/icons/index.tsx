@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import type { AssetObject } from '@handoff/types';
 import { Download } from 'lucide-react';
 import type { GetStaticProps } from 'next';
@@ -12,7 +11,7 @@ import { MarkdownComponents } from '../../../components/Markdown/MarkdownCompone
 import HeadersType from '../../../components/Typography/Headers';
 import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../../components/util';
 
 export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
@@ -56,7 +55,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       assets: getTokens().assets,
     },
   };

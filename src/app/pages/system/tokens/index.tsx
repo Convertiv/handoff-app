@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import type { GetStaticProps } from 'next';
 import { useEffect, useState } from 'react';
@@ -13,6 +12,7 @@ import {
   fetchComponents,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
+  getClientRuntimeConfig,
   Metadata,
 } from '../../../components/util';
 
@@ -31,7 +31,7 @@ type ComponentPageDocumentationProps = DocumentationProps & {
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {

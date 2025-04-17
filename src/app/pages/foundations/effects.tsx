@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { isShadowEffectType } from '@handoff/exporters/utils';
 import { EffectParametersObject } from '@handoff/types';
 import { lowerCase } from 'lodash';
@@ -35,7 +34,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
-      config: getClientConfig(),
+      config: util.getClientRuntimeConfig(),
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
       design: getTokens().design,
     },

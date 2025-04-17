@@ -11,7 +11,7 @@ import { getPathToIntegration } from '../transformers/integration';
  * @param handoff
  */
 export const ejectConfig = async (handoff: Handoff) => {
-  const config = getClientConfig(handoff.config);
+  const config = getClientConfig(handoff);
   const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.json'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
@@ -99,9 +99,7 @@ export const ejectTheme = async (handoff: Handoff) => {
   const workingPath = path.resolve(path.join(handoff.workingPath, 'theme', 'default.scss'));
   if (fs.existsSync(workingPath)) {
     if (!handoff.force) {
-      console.log(
-        chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`)
-      );
+      console.log(chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`));
       return;
     }
   }

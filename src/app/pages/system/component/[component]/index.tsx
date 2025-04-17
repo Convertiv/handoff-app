@@ -1,5 +1,4 @@
 'use client';
-import { getClientConfig } from '@handoff/config';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import React, { useEffect, useState } from 'react';
@@ -16,7 +15,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { fetchComponents, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -73,7 +72,7 @@ export const getStaticProps = async (context) => {
   // const isFigmaComponent = false;
 
   const menu = staticBuildMenu();
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
 

@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { FontFamily } from '@handoff/types/font';
 import sortedUniq from 'lodash/sortedUniq';
 import type * as next from 'next';
@@ -9,7 +8,7 @@ import TypographyExamples from '../../components/Foundations/TypographyExample';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
-import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
 export interface typographyTypes {
   [key: string]: ReactElement;
@@ -27,7 +26,7 @@ export const getStaticProps: next.GetStaticProps = async () => {
   return {
     props: {
       ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       design: getTokens().design,
     },
   };
@@ -100,7 +99,7 @@ const Typography = ({
 export default Typography;
 
 /**
- *       
+ *
  *       {Object.keys(families).map((key) => (
         <div className="c-typography__preview-big" key={`family-${key}`}>
           <div className="o-row u-justify-between">

@@ -1,5 +1,4 @@
-import * as fs from 'fs-extra';
-import path from 'path';
+import Handoff from '.';
 import { ClientConfig, Config } from './types/config';
 
 export interface ImageStyle {
@@ -48,22 +47,13 @@ export const defaultConfig = (): Config => ({
 });
 
 /**
- * Get the configuration formatted for the client, either from the root of the project or from the default config.
- * @returns Promise<Config>
+ * Retrieves the client configuration from the provided handoff configuration.
+ *
+ * @param handoff - The handoff object containing the configuration details.
+ * @returns The client configuration object.
  */
-export const getClientConfig = (configOverride?: any): ClientConfig => {
-  // Check to see if there is a config in the root of the project
-  let config = {};
-  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
-
-  if (fs.existsSync(configPath)) {
-    const defBuffer = fs.readFileSync(configPath);
-    config = JSON.parse(defBuffer.toString()) as Config;
-  }
-
-  if (configOverride) {
-    config = { ...config, ...configOverride };
-  }
+export const getClientConfig = (handoff: Handoff): ClientConfig => {
+  const config = handoff.config;
 
   const {
     app,

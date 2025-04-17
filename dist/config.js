@@ -1,34 +1,6 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getClientConfig = exports.defaultConfig = void 0;
-const fs = __importStar(require("fs-extra"));
-const path_1 = __importDefault(require("path"));
 const defaultConfig = () => {
     var _a, _b, _c, _d, _e;
     return ({
@@ -70,20 +42,13 @@ const defaultConfig = () => {
 };
 exports.defaultConfig = defaultConfig;
 /**
- * Get the configuration formatted for the client, either from the root of the project or from the default config.
- * @returns Promise<Config>
+ * Retrieves the client configuration from the provided handoff configuration.
+ *
+ * @param handoff - The handoff object containing the configuration details.
+ * @returns The client configuration object.
  */
-const getClientConfig = (configOverride) => {
-    // Check to see if there is a config in the root of the project
-    let config = {};
-    let configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
-    if (fs.existsSync(configPath)) {
-        const defBuffer = fs.readFileSync(configPath);
-        config = JSON.parse(defBuffer.toString());
-    }
-    if (configOverride) {
-        config = Object.assign(Object.assign({}, config), configOverride);
-    }
+const getClientConfig = (handoff) => {
+    const config = handoff.config;
     const { app, exportsOutputDirectory, sitesOutputDirectory, assets_zip_links = { icons: null, logos: null }, useVariables, } = Object.assign(Object.assign({}, (0, exports.defaultConfig)()), config);
     return {
         app,
