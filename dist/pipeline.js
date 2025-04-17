@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildIntegrationOnly = exports.buildRecipe = exports.buildComponents = exports.readPrevJSONFile = exports.logosZipFilePath = exports.iconsZipFilePath = exports.variablesFilePath = exports.changelogFilePath = exports.previewFilePath = exports.tokensFilePath = exports.outputPath = void 0;
+exports.buildIntegrationOnly = exports.buildRecipe = exports.buildComponents = exports.readPrevJSONFile = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -59,21 +59,6 @@ const tokens_1 = require("./transformers/tokens");
 const utils_1 = require("./utils");
 const fs_1 = require("./utils/fs");
 const prompt_1 = require("./utils/prompt");
-let config;
-const outputPath = (handoff) => path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-exports.outputPath = outputPath;
-const tokensFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'tokens.json');
-exports.tokensFilePath = tokensFilePath;
-const previewFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'preview.json');
-exports.previewFilePath = previewFilePath;
-const changelogFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'changelog.json');
-exports.changelogFilePath = changelogFilePath;
-const variablesFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'tokens');
-exports.variablesFilePath = variablesFilePath;
-const iconsZipFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'icons.zip');
-exports.iconsZipFilePath = iconsZipFilePath;
-const logosZipFilePath = (handoff) => path_1.default.join((0, exports.outputPath)(handoff), 'logos.zip');
-exports.logosZipFilePath = logosZipFilePath;
 /**
  * Read Previous Json File
  * @param path
@@ -111,7 +96,7 @@ const buildIntegration = (handoff, documentationObject) => __awaiter(void 0, voi
  */
 const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0, void 0, function* () {
     yield Promise.all([
-        (0, index_4.default)(handoff, documentationObject).then((out) => fs_extra_1.default.writeJSON((0, exports.previewFilePath)(handoff), out, { spaces: 2 })),
+        (0, index_4.default)(handoff, documentationObject).then((out) => fs_extra_1.default.writeJSON(handoff.getPreviewFilePath(), out, { spaces: 2 })),
     ]);
 });
 /**
@@ -120,8 +105,7 @@ const buildPreviews = (handoff, documentationObject) => __awaiter(void 0, void 0
  * @returns
  */
 const buildComponents = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const documentationObject = yield (0, exports.readPrevJSONFile)((0, exports.tokensFilePath)(handoff));
-    yield Promise.all([(0, component_1.componentTransformer)(handoff, documentationObject.components)]);
+    yield Promise.all([(0, component_1.componentTransformer)(handoff)]);
 });
 exports.buildComponents = buildComponents;
 /**
@@ -136,24 +120,24 @@ const buildStyles = (handoff, documentationObject) => __awaiter(void 0, void 0, 
     const mapFiles = (0, map_1.default)(documentationObject, handoff.integrationObject);
     yield Promise.all([
         fs_extra_1.default
-            .ensureDir((0, exports.variablesFilePath)(handoff))
-            .then(() => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/types`))
-            .then(() => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/css`))
-            .then(() => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/sass`))
-            .then(() => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/sd/tokens`))
-            .then(() => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/maps`))
-            .then(() => Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs_extra_1.default.ensureDir(`${(0, exports.variablesFilePath)(handoff)}/sd/tokens/${name}`))))
-            .then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/types/${name}.scss`, content))))
-            .then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/types/${name}.scss`, content))))
-            .then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/css/${name}.css`, content))))
-            .then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/css/${name}.css`, content))))
-            .then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/sass/${name}.scss`, content))))
-            .then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/sass/${name}.scss`, content))))
-            .then(() => Promise.all(Object.entries(sdFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content))))
-            .then(() => Promise.all(Object.entries(sdFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/sd/tokens/${name}.tokens.json`, content))))
-            .then(() => Promise.all(Object.entries(mapFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/maps/${name}.json`, content))))
-            .then(() => Promise.all(Object.entries(mapFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.variablesFilePath)(handoff)}/maps/${name}.json`, content))))
-            .then(() => Promise.all(Object.entries(mapFiles.attachments).map(([name, content]) => fs_extra_1.default.writeFile(`${(0, exports.outputPath)(handoff)}/${name}.json`, content)))),
+            .ensureDir(handoff.getVariablesFilePath())
+            .then(() => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/types`))
+            .then(() => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/css`))
+            .then(() => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/sass`))
+            .then(() => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens`))
+            .then(() => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/maps`))
+            .then(() => Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs_extra_1.default.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens/${name}`))))
+            .then(() => Promise.all(Object.entries(typeFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content))))
+            .then(() => Promise.all(Object.entries(typeFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content))))
+            .then(() => Promise.all(Object.entries(cssFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content))))
+            .then(() => Promise.all(Object.entries(cssFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content))))
+            .then(() => Promise.all(Object.entries(scssFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content))))
+            .then(() => Promise.all(Object.entries(scssFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content))))
+            .then(() => Promise.all(Object.entries(sdFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}/${name}.tokens.json`, content))))
+            .then(() => Promise.all(Object.entries(sdFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}.tokens.json`, content))))
+            .then(() => Promise.all(Object.entries(mapFiles.components).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content))))
+            .then(() => Promise.all(Object.entries(mapFiles.design).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content))))
+            .then(() => Promise.all(Object.entries(mapFiles.attachments).map(([name, content]) => fs_extra_1.default.writeFile(`${handoff.getOutputPath()}/${name}.json`, content)))),
     ]);
 });
 const validateHandoffRequirements = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
@@ -233,9 +217,9 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 });
 const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(chalk_1.default.green(`Starting Figma data extraction.`));
-    let prevDocumentationObject = yield (0, exports.readPrevJSONFile)((0, exports.tokensFilePath)(handoff));
-    let changelog = (yield (0, exports.readPrevJSONFile)((0, exports.changelogFilePath)(handoff))) || [];
-    yield fs_extra_1.default.emptyDir((0, exports.outputPath)(handoff));
+    let prevDocumentationObject = yield handoff.getDocumentationObject();
+    let changelog = (yield (0, exports.readPrevJSONFile)(handoff.getChangelogFilePath())) || [];
+    yield fs_extra_1.default.emptyDir(handoff.getOutputPath());
     const legacyDefinitions = yield getLegacyDefinitions(handoff);
     const documentationObject = yield (0, documentation_object_1.createDocumentationObject)(handoff, legacyDefinitions);
     const changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
@@ -243,12 +227,12 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         changelog = [changelogRecord, ...changelog];
     }
     yield Promise.all([
-        fs_extra_1.default.writeJSON((0, exports.tokensFilePath)(handoff), documentationObject, { spaces: 2 }),
-        fs_extra_1.default.writeJSON((0, exports.changelogFilePath)(handoff), changelog, { spaces: 2 }),
+        fs_extra_1.default.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
+        fs_extra_1.default.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
         ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
             ? [
-                (0, api_1.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream((0, exports.iconsZipFilePath)(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
-                (0, api_1.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream((0, exports.logosZipFilePath)(handoff))).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, api_1.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, api_1.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
             ]
             : []),
     ]);
@@ -259,8 +243,8 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         yield fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true });
     }
     // copy assets to output folder
-    fs_extra_1.default.copyFileSync((0, exports.iconsZipFilePath)(handoff), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip'));
-    fs_extra_1.default.copyFileSync((0, exports.logosZipFilePath)(handoff), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip'));
+    fs_extra_1.default.copyFileSync(handoff.getIconsZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip'));
+    fs_extra_1.default.copyFileSync(handoff.getLogosZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip'));
     return documentationObject;
 });
 const buildRecipe = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
@@ -356,7 +340,7 @@ exports.buildRecipe = buildRecipe;
  * @param handoff
  */
 const buildIntegrationOnly = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const documentationObject = yield (0, exports.readPrevJSONFile)((0, exports.tokensFilePath)(handoff));
+    const documentationObject = yield handoff.getDocumentationObject();
     if (documentationObject) {
         // Ensure that the integration object is set if possible
         // handoff.integrationObject = initIntegrationObject(handoff);

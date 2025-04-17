@@ -147,7 +147,8 @@ const loadTemplateContent = (path) => __awaiter(void 0, void 0, void 0, function
 });
 /**
  * Find the integration to sync and sync the sass files and template files.
- * @param documentationObject
+ * @param {Handoff} handoff - The Handoff instance containing configuration and integration data
+ * @param {DocumentationObject} documentationObject - The documentation object containing component definitions
  */
 function integrationTransformer(handoff, documentationObject) {
     var _a, _b;

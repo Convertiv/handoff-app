@@ -1,7 +1,5 @@
 import chalk from 'chalk';
-import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
-import { processSharedStyles } from '../component';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
@@ -38,21 +36,21 @@ const defaultComponent: TransformComponentTokensResult = {
 };
 
 /**
- * Process process a specific component
- * @param handoff
- * @param file
- * @param sharedStyles
+ * Process components and generate their code, styles, and previews
+ * @param handoff - The Handoff instance containing configuration and state
+ * @param id - Optional component ID to process a specific component
+ * @param segmentToUpdate - Optional segment to update ('js', 'css', 'previews', or 'validation')
+ * @returns Promise resolving to an array of processed components
  */
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  sharedStyles?: string,
-  components?: FileComponentsObject,
   segmentToUpdate?: 'js' | 'css' | 'previews' | 'validation'
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
-  if (!sharedStyles) sharedStyles = await processSharedStyles(handoff);
+  const components = (await handoff.getDocumentationObject()).components;
+  const sharedStyles = await handoff.getSharedStyles();
 
   const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
 

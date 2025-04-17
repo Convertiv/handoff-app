@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
 import WebSocket from 'ws';
-import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponents from './component/builder';
@@ -140,13 +139,11 @@ export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIP
  * @param documentationObject
  * @returns
  */
-export async function componentTransformer(handoff: Handoff, components?: FileComponentsObject) {
-  const sharedStyles = await processSharedStyles(handoff);
-  const componentData = await processComponents(handoff, undefined, sharedStyles, components);
+export async function componentTransformer(handoff: Handoff) {
+  const componentData = await processComponents(handoff);
   await writeComponentSummaryAPI(handoff, componentData);
   await buildMainJS(handoff);
   await buildMainCss(handoff);
-  return;
 }
 
 /**

@@ -22,7 +22,6 @@ const prompt_1 = require("../utils/prompt");
  * @param handoff
  */
 const makeExportable = (handoff, type, name) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     if (type !== 'component' && type !== 'foundation') {
         console.log(chalk_1.default.red(`Exportable type must be either 'component' or 'foundation'`));
         return;
@@ -105,7 +104,6 @@ exports.makeTemplate = makeTemplate;
  * @param handoff
  */
 const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     let type = 'mdx';
     if (!name) {
         console.log(chalk_1.default.red(`Page name must be set`));
@@ -157,7 +155,6 @@ exports.makePage = makePage;
  * @param handoff
  */
 const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     if (!name) {
         console.log(chalk_1.default.red(`Component name must be set`));
         return;

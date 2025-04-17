@@ -9,10 +9,9 @@ import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
-import { buildComponents, buildIntegrationOnly, readPrevJSONFile, tokensFilePath } from './pipeline';
-import { createWebSocketServer, processSharedStyles } from './transformers/preview/component';
+import { buildComponents, buildIntegrationOnly } from './pipeline';
+import { createWebSocketServer } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
-import { DocumentationObject } from './types';
 import { buildClientFiles } from './utils/preview';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
@@ -238,6 +237,13 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
 
+  const persistRuntimeCache = () => {
+    const destination = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+    fs.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
+  };
+
+  persistRuntimeCache();
+
   // Build app
   await nextBuild(
     {
@@ -272,14 +278,11 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  const tokensJsonFilePath = tokensFilePath(handoff);
+  const tokensJsonFilePath = handoff.getTokensFilePath();
 
   if (!fs.existsSync(tokensJsonFilePath)) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
-
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensJsonFilePath);
-  const sharedStyles = await processSharedStyles(handoff);
 
   // Build client preview styles
   await buildClientFiles(handoff)
@@ -289,7 +292,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     });
 
   // Initial processing of the components
-  await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
+  await processComponents(handoff);
 
   const appPath = await prepareProjectApp(handoff);
   // Include any changes made within the app source during watch
@@ -420,7 +423,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     if (runtimeComponentPathsToWatch.size > 0) {
       runtimeComponentsWatcher = chokidar.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true });
       runtimeComponentsWatcher.on('all', async (event, file) => {
-        if (handoff._configs.includes(file)) {
+        if (handoff.getConfigFilePaths().includes(file)) {
           return;
         }
 
@@ -434,7 +437,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               const extension = path.extname(file);
               const segmentToUpdate =
                 extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
-              await processComponents(handoff, path.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
+              await processComponents(handoff, path.basename(file), segmentToUpdate);
               debounce = false;
             }
             break;
@@ -448,8 +451,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       runtimeConfigurationWatcher.close();
     }
 
-    if (handoff._configs.length > 0) {
-      runtimeConfigurationWatcher = chokidar.watch(handoff._configs, { ignoreInitial: true });
+    if (handoff.getConfigFilePaths().length > 0) {
+      runtimeConfigurationWatcher = chokidar.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
       runtimeConfigurationWatcher.on('all', async (event, file) => {
         switch (event) {
           case 'add':
@@ -460,7 +463,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
               file = path.dirname(path.dirname(file));
               handoff.reload();
               watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-              await processComponents(handoff, path.basename(file), sharedStyles, documentationObject.components);
+              await processComponents(handoff, path.basename(file));
               debounce = false;
             }
             break;
@@ -525,7 +528,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
             if (!debounce) {
               debounce = true;
               await buildIntegrationOnly(handoff);
-              await processSharedStyles(handoff);
+              await handoff.getSharedStyles();
               debounce = false;
             }
         }
