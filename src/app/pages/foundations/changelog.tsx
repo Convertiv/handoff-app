@@ -1,11 +1,10 @@
-import { getClientConfig } from '@handoff/config';
 import { format } from 'date-fns';
 import { Activity, Paintbrush, Sun, Zap } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import * as React from 'react';
 import Layout from '../../components/Layout/Main';
 import HeadersType from '../../components/Typography/Headers';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../../components/util';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog, getClientRuntimeConfig } from '../../components/util';
 
 const getCountLabel = (count: number, singular: string, plural: string) => {
   if (count === 1) {
@@ -27,7 +26,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'changelog', `/changelog`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       changelog: getChangelog(),
     },
   };

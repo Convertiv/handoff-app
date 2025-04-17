@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { ArrowRight, Component, Hexagon, Layers, Shapes } from 'lucide-react';
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
@@ -10,7 +9,7 @@ import Layout from '../components/Layout/Main';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog } from '../components/util';
+import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog, getClientRuntimeConfig } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -24,7 +23,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       changelog: getChangelog(),
     },
   };

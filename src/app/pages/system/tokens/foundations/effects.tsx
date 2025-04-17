@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { EffectObject } from '@handoff/types';
 import { groupBy, upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
@@ -9,7 +8,13 @@ import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComp
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
-import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../../../components/util';
+import {
+  fetchComponents,
+  fetchDocPageMarkdown,
+  FoundationDocumentationProps,
+  getClientRuntimeConfig,
+  getTokens,
+} from '../../../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -22,7 +27,7 @@ import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, ge
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
   const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {

@@ -1,5 +1,4 @@
 import { ChangelogRecord } from '@handoff/changelog';
-import { getClientConfig } from '@handoff/config';
 import { ComponentType, FileComponentObject } from '@handoff/exporters/components/types';
 import { ComponentListObject } from '@handoff/transformers/preview/types';
 import {
@@ -7,7 +6,7 @@ import {
   LegacyComponentDefinition,
   LegacyComponentDefinitionOptions,
   PreviewJson,
-  PreviewObject
+  PreviewObject,
 } from '@handoff/types';
 import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
@@ -479,7 +478,7 @@ export const fetchComponents = (fetchAll: boolean = true) => {
           type: metadata.type as ComponentType,
           group: metadata.group || '',
           description: metadata.description || '',
-          name: metadata.title || ''
+          name: metadata.title || '',
         };
       }
     }
@@ -501,9 +500,11 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   }
 };
 
-let cachedRuntimeCache: IntegrationObject | null = null;
+type RuntimeCache = IntegrationObject & { config: ClientConfig };
 
-const loadRuntimeCache = (): IntegrationObject => {
+let cachedRuntimeCache: RuntimeCache | null = null;
+
+const loadRuntimeCache = (): RuntimeCache => {
   if (cachedRuntimeCache) {
     return cachedRuntimeCache;
   }
@@ -519,7 +520,7 @@ const loadRuntimeCache = (): IntegrationObject => {
 
   try {
     const cacheContent = fs.readFileSync(runtimeCachePath, 'utf-8');
-    cachedRuntimeCache = JSON.parse(cacheContent) as IntegrationObject;
+    cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
     return cachedRuntimeCache;
   } catch (e) {
     console.error(`Error reading runtime cache: ${runtimeCachePath}`, e);
@@ -559,7 +560,7 @@ export const getLatestComponentMetadata = (id: string) => {
  * @deprecated Will be removed before 1.0.0 release.
  */
 export const getLegacyDefinition = (name: string) => {
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
 
   const sourcePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'exportables');
 
@@ -601,30 +602,10 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-// export const getIntegrationObject = (): IntegrationObject => {
-//   const defaultObject = null as IntegrationObject;
-
-//   if (!process.env.HANDOFF_WORKING_PATH) {
-//     return defaultObject;
-//   }
-
-//   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-
-//   if (!fs.existsSync(integrationPath)) {
-//     return defaultObject;
-//   }
-
-//   const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
-
-//   if (!fs.existsSync(integrationFilePath)) {
-//     return defaultObject;
-//   }
-
-//   const buffer = fs.readFileSync(integrationFilePath);
-//   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
-
-//   return prepareIntegrationObject(integration, integrationPath);
-// };
+export const getClientRuntimeConfig = (): ClientConfig => {
+  const runtimeCache = loadRuntimeCache();
+  return runtimeCache.config;
+};
 
 export const getTokens = (): ExportResult => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
@@ -725,7 +706,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
  * @returns
  */
 export const titleString = (prefix: string | null): string => {
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config?.app?.client} Design System`;
 };

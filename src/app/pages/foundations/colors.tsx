@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import type { GetStaticProps } from 'next';
@@ -25,7 +24,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
-      config: getClientConfig(),
+      config: util.getClientRuntimeConfig(),
       design: getTokens().design,
     },
   };

@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
 import { tokenReferenceFormat } from '@handoff/transformers/css/component';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
@@ -16,6 +15,7 @@ import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
   fetchComponents,
+  getClientRuntimeConfig,
   getLegacyDefinition,
   getPreview,
   getTokens,
@@ -40,7 +40,7 @@ export const getStaticProps = async (context) => {
   // get previews for components on this page
   const previews = getPreview();
   const menu = staticBuildMenu();
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
 
   const componentSlug = reduceSlugToString(component);

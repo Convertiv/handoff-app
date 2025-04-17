@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import * as fs from 'fs-extra';
 import uniq from 'lodash/uniq';
 import { FileArchive } from 'lucide-react';
@@ -11,7 +10,7 @@ import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
-import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
+import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -39,7 +38,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
       design: getTokens().design,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       customFonts,
     },
   };

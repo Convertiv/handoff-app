@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
@@ -7,7 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
-import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -21,7 +20,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'logos', `/assets`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
     },
   };
 };

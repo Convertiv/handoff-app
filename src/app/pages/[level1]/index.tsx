@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
@@ -7,7 +6,14 @@ import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
 import CustomNav from '../../components/SideNav/Custom';
-import { buildL1StaticPaths, DocumentationProps, fetchDocPageMarkdown, IParams, reduceSlugToString } from '../../components/util';
+import {
+  buildL1StaticPaths,
+  DocumentationProps,
+  fetchDocPageMarkdown,
+  getClientRuntimeConfig,
+  IParams,
+  reduceSlugToString,
+} from '../../components/util';
 
 /**
  * Render all index pages
@@ -34,7 +40,7 @@ export const getStaticProps: GetStaticProps = (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', reduceSlugToString(level1), `/${level1}`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
     },
   };
 };
