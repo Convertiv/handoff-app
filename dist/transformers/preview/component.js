@@ -114,14 +114,12 @@ exports.getComponentOutputPath = getComponentOutputPath;
  * @param documentationObject
  * @returns
  */
-function componentTransformer(handoff, components) {
+function componentTransformer(handoff) {
     return __awaiter(this, void 0, void 0, function* () {
-        const sharedStyles = yield processSharedStyles(handoff);
-        const componentData = yield (0, builder_1.default)(handoff, undefined, sharedStyles, components);
+        const componentData = yield (0, builder_1.default)(handoff);
         yield (0, api_1.default)(handoff, componentData);
         yield (0, javascript_1.buildMainJS)(handoff);
         yield (0, css_1.buildMainCss)(handoff);
-        return;
     });
 }
 exports.componentTransformer = componentTransformer;

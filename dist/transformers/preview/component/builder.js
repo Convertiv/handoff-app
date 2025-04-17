@@ -25,7 +25,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processComponents = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const component_1 = require("../component");
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
@@ -60,17 +59,18 @@ const defaultComponent = {
     sass: null,
 };
 /**
- * Process process a specific component
- * @param handoff
- * @param file
- * @param sharedStyles
+ * Process components and generate their code, styles, and previews
+ * @param handoff - The Handoff instance containing configuration and state
+ * @param id - Optional component ID to process a specific component
+ * @param segmentToUpdate - Optional segment to update ('js', 'css', 'previews', or 'validation')
+ * @returns Promise resolving to an array of processed components
  */
-function processComponents(handoff, id, sharedStyles, components, segmentToUpdate) {
+function processComponents(handoff, id, segmentToUpdate) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const result = [];
-        if (!sharedStyles)
-            sharedStyles = yield (0, component_1.processSharedStyles)(handoff);
+        const components = (yield handoff.getDocumentationObject()).components;
+        const sharedStyles = yield handoff.getSharedStyles();
         const runtimeComponents = (_c = (_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.components) !== null && _c !== void 0 ? _c : {};
         for (const runtimeComponentId of Object.keys(runtimeComponents)) {
             if (!!id && runtimeComponentId !== id) {

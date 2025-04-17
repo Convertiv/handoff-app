@@ -156,7 +156,8 @@ const loadTemplateContent = async (path: string): Promise<string> => {
 
 /**
  * Find the integration to sync and sync the sass files and template files.
- * @param documentationObject
+ * @param {Handoff} handoff - The Handoff instance containing configuration and integration data
+ * @param {DocumentationObject} documentationObject - The documentation object containing component definitions
  */
 export default async function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject) {
   if (!handoff?.integrationObject) {

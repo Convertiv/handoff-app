@@ -60,7 +60,7 @@ class Handoff {
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
         this._initialArgs = {};
-        this._configs = [];
+        this._configFilePaths = [];
         this._initialArgs = { debug, force, config };
         this.construct(debug, force, config);
     }
@@ -77,7 +77,7 @@ class Handoff {
         this.config = config;
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        [this.integrationObject, this._configs] = (0, exports.initIntegrationObject)(this);
+        [this.integrationObject, this._configFilePaths] = (0, exports.initIntegrationObject)(this);
         return this;
     }
     reload() {
@@ -95,33 +95,27 @@ class Handoff {
     }
     fetch() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, pipeline_1.default)(this);
-            }
+            this.preRunner();
+            yield (0, pipeline_1.default)(this);
             return this;
         });
     }
     recipe() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, pipeline_1.buildRecipe)(this);
-            }
+            yield (0, pipeline_1.buildRecipe)(this);
             return this;
         });
     }
     component(name) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                if (name) {
-                    name = name.replace('.hbs', '');
-                    yield (0, builder_1.default)(this, name);
-                }
-                else {
-                    yield (0, pipeline_1.buildComponents)(this);
-                }
+            if (name) {
+                name = name.replace('.hbs', '');
+                yield (0, builder_1.default)(this, name);
+            }
+            else {
+                yield (0, pipeline_1.buildComponents)(this);
             }
             return this;
         });
@@ -129,148 +123,229 @@ class Handoff {
     renameComponent(oldName, target) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                (0, rename_1.renameComponent)(this, oldName, target);
-            }
+            yield (0, rename_1.renameComponent)(this, oldName, target);
             return this;
         });
     }
     integration() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, pipeline_1.buildIntegrationOnly)(this);
-                yield (0, pipeline_1.buildComponents)(this);
-            }
+            yield (0, pipeline_1.buildIntegrationOnly)(this);
+            yield (0, pipeline_1.buildComponents)(this);
             return this;
         });
     }
     build() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, app_1.default)(this);
-            }
+            yield (0, app_1.default)(this);
             return this;
         });
     }
     ejectConfig() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, eject_1.ejectConfig)(this);
-            }
+            yield (0, eject_1.ejectConfig)(this);
             return this;
         });
     }
     ejectIntegration() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.makeIntegration)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.makeIntegration)(this);
             return this;
         });
     }
     ejectExportables() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectExportables)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectExportables)(this);
             return this;
         });
     }
     ejectPages() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectPages)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectPages)(this);
             return this;
         });
     }
     ejectTheme() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectTheme)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectTheme)(this);
             return this;
         });
     }
     makeExportable(type, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeExportable)(this, type, name);
-            }
+            this.preRunner();
+            yield (0, make_1.makeExportable)(this, type, name);
             return this;
         });
     }
     makeTemplate(component, state) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeTemplate)(this, component, state);
-            }
+            this.preRunner();
+            yield (0, make_1.makeTemplate)(this, component, state);
             return this;
         });
     }
     makePage(name, parent) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makePage)(this, name, parent);
-            }
+            this.preRunner();
+            yield (0, make_1.makePage)(this, name, parent);
             return this;
         });
     }
     makeComponent(name) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeComponent)(this, name);
-            }
+            this.preRunner();
+            yield (0, make_1.makeComponent)(this, name);
             return this;
         });
     }
     makeIntegration() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.makeIntegration)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.makeIntegration)(this);
             return this;
         });
     }
     makeIntegrationStyles() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, javascript_1.buildMainJS)(this);
-                yield (0, css_1.buildMainCss)(this);
-            }
+            this.preRunner();
+            yield (0, javascript_1.buildMainJS)(this);
+            yield (0, css_1.buildMainCss)(this);
             return this;
         });
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, app_1.watchApp)(this);
-            }
+            this.preRunner();
+            yield (0, app_1.watchApp)(this);
             return this;
         });
     }
     dev() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, app_1.devApp)(this);
-            }
+            this.preRunner();
+            yield (0, app_1.devApp)(this);
             return this;
         });
     }
     validateComponents() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                const documentationObject = yield (0, pipeline_1.readPrevJSONFile)((0, pipeline_1.tokensFilePath)(this));
-                const sharedStyles = yield (0, component_1.processSharedStyles)(this);
-                yield (0, builder_1.default)(this, undefined, sharedStyles, documentationObject.components, 'validation');
-            }
+            yield (0, builder_1.default)(this, undefined, 'validation');
             return this;
+        });
+    }
+    /**
+     * Retrieves the documentation object, using cached version if available
+     * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+     */
+    getDocumentationObject() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._documentationObjectCache) {
+                return this._documentationObjectCache;
+            }
+            const documentationObject = yield this.readJsonFile(this.getTokensFilePath());
+            this._documentationObjectCache = documentationObject;
+            return documentationObject;
+        });
+    }
+    /**
+     * Retrieves shared styles, using cached version if available
+     * @returns {Promise<string | null>} The shared styles string or null if not found
+     */
+    getSharedStyles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._sharedStylesCache !== undefined) {
+                return this._sharedStylesCache;
+            }
+            const sharedStyles = yield (0, component_1.processSharedStyles)(this);
+            this._sharedStylesCache = sharedStyles;
+            return sharedStyles;
+        });
+    }
+    /**
+     * Gets the output path for the current project
+     * @returns {string} The absolute path to the output directory
+     */
+    getOutputPath() {
+        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+    }
+    /**
+     * Gets the path to the tokens.json file
+     * @returns {string} The absolute path to the tokens.json file
+     */
+    getTokensFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'tokens.json');
+    }
+    /**
+     * Gets the path to the preview.json file
+     * @returns {string} The absolute path to the preview.json file
+     */
+    getPreviewFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'preview.json');
+    }
+    /**
+     * Gets the path to the changelog.json file
+     * @returns {string} The absolute path to the changelog.json file
+     */
+    getChangelogFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'changelog.json');
+    }
+    /**
+     * Gets the path to the tokens directory
+     * @returns {string} The absolute path to the tokens directory
+     */
+    getVariablesFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'tokens');
+    }
+    /**
+     * Gets the path to the icons.zip file
+     * @returns {string} The absolute path to the icons.zip file
+     */
+    getIconsZipFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'icons.zip');
+    }
+    /**
+     * Gets the path to the logos.zip file
+     * @returns {string} The absolute path to the logos.zip file
+     */
+    getLogosZipFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'logos.zip');
+    }
+    /**
+     * Gets the list of config file paths
+     * @returns {string[]} Array of absolute paths to config files
+     */
+    getConfigFilePaths() {
+        return this._configFilePaths;
+    }
+    /**
+     * Clears all cached data
+     * @returns {void}
+     */
+    clearCaches() {
+        this._documentationObjectCache = undefined;
+        this._sharedStylesCache = undefined;
+    }
+    /**
+     * Reads and parses a JSON file
+     * @param {string} path - Path to the JSON file
+     * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+     */
+    readJsonFile(path) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                return yield fs_extra_1.default.readJSON(path);
+            }
+            catch (e) {
+                return undefined;
+            }
         });
     }
 }

@@ -7,7 +7,7 @@ import buildApp, { devApp, watchApp } from './app';
 import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
 import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
-import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe, readPrevJSONFile, tokensFilePath } from './pipeline';
+import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
@@ -31,8 +31,11 @@ class Handoff {
     effects: {};
     typography: {};
   };
-  _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
-  _configs: string[] = [];
+
+  private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  private _configFilePaths: string[] = [];
+  private _documentationObjectCache?: DocumentationObject;
+  private _sharedStylesCache?: string | null;
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this._initialArgs = { debug, force, config };
@@ -46,18 +49,21 @@ class Handoff {
     this.init(config);
     global.handoff = this;
   }
+
   init(configOverride?: Partial<Config>): Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    [this.integrationObject, this._configs] = initIntegrationObject(this);
+    [this.integrationObject, this._configFilePaths] = initIntegrationObject(this);
     return this;
   }
+
   reload(): Handoff {
     this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
     return this;
   }
+
   preRunner(validate?: boolean): Handoff {
     if (!this.config) {
       throw Error('Handoff not initialized');
@@ -67,144 +73,246 @@ class Handoff {
     }
     return this;
   }
+
   async fetch(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await pipeline(this);
-    }
+    this.preRunner();
+    await pipeline(this);
     return this;
   }
+
   async recipe(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await buildRecipe(this);
-    }
+    await buildRecipe(this);
     return this;
   }
+
   async component(name: string | null): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      if (name) {
-        name = name.replace('.hbs', '');
-        await processComponents(this, name);
-      } else {
-        await buildComponents(this);
-      }
-    }
-    return this;
-  }
-  async renameComponent(oldName: string, target: string): Promise<Handoff> {
-    this.preRunner();
-    if (this.config) {
-      renameComponent(this, oldName, target);
-    }
-    return this;
-  }
-  async integration(): Promise<Handoff> {
-    this.preRunner();
-    if (this.config) {
-      await buildIntegrationOnly(this);
+
+    if (name) {
+      name = name.replace('.hbs', '');
+      await processComponents(this, name);
+    } else {
       await buildComponents(this);
     }
+
     return this;
   }
+
+  async renameComponent(oldName: string, target: string): Promise<Handoff> {
+    this.preRunner();
+    await renameComponent(this, oldName, target);
+    return this;
+  }
+
+  async integration(): Promise<Handoff> {
+    this.preRunner();
+    await buildIntegrationOnly(this);
+    await buildComponents(this);
+    return this;
+  }
+
   async build(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await buildApp(this);
-    }
+    await buildApp(this);
     return this;
   }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await ejectConfig(this);
-    }
+    await ejectConfig(this);
     return this;
   }
+
   async ejectIntegration(): Promise<Handoff> {
-    if (this.config) {
-      await makeIntegration(this);
-    }
+    this.preRunner();
+    await makeIntegration(this);
     return this;
   }
+
   async ejectExportables(): Promise<Handoff> {
-    if (this.config) {
-      await ejectExportables(this);
-    }
+    this.preRunner();
+    await ejectExportables(this);
     return this;
   }
+
   async ejectPages(): Promise<Handoff> {
-    if (this.config) {
-      await ejectPages(this);
-    }
+    this.preRunner();
+    await ejectPages(this);
     return this;
   }
+
   async ejectTheme(): Promise<Handoff> {
-    if (this.config) {
-      await ejectTheme(this);
-    }
+    this.preRunner();
+    await ejectTheme(this);
     return this;
   }
+
   async makeExportable(type: string, name: string): Promise<Handoff> {
-    if (this.config) {
-      await makeExportable(this, type, name);
-    }
+    this.preRunner();
+    await makeExportable(this, type, name);
     return this;
   }
+
   async makeTemplate(component: string, state: string): Promise<Handoff> {
-    if (this.config) {
-      await makeTemplate(this, component, state);
-    }
+    this.preRunner();
+    await makeTemplate(this, component, state);
     return this;
   }
+
   async makePage(name: string, parent: string): Promise<Handoff> {
-    if (this.config) {
-      await makePage(this, name, parent);
-    }
+    this.preRunner();
+    await makePage(this, name, parent);
     return this;
   }
+
   async makeComponent(name: string): Promise<Handoff> {
-    if (this.config) {
-      await makeComponent(this, name);
-    }
+    this.preRunner();
+    await makeComponent(this, name);
     return this;
   }
+
   async makeIntegration(): Promise<Handoff> {
-    if (this.config) {
-      await makeIntegration(this);
-    }
+    this.preRunner();
+    await makeIntegration(this);
     return this;
   }
+
   async makeIntegrationStyles(): Promise<Handoff> {
-    if (this.config) {
-      await buildMainJS(this);
-      await buildMainCss(this);
-    }
+    this.preRunner();
+    await buildMainJS(this);
+    await buildMainCss(this);
     return this;
   }
+
   async start(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await watchApp(this);
-    }
+    this.preRunner();
+    await watchApp(this);
     return this;
   }
+
   async dev(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await devApp(this);
-    }
+    this.preRunner();
+    await devApp(this);
     return this;
   }
+
   async validateComponents(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(this));
-      const sharedStyles = await processSharedStyles(this);
-      await processComponents(this, undefined, sharedStyles, documentationObject.components, 'validation');
-    }
+    await processComponents(this, undefined, 'validation');
     return this;
+  }
+
+  /**
+   * Retrieves the documentation object, using cached version if available
+   * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+   */
+  async getDocumentationObject(): Promise<DocumentationObject | undefined> {
+    if (this._documentationObjectCache) {
+      return this._documentationObjectCache;
+    }
+    const documentationObject = await this.readJsonFile(this.getTokensFilePath());
+    this._documentationObjectCache = documentationObject;
+    return documentationObject;
+  }
+
+  /**
+   * Retrieves shared styles, using cached version if available
+   * @returns {Promise<string | null>} The shared styles string or null if not found
+   */
+  async getSharedStyles(): Promise<string | null> {
+    if (this._sharedStylesCache !== undefined) {
+      return this._sharedStylesCache;
+    }
+    const sharedStyles = await processSharedStyles(this);
+    this._sharedStylesCache = sharedStyles;
+    return sharedStyles;
+  }
+
+  /**
+   * Gets the output path for the current project
+   * @returns {string} The absolute path to the output directory
+   */
+  getOutputPath(): string {
+    return path.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+  }
+
+  /**
+   * Gets the path to the tokens.json file
+   * @returns {string} The absolute path to the tokens.json file
+   */
+  getTokensFilePath(): string {
+    return path.join(this.getOutputPath(), 'tokens.json');
+  }
+
+  /**
+   * Gets the path to the preview.json file
+   * @returns {string} The absolute path to the preview.json file
+   */
+  getPreviewFilePath(): string {
+    return path.join(this.getOutputPath(), 'preview.json');
+  }
+
+  /**
+   * Gets the path to the changelog.json file
+   * @returns {string} The absolute path to the changelog.json file
+   */
+  getChangelogFilePath(): string {
+    return path.join(this.getOutputPath(), 'changelog.json');
+  }
+
+  /**
+   * Gets the path to the tokens directory
+   * @returns {string} The absolute path to the tokens directory
+   */
+  getVariablesFilePath(): string {
+    return path.join(this.getOutputPath(), 'tokens');
+  }
+
+  /**
+   * Gets the path to the icons.zip file
+   * @returns {string} The absolute path to the icons.zip file
+   */
+  getIconsZipFilePath(): string {
+    return path.join(this.getOutputPath(), 'icons.zip');
+  }
+
+  /**
+   * Gets the path to the logos.zip file
+   * @returns {string} The absolute path to the logos.zip file
+   */
+  getLogosZipFilePath(): string {
+    return path.join(this.getOutputPath(), 'logos.zip');
+  }
+
+  /**
+   * Gets the list of config file paths
+   * @returns {string[]} Array of absolute paths to config files
+   */
+  getConfigFilePaths(): string[] {
+    return this._configFilePaths;
+  }
+
+  /**
+   * Clears all cached data
+   * @returns {void}
+   */
+  clearCaches(): void {
+    this._documentationObjectCache = undefined;
+    this._sharedStylesCache = undefined;
+  }
+
+  /**
+   * Reads and parses a JSON file
+   * @param {string} path - Path to the JSON file
+   * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+   */
+  private async readJsonFile(path: string) {
+    try {
+      return await fs.readJSON(path);
+    } catch (e) {
+      return undefined;
+    }
   }
 }
 

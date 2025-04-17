@@ -1,11 +1,11 @@
-import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
 import { ComponentListObject } from '../types';
 /**
- * Process process a specific component
- * @param handoff
- * @param file
- * @param sharedStyles
+ * Process components and generate their code, styles, and previews
+ * @param handoff - The Handoff instance containing configuration and state
+ * @param id - Optional component ID to process a specific component
+ * @param segmentToUpdate - Optional segment to update ('js', 'css', 'previews', or 'validation')
+ * @returns Promise resolving to an array of processed components
  */
-export declare function processComponents(handoff: Handoff, id?: string, sharedStyles?: string, components?: FileComponentsObject, segmentToUpdate?: 'js' | 'css' | 'previews' | 'validation'): Promise<ComponentListObject[]>;
+export declare function processComponents(handoff: Handoff, id?: string, segmentToUpdate?: 'js' | 'css' | 'previews' | 'validation'): Promise<ComponentListObject[]>;
 export default processComponents;

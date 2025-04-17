@@ -28,6 +28,7 @@ export declare const addFileToZip: (directory: string[], dirPath: string, archiv
 export declare const zipTokens: (dirPath: string, destination: stream.Writable) => Promise<stream.Writable>;
 /**
  * Find the integration to sync and sync the sass files and template files.
- * @param documentationObject
+ * @param {Handoff} handoff - The Handoff instance containing configuration and integration data
+ * @param {DocumentationObject} documentationObject - The documentation object containing component definitions
  */
 export default function integrationTransformer(handoff: Handoff, documentationObject: DocumentationObject): Promise<void>;

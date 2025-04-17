@@ -236,6 +236,11 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     });
     // Prepare app
     const appPath = yield prepareProjectApp(handoff);
+    const persistRuntimeCache = () => {
+        const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+        fs_extra_1.default.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
+    };
+    persistRuntimeCache();
     // Build app
     yield (0, next_build_1.nextBuild)({
         lint: true,
@@ -264,12 +269,10 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _e, _f, _g, _h;
-    const tokensJsonFilePath = (0, pipeline_1.tokensFilePath)(handoff);
+    const tokensJsonFilePath = handoff.getTokensFilePath();
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
-    const documentationObject = yield (0, pipeline_1.readPrevJSONFile)(tokensJsonFilePath);
-    const sharedStyles = yield (0, component_1.processSharedStyles)(handoff);
     // Build client preview styles
     yield (0, preview_1.buildClientFiles)(handoff)
         .then((value) => !!value && console.log(chalk_1.default.green(value)))
@@ -277,7 +280,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error(error);
     });
     // Initial processing of the components
-    yield (0, builder_1.default)(handoff, undefined, sharedStyles, documentationObject.components);
+    yield (0, builder_1.default)(handoff);
     const appPath = yield prepareProjectApp(handoff);
     // Include any changes made within the app source during watch
     chokidar_1.default
@@ -397,7 +400,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         if (runtimeComponentPathsToWatch.size > 0) {
             runtimeComponentsWatcher = chokidar_1.default.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true });
             runtimeComponentsWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-                if (handoff._configs.includes(file)) {
+                if (handoff.getConfigFilePaths().includes(file)) {
                     return;
                 }
                 switch (event) {
@@ -409,7 +412,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                             file = path_1.default.dirname(path_1.default.dirname(file));
                             const extension = path_1.default.extname(file);
                             const segmentToUpdate = extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
+                            yield (0, builder_1.default)(handoff, path_1.default.basename(file), segmentToUpdate);
                             debounce = false;
                         }
                         break;
@@ -421,8 +424,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         if (runtimeConfigurationWatcher) {
             runtimeConfigurationWatcher.close();
         }
-        if (handoff._configs.length > 0) {
-            runtimeConfigurationWatcher = chokidar_1.default.watch(handoff._configs, { ignoreInitial: true });
+        if (handoff.getConfigFilePaths().length > 0) {
+            runtimeConfigurationWatcher = chokidar_1.default.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
             runtimeConfigurationWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
                 switch (event) {
                     case 'add':
@@ -433,7 +436,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                             file = path_1.default.dirname(path_1.default.dirname(file));
                             handoff.reload();
                             watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components);
+                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
                             debounce = false;
                         }
                         break;
@@ -491,7 +494,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                     if (!debounce) {
                         debounce = true;
                         yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                        yield (0, component_1.processSharedStyles)(handoff);
+                        yield handoff.getSharedStyles();
                         debounce = false;
                     }
             }
