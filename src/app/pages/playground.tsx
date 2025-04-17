@@ -48,11 +48,10 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbS
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 
-import { getClientConfig } from '@handoff/config';
 import { GetStaticProps } from 'next';
 import { ConfigContextProvider } from '../components/context/ConfigContext';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { ChangelogDocumentationProps, getChangelog } from '../components/util';
+import { ChangelogDocumentationProps, getChangelog, getClientRuntimeConfig } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -67,7 +66,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       menu: [],
       current: [],
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       changelog: getChangelog(),
     },
   };

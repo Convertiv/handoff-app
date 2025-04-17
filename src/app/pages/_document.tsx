@@ -1,8 +1,8 @@
-import { getClientConfig } from '@handoff/config';
 import Document, { Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
+import { getClientRuntimeConfig } from '../components/util';
 
-const config = getClientConfig();
+const config = getClientRuntimeConfig();
 
 class MyDocument extends Document {
   render() {

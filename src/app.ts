@@ -9,6 +9,7 @@ import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
+import { getClientConfig } from './config';
 import { buildComponents, buildIntegrationOnly } from './pipeline';
 import { createWebSocketServer } from './transformers/preview/component';
 import processComponents from './transformers/preview/component/builder';
@@ -113,15 +114,14 @@ const transformMdx = (src: string, dest: string, id: string) => {
   //
   mdx = `
 \n\n${mdx}\n\n
-import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
-import { getClientConfig } from '@handoff/config';
+import { staticBuildMenu, getCurrentSection, getClientRuntimeConfig } from "handoff-app/src/app/components/util";
 import { getPreview } from "handoff-app/src/app/components/util";
 
 export const getStaticProps = async () => {
   // get previews for components on this page
   const previews = getPreview();
   const menu = staticBuildMenu();
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     props: {
       previews,
@@ -210,6 +210,11 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   return appPath;
 };
 
+const persistRuntimeCache = (handoff: Handoff) => {
+  const destination = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+  fs.writeFileSync(destination, JSON.stringify({ config: getClientConfig(handoff), ...handoff.integrationObject }, null, 2), 'utf-8');
+};
+
 /**
  * Build the next js application
  * @param handoff
@@ -237,12 +242,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
 
-  const persistRuntimeCache = () => {
-    const destination = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-    fs.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
-  };
-
-  persistRuntimeCache();
+  persistRuntimeCache(handoff);
 
   // Build app
   await nextBuild(
@@ -408,13 +408,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   let runtimeComponentsWatcher: chokidar.FSWatcher | null = null;
   let runtimeConfigurationWatcher: chokidar.FSWatcher | null = null;
 
-  const persistRuntimeCache = () => {
-    const destination = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-    fs.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
-  };
-
   const watchRuntimeComponents = (runtimeComponentPathsToWatch: Set<string>) => {
-    persistRuntimeCache();
+    persistRuntimeCache(handoff);
 
     if (runtimeComponentsWatcher) {
       runtimeComponentsWatcher.close();

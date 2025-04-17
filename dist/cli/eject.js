@@ -24,7 +24,7 @@ const integration_1 = require("../transformers/integration");
  * @param handoff
  */
 const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = (0, config_1.getClientConfig)(handoff.config);
+    const config = (0, config_1.getClientConfig)(handoff);
     const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
     if (fs_extra_1.default.existsSync(configPath)) {
         if (!handoff.force) {

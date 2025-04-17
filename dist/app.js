@@ -23,6 +23,7 @@ const next_build_1 = require("next/dist/cli/next-build");
 const next_dev_1 = require("next/dist/cli/next-dev");
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
+const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
 const component_1 = require("./transformers/preview/component");
 const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
@@ -123,15 +124,14 @@ const transformMdx = (src, dest, id) => {
     //
     mdx = `
 \n\n${mdx}\n\n
-import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
-import { getClientConfig } from '@handoff/config';
+import { staticBuildMenu, getCurrentSection, getClientRuntimeConfig } from "handoff-app/src/app/components/util";
 import { getPreview } from "handoff-app/src/app/components/util";
 
 export const getStaticProps = async () => {
   // get previews for components on this page
   const previews = getPreview();
   const menu = staticBuildMenu();
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     props: {
       previews,
@@ -214,6 +214,10 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     yield fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent);
     return appPath;
 });
+const persistRuntimeCache = (handoff) => {
+    const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+    fs_extra_1.default.writeFileSync(destination, JSON.stringify(Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.integrationObject), null, 2), 'utf-8');
+};
 /**
  * Build the next js application
  * @param handoff
@@ -236,11 +240,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     });
     // Prepare app
     const appPath = yield prepareProjectApp(handoff);
-    const persistRuntimeCache = () => {
-        const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-        fs_extra_1.default.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
-    };
-    persistRuntimeCache();
+    persistRuntimeCache(handoff);
     // Build app
     yield (0, next_build_1.nextBuild)({
         lint: true,
@@ -388,12 +388,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     }
     let runtimeComponentsWatcher = null;
     let runtimeConfigurationWatcher = null;
-    const persistRuntimeCache = () => {
-        const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-        fs_extra_1.default.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
-    };
     const watchRuntimeComponents = (runtimeComponentPathsToWatch) => {
-        persistRuntimeCache();
+        persistRuntimeCache(handoff);
         if (runtimeComponentsWatcher) {
             runtimeComponentsWatcher.close();
         }
