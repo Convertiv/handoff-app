@@ -1,10 +1,10 @@
-import path from 'path';
-import Handoff from '../index';
-import fs from 'fs-extra';
 import chalk from 'chalk';
-import { getPathToIntegration } from '../transformers/integration';
+import fs from 'fs-extra';
+import path from 'path';
 import { getClientConfig } from '../config';
-import { buildIntegrationOnly, buildComponents } from '../pipeline';
+import Handoff from '../index';
+import { buildComponents, buildIntegrationOnly } from '../pipeline';
+import { getPathToIntegration } from '../transformers/integration';
 
 /**
  * Eject the config to the working directory
@@ -28,8 +28,6 @@ export const ejectConfig = async (handoff: Handoff) => {
  * @param handoff
  */
 export const makeIntegration = async (handoff: Handoff) => {
-  const config = handoff.config;
-
   // does an local integration exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'integration'));
   if (fs.existsSync(workingPath)) {
@@ -54,7 +52,6 @@ export const makeIntegration = async (handoff: Handoff) => {
  * @param handoff
  */
 export const ejectExportables = async (handoff: Handoff) => {
-  const config = await handoff.config;
   // does an local integration exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'exportables'));
   if (fs.existsSync(workingPath)) {
@@ -77,7 +74,6 @@ export const ejectExportables = async (handoff: Handoff) => {
  * @param handoff
  */
 export const ejectPages = async (handoff: Handoff) => {
-  const config = await handoff.config;
   // does an local page exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'pages'));
   if (fs.existsSync(workingPath)) {

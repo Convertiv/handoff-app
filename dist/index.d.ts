@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { DocumentationObject } from './types';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -14,12 +15,10 @@ declare class Handoff {
         effects: {};
         typography: {};
     };
-    _initialArgs: {
-        debug?: boolean;
-        force?: boolean;
-        config?: Partial<Config>;
-    };
-    _configs: string[];
+    private _initialArgs;
+    private _configFilePaths;
+    private _documentationObjectCache?;
+    private _sharedStylesCache?;
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
     private construct;
     init(configOverride?: Partial<Config>): Handoff;
@@ -45,6 +44,67 @@ declare class Handoff {
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     validateComponents(): Promise<Handoff>;
+    /**
+     * Retrieves the documentation object, using cached version if available
+     * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+     */
+    getDocumentationObject(): Promise<DocumentationObject | undefined>;
+    /**
+     * Retrieves shared styles, using cached version if available
+     * @returns {Promise<string | null>} The shared styles string or null if not found
+     */
+    getSharedStyles(): Promise<string | null>;
+    /**
+     * Gets the output path for the current project
+     * @returns {string} The absolute path to the output directory
+     */
+    getOutputPath(): string;
+    /**
+     * Gets the path to the tokens.json file
+     * @returns {string} The absolute path to the tokens.json file
+     */
+    getTokensFilePath(): string;
+    /**
+     * Gets the path to the preview.json file
+     * @returns {string} The absolute path to the preview.json file
+     */
+    getPreviewFilePath(): string;
+    /**
+     * Gets the path to the changelog.json file
+     * @returns {string} The absolute path to the changelog.json file
+     */
+    getChangelogFilePath(): string;
+    /**
+     * Gets the path to the tokens directory
+     * @returns {string} The absolute path to the tokens directory
+     */
+    getVariablesFilePath(): string;
+    /**
+     * Gets the path to the icons.zip file
+     * @returns {string} The absolute path to the icons.zip file
+     */
+    getIconsZipFilePath(): string;
+    /**
+     * Gets the path to the logos.zip file
+     * @returns {string} The absolute path to the logos.zip file
+     */
+    getLogosZipFilePath(): string;
+    /**
+     * Gets the list of config file paths
+     * @returns {string[]} Array of absolute paths to config files
+     */
+    getConfigFilePaths(): string[];
+    /**
+     * Clears all cached data
+     * @returns {void}
+     */
+    clearCaches(): void;
+    /**
+     * Reads and parses a JSON file
+     * @param {string} path - Path to the JSON file
+     * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+     */
+    private readJsonFile;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
 export type { ComponentListObject as Component } from './transformers/preview/types';

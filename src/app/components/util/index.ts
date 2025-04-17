@@ -1,13 +1,13 @@
 import { ChangelogRecord } from '@handoff/changelog';
 import { getClientConfig } from '@handoff/config';
-import { FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentType, FileComponentObject } from '@handoff/exporters/components/types';
 import { ComponentListObject } from '@handoff/transformers/preview/types';
 import {
   ComponentDocumentationOptions,
   LegacyComponentDefinition,
   LegacyComponentDefinitionOptions,
   PreviewJson,
-  PreviewObject,
+  PreviewObject
 } from '@handoff/types';
 import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
@@ -449,7 +449,7 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * @returns {string[]}
  */
 export const fetchComponents = (fetchAll: boolean = true) => {
-  let components = getTokens().components;
+  let components: Record<string, Pick<FileComponentObject, 'type' | 'group' | 'description' | 'name'>> = getTokens().components;
 
   if (fetchAll) {
     const componentIds = Array.from(
@@ -475,8 +475,12 @@ export const fetchComponents = (fetchAll: boolean = true) => {
     for (const componentId of componentIds) {
       const metadata = getLatestComponentMetadata(componentId);
       if (metadata) {
-        components[componentId] = metadata;
-        components[componentId].name = metadata.title;
+        components[componentId] = {
+          type: metadata.type as ComponentType,
+          group: metadata.group || '',
+          description: metadata.description || '',
+          name: metadata.title || ''
+        };
       }
     }
   }

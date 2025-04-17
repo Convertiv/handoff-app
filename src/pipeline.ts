@@ -25,16 +25,6 @@ import { filterOutNull, filterOutUndefined } from './utils';
 import { findFilesByExtension } from './utils/fs';
 import { maskPrompt, prompt } from './utils/prompt';
 
-let config;
-export const outputPath = (handoff: Handoff) =>
-  path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-export const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
-export const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
-export const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
-export const variablesFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens');
-export const iconsZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'icons.zip');
-export const logosZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'logos.zip');
-
 /**
  * Read Previous Json File
  * @param path
@@ -73,7 +63,7 @@ const buildIntegration = async (handoff: Handoff, documentationObject: Documenta
  */
 const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   await Promise.all([
-    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
+    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(handoff.getPreviewFilePath(), out, { spaces: 2 })),
   ]);
 };
 
@@ -83,8 +73,7 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @returns
  */
 export const buildComponents = async (handoff: Handoff) => {
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
-  await Promise.all([componentTransformer(handoff, documentationObject.components)]);
+  await Promise.all([componentTransformer(handoff)]);
 };
 
 /**
@@ -100,85 +89,84 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
 
   await Promise.all([
     fs
-      .ensureDir(variablesFilePath(handoff))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/types`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/css`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sass`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/maps`))
+      .ensureDir(handoff.getVariablesFilePath())
+      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/types`))
+      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/css`))
+      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/sass`))
+      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens`))
+      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/maps`))
       .then(() =>
-        Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`)))
+        Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens/${name}`)))
       )
-
       .then(() =>
         Promise.all(
           Object.entries(typeFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(typeFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(cssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content))
+          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content))
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(scssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(scssFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(sdFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}/${name}.tokens.json`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(sdFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}.tokens.json`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
           Object.entries(mapFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content)
+            fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content)
           )
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
+          Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content))
         )
       )
       .then(() =>
         Promise.all(
-          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${outputPath(handoff)}/${name}.json`, content))
+          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${handoff.getOutputPath()}/${name}.json`, content))
         )
       ),
   ]);
@@ -294,10 +282,10 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   console.log(chalk.green(`Starting Figma data extraction.`));
 
-  let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
-  let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
+  let prevDocumentationObject = await handoff.getDocumentationObject();
+  let changelog: ChangelogRecord[] = (await readPrevJSONFile(handoff.getChangelogFilePath())) || [];
 
-  await fs.emptyDir(outputPath(handoff));
+  await fs.emptyDir(handoff.getOutputPath());
 
   const legacyDefinitions = await getLegacyDefinitions(handoff);
   const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
@@ -306,19 +294,19 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
   }
-  
+
   await Promise.all([
-    fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
-    fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
+    fs.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
+    fs.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath(handoff))).then((writeStream) =>
-            stream.promises.finished(writeStream)
-          ),
-        ]
+        zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+        zipAssets(documentationObject.assets.logos, fs.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) =>
+          stream.promises.finished(writeStream)
+        ),
+      ]
       : []),
   ]);
 
@@ -332,15 +320,15 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
 
   // copy assets to output folder
   fs.copyFileSync(
-    iconsZipFilePath(handoff),
+    handoff.getIconsZipFilePath(),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
   );
 
   fs.copyFileSync(
-    logosZipFilePath(handoff),
+    handoff.getLogosZipFilePath(),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
   );
-  
+
   return documentationObject;
 };
 
@@ -458,7 +446,7 @@ export const buildRecipe = async (handoff: Handoff) => {
  * @param handoff
  */
 export const buildIntegrationOnly = async (handoff: Handoff) => {
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
+  const documentationObject = await handoff.getDocumentationObject();
   if (documentationObject) {
     // Ensure that the integration object is set if possible
     // handoff.integrationObject = initIntegrationObject(handoff);

@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.makeIntegration = exports.ejectConfig = void 0;
-const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
 const chalk_1 = __importDefault(require("chalk"));
-const integration_1 = require("../transformers/integration");
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
 const config_1 = require("../config");
 const pipeline_1 = require("../pipeline");
+const integration_1 = require("../transformers/integration");
 /**
  * Eject the config to the working directory
  * @param handoff
@@ -41,7 +41,6 @@ exports.ejectConfig = ejectConfig;
  * @param handoff
  */
 const makeIntegration = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = handoff.config;
     // does an local integration exist?
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
     if (fs_extra_1.default.existsSync(workingPath)) {
@@ -66,7 +65,6 @@ exports.makeIntegration = makeIntegration;
  * @param handoff
  */
 const ejectExportables = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     // does an local integration exist?
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables'));
     if (fs_extra_1.default.existsSync(workingPath)) {
@@ -86,7 +84,6 @@ exports.ejectExportables = ejectExportables;
  * @param handoff
  */
 const ejectPages = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     // does an local page exist?
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'pages'));
     if (fs_extra_1.default.existsSync(workingPath)) {

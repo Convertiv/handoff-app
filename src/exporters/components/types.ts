@@ -1,7 +1,7 @@
 import * as FigmaTypes from '../../figma/types';
-import { Exportable, ComponentDefinition, Side, ReferenceObject } from "../../types";
+import { ComponentDefinition, Exportable, ReferenceObject, Side } from "../../types";
 
-enum ComponentType {
+export enum ComponentType {
   ELEMENT = 'element',
   BLOCK = 'block',
 }
@@ -56,7 +56,7 @@ export interface BorderTokenSet extends BaseTokenSet {
 
 export interface SpacingTokenSet extends BaseTokenSet {
   name: 'SPACING';
-  padding: {[key in Side]: number};
+  padding: { [key in Side]: number };
   spacing: number;
 }
 
