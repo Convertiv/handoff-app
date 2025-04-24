@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import * as stream from 'node:stream';
 import Handoff from '..';
 import { AssetObject } from '../types';
