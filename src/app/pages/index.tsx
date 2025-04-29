@@ -48,7 +48,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
       </div>
 
       <div className="container mx-auto px-8">
-        <div className="grid grid-cols-3 gap-6 pb-16">
+        <div className="grid grid-cols-1 gap-6 pb-16 md:grid-cols-3">
           <div className="flex flex-col items-start gap-3 pr-16">
             <p className="flex items-center gap-3 text-sm font-normal text-gray-500 dark:text-gray-400">
               <Layers className="size-3 stroke-[1.5]" />
@@ -107,7 +107,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
       </div>
 
       <div className="container mx-auto px-8 pt-16">
-        <div className="grid grid-cols-3 gap-6 pb-16">
+        <div className="grid grid-cols-1 gap-6 pb-16 md:grid-cols-3">
           <div className="flex flex-col items-start gap-3 pr-16">
             <p className="flex items-center gap-3 text-sm font-normal text-gray-500 dark:text-gray-400">
               <Component className="size-3 stroke-[1.5]" />
