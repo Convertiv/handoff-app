@@ -34,12 +34,12 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
-      <div className="w-full bg-gradient-to-r py-20 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full bg-gradient-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
-          <HeadersType.H1 className="max-w-4xl text-4xl font-semibold  leading-[-0.05px]">
+          <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
           </HeadersType.H1>
-          <p className="mt-5 max-w-4xl text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+          <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
             A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
             digital experiences.
           </p>
