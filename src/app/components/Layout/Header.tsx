@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ModeToggle } from '../../components/ModeSwitcher';
 import { MainNav } from '../../components/Navigation/MainNav';
+import { MobileNav } from '../../components/Navigation/MobileNav';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
 
@@ -30,9 +31,12 @@ export function Header() {
           <Link href="/">
             <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
           </Link>
-          <div className=" hidden items-center gap-4 @2xl:flex">
+          <div className="hidden items-center gap-4 @2xl:flex">
             <MainNav />
             <ModeToggle />
+          </div>
+          <div className="flex items-center gap-4 @2xl:hidden">
+            <MobileNav />
           </div>
         </div>
       </header>
