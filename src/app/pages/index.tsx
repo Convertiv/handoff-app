@@ -35,12 +35,12 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
-      <div className="w-full bg-gradient-to-r py-20 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full bg-gradient-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
-          <HeadersType.H1 className="max-w-4xl text-4xl font-semibold  leading-[-0.05px]">
+          <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
           </HeadersType.H1>
-          <p className="mt-5 max-w-4xl text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+          <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
             A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
             digital experiences.
           </p>
@@ -49,7 +49,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
       </div>
 
       <div className="container mx-auto px-8">
-        <div className="grid grid-cols-3 gap-6 pb-16">
+        <div className="grid grid-cols-1 gap-6 pb-16 md:grid-cols-3">
           <div className="flex flex-col items-start gap-3 pr-16">
             <p className="flex items-center gap-3 text-sm font-normal text-gray-500 dark:text-gray-400">
               <Layers className="size-3 stroke-[1.5]" />
@@ -120,7 +120,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
       </div>
 
       <div className="container mx-auto px-8 pt-16">
-        <div className="grid grid-cols-3 gap-6 pb-16">
+        <div className="grid grid-cols-1 gap-6 pb-16 md:grid-cols-3">
           <div className="flex flex-col items-start gap-3 pr-16">
             <p className="flex items-center gap-3 text-sm font-normal text-gray-500 dark:text-gray-400">
               <Component className="size-3 stroke-[1.5]" />
@@ -143,7 +143,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.svg`} alt="Components" />
               </div>
               <h3 className="text-base font-medium">Components</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Atomic reusable components.</p>
@@ -159,7 +159,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/blocks.svg`} alt="Blocks" />
               </div>
               <h3 className="text-base font-medium">Blocks</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Bigger sections used to quickly build pages.</p>

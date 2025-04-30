@@ -145,7 +145,7 @@ export const ComponentDisplay: React.FC<{
       <div className="text-medium flex w-full flex-col items-center rounded-lg border border-gray-200 dark:border-gray-900">
         {component?.previews && (
           <>
-            <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800">
+            <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle @container dark:bg-gray-800">
               <div className="flex items-center gap-2">
                 {context.variants ? (
                   <>
@@ -195,7 +195,7 @@ export const ComponentDisplay: React.FC<{
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-0">
+              <div className=" hidden items-center gap-0 @2xl:flex">
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -244,25 +244,6 @@ export const ComponentDisplay: React.FC<{
                     <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                {/* <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="[&_svg]:size-3"
-                        onClick={() => {
-                          // make div fullscreen
-                          if (ref.current) {
-                            ref.current.requestFullscreen();
-                          }
-                        }}
-                        variant="ghost"
-                      >
-                        <Fullscreen />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="px-2 py-1 text-xs">Fullscreen Preview</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider> */}
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
