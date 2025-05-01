@@ -24,20 +24,14 @@ export declare const formatComponentCodeBlockComment: (component: ComponentInsta
  * @param options
  * @returns
  */
-export declare const formatTokenName: (tokenType: TokenType, componentName: string, componentVariantProps: [
-    string,
-    string
-][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string;
+export declare const formatTokenName: (tokenType: TokenType, componentName: string, componentVariantProps: [string, string][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string;
 /**
  * Returns the token name segments
  * @param component
  * @param options
  * @returns
  */
-export declare const getTokenNameSegments: (componentName: string, componentVariantProps: [
-    string,
-    string
-][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string[];
+export declare const getTokenNameSegments: (componentName: string, componentVariantProps: [string, string][], part: string, property: string, options?: IntegrationObjectComponentOptions) => string[];
 /**
  * Normalizes the token name variable (specifier) by considering if the value should be replaced
  * with some other value based replace rules defined in the transformer options of the component

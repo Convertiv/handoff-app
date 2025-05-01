@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs';
-import { getSharedOptions } from '../utils';
-import { SharedArgs } from '../types';
 import Handoff from '../../';
+import { SharedArgs } from '../types';
+import { getSharedOptions } from '../utils';
 
 export interface EjectConfigArgs extends SharedArgs {}
 
@@ -12,7 +12,7 @@ const command: CommandModule<{}, EjectConfigArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: EjectConfigArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
     await handoff.ejectConfig();
   },
 };

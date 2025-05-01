@@ -12,8 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../utils");
 const __1 = __importDefault(require("../../"));
+const utils_1 = require("../utils");
 const command = {
     command: 'make:template <component> [state]',
     describe: 'Create a new template',
@@ -29,7 +29,7 @@ const command = {
         });
     },
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
-        const handoff = new __1.default(args.debug, args.force, { integrationPath: args.integration });
+        const handoff = new __1.default(args.debug, args.force);
         const templateComponent = args.component;
         if (!/^[a-z0-9]+$/i.test(templateComponent)) {
             console.error(`Template component must be alphanumeric and may contain dashes or underscores`);

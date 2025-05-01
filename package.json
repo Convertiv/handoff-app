@@ -93,7 +93,6 @@
     "@types/react-scroll": "^1.8.6",
     "@types/react-syntax-highlighter": "^15.5.7",
     "@types/refractor": "^3.0.2",
-    "@types/webpack": "^5.28.0",
     "@types/yargs": "^17.0.33",
     "archiver": "^5.3.1",
     "arg": "^5.0.2",
@@ -144,8 +143,8 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "4.8.3",
     "vaul": "^1.1.2",
-    "webpack": "^5.75.0",
-    "webpack-dev-server": "^5.1.0",
+    "vite": "^4.5.13",
+    "webpack-dev-server": "^5.2.1",
     "ws": "^8.18.0",
     "yargs": "^17.7.2"
   },

@@ -66,7 +66,6 @@ const toTitleCase = (str: string): string => {
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  // const previews = getPreview();
 
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;

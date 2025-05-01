@@ -4,15 +4,14 @@ import fs from 'fs-extra';
 import path from 'path';
 import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
-import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
+import { ejectConfig, ejectExportables, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
-import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
+import pipeline, { buildComponents } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
-import processComponents from './transformers/preview/component/builder';
+import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
-import { renameComponent } from './transformers/preview/component/rename';
 import { ComponentListObject } from './transformers/preview/types';
 import { DocumentationObject } from './types';
 import { Config, IntegrationObject } from './types/config';
@@ -80,12 +79,6 @@ class Handoff {
     return this;
   }
 
-  async recipe(): Promise<Handoff> {
-    this.preRunner();
-    await buildRecipe(this);
-    return this;
-  }
-
   async component(name: string | null): Promise<Handoff> {
     this.preRunner();
 
@@ -99,19 +92,6 @@ class Handoff {
     return this;
   }
 
-  async renameComponent(oldName: string, target: string): Promise<Handoff> {
-    this.preRunner();
-    await renameComponent(this, oldName, target);
-    return this;
-  }
-
-  async integration(): Promise<Handoff> {
-    this.preRunner();
-    await buildIntegrationOnly(this);
-    await buildComponents(this);
-    return this;
-  }
-
   async build(): Promise<Handoff> {
     this.preRunner();
     await buildApp(this);
@@ -121,12 +101,6 @@ class Handoff {
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);
-    return this;
-  }
-
-  async ejectIntegration(): Promise<Handoff> {
-    this.preRunner();
-    await makeIntegration(this);
     return this;
   }
 
@@ -172,12 +146,6 @@ class Handoff {
     return this;
   }
 
-  async makeIntegration(): Promise<Handoff> {
-    this.preRunner();
-    await makeIntegration(this);
-    return this;
-  }
-
   async makeIntegrationStyles(): Promise<Handoff> {
     this.preRunner();
     await buildMainJS(this);
@@ -199,7 +167,7 @@ class Handoff {
 
   async validateComponents(): Promise<Handoff> {
     this.preRunner();
-    await processComponents(this, undefined, 'validation');
+    await processComponents(this, undefined, ComponentSegment.Validation);
     return this;
   }
 

@@ -12,12 +12,40 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.zipFonts = void 0;
-const chalk_1 = __importDefault(require("chalk"));
 const archiver_1 = __importDefault(require("archiver"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const path_1 = __importDefault(require("path"));
 const sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
+const path_1 = __importDefault(require("path"));
+/**
+ * Zips the contents of a directory and writes the resulting archive to a writable stream.
+ *
+ * @param dirPath - The path to the directory whose contents will be zipped.
+ * @param destination - A writable stream where the zip archive will be written.
+ * @returns A Promise that resolves with the destination stream when the archive has been finalized.
+ * @throws Will throw an error if the archiving process fails.
+ */
+const zip = (dirPath, destination) => __awaiter(void 0, void 0, void 0, function* () {
+    return new Promise((resolve, reject) => {
+        const archive = (0, archiver_1.default)('zip', {
+            zlib: { level: 9 },
+        });
+        // Set up event handlers
+        archive.on('error', reject);
+        destination.on('error', reject);
+        // When the destination closes, resolve the promise
+        destination.on('close', () => resolve(destination));
+        archive.pipe(destination);
+        fs_extra_1.default.readdir(dirPath)
+            .then((fontDir) => {
+            for (const file of fontDir) {
+                const filePath = path_1.default.join(dirPath, file);
+                archive.append(fs_extra_1.default.createReadStream(filePath), { name: path_1.default.basename(file) });
+            }
+            return archive.finalize();
+        })
+            .catch(reject);
+    });
+});
 /**
  * Detect a font present in the public dir.  If it matches a font family from
  * figma, zip it up and make it avaliable in the config for use
@@ -25,7 +53,6 @@ const sortedUniq_1 = __importDefault(require("lodash/sortedUniq"));
 function fontTransformer(handoff, documentationObject) {
     return __awaiter(this, void 0, void 0, function* () {
         const { design } = documentationObject;
-        const outputFolder = 'public';
         const fontLocation = path_1.default.join(handoff === null || handoff === void 0 ? void 0 : handoff.workingPath, 'fonts');
         const families = design.typography.reduce((result, current) => {
             return Object.assign(Object.assign({}, result), { [current.values.fontFamily]: result[current.values.fontFamily]
@@ -33,52 +60,19 @@ function fontTransformer(handoff, documentationObject) {
                         (0, sortedUniq_1.default)([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
                     : [current.values.fontWeight] });
         }, {});
-        const customFonts = [];
         Object.keys(families).map((key) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            //
             const name = key.replace(/\s/g, '');
             const fontDirName = path_1.default.join(fontLocation, name);
             if (fs_extra_1.default.existsSync(fontDirName)) {
-                console.log(chalk_1.default.green(`Found a custom font ${name}`));
-                // Ok, we've found a custom font at this location
-                // Zip the font up and put the zip in the font location
                 const stream = fs_extra_1.default.createWriteStream(path_1.default.join(fontLocation, `${name}.zip`));
-                yield (0, exports.zipFonts)(fontDirName, stream);
-                const fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'fonts');
+                yield zip(fontDirName, stream);
+                const fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
                 if (!fs_extra_1.default.existsSync(fontsFolder)) {
                     fs_extra_1.default.mkdirSync(fontsFolder);
                 }
-                yield fs_extra_1.default.copySync(fontDirName, fontsFolder);
-                customFonts.push(`${name}.zip`);
+                fs_extra_1.default.copySync(fontDirName, fontsFolder);
             }
         }));
-        //const hookReturn = (await pluginTransformer()).postFont(documentationObject, customFonts);
-        //return hookReturn;
     });
 }
 exports.default = fontTransformer;
-/**
- * Zip the fonts for download
- * @param dirPath
- * @param destination
- * @returns
- */
-const zipFonts = (dirPath, destination) => __awaiter(void 0, void 0, void 0, function* () {
-    const archive = (0, archiver_1.default)('zip', {
-        zlib: { level: 9 }, // Sets the compression level.
-    });
-    // good practice to catch this error explicitly
-    archive.on('error', function (err) {
-        throw err;
-    });
-    archive.pipe(destination);
-    const fontDir = yield fs_extra_1.default.readdir(dirPath);
-    for (const file of fontDir) {
-        const data = fs_extra_1.default.readFileSync(path_1.default.join(dirPath, file), 'utf-8');
-        archive.append(data, { name: path_1.default.basename(file) });
-    }
-    yield archive.finalize();
-    return destination;
-});
-exports.zipFonts = zipFonts;

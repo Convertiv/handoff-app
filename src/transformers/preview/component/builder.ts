@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import Handoff from '../../../index';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
@@ -36,16 +35,26 @@ const defaultComponent: TransformComponentTokensResult = {
 };
 
 /**
+ * Types of component segments that can be updated
+ */
+export enum ComponentSegment {
+  JavaScript = 'javascript',
+  Style = 'style',
+  Previews = 'previews',
+  Validation = 'validation',
+}
+
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
- * @param segmentToUpdate - Optional segment to update ('js', 'css', 'previews', or 'validation')
+ * @param segmentToProcess - Optional segment to update
  * @returns Promise resolving to an array of processed components
  */
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  segmentToUpdate?: 'js' | 'css' | 'previews' | 'validation'
+  segmentToProcess?: ComponentSegment
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
@@ -63,8 +72,6 @@ export async function processComponents(
     const latest = getLatestVersionForComponent(versions);
     let latestVersion: TransformComponentTokensResult | undefined = undefined;
 
-    console.log(chalk.green(`Processing component ${runtimeComponentId} `));
-
     await Promise.all(
       versions.map(async (version) => {
         const runtimeComponent = runtimeComponents[runtimeComponentId][version];
@@ -75,19 +82,19 @@ export async function processComponents(
           type: (type as ComponentType) || ComponentType.Element,
         };
 
-        if (!segmentToUpdate || segmentToUpdate === 'js' || segmentToUpdate === 'validation') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentJs(data, handoff);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'css' || segmentToUpdate === 'validation') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.Style || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentCss(data, handoff, sharedStyles);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'previews' || segmentToUpdate === 'validation') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
           data = await buildPreviews(data, handoff, components);
         }
 
-        if (segmentToUpdate === 'validation') {
+        if (segmentToProcess === ComponentSegment.Validation) {
           if (handoff.config?.hooks?.validateComponent && data) {
             const validationResults = await handoff.config.hooks.validateComponent(data);
             data.validations = validationResults;

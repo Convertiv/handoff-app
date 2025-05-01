@@ -12,9 +12,9 @@ const command: CommandModule<{}, ValidateComponentsArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: ValidateComponentsArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
     await handoff.validateComponents();
   },
 };
 
-export default command; 
+export default command;

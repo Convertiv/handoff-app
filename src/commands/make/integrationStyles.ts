@@ -3,7 +3,7 @@ import Handoff from '../..';
 import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
-export interface MakeIntegrationStylesArgs extends SharedArgs { }
+export interface MakeIntegrationStylesArgs extends SharedArgs {}
 
 const command: CommandModule<{}, MakeIntegrationStylesArgs> = {
   command: 'make:integration:styles',
@@ -12,7 +12,7 @@ const command: CommandModule<{}, MakeIntegrationStylesArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: MakeIntegrationStylesArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
     await handoff.makeIntegrationStyles();
   },
 };
