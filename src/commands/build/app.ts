@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs';
-import { getSharedOptions } from '../utils';
-import { SharedArgs } from '../types';
 import Handoff from '../../';
+import { SharedArgs } from '../types';
+import { getSharedOptions } from '../utils';
 
 export interface BuildAppArgs extends SharedArgs {}
 
@@ -12,7 +12,7 @@ const command: CommandModule<{}, BuildAppArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: BuildAppArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
     await handoff.build();
   },
 };

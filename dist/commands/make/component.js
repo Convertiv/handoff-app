@@ -24,7 +24,7 @@ const command = {
         });
     },
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
-        const handoff = new __1.default(args.debug, args.force, { integrationPath: args.integration });
+        const handoff = new __1.default(args.debug, args.force);
         const componentName = args.name;
         const version = args.version;
         if (!/^[a-z0-9_-]+$/i.test(componentName)) {

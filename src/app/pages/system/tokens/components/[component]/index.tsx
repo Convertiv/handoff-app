@@ -2,7 +2,7 @@ import { ComponentInstance, FileComponentObject } from '@handoff/exporters/compo
 import { tokenReferenceFormat } from '@handoff/transformers/css/component';
 import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { Token } from '@handoff/transformers/types';
-import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
+import { ComponentDocumentationOptions } from '@handoff/types';
 import { IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { filterOutNull } from '@handoff/utils';
 import { round, startCase } from 'lodash';
@@ -17,7 +17,6 @@ import {
   fetchComponents,
   getClientRuntimeConfig,
   getLegacyDefinition,
-  getPreview,
   getTokens,
   IParams,
   reduceSlugToString,
@@ -38,21 +37,18 @@ export async function getStaticPaths() {
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  const previews = getPreview();
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
   const metadata = await fetchComponents().filter((c) => c.id === component)[0];
 
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
-  const componentPreviews = getPreview().components[componentSlug!];
 
   return {
     props: {
       id: component,
       component: componentObject || {},
       legacyDefinition: getLegacyDefinition(componentSlug!),
-      previews: componentPreviews || [],
       menu,
       config,
       ...fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props,
@@ -66,12 +62,11 @@ const GenericComponentPage = ({
   current,
   id,
   config,
-  previews,
   component,
   options,
   componentOptions,
 }: ComponentDocumentationProps) => {
-  const tokensTabComponents = getComponentPreviews('tokens', component, options, previews);
+  const tokensTabComponents = getComponentPreviews('tokens', component, options);
   if (!tokensTabComponents) return <p>Loading...</p>;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
@@ -102,10 +97,8 @@ const GenericComponentPage = ({
 export const getComponentPreviews = (
   tab: 'overview' | 'tokens',
   component: FileComponentObject,
-  options: ComponentDocumentationOptions,
-  previews: PreviewObject[]
+  options: ComponentDocumentationOptions
 ) => {
-  const hasPreviews = previews.length > 0;
   const instances = component.instances;
   const view = (options?.views ?? {})[tab] ?? {};
   const viewFilters = view.condition ?? {};
@@ -165,7 +158,6 @@ export const getComponentPreviews = (
         name: /*hasPreviews*/ false
           ? `${startCase(name)} ${startCase(componentInstance.name)}`
           : `${startCase(componentInstance.name)} (${name})`,
-        preview: previews.find((item) => item.id === componentInstance.id),
         overrides,
       };
     })

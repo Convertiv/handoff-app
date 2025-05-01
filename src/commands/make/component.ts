@@ -18,7 +18,7 @@ const command: CommandModule<{}, MakeComponentArgs> = {
   },
 
   handler: async (args: MakeComponentArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
 
     const componentName = args.name;
     const version = args.version;

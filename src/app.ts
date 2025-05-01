@@ -10,10 +10,10 @@ import path from 'path';
 import { parse } from 'url';
 import Handoff from '.';
 import { getClientConfig } from './config';
-import { buildComponents, buildIntegrationOnly } from './pipeline';
+import { buildComponents } from './pipeline';
 import { createWebSocketServer } from './transformers/preview/component';
-import processComponents from './transformers/preview/component/builder';
-import { buildClientFiles } from './utils/preview';
+import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
+import { ComponentListObject } from './transformers/preview/types';
 
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
@@ -177,9 +177,35 @@ const performCleanup = async (handoff: Handoff): Promise<void> => {
   }
 };
 
+const publishTokensApi = async (handoff: Handoff) => {
+  const apiPath = path.resolve(path.join(handoff.workingPath, 'public/api'));
+
+  if (!fs.existsSync(apiPath)) {
+    fs.mkdirSync(apiPath, { recursive: true });
+  }
+
+  const tokens = await handoff.getDocumentationObject();
+
+  fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
+
+  if (!fs.existsSync(path.join(apiPath, 'tokens'))) {
+    fs.mkdirSync(path.join(apiPath, 'tokens'));
+  }
+
+  for (const type in tokens) {
+    if (type === 'timestamp') continue;
+    for (const group in tokens[type]) {
+      fs.writeFileSync(path.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+    }
+  }
+};
+
 const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
+
+  // Publish tokens API
+  publishTokensApi(handoff);
 
   // Prepare project app dir
   await fs.promises.mkdir(appPath, { recursive: true });
@@ -191,7 +217,6 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffProjectId = handoff.config.figma_project_id ?? '';
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
-  const handoffIntegrationPath = path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
@@ -201,7 +226,6 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
     .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
-    .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, `HANDOFF_INTEGRATION_PATH: '${handoffIntegrationPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
     .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
@@ -229,16 +253,8 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   // Perform cleanup
   await performCleanup(handoff);
 
-  // If we are building the app, ensure the integration is built first
-  await buildIntegrationOnly(handoff);
+  // Build components
   await buildComponents(handoff);
-
-  // Build client preview styles
-  await buildClientFiles(handoff)
-    .then((value) => !!value && console.log(chalk.green(value)))
-    .catch((error) => {
-      throw new Error(error);
-    });
 
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
@@ -284,13 +300,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   if (!fs.existsSync(tokensJsonFilePath)) {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
-
-  // Build client preview styles
-  await buildClientFiles(handoff)
-    .then((value) => !!value && console.log(chalk.green(value)))
-    .catch((error) => {
-      throw new Error(error);
-    });
 
   // Initial processing of the components
   await processComponents(handoff);
@@ -409,7 +418,15 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   let runtimeComponentsWatcher: chokidar.FSWatcher | null = null;
   let runtimeConfigurationWatcher: chokidar.FSWatcher | null = null;
 
-  const watchRuntimeComponents = (runtimeComponentPathsToWatch: Set<string>) => {
+  const entryTypeToSegment = (type: keyof ComponentListObject['entries']): ComponentSegment | undefined => {
+    return {
+      js: ComponentSegment.JavaScript,
+      scss: ComponentSegment.Style,
+      templates: ComponentSegment.Previews,
+    }[type];
+  };
+
+  const watchRuntimeComponents = (runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>) => {
     persistRuntimeCache(handoff);
 
     if (runtimeComponentsWatcher) {
@@ -417,7 +434,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     }
 
     if (runtimeComponentPathsToWatch.size > 0) {
-      runtimeComponentsWatcher = chokidar.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true });
+      const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
+      runtimeComponentsWatcher = chokidar.watch(pathsToWatch, { ignoreInitial: true });
       runtimeComponentsWatcher.on('all', async (event, file) => {
         if (handoff.getConfigFilePaths().includes(file)) {
           return;
@@ -429,11 +447,16 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
           case 'unlink':
             if (!debounce) {
               debounce = true;
-              file = path.dirname(path.dirname(file));
-              const extension = path.extname(file);
-              const segmentToUpdate =
-                extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
-              await processComponents(handoff, path.basename(file), segmentToUpdate);
+              let segmentToUpdate: ComponentSegment = undefined;
+              const matchingPath = runtimeComponentPathsToWatch.get(file);
+
+              if (matchingPath) {
+                const entryType = runtimeComponentPathsToWatch.get(matchingPath);
+                segmentToUpdate = entryTypeToSegment(entryType);
+              }
+
+              const componentDir = path.basename(path.dirname(path.dirname(file)));
+              await processComponents(handoff, componentDir, segmentToUpdate);
               debounce = false;
             }
             break;
@@ -469,18 +492,19 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   };
 
   const getRuntimeComponentsPathsToWatch = () => {
-    const result: Set<string> = new Set<string>();
+    const result: Map<string, keyof ComponentListObject['entries']> = new Map();
 
     for (const runtimeComponentId of Object.keys(handoff.integrationObject?.entries.components ?? {})) {
       for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
         const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
-        for (const [_, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
+        for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
           const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
           if (fs.existsSync(normalizedComponentEntryPath)) {
+            const entryType = runtimeComponentEntryType as keyof ComponentListObject['entries'];
             if (fs.statSync(normalizedComponentEntryPath).isFile()) {
-              result.add(path.dirname(normalizedComponentEntryPath));
+              result.set(path.dirname(normalizedComponentEntryPath), entryType);
             } else {
-              result.add(normalizedComponentEntryPath);
+              result.set(normalizedComponentEntryPath, entryType);
             }
           }
         }
@@ -523,7 +547,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
           case 'unlink':
             if (!debounce) {
               debounce = true;
-              await buildIntegrationOnly(handoff);
               await handoff.getSharedStyles();
               debounce = false;
             }
@@ -556,15 +579,9 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
     throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
   }
 
-  // Build client preview styles
-  await buildClientFiles(handoff)
-    .then((value) => !!value && console.log(chalk.green(value)))
-    .catch((error) => {
-      throw new Error(error);
-    });
-
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
+
   // Purge app cache
   const moduleOutput = path.resolve(appPath, 'out');
   if (fs.existsSync(moduleOutput)) {

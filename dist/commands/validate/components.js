@@ -21,7 +21,7 @@ const command = {
         return (0, utils_1.getSharedOptions)(yargs);
     },
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
-        const handoff = new __1.default(args.debug, args.force, { integrationPath: args.integration });
+        const handoff = new __1.default(args.debug, args.force);
         yield handoff.validateComponents();
     }),
 };

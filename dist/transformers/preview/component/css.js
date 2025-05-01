@@ -20,7 +20,7 @@ const sass_1 = __importDefault(require("sass"));
 const index_1 = require("../../../index");
 const component_1 = require("../component");
 const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const id = data.id;
     const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
     if (!entry) {
@@ -34,13 +34,16 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     if (extension === '.scss') {
         try {
+            const loadPaths = [
+                path_1.default.resolve(handoff.workingPath),
+                path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                path_1.default.resolve(handoff.workingPath, 'node_modules'),
+            ];
+            if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
+                loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
+            }
             const result = yield sass_1.default.compileAsync(entry, {
-                loadPaths: [
-                    path_1.default.resolve(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'sass'),
-                    path_1.default.resolve(handoff.workingPath, 'node_modules'),
-                    path_1.default.resolve(handoff.workingPath),
-                    path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-                ],
+                loadPaths,
                 quietDeps: true,
                 silenceDeprecations: ['import'],
             });
@@ -48,7 +51,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
                 // @ts-ignore
                 data['css'] = result.css;
                 // Split the CSS into shared styles and component styles
-                const splitCSS = (_c = data['css']) === null || _c === void 0 ? void 0 : _c.split('/* COMPONENT STYLES*/');
+                const splitCSS = (_d = data['css']) === null || _d === void 0 ? void 0 : _d.split('/* COMPONENT STYLES*/');
                 // If there are two parts, the first part is the shared styles
                 if (splitCSS && splitCSS.length > 1) {
                     data['css'] = splitCSS[1];
@@ -87,7 +90,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
  * @param handoff
  */
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _e, _f;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const integration = (0, index_1.initIntegrationObject)(handoff)[0];
     if (integration && integration.entries.integration && fs_extra_1.default.existsSync(integration.entries.integration)) {
@@ -97,13 +100,16 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
             console.log(chalk_1.default.green(`Detected main CSS file`));
             try {
                 const scssPath = path_1.default.resolve(integration.entries.integration);
+                const loadPaths = [
+                    path_1.default.resolve(handoff.workingPath),
+                    path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                    path_1.default.resolve(handoff.workingPath, 'node_modules'),
+                ];
+                if ((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) {
+                    loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
+                }
                 const result = yield sass_1.default.compileAsync(scssPath, {
-                    loadPaths: [
-                        path_1.default.resolve(handoff.workingPath, (_d = handoff.config.integrationPath) !== null && _d !== void 0 ? _d : 'integration', 'sass'),
-                        path_1.default.resolve(handoff.workingPath, 'node_modules'),
-                        path_1.default.resolve(handoff.workingPath),
-                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-                    ],
+                    loadPaths,
                     quietDeps: true,
                 });
                 yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'main.css'), result.css);

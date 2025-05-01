@@ -25,13 +25,9 @@ declare class Handoff {
     reload(): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
-    recipe(): Promise<Handoff>;
     component(name: string | null): Promise<Handoff>;
-    renameComponent(oldName: string, target: string): Promise<Handoff>;
-    integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
-    ejectIntegration(): Promise<Handoff>;
     ejectExportables(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
     ejectTheme(): Promise<Handoff>;
@@ -39,7 +35,6 @@ declare class Handoff {
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
-    makeIntegration(): Promise<Handoff>;
     makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
