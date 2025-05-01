@@ -35,16 +35,32 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     var _a;
     if (!((_a = data.entries) === null || _a === void 0 ? void 0 : _a.template))
         return data;
-    const viteConfig = Object.assign(Object.assign({}, config_1.default), { build: {
-            outDir: (0, component_1.getComponentOutputPath)(handoff),
-            emptyOutDir: false,
-            rollupOptions: {
-                input: {
-                    'virtual-entry': 'virtual-entry',
+    // Store the current NODE_ENV value before vite build
+    // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
+    // which can cause issues with subsequent Next.js operations that rely on
+    // the original NODE_ENV value
+    const oldNodeEnv = process.env.NODE_ENV;
+    try {
+        const viteConfig = Object.assign(Object.assign({}, config_1.default), { build: {
+                outDir: (0, component_1.getComponentOutputPath)(handoff),
+                emptyOutDir: false,
+                rollupOptions: {
+                    input: {
+                        'virtual-entry': 'virtual-entry',
+                    },
                 },
-            },
-        }, plugins: [...(config_1.default.plugins || []), (0, plugins_1.handlebarsPreviewsPlugin)(data, components)] });
-    yield (0, vite_1.build)(viteConfig);
+            }, plugins: [...(config_1.default.plugins || []), (0, plugins_1.handlebarsPreviewsPlugin)(data, components)] });
+        yield (0, vite_1.build)(viteConfig);
+    }
+    catch (error) {
+        console.error('Error building component previews:', error);
+    }
+    finally {
+        // Restore the original NODE_ENV value after vite build completes
+        // This prevents interference with Next.js app building/running processes
+        // that depend on the correct NODE_ENV value
+        process.env.NODE_ENV = oldNodeEnv;
+    }
     return data;
 });
 exports.buildPreviews = buildPreviews;
