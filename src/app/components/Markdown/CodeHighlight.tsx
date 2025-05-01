@@ -108,7 +108,8 @@ export const CodeHighlight: React.FC<{
 
   useEffect(() => {
     Handlebars.registerHelper('eq', (a, b) => a === b);
-  }, [data]);
+    Handlebars.registerHelper('field', (_, options) => options.fn(this));
+  });
 
   useEffect(() => {
     // check if data is a string

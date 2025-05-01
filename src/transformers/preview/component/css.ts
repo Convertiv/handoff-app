@@ -25,16 +25,22 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
 
   if (extension === '.scss') {
     try {
+      const loadPaths = [
+        path.resolve(handoff.workingPath),
+        path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+        path.resolve(handoff.workingPath, 'node_modules'),
+      ];
+
+      if (handoff.integrationObject?.entries?.integration) {
+        loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+      }
+
       const result = await sass.compileAsync(entry, {
-        loadPaths: [
-          path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
-          path.resolve(handoff.workingPath, 'node_modules'),
-          path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-        ],
+        loadPaths,
         quietDeps: true,
         silenceDeprecations: ['import'],
       });
+
       if (result.css) {
         // @ts-ignore
         data['css'] = result.css;
@@ -86,13 +92,18 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
       console.log(chalk.green(`Detected main CSS file`));
       try {
         const scssPath = path.resolve(integration.entries.integration);
+        const loadPaths = [
+          path.resolve(handoff.workingPath),
+          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          path.resolve(handoff.workingPath, 'node_modules'),
+        ];
+
+        if (handoff.integrationObject?.entries?.integration) {
+          loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+        }
+
         const result = await sass.compileAsync(scssPath, {
-          loadPaths: [
-            path.resolve(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'sass'),
-            path.resolve(handoff.workingPath, 'node_modules'),
-            path.resolve(handoff.workingPath),
-            path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
-          ],
+          loadPaths,
           quietDeps: true,
         });
         await fs.writeFile(path.resolve(outputPath, 'main.css'), result.css);
@@ -103,4 +114,5 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     }
   }
 };
+
 export default buildComponentCss;

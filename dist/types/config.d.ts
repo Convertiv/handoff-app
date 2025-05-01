@@ -1,3 +1,4 @@
+import { InlineConfig } from 'vite';
 import { FileComponentsObject } from '../exporters/components/types';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
@@ -79,7 +80,6 @@ interface NextAppConfig {
 export interface Config {
     dev_access_token?: string | null | undefined;
     figma_project_id?: string | null | undefined;
-    integrationPath?: string;
     exportsOutputDirectory?: string;
     sitesOutputDirectory?: string;
     useVariables?: boolean;
@@ -145,9 +145,22 @@ export interface Config {
          * ```
          */
         validateComponent?: (component: TransformComponentTokensResult) => Promise<Record<string, ValidationResult>>;
+        /**
+         * Optional hook to override the Vite configuration
+         * @param config - The default Vite configuration
+         * @returns Modified Vite configuration
+         * @example
+         * ```typescript
+         * viteConfigOverride: (config) => {
+         *   ... // Modify the Vite config as needed
+         *   return config;
+         * }
+         * ```
+         */
+        jsBuildConfig?: (config: InlineConfig) => InlineConfig;
     };
 }
-export declare type ClientConfig = Pick<Config, 'app' | 'integrationPath' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
+export declare type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
 export interface IntegrationObjectComponentOptions {
     cssRootClass?: string;
     tokenNameSegments?: string[];

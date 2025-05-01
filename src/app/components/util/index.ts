@@ -1,13 +1,7 @@
 import { ChangelogRecord } from '@handoff/changelog';
 import { ComponentType, FileComponentObject } from '@handoff/exporters/components/types';
 import { ComponentListObject } from '@handoff/transformers/preview/types';
-import {
-  ComponentDocumentationOptions,
-  LegacyComponentDefinition,
-  LegacyComponentDefinitionOptions,
-  PreviewJson,
-  PreviewObject,
-} from '@handoff/types';
+import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types';
 import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
@@ -623,15 +617,6 @@ export const getChangelog = () => {
   if (!fs.existsSync(exportedFilePath)) return [];
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
-};
-
-export const getPreview = (): PreviewJson => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
-    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json')
-    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
-  const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as PreviewJson;
 };
 
 /**

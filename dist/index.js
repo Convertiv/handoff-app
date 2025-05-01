@@ -47,10 +47,9 @@ const make_1 = require("./cli/make");
 const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const component_1 = require("./transformers/preview/component");
-const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
+const builder_1 = __importStar(require("./transformers/preview/component/builder"));
 const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
-const rename_1 = require("./transformers/preview/component/rename");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -100,13 +99,6 @@ class Handoff {
             return this;
         });
     }
-    recipe() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, pipeline_1.buildRecipe)(this);
-            return this;
-        });
-    }
     component(name) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -117,21 +109,6 @@ class Handoff {
             else {
                 yield (0, pipeline_1.buildComponents)(this);
             }
-            return this;
-        });
-    }
-    renameComponent(oldName, target) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, rename_1.renameComponent)(this, oldName, target);
-            return this;
-        });
-    }
-    integration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, pipeline_1.buildIntegrationOnly)(this);
-            yield (0, pipeline_1.buildComponents)(this);
             return this;
         });
     }
@@ -146,13 +123,6 @@ class Handoff {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             yield (0, eject_1.ejectConfig)(this);
-            return this;
-        });
-    }
-    ejectIntegration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, eject_1.makeIntegration)(this);
             return this;
         });
     }
@@ -205,13 +175,6 @@ class Handoff {
             return this;
         });
     }
-    makeIntegration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, eject_1.makeIntegration)(this);
-            return this;
-        });
-    }
     makeIntegrationStyles() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -237,7 +200,7 @@ class Handoff {
     validateComponents() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            yield (0, builder_1.default)(this, undefined, 'validation');
+            yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
             return this;
         });
     }

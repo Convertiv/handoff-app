@@ -5,11 +5,6 @@ import Handoff from '../index';
  */
 export declare const ejectConfig: (handoff: Handoff) => Promise<Handoff>;
 /**
- * Creates a integration within the working directory
- * @param handoff
- */
-export declare const makeIntegration: (handoff: Handoff) => Promise<Handoff>;
-/**
  * Eject the integration to the working directory
  * @param handoff
  */

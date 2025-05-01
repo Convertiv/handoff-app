@@ -34,7 +34,6 @@ import BestPracticesCard from './BestPracticesCard';
 export type ComponentPreview = {
   component: ComponentInstance;
   name: string;
-  preview: PreviewObject | undefined;
   overrides?: { states?: string[] | undefined };
 };
 
@@ -42,27 +41,6 @@ export type ComponentPreviews = ComponentPreview[];
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
   return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
-};
-
-export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
-  return (
-    <>
-      {components.map((previewableComponent) => {
-        const component = previewableComponent.component;
-        return (
-          <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
-            <p>{component.description}</p>
-            <div className="c-component-preview">
-              <ComponentDisplay component={previewableComponent.preview} />
-            </div>
-            <CodeHighlight data={previewableComponent.preview} />
-            <hr />
-          </div>
-        );
-      })}
-    </>
-  );
 };
 
 export const ComponentDisplay: React.FC<{

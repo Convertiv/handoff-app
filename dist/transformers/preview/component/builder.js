@@ -23,8 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processComponents = void 0;
-const chalk_1 = __importDefault(require("chalk"));
+exports.processComponents = exports.ComponentSegment = void 0;
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
@@ -59,13 +58,23 @@ const defaultComponent = {
     sass: null,
 };
 /**
+ * Types of component segments that can be updated
+ */
+var ComponentSegment;
+(function (ComponentSegment) {
+    ComponentSegment["JavaScript"] = "javascript";
+    ComponentSegment["Style"] = "style";
+    ComponentSegment["Previews"] = "previews";
+    ComponentSegment["Validation"] = "validation";
+})(ComponentSegment = exports.ComponentSegment || (exports.ComponentSegment = {}));
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
- * @param segmentToUpdate - Optional segment to update ('js', 'css', 'previews', or 'validation')
+ * @param segmentToProcess - Optional segment to update
  * @returns Promise resolving to an array of processed components
  */
-function processComponents(handoff, id, segmentToUpdate) {
+function processComponents(handoff, id, segmentToProcess) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const result = [];
@@ -79,22 +88,21 @@ function processComponents(handoff, id, segmentToUpdate) {
             const versions = Object.keys(runtimeComponents[runtimeComponentId]);
             const latest = (0, versions_1.getLatestVersionForComponent)(versions);
             let latestVersion = undefined;
-            console.log(chalk_1.default.green(`Processing component ${runtimeComponentId} `));
             yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
                 var _d, _e;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
                 let { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
                 let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
-                if (!segmentToUpdate || segmentToUpdate === 'js' || segmentToUpdate === 'validation') {
+                if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, javascript_1.default)(data, handoff);
                 }
-                if (!segmentToUpdate || segmentToUpdate === 'css' || segmentToUpdate === 'validation') {
+                if (!segmentToProcess || segmentToProcess === ComponentSegment.Style || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, css_1.default)(data, handoff, sharedStyles);
                 }
-                if (!segmentToUpdate || segmentToUpdate === 'previews' || segmentToUpdate === 'validation') {
+                if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, html_1.default)(data, handoff, components);
                 }
-                if (segmentToUpdate === 'validation') {
+                if (segmentToProcess === ComponentSegment.Validation) {
                     if (((_e = (_d = handoff.config) === null || _d === void 0 ? void 0 : _d.hooks) === null || _e === void 0 ? void 0 : _e.validateComponent) && data) {
                         const validationResults = yield handoff.config.hooks.validateComponent(data);
                         data.validations = validationResults;

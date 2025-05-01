@@ -3,8 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import { getClientConfig } from '../config';
 import Handoff from '../index';
-import { buildComponents, buildIntegrationOnly } from '../pipeline';
-import { getPathToIntegration } from '../transformers/integration';
 
 /**
  * Eject the config to the working directory
@@ -20,30 +18,6 @@ export const ejectConfig = async (handoff: Handoff) => {
   }
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}`);
   console.log(chalk.green(`Config ejected to ${configPath}`));
-  return handoff;
-};
-
-/**
- * Creates a integration within the working directory
- * @param handoff
- */
-export const makeIntegration = async (handoff: Handoff) => {
-  // does an local integration exist?
-  const workingPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-  if (fs.existsSync(workingPath)) {
-    if (!handoff.force) {
-      console.log(chalk.red(`An integration already exists in the working directory. Use the --force flag to overwrite.`));
-      return;
-    }
-  }
-
-  // perform integration ejection
-  const integrationPath = getPathToIntegration(handoff, true);
-  fs.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
-  if (handoff.force) handoff.force = false;
-  console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
-  await buildIntegrationOnly(handoff);
-  await buildComponents(handoff);
   return handoff;
 };
 

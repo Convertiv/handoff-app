@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs';
-import { getSharedOptions } from '../utils';
-import { SharedArgs } from '../types';
 import Handoff from '../../';
+import { SharedArgs } from '../types';
+import { getSharedOptions } from '../utils';
 
 export interface MakeTemplateArgs extends SharedArgs {
   component: string;
@@ -23,7 +23,7 @@ const command: CommandModule<{}, MakeTemplateArgs> = {
       });
   },
   handler: async (args: MakeTemplateArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
 
     const templateComponent = args.component;
 

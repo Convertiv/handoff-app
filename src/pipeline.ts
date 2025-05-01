@@ -12,16 +12,12 @@ import { createDocumentationObject } from './documentation-object';
 import { getRequestCount } from './figma/api';
 import cssTransformer from './transformers/css/index';
 import fontTransformer from './transformers/font/index';
-import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
 import mapTransformer from './transformers/map';
 import { componentTransformer } from './transformers/preview/component';
-import previewTransformer from './transformers/preview/index';
 import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
 import sdTransformer from './transformers/sd';
-import { getTokenSetNameByProperty } from './transformers/tokens';
 import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
-import { ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
-import { filterOutNull, filterOutUndefined } from './utils';
+import { filterOutNull } from './utils';
 import { findFilesByExtension } from './utils/fs';
 import { maskPrompt, prompt } from './utils/prompt';
 
@@ -45,26 +41,6 @@ export const readPrevJSONFile = async (path: string) => {
  */
 const buildCustomFonts = async (handoff: Handoff, documentationObject: DocumentationObject) => {
   return await fontTransformer(handoff, documentationObject);
-};
-
-/**
- * Build integration
- * @param documentationObject
- * @returns
- */
-const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  await integrationTransformer(handoff, documentationObject);
-};
-
-/**
- * Build previews
- * @param documentationObject
- * @returns
- */
-const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  await Promise.all([
-    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(handoff.getPreviewFilePath(), out, { spaces: 2 })),
-  ]);
 };
 
 /**
@@ -96,7 +72,9 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens`))
       .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/maps`))
       .then(() =>
-        Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens/${name}`)))
+        Promise.all(
+          Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens/${name}`))
+        )
       )
       .then(() =>
         Promise.all(
@@ -121,7 +99,9 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       )
       .then(() =>
         Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content))
+          Object.entries(cssFiles.design).map(([name, content]) =>
+            fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content)
+          )
         )
       )
       .then(() =>
@@ -161,7 +141,9 @@ const buildStyles = async (handoff: Handoff, documentationObject: DocumentationO
       )
       .then(() =>
         Promise.all(
-          Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content))
+          Object.entries(mapFiles.design).map(([name, content]) =>
+            fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content)
+          )
         )
       )
       .then(() =>
@@ -300,13 +282,13 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
     fs.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-        zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
-          stream.promises.finished(writeStream)
-        ),
-        zipAssets(documentationObject.assets.logos, fs.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) =>
-          stream.promises.finished(writeStream)
-        ),
-      ]
+          zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
+            stream.promises.finished(writeStream)
+          ),
+          zipAssets(documentationObject.assets.logos, fs.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) =>
+            stream.promises.finished(writeStream)
+          ),
+        ]
       : []),
   ]);
 
@@ -332,129 +314,6 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
   return documentationObject;
 };
 
-export const buildRecipe = async (handoff: Handoff) => {
-  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
-
-  const processToken = (content: string, records: ComponentIntegrations): void => {
-    let match;
-    const regex = new RegExp(TOKEN_REGEX, 'g');
-    while ((match = regex.exec(content)) !== null) {
-      const [_, __, component, part, variants, cssProperty] = match;
-
-      let componentRecord = records.components.find((c) => c.name === component);
-      if (!componentRecord) {
-        componentRecord = { name: component, common: { parts: [] }, recipes: [] };
-        records.components.push(componentRecord);
-      }
-
-      const requiredTokenSet = getTokenSetNameByProperty(cssProperty);
-      const existingPartIndex = (componentRecord.common.parts ?? []).findIndex((p) => typeof p !== 'string' && p.name === part);
-
-      if (existingPartIndex === -1) {
-        componentRecord.common.parts.push({
-          name: part,
-          require: [getTokenSetNameByProperty(cssProperty)].filter(filterOutUndefined),
-        });
-      } else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
-        componentRecord.common.parts[existingPartIndex].require = [
-          ...componentRecord.common.parts[existingPartIndex].require,
-          requiredTokenSet,
-        ];
-      }
-
-      const variantPairs = variants.split(',').map((v) => v.split(':'));
-      const variantGroup: ComponentIntegrationRecipe['require'] = { variantProps: [], variantValues: {} };
-
-      variantPairs.forEach(([key, value]) => {
-        if (!variantGroup.variantProps.includes(key)) {
-          variantGroup.variantProps.push(key);
-        }
-
-        if (!variantGroup.variantValues[key]) {
-          variantGroup.variantValues[key] = [];
-        }
-
-        if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
-          variantGroup.variantValues[key].push(value);
-        }
-      });
-
-      const existingGroupIndex = componentRecord.recipes.findIndex(
-        (recipe) =>
-          recipe.require.variantProps.length === variantGroup.variantProps.length &&
-          recipe.require.variantProps.every((prop) => variantGroup.variantProps.includes(prop)) &&
-          Object.keys(recipe.require.variantValues).every(
-            (key) =>
-              recipe.require.variantValues[key].length === variantGroup.variantValues[key]?.length &&
-              recipe.require.variantValues[key].every((val) => variantGroup.variantValues[key].includes(val))
-          )
-      );
-
-      if (existingGroupIndex === -1) {
-        componentRecord.recipes.push({ require: variantGroup });
-      }
-    }
-  };
-
-  const traverseDirectory = (directory: string, records: ComponentIntegrations): void => {
-    const files = fs.readdirSync(directory);
-
-    files.forEach((file) => {
-      const fullPath = path.join(directory, file);
-      const stat = fs.statSync(fullPath);
-
-      if (stat.isDirectory()) {
-        traverseDirectory(fullPath, records);
-      } else if (stat.isFile()) {
-        const content = fs.readFileSync(fullPath, 'utf8');
-        processToken(content, records);
-      }
-    });
-  };
-
-  const integrationPath = getPathToIntegration(handoff, false);
-
-  if (!integrationPath) {
-    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration not found.'));
-    return;
-  }
-
-  const directoryToTraverse = handoff?.integrationObject?.entries?.integration;
-  if (!directoryToTraverse) {
-    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
-    return;
-  }
-
-  const componentRecords: ComponentIntegrations = { components: [] };
-  const stat = await fs.stat(directoryToTraverse);
-
-  traverseDirectory(stat.isDirectory() ? directoryToTraverse : path.dirname(directoryToTraverse), componentRecords);
-
-  componentRecords.components.forEach((component) => {
-    component.common.parts.sort();
-  });
-
-  const writePath = path.resolve(handoff.workingPath, 'recipes.json');
-
-  await fs.writeFile(writePath, JSON.stringify(componentRecords, null, 2));
-
-  console.log(chalk.green(`Integration recipe has been successfully written to ${writePath}`));
-};
-
-/**
- * Build only integrations and previews
- * @param handoff
- */
-export const buildIntegrationOnly = async (handoff: Handoff) => {
-  const documentationObject = await handoff.getDocumentationObject();
-  if (documentationObject) {
-    // Ensure that the integration object is set if possible
-    // handoff.integrationObject = initIntegrationObject(handoff);
-    await buildIntegration(handoff, documentationObject);
-    await buildPreviews(handoff, documentationObject);
-  }
-};
-
 /**
  * Run the entire pipeline
  */
@@ -468,8 +327,6 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   const documentationObject = await figmaExtract(handoff);
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject);
-  await buildIntegration(handoff, documentationObject);
-  await buildPreviews(handoff, documentationObject);
   // await buildComponents(handoff);
   if (build) {
     await buildApp(handoff);
