@@ -119,13 +119,10 @@ import { getClientConfig } from '@handoff/config';
 import { getPreview } from "@handoff/app/components/util";
 
 export const getStaticProps = async () => {
-  // get previews for components on this page
-  const previews = getPreview();
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
   return {
     props: {
-      previews,
       menu,
       config,
       current: getCurrentSection(menu, "/${id}") ?? [],
@@ -156,7 +153,6 @@ export default function Layout(props) {
         enabled: ${enabled},
       }}
       wide={${wide}}
-      allPreviews={props.previews}
       config={props.config}
       current={props.current}
     >
