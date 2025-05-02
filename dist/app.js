@@ -147,16 +147,12 @@ const transformMdx = (src, dest, id) => {
     mdx = `
 \n\n${mdx}\n\n
 import { staticBuildMenu, getCurrentSection, getClientRuntimeConfig } from "handoff-app/src/app/components/util";
-import { getPreview } from "handoff-app/src/app/components/util";
 
 export const getStaticProps = async () => {
-  // get previews for components on this page
-  const previews = getPreview();
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
   return {
     props: {
-      previews,
       menu,
       config,
       current: getCurrentSection(menu, "/${id}") ?? [],
@@ -165,10 +161,6 @@ export const getStaticProps = async () => {
       image: "${image}",
     },
   };
-};
-
-export const preview = (name) => {
-  return previews.components[name];
 };
 
 import MarkdownLayout from "handoff-app/src/app/components/Layout/Markdown";
@@ -187,7 +179,6 @@ export default function Layout(props) {
         enabled: ${enabled},
       }}
       wide={${wide}}
-      allPreviews={props.previews}
       config={props.config}
       current={props.current}
     >
