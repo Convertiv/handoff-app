@@ -34,6 +34,7 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff 
     var _a, _b;
     // Store the current NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
+    console.log('WHAT IS THIS', entry, outputPath, outputFilename);
     try {
         let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: Object.assign(Object.assign({}, config_1.default.build), { outDir: outputPath, emptyOutDir: false, minify: false, rollupOptions: {
                     input: {
@@ -136,6 +137,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
     }
     catch (e) {
         console.log(chalk_1.default.red(`Error building CSS for ${id}`));
+        console.log(e);
         throw e;
     }
     return data;
