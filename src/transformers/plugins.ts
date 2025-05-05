@@ -33,12 +33,12 @@ export function handlebarsPreviewsPlugin(data: TransformComponentTokensResult, c
     name: 'vite-plugin-previews',
     apply: 'build',
     resolveId(id) {
-      if (id === 'virtual-entry') {
+      if (id === 'script') {
         return id;
       }
     },
     load(id) {
-      if (id === 'virtual-entry') {
+      if (id === 'script') {
         return 'export default {}'; // dummy minimal entry
       }
     },
