@@ -146,18 +146,46 @@ export interface Config {
     validateComponent?: (component: TransformComponentTokensResult) => Promise<Record<string, ValidationResult>>;
 
     /**
-     * Optional hook to override the Vite configuration
+     * Optional hook to override the JavaScript Vite configuration
      * @param config - The default Vite configuration
      * @returns Modified Vite configuration
      * @example
      * ```typescript
-     * viteConfigOverride: (config) => {
+     * jsBuildConfig: (config) => {
      *   ... // Modify the Vite config as needed
      *   return config;
      * }
      * ```
      */
     jsBuildConfig?: (config: InlineConfig) => InlineConfig;
+
+    /**
+     * Optional hook to override the CSS Vite configuration
+     * @param config - The default Vite configuration
+     * @returns Modified Vite configuration
+     * @example
+     * ```typescript
+     * cssBuildConfig: (config) => {
+     *   ... // Modify the Vite config as needed
+     *   return config;
+     * }
+     * ```
+     */
+    cssBuildConfig?: (config: InlineConfig) => InlineConfig;
+
+    /**
+     * Optional hook to override the HTML Vite configuration
+     * @param config - The default Vite configuration
+     * @returns Modified Vite configuration
+     * @example
+     * ```typescript
+     * htmlBuildConfig: (config) => {
+     *   ... // Modify the Vite config as needed
+     *   return config;
+     * }
+     * ```
+     */
+    htmlBuildConfig?: (config: InlineConfig) => InlineConfig;
   };
 }
 

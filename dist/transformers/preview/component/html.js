@@ -32,7 +32,7 @@ const component_1 = require("../component");
  * ```
  */
 const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b, _c;
     if (!((_a = data.entries) === null || _a === void 0 ? void 0 : _a.template))
         return data;
     // Store the current NODE_ENV value before vite build
@@ -41,7 +41,7 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     // the original NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
-        const viteConfig = Object.assign(Object.assign({}, config_1.default), { build: {
+        let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: {
                 outDir: (0, component_1.getComponentOutputPath)(handoff),
                 emptyOutDir: false,
                 rollupOptions: {
@@ -50,6 +50,10 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
                     },
                 },
             }, plugins: [...(config_1.default.plugins || []), (0, plugins_1.handlebarsPreviewsPlugin)(data, components)] });
+        // Allow configuration to be modified through hooks
+        if ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.htmlBuildConfig) {
+            viteConfig = handoff.config.hooks.htmlBuildConfig(viteConfig);
+        }
         yield (0, vite_1.build)(viteConfig);
     }
     catch (error) {
