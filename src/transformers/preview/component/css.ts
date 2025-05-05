@@ -18,9 +18,9 @@ import { TransformComponentTokensResult } from '../types';
  * @param options.handoff - The Handoff configuration object
  */
 const buildCssBundle = async (
-  { entry, outputPath, outputFilename, loadPaths, handoff }: { 
-    entry: string; 
-    outputPath: string; 
+  { entry, outputPath, outputFilename, loadPaths, handoff }: {
+    entry: string;
+    outputPath: string;
     outputFilename: string;
     loadPaths: string[];
     handoff: Handoff;
@@ -28,7 +28,7 @@ const buildCssBundle = async (
 ): Promise<void> => {
   // Store the current NODE_ENV value
   const oldNodeEnv = process.env.NODE_ENV;
-
+  console.log('WHAT IS THIS', entry, outputPath, outputFilename);
   try {
     let viteConfig: InlineConfig = {
       ...viteBaseConfig,
@@ -131,24 +131,28 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       });
 
       // Read the built CSS
-      const builtCss = await fs.readFile(path.resolve(outputPath, `${id}.css`), 'utf8');
-      data['css'] = builtCss;
+      const builtCssPath = path.resolve(outputPath, `${id}.css`);
+      if (fs.existsSync(builtCssPath)) {
+        const builtCss = await fs.readFile(builtCssPath, 'utf8');
+        data['css'] = builtCss;
 
-      // Handle shared styles
-      const splitCSS = builtCss.split('/* COMPONENT STYLES*/');
-      if (splitCSS && splitCSS.length > 1) {
-        data['css'] = splitCSS[1];
-        data['sharedStyles'] = splitCSS[0];
-        await fs.writeFile(path.resolve(outputPath, 'shared.css'), data['sharedStyles']);
-      } else {
-        if (!sharedStyles) {
-          sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
+        // Handle shared styles
+        const splitCSS = builtCss.split('/* COMPONENT STYLES*/');
+        if (splitCSS && splitCSS.length > 1) {
+          data['css'] = splitCSS[1];
+          data['sharedStyles'] = splitCSS[0];
+          await fs.writeFile(path.resolve(outputPath, 'shared.css'), data['sharedStyles']);
+        } else {
+          if (!sharedStyles) {
+            sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
+          }
+          await fs.writeFile(path.resolve(outputPath, 'shared.css'), sharedStyles);
         }
-        await fs.writeFile(path.resolve(outputPath, 'shared.css'), sharedStyles);
       }
     }
   } catch (e) {
     console.log(chalk.red(`Error building CSS for ${id}`));
+    console.log(e);
     throw e;
   }
 
@@ -161,11 +165,11 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
   const integration = initIntegrationObject(handoff)[0];
-  
+
   if (integration?.entries?.integration && fs.existsSync(integration.entries.integration)) {
     const stat = await fs.stat(integration.entries.integration);
-    const entryPath = stat.isDirectory() 
-      ? path.resolve(integration.entries.integration, 'main.scss') 
+    const entryPath = stat.isDirectory()
+      ? path.resolve(integration.entries.integration, 'main.scss')
       : integration.entries.integration;
 
     if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
