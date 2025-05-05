@@ -34,7 +34,6 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff 
     var _a, _b;
     // Store the current NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
-    console.log('WHAT IS THIS', entry, outputPath, outputFilename);
     try {
         let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: Object.assign(Object.assign({}, config_1.default.build), { outDir: outputPath, emptyOutDir: false, minify: false, rollupOptions: {
                     input: {
@@ -118,26 +117,28 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
                 handoff
             });
             // Read the built CSS
-            const builtCss = yield fs_extra_1.default.readFile(path_1.default.resolve(outputPath, `${id}.css`), 'utf8');
-            data['css'] = builtCss;
-            // Handle shared styles
-            const splitCSS = builtCss.split('/* COMPONENT STYLES*/');
-            if (splitCSS && splitCSS.length > 1) {
-                data['css'] = splitCSS[1];
-                data['sharedStyles'] = splitCSS[0];
-                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'shared.css'), data['sharedStyles']);
-            }
-            else {
-                if (!sharedStyles) {
-                    sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
+            const builtCssPath = path_1.default.resolve(outputPath, `${id}.css`);
+            if (fs_extra_1.default.existsSync(builtCssPath)) {
+                const builtCss = yield fs_extra_1.default.readFile(builtCssPath, 'utf8');
+                data['css'] = builtCss;
+                // Handle shared styles
+                const splitCSS = builtCss.split('/* COMPONENT STYLES*/');
+                if (splitCSS && splitCSS.length > 1) {
+                    data['css'] = splitCSS[1];
+                    data['sharedStyles'] = splitCSS[0];
+                    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'shared.css'), data['sharedStyles']);
                 }
-                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'shared.css'), sharedStyles);
+                else {
+                    if (!sharedStyles) {
+                        sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
+                    }
+                    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputPath, 'shared.css'), sharedStyles);
+                }
             }
         }
     }
     catch (e) {
         console.log(chalk_1.default.red(`Error building CSS for ${id}`));
-        console.log(e);
         throw e;
     }
     return data;
