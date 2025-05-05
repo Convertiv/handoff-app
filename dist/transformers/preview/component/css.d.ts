@@ -40,9 +40,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
     validations?: Record<string, import("../../../types/config").ValidationResult>;
 }>;
 /**
- * Check to see if there's an entry point for the main JS file
- * build that javascript and write it to the output folder
- * @param handoff
+ * Build the main CSS file using Vite
  */
 export declare const buildMainCss: (handoff: Handoff) => Promise<void>;
 export default buildComponentCss;
