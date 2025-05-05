@@ -28,7 +28,6 @@ const buildCssBundle = async (
 ): Promise<void> => {
   // Store the current NODE_ENV value
   const oldNodeEnv = process.env.NODE_ENV;
-  console.log('WHAT IS THIS', entry, outputPath, outputFilename);
   try {
     let viteConfig: InlineConfig = {
       ...viteBaseConfig,
@@ -152,7 +151,6 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
     }
   } catch (e) {
     console.log(chalk.red(`Error building CSS for ${id}`));
-    console.log(e);
     throw e;
   }
 
