@@ -15,20 +15,22 @@ import { TransformComponentTokensResult } from '../types';
  * @param options.outputPath - The directory where the bundle will be output
  * @param options.outputFilename - The name of the output file
  * @param options.loadPaths - Array of paths for SASS to look for imports
+ * @param options.handoff - The Handoff configuration object
  */
 const buildCssBundle = async (
-  { entry, outputPath, outputFilename, loadPaths }: { 
+  { entry, outputPath, outputFilename, loadPaths, handoff }: { 
     entry: string; 
     outputPath: string; 
     outputFilename: string;
     loadPaths: string[];
+    handoff: Handoff;
   }
 ): Promise<void> => {
   // Store the current NODE_ENV value
   const oldNodeEnv = process.env.NODE_ENV;
 
   try {
-    const viteConfig: InlineConfig = {
+    let viteConfig: InlineConfig = {
       ...viteBaseConfig,
       build: {
         ...viteBaseConfig.build,
@@ -68,6 +70,11 @@ const buildCssBundle = async (
         }
       }
     };
+
+    // Allow configuration to be modified through hooks
+    if (handoff?.config?.hooks?.cssBuildConfig) {
+      viteConfig = handoff.config.hooks.cssBuildConfig(viteConfig);
+    }
 
     await viteBuild(viteConfig);
   } finally {
@@ -119,7 +126,8 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
         entry,
         outputPath,
         outputFilename: `${id}.css`,
-        loadPaths
+        loadPaths,
+        handoff
       });
 
       // Read the built CSS
@@ -179,7 +187,8 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           entry: entryPath,
           outputPath,
           outputFilename: 'main.css',
-          loadPaths
+          loadPaths,
+          handoff
         });
       } catch (e) {
         console.log(chalk.red(`Error building main CSS`));

@@ -28,12 +28,14 @@ const component_1 = require("../component");
  * @param options.outputPath - The directory where the bundle will be output
  * @param options.outputFilename - The name of the output file
  * @param options.loadPaths - Array of paths for SASS to look for imports
+ * @param options.handoff - The Handoff configuration object
  */
-const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths }) => __awaiter(void 0, void 0, void 0, function* () {
+const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff }) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     // Store the current NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
-        const viteConfig = Object.assign(Object.assign({}, config_1.default), { build: Object.assign(Object.assign({}, config_1.default.build), { outDir: outputPath, emptyOutDir: false, minify: false, rollupOptions: {
+        let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: Object.assign(Object.assign({}, config_1.default.build), { outDir: outputPath, emptyOutDir: false, minify: false, rollupOptions: {
                     input: {
                         style: entry
                     },
@@ -63,6 +65,10 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths }) => __a
                     }
                 }
             } });
+        // Allow configuration to be modified through hooks
+        if ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.cssBuildConfig) {
+            viteConfig = handoff.config.hooks.cssBuildConfig(viteConfig);
+        }
         yield (0, vite_1.build)(viteConfig);
     }
     finally {
@@ -76,9 +82,9 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths }) => __a
     }
 });
 const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _c, _d, _e;
     const id = data.id;
-    const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
+    const entry = (_c = data.entries) === null || _c === void 0 ? void 0 : _c.scss;
     if (!entry) {
         return data;
     }
@@ -100,14 +106,15 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
                 path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                 path_1.default.resolve(handoff.workingPath, 'node_modules'),
             ];
-            if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
+            if ((_e = (_d = handoff.integrationObject) === null || _d === void 0 ? void 0 : _d.entries) === null || _e === void 0 ? void 0 : _e.integration) {
                 loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
             }
             yield buildCssBundle({
                 entry,
                 outputPath,
                 outputFilename: `${id}.css`,
-                loadPaths
+                loadPaths,
+                handoff
             });
             // Read the built CSS
             const builtCss = yield fs_extra_1.default.readFile(path_1.default.resolve(outputPath, `${id}.css`), 'utf8');
@@ -137,10 +144,10 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
  * Build the main CSS file using Vite
  */
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e, _f;
+    var _f, _g, _h;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const integration = (0, index_1.initIntegrationObject)(handoff)[0];
-    if (((_d = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _d === void 0 ? void 0 : _d.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
+    if (((_f = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
         const stat = yield fs_extra_1.default.stat(integration.entries.integration);
         const entryPath = stat.isDirectory()
             ? path_1.default.resolve(integration.entries.integration, 'main.scss')
@@ -154,14 +161,15 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                 ];
-                if ((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) {
+                if ((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration) {
                     loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
                 }
                 yield buildCssBundle({
                     entry: entryPath,
                     outputPath,
                     outputFilename: 'main.css',
-                    loadPaths
+                    loadPaths,
+                    handoff
                 });
             }
             catch (e) {
