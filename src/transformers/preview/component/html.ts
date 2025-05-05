@@ -34,7 +34,7 @@ export const buildPreviews = async (
   const oldNodeEnv = process.env.NODE_ENV;
 
   try {
-    const viteConfig: InlineConfig = {
+    let viteConfig: InlineConfig = {
       ...viteBaseConfig,
       build: {
         outDir: getComponentOutputPath(handoff),
@@ -47,6 +47,11 @@ export const buildPreviews = async (
       },
       plugins: [...(viteBaseConfig.plugins || []), handlebarsPreviewsPlugin(data, components)],
     };
+
+    // Allow configuration to be modified through hooks
+    if (handoff?.config?.hooks?.htmlBuildConfig) {
+      viteConfig = handoff.config.hooks.htmlBuildConfig(viteConfig);
+    }
 
     await viteBuild(viteConfig);
   } catch (error) {
