@@ -41,7 +41,7 @@ export const buildPreviews = async (
         emptyOutDir: false,
         rollupOptions: {
           input: {
-            'virtual-entry': 'virtual-entry',
+            'script': 'script',
           },
         },
       },
@@ -55,7 +55,11 @@ export const buildPreviews = async (
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
     // that depend on the correct NODE_ENV value
-    (process.env as any).NODE_ENV = oldNodeEnv;
+    if (oldNodeEnv === 'development' || oldNodeEnv === 'production' || oldNodeEnv === 'test') {
+      (process.env as any).NODE_ENV = oldNodeEnv;
+    } else {
+      delete (process.env as any).NODE_ENV;
+    }
   }
 
   return data;
