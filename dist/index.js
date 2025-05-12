@@ -343,8 +343,8 @@ const initConfig = (configOverride) => {
     return returnConfig;
 };
 const initIntegrationObject = (handoff) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    var _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _k;
     const configFiles = [];
     const result = {
         options: {},
@@ -357,10 +357,14 @@ const initIntegrationObject = (handoff) => {
     if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
         result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
+    //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
         result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
+    else {
+        console.log(chalk_1.default.red('No js entry found in config'), handoff.debug ? `Path: ${path_1.default.resolve(handoff.workingPath, (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.js)}` : '');
+    }
+    if ((_g = (_f = handoff.config.entries) === null || _f === void 0 ? void 0 : _f.components) === null || _g === void 0 ? void 0 : _g.length) {
         const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
         for (const componentPath of componentPaths) {
             const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
@@ -412,10 +416,10 @@ const initIntegrationObject = (handoff) => {
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
-                (_j = component.options).transformer || (_j.transformer = { defaults: {}, replace: {} });
+                (_k = component.options).transformer || (_k.transformer = { defaults: {}, replace: {} });
                 const transformer = component.options.transformer;
-                (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
-                (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);
+                (_h = transformer.cssRootClass) !== null && _h !== void 0 ? _h : (transformer.cssRootClass = null);
+                (_j = transformer.tokenNameSegments) !== null && _j !== void 0 ? _j : (transformer.tokenNameSegments = null);
                 // Normalize keys and values to lowercase
                 transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, transformer.defaults));
                 transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, transformer.replace));
