@@ -17,15 +17,19 @@ import { TransformComponentTokensResult } from '../types';
  * @param options.loadPaths - Array of paths for SASS to look for imports
  * @param options.handoff - The Handoff configuration object
  */
-const buildCssBundle = async (
-  { entry, outputPath, outputFilename, loadPaths, handoff }: {
-    entry: string;
-    outputPath: string;
-    outputFilename: string;
-    loadPaths: string[];
-    handoff: Handoff;
-  }
-): Promise<void> => {
+const buildCssBundle = async ({
+  entry,
+  outputPath,
+  outputFilename,
+  loadPaths,
+  handoff,
+}: {
+  entry: string;
+  outputPath: string;
+  outputFilename: string;
+  loadPaths: string[];
+  handoff: Handoff;
+}): Promise<void> => {
   // Store the current NODE_ENV value
   const oldNodeEnv = process.env.NODE_ENV;
   try {
@@ -38,7 +42,7 @@ const buildCssBundle = async (
         minify: false,
         rollupOptions: {
           input: {
-            style: entry
+            style: entry,
           },
           output: {
             assetFileNames: (assetInfo) => {
@@ -46,9 +50,9 @@ const buildCssBundle = async (
                 return outputFilename;
               }
               return assetInfo.name as string;
-            }
-          }
-        }
+            },
+          },
+        },
       },
       css: {
         preprocessorOptions: {
@@ -56,18 +60,20 @@ const buildCssBundle = async (
             includePaths: loadPaths,
             quietDeps: true,
             // Maintain compatibility with older sass imports
-            importer: [(url: string) => {
-              if (url.startsWith('~')) {
-                return { file: url.slice(1) };
-              }
-              return null;
-            }],
+            importer: [
+              (url: string) => {
+                if (url.startsWith('~')) {
+                  return { file: url.slice(1) };
+                }
+                return null;
+              },
+            ],
             // Use modern API settings
             api: 'modern',
-            silenceDeprecations: ["import", "legacy-js-api"],
-          }
-        }
-      }
+            silenceDeprecations: ['import', 'legacy-js-api'],
+          },
+        },
+      },
     };
 
     // Allow configuration to be modified through hooks
@@ -126,7 +132,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
         outputPath,
         outputFilename: `${id}.css`,
         loadPaths,
-        handoff
+        handoff,
       });
 
       // Read the built CSS
@@ -166,9 +172,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
 
   if (integration?.entries?.integration && fs.existsSync(integration.entries.integration)) {
     const stat = await fs.stat(integration.entries.integration);
-    const entryPath = stat.isDirectory()
-      ? path.resolve(integration.entries.integration, 'main.scss')
-      : integration.entries.integration;
+    const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
 
     if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
       console.log(chalk.green(`Building main CSS file`));
@@ -190,7 +194,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           outputPath,
           outputFilename: 'main.css',
           loadPaths,
-          handoff
+          handoff,
         });
       } catch (e) {
         console.log(chalk.red(`Error building main CSS`));

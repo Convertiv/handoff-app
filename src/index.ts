@@ -333,9 +333,14 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
   if (!!handoff.config.entries?.scss) {
     result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
-
+  //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
   if (!!handoff.config.entries?.js) {
     result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
+  } else {
+    console.log(
+      chalk.red('No js entry found in config'),
+      handoff.debug ? `Path: ${path.resolve(handoff.workingPath, handoff.config.entries?.js)}` : ''
+    );
   }
 
   if (handoff.config.entries?.components?.length) {
