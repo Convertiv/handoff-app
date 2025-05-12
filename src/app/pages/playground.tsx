@@ -49,6 +49,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbS
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 
 import { GetStaticProps } from 'next';
+import Image from 'next/image';
 import { ConfigContextProvider } from '../components/context/ConfigContext';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { ChangelogDocumentationProps, getChangelog, getClientRuntimeConfig } from '../components/util';
@@ -96,7 +97,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="absolute left-[-200px] top-[-200px] z-[-1] h-[400px] w-[600px] bg-[#FD3146] opacity-[0.07] blur-[280px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {/* <img
+            {/* <Image
             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/back.png`}
             width={1528}
             height={1250}
@@ -140,7 +141,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                     >
                       <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`}
                           width={1528}
                           height={1250}
@@ -160,7 +161,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
 
                       <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-2.svg`}
                           width={1528}
                           height={1250}
@@ -180,7 +181,7 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
 
                       <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-3.svg`}
                           width={1528}
                           height={1250}
@@ -903,13 +904,13 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                       </p>
                       <div className="mb-8 grid grid-cols-2 gap-6">
                         <div className="flex flex-col @container">
-                          <img
+                          <Image
                             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-correct.png`}
                             alt="Usage Cards"
                             className="rounded-xl @[400px]:rounded-3xl"
                           />
                           <div className="mt-4 flex flex-row gap-4 @[400px]:mt-5">
-                            <img
+                            <Image
                               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/check-circle.svg`}
                               alt="Do"
                               className="mt-0.5 h-4 w-4 @[400px]:mt-0 @[400px]:h-6 @[400px]:w-6"
@@ -920,13 +921,13 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                           </div>
                         </div>
                         <div className="flex flex-col @container">
-                          <img
+                          <Image
                             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
                             alt="Usage Cards"
                             className="rounded-xl @[400px]:rounded-3xl"
                           />
                           <div className="mt-4 flex flex-row gap-4 @[400px]:mt-5">
-                            <img
+                            <Image
                               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
                               alt="Do"
                               className="mt-0.5 h-4 w-4 @[400px]:mt-0 @[400px]:h-6 @[400px]:w-6"
@@ -943,13 +944,13 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                       </p>
                       <div className="mb-8 grid grid-cols-3 gap-6">
                         <div className="flex flex-col @container">
-                          <img
+                          <Image
                             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-correct.png`}
                             alt="Usage Cards"
                             className="rounded-xl @[400px]:rounded-3xl"
                           />
                           <div className="mt-4 flex flex-row gap-4 @[400px]:mt-5">
-                            <img
+                            <Image
                               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/check-circle.svg`}
                               alt="Do"
                               className="mt-0.5 h-4 w-4 @[400px]:mt-0 @[400px]:h-6 @[400px]:w-6"
@@ -960,13 +961,13 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                           </div>
                         </div>
                         <div className="flex flex-col @container">
-                          <img
+                          <Image
                             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
                             alt="Usage Cards"
                             className="rounded-xl @[400px]:rounded-3xl"
                           />
                           <div className="mt-4 flex flex-row gap-4 @[400px]:mt-5">
-                            <img
+                            <Image
                               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
                               alt="Do"
                               className="mt-0.5 h-4 w-4 @[400px]:mt-0 @[400px]:h-6 @[400px]:w-6"
@@ -977,13 +978,13 @@ const ButtonDemo = ({ content, menu, metadata, config, changelog, current }: Cha
                           </div>
                         </div>
                         <div className="flex flex-col @container">
-                          <img
+                          <Image
                             src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/usage-wrong.png`}
                             alt="Usage Cards"
                             className="rounded-xl @[400px]:rounded-3xl"
                           />
                           <div className="mt-4 flex flex-row gap-4 @[400px]:mt-5">
-                            <img
+                            <Image
                               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/x-circle.svg`}
                               alt="Do"
                               className="mt-0.5 h-4 w-4 @[400px]:mt-0 @[400px]:h-6 @[400px]:w-6"
