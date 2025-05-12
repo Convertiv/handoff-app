@@ -30,14 +30,14 @@ const component_1 = require("../component");
  * @param options.loadPaths - Array of paths for SASS to look for imports
  * @param options.handoff - The Handoff configuration object
  */
-const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff }) => __awaiter(void 0, void 0, void 0, function* () {
+const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff, }) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     // Store the current NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
         let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: Object.assign(Object.assign({}, config_1.default.build), { outDir: outputPath, emptyOutDir: false, minify: false, rollupOptions: {
                     input: {
-                        style: entry
+                        style: entry,
                     },
                     output: {
                         assetFileNames: (assetInfo) => {
@@ -45,25 +45,27 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff 
                                 return outputFilename;
                             }
                             return assetInfo.name;
-                        }
-                    }
+                        },
+                    },
                 } }), css: {
                 preprocessorOptions: {
                     scss: {
                         includePaths: loadPaths,
                         quietDeps: true,
                         // Maintain compatibility with older sass imports
-                        importer: [(url) => {
+                        importer: [
+                            (url) => {
                                 if (url.startsWith('~')) {
                                     return { file: url.slice(1) };
                                 }
                                 return null;
-                            }],
+                            },
+                        ],
                         // Use modern API settings
                         api: 'modern',
-                        silenceDeprecations: ["import", "legacy-js-api"],
-                    }
-                }
+                        silenceDeprecations: ['import', 'legacy-js-api'],
+                    },
+                },
             } });
         // Allow configuration to be modified through hooks
         if ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.cssBuildConfig) {
@@ -114,7 +116,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
                 outputPath,
                 outputFilename: `${id}.css`,
                 loadPaths,
-                handoff
+                handoff,
             });
             // Read the built CSS
             const builtCssPath = path_1.default.resolve(outputPath, `${id}.css`);
@@ -152,9 +154,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
     const integration = (0, index_1.initIntegrationObject)(handoff)[0];
     if (((_f = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
         const stat = yield fs_extra_1.default.stat(integration.entries.integration);
-        const entryPath = stat.isDirectory()
-            ? path_1.default.resolve(integration.entries.integration, 'main.scss')
-            : integration.entries.integration;
+        const entryPath = stat.isDirectory() ? path_1.default.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
         if (entryPath === integration.entries.integration || fs_extra_1.default.existsSync(entryPath)) {
             console.log(chalk_1.default.green(`Building main CSS file`));
             try {
@@ -172,7 +172,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                     outputPath,
                     outputFilename: 'main.css',
                     loadPaths,
-                    handoff
+                    handoff,
                 });
             }
             catch (e) {
