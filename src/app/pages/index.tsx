@@ -1,5 +1,6 @@
 import { ArrowRight, Component, Hexagon, Layers, Shapes } from 'lucide-react';
 import { GetStaticProps } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
@@ -84,7 +85,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <Image src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
               </div>
               <h3 className="text-base font-medium">Colors</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
@@ -102,7 +103,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/typography.svg`} alt="Typography" />
+                <Image src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/typography.svg`} alt="Typography" />
               </div>
               <h3 className="text-base font-medium">Typography</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
@@ -142,7 +143,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <Image src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
               </div>
               <h3 className="text-base font-medium">Components</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Atomic reusable components.</p>
@@ -158,7 +159,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           >
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
-                <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
+                <Image src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`} alt="Colors" />
               </div>
               <h3 className="text-base font-medium">Blocks</h3>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Bigger sections used to quickly build pages.</p>
