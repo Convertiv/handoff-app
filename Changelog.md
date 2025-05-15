@@ -42,12 +42,15 @@ This release does a number major things -
   query the
   - Each component is published at /api/component/{name}.json. This allows systems
     to fetch just the relevant component.
-  -
 - Completely redesigns and rearchitects the application.
   - Redesigned using shadCn tailwind components
   - Reorganized the information architecture to default to best practice in
     organizing foundations, systems and guidelines.
   - This architecture and design can be customized
+
+See the demo site at demo.handoff.com and the demo code at h
+https://github.com/Convertiv/handoff-demo to have a sample of how this should be
+structured
 
 ## Component Structure
 
