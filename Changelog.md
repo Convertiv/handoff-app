@@ -6,21 +6,298 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2025-05-14
+
+This release is a major reorganization of Handoff. We've preserved the core
+Figma Token ETL behavior, but this release significantly rethinks and improves
+the documentation application.
+
+### Justification
+
+The Handoff documentation app was initial designed to complement the token extraction
+and document simple tokens. Over time, we added the ability to document Figma
+components in the application. We supported integrations that would allow
+users to describe Figma components in code.
+
+As we built out more complex design system documentation, we quickly hit the limits
+of what we could build and describe with that simple system. We needed a way
+to flexibly describe components - both defined in Figma, and standalone custom
+components. There are other open source products like Storybook that have some
+of this functionality but we were looking for a more flexible, and robust
+architecture for describing and distributing components across ecosystems.
+
+This release does a number major things -
+
+- Introduces a new component architecture, allowing users to describe components
+  using handlebars, css, and JSON
+  - These components are built, compiled, and validated on each handoff build. The
+    build system is designed to be highly configurable.
+  - Each component has a set of typed properties allowing users to pass pass in
+    data to the component, and visualize variations
+  - Components can be annotated with metadata to allow users to provide robust
+    usage guidelines.
+  - Each component is semver versioned
+  -
+- Publishes a robust API at /api/components.json that allows remote systems to
+  query the
+  - Each component is published at /api/component/{name}.json. This allows systems
+    to fetch just the relevant component.
+  -
+- Completely redesigns and rearchitects the application.
+  - Redesigned using shadCn tailwind components
+  - Reorganized the information architecture to default to best practice in
+    organizing foundations, systems and guidelines.
+  - This architecture and design can be customized
+
+## Component Structure
+
+In this version components should be stored at `{integrationPath}/components`.
+Each integration should be in a folder with a unique name. This name will be
+used as the id for the component.
+
+Within each component folder, there should be at least one folder, named
+with a semver name. The structure of this should look like
+
+- {integrationPath}
+  - components
+    - component1
+      - 1.0.0
+        - component1.json - Describes the component in a JSON format documented below
+        - component1.hbs - A handlebar template to describe the markup of the component
+        - component1.scss - An optional style sheet to include with the project
+        - component1.js - An optional js file to include with the project
+
+### Minimum Component JSON
+
+This is a sample json component to show how you can structure the component
+documenation. Most of this is metadata used to construct robust documentation
+for users.
+
+The two important semantic sections are `previews` and `properties`. Properties
+defines a list of properties the component accepts. They are defined using the
+OpenAPI json specification.
+
+Once you define a list of properties, you can then define a list of previews.
+Each preview defines values for the properties. Handoff will then render a set
+of html previews of your component. This way you can render variations
+simply.
+
+```JSON
+{
+  "title": "Accordion",
+  "image": "https://placehold.co/1360x900",
+  "description": "Collapsible sections for toggling sections of content on and off.",
+  "figma": "https://www.figma.com/design/0gKWw8gYChpItKWzh8o23N/SS%26C-Design-System?node-id=301-598&t=qoaWE7Tx8sH4njGu-4",
+  "type": "block",
+  "group": "Accordion",
+  "categories": ["Components"],
+  "tags": ["accordion"],
+  "should_do": ["Show a list of items in an accordion format.", "Allow users to expand and collapse each item individually."],
+  "should_not_do": ["Use this component for a large number of items."],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2021-01-01",
+      "changes": ["Initial version."]
+    }
+  ],
+  "previews": {
+    "generic": {
+      "title": "Generic",
+      "values": {
+        "id": "accordion",
+        "items": [
+          {
+            "id": "accordion-item-1",
+            "title": "Accordion Item 1",
+            "paragraph": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
+            "image": {
+              "url": "https://placehold.co/1360x900",
+              "alt": "Image alt text"
+            }
+          },
+          }
+        ]
+      }
+    }
+  },
+  "properties": {
+    "id": {
+      "name": "ID",
+      "description": "Unique identifier for the accordion.",
+      "type": "text",
+      "default": "accordion",
+      "rules": {
+        "required": true,
+        "content": {
+          "min": 5,
+          "max": 25
+        },
+        "pattern": "^[a-z0-9-]+$"
+      }
+    },
+    "items": {
+      "name": "Items",
+      "description": "Accordion items",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "name": "ID",
+            "description": "Unique identifier for the accordion item.",
+            "type": "text",
+            "default": "accordion-item-1",
+            "rules": {
+              "required": true,
+              "content": {
+                "min": 5,
+                "max": 25
+              },
+              "pattern": "^[a-z0-9-]+$"
+            }
+          },
+          "title": {
+            "name": "Title",
+            "description": "Title of the accordion item.",
+            "type": "text",
+            "default": "Accordion Item 1",
+            "rules": {
+              "required": true,
+              "content": {
+                "min": 5,
+                "max": 25
+              }
+            }
+          },
+          "paragraph": {
+            "name": "Paragraph",
+            "description": "Paragraph of the accordion item.",
+            "type": "text",
+            "default": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
+            "rules": {
+              "required": true,
+              "content": {
+                "min": 5,
+                "max": 100
+              }
+            }
+          },
+          "image": {
+            "name": "Image",
+            "description": "Image of the accordion item.",
+            "type": "image",
+            "default": {
+              "url": "https://placehold.co/1360x900",
+              "alt": "Image alt text"
+            },
+            "rules": {
+              "required": true,
+              "dimensions": {
+                "min": {
+                  "width": 1360,
+                  "height": 900
+                },
+                "max": {
+                  "width": 1360,
+                  "height": 900
+                }
+              }
+            }
+          }
+        }
+      },
+      "rules": {
+        "required": true,
+        "min": 1,
+        "max": 10
+      }
+    }
+  }
+}
+```
+
+### Handlebars Templates
+
+We anticipate allowing other templating systems in the future, but in this
+version, we support handlebars with limited logic. Using Handlebars allows
+us to create a simple system that will be compatible with most downstream
+platforms.
+
+There are two special feature of this handlebars file -
+
+- `#field` This allows you wrap a field in a tag. This allows handoff to inject
+  metadata around a field to make the field inline editable, and to allow us to
+  open a sidebar with metadata about the property. You don't have to use this
+  but its helpful.
+- `style` and `script` - These tags allow us to inject automatically the built
+  script and style artifacts.
+
+```html
+<head>
+  {{{style}}} {{{script}}}
+</head>
+<body class="preview-body">
+  <section class="py-lg-12 py-8">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+          <div class="accordion accordion-spaced" id="{{properties.id}}">
+            {{#each properties.items}}
+            <div class="accordion-item">
+              <h3 class="accordion-header" id="{{../properties.id}}-heading-{{this.id}}">
+                <button
+                  class="accordion-button"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#{{../properties.id}}-collapse-{{this.id}}"
+                  aria-expanded="true"
+                  aria-controls="{{../properties.id}}-collapse-{{this.id}}"
+                >
+                  {{#field "items.title" }}{{this.title}}{{/field}}
+                </button>
+              </h3>
+              <div
+                id="{{../properties.id}}-collapse-{{this.id}}"
+                class="accordion-collapse collapse"
+                aria-labelledby="{{this.id}}"
+                data-bs-parent="#{{../properties.id}}-heading-{{this.id}}"
+              >
+                <div class="accordion-body w-lg-90 mx-lg-auto fs-lg">
+                  <p>{{#field "items.paragraph" }}{{this.paragraph}}{{/field}}</p>
+                </div>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+```
+
+### Bugfixes
+
 ## [0.15.2] - 2024-12-11
+
 This release fixes a small bug when pulling foundation tokens with nested names.
 
 ### Bugfixes
-- Figma's name schema delivers names as {group}/{name}. If your foundation 
-(color, shadow, etc) names include a slash `Blue/100` Handoff would only grab
-the first part of that name, and construct the token excluding the remaining
-data. This patch resolves that so instead of getting `primitive-blue` you will
-now get `primitive-blue-100` as your token.
+
+- Figma's name schema delivers names as {group}/{name}. If your foundation
+  (color, shadow, etc) names include a slash `Blue/100` Handoff would only grab
+  the first part of that name, and construct the token excluding the remaining
+  data. This patch resolves that so instead of getting `primitive-blue` you will
+  now get `primitive-blue-100` as your token.
 
 ## [0.15.1] - 2024-11-27
-This is a minor release to fix several small typing issues that cause problems 
+
+This is a minor release to fix several small typing issues that cause problems
 in the linter when running as a local NPM package.
 
 ### Bugfixes
+
 - Fixes a typing issue in the transformers when including the handoff core package
 - Fixes a typing issue when including the ReferenceObject type
 
@@ -37,8 +314,8 @@ to structure and reuse styles across multiple large components.
   component styles in the tokens export. This allows you to use foundation styles
   as variables in component styles in CSS, SASS, and Style Dictionaries.
   - To enable, set `useVariables` to `true` in the `handoff.config.json` file.
-  - You can also enable variable support via the `.env` var 
-  `HANDOFF_USE_VARIABLES`. You can use a boolean or string ("true"/"false")
+  - You can also enable variable support via the `.env` var
+    `HANDOFF_USE_VARIABLES`. You can use a boolean or string ("true"/"false")
   - When enabled, Handoff will create variable references in the component styles
     for the foundation styles wherever possible instead of using the string value.
   - For example a color foundation style `Blue` in the `Primary` color group
