@@ -427,12 +427,10 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
 
   if (handoff.config.entries?.components?.length) {
     const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
-
     for (const componentPath of componentPaths) {
       const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
       const componentBaseName = path.basename(resolvedComponentPath);
       const versions = getVersionsForComponent(resolvedComponentPath);
-
       if (!versions.length) {
         console.warn(`No versions found for component at: ${resolvedComponentPath}`);
         continue;
@@ -574,13 +572,7 @@ const getVersionsForComponent = (componentPath: string): string[] => {
     // and each directory inside should be a version
     for (const versionDirectory of versionDirectories) {
       if (semver.valid(versionDirectory)) {
-        const versionFiles = fs.readdirSync(path.resolve(componentPath, versionDirectory));
-        for (const versionFile of versionFiles) {
-          if (versionFile.endsWith('.hbs')) {
-            versions.push(versionDirectory);
-            break;
-          }
-        }
+        versions.push(versionDirectory);
       } else {
         console.error(`Invalid version directory ${versionDirectory}`);
       }
