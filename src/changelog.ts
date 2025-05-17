@@ -1,6 +1,5 @@
 import { Types as HandoffTypes } from 'handoff-core';
 import isEqual from 'lodash/isEqual';
-import { AssetObject } from './types';
 
 export interface ChangelogRecord {
   timestamp: string;
@@ -9,8 +8,8 @@ export interface ChangelogRecord {
     typography?: ChangelogObject<HandoffTypes.ITypographyObject>[];
   };
   assets?: {
-    icons?: ChangelogObject<AssetObject>[];
-    logos?: ChangelogObject<AssetObject>[];
+    icons?: ChangelogObject<HandoffTypes.IAssetObject>[];
+    logos?: ChangelogObject<HandoffTypes.IAssetObject>[];
   };
 }
 

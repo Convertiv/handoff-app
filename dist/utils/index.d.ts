@@ -13,7 +13,7 @@ export declare function replaceTokens(str: string, tokenValMap: Map<string, stri
  */
 export declare const slugify: (str: string) => string;
 /**
- *  Filters out null values
+ * Filters out null values
  * @param value
  * @returns
  */

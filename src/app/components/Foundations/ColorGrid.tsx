@@ -1,4 +1,4 @@
-import { ColorObject } from '@handoff/api';
+import { Types as CoreTypes } from 'handoff-core';
 import startCase from 'lodash/startCase';
 import { ArrowRightToLine, Check, Contrast, Copy, Link, SwatchBook } from 'lucide-react';
 import React from 'react';
@@ -20,14 +20,15 @@ import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader } from '../ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { calculateContrastRatio, hexToRgb } from '../util/colors';
+
 type ColorGridProps = {
   title: string;
   group: string;
   description: string;
-  colors: ColorObject[];
+  colors: CoreTypes.IColorObject[];
 };
 
-const LargeColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => (
+const LargeColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => (
   <div className="@container">
     <div className="mb-6 grid grid-cols-1 gap-6 @md:grid-cols-2">
       {colors.map((color) => (
@@ -46,7 +47,7 @@ const LargeColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void
   </div>
 );
 
-const SmallColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => {
+const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (color) => void }> = ({ colors, setOpen }) => {
   // group colors by subgroup
   const groupedColors = colors.reduce(
     (acc, color) => {
@@ -56,7 +57,7 @@ const SmallColorGrid: React.FC<{ colors: ColorObject[]; setOpen: (color) => void
       acc[color.subgroup].push(color);
       return acc;
     },
-    {} as Record<string, ColorObject[]>
+    {} as Record<string, CoreTypes.IColorObject[]>
   );
   return (
     <>
@@ -104,7 +105,7 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
   );
 };
 
-const ColorDropdown: React.FC<{ color: ColorObject; openSheet: (color) => void }> = ({ color, openSheet }) => (
+const ColorDropdown: React.FC<{ color: CoreTypes.IColorObject; openSheet: (color) => void }> = ({ color, openSheet }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <div className="absolute right-1 top-1 flex cursor-pointer items-center justify-center rounded-sm bg-white/100 p-[6px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -135,7 +136,7 @@ const ColorDropdown: React.FC<{ color: ColorObject; openSheet: (color) => void }
   </DropdownMenu>
 );
 
-const ColorSheet: React.FC<{ color: ColorObject; open: boolean; setOpen: (boolean) => void }> = ({ color, open, setOpen }) => {
+const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOpen: (boolean) => void }> = ({ color, open, setOpen }) => {
   const [selectedValue, setSelectedValue] = React.useState('off');
   const [copied, setCopied] = React.useState(false);
   const handleCopy = () => {

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
-import { Handoff as HandoffRunner, Providers } from 'handoff-core';
+import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
@@ -15,7 +15,6 @@ import processComponents, { ComponentSegment } from './transformers/preview/comp
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
 import { ComponentListObject } from './transformers/preview/types';
-import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
 import { Config, IntegrationObject } from './types/config';
 import { filterOutNull } from './utils';
 import { findFilesByExtension } from './utils/fs';
@@ -37,7 +36,7 @@ class Handoff {
 
   private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
   private _configFilePaths: string[] = [];
-  private _documentationObjectCache?: DocumentationObject;
+  private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _sharedStylesCache?: string | null;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
@@ -178,9 +177,9 @@ class Handoff {
 
   /**
    * Retrieves the documentation object, using cached version if available
-   * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+   * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
    */
-  async getDocumentationObject(): Promise<DocumentationObject | undefined> {
+  async getDocumentationObject(): Promise<CoreTypes.IDocumentationObject | undefined> {
     if (this._documentationObjectCache) {
       return this._documentationObjectCache;
     }
@@ -251,7 +250,7 @@ class Handoff {
    * Returns configured legacy component definitions in array form.
    * @deprecated Will be removed before 1.0.0 release.
    */
-  async getLegacyDefinitions(): Promise<LegacyComponentDefinition[] | null> {
+  async getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null> {
     try {
       const sourcePath = path.resolve(this.workingPath, 'exportables');
 
@@ -264,11 +263,11 @@ class Handoff {
       const exportables = definitionPaths
         .map((definitionPath) => {
           const defBuffer = fs.readFileSync(definitionPath);
-          const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
+          const exportable = JSON.parse(defBuffer.toString()) as CoreTypes.ILegacyComponentDefinition;
 
           const exportableOptions = {};
           merge(exportableOptions, exportable.options);
-          exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
+          exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
 
           return exportable;
         })

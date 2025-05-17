@@ -1,4 +1,4 @@
-import { FileComponentsObject } from '../../../exporters/components/types';
+import { Types as CoreTypes } from 'handoff-core';
 import Handoff from '../../../index';
 import { TransformComponentTokensResult } from '../types';
 /**
@@ -15,5 +15,5 @@ import { TransformComponentTokensResult } from '../types';
  * const result = await buildPreviews(transformedData, handoffConfig, fileComponents);
  * ```
  */
-export declare const buildPreviews: (data: TransformComponentTokensResult, handoff: Handoff, components?: FileComponentsObject) => Promise<TransformComponentTokensResult>;
+export declare const buildPreviews: (data: TransformComponentTokensResult, handoff: Handoff, components?: CoreTypes.IDocumentationObject['components']) => Promise<TransformComponentTokensResult>;
 export default buildPreviews;

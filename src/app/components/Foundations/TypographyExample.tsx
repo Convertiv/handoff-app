@@ -1,5 +1,5 @@
-import { TypographyObject } from '@handoff/api';
 import { Separator } from '@radix-ui/react-select';
+import { Types as CoreTypes } from 'handoff-core';
 import { ArrowRightToLine, BookType, Check, Copy, Link, Type } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../lib/utils';
@@ -14,10 +14,10 @@ type TypographyProps = {
   title: string;
   group: string;
   description: string;
-  types: TypographyObject[];
+  types: CoreTypes.ITypographyObject[];
 };
 
-export const pluckStyle = (type: TypographyObject) => {
+export const pluckStyle = (type: CoreTypes.ITypographyObject) => {
   return {
     fontFamily: type.values.fontFamily,
     fontSize: type.values.fontSize,
@@ -26,7 +26,10 @@ export const pluckStyle = (type: TypographyObject) => {
   };
 };
 
-export const renderTypes: (type: TypographyObject, content: string) => typographyTypes = (type: TypographyObject, content: string) => ({
+export const renderTypes: (type: CoreTypes.ITypographyObject, content: string) => typographyTypes = (
+  type: CoreTypes.ITypographyObject,
+  content: string
+) => ({
   'Heading 1': <h1 style={pluckStyle(type)}>{content}</h1>,
   'Heading 2': <h2 style={pluckStyle(type)}>{content}</h2>,
   'Heading 3': <h3 style={pluckStyle(type)}>{content}</h3>,
@@ -39,12 +42,12 @@ export const renderTypes: (type: TypographyObject, content: string) => typograph
   Paragraph: <p style={pluckStyle(type)}>{content}</p>,
 });
 
-const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: string }> = ({ types, type_copy }) => {
+const TypographyExamples: React.FC<{ types: CoreTypes.ITypographyObject[]; type_copy?: string }> = ({ types, type_copy }) => {
   const [openType, setOpenType] = React.useState(false);
   const [copy, setCopy] = React.useState('Copy link to clipboard');
-  const [selectedType, setSelectedType] = React.useState<TypographyObject | undefined>(undefined);
+  const [selectedType, setSelectedType] = React.useState<CoreTypes.ITypographyObject | undefined>(undefined);
   type_copy = type_copy ?? 'Almost before we knew it, we had left the ground.';
-  const openTypeSheet = (type: TypographyObject) => {
+  const openTypeSheet = (type: CoreTypes.ITypographyObject) => {
     setSelectedType(type);
     setOpenType(true);
   };
@@ -91,7 +94,7 @@ const TypographyExamples: React.FC<{ types: TypographyObject[]; type_copy?: stri
   );
 };
 
-const TypographySheet: React.FC<{ type: TypographyObject; openType: boolean; setOpenType: (boolean) => void }> = ({
+const TypographySheet: React.FC<{ type: CoreTypes.ITypographyObject; openType: boolean; setOpenType: (boolean) => void }> = ({
   type,
   openType,
   setOpenType,
