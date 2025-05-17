@@ -1,4 +1,4 @@
+import { Types as CoreTypes } from 'handoff-core';
 import { Plugin } from 'vite';
-import { FileComponentsObject } from '../exporters/components/types';
 import { TransformComponentTokensResult } from './preview/types';
-export declare function handlebarsPreviewsPlugin(data: TransformComponentTokensResult, components?: FileComponentsObject): Plugin;
+export declare function handlebarsPreviewsPlugin(data: TransformComponentTokensResult, components?: CoreTypes.IDocumentationObject['components']): Plugin;

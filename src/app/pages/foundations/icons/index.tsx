@@ -1,4 +1,4 @@
-import type { AssetObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { Download } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../../components/util';
 
-export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
+export const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
     // For SSR
     if (typeof window === 'undefined') {

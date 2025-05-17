@@ -27,7 +27,7 @@ export const getStaticProps: next.GetStaticProps = async () => {
     props: {
       ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
       config: getClientRuntimeConfig(),
-      design: getTokens().design,
+      design: getTokens().localStyles,
     },
   };
 };

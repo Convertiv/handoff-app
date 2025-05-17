@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildComponents = exports.readPrevJSONFile = void 0;
+exports.buildComponents = exports.zipAssets = exports.readPrevJSONFile = void 0;
 const archiver_1 = __importDefault(require("archiver"));
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
@@ -44,11 +44,9 @@ const handoff_core_1 = require("handoff-core");
 const lodash_1 = require("lodash");
 const stream = __importStar(require("node:stream"));
 const path_1 = __importDefault(require("path"));
-const api_1 = require("./api");
 const app_1 = __importDefault(require("./app"));
 const changelog_1 = __importDefault(require("./changelog"));
 const documentation_object_1 = require("./documentation-object");
-const api_2 = require("./figma/api");
 const component_1 = require("./transformers/preview/component");
 const prompt_1 = require("./utils/prompt");
 /**
@@ -95,6 +93,22 @@ const zip = (dirPath, destination) => __awaiter(void 0, void 0, void 0, function
             .catch(reject);
     });
 });
+const zipAssets = (assets, destination) => __awaiter(void 0, void 0, void 0, function* () {
+    const archive = (0, archiver_1.default)('zip', {
+        zlib: { level: 9 }, // Sets the compression level.
+    });
+    // good practice to catch this error explicitly
+    archive.on('error', function (err) {
+        throw err;
+    });
+    archive.pipe(destination);
+    assets.forEach((asset) => {
+        archive.append(asset.data, { name: asset.path });
+    });
+    yield archive.finalize();
+    return destination;
+});
+exports.zipAssets = zipAssets;
 /**
  * Build just the custom fonts
  * @param documentationObject
@@ -311,8 +325,8 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         fs_extra_1.default.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
         ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
             ? [
-                (0, api_1.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
-                (0, api_1.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, exports.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
+                (0, exports.zipAssets)(documentationObject.assets.logos, fs_extra_1.default.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),
             ]
             : []),
     ]);
@@ -344,7 +358,5 @@ const pipeline = (handoff, build) => __awaiter(void 0, void 0, void 0, function*
     if (build) {
         yield (0, app_1.default)(handoff);
     }
-    // (await pluginTransformer()).postBuild(documentationObject);
-    console.log(chalk_1.default.green(`Figma pipeline complete:`, `${(0, api_2.getRequestCount)()} requests`));
 });
 exports.default = pipeline;

@@ -1,11 +1,11 @@
 import { ChangelogRecord } from '@handoff/changelog';
-import { ComponentType, FileComponentObject } from '@handoff/exporters/components/types';
-import { ComponentListObject } from '@handoff/transformers/preview/types';
-import { ComponentDocumentationOptions, LegacyComponentDefinition, LegacyComponentDefinitionOptions, PreviewObject } from '@handoff/types';
-import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
+import { ClientConfig, IntegrationObject } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
+import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, merge, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
@@ -68,24 +68,24 @@ export interface ChangelogDocumentationProps extends DocumentationProps {
 
 export interface FontDocumentationProps extends DocumentationProps {
   customFonts: string[];
-  design: ExportResult['design'];
+  design: CoreTypes.IDocumentationObject['localStyles'];
 }
 
 export interface AssetDocumentationProps extends DocumentationProps {
-  assets: ExportResult['assets'];
+  assets: CoreTypes.IDocumentationObject['assets'];
 }
 
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
-  component: FileComponentObject;
-  legacyDefinition: LegacyComponentDefinition;
+  component: CoreTypes.IFileComponentObject;
+  legacyDefinition: CoreTypes.ILegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
-  componentOptions: IntegrationObjectComponentOptions;
+  componentOptions: CoreTypes.IHandoffConfigurationComponentOptions;
 }
 
 export interface FoundationDocumentationProps extends DocumentationWithTokensProps {
-  design: ExportResult['design'];
+  design: CoreTypes.IDocumentationObject['localStyles'];
 }
 /**
  * List the default paths
@@ -442,7 +442,10 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * @returns {string[]}
  */
 export const fetchComponents = (fetchAll: boolean = true) => {
-  let components: Record<string, Pick<FileComponentObject, 'type' | 'group' | 'description' | 'name'>> = getTokens().components;
+  let components: Record<
+    string,
+    Omit<CoreTypes.IFileComponentObject, 'instances'> & { type?: ComponentType; group?: string; description?: string; name?: string }
+  > = getTokens().components;
 
   if (fetchAll) {
     const componentIds = Array.from(
@@ -569,11 +572,11 @@ export const getLegacyDefinition = (name: string) => {
   }
 
   const data = fs.readFileSync(definitionPaths[0], 'utf-8');
-  const exportable = JSON.parse(data.toString()) as LegacyComponentDefinition;
+  const exportable = JSON.parse(data.toString()) as CoreTypes.ILegacyComponentDefinition;
 
   const exportableOptions = {};
   merge(exportableOptions, exportable.options);
-  exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
+  exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
   return exportable;
 };
 
@@ -601,13 +604,13 @@ export const getClientRuntimeConfig = (): ClientConfig => {
   return runtimeCache.config;
 };
 
-export const getTokens = (): ExportResult => {
+export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
     : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as ExportResult;
+  if (!fs.existsSync(exportedFilePath)) return {} as CoreTypes.IDocumentationObject;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as ExportResult;
+  return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
 };
 
 export const getChangelog = () => {

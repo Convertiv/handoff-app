@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import { Handoff as HandoffRunner } from 'handoff-core';
-import { DocumentationObject, LegacyComponentDefinition } from './types';
+import { Types as CoreTypes, Handoff as HandoffRunner } from 'handoff-core';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -43,9 +42,9 @@ declare class Handoff {
     validateComponents(): Promise<Handoff>;
     /**
      * Retrieves the documentation object, using cached version if available
-     * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+     * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
      */
-    getDocumentationObject(): Promise<DocumentationObject | undefined>;
+    getDocumentationObject(): Promise<CoreTypes.IDocumentationObject | undefined>;
     /**
      * Retrieves shared styles, using cached version if available
      * @returns {Promise<string | null>} The shared styles string or null if not found
@@ -56,7 +55,7 @@ declare class Handoff {
      * Returns configured legacy component definitions in array form.
      * @deprecated Will be removed before 1.0.0 release.
      */
-    getLegacyDefinitions(): Promise<LegacyComponentDefinition[] | null>;
+    getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
     /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory

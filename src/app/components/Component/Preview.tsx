@@ -1,9 +1,6 @@
-import React, { useCallback, useContext, useEffect } from 'react';
-import { CodeHighlight } from '../Markdown/CodeHighlight';
-
-import { ComponentInstance } from '@handoff/exporters/components/types';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { startCase } from 'lodash';
 import {
   Component,
@@ -17,9 +14,11 @@ import {
   Tablet,
   Text,
 } from 'lucide-react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { HotReloadContext } from '../context/HotReloadProvider';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
+import { CodeHighlight } from '../Markdown/CodeHighlight';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -32,7 +31,7 @@ import { ValidationResults } from '../Validation/ValidationResults';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
-  component: ComponentInstance;
+  component: CoreTypes.IComponentInstance;
   name: string;
   overrides?: { states?: string[] | undefined };
 };

@@ -1,4 +1,4 @@
-import { ValidationResult } from '../../types/config';
+import { ValidationResult } from '../../types';
 import { SlotMetadata } from './component';
 
 export enum ComponentType {
