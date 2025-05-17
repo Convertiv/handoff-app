@@ -131,7 +131,6 @@ export const createWebSocketServer = async (port: number = 3001) => {
   };
 };
 
-export const getComponentPath = (handoff: Handoff) => path.resolve(handoff.workingPath, `integration/components`);
 export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 /**
  * Create a component transformer

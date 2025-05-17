@@ -1,9 +1,10 @@
-import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types';
+import { Types as HandoffTypes } from 'handoff-core';
+import { AssetObject } from './types';
 export interface ChangelogRecord {
     timestamp: string;
     design?: {
-        colors?: ChangelogObject<ColorObject>[];
-        typography?: ChangelogObject<TypographyObject>[];
+        colors?: ChangelogObject<HandoffTypes.IColorObject>[];
+        typography?: ChangelogObject<HandoffTypes.ITypographyObject>[];
     };
     assets?: {
         icons?: ChangelogObject<AssetObject>[];
@@ -21,5 +22,5 @@ export declare type ChangelogObject<ObjectType> = {
     old: ObjectType;
     new: ObjectType;
 };
-declare const generateChangelogRecord: (prevDoc: DocumentationObject | undefined, newDoc: DocumentationObject) => ChangelogRecord | undefined;
+declare const generateChangelogRecord: (prevDoc: HandoffTypes.IDocumentationObject | undefined, newDoc: HandoffTypes.IDocumentationObject) => ChangelogRecord | undefined;
 export default generateChangelogRecord;

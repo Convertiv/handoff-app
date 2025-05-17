@@ -1,7 +1,9 @@
+import archiver from 'archiver';
 import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
-import { merge } from 'lodash';
+import { Types as HandoffTypes, Transformers } from 'handoff-core';
+import { sortedUniq } from 'lodash';
 import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '.';
@@ -10,15 +12,8 @@ import buildApp from './app';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { getRequestCount } from './figma/api';
-import cssTransformer from './transformers/css/index';
-import fontTransformer from './transformers/font/index';
-import mapTransformer from './transformers/map';
 import { componentTransformer } from './transformers/preview/component';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
-import sdTransformer from './transformers/sd';
-import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
-import { filterOutNull } from './utils';
-import { findFilesByExtension } from './utils/fs';
+import { FontFamily } from './types/font';
 import { maskPrompt, prompt } from './utils/prompt';
 
 /**
@@ -35,12 +30,71 @@ export const readPrevJSONFile = async (path: string) => {
 };
 
 /**
+ * Zips the contents of a directory and writes the resulting archive to a writable stream.
+ *
+ * @param dirPath - The path to the directory whose contents will be zipped.
+ * @param destination - A writable stream where the zip archive will be written.
+ * @returns A Promise that resolves with the destination stream when the archive has been finalized.
+ * @throws Will throw an error if the archiving process fails.
+ */
+const zip = async (dirPath: string, destination: stream.Writable): Promise<stream.Writable> => {
+  return new Promise((resolve, reject) => {
+    const archive = archiver('zip', {
+      zlib: { level: 9 },
+    });
+
+    // Set up event handlers
+    archive.on('error', reject);
+    destination.on('error', reject);
+
+    // When the destination closes, resolve the promise
+    destination.on('close', () => resolve(destination));
+
+    archive.pipe(destination);
+
+    fs.readdir(dirPath)
+      .then((fontDir) => {
+        for (const file of fontDir) {
+          const filePath = path.join(dirPath, file);
+          archive.append(fs.createReadStream(filePath), { name: path.basename(file) });
+        }
+        return archive.finalize();
+      })
+      .catch(reject);
+  });
+};
+
+/**
  * Build just the custom fonts
  * @param documentationObject
  * @returns
  */
-const buildCustomFonts = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  return await fontTransformer(handoff, documentationObject);
+const buildCustomFonts = async (handoff: Handoff, documentationObject: HandoffTypes.IDocumentationObject) => {
+  const { localStyles } = documentationObject;
+  const fontLocation = path.join(handoff?.workingPath, 'fonts');
+  const families: FontFamily = localStyles.typography.reduce((result, current) => {
+    return {
+      ...result,
+      [current.values.fontFamily]: result[current.values.fontFamily]
+        ? // sorts and returns unique font weights
+          sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
+        : [current.values.fontWeight],
+    };
+  }, {} as FontFamily);
+
+  Object.keys(families).map(async (key) => {
+    const name = key.replace(/\s/g, '');
+    const fontDirName = path.join(fontLocation, name);
+    if (fs.existsSync(fontDirName)) {
+      const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
+      await zip(fontDirName, stream);
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
+      if (!fs.existsSync(fontsFolder)) {
+        fs.mkdirSync(fontsFolder);
+      }
+      fs.copySync(fontDirName, fontsFolder);
+    }
+  });
 };
 
 /**
@@ -56,102 +110,115 @@ export const buildComponents = async (handoff: Handoff) => {
  * Build only the styles pipeline
  * @param documentationObject
  */
-const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  const typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
-  const cssFiles = cssTransformer(documentationObject, handoff, handoff.integrationObject);
-  const scssFiles = scssTransformer(documentationObject, handoff, handoff.integrationObject);
-  const sdFiles = sdTransformer(documentationObject, handoff, handoff.integrationObject);
-  const mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
+const buildStyles = async (handoff: Handoff, documentationObject: HandoffTypes.IDocumentationObject) => {
+  // Core transformers that should always be included
+  const coreTransformers = [
+    {
+      transformer: Transformers.ScssTransformer,
+      outDir: 'sass',
+      format: 'scss',
+    },
+    {
+      transformer: Transformers.ScssTypesTransformer,
+      outDir: 'types',
+      format: 'scss',
+    },
+    {
+      transformer: Transformers.CssTransformer,
+      outDir: 'css',
+      format: 'css',
+    },
+  ];
 
-  await Promise.all([
-    fs
-      .ensureDir(handoff.getVariablesFilePath())
-      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/types`))
-      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/css`))
-      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/sass`))
-      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens`))
-      .then(() => fs.ensureDir(`${handoff.getVariablesFilePath()}/maps`))
-      .then(() =>
-        Promise.all(
-          Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${handoff.getVariablesFilePath()}/sd/tokens/${name}`))
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/types/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/css/${name}.css`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.design).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/sass/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(sdFiles.components).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}/${name}.tokens.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(sdFiles.design).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/sd/tokens/${name}.tokens.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.components).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.design).map(([name, content]) =>
-            fs.writeFile(`${handoff.getVariablesFilePath()}/maps/${name}.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${handoff.getOutputPath()}/${name}.json`, content))
-        )
+  // Get user-configured transformers
+  const userTransformers = handoff.config?.pipeline?.transformers || [];
+
+  // Merge core transformers with user transformers
+  // If a user transformer matches a core transformer, use user's outDir and format
+  const transformers = coreTransformers.map((coreTransformer) => {
+    const userTransformer = userTransformers.find((t) => t.transformer === coreTransformer.transformer);
+    return userTransformer ? { ...coreTransformer, outDir: userTransformer.outDir, format: userTransformer.format } : coreTransformer;
+  });
+
+  // Add any additional user transformers that aren't core transformers
+  userTransformers.forEach((userTransformer) => {
+    if (!coreTransformers.some((core) => core.transformer === userTransformer.transformer)) {
+      transformers.push(userTransformer);
+    }
+  });
+
+  const baseDir = handoff.getVariablesFilePath();
+  const runner = await handoff.getRunner();
+
+  // Create transformer instances and transform documentation object
+  const transformedFiles = transformers.map(({ transformer }) => ({
+    transformer,
+    files: runner.transform(transformer({ useVariables: handoff.config?.useVariables }), documentationObject),
+  }));
+
+  // Ensure base directory exists
+  await fs.ensureDir(baseDir);
+
+  // Create all necessary subdirectories
+  const directories = transformers.map(({ outDir }) => path.join(baseDir, outDir));
+  await Promise.all(directories.map((dir) => fs.ensureDir(dir)));
+
+  // Special case for SD tokens components directory
+  const sdTransformer = transformers.find((t) => t.transformer === Transformers.StyleDictionaryTransformer);
+  if (sdTransformer) {
+    const sdFiles = transformedFiles.find((t) => t.transformer === Transformers.StyleDictionaryTransformer)?.files;
+    if (sdFiles?.components) {
+      await Promise.all(Object.keys(sdFiles.components).map((name) => fs.ensureDir(path.join(baseDir, sdTransformer.outDir, name))));
+    }
+  }
+
+  // Write all files
+  const writePromises = transformedFiles.flatMap(({ transformer: TransformerClass, files }) => {
+    const { outDir, format } = transformers.find((t) => t.transformer === TransformerClass) || {};
+    if (!outDir || !files) return [];
+
+    const componentPromises = Object.entries(files.components || {}).map(([name, content]) => {
+      const filePath =
+        TransformerClass === Transformers.StyleDictionaryTransformer
+          ? path.join(baseDir, outDir, name, `${name}.tokens.json`)
+          : path.join(baseDir, outDir, `${name}.${format}`);
+      return fs.writeFile(filePath, content);
+    });
+
+    const designPromises = Object.entries(files.design || {}).map(([name, content]) => {
+      const filePath =
+        TransformerClass === Transformers.StyleDictionaryTransformer
+          ? path.join(baseDir, outDir, `${name}.tokens.json`)
+          : path.join(baseDir, outDir, `${name}.${format}`);
+      return fs.writeFile(filePath, content);
+    });
+
+    return [...componentPromises, ...designPromises];
+  });
+
+  // Generate tokens-map.json
+  const mapFiles = transformedFiles.find((t) => t.transformer === Transformers.MapTransformer)?.files;
+  if (mapFiles) {
+    const tokensMapContent = JSON.stringify(
+      Object.entries(mapFiles.components || {}).reduce(
+        (acc, [_, data]) => ({
+          ...acc,
+          ...JSON.parse(data as string),
+        }),
+        {
+          ...JSON.parse(mapFiles.design.colors as string),
+          ...JSON.parse(mapFiles.design.typography as string),
+          ...JSON.parse(mapFiles.design.effects as string),
+        }
       ),
-  ]);
+      null,
+      2
+    );
+    writePromises.push(fs.writeFile(path.join(handoff.getOutputPath(), 'tokens-map.json'), tokensMapContent));
+  }
+
+  // Write all files
+  await Promise.all(writePromises);
 };
 
 const validateHandoffRequirements = async (handoff: Handoff) => {
@@ -261,7 +328,7 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
   handoff.config.figma_project_id = FIGMA_PROJECT_ID;
 };
 
-const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
+const figmaExtract = async (handoff: Handoff) => {
   console.log(chalk.green(`Starting Figma data extraction.`));
 
   let prevDocumentationObject = await handoff.getDocumentationObject();
@@ -269,8 +336,7 @@ const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
 
   await fs.emptyDir(handoff.getOutputPath());
 
-  const legacyDefinitions = await getLegacyDefinitions(handoff);
-  const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
+  const documentationObject = await createDocumentationObject(handoff);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
 
   if (changelogRecord) {
@@ -335,36 +401,3 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 export default pipeline;
-
-/**
- * Returns configured legacy component definitions in array form.
- * @deprecated Will be removed before 1.0.0 release.
- */
-const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[] | null> => {
-  try {
-    const sourcePath = path.resolve(handoff.workingPath, 'exportables');
-
-    if (!fs.existsSync(sourcePath)) {
-      return null;
-    }
-
-    const definitionPaths = findFilesByExtension(sourcePath, '.json');
-
-    const exportables = definitionPaths
-      .map((definitionPath) => {
-        const defBuffer = fs.readFileSync(definitionPath);
-        const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
-
-        const exportableOptions = {};
-        merge(exportableOptions, exportable.options);
-        exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
-
-        return exportable;
-      })
-      .filter(filterOutNull);
-
-    return exportables ? exportables : null;
-  } catch (e) {
-    return [];
-  }
-};

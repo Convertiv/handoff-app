@@ -35,10 +35,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initIntegrationObject = void 0;
+exports.CoreTypes = exports.CoreTransformers = exports.initIntegrationObject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
+const handoff_core_1 = require("handoff-core");
+const lodash_1 = require("lodash");
 const path_1 = __importDefault(require("path"));
 const semver_1 = __importDefault(require("semver"));
 const app_1 = __importStar(require("./app"));
@@ -50,6 +52,8 @@ const component_1 = require("./transformers/preview/component");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
 const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
+const utils_1 = require("./utils");
+const fs_1 = require("./utils/fs");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -230,6 +234,71 @@ class Handoff {
             const sharedStyles = yield (0, component_1.processSharedStyles)(this);
             this._sharedStylesCache = sharedStyles;
             return sharedStyles;
+        });
+    }
+    getRunner() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!!this._handoffRunner) {
+                return this._handoffRunner;
+            }
+            const apiCredentials = {
+                projectId: this.config.figma_project_id,
+                accessToken: this.config.dev_access_token,
+            };
+            const legacyDefinitions = yield this.getLegacyDefinitions();
+            const useLegacyDefintions = !!legacyDefinitions;
+            // Initialize the provider
+            const provider = useLegacyDefintions
+                ? handoff_core_1.Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
+                : handoff_core_1.Providers.RestApiProvider(apiCredentials);
+            this._handoffRunner = (0, handoff_core_1.Handoff)(provider, {
+                options: {
+                    transformer: this.integrationObject.options,
+                },
+            }, {
+                log: (msg) => {
+                    console.log(msg);
+                },
+                err: (msg) => {
+                    console.log(chalk_1.default.red(msg));
+                },
+                warn: (msg) => {
+                    console.log(chalk_1.default.yellow(msg));
+                },
+                success: (msg) => {
+                    console.log(chalk_1.default.green(msg));
+                },
+            });
+            return this._handoffRunner;
+        });
+    }
+    /**
+     * Returns configured legacy component definitions in array form.
+     * @deprecated Will be removed before 1.0.0 release.
+     */
+    getLegacyDefinitions() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const sourcePath = path_1.default.resolve(this.workingPath, 'exportables');
+                if (!fs_extra_1.default.existsSync(sourcePath)) {
+                    return null;
+                }
+                const definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
+                const exportables = definitionPaths
+                    .map((definitionPath) => {
+                    const defBuffer = fs_extra_1.default.readFileSync(definitionPath);
+                    const exportable = JSON.parse(defBuffer.toString());
+                    const exportableOptions = {};
+                    (0, lodash_1.merge)(exportableOptions, exportable.options);
+                    exportable.options = exportableOptions;
+                    return exportable;
+                })
+                    .filter(utils_1.filterOutNull);
+                return exportables ? exportables : null;
+            }
+            catch (e) {
+                return [];
+            }
         });
     }
     /**
@@ -519,4 +588,8 @@ const toLowerCaseKeysAndValues = (obj) => {
     }
     return loweredObj;
 };
+// Export transformers and types from handoff-core
+var handoff_core_2 = require("handoff-core");
+Object.defineProperty(exports, "CoreTransformers", { enumerable: true, get: function () { return handoff_core_2.Transformers; } });
+Object.defineProperty(exports, "CoreTypes", { enumerable: true, get: function () { return handoff_core_2.Types; } });
 exports.default = Handoff;
