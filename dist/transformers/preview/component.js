@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSharedStyles = exports.componentTransformer = exports.getComponentOutputPath = exports.getComponentPath = exports.createWebSocketServer = exports.SlotType = void 0;
+exports.processSharedStyles = exports.componentTransformer = exports.getComponentOutputPath = exports.createWebSocketServer = exports.SlotType = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
@@ -104,8 +104,6 @@ const createWebSocketServer = (port = 3001) => __awaiter(void 0, void 0, void 0,
     };
 });
 exports.createWebSocketServer = createWebSocketServer;
-const getComponentPath = (handoff) => path_1.default.resolve(handoff.workingPath, `integration/components`);
-exports.getComponentPath = getComponentPath;
 const getComponentOutputPath = (handoff) => path_1.default.resolve((0, api_1.getAPIPath)(handoff), 'component');
 exports.getComponentOutputPath = getComponentOutputPath;
 /**

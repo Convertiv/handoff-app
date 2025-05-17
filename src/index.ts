@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
+import { Handoff as HandoffRunner, Providers } from 'handoff-core';
+import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
@@ -13,8 +15,10 @@ import processComponents, { ComponentSegment } from './transformers/preview/comp
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
 import { ComponentListObject } from './transformers/preview/types';
-import { DocumentationObject } from './types';
+import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
 import { Config, IntegrationObject } from './types/config';
+import { filterOutNull } from './utils';
+import { findFilesByExtension } from './utils/fs';
 
 class Handoff {
   config: Config | null;
@@ -35,6 +39,7 @@ class Handoff {
   private _configFilePaths: string[] = [];
   private _documentationObjectCache?: DocumentationObject;
   private _sharedStylesCache?: string | null;
+  private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this._initialArgs = { debug, force, config };
@@ -195,6 +200,84 @@ class Handoff {
     const sharedStyles = await processSharedStyles(this);
     this._sharedStylesCache = sharedStyles;
     return sharedStyles;
+  }
+
+  async getRunner(): Promise<ReturnType<typeof HandoffRunner>> {
+    if (!!this._handoffRunner) {
+      return this._handoffRunner;
+    }
+
+    const apiCredentials = {
+      projectId: this.config.figma_project_id,
+      accessToken: this.config.dev_access_token,
+    };
+
+    const legacyDefinitions = await this.getLegacyDefinitions();
+
+    const useLegacyDefintions = !!legacyDefinitions;
+
+    // Initialize the provider
+    const provider = useLegacyDefintions
+      ? Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
+      : Providers.RestApiProvider(apiCredentials);
+
+    this._handoffRunner = HandoffRunner(
+      provider,
+      {
+        options: {
+          transformer: this.integrationObject.options,
+        },
+      },
+      {
+        log: (msg: string): void => {
+          console.log(msg);
+        },
+        err: (msg: string): void => {
+          console.log(chalk.red(msg));
+        },
+        warn: (msg: string): void => {
+          console.log(chalk.yellow(msg));
+        },
+        success: (msg: string): void => {
+          console.log(chalk.green(msg));
+        },
+      }
+    );
+
+    return this._handoffRunner;
+  }
+
+  /**
+   * Returns configured legacy component definitions in array form.
+   * @deprecated Will be removed before 1.0.0 release.
+   */
+  async getLegacyDefinitions(): Promise<LegacyComponentDefinition[] | null> {
+    try {
+      const sourcePath = path.resolve(this.workingPath, 'exportables');
+
+      if (!fs.existsSync(sourcePath)) {
+        return null;
+      }
+
+      const definitionPaths = findFilesByExtension(sourcePath, '.json');
+
+      const exportables = definitionPaths
+        .map((definitionPath) => {
+          const defBuffer = fs.readFileSync(definitionPath);
+          const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
+
+          const exportableOptions = {};
+          merge(exportableOptions, exportable.options);
+          exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
+
+          return exportable;
+        })
+        .filter(filterOutNull);
+
+      return exportables ? exportables : null;
+    } catch (e) {
+      return [];
+    }
   }
 
   /**
@@ -529,5 +612,8 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
 
 export type { ComponentListObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
+
+// Export transformers and types from handoff-core
+export { Transformers as CoreTransformers, Types as CoreTypes } from 'handoff-core';
 
 export default Handoff;

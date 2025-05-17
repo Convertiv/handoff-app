@@ -1,11 +1,12 @@
+import { Types as HandoffTypes } from 'handoff-core';
 import isEqual from 'lodash/isEqual';
-import { AssetObject, ColorObject, DocumentationObject, TypographyObject } from './types';
+import { AssetObject } from './types';
 
 export interface ChangelogRecord {
   timestamp: string;
   design?: {
-    colors?: ChangelogObject<ColorObject>[];
-    typography?: ChangelogObject<TypographyObject>[];
+    colors?: ChangelogObject<HandoffTypes.IColorObject>[];
+    typography?: ChangelogObject<HandoffTypes.ITypographyObject>[];
   };
   assets?: {
     icons?: ChangelogObject<AssetObject>[];
@@ -44,9 +45,12 @@ const generateChangelogObjectArr = <T>(prevArr: T[], newArr: T[], discriminator:
   ];
 };
 
-const generateChangelogRecord = (prevDoc: DocumentationObject | undefined, newDoc: DocumentationObject): ChangelogRecord | undefined => {
-  const colors = generateChangelogObjectArr(prevDoc?.design.color ?? [], newDoc.design.color, 'sass');
-  const typography = generateChangelogObjectArr(prevDoc?.design.typography ?? [], newDoc.design.typography, 'name');
+const generateChangelogRecord = (
+  prevDoc: HandoffTypes.IDocumentationObject | undefined,
+  newDoc: HandoffTypes.IDocumentationObject
+): ChangelogRecord | undefined => {
+  const colors = generateChangelogObjectArr(prevDoc?.localStyles.color ?? [], newDoc.localStyles.color, 'sass');
+  const typography = generateChangelogObjectArr(prevDoc?.localStyles.typography ?? [], newDoc.localStyles.typography, 'name');
 
   const design =
     colors.length || typography.length

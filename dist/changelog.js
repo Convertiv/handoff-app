@@ -28,8 +28,8 @@ const generateChangelogObjectArr = (prevArr, newArr, discriminator) => {
 };
 const generateChangelogRecord = (prevDoc, newDoc) => {
     var _a, _b, _c, _d;
-    const colors = generateChangelogObjectArr((_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.color) !== null && _a !== void 0 ? _a : [], newDoc.design.color, 'sass');
-    const typography = generateChangelogObjectArr((_b = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.design.typography) !== null && _b !== void 0 ? _b : [], newDoc.design.typography, 'name');
+    const colors = generateChangelogObjectArr((_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles.color) !== null && _a !== void 0 ? _a : [], newDoc.localStyles.color, 'sass');
+    const typography = generateChangelogObjectArr((_b = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles.typography) !== null && _b !== void 0 ? _b : [], newDoc.localStyles.typography, 'name');
     const design = colors.length || typography.length
         ? { colors: colors.length ? colors : undefined, typography: typography.length ? typography : undefined }
         : undefined;
