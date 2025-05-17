@@ -123,9 +123,9 @@ const transformMdx = (src, dest, id) => {
     //
     mdx = `
 \n\n${mdx}\n\n
-import {staticBuildMenu, getCurrentSection} from "handoff-app/src/app/components/util";
+import {staticBuildMenu, getCurrentSection} from "@handoff/app/components/util";
 import { getClientConfig } from '@handoff/config';
-import { getPreview } from "handoff-app/src/app/components/util";
+import { getPreview } from "@handoff/app/components/util";
 
 export const getStaticProps = async () => {
   // get previews for components on this page
@@ -149,7 +149,7 @@ export const preview = (name) => {
   return previews.components[name];
 };
 
-import MarkdownLayout from "handoff-app/src/app/components/Layout/Markdown";
+import MarkdownLayout from "@handoff/app/components/Layout/Markdown";
 export default function Layout(props) {
   return (
     <MarkdownLayout
