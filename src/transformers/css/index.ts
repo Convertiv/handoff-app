@@ -7,7 +7,11 @@ import transformColors from './design/colors';
 import transformEffects from './design/effects';
 import transformTypography from './design/typography';
 
-export default function cssTransformer(documentationObject: DocumentationObject, handoff: Handoff, integrationObject?: IntegrationObject): TransformerOutput {
+export default function cssTransformer(
+  documentationObject: DocumentationObject,
+  handoff: Handoff,
+  integrationObject?: IntegrationObject
+): TransformerOutput {
   const components: Record<string, string> = {};
 
   for (const componentId in documentationObject.components) {

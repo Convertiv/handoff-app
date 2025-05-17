@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { DocumentationObject } from './types';
+import { Handoff as HandoffRunner } from 'handoff-core';
+import { DocumentationObject, LegacyComponentDefinition } from './types';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -19,6 +20,7 @@ declare class Handoff {
     private _configFilePaths;
     private _documentationObjectCache?;
     private _sharedStylesCache?;
+    private _handoffRunner?;
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
     private construct;
     init(configOverride?: Partial<Config>): Handoff;
@@ -49,6 +51,12 @@ declare class Handoff {
      * @returns {Promise<string | null>} The shared styles string or null if not found
      */
     getSharedStyles(): Promise<string | null>;
+    getRunner(): Promise<ReturnType<typeof HandoffRunner>>;
+    /**
+     * Returns configured legacy component definitions in array form.
+     * @deprecated Will be removed before 1.0.0 release.
+     */
+    getLegacyDefinitions(): Promise<LegacyComponentDefinition[] | null>;
     /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
@@ -104,4 +112,5 @@ declare class Handoff {
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
 export type { ComponentListObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
+export { Transformers as CoreTransformers, Types as CoreTypes } from 'handoff-core';
 export default Handoff;

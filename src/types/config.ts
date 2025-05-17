@@ -1,3 +1,4 @@
+import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { FileComponentsObject } from '../exporters/components/types';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
@@ -36,6 +37,34 @@ export interface ImageStyle {
 export interface Integration {
   name: string;
   version: string;
+}
+
+export interface TransformerConfig {
+  /**
+   * Reference to the transformer function from CoreTransformers
+   * @example transformer: CoreTransformers.ScssTransformer
+   */
+  transformer: (options?: HandoffTypes.IHandoffTransformerOptions) => HandoffTypes.IHandoffTransformer;
+  outDir: string;
+  format: string;
+}
+
+export interface PipelineConfig {
+  /**
+   * List of transformers to be used in the build pipeline
+   * Each transformer should specify the transformer function, output directory, and format
+   * @example
+   * ```typescript
+   * transformers: [
+   *   {
+   *     transformer: Transformers.ScssTransformer,
+   *     outDir: 'scss',
+   *     format: 'scss'
+   *   }
+   * ]
+   * ```
+   */
+  transformers?: TransformerConfig[];
 }
 
 export interface ComponentSizeMap {
@@ -83,6 +112,10 @@ export interface Config {
   sitesOutputDirectory?: string;
   useVariables?: boolean;
   app?: NextAppConfig;
+  /**
+   * Configuration for the build pipeline
+   */
+  pipeline?: PipelineConfig;
   /**
    * Configuration for entry points to assets and components that will be built
    */
