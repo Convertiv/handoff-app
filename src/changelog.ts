@@ -48,8 +48,8 @@ const generateChangelogRecord = (
   prevDoc: HandoffTypes.IDocumentationObject | undefined,
   newDoc: HandoffTypes.IDocumentationObject
 ): ChangelogRecord | undefined => {
-  const colors = generateChangelogObjectArr(prevDoc?.localStyles.color ?? [], newDoc.localStyles.color, 'sass');
-  const typography = generateChangelogObjectArr(prevDoc?.localStyles.typography ?? [], newDoc.localStyles.typography, 'name');
+  const colors = generateChangelogObjectArr(prevDoc?.localStyles?.color ?? [], newDoc.localStyles?.color, 'sass');
+  const typography = generateChangelogObjectArr(prevDoc?.localStyles?.typography ?? [], newDoc.localStyles?.typography, 'name');
 
   const design =
     colors.length || typography.length
