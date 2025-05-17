@@ -27,14 +27,14 @@ const generateChangelogObjectArr = (prevArr, newArr, discriminator) => {
     ];
 };
 const generateChangelogRecord = (prevDoc, newDoc) => {
-    var _a, _b, _c, _d;
-    const colors = generateChangelogObjectArr((_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles.color) !== null && _a !== void 0 ? _a : [], newDoc.localStyles.color, 'sass');
-    const typography = generateChangelogObjectArr((_b = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles.typography) !== null && _b !== void 0 ? _b : [], newDoc.localStyles.typography, 'name');
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const colors = generateChangelogObjectArr((_b = (_a = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles) === null || _a === void 0 ? void 0 : _a.color) !== null && _b !== void 0 ? _b : [], (_c = newDoc.localStyles) === null || _c === void 0 ? void 0 : _c.color, 'sass');
+    const typography = generateChangelogObjectArr((_e = (_d = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.localStyles) === null || _d === void 0 ? void 0 : _d.typography) !== null && _e !== void 0 ? _e : [], (_f = newDoc.localStyles) === null || _f === void 0 ? void 0 : _f.typography, 'name');
     const design = colors.length || typography.length
         ? { colors: colors.length ? colors : undefined, typography: typography.length ? typography : undefined }
         : undefined;
-    const icons = generateChangelogObjectArr((_c = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.icons) !== null && _c !== void 0 ? _c : [], newDoc.assets.icons, 'path');
-    const logos = generateChangelogObjectArr((_d = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.logos) !== null && _d !== void 0 ? _d : [], newDoc.assets.logos, 'path');
+    const icons = generateChangelogObjectArr((_g = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.icons) !== null && _g !== void 0 ? _g : [], newDoc.assets.icons, 'path');
+    const logos = generateChangelogObjectArr((_h = prevDoc === null || prevDoc === void 0 ? void 0 : prevDoc.assets.logos) !== null && _h !== void 0 ? _h : [], newDoc.assets.logos, 'path');
     const assets = icons.length || logos.length ? { icons: icons.length ? icons : undefined, logos: logos.length ? logos : undefined } : undefined;
     if (assets || design) {
         return {
