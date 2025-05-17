@@ -9,7 +9,7 @@ exports.filterOutUndefined = exports.filterOutNull = exports.slugify = exports.r
  * @returns
  */
 function replaceTokens(str, tokenValMap, pipe) {
-    return str.replace(/\$\{(.*?)\}/g, token => {
+    return str.replace(/\$\{(.*?)\}/g, (token) => {
         var _a;
         const key = token.substring(2, token.length - 1).toLowerCase();
         const val = (_a = tokenValMap.get(key)) !== null && _a !== void 0 ? _a : '';
@@ -30,7 +30,7 @@ const slugify = (str) => str
     .replace(/^-+|-+$/g, '');
 exports.slugify = slugify;
 /**
- *  Filters out null values
+ * Filters out null values
  * @param value
  * @returns
  */

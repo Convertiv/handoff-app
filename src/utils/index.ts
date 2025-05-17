@@ -6,7 +6,7 @@
  * @returns
  */
 export function replaceTokens(str: string, tokenValMap: Map<string, string>, pipe?: (token: string, key: string, value: string) => string) {
-  return str.replace(/\$\{(.*?)\}/g, token => {
+  return str.replace(/\$\{(.*?)\}/g, (token) => {
     const key = token.substring(2, token.length - 1).toLowerCase();
     const val = tokenValMap.get(key) ?? '';
     return pipe ? pipe(token, key, val) : val;
@@ -27,7 +27,7 @@ export const slugify = (str: string): string =>
     .replace(/^-+|-+$/g, '');
 
 /**
- *  Filters out null values
+ * Filters out null values
  * @param value
  * @returns
  */

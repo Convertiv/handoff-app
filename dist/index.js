@@ -210,7 +210,7 @@ class Handoff {
     }
     /**
      * Retrieves the documentation object, using cached version if available
-     * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+     * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
      */
     getDocumentationObject() {
         return __awaiter(this, void 0, void 0, function* () {

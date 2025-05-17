@@ -1,5 +1,4 @@
 import { Types as HandoffTypes } from 'handoff-core';
-import { AssetObject } from './types';
 export interface ChangelogRecord {
     timestamp: string;
     design?: {
@@ -7,8 +6,8 @@ export interface ChangelogRecord {
         typography?: ChangelogObject<HandoffTypes.ITypographyObject>[];
     };
     assets?: {
-        icons?: ChangelogObject<AssetObject>[];
-        logos?: ChangelogObject<AssetObject>[];
+        icons?: ChangelogObject<HandoffTypes.IAssetObject>[];
+        logos?: ChangelogObject<HandoffTypes.IAssetObject>[];
     };
 }
 export interface ChangeLogEntry {

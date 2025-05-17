@@ -7,11 +7,9 @@ import { sortedUniq } from 'lodash';
 import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '.';
-import { zipAssets } from './api';
 import buildApp from './app';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
-import { getRequestCount } from './figma/api';
 import { componentTransformer } from './transformers/preview/component';
 import { FontFamily } from './types/font';
 import { maskPrompt, prompt } from './utils/prompt';
@@ -62,6 +60,27 @@ const zip = async (dirPath: string, destination: stream.Writable): Promise<strea
       })
       .catch(reject);
   });
+};
+
+export const zipAssets = async (assets: HandoffTypes.IAssetObject[], destination: stream.Writable) => {
+  const archive = archiver('zip', {
+    zlib: { level: 9 }, // Sets the compression level.
+  });
+
+  // good practice to catch this error explicitly
+  archive.on('error', function (err) {
+    throw err;
+  });
+
+  archive.pipe(destination);
+
+  assets.forEach((asset) => {
+    archive.append(asset.data, { name: asset.path });
+  });
+
+  await archive.finalize();
+
+  return destination;
 };
 
 /**
@@ -397,7 +416,5 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   if (build) {
     await buildApp(handoff);
   }
-  // (await pluginTransformer()).postBuild(documentationObject);
-  console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 export default pipeline;

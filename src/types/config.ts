@@ -1,30 +1,7 @@
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
-import { FileComponentsObject } from '../exporters/components/types';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
-import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
-
-/**
- * Represents the result of a single validation check
- */
-export interface ValidationResult {
-  /**
-   * Description of what this validation check does
-   */
-  description: string;
-  /**
-   * Whether the validation passed or failed
-   */
-  passed: boolean;
-  /**
-   * Optional messages providing more details about the validation result
-   */
-  messages?: string[];
-  /**
-   * Optional timestamp of when the validation was performed
-   */
-  timestamp?: string;
-}
+import { ValidationResult } from '../types';
 
 export interface ImageStyle {
   name: string;
@@ -65,24 +42,6 @@ export interface PipelineConfig {
    * ```
    */
   transformers?: TransformerConfig[];
-}
-
-export interface ComponentSizeMap {
-  figma: string;
-  css: string;
-}
-
-export interface ExportResult {
-  design: {
-    color: ColorObject[];
-    effect: EffectObject[];
-    typography: TypographyObject[];
-  };
-  components: FileComponentsObject;
-  assets: {
-    icons: AssetObject[];
-    logos: AssetObject[];
-  };
 }
 
 export interface Breakpoints {
