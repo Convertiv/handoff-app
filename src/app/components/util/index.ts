@@ -508,10 +508,7 @@ const loadRuntimeCache = (): RuntimeCache => {
 
   const runtimeCachePath = path.resolve(process.env.HANDOFF_EXPORT_PATH, 'runtime.cache.json');
 
-  console.log(`Loading runtime cache from: ${runtimeCachePath}`);
-
   if (!fs.existsSync(runtimeCachePath)) {
-    console.error(`Runtime cache not found at: ${runtimeCachePath}`);
     throw new Error(`Runtime cache not found at: ${runtimeCachePath}`);
   }
 
@@ -520,7 +517,6 @@ const loadRuntimeCache = (): RuntimeCache => {
     cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
     return cachedRuntimeCache;
   } catch (e) {
-    console.error(`Error reading runtime cache: ${runtimeCachePath}`, e);
     throw new Error(`Error reading runtime cache: ${runtimeCachePath}`);
   }
 };
