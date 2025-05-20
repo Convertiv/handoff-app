@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CoreTypes = exports.CoreTransformers = exports.initIntegrationObject = void 0;
+exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initIntegrationObject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -591,5 +591,6 @@ const toLowerCaseKeysAndValues = (obj) => {
 // Export transformers and types from handoff-core
 var handoff_core_2 = require("handoff-core");
 Object.defineProperty(exports, "CoreTransformers", { enumerable: true, get: function () { return handoff_core_2.Transformers; } });
+Object.defineProperty(exports, "CoreTransformerUtils", { enumerable: true, get: function () { return handoff_core_2.TransformerUtils; } });
 Object.defineProperty(exports, "CoreTypes", { enumerable: true, get: function () { return handoff_core_2.Types; } });
 exports.default = Handoff;

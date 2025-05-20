@@ -1,10 +1,10 @@
-import { Functions as CoreFunctions, Types as CoreTypes } from 'handoff-core';
+import { TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 
 export const getComponentInstanceScssTokens = (
   component: CoreTypes.IComponentInstance,
   options?: CoreTypes.IHandoffConfigurationComponentOptions
 ) => {
-  return CoreFunctions.getComponentInstanceTokens('scss', component, options);
+  return CoreTransformerUtils.getComponentInstanceTokens('scss', component, options);
 };
 
 export const tokenReferenceFormat = (token: CoreTypes.IToken, type: 'css' | 'scss' | 'sd') => {
