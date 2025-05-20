@@ -613,6 +613,6 @@ export type { ComponentListObject as Component } from './transformers/preview/ty
 export type { Config } from './types/config';
 
 // Export transformers and types from handoff-core
-export { Transformers as CoreTransformers, Types as CoreTypes } from 'handoff-core';
+export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 
 export default Handoff;
