@@ -115,7 +115,7 @@
     "geist": "^1.3.1",
     "gray-matter": "^4.0.3",
     "handlebars": "^4.7.8",
-    "handoff-core": "file:../handoff-core",
+    "handoff-core": "^0.1.0",
     "html-react-parser": "^3.0.4",
     "jquery": "^3.6.1",
     "lodash": "^4.17.21",
