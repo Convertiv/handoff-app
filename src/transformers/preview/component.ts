@@ -51,7 +51,7 @@ export type RuleObject = {
     min: number;
     max: number;
   };
-  dimension?: {
+  dimensions?: {
     width: number;
     height: number;
     min: {

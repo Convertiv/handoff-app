@@ -26,7 +26,7 @@ const humanReadableRule = (rule: string, value: any) => {
     case 'pattern':
       return 'This field must match the pattern ' + value;
     case 'dimensions':
-      return `Use a minimum size of ${value.minW}x${value.minHeight} and a maximum size of ${value.maxWidth}x${value.maxHeight}`;
+      return `Use a minimum size of ${value.min.width}x${value.min.height} and a maximum size of ${value.max.width}x${value.max.height}`;
     case 'maxSize':
       // translate to human readable byte size
       if (value < 1024) {
@@ -122,8 +122,8 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
           {field.type === 'image' && (
             <div className="flex h-[200px] items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-500">
               <p>
-                {field.rules?.dimension
-                  ? `${field.rules.dimension.min.width}x${field.rules.dimension.min.height} - ${field.rules.dimension.max.width}x${field.rules.dimension.max.height}`
+                {field.rules?.dimensions
+                  ? `${field.rules.dimensions.min.width}x${field.rules.dimensions.min.height} - ${field.rules.dimensions.max.width}x${field.rules.dimensions.max.height}`
                   : 'No dimensions specified'}
               </p>
               <Image className="pointer-events-none absolute h-[100px] w-[100px] stroke-1 opacity-5" />
