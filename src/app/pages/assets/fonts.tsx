@@ -37,7 +37,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
-      design: getTokens().design,
+      design: getTokens().localStyles,
       config: getClientRuntimeConfig(),
       customFonts,
     },

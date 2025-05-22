@@ -1,11 +1,11 @@
 // plugins/vite-plugin-previews.ts
 import fs from 'fs-extra';
 import Handlebars from 'handlebars';
+import { Types as CoreTypes } from 'handoff-core';
 import { parse } from 'node-html-parser';
 import path from 'path';
 import prettier from 'prettier';
 import { Plugin } from 'vite';
-import { FileComponentsObject } from '../exporters/components/types';
 import { SlotMetadata } from './preview/component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from './preview/types';
 
@@ -28,7 +28,10 @@ const trimPreview = (preview: string) => {
   return code;
 };
 
-export function handlebarsPreviewsPlugin(data: TransformComponentTokensResult, components?: FileComponentsObject): Plugin {
+export function handlebarsPreviewsPlugin(
+  data: TransformComponentTokensResult,
+  components?: CoreTypes.IDocumentationObject['components']
+): Plugin {
   return {
     name: 'vite-plugin-previews',
     apply: 'build',

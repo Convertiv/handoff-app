@@ -46,7 +46,7 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
                 emptyOutDir: false,
                 rollupOptions: {
                     input: {
-                        'script': 'script',
+                        script: 'script',
                     },
                 },
             }, plugins: [...(config_1.default.plugins || []), (0, plugins_1.handlebarsPreviewsPlugin)(data, components)] });

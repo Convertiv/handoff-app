@@ -1,4 +1,4 @@
-import { TypographyObject } from '@handoff/api';
+import { Types as CoreTypes } from 'handoff-core';
 import { upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
 import React, { ReactElement } from 'react';
@@ -34,7 +34,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system/tokens/foundations/typography', `/system`).props,
-        design: getTokens().design,
+        design: getTokens().localStyles,
       } as FoundationDocumentationProps,
     },
   };
@@ -72,7 +72,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
   );
 };
 
-const FontsTable = ({ types }: { types: TypographyObject[] }) => {
+const FontsTable = ({ types }: { types: CoreTypes.ITypographyObject[] }) => {
   return (
     <>
       {types.map((type, index) => {
@@ -117,7 +117,7 @@ const FontsTable = ({ types }: { types: TypographyObject[] }) => {
   );
 };
 
-export const pluckStyle = (type: TypographyObject) => {
+export const pluckStyle = (type: CoreTypes.ITypographyObject) => {
   return {
     fontFamily: type.values.fontFamily,
     fontSize: type.values.fontSize,

@@ -1,4 +1,4 @@
-import { ValidationResult } from '@handoff/types/config';
+import { ValidationResult } from '@handoff/types';
 import { CheckCircle2, ChevronDown, XCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';

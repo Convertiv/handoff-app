@@ -70,7 +70,6 @@ export declare type RuleObject = {
  * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
 export declare const createWebSocketServer: (port?: number) => Promise<(message: string) => void>;
-export declare const getComponentPath: (handoff: Handoff) => string;
 export declare const getComponentOutputPath: (handoff: Handoff) => string;
 /**
  * Create a component transformer

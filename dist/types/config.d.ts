@@ -1,28 +1,7 @@
+import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
-import { FileComponentsObject } from '../exporters/components/types';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
-import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
-/**
- * Represents the result of a single validation check
- */
-export interface ValidationResult {
-    /**
-     * Description of what this validation check does
-     */
-    description: string;
-    /**
-     * Whether the validation passed or failed
-     */
-    passed: boolean;
-    /**
-     * Optional messages providing more details about the validation result
-     */
-    messages?: string[];
-    /**
-     * Optional timestamp of when the validation was performed
-     */
-    timestamp?: string;
-}
+import { ValidationResult } from '../types';
 export interface ImageStyle {
     name: string;
     style: string;
@@ -34,21 +13,31 @@ export interface Integration {
     name: string;
     version: string;
 }
-export interface ComponentSizeMap {
-    figma: string;
-    css: string;
+export interface TransformerConfig {
+    /**
+     * Reference to the transformer function from CoreTransformers
+     * @example transformer: CoreTransformers.ScssTransformer
+     */
+    transformer: (options?: HandoffTypes.IHandoffTransformerOptions) => HandoffTypes.IHandoffTransformer;
+    outDir: string;
+    format: string;
 }
-export interface ExportResult {
-    design: {
-        color: ColorObject[];
-        effect: EffectObject[];
-        typography: TypographyObject[];
-    };
-    components: FileComponentsObject;
-    assets: {
-        icons: AssetObject[];
-        logos: AssetObject[];
-    };
+export interface PipelineConfig {
+    /**
+     * List of transformers to be used in the build pipeline
+     * Each transformer should specify the transformer function, output directory, and format
+     * @example
+     * ```typescript
+     * transformers: [
+     *   {
+     *     transformer: Transformers.ScssTransformer,
+     *     outDir: 'scss',
+     *     format: 'scss'
+     *   }
+     * ]
+     * ```
+     */
+    transformers?: TransformerConfig[];
 }
 export interface Breakpoints {
     mobile: {
@@ -84,6 +73,10 @@ export interface Config {
     sitesOutputDirectory?: string;
     useVariables?: boolean;
     app?: NextAppConfig;
+    /**
+     * Configuration for the build pipeline
+     */
+    pipeline?: PipelineConfig;
     /**
      * Configuration for entry points to assets and components that will be built
      */

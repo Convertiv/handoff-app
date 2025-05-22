@@ -1,4 +1,4 @@
-import { EffectObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
@@ -33,7 +33,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system/tokens/foundations/effects', `/system`).props,
-        design: getTokens().design,
+        design: getTokens().localStyles,
       } as FoundationDocumentationProps,
     },
   };
@@ -90,7 +90,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
   );
 };
 
-const EffectsTable = ({ group, effects }: { group: string; effects: EffectObject[] }) => {
+const EffectsTable = ({ group, effects }: { group: string; effects: CoreTypes.IEffectObject[] }) => {
   return (
     <Table className="border-b-[0.5px] border-l-[0.5px] border-r-[0.5px]">
       <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">

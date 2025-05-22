@@ -37,7 +37,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
             groupBy?: string;
         };
     };
-    validations?: Record<string, import("../../../types/config").ValidationResult>;
+    validations?: Record<string, import("../../../types").ValidationResult>;
 }>;
 /**
  * Build the main CSS file using Vite

@@ -1,5 +1,5 @@
+import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
-import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
 import viteBaseConfig from '../../config';
 import { handlebarsPreviewsPlugin } from '../../plugins';
@@ -23,7 +23,7 @@ import { TransformComponentTokensResult } from '../types';
 export const buildPreviews = async (
   data: TransformComponentTokensResult,
   handoff: Handoff,
-  components?: FileComponentsObject
+  components?: CoreTypes.IDocumentationObject['components']
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
@@ -41,7 +41,7 @@ export const buildPreviews = async (
         emptyOutDir: false,
         rollupOptions: {
           input: {
-            'script': 'script',
+            script: 'script',
           },
         },
       },

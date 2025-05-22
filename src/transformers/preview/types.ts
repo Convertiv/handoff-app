@@ -1,4 +1,4 @@
-import { ValidationResult } from '../../types/config';
+import { ValidationResult } from '../../types';
 import { SlotMetadata } from './component';
 
 export enum ComponentType {
@@ -88,6 +88,7 @@ export type OptionalPreviewRender = {
   values: { [key: string]: string | string[] | any };
   url: string;
 };
+
 export interface TransformedPreviewComponents {
   [key: string]: TransformComponentTokensResult[];
 }

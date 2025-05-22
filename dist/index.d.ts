@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { DocumentationObject } from './types';
+import { Types as CoreTypes, Handoff as HandoffRunner } from 'handoff-core';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -19,6 +19,7 @@ declare class Handoff {
     private _configFilePaths;
     private _documentationObjectCache?;
     private _sharedStylesCache?;
+    private _handoffRunner?;
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
     private construct;
     init(configOverride?: Partial<Config>): Handoff;
@@ -41,14 +42,20 @@ declare class Handoff {
     validateComponents(): Promise<Handoff>;
     /**
      * Retrieves the documentation object, using cached version if available
-     * @returns {Promise<DocumentationObject | undefined>} The documentation object or undefined if not found
+     * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
      */
-    getDocumentationObject(): Promise<DocumentationObject | undefined>;
+    getDocumentationObject(): Promise<CoreTypes.IDocumentationObject | undefined>;
     /**
      * Retrieves shared styles, using cached version if available
      * @returns {Promise<string | null>} The shared styles string or null if not found
      */
     getSharedStyles(): Promise<string | null>;
+    getRunner(): Promise<ReturnType<typeof HandoffRunner>>;
+    /**
+     * Returns configured legacy component definitions in array form.
+     * @deprecated Will be removed before 1.0.0 release.
+     */
+    getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
     /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
@@ -104,4 +111,5 @@ declare class Handoff {
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
 export type { ComponentListObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
+export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 export default Handoff;

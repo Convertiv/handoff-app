@@ -1,3 +1,3 @@
+import { Types as HandoffTypes } from 'handoff-core';
 import Handoff from '.';
-import { DocumentationObject, LegacyComponentDefinition } from './types';
-export declare const createDocumentationObject: (handoff: Handoff, legacyDefinitions?: LegacyComponentDefinition[]) => Promise<DocumentationObject>;
+export declare const createDocumentationObject: (handoff: Handoff) => Promise<HandoffTypes.IDocumentationObject>;

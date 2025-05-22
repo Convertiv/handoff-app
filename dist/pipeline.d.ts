@@ -1,4 +1,7 @@
+/// <reference types="node" />
 import 'dotenv/config';
+import { Types as HandoffTypes } from 'handoff-core';
+import * as stream from 'node:stream';
 import Handoff from '.';
 /**
  * Read Previous Json File
@@ -6,6 +9,7 @@ import Handoff from '.';
  * @returns
  */
 export declare const readPrevJSONFile: (path: string) => Promise<any>;
+export declare const zipAssets: (assets: HandoffTypes.IAssetObject[], destination: stream.Writable) => Promise<stream.Writable>;
 /**
  * Build previews
  * @param documentationObject
