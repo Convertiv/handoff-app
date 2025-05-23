@@ -1,10 +1,13 @@
 // plugins/vite-plugin-previews.ts
+import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import { Types as CoreTypes } from 'handoff-core';
 import { parse } from 'node-html-parser';
 import path from 'path';
 import prettier from 'prettier';
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { Plugin } from 'vite';
 import { SlotMetadata } from './preview/component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from './preview/types';
@@ -134,6 +137,89 @@ export function handlebarsPreviewsPlugin(
 
       data.preview = '';
       data.code = trimPreview(template);
+    },
+  };
+}
+
+export function ssrRenderPlugin(
+  data: TransformComponentTokensResult,
+  components?: CoreTypes.IDocumentationObject['components']
+): import('vite').Plugin {
+  return {
+    name: 'vite-plugin-ssr-static-render',
+    apply: 'build',
+    resolveId(id) {
+      if (id === 'script') {
+        return id;
+      }
+    },
+    load(id) {
+      if (id === 'script') {
+        return 'export default {}'; // dummy minimal entry
+      }
+    },
+    async generateBundle(_, bundle) {
+      // Delete all JS chunks
+      for (const [fileName, chunkInfo] of Object.entries(bundle)) {
+        if (chunkInfo.type === 'chunk' && fileName.includes('script')) {
+          delete bundle[fileName];
+        }
+      }
+
+      const id = data.id;
+
+      const entry = path.resolve(data.entries.template);
+
+      // 1. Compile the component to CommonJS in memory
+      const result = await esbuild.build({
+        entryPoints: [entry],
+        bundle: true,
+        write: false,
+        format: 'cjs',
+        platform: 'node',
+        jsx: 'automatic',
+        external: ['react', 'react-dom'],
+      });
+
+      // 2. Evaluate the compiled code
+      const { text } = result.outputFiles[0];
+      const m: any = { exports: {} };
+      const func = new Function('require', 'module', 'exports', text);
+      func(require, m, m.exports);
+      const Component = m.exports.default;
+
+      if (!components) components = {};
+
+      const previews = {};
+
+      if (components[data.id]) {
+        for (const instance of components[data.id].instances) {
+          const variationId = instance.id;
+          const values = Object.fromEntries(instance.variantProperties);
+
+          data.previews[variationId] = {
+            title: variationId,
+            url: '',
+            values,
+          };
+        }
+      }
+
+      for (const key in data.previews) {
+        const html = ReactDOMServer.renderToStaticMarkup(React.createElement(Component, { properties: data.previews[key].values }));
+
+        this.emitFile({
+          type: 'asset',
+          fileName: `${id}-${key}.html`,
+          source: `<!DOCTYPE html>\n${html}`,
+        });
+
+        previews[key] = html;
+        data.previews[key].url = `${id}-${key}.html`;
+      }
+
+      data.preview = '';
+      data.code = trimPreview('');
     },
   };
 }

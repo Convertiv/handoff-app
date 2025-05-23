@@ -12,13 +12,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handlebarsPreviewsPlugin = void 0;
+exports.ssrRenderPlugin = exports.handlebarsPreviewsPlugin = void 0;
 // plugins/vite-plugin-previews.ts
+const esbuild_1 = __importDefault(require("esbuild"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const node_html_parser_1 = require("node-html-parser");
 const path_1 = __importDefault(require("path"));
 const prettier_1 = __importDefault(require("prettier"));
+const react_1 = __importDefault(require("react"));
+const server_1 = __importDefault(require("react-dom/server"));
 const ensureIds = (properties) => {
     var _a;
     for (const key in properties) {
@@ -133,3 +136,74 @@ function handlebarsPreviewsPlugin(data, components) {
     };
 }
 exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
+function ssrRenderPlugin(data, components) {
+    return {
+        name: 'vite-plugin-ssr-static-render',
+        apply: 'build',
+        resolveId(id) {
+            if (id === 'script') {
+                return id;
+            }
+        },
+        load(id) {
+            if (id === 'script') {
+                return 'export default {}'; // dummy minimal entry
+            }
+        },
+        generateBundle(_, bundle) {
+            return __awaiter(this, void 0, void 0, function* () {
+                // Delete all JS chunks
+                for (const [fileName, chunkInfo] of Object.entries(bundle)) {
+                    if (chunkInfo.type === 'chunk' && fileName.includes('script')) {
+                        delete bundle[fileName];
+                    }
+                }
+                const id = data.id;
+                const entry = path_1.default.resolve(data.entries.template);
+                // 1. Compile the component to CommonJS in memory
+                const result = yield esbuild_1.default.build({
+                    entryPoints: [entry],
+                    bundle: true,
+                    write: false,
+                    format: 'cjs',
+                    platform: 'node',
+                    jsx: 'automatic',
+                    external: ['react', 'react-dom'],
+                });
+                // 2. Evaluate the compiled code
+                const { text } = result.outputFiles[0];
+                const m = { exports: {} };
+                const func = new Function('require', 'module', 'exports', text);
+                func(require, m, m.exports);
+                const Component = m.exports.default;
+                if (!components)
+                    components = {};
+                const previews = {};
+                if (components[data.id]) {
+                    for (const instance of components[data.id].instances) {
+                        const variationId = instance.id;
+                        const values = Object.fromEntries(instance.variantProperties);
+                        data.previews[variationId] = {
+                            title: variationId,
+                            url: '',
+                            values,
+                        };
+                    }
+                }
+                for (const key in data.previews) {
+                    const html = server_1.default.renderToStaticMarkup(react_1.default.createElement(Component, { properties: data.previews[key].values }));
+                    this.emitFile({
+                        type: 'asset',
+                        fileName: `${id}-${key}.html`,
+                        source: `<!DOCTYPE html>\n${html}`,
+                    });
+                    previews[key] = html;
+                    data.previews[key].url = `${id}-${key}.html`;
+                }
+                data.preview = '';
+                data.code = trimPreview('');
+            });
+        },
+    };
+}
+exports.ssrRenderPlugin = ssrRenderPlugin;
