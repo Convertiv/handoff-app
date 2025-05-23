@@ -1,10 +1,9 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
-import path from 'path';
-import { BuildOptions, InlineConfig, build as viteBuild } from 'vite';
+import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff from '../../../index';
 import viteBaseConfig from '../../config';
-import { handlebarsPreviewsPlugin } from '../../plugins';
+import { handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
@@ -28,33 +27,13 @@ export const buildPreviews = async (
   components?: CoreTypes.IDocumentationObject['components']
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
-  let plugins = [...(viteBaseConfig.plugins || []), handlebarsPreviewsPlugin(data, components)];
-  let build: BuildOptions = {
-    outDir: getComponentOutputPath(handoff),
-    emptyOutDir: false,
-    rollupOptions: {
-      input: {
-        script: 'script',
-      },
-    },
-  };
 
-  if (data.entries.template.includes('.html')) {
-    console.log('Building HTML From HTML', data.entries);
-    plugins = [...(viteBaseConfig.plugins || []), react()];
-    build = {
-      emptyOutDir: false,
-      rollupOptions: {
-        input: path.resolve(data.entries.template),
-        output: {
-          format: 'iife',
-          dir: path.resolve(getComponentOutputPath(handoff)),
-          entryFileNames: data.id + '-[hash].js',
-          manualChunks: undefined,
-        },
-      },
-    };
-  }
+  const plugins = [
+    ...(viteBaseConfig.plugins || []),
+    ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components)] : []),
+    ...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components)] : []),
+  ];
+
   // Store the current NODE_ENV value before vite build
   // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
   // which can cause issues with subsequent Next.js operations that rely on
@@ -64,8 +43,14 @@ export const buildPreviews = async (
   try {
     let viteConfig: InlineConfig = {
       ...viteBaseConfig,
-      build,
       plugins,
+      build: {
+        outDir: getComponentOutputPath(handoff),
+        emptyOutDir: false,
+        rollupOptions: {
+          input: { script: 'script' },
+        },
+      },
     };
 
     // Allow configuration to be modified through hooks
@@ -88,22 +73,6 @@ export const buildPreviews = async (
   }
 
   return data;
-};
-
-const reactHtmlTemplate = (data: TransformComponentTokensResult) => {
-  return `
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./${data.id}.tsx"></script>
-  </body>
-</html>`;
 };
 
 export default buildPreviews;
