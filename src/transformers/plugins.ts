@@ -236,22 +236,7 @@ export function ssrRenderPlugin(
           jsx: 'automatic',
           sourcemap: false,
           minify: false,
-          plugins: [
-            {
-              name: 'handoff-resolve-react',
-              setup(build) {
-                build.onResolve({ filter: /^react$/ }, () => ({
-                  path: path.join(handoff.modulePath, 'node_modules/react/index.js'),
-                }));
-                build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
-                  path: path.join(handoff.modulePath, 'node_modules/react-dom/client.js'),
-                }));
-                build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
-                  path: path.join(handoff.modulePath, 'node_modules/react/jsx-runtime.js'),
-                }));
-              },
-            },
-          ],
+          plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
         });
 
         const inlinedJs = bundledClient.outputFiles[0].text;
@@ -290,6 +275,41 @@ export function ssrRenderPlugin(
 
       data.preview = '';
       data.code = trimPreview('TEST');
+    },
+  };
+}
+
+function resolveModule(id: string, searchDirs: string[]): string {
+  for (const dir of searchDirs) {
+    try {
+      const resolved = require.resolve(id, {
+        paths: [path.resolve(dir)],
+      });
+      return resolved;
+    } catch (_) {
+      // skip
+    }
+  }
+  throw new Error(`Module "${id}" not found in:\n${searchDirs.join('\n')}`);
+}
+
+function handoffResolveReactEsbuildPlugin(workingPath: string, handoffModulePath: string) {
+  const searchDirs = [workingPath, path.join(handoffModulePath, 'node_modules')];
+
+  return {
+    name: 'handoff-resolve-react',
+    setup(build: any) {
+      build.onResolve({ filter: /^react$/ }, () => ({
+        path: resolveModule('react', searchDirs),
+      }));
+
+      build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
+        path: resolveModule('react-dom/client', searchDirs),
+      }));
+
+      build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
+        path: resolveModule('react/jsx-runtime', searchDirs),
+      }));
     },
   };
 }

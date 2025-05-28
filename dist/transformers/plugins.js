@@ -216,22 +216,7 @@ function ssrRenderPlugin(data, components, handoff) {
                         jsx: 'automatic',
                         sourcemap: false,
                         minify: false,
-                        plugins: [
-                            {
-                                name: 'handoff-resolve-react',
-                                setup(build) {
-                                    build.onResolve({ filter: /^react$/ }, () => ({
-                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react/index.js'),
-                                    }));
-                                    build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
-                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react-dom/client.js'),
-                                    }));
-                                    build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
-                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react/jsx-runtime.js'),
-                                    }));
-                                },
-                            },
-                        ],
+                        plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
                     });
                     const inlinedJs = bundledClient.outputFiles[0].text;
                     // 4. Emit fully inlined HTML
@@ -269,3 +254,34 @@ function ssrRenderPlugin(data, components, handoff) {
     };
 }
 exports.ssrRenderPlugin = ssrRenderPlugin;
+function resolveModule(id, searchDirs) {
+    for (const dir of searchDirs) {
+        try {
+            const resolved = require.resolve(id, {
+                paths: [path_1.default.resolve(dir)],
+            });
+            return resolved;
+        }
+        catch (_) {
+            // skip
+        }
+    }
+    throw new Error(`Module "${id}" not found in:\n${searchDirs.join('\n')}`);
+}
+function handoffResolveReactEsbuildPlugin(workingPath, handoffModulePath) {
+    const searchDirs = [workingPath, path_1.default.join(handoffModulePath, 'node_modules')];
+    return {
+        name: 'handoff-resolve-react',
+        setup(build) {
+            build.onResolve({ filter: /^react$/ }, () => ({
+                path: resolveModule('react', searchDirs),
+            }));
+            build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
+                path: resolveModule('react-dom/client', searchDirs),
+            }));
+            build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
+                path: resolveModule('react/jsx-runtime', searchDirs),
+            }));
+        },
+    };
+}
