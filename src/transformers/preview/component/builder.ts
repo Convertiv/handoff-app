@@ -27,6 +27,7 @@ const defaultComponent: TransformComponentTokensResult = {
     },
   },
   properties: {},
+  format: 'html',
   code: '',
   html: '',
   js: null,

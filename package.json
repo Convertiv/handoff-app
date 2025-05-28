@@ -151,6 +151,7 @@
   },
   "devDependencies": {
     "eslint-config-prettier": "^10.0.2",
-    "np": "^8.0.4"
+    "np": "^8.0.4",
+    "sass-embedded": "^1.89.0"
   }
 }
