@@ -51,6 +51,7 @@ const defaultComponent = {
         },
     },
     properties: {},
+    format: 'html',
     code: '',
     html: '',
     js: null,

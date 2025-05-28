@@ -5,6 +5,7 @@ import js from 'refractor/lang/javascript';
 import json from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
+import tsx from 'refractor/lang/tsx';
 import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
@@ -24,7 +25,7 @@ SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('scss', scss);
-
+SyntaxHighlighter.registerLanguage('tsx', tsx);
 /**
  * Highlight code for preview elements
  * @param param0
@@ -111,6 +112,23 @@ export const CodeHighlight: React.FC<{
     Handlebars.registerHelper('field', (_, options) => options.fn(this));
   });
 
+  const labels = {
+    html: 'HTML',
+    css: 'CSS',
+    js: 'Javascript',
+    sass: 'SASS',
+    sharedStyles: 'Shared CSS',
+  };
+  const getLabel = (state: string) => {
+    if (state === 'html' && data.format === 'react') return 'React';
+    return labels[state] || state;
+  };
+
+  const language = (activeState: string) => {
+    if (activeState === 'html' && data.format === 'react') return 'tsx';
+    return activeState === 'html' ? type : activeState;
+  };
+
   useEffect(() => {
     // check if data is a string
     if (typeof data === 'string') {
@@ -163,21 +181,13 @@ export const CodeHighlight: React.FC<{
               <SelectContent>
                 {states
                   .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
-                  .map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state === 'html'
-                        ? 'HTML'
-                        : state === 'css'
-                          ? 'CSS'
-                          : state === 'js'
-                            ? 'Javascript'
-                            : state === 'sass'
-                              ? 'SASS'
-                              : state === 'sharedStyles'
-                                ? 'Shared CSS'
-                                : state}
-                    </SelectItem>
-                  ))}
+                  .map((state) => {
+                    return (
+                      <SelectItem key={state} value={state}>
+                        {getLabel(state)}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           )}
@@ -188,7 +198,7 @@ export const CodeHighlight: React.FC<{
 
       <SyntaxHighlighter
         style={theme}
-        language={activeState === 'html' ? type : activeState}
+        language={language(activeState)}
         PreTag="div"
         showLineNumbers={true}
         wrapLines={true}
