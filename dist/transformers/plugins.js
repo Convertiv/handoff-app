@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ssrRenderPlugin = exports.handlebarsPreviewsPlugin = void 0;
-// plugins/vite-plugin-previews.ts
 const esbuild_1 = __importDefault(require("esbuild"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
@@ -22,6 +21,7 @@ const path_1 = __importDefault(require("path"));
 const prettier_1 = __importDefault(require("prettier"));
 const react_1 = __importDefault(require("react"));
 const server_1 = __importDefault(require("react-dom/server"));
+const vite_1 = require("vite");
 const ensureIds = (properties) => {
     var _a;
     for (const key in properties) {
@@ -40,7 +40,7 @@ const trimPreview = (preview) => {
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
     return code;
 };
-function handlebarsPreviewsPlugin(data, components) {
+function handlebarsPreviewsPlugin(data, components, handoff) {
     return {
         name: 'vite-plugin-previews',
         apply: 'build',
@@ -136,7 +136,7 @@ function handlebarsPreviewsPlugin(data, components) {
     };
 }
 exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
-function ssrRenderPlugin(data, components) {
+function ssrRenderPlugin(data, components, handoff) {
     return {
         name: 'vite-plugin-ssr-static-render',
         apply: 'build',
@@ -161,7 +161,7 @@ function ssrRenderPlugin(data, components) {
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
                 // 1. Compile the component to CommonJS in memory
-                const result = yield esbuild_1.default.build({
+                const ssrBuild = yield esbuild_1.default.build({
                     entryPoints: [entry],
                     bundle: true,
                     write: false,
@@ -171,11 +171,11 @@ function ssrRenderPlugin(data, components) {
                     external: ['react', 'react-dom'],
                 });
                 // 2. Evaluate the compiled code
-                const { text } = result.outputFiles[0];
-                const m = { exports: {} };
-                const func = new Function('require', 'module', 'exports', text);
-                func(require, m, m.exports);
-                const Component = m.exports.default;
+                const { text: serverCode } = ssrBuild.outputFiles[0];
+                const mod = { exports: {} };
+                const func = new Function('require', 'module', 'exports', serverCode);
+                func(require, mod, mod.exports);
+                const Component = mod.exports.default;
                 if (!components)
                     components = {};
                 const previews = {};
@@ -191,17 +191,79 @@ function ssrRenderPlugin(data, components) {
                     }
                 }
                 for (const key in data.previews) {
-                    const html = server_1.default.renderToStaticMarkup(react_1.default.createElement(Component, { properties: data.previews[key].values }));
+                    const props = { properties: data.previews[key].values };
+                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, { properties: data.previews[key].values }));
+                    // 3. Hydration source: baked-in, references user entry
+                    const clientSource = `
+          import React from 'react';
+          import { hydrateRoot } from 'react-dom/client';
+          import Component from '${(0, vite_1.normalizePath)(entry)}';
+
+          const raw = document.getElementById('__APP_PROPS__')?.textContent || '{}';
+          const props = JSON.parse(raw);
+          hydrateRoot(document.getElementById('root'), <Component {...props} />);
+        `;
+                    const bundledClient = yield esbuild_1.default.build({
+                        stdin: {
+                            contents: clientSource,
+                            resolveDir: process.cwd(),
+                            loader: 'tsx',
+                        },
+                        bundle: true,
+                        write: false,
+                        format: 'esm',
+                        platform: 'browser',
+                        jsx: 'automatic',
+                        sourcemap: false,
+                        minify: false,
+                        plugins: [
+                            {
+                                name: 'handoff-resolve-react',
+                                setup(build) {
+                                    build.onResolve({ filter: /^react$/ }, () => ({
+                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react/index.js'),
+                                    }));
+                                    build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
+                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react-dom/client.js'),
+                                    }));
+                                    build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
+                                        path: path_1.default.join(handoff.modulePath, 'node_modules/react/jsx-runtime.js'),
+                                    }));
+                                },
+                            },
+                        ],
+                    });
+                    const inlinedJs = bundledClient.outputFiles[0].text;
+                    // 4. Emit fully inlined HTML
+                    const fullHtml = `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
+            <script type="module">
+              ${inlinedJs}
+            </script>
+          </head>
+          <body>
+            <div id="root">${renderedHtml}</div>
+          </body>
+        </html>`;
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,
-                        source: `<!DOCTYPE html>\n${html}`,
+                        source: fullHtml,
                     });
-                    previews[key] = html;
+                    // TODO: Currently contains the same data as the first emitted file. Should be resolved before release.
+                    this.emitFile({
+                        type: 'asset',
+                        fileName: `${id}-${key}-inspect.html`,
+                        source: `<!DOCTYPE html>\n${fullHtml}`,
+                    });
+                    previews[key] = fullHtml;
                     data.previews[key].url = `${id}-${key}.html`;
                 }
                 data.preview = '';
-                data.code = trimPreview('');
+                data.code = trimPreview('TEST');
             });
         },
     };
