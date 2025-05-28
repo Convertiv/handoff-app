@@ -1,4 +1,3 @@
-// plugins/vite-plugin-previews.ts
 import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import Handlebars from 'handlebars';
@@ -8,7 +7,8 @@ import path from 'path';
 import prettier from 'prettier';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { Plugin } from 'vite';
+import { Plugin, normalizePath } from 'vite';
+import Handoff from '..';
 import { SlotMetadata } from './preview/component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from './preview/types';
 
@@ -33,7 +33,8 @@ const trimPreview = (preview: string) => {
 
 export function handlebarsPreviewsPlugin(
   data: TransformComponentTokensResult,
-  components?: CoreTypes.IDocumentationObject['components']
+  components: CoreTypes.IDocumentationObject['components'],
+  handoff: Handoff
 ): Plugin {
   return {
     name: 'vite-plugin-previews',
@@ -143,7 +144,8 @@ export function handlebarsPreviewsPlugin(
 
 export function ssrRenderPlugin(
   data: TransformComponentTokensResult,
-  components?: CoreTypes.IDocumentationObject['components']
+  components: CoreTypes.IDocumentationObject['components'],
+  handoff?: Handoff
 ): import('vite').Plugin {
   return {
     name: 'vite-plugin-ssr-static-render',
@@ -171,7 +173,7 @@ export function ssrRenderPlugin(
       const entry = path.resolve(data.entries.template);
 
       // 1. Compile the component to CommonJS in memory
-      const result = await esbuild.build({
+      const ssrBuild = await esbuild.build({
         entryPoints: [entry],
         bundle: true,
         write: false,
@@ -182,11 +184,12 @@ export function ssrRenderPlugin(
       });
 
       // 2. Evaluate the compiled code
-      const { text } = result.outputFiles[0];
-      const m: any = { exports: {} };
-      const func = new Function('require', 'module', 'exports', text);
-      func(require, m, m.exports);
-      const Component = m.exports.default;
+      const { text: serverCode } = ssrBuild.outputFiles[0];
+      const mod: any = { exports: {} };
+      const func = new Function('require', 'module', 'exports', serverCode);
+      func(require, mod, mod.exports);
+
+      const Component = mod.exports.default;
 
       if (!components) components = {};
 
@@ -206,20 +209,87 @@ export function ssrRenderPlugin(
       }
 
       for (const key in data.previews) {
-        const html = ReactDOMServer.renderToStaticMarkup(React.createElement(Component, { properties: data.previews[key].values }));
+        const props = { properties: data.previews[key].values };
+        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, { properties: data.previews[key].values }));
+
+        // 3. Hydration source: baked-in, references user entry
+        const clientSource = `
+          import React from 'react';
+          import { hydrateRoot } from 'react-dom/client';
+          import Component from '${normalizePath(entry)}';
+
+          const raw = document.getElementById('__APP_PROPS__')?.textContent || '{}';
+          const props = JSON.parse(raw);
+          hydrateRoot(document.getElementById('root'), <Component {...props} />);
+        `;
+
+        const bundledClient = await esbuild.build({
+          stdin: {
+            contents: clientSource,
+            resolveDir: process.cwd(),
+            loader: 'tsx',
+          },
+          bundle: true,
+          write: false,
+          format: 'esm',
+          platform: 'browser',
+          jsx: 'automatic',
+          sourcemap: false,
+          minify: false,
+          plugins: [
+            {
+              name: 'handoff-resolve-react',
+              setup(build) {
+                build.onResolve({ filter: /^react$/ }, () => ({
+                  path: path.join(handoff.modulePath, 'node_modules/react/index.js'),
+                }));
+                build.onResolve({ filter: /^react-dom\/client$/ }, () => ({
+                  path: path.join(handoff.modulePath, 'node_modules/react-dom/client.js'),
+                }));
+                build.onResolve({ filter: /^react\/jsx-runtime$/ }, () => ({
+                  path: path.join(handoff.modulePath, 'node_modules/react/jsx-runtime.js'),
+                }));
+              },
+            },
+          ],
+        });
+
+        const inlinedJs = bundledClient.outputFiles[0].text;
+
+        // 4. Emit fully inlined HTML
+        const fullHtml = `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
+            <script type="module">
+              ${inlinedJs}
+            </script>
+          </head>
+          <body>
+            <div id="root">${renderedHtml}</div>
+          </body>
+        </html>`;
 
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}.html`,
-          source: `<!DOCTYPE html>\n${html}`,
+          source: fullHtml,
         });
 
-        previews[key] = html;
+        // TODO: Currently contains the same data as the first emitted file. Should be resolved before release.
+        this.emitFile({
+          type: 'asset',
+          fileName: `${id}-${key}-inspect.html`,
+          source: `<!DOCTYPE html>\n${fullHtml}`,
+        });
+
+        previews[key] = fullHtml;
         data.previews[key].url = `${id}-${key}.html`;
       }
 
       data.preview = '';
-      data.code = trimPreview('');
+      data.code = trimPreview('TEST');
     },
   };
 }

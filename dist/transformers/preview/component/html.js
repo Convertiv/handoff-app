@@ -38,8 +38,8 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
         return data;
     const plugins = [
         ...(config_1.default.plugins || []),
-        ...(data.entries.template.includes('.hbs') ? [(0, plugins_1.handlebarsPreviewsPlugin)(data, components)] : []),
-        ...(data.entries.template.includes('.tsx') ? [(0, plugin_react_1.default)(), (0, plugins_1.ssrRenderPlugin)(data, components)] : []),
+        ...(data.entries.template.includes('.hbs') ? [(0, plugins_1.handlebarsPreviewsPlugin)(data, components, handoff)] : []),
+        ...(data.entries.template.includes('.tsx') ? [(0, plugin_react_1.default)(), (0, plugins_1.ssrRenderPlugin)(data, components, handoff)] : []),
     ];
     // Store the current NODE_ENV value before vite build
     // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'

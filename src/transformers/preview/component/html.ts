@@ -30,8 +30,8 @@ export const buildPreviews = async (
 
   const plugins = [
     ...(viteBaseConfig.plugins || []),
-    ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components)] : []),
-    ...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components)] : []),
+    ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
+    ...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
   ];
 
   // Store the current NODE_ENV value before vite build
