@@ -55,7 +55,7 @@ export const buildPreviews = async (
 
     await viteBuild(viteConfig);
   } catch (error) {
-    console.error('Error building component previews:', error);
+    console.error(`Error building component previews: ${data.entries.template}`, error);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
