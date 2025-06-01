@@ -12,12 +12,20 @@ This release is a major reorganization of Handoff. We've preserved the core
 Figma Token ETL behavior, but this release significantly rethinks and improves
 the documentation application.
 
+**This is a significant breaking change. We recommend starting from a fresh
+project.** Its possible to upgrade an existing Handoff project, but its
+easier to start fresh. Previous versions of handoff depended on specific
+structure. We're working to remove any structure or conventions, so you can
+use handoff in any project as you see fit.
+
+Contact us if you need help upgrading a legacy project handoff@convertiv.com.
+
 ### Justification
 
-The Handoff documentation app was initial designed to complement the token extraction
-and document simple tokens. Over time, we added the ability to document Figma
-components in the application. We supported integrations that would allow
-users to describe Figma components in code.
+The Handoff documentation app was initial designed to complement the token e
+xtraction and document simple tokens. Over time, we added the ability to
+document Figma components in the application. We supported integrations that
+would allow users to describe Figma components in code.
 
 As we built out more complex design system documentation, we quickly hit the limits
 of what we could build and describe with that simple system. We needed a way
