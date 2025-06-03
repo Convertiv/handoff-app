@@ -195,7 +195,15 @@ function ssrRenderPlugin(data, components) {
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,
-                        source: `<!DOCTYPE html>\n${html}`,
+                        source: `<!DOCTYPE html>
+<head>
+  <link rel="stylesheet" href="/api/component/shared.css">
+  <link rel="stylesheet" href="/api/component/${id}.css">
+  <link rel="stylesheet" href="/assets/css/preview.css">
+</head>
+<body>
+  ${html}
+</body>`,
                     });
                     previews[key] = html;
                     data.previews[key].url = `${id}-${key}.html`;
