@@ -191,7 +191,7 @@ function ssrRenderPlugin(data, components) {
                     }
                 }
                 for (const key in data.previews) {
-                    const html = server_1.default.renderToStaticMarkup(react_1.default.createElement(Component, { properties: data.previews[key].values }));
+                    const html = server_1.default.renderToStaticMarkup(react_1.default.createElement(Component, Object.assign({}, data.previews[key].values)));
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,

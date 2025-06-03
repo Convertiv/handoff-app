@@ -206,7 +206,7 @@ export function ssrRenderPlugin(
       }
 
       for (const key in data.previews) {
-        const html = ReactDOMServer.renderToStaticMarkup(React.createElement(Component, { properties: data.previews[key].values }));
+        const html = ReactDOMServer.renderToStaticMarkup(React.createElement(Component, { ...data.previews[key].values }));
 
         this.emitFile({
           type: 'asset',
