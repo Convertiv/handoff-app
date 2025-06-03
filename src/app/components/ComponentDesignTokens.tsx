@@ -1,12 +1,12 @@
-import startCase from 'lodash/startCase';
-import round from 'lodash/round';
-import React, { useEffect } from 'react';
-import Icon from './Icon';
-import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { ComponentInstance } from '@handoff/exporters/components/types';
-import { IntegrationObjectComponentOptions } from '@handoff/types/config';
-import { tokenReferenceFormat } from './util/token';
+import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
 import { Token } from '@handoff/transformers/types';
+import { IntegrationObjectComponentOptions } from '@handoff/types/config';
+import round from 'lodash/round';
+import startCase from 'lodash/startCase';
+import { Blend } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { tokenReferenceFormat } from './util/token';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -244,14 +244,29 @@ const PropertyStateValue: React.FC<{
         </div>
       )}
       <PropertyIcon name={property} />
-      <p>{!showReference ? NormalizeValue(value) : tokenReference ? <>{tokenReferenceFormat(tokenReference, 'generic')} </> : NormalizeValue(value)}</p>
+      <p>
+        {!showReference ? (
+          NormalizeValue(value)
+        ) : tokenReference ? (
+          <>{tokenReferenceFormat(tokenReference, 'generic')} </>
+        ) : (
+          NormalizeValue(value)
+        )}
+      </p>
     </div>
   );
 };
 
 const PropertyIcon: React.FC<{ name: string }> = ({ name }) => {
   const icon = PropertyIconPathMap[name];
-  return icon !== undefined ? <Icon name={icon} className="o-icon" /> : <></>;
+  // TODO Map the icon to the correct icon
+  switch (name) {
+    case 'border-width':
+      return <Blend />;
+
+    default:
+      return <Blend />;
+  }
 };
 
 export default ComponentDesignTokens;

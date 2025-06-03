@@ -1,15 +1,13 @@
-import type { GetStaticProps } from 'next';
-import Link from 'next/link';
 import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
-import Head from 'next/head';
-import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
-import Header from '../../components/Header';
+import { Grid, Hexagon, Palette, Shapes, Sun, TypeOutline } from 'lucide-react';
+import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
-import CustomNav from '../../components/SideNav/Custom';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
-import Footer from '../../components/Footer';
+import CardsWithIcons from '../../components/cards/CardsWithIcons';
+import Layout from '../../components/Layout/Main';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
+import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -30,63 +28,63 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const DesignPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
   return (
-    <div className="c-page">
-      <Head>
-        <title>{metadata.metaTitle}</title>
-        <meta name="description" content={metadata.metaDescription} />
-      </Head>
-      <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content">
-        <div className="o-container-fluid">
-          <div className="c-hero c-hero--boxed c-hero--bg-yellow">
-            <div>
-              <h1 className="c-title--extra-large">{metadata.title}</h1>
-              <p>{metadata.description}</p>
-            </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
-          </div>
-
-          <div className="o-row">
-            <div className="o-col-6@md">
-              <div className="c-card">
-                <h4>Colors</h4>
-                <p>Official logo used for all digital and offline materials.</p>
-                <p>
-                  <a href="#"></a>
-                </p>
-                <p>
-                  <Link href="/foundations/colors">Explore Colors</Link>
-                </p>
-              </div>
-            </div>
-            <div className="o-col-6@md">
-              <div className="c-card">
-                <h4>Logos</h4>
-                <p>{config?.app?.client} logo used for all digital and offline materials.</p>
-                <p>
-                  <Link href="/foundations/logo">Explore Logos</Link>
-                </p>
-              </div>
-            </div>
-            <div className="o-col-6@md">
-              <div className="c-card">
-                <h4>Typography</h4>
-                <p>Typographic system with scale, sizes and color of text.</p>
-                <p>
-                  <Link href="/foundations/typography">Explore Typography</Link>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-      </section>
-      <Footer config={config} />
-    </div>
+    <Layout config={config} menu={menu} current={current} metadata={metadata}>
+      <div className="flex flex-col gap-2 pb-7">
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+      </div>
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
+      <div>
+        <CardsWithIcons
+          items={[
+            {
+              title: 'Logos',
+              description: `${config?.app?.client} logo used for all digital and offline materials.`,
+              icon: Hexagon,
+              link: '/foundations/logo',
+              cta: 'Explore Logos',
+            },
+            {
+              title: 'Colors',
+              description: 'Official logo used for all digital and offline materials.',
+              icon: Palette,
+              link: '/foundations/colors',
+              cta: 'Explore Colors',
+            },
+            {
+              title: 'Typography',
+              description: 'Typographic system with scale, sizes and color of text.',
+              icon: TypeOutline,
+              link: '/foundations/typography',
+              cta: 'Explore Typography',
+            },
+            {
+              title: 'Grid',
+              description: 'How should pages be laid out, with spacing, breakpoints, and device sizes.',
+              icon: Grid,
+              link: '/foundations/grid',
+              cta: 'Explore Grid',
+            },
+            {
+              title: 'Icons',
+              description: 'Downloadable icon set for use in digital and offline materials.',
+              icon: Shapes,
+              link: '/foundations/icons',
+              cta: 'View Library',
+            },
+            {
+              title: 'Effects',
+              description: 'Shadows, blurs, and other effects used in the design system.',
+              icon: Sun,
+              link: '/foundations/effects',
+              cta: 'View Effects',
+            },
+          ]}
+        />
+      </div>
+    </Layout>
   );
 };
 export default DesignPage;

@@ -9,10 +9,10 @@ exports.filterOutUndefined = exports.filterOutNull = exports.slugify = exports.r
  * @returns
  */
 function replaceTokens(str, tokenValMap, pipe) {
-    return str.replace(/\$\{(.*?)\}/g, function (token) {
+    return str.replace(/\$\{(.*?)\}/g, token => {
         var _a;
-        var key = token.substring(2, token.length - 1).toLowerCase();
-        var val = (_a = tokenValMap.get(key)) !== null && _a !== void 0 ? _a : '';
+        const key = token.substring(2, token.length - 1).toLowerCase();
+        const val = (_a = tokenValMap.get(key)) !== null && _a !== void 0 ? _a : '';
         return pipe ? pipe(token, key, val) : val;
     });
 }
@@ -22,26 +22,24 @@ exports.replaceTokens = replaceTokens;
  * @param str
  * @returns
  */
-var slugify = function (str) {
-    return str
-        .toLowerCase()
-        .trim()
-        .replace(/[^\$\w\s-]/g, '-')
-        .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-};
+const slugify = (str) => str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\$\w\s-]/g, '-')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 exports.slugify = slugify;
 /**
  *  Filters out null values
  * @param value
  * @returns
  */
-var filterOutNull = function (value) { return value !== null; };
+const filterOutNull = (value) => value !== null;
 exports.filterOutNull = filterOutNull;
 /**
  * Filters out undefined vars
  * @param value
  * @returns
  */
-var filterOutUndefined = function (value) { return value !== undefined; };
+const filterOutUndefined = (value) => value !== undefined;
 exports.filterOutUndefined = filterOutUndefined;

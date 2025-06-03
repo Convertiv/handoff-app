@@ -1,0 +1,44 @@
+{
+  "title": "button",
+  "description": "",
+  "type": "Block",
+  "group": "Buttons",
+  "tags": [],
+  "previews": {
+    "generic": {
+      "title": "Generic",
+      "values": {
+        "label": "Primary CTA",
+        "url": "#"
+      }
+    }
+  },
+  "properties": {
+    "label": {
+      "name": "Label",
+      "description": "This should be the text that appears on the button",
+      "type": "string",
+      "default": "Primary CTA",
+      "rules": {
+        "required": true,
+        "content": {
+          "min": 5,
+          "max": 25
+        }
+      }
+    },
+    "url": {
+      "name": "URL",
+      "description": "This should be the URL that the button links to",
+      "type": "string",
+      "default": "#",
+      "rules": {
+        "required": true,
+        "content": {
+          "min": 5,
+          "max": 25
+        }
+      }
+    }
+  }
+}

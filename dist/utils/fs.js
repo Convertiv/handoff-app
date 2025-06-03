@@ -24,8 +24,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findFilesByExtension = void 0;
-var fs = __importStar(require("fs"));
-var path = __importStar(require("path"));
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 /**
  * Recursively finds all files with a given extension in a directory.
  *
@@ -33,15 +33,15 @@ var path = __importStar(require("path"));
  * @param {string} extension - The file extension to look for (e.g., '.json', '.txt').
  * @returns {string[]} An array of paths to files with the specified extension.
  */
-var findFilesByExtension = function (dir, extension) {
-    var results = [];
+const findFilesByExtension = (dir, extension) => {
+    let results = [];
     // Read the contents of the directory
-    var list = fs.readdirSync(dir);
-    list.forEach(function (file) {
+    const list = fs.readdirSync(dir);
+    list.forEach((file) => {
         // Construct the full path
-        var filePath = path.join(dir, file);
+        const filePath = path.join(dir, file);
         // Get the file stats (is it a directory or a file?)
-        var stat = fs.statSync(filePath);
+        const stat = fs.statSync(filePath);
         // If it's a directory, recurse into it
         if (stat && stat.isDirectory()) {
             results = results.concat((0, exports.findFilesByExtension)(filePath, extension));

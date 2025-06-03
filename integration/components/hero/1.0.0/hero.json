@@ -1,0 +1,262 @@
+{
+  "title": "Hero",
+  "description": "This is a hero block that can be used to highlight important content. You can use it on landing pages, or at the top of content pages to give context. This hero contains a title, subtitle, and a call to action button.",
+  "type": "block",
+  "group": "Hero",
+  "tags": ["header", "hero", "landing", "image", "video", "cta"],
+  "previews": {
+    "generic": {
+      "title": "Generic",
+      "values": {
+        "title_prefix": "Main heading",
+        "title": "longer example.",
+        "paragraph": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut scelerisque scelerisque mattis. Phasellus blandit dignissim imperdiet. Cras nec tincidunt urna. Duis nec pretium diam, ac rhoncus turpis.",
+        "backgroundImage": false,
+        "backgroundVideo": "",
+        "image": {
+          "src": "https://placehold.co/985x400",
+          "alt": "Image Alt"
+        },
+        "primary": {
+          "label": "Primary CTA",
+          "url": "#"
+        },
+        "secondary": {
+          "label": "Secondary CTA",
+          "url": "#"
+        },
+        "breadcrumb": [
+          {
+            "label": "Previous",
+            "url": "#",
+            "active": false
+          },
+          {
+            "label": "Current",
+            "url": "#",
+            "active": true
+          }
+        ]
+      }
+    },
+    "intralinks": {
+      "title": "Intralinks",
+      "values": {
+        "title_prefix": "The fastest, smartest",
+        "title": "VDR anywhere.",
+        "paragraph": "Accelerate your deal with VDRPro™ — the world’s most advanced virtual data room (VDR). Since creating an industry over 25 years ago, SS&C Intralinks combines innovation and expertise to deliver the industry-leading VDR that’s preferred by dealmakers worldwide.",
+        "backgroundImage": false,
+        "backgroundVideo": "https://www.intralinks.com/sites/default/files/videos/Inner_1_nobg.mp4",
+        "image": {
+          "src": "https://www.intralinks.com/sites/default/files/styles/original/public/images/05-Sprint_4-VDRPro-Hero_0.png.webp?itok=LbSVPc3r",
+          "alt": "Image Alt"
+        },
+        "primary": {
+          "label": "Get A Quote",
+          "url": "#"
+        },
+        "breadcrumb": [
+          {
+            "label": "Products",
+            "url": "#",
+            "active": false
+          },
+          {
+            "label": "VDRPRO",
+            "url": "#",
+            "active": true
+          }
+        ]
+      }
+    }
+  },
+  "properties": {
+    "breadcrumb": {
+      "name": "Breadcrumb",
+      "type": "array",
+      "description": "This is the breadcrumb that will appear at the top of the page above the title. Its an array of breadcrumb items (label, url, active).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "name": "Label",
+            "type": "text",
+            "default": "Previous",
+            "rules": {
+              "required": true,
+              "content": { "min": 5, "max": 25 },
+              "pattern": "^[a-zA-Z0-9 ]+$"
+            }
+          },
+          "url": {
+            "name": "URL",
+            "type": "text",
+            "default": "#",
+            "rules": {
+              "required": true,
+              "content": { "min": 5, "max": 25 },
+              "pattern": "^[a-zA-Z0-9 ]+$"
+            }
+          },
+          "active": {
+            "name": "Active",
+            "type": "boolean",
+            "default": false,
+            "rules": {
+              "required": true
+            }
+          }
+        }
+      },
+      "default": [
+        {
+          "label": "Previous",
+          "url": "#",
+          "active": false
+        },
+        {
+          "label": "Current",
+          "url": "#",
+          "active": true
+        }
+      ],
+      "rules": {
+        "required": false,
+        "content": { "min": 1, "max": 3 }
+      }
+    },
+    "title_prefix": {
+      "name": "Title Prefix",
+      "description": "This is the first part of the top level heading.  You should insert a short phrase or single word here. If you leave this out, the title will start with the bolded words.",
+      "type": "text",
+      "default": "Main heading",
+      "rules": {
+        "required": false,
+        "content": { "min": 5, "max": 25 },
+        "pattern": "^[a-zA-Z0-9 ]+$"
+      }
+    },
+    "title": {
+      "name": "Title",
+      "description": "The second part of the title string, a set of bolded words.",
+      "type": "text",
+      "default": "longer example.",
+      "rules": {
+        "required": true,
+        "content": { "min": 10, "max": 80 },
+        "pattern": "^[a-zA-Z0-9 ]+$"
+      }
+    },
+    "paragraph": {
+      "name": "Lead Text",
+      "type": "text",
+      "description": "This is the callout, several lines long. Use this to provide context.",
+      "default": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pharetra, ex eu fringilla scelerisque, massa justo dapibus quam, in ultricies mi tellus non augue.",
+      "rules": {
+        "required": true,
+        "content": { "min": 50, "max": 300 },
+        "pattern": "^[a-zA-Z0-9 ]+$"
+      }
+    },
+    "primary": {
+      "name": "Primary CTA",
+      "type": "button",
+      "description": "This is the text that will appear on the primary Call to Action button. It should be a short phrase or single word.",
+      "default": {
+        "label": "Primary CTA",
+        "url": "#",
+        "target": "_self",
+        "rel": "noopener"
+      },
+      "rules": {
+        "required": true,
+        "content": { "min": 5, "max": 25 },
+        "pattern": "^[a-zA-Z0-9 ]+$"
+      }
+    },
+    "secondary": {
+      "name": "Secondary CTA",
+      "type": "button",
+      "description": "This is the text that will appear on the secondary Call to Action button. It should be a short phrase or single word.",
+      "default": {
+        "label": "Secondary CTA",
+        "url": "#"
+      },
+      "rules": {
+        "required": true,
+        "content": { "min": 5, "max": 25 },
+        "pattern": "^[a-zA-Z0-9 ]+$"
+      }
+    },
+    "backgroundVideo": {
+      "name": "Background Video",
+      "description": "This is the background video that will appear behind the text. It should be a high quality image or video that is relevant to the content.",
+      "type": "video_file",
+      "default": "https://www.intralinks.com/sites/default/files/videos/Inner_1_nobg.mp4",
+      "rules": {
+        "required": false,
+        "dimensions": {
+          "min": {
+            "width": 600,
+            "height": 600
+          },
+          "max": {
+            "width": 1920,
+            "height": 1080
+          },
+          "recommend": {
+            "width": 1340,
+            "height": 860
+          }
+        },
+        "filesize": 1000000
+      }
+    },
+    "backgroundImage": {
+      "name": "Background Image",
+      "description": "This is the background image that will appear behind the text. It should be a high quality image or video that is relevant to the content.",
+      "type": "image",
+      "default": "https://picsum.photos/800",
+      "rules": {
+        "required": false,
+        "dimensions": {
+          "min": {
+            "width": 600,
+            "height": 600
+          },
+          "max": {
+            "width": 1920,
+            "height": 1080
+          },
+          "recommend": {
+            "width": 1340,
+            "height": 860
+          }
+        },
+        "filesize": 1000000
+      }
+    },
+    "image": {
+      "name": "Image",
+      "type": "image",
+      "rules": {
+        "required": true,
+        "dimensions": {
+          "min": {
+            "width": 450,
+            "height": 450
+          },
+          "max": {
+            "width": 2100,
+            "height": 900
+          },
+          "recommend": {
+            "width": 1340,
+            "height": 860
+          }
+        }
+      },
+      "default": "https://placehold.co/1340x860"
+    }
+  }
+}

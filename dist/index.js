@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -42,89 +31,75 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initIntegrationObject = void 0;
-var config_1 = require("./config");
-var fs_extra_1 = __importDefault(require("fs-extra"));
-var path_1 = __importDefault(require("path"));
+exports.getLatestVersionForComponent = exports.initIntegrationObject = void 0;
+const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
-var app_1 = __importStar(require("./app"));
-var pipeline_1 = __importStar(require("./pipeline"));
-var eject_1 = require("./cli/eject");
-var make_1 = require("./cli/make");
-var integration_1 = require("./transformers/integration");
-var chalk_1 = __importDefault(require("chalk"));
-var integration_2 = require("./utils/integration");
-var preview_1 = require("./transformers/preview");
-var Handoff = /** @class */ (function () {
-    function Handoff(debug, force, config) {
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
+const semver_1 = __importDefault(require("semver"));
+const app_1 = __importStar(require("./app"));
+const eject_1 = require("./cli/eject");
+const make_1 = require("./cli/make");
+const config_1 = require("./config");
+const pipeline_1 = __importStar(require("./pipeline"));
+const integration_1 = require("./transformers/integration");
+const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
+const css_1 = require("./transformers/preview/component/css");
+const javascript_1 = require("./transformers/preview/component/javascript");
+const rename_1 = require("./transformers/preview/component/rename");
+class Handoff {
+    constructor(debug, force, config) {
         this.debug = false;
         this.force = false;
         this.modulePath = path_1.default.resolve(__filename, '../..');
         this.workingPath = process.cwd();
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
+        this._initialArgs = {};
+        this._configs = [];
+        this._initialArgs = { debug, force, config };
+        this.construct(debug, force, config);
+    }
+    construct(debug, force, config) {
         this.config = null;
         this.debug = debug !== null && debug !== void 0 ? debug : false;
         this.force = force !== null && force !== void 0 ? force : false;
         this.hooks = {
-            init: function (config) { return config; },
-            fetch: function () { },
-            build: function (documentationObject) { },
-            typeTransformer: function (documentationObject, types) { return types; },
-            integration: function (documentationObject, data) { return data; },
-            cssTransformer: function (documentationObject, css) { return css; },
-            scssTransformer: function (documentationObject, scss) { return scss; },
-            styleDictionaryTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
-            mapTransformer: function (documentationObject, styleDictionary) { return styleDictionary; },
-            webpack: function (webpackConfig) { return webpackConfig; },
-            preview: function (webpackConfig, preview) { return preview; },
+            init: (config) => config,
+            fetch: () => { },
+            build: (documentationObject) => { },
+            typeTransformer: (documentationObject, types) => types,
+            integration: (documentationObject, data) => data,
+            cssTransformer: (documentationObject, css) => css,
+            scssTransformer: (documentationObject, scss) => scss,
+            styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
+            mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
+            webpack: (webpackConfig) => webpackConfig,
+            preview: (webpackConfig, preview) => preview,
         };
         this.init(config);
         this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
-    Handoff.prototype.init = function (configOverride) {
+    init(configOverride) {
         var _a, _b;
-        var config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
+        const config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
         this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        this.integrationObject = (0, exports.initIntegrationObject)(this);
+        [this.integrationObject, this._configs] = (0, exports.initIntegrationObject)(this);
         return this;
-    };
-    Handoff.prototype.preRunner = function (validate) {
+    }
+    reload() {
+        this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
+        return this;
+    }
+    preRunner(validate) {
         if (!this.config) {
             throw Error('Handoff not initialized');
         }
@@ -132,355 +107,329 @@ var Handoff = /** @class */ (function () {
             this.config = validateConfig(this.config);
         }
         return this;
-    };
-    Handoff.prototype.fetch = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        this.preRunner();
-                        return [4 /*yield*/, (0, pipeline_1.default)(this)];
-                    case 1:
-                        _a.sent();
-                        this.hooks.fetch();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    Handoff.prototype.recipe = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.preRunner();
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, pipeline_1.buildRecipe)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    Handoff.prototype.snippet = function (name) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var snippetPath, sharedStyles;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        this.preRunner();
-                        if (!this.config) return [3 /*break*/, 5];
-                        if (!name) return [3 /*break*/, 3];
-                        // Get snippet path
-                        name = name.includes('.html') ? name : "".concat(name, ".html");
-                        snippetPath = path_1.default.resolve(this.workingPath, (_a = this.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration', 'snippets', name);
-                        return [4 /*yield*/, (0, preview_1.processSharedStyles)(this)];
-                    case 1:
-                        sharedStyles = _b.sent();
-                        return [4 /*yield*/, (0, preview_1.processSnippet)(this, snippetPath, sharedStyles)];
-                    case 2:
-                        _b.sent();
-                        return [3 /*break*/, 5];
-                    case 3: return [4 /*yield*/, (0, pipeline_1.buildSnippets)(this)];
-                    case 4:
-                        _b.sent();
-                        _b.label = 5;
-                    case 5: return [2 /*return*/, this];
-                }
-            });
-        });
-    };
-    Handoff.prototype.renameSnippet = function (oldName, target) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
+    }
+    fetch() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
                 this.preRunner();
-                if (this.config) {
-                    (0, preview_1.renameSnippet)(this, oldName, target);
-                }
-                return [2 /*return*/, this];
-            });
+                yield (0, pipeline_1.default)(this);
+                this.hooks.fetch();
+            }
+            return this;
         });
-    };
-    Handoff.prototype.integration = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.preRunner();
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, pipeline_1.buildIntegrationOnly)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    recipe() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                yield (0, pipeline_1.buildRecipe)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.build = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.preRunner(true);
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, app_1.default)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
+    }
+    component(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                if (name) {
+                    name = name.replace('.hbs', '');
+                    yield (0, builder_1.default)(this, name);
                 }
-            });
-        });
-    };
-    Handoff.prototype.ejectConfig = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.preRunner();
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectConfig)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
+                else {
+                    yield (0, pipeline_1.buildComponents)(this);
                 }
-            });
+            }
+            return this;
         });
-    };
-    Handoff.prototype.ejectIntegration = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    renameComponent(oldName, target) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                (0, rename_1.renameComponent)(this, oldName, target);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.ejectExportables = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectExportables)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    integration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                yield (0, pipeline_1.buildIntegrationOnly)(this);
+                yield (0, pipeline_1.buildComponents)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.ejectPages = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectPages)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    build() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                yield (0, app_1.default)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.ejectTheme = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.ejectTheme)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    ejectConfig() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            if (this.config) {
+                yield (0, eject_1.ejectConfig)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.makeExportable = function (type, name) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makeExportable)(this, type, name)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    ejectIntegration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, eject_1.makeIntegration)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.makeTemplate = function (component, state) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makeTemplate)(this, component, state)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    ejectExportables() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, eject_1.ejectExportables)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.makePage = function (name, parent) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makePage)(this, name, parent)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    ejectPages() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, eject_1.ejectPages)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.makeSnippet = function (name) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, make_1.makeSnippet)(this, name)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    ejectTheme() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, eject_1.ejectTheme)(this);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.makeIntegration = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        return [4 /*yield*/, (0, eject_1.makeIntegration)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    makeExportable(type, name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, make_1.makeExportable)(this, type, name);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.start = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        this.preRunner(true);
-                        return [4 /*yield*/, (0, app_1.watchApp)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    makeTemplate(component, state) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, make_1.makeTemplate)(this, component, state);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.dev = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.config) return [3 /*break*/, 2];
-                        this.preRunner(true);
-                        return [4 /*yield*/, (0, app_1.devApp)(this)];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2 /*return*/, this];
-                }
-            });
+    }
+    makePage(name, parent) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, make_1.makePage)(this, name, parent);
+            }
+            return this;
         });
-    };
-    Handoff.prototype.postInit = function (callback) {
+    }
+    makeComponent(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, make_1.makeComponent)(this, name);
+            }
+            return this;
+        });
+    }
+    makeIntegration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, eject_1.makeIntegration)(this);
+            }
+            return this;
+        });
+    }
+    makeIntegrationStyles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                yield (0, javascript_1.buildMainJS)(this);
+                yield (0, css_1.buildMainCss)(this);
+            }
+            return this;
+        });
+    }
+    start() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                this.preRunner();
+                yield (0, app_1.watchApp)(this);
+            }
+            return this;
+        });
+    }
+    dev() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.config) {
+                this.preRunner();
+                yield (0, app_1.devApp)(this);
+            }
+            return this;
+        });
+    }
+    postInit(callback) {
         this.hooks.init = callback;
-    };
-    Handoff.prototype.postTypeTransformer = function (callback) {
+    }
+    postTypeTransformer(callback) {
         this.hooks.typeTransformer = callback;
-    };
-    Handoff.prototype.postCssTransformer = function (callback) {
+    }
+    postCssTransformer(callback) {
         this.hooks.cssTransformer = callback;
-    };
-    Handoff.prototype.postScssTransformer = function (callback) {
+    }
+    postScssTransformer(callback) {
         this.hooks.scssTransformer = callback;
-    };
-    Handoff.prototype.postPreview = function (callback) {
+    }
+    postPreview(callback) {
         this.hooks.preview = callback;
-    };
-    Handoff.prototype.postBuild = function (callback) {
+    }
+    postBuild(callback) {
         this.hooks.build = callback;
-    };
-    Handoff.prototype.postIntegration = function (callback) {
+    }
+    postIntegration(callback) {
         this.hooks.integration = callback;
-    };
-    Handoff.prototype.modifyWebpackConfig = function (callback) {
+    }
+    modifyWebpackConfig(callback) {
         this.hooks.webpack = callback;
-    };
-    return Handoff;
-}());
-var initConfig = function (configOverride) {
-    var config = {};
-    var configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
+    }
+}
+const initConfig = (configOverride) => {
+    let config = {};
+    let configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
     if (fs_extra_1.default.existsSync(configPath)) {
-        var defBuffer = fs_extra_1.default.readFileSync(configPath);
+        const defBuffer = fs_extra_1.default.readFileSync(configPath);
         config = JSON.parse(defBuffer.toString());
     }
     if (configOverride) {
-        Object.keys(configOverride).forEach(function (key) {
-            var value = configOverride[key];
+        Object.keys(configOverride).forEach((key) => {
+            const value = configOverride[key];
             if (value !== undefined) {
                 config[key] = value;
             }
         });
     }
-    var returnConfig = __assign(__assign({}, (0, config_1.defaultConfig)()), config);
+    const returnConfig = Object.assign(Object.assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
 };
-var initIntegrationObject = function (handoff) {
-    var _a, _b;
-    var integrationPath = path_1.default.join(handoff.workingPath, (_a = handoff.config.integrationPath) !== null && _a !== void 0 ? _a : 'integration');
-    if (!fs_extra_1.default.existsSync(integrationPath)) {
-        return null;
+const initIntegrationObject = (handoff) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const configFiles = [];
+    const result = {
+        name: '',
+        options: {},
+        entries: {
+            integration: undefined,
+            bundle: undefined,
+            components: {},
+        },
+    };
+    if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
+        result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
-    var integrationConfigPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, (_b = handoff.config.integrationPath) !== null && _b !== void 0 ? _b : 'integration', 'integration.config.json'));
-    if (!fs_extra_1.default.existsSync(integrationConfigPath)) {
-        return null;
+    if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
+        result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    var buffer = fs_extra_1.default.readFileSync(integrationConfigPath);
-    var integration = JSON.parse(buffer.toString());
-    return (0, integration_2.prepareIntegrationObject)(integration, integrationPath);
+    if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
+        const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
+        for (const componentPath of componentPaths) {
+            const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
+            const componentBaseName = path_1.default.basename(resolvedComponentPath);
+            const versions = getVersionsForComponent(resolvedComponentPath);
+            if (!versions.length) {
+                console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+                continue;
+            }
+            const latest = (0, exports.getLatestVersionForComponent)(versions);
+            for (const componentVersion of versions) {
+                const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
+                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+                // Skip if config file does not exist
+                if (!fs_extra_1.default.existsSync(resolvedComponentVersionConfigPath)) {
+                    console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+                    continue;
+                }
+                configFiles.push(resolvedComponentVersionConfigPath);
+                let componentJson;
+                let component;
+                try {
+                    componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+                    component = JSON.parse(componentJson);
+                }
+                catch (err) {
+                    console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+                    continue;
+                }
+                // Use component basename as the id
+                component.id = componentBaseName;
+                // Resolve entry paths relative to component version directory
+                if (component.entries) {
+                    for (const entryType in component.entries) {
+                        if (component.entries[entryType]) {
+                            component.entries[entryType] = path_1.default.resolve(resolvedComponentVersionPath, component.entries[entryType]);
+                        }
+                    }
+                }
+                // Initialize options with safe defaults
+                component.options || (component.options = {
+                    transformer: { defaults: {}, replace: {} },
+                });
+                const transformer = component.options.transformer;
+                (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
+                (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);
+                // Normalize keys and values to lowercase
+                transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, transformer.defaults));
+                transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, transformer.replace));
+                // Save transformer config for latest version
+                if (componentVersion === latest) {
+                    result.options[component.id] = transformer;
+                }
+                // Save full component entry under its version
+                result.entries.components[component.id] = Object.assign(Object.assign({}, result.entries.components[component.id]), { [componentVersion]: component });
+            }
+        }
+    }
+    return [result, Array.from(configFiles)];
 };
 exports.initIntegrationObject = initIntegrationObject;
-var validateConfig = function (config) {
+/**
+ * Returns a list of component directories for a given path.
+ *
+ * This function inspects the immediate subdirectories of the provided `searchPath`.
+ * - If **any** subdirectory is **not** a valid semantic version (e.g. "header", "button"),
+ *   the function assumes `searchPath` contains multiple component directories, and returns their full paths.
+ * - If **all** subdirectories are valid semantic versions (e.g. "1.0.0", "2.1.3"),
+ *   the function assumes `searchPath` itself is a component directory, and returns it as a single-element array.
+ *
+ * @param searchPath - The absolute path to check for components or versioned directories.
+ * @returns An array of string paths to component directories.
+ */
+const getComponentsForPath = (searchPath) => {
+    // Read all entries in the given path and keep only directories
+    const components = fs_extra_1.default
+        .readdirSync(searchPath, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+    // If there's any non-semver-named directory, this is a directory full of components
+    const containsComponents = components.some((name) => !semver_1.default.valid(name));
+    if (containsComponents) {
+        // Return full paths to each component directory
+        return components.map((component) => path_1.default.join(searchPath, component));
+    }
+    // All subdirectories are semver versions – treat this as a single component directory
+    return [searchPath];
+};
+const validateConfig = (config) => {
+    // TODO: Check to see if the exported folder exists before we run start
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env
         console.error(chalk_1.default.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
@@ -492,5 +441,49 @@ var validateConfig = function (config) {
         throw new Error('Cannot initialize configuration');
     }
     return config;
+};
+const getVersionsForComponent = (componentPath) => {
+    const versionDirectories = fs_extra_1.default.readdirSync(componentPath);
+    const versions = [];
+    // The directory name must be a semver
+    if (fs_extra_1.default.lstatSync(componentPath).isDirectory()) {
+        // this is a directory structure.  this should be the component name,
+        // and each directory inside should be a version
+        for (const versionDirectory of versionDirectories) {
+            if (semver_1.default.valid(versionDirectory)) {
+                const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(componentPath, versionDirectory));
+                for (const versionFile of versionFiles) {
+                    if (versionFile.endsWith('.hbs')) {
+                        versions.push(versionDirectory);
+                        break;
+                    }
+                }
+            }
+            else {
+                console.error(`Invalid version directory ${versionDirectory}`);
+            }
+        }
+    }
+    versions.sort(semver_1.default.rcompare);
+    return versions;
+};
+const getLatestVersionForComponent = (versions) => versions.sort(semver_1.default.rcompare)[0];
+exports.getLatestVersionForComponent = getLatestVersionForComponent;
+const toLowerCaseKeysAndValues = (obj) => {
+    const loweredObj = {};
+    for (const key in obj) {
+        const lowerKey = key.toLowerCase();
+        const value = obj[key];
+        if (typeof value === 'string') {
+            loweredObj[lowerKey] = value.toLowerCase();
+        }
+        else if (typeof value === 'object' && value !== null) {
+            loweredObj[lowerKey] = toLowerCaseKeysAndValues(value);
+        }
+        else {
+            loweredObj[lowerKey] = value; // For non-string values
+        }
+    }
+    return loweredObj;
 };
 exports.default = Handoff;

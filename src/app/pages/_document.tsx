@@ -1,6 +1,6 @@
-import Document, { Html, Head, Main, NextScript } from 'next/document';
-import Script from 'next/script';
 import { getClientConfig } from '@handoff/config';
+import Document, { Head, Html, Main, NextScript } from 'next/document';
+import Script from 'next/script';
 
 const config = getClientConfig();
 
@@ -11,6 +11,7 @@ class MyDocument extends Document {
         <Head>
           <link rel="shortcut icon" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
           <link rel="icon" sizes="16x16 32x32 64x64" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
+          <link rel="stylesheet" type="text/css" href="/theme.css" />
           {config?.app?.google_tag_manager && (
             <Script id="google-tag-manager" strategy="afterInteractive">
               {`

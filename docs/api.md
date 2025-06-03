@@ -1,5 +1,6 @@
 # Handoff API
 
+Handoff exposes two APIs - A Javascript API for interacting with the pipeline
 Handoff exposes a Javascript API allowing you to easily integrate Handoff into
 existing Node based applications, CI/CD, and command line tools. This API also
 allows you to hook into the pipeline execution and generate new build artifacts

@@ -1,7 +1,7 @@
+import chalk from 'chalk';
+import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
-import fs from 'fs-extra';
-import chalk from 'chalk';
 import { prompt } from '../utils/prompt';
 
 /**
@@ -109,7 +109,11 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
     return;
   }
 
-  const checkType = await prompt(chalk.green(`By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `));
+  const checkType = await prompt(
+    chalk.green(
+      `By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `
+    )
+  );
   if (checkType === 'markdown') {
     type = 'md';
   }
@@ -152,38 +156,42 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
  * Make a new docs page
  * @param handoff
  */
-export const makeSnippet = async (handoff: Handoff, name: string) => {
+export const makeComponent = async (handoff: Handoff, name: string) => {
   const config = await handoff.config;
   if (!name) {
-    console.log(chalk.red(`Snippet name must be set`));
+    console.log(chalk.red(`Component name must be set`));
     return;
   }
-  if (!/^[a-z0-9]+$/i.test(name)) {
-    console.log(chalk.red(`Snippet name must be alphanumeric and may contain dashes or underscores`));
-    return;
-  }
+
+  const version = '1.0.0';
+
   name = name.replace('.html', '');
 
-  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/snippets`));
+  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components/${name}/${version}`));
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }
-  const targetHtml = path.resolve(workingPath, `${name}.html`);
+  const targetHtml = path.resolve(workingPath, `${name}.hbs`);
   if (fs.existsSync(targetHtml)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`'${name}' already exists as custom snippet.`));
+      console.log(chalk.yellow(`'${name}' already exists as custom component.`));
       return;
     }
   }
-  const htmlPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.html'));
+  const templatePath = path.join(handoff.modulePath, 'config', 'templates/integration/components/template/1.0.0');
+  const htmlPath = path.resolve(templatePath, 'template.hbs');
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);
-  console.log(chalk.green(`New snippet ${name}.html was created in ${workingPath}`));
+  console.log(chalk.green(`New component ${name}.hbs was created in ${workingPath}`));
+
+  const jsonpath = path.resolve(templatePath, 'template.json');
+  const jsonTemplate = fs.readFileSync(jsonpath, 'utf8');
+  fs.writeFileSync(path.resolve(workingPath, `${name}.json`), jsonTemplate);
 
   const writeJSFile = await prompt(chalk.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
   if (writeJSFile === 'y') {
     console.log(chalk.green(`Writing ${name}.js.\n`));
-    const jsPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.js'));
+    const jsPath = path.resolve(templatePath, 'template.js');
     const jsTemplate = fs.readFileSync(jsPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.js`), jsTemplate);
   }
@@ -191,7 +199,7 @@ export const makeSnippet = async (handoff: Handoff, name: string) => {
 
   if (writeSassFile === 'y') {
     console.log(chalk.green(`Writing ${name}.scss.\n`));
-    const scssPath = path.resolve(path.join(handoff.modulePath, 'config', 'snippet.scss'));
+    const scssPath = path.resolve(templatePath, 'template.scss');
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }

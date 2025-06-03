@@ -1,7 +1,15 @@
 import * as FigmaTypes from '../../figma/types';
 import { Exportable, ComponentDefinition, Side, ReferenceObject } from "../../types";
+declare enum ComponentType {
+    ELEMENT = "element",
+    BLOCK = "block"
+}
 export interface FileComponentObject {
     instances: ComponentInstance[];
+    type?: ComponentType;
+    group?: string;
+    description?: string;
+    name?: string;
 }
 export interface FileComponentsObject {
     [key: string]: FileComponentObject;
@@ -71,3 +79,4 @@ export declare type DocumentComponentDefinitions = {
 };
 export declare type TokenSet = BackgroundTokenSet | FillTokenSet | BorderTokenSet | SpacingTokenSet | TypographyTokenSet | EffectTokenSet | OpacityTokenSet | SizeTokenSet;
 export declare type TokenSets = TokenSet[];
+export {};

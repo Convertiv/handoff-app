@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @returns
  */
 function transformColors(colors) {
-    var sd = {};
-    colors.forEach(function (color) {
+    const sd = {};
+    colors.forEach(color => {
         var _a;
         var _b;
         (_a = sd[_b = color.group]) !== null && _a !== void 0 ? _a : (sd[_b] = {});

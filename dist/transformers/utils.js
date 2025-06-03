@@ -1,16 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeTokenNamePartValue = exports.getTokenNameSegments = exports.formatTokenName = exports.formatComponentCodeBlockComment = exports.getTypeName = void 0;
-var index_1 = require("../utils/index");
-var lodash_1 = require("lodash");
+const index_1 = require("../utils/index");
+const lodash_1 = require("lodash");
 /**
  * Returns normalized type name
  * @param type
  * @returns
  */
-var getTypeName = function (type) { return type.group
-    ? "".concat(type.group, "-").concat(type.machine_name)
-    : "".concat(type.machine_name); };
+const getTypeName = (type) => type.group
+    ? `${type.group}-${type.machine_name}`
+    : `${type.machine_name}`;
 exports.getTypeName = getTypeName;
 /**
  * Generates a standardized component comment block.
@@ -18,14 +18,14 @@ exports.getTypeName = getTypeName;
  * @param component
  * @returns
  */
-var formatComponentCodeBlockComment = function (component, format) {
-    var parts = [(0, lodash_1.capitalize)(component.name)];
-    component.variantProperties.forEach(function (_a) {
-        var variantProp = _a[0], val = _a[1];
-        parts.push("".concat(variantProp.toLowerCase(), ": ").concat(val));
+const formatComponentCodeBlockComment = (component, format) => {
+    const parts = [(0, lodash_1.capitalize)(component.name)];
+    component.variantProperties.forEach(([variantProp, val]) => {
+        // @ts-ignore
+        parts.push(`${variantProp.toLowerCase()}: ${val}`);
     });
-    var str = parts.join(', ');
-    return format === "/**/" ? "/* ".concat(str, " */") : "// ".concat(str);
+    const str = parts.join(', ');
+    return format === "/**/" ? `/* ${str} */` : `// ${str}`;
 };
 exports.formatComponentCodeBlockComment = formatComponentCodeBlockComment;
 /**
@@ -37,10 +37,10 @@ exports.formatComponentCodeBlockComment = formatComponentCodeBlockComment;
  * @param options
  * @returns
  */
-var formatTokenName = function (tokenType, componentName, componentVariantProps, part, property, options) {
-    var prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
-    var tokenNameParts = (0, exports.getTokenNameSegments)(componentName, componentVariantProps, part, property, options);
-    return "".concat(prefix).concat(tokenNameParts.join('-'));
+const formatTokenName = (tokenType, componentName, componentVariantProps, part, property, options) => {
+    const prefix = tokenType === 'css' ? '--' : tokenType === 'scss' ? '$' : '';
+    const tokenNameParts = (0, exports.getTokenNameSegments)(componentName, componentVariantProps, part, property, options);
+    return `${prefix}${tokenNameParts.join('-')}`;
 };
 exports.formatTokenName = formatTokenName;
 /**
@@ -49,38 +49,31 @@ exports.formatTokenName = formatTokenName;
  * @param options
  * @returns
  */
-var getTokenNameSegments = function (componentName, componentVariantProps, part, property, options) {
+const getTokenNameSegments = (componentName, componentVariantProps, part, property, options) => {
     if (options === null || options === void 0 ? void 0 : options.tokenNameSegments) {
         return options.tokenNameSegments
-            .map(function (tokenNamePart) {
-            var initialValue = tokenNamePart;
+            .map((tokenNamePart) => {
+            const initialValue = tokenNamePart;
             tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map([
                 ['component', componentName],
                 ['part', normalizeComponentPartName(part)],
                 ['property', property],
-            ]), function (token, _, value) { return (value === '' ? token : value); });
-            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map(componentVariantProps.map(function (_a) {
-                var k = _a[0], v = _a[1];
-                return [('Variant.' + k).toLowerCase(), v.toLowerCase()];
-            })), function (_, variantProp, value) { return (0, exports.normalizeTokenNamePartValue)(variantProp.replace('variant.', ''), value, options); });
+            ]), (token, _, value) => (value === '' ? token : value));
+            tokenNamePart = (0, index_1.replaceTokens)(tokenNamePart, new Map(componentVariantProps.map(([k, v]) => [('Variant.' + k).toLowerCase(), v.toLowerCase()])), (_, variantProp, value) => (0, exports.normalizeTokenNamePartValue)(variantProp.replace('variant.', ''), value, options));
             // Backward compatibility (remove before 1.0 release)
             if (tokenNamePart === '') {
-                tokenNamePart = (0, index_1.replaceTokens)(initialValue, new Map(componentVariantProps.map(function (_a) {
-                    var k = _a[0], v = _a[1];
-                    return [k.toLowerCase(), v.toLowerCase()];
-                })), function (_, variantProp, value) { return (0, exports.normalizeTokenNamePartValue)(variantProp, value, options); });
+                tokenNamePart = (0, index_1.replaceTokens)(initialValue, new Map(componentVariantProps.map(([k, v]) => [k.toLowerCase(), v.toLowerCase()])), (_, variantProp, value) => (0, exports.normalizeTokenNamePartValue)(variantProp, value, options));
             }
             return tokenNamePart;
         })
-            .filter(function (part) { return part !== ''; });
+            .filter((part) => part !== '');
     }
-    var parts = [componentName, normalizeComponentPartName(part)];
-    componentVariantProps.forEach(function (_a) {
-        var variantProp = _a[0], value = _a[1];
+    const parts = [componentName, normalizeComponentPartName(part)];
+    componentVariantProps.forEach(([variantProp, value]) => {
         parts.push((0, exports.normalizeTokenNamePartValue)(variantProp, value, options));
     });
     parts.push(property);
-    return parts.filter(function (part) { return part !== ''; });
+    return parts.filter((part) => part !== '');
 };
 exports.getTokenNameSegments = getTokenNameSegments;
 /**
@@ -93,13 +86,12 @@ exports.getTokenNameSegments = getTokenNameSegments;
  * @param options
  * @returns
  */
-var normalizeTokenNamePartValue = function (variable, value, options, keepDefaults) {
+const normalizeTokenNamePartValue = (variable, value, options, keepDefaults = false) => {
     var _a, _b, _c, _d, _e;
-    if (keepDefaults === void 0) { keepDefaults = false; }
-    var normalizedVariable = variable.toLowerCase();
-    var normalizedValue = value.toLowerCase();
-    var replace = (_a = options === null || options === void 0 ? void 0 : options.replace) !== null && _a !== void 0 ? _a : {};
-    var defaults = (_b = options === null || options === void 0 ? void 0 : options.defaults) !== null && _b !== void 0 ? _b : {};
+    const normalizedVariable = variable.toLowerCase();
+    const normalizedValue = value.toLowerCase();
+    const replace = (_a = options === null || options === void 0 ? void 0 : options.replace) !== null && _a !== void 0 ? _a : {};
+    const defaults = (_b = options === null || options === void 0 ? void 0 : options.defaults) !== null && _b !== void 0 ? _b : {};
     if (normalizedVariable in (replace !== null && replace !== void 0 ? replace : {}) && normalizedValue && normalizedValue in ((_c = replace[normalizedVariable]) !== null && _c !== void 0 ? _c : {})) {
         return (_d = replace[normalizedVariable][normalizedValue]) !== null && _d !== void 0 ? _d : '';
     }
@@ -114,6 +106,6 @@ exports.normalizeTokenNamePartValue = normalizeTokenNamePartValue;
  * @param part
  * @returns
  */
-var normalizeComponentPartName = function (part) {
-    return part === '$' ? '' : part.replace(/[A-Z]/g, function (m) { return "-" + m.toLowerCase(); });
+const normalizeComponentPartName = (part) => {
+    return part === '$' ? '' : part.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
 };

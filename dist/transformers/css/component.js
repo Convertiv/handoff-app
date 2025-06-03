@@ -1,24 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tokenReferenceFormat = exports.transformComponentTokensToCssVariables = exports.transformComponentsToCssVariables = void 0;
-var utils_1 = require("../utils");
-var transformer_1 = require("../transformer");
-var design_1 = require("../../exporters/design");
+const utils_1 = require("../utils");
+const transformer_1 = require("../transformer");
+const design_1 = require("../../exporters/design");
 /**
  * Map down to a variable object
  * @param alerts
  * @returns
  */
-var transformComponentsToCssVariables = function (componentId, component, integrationOptions, handoff) {
+const transformComponentsToCssVariables = (componentId, component, integrationOptions, handoff) => {
     var _a;
-    var lines = [];
-    var componentCssClass = (_a = integrationOptions === null || integrationOptions === void 0 ? void 0 : integrationOptions.cssRootClass) !== null && _a !== void 0 ? _a : componentId;
-    lines.push(".".concat(componentCssClass, " {"));
-    var cssVars = component.instances.map(function (instance) {
-        return "\t".concat((0, utils_1.formatComponentCodeBlockComment)(instance, '/**/'), "\n").concat((0, exports.transformComponentTokensToCssVariables)(instance, integrationOptions)
-            .map(function (token) { return "\t".concat(token.name, ": ").concat((0, exports.tokenReferenceFormat)(token, 'css', handoff), ";"); })
-            .join('\n'));
-    });
+    const lines = [];
+    const componentCssClass = (_a = integrationOptions === null || integrationOptions === void 0 ? void 0 : integrationOptions.cssRootClass) !== null && _a !== void 0 ? _a : componentId;
+    lines.push(`.${componentCssClass} {`);
+    const cssVars = component.instances.map((instance) => `\t${(0, utils_1.formatComponentCodeBlockComment)(instance, '/**/')}\n${(0, exports.transformComponentTokensToCssVariables)(instance, integrationOptions)
+        .map((token) => `\t${token.name}: ${(0, exports.tokenReferenceFormat)(token, 'css', handoff)};`)
+        .join('\n')}`);
     return lines.concat(cssVars).join('\n\n') + '\n}\n';
 };
 exports.transformComponentsToCssVariables = transformComponentsToCssVariables;
@@ -27,45 +25,45 @@ exports.transformComponentsToCssVariables = transformComponentsToCssVariables;
  * @param tokens
  * @returns
  */
-var transformComponentTokensToCssVariables = function (component, options) {
+const transformComponentTokensToCssVariables = (component, options) => {
     return (0, transformer_1.transform)('css', component, options);
 };
 exports.transformComponentTokensToCssVariables = transformComponentTokensToCssVariables;
-var tokenReferenceFormat = function (token, type, handoff) {
+const tokenReferenceFormat = (token, type, handoff) => {
     if (!handoff || !handoff.config.useVariables)
         return token.value;
-    var referenceObject = token.metadata.reference;
-    var wrapped = '';
+    let referenceObject = token.metadata.reference;
+    let wrapped = '';
     if (referenceObject) {
-        var reference = '';
+        let reference = '';
         if (type === 'sd') {
             // build reference for style dictionary
             if (referenceObject.type === 'color') {
-                reference = "color.".concat(referenceObject.group, ".").concat((0, design_1.toSDMachineName)(referenceObject.name));
+                reference = `color.${referenceObject.group}.${(0, design_1.toSDMachineName)(referenceObject.name)}`;
             }
             else if (referenceObject.type === 'effect') {
-                reference = "effect.".concat(referenceObject.group, ".").concat((0, design_1.toSDMachineName)(referenceObject.name));
+                reference = `effect.${referenceObject.group}.${(0, design_1.toSDMachineName)(referenceObject.name)}`;
             }
             else if (referenceObject.type === 'typography') {
                 switch (token.metadata.cssProperty) {
                     case 'font-size':
-                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.size");
+                        reference = `typography.${(0, design_1.toSDMachineName)(referenceObject.name)}.font.size`;
                         break;
                     case 'font-weight':
-                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.weight");
+                        reference = `typography.${(0, design_1.toSDMachineName)(referenceObject.name)}.font.weight`;
                         break;
                     case 'font-family':
-                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".font.family");
+                        reference = `typography.${(0, design_1.toSDMachineName)(referenceObject.name)}.font.family`;
                         break;
                     case 'line-height':
-                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".line.height");
+                        reference = `typography.${(0, design_1.toSDMachineName)(referenceObject.name)}.line.height`;
                         break;
                     case 'letter-spacing':
-                        reference = "typography.".concat((0, design_1.toSDMachineName)(referenceObject.name), ".letter.spacing");
+                        reference = `typography.${(0, design_1.toSDMachineName)(referenceObject.name)}.letter.spacing`;
                         break;
                 }
             }
-            return reference ? "{".concat(reference, "}") : token.value;
+            return reference ? `{${reference}}` : token.value;
         }
         else {
             reference = referenceObject.reference;
@@ -76,9 +74,9 @@ var tokenReferenceFormat = function (token, type, handoff) {
                 // Everything on this list shouldn't, everything else should
             }
             else if (!['box-shadow', 'background', 'color', 'border-color'].includes(token.metadata.cssProperty)) {
-                reference += "-".concat(token.metadata.cssProperty);
+                reference += `-${token.metadata.cssProperty}`;
             }
-            wrapped = type === 'css' ? "var(--".concat(reference, ")") : "$".concat(reference);
+            wrapped = type === 'css' ? `var(--${reference})` : `$${reference}`;
         }
         return reference ? wrapped : token.value;
     }

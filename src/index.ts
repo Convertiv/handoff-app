@@ -1,21 +1,23 @@
-import { defaultConfig } from './config';
-import { Config, IntegrationObject } from './types/config';
+import chalk from 'chalk';
+import 'dotenv/config';
 import fs from 'fs-extra';
 import path from 'path';
-import 'dotenv/config';
+import semver from 'semver';
 import webpack from 'webpack';
-import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { HookReturn } from './types';
 import buildApp, { devApp, watchApp } from './app';
-import pipeline, { buildIntegrationOnly, buildRecipe, buildSnippets } from './pipeline';
-import { ejectConfig, ejectExportables, makeIntegration, ejectPages, ejectTheme } from './cli/eject';
-import { makeExportable, makePage, makeSnippet, makeTemplate } from './cli/make';
+import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
+import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
+import { defaultConfig } from './config';
+import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
 import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
+import processComponents from './transformers/preview/component/builder';
+import { buildMainCss } from './transformers/preview/component/css';
+import { buildMainJS } from './transformers/preview/component/javascript';
+import { renameComponent } from './transformers/preview/component/rename';
+import { ComponentListObject, TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
-import chalk from 'chalk';
-import { prepareIntegrationObject } from './utils/integration';
-import { processSharedStyles, processSnippet, renameSnippet } from './transformers/preview';
+import { DocumentationObject, HookReturn } from './types';
+import { Config, IntegrationObject } from './types/config';
 
 class Handoff {
   config: Config | null;
@@ -28,9 +30,9 @@ class Handoff {
   integrationObject?: IntegrationObject | null;
   integrationHooks: HandoffIntegration;
   designMap: {
-    colors: {},
-    effects: {},
-    typography: {}
+    colors: {};
+    effects: {};
+    typography: {};
   };
   hooks: {
     init: (config: Config) => Config;
@@ -45,8 +47,15 @@ class Handoff {
     webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
     preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
   };
+  _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  _configs: string[] = [];
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
+    this._initialArgs = { debug, force, config };
+    this.construct(debug, force, config);
+  }
+
+  private construct(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
@@ -73,7 +82,11 @@ class Handoff {
     this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    this.integrationObject = initIntegrationObject(this);
+    [this.integrationObject, this._configs] = initIntegrationObject(this);
+    return this;
+  }
+  reload(): Handoff {
+    this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
     return this;
   }
   preRunner(validate?: boolean): Handoff {
@@ -100,25 +113,22 @@ class Handoff {
     }
     return this;
   }
-  async snippet(name: string | null): Promise<Handoff> {
+  async component(name: string | null): Promise<Handoff> {
     this.preRunner();
     if (this.config) {
       if (name) {
-        // Get snippet path
-        name = name.includes('.html') ? name : `${name}.html`;
-        const snippetPath = path.resolve(this.workingPath, this.config.integrationPath ?? 'integration', 'snippets', name);
-        const sharedStyles = await processSharedStyles(this);
-        await processSnippet(this, snippetPath, sharedStyles);
+        name = name.replace('.hbs', '');
+        await processComponents(this, name);
       } else {
-        await buildSnippets(this);
+        await buildComponents(this);
       }
     }
     return this;
   }
-  async renameSnippet(oldName: string, target: string): Promise<Handoff> {
+  async renameComponent(oldName: string, target: string): Promise<Handoff> {
     this.preRunner();
     if (this.config) {
-      renameSnippet(this, oldName, target);
+      renameComponent(this, oldName, target);
     }
     return this;
   }
@@ -126,11 +136,12 @@ class Handoff {
     this.preRunner();
     if (this.config) {
       await buildIntegrationOnly(this);
+      await buildComponents(this);
     }
     return this;
   }
   async build(): Promise<Handoff> {
-    this.preRunner(true);
+    this.preRunner();
     if (this.config) {
       await buildApp(this);
     }
@@ -185,9 +196,9 @@ class Handoff {
     }
     return this;
   }
-  async makeSnippet(name: string): Promise<Handoff> {
+  async makeComponent(name: string): Promise<Handoff> {
     if (this.config) {
-      await makeSnippet(this, name);
+      await makeComponent(this, name);
     }
     return this;
   }
@@ -197,16 +208,23 @@ class Handoff {
     }
     return this;
   }
+  async makeIntegrationStyles(): Promise<Handoff> {
+    if (this.config) {
+      await buildMainJS(this);
+      await buildMainCss(this);
+    }
+    return this;
+  }
   async start(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner(true);
+      this.preRunner();
       await watchApp(this);
     }
     return this;
   }
   async dev(): Promise<Handoff> {
     if (this.config) {
-      this.preRunner(true);
+      this.preRunner();
       await devApp(this);
     }
     return this;
@@ -261,29 +279,144 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
   return returnConfig;
 };
 
+export const initIntegrationObject = (handoff: Handoff): [integrationObject: IntegrationObject, configs: string[]] => {
+  const configFiles: string[] = [];
+  const result: IntegrationObject = {
+    name: '',
+    options: {},
+    entries: {
+      integration: undefined, // scss
+      bundle: undefined, // js
+      components: {},
+    },
+  };
 
-export const initIntegrationObject = (handoff: Handoff): IntegrationObject => {
-  const integrationPath = path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration');
-
-  if (!fs.existsSync(integrationPath)) {
-    return null;
+  if (!!handoff.config.entries?.scss) {
+    result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
 
-  const integrationConfigPath = path.resolve(
-    path.join(handoff.workingPath, handoff.config.integrationPath ?? 'integration', 'integration.config.json')
-  );
-
-  if (!fs.existsSync(integrationConfigPath)) {
-    return null;
+  if (!!handoff.config.entries?.js) {
+    result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
 
-  const buffer = fs.readFileSync(integrationConfigPath);
-  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+  if (handoff.config.entries?.components?.length) {
+    const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
 
-  return prepareIntegrationObject(integration, integrationPath);
+    for (const componentPath of componentPaths) {
+      const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
+      const componentBaseName = path.basename(resolvedComponentPath);
+      const versions = getVersionsForComponent(resolvedComponentPath);
+
+      if (!versions.length) {
+        console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+        continue;
+      }
+
+      const latest = getLatestVersionForComponent(versions);
+
+      for (const componentVersion of versions) {
+        const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
+        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+
+        // Skip if config file does not exist
+        if (!fs.existsSync(resolvedComponentVersionConfigPath)) {
+          console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+          continue;
+        }
+
+        configFiles.push(resolvedComponentVersionConfigPath);
+
+        let componentJson: string;
+        let component: ComponentListObject;
+
+        try {
+          componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+          component = JSON.parse(componentJson) as ComponentListObject;
+        } catch (err) {
+          console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+          continue;
+        }
+
+        // Use component basename as the id
+        component.id = componentBaseName;
+
+        // Resolve entry paths relative to component version directory
+        if (component.entries) {
+          for (const entryType in component.entries) {
+            if (component.entries[entryType]) {
+              component.entries[entryType] = path.resolve(resolvedComponentVersionPath, component.entries[entryType]);
+            }
+          }
+        }
+
+        // Initialize options with safe defaults
+        component.options ||= {
+          transformer: { defaults: {}, replace: {} },
+        };
+
+        const transformer = component.options.transformer;
+        transformer.cssRootClass ??= null;
+        transformer.tokenNameSegments ??= null;
+
+        // Normalize keys and values to lowercase
+        transformer.defaults = toLowerCaseKeysAndValues({
+          ...transformer.defaults,
+        });
+
+        transformer.replace = toLowerCaseKeysAndValues({
+          ...transformer.replace,
+        });
+
+        // Save transformer config for latest version
+        if (componentVersion === latest) {
+          result.options[component.id] = transformer;
+        }
+
+        // Save full component entry under its version
+        result.entries.components[component.id] = {
+          ...result.entries.components[component.id],
+          [componentVersion]: component,
+        };
+      }
+    }
+  }
+
+  return [result, Array.from(configFiles)];
+};
+
+/**
+ * Returns a list of component directories for a given path.
+ *
+ * This function inspects the immediate subdirectories of the provided `searchPath`.
+ * - If **any** subdirectory is **not** a valid semantic version (e.g. "header", "button"),
+ *   the function assumes `searchPath` contains multiple component directories, and returns their full paths.
+ * - If **all** subdirectories are valid semantic versions (e.g. "1.0.0", "2.1.3"),
+ *   the function assumes `searchPath` itself is a component directory, and returns it as a single-element array.
+ *
+ * @param searchPath - The absolute path to check for components or versioned directories.
+ * @returns An array of string paths to component directories.
+ */
+const getComponentsForPath = (searchPath: string): string[] => {
+  // Read all entries in the given path and keep only directories
+  const components = fs
+    .readdirSync(searchPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  // If there's any non-semver-named directory, this is a directory full of components
+  const containsComponents = components.some((name) => !semver.valid(name));
+
+  if (containsComponents) {
+    // Return full paths to each component directory
+    return components.map((component) => path.join(searchPath, component));
+  }
+
+  // All subdirectories are semver versions – treat this as a single component directory
+  return [searchPath];
 };
 
 const validateConfig = (config: Config): Config => {
+  // TODO: Check to see if the exported folder exists before we run start
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
     // check to see if we can get this from the env
     console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
@@ -296,4 +429,49 @@ const validateConfig = (config: Config): Config => {
   }
   return config;
 };
+
+const getVersionsForComponent = (componentPath: string): string[] => {
+  const versionDirectories = fs.readdirSync(componentPath);
+  const versions: string[] = [];
+  // The directory name must be a semver
+  if (fs.lstatSync(componentPath).isDirectory()) {
+    // this is a directory structure.  this should be the component name,
+    // and each directory inside should be a version
+    for (const versionDirectory of versionDirectories) {
+      if (semver.valid(versionDirectory)) {
+        const versionFiles = fs.readdirSync(path.resolve(componentPath, versionDirectory));
+        for (const versionFile of versionFiles) {
+          if (versionFile.endsWith('.hbs')) {
+            versions.push(versionDirectory);
+            break;
+          }
+        }
+      } else {
+        console.error(`Invalid version directory ${versionDirectory}`);
+      }
+    }
+  }
+  versions.sort(semver.rcompare);
+  return versions;
+};
+
+export const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
+
+const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any> => {
+  const loweredObj: Record<string, any> = {};
+  for (const key in obj) {
+    const lowerKey = key.toLowerCase();
+    const value = obj[key];
+
+    if (typeof value === 'string') {
+      loweredObj[lowerKey] = value.toLowerCase();
+    } else if (typeof value === 'object' && value !== null) {
+      loweredObj[lowerKey] = toLowerCaseKeysAndValues(value);
+    } else {
+      loweredObj[lowerKey] = value; // For non-string values
+    }
+  }
+  return loweredObj;
+};
+
 export default Handoff;

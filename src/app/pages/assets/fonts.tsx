@@ -1,17 +1,16 @@
-import * as React from 'react';
+import { getClientConfig } from '@handoff/config';
+import * as fs from 'fs-extra';
+import uniq from 'lodash/uniq';
+import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
-import rehypeRaw from 'rehype-raw';
 import path from 'path';
-import { getClientConfig } from '@handoff/config';
-import uniq from 'lodash/uniq';
-import * as fs from 'fs-extra';
-import Icon from '../../components/Icon';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import CustomNav from '../../components/SideNav/Custom';
+import * as React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import rehypeRaw from 'rehype-raw';
+import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import Header from '../../components/old/Header';
 import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
 
 /**
@@ -23,7 +22,9 @@ import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../c
  * @returns
  */
 export const getStaticProps: GetStaticProps = async (context) => {
-  const fonts = fs.readdirSync(path.resolve(process.env.HANDOFF_MODULE_PATH ?? "", '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts'));
+  const fonts = fs.readdirSync(
+    path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts')
+  );
   const customFonts: string[] = [];
 
   fonts.map((font) => {
@@ -61,8 +62,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu}  config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
+      <Header menu={menu} config={config} />
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">
@@ -70,7 +70,6 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
               <h1>{metadata.title}</h1>
               <p>{metadata.description}</p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__image--small" />}
           </div>
           {fontFamilies.map((fontFamily, i) => (
             <React.Fragment key={fontFamily}>
@@ -80,7 +79,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
                 </div>
                 <div className="o-col-6@md">
                   <div className="c-card">
-                    <Icon name="file-zip" className="c-card__icon" />
+                    <FileArchive />
                     <h4>{fontFamily}</h4>
                     <p>Font files for installing on a local machine.</p>
                     <p>
@@ -93,7 +92,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
             </React.Fragment>
           ))}
 
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>

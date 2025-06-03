@@ -1,8 +1,17 @@
 import * as FigmaTypes from '../../figma/types';
 import { Exportable, ComponentDefinition, Side, ReferenceObject } from "../../types";
 
+enum ComponentType {
+  ELEMENT = 'element',
+  BLOCK = 'block',
+}
+
 export interface FileComponentObject {
   instances: ComponentInstance[];
+  type?: ComponentType;
+  group?: string;
+  description?: string;
+  name?: string;
 }
 
 export interface FileComponentsObject {

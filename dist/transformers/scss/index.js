@@ -24,12 +24,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scssTypesTransformer = void 0;
-var colors_1 = __importStar(require("./design/colors"));
-var effects_1 = __importStar(require("./design/effects"));
-var typography_1 = __importStar(require("./design/typography"));
-var component_1 = require("./component");
-var utils_1 = require("../utils");
-var component_2 = require("../css/component");
+const colors_1 = __importStar(require("./design/colors"));
+const effects_1 = __importStar(require("./design/effects"));
+const typography_1 = __importStar(require("./design/typography"));
+const component_1 = require("./component");
+const utils_1 = require("../utils");
+const component_2 = require("../css/component");
 /**
  * Build a set of Component types to use as a set of SCSS vars
  * @param documentationObject
@@ -37,16 +37,16 @@ var component_2 = require("../css/component");
  */
 function scssTypesTransformer(documentationObject, integrationObject) {
     var _a;
-    var components = {};
-    for (var componentId in documentationObject.components) {
+    const components = {};
+    for (const componentId in documentationObject.components) {
         components[componentId] = (0, component_1.transformComponentsToScssTypes)(componentId, documentationObject.components[componentId], (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
     }
-    var design = {
+    const design = {
         colors: (0, colors_1.transformColorTypes)(documentationObject.design.color),
         effects: (0, effects_1.transformEffectTypes)(documentationObject.design.effect),
         typography: (0, typography_1.transformTypographyTypes)(documentationObject.design.typography),
     };
-    return { components: components, design: design };
+    return { components, design };
 }
 exports.scssTypesTransformer = scssTypesTransformer;
 /**
@@ -55,28 +55,25 @@ exports.scssTypesTransformer = scssTypesTransformer;
  * @returns
  */
 function scssTransformer(documentationObject, handoff, integrationObject) {
-    var components = {};
-    var _loop_1 = function (componentId) {
+    const components = {};
+    for (const componentId in documentationObject.components) {
         components[componentId] = documentationObject.components[componentId].instances
-            .map(function (instance) {
+            .map((instance) => {
             var _a;
             return [
                 (0, utils_1.formatComponentCodeBlockComment)(instance, '//'),
                 (0, component_1.transformComponentTokensToScssVariables)(instance, (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*'])
-                    .map(function (token) { return "\t".concat(token.name, ": ").concat((0, component_2.tokenReferenceFormat)(token, 'scss', handoff), ";"); })
+                    .map((token) => `\t${token.name}: ${(0, component_2.tokenReferenceFormat)(token, 'scss', handoff)};`)
                     .join('\n'),
             ].join('\n');
         })
             .join('\n\n');
-    };
-    for (var componentId in documentationObject.components) {
-        _loop_1(componentId);
     }
-    var design = {
+    const design = {
         colors: (0, colors_1.default)(documentationObject.design.color),
         typography: (0, typography_1.default)(documentationObject.design.typography),
         effects: (0, effects_1.default)(documentationObject.design.effect),
     };
-    return { components: components, design: design };
+    return { components, design };
 }
 exports.default = scssTransformer;

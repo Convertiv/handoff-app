@@ -1,11 +1,10 @@
-import { Config, IntegrationObject } from './types/config';
 import 'dotenv/config';
 import webpack from 'webpack';
-import { DocumentationObject } from './types';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { HookReturn } from './types';
 import { HandoffIntegration } from './transformers/integration';
+import { TransformedPreviewComponents } from './transformers/preview/types';
 import { TransformerOutput } from './transformers/types';
+import { DocumentationObject, HookReturn } from './types';
+import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
     debug: boolean;
@@ -34,13 +33,21 @@ declare class Handoff {
         webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
         preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
     };
+    _initialArgs: {
+        debug?: boolean;
+        force?: boolean;
+        config?: Partial<Config>;
+    };
+    _configs: string[];
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
+    private construct;
     init(configOverride?: Partial<Config>): Handoff;
+    reload(): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     recipe(): Promise<Handoff>;
-    snippet(name: string | null): Promise<Handoff>;
-    renameSnippet(oldName: string, target: string): Promise<Handoff>;
+    component(name: string | null): Promise<Handoff>;
+    renameComponent(oldName: string, target: string): Promise<Handoff>;
     integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
@@ -51,8 +58,9 @@ declare class Handoff {
     makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
-    makeSnippet(name: string): Promise<Handoff>;
+    makeComponent(name: string): Promise<Handoff>;
     makeIntegration(): Promise<Handoff>;
+    makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     postInit(callback: (config: Config) => Config): void;
@@ -64,5 +72,6 @@ declare class Handoff {
     postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
     modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
 }
-export declare const initIntegrationObject: (handoff: Handoff) => IntegrationObject;
+export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
+export declare const getLatestVersionForComponent: (versions: string[]) => string;
 export default Handoff;

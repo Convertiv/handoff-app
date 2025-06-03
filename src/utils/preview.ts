@@ -1,9 +1,9 @@
-import webpack from 'webpack';
+import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import chalk from 'chalk';
-import { getIntegrationEntryPoint } from '../transformers/integration/index';
+import webpack from 'webpack';
 import Handoff from '../index';
+import { getIntegrationEntryPoint } from '../transformers/integration/index';
 const { createFsFromVolume, Volume } = require('memfs');
 
 export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
@@ -21,10 +21,12 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
     const compile = webpack(generateWebpackConfig(entry, handoff));
     compile.run((err, stats) => {
       if (err) {
-        let error = chalk.red('Errors encountered trying to build preview styles.') + '\n  The integration sass expects a token that isn\'t found in your Figma component.\n';
+        let error =
+          chalk.red('Errors encountered trying to build preview styles.') +
+          "\n  The integration sass expects a token that isn't found in your Figma component.\n";
         if (handoff.debug) {
           error += chalk.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + err.stack || err;
-        }else{
+        } else {
           error += 'Add the --debug flag to see the full error trace\n\n';
         }
         return reject(error);
@@ -33,10 +35,12 @@ export const buildClientFiles = async (handoff: Handoff): Promise<string> => {
       if (stats) {
         if (stats.hasErrors()) {
           let buildErrors = stats.compilation.errors?.map((err) => err.message);
-          let error = chalk.red('Errors encountered trying to build preview styles.') + '\nThe integration sass expects a token that isn\'t found in your Figma component.\n';
+          let error =
+            chalk.red('Errors encountered trying to build preview styles.') +
+            "\nThe integration sass expects a token that isn't found in your Figma component.\n";
           if (handoff.debug) {
             error += chalk.yellow('\n\n---------- Sass Build Error Trace ---------- \n') + buildErrors;
-          }else{
+          } else {
             error += 'Add the --debug flag to see the full error trace\n\n';
           }
           return reject(error);

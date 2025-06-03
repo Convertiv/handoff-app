@@ -2,18 +2,16 @@ import React, { ReactElement } from 'react';
 import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
 
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-import yaml from 'refractor/lang/yaml';
-import json from 'refractor/lang/json';
-import markdown from 'refractor/lang/json';
 import bash from 'refractor/lang/bash';
+import { default as json, default as markdown } from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import html from 'refractor/lang/xml-doc';
+import yaml from 'refractor/lang/yaml';
 // @ts-ignore
 import highlight from 'react-syntax-highlighter/src/highlight';
-import refractor  from 'refractor/core';
+import refractor from 'refractor/core';
 const SyntaxHighlighter = highlight(refractor, {});
-SyntaxHighlighter.registerLanguage = (_: string, language: any) =>
-  refractor.register(language);
+SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
@@ -32,6 +30,7 @@ export type CustomRenderers = {
   h4: (props: HeadingProps) => ReactElement;
   h5: (props: HeadingProps) => ReactElement;
   h6: (props: HeadingProps) => ReactElement;
+  paragraph: (props: { children: React.ReactNode }) => ReactElement;
 };
 
 /**
@@ -93,6 +92,7 @@ export const MarkdownComponents: CustomRenderers = {
   h4: Headings,
   h5: Headings,
   h6: Headings,
+  paragraph: ({ children }) => <p>{children}</p>,
   code(props) {
     const { className } = props;
     const match = /language-(\w+)/.exec(className || '');
@@ -108,7 +108,8 @@ export const MarkdownComponents: CustomRenderers = {
         showLineNumbers={true}
         wrapLines={true}
         useInlineStyles={true}
-        {...props}></SyntaxHighlighter>
+        {...props}
+      ></SyntaxHighlighter>
     ) : (
       <code {...props} />
     );

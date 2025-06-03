@@ -1,7 +1,7 @@
-import { getClientConfig } from '@handoff/config';
 import { ChangelogRecord } from '@handoff/changelog';
-import { ExportResult, ClientConfig, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { getClientConfig } from '@handoff/config';
 import { FileComponentObject } from '@handoff/exporters/components/types';
+import { ComponentListObject } from '@handoff/transformers/preview/types';
 import {
   ComponentDocumentationOptions,
   LegacyComponentDefinition,
@@ -9,14 +9,14 @@ import {
   PreviewJson,
   PreviewObject,
 } from '@handoff/types';
-import { prepareIntegrationObject } from '@handoff/utils/integration';
+import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { groupBy, merge, startCase, uniq } from 'lodash';
-import { SubPageType } from '../../pages/[level1]/[level2]';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
@@ -106,18 +106,9 @@ export const knownPaths = [
   'foundations/effects',
   'foundations/logos',
   'foundations/typography',
-  'components',
+  'system',
+  'system/component',
   'changelog',
-  'components/button',
-  'components/alert',
-  'components/modal',
-  'components/pagination',
-  'components/tooltip',
-  'components/switch',
-  'components/input',
-  'components/radio',
-  'components/select',
-  'components/checkbox',
 ];
 
 /**
@@ -262,24 +253,25 @@ export const staticBuildMenu = () => {
         const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
         let subSections = [];
 
-        if (filepath === '/components') {
-          const components = fetchComponents();
-          // Build the submenu of exportables (components)
-          const groupedComponents = groupBy(components, (e) => e.group ?? '');
-          Object.keys(groupedComponents).forEach((group) => {
-            subSections.push({ path: '', title: group });
-            groupedComponents[group].forEach((component) => {
-              const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
-              subSections.push({ path: `components/${component.id}`, title: docs.metadata['title'] ?? startCase(component.id) });
-            });
-          });
-        }
-
         if (metadata.menu) {
           // Build the submenu
           subSections = Object.keys(metadata.menu)
             .map((key) => {
               const sub = metadata.menu[key];
+              if (sub.components) {
+                // The user wants to inject the component menu here
+                return {
+                  title: sub.title,
+                  menu: staticBuildComponentMenu(sub.components),
+                };
+              }
+              if (sub.tokens) {
+                // The user wants to inject the component menu here
+                return {
+                  title: 'Tokens',
+                  menu: staticBuildTokensMenu(),
+                };
+              }
               if (sub.enabled !== false) {
                 return sub;
               }
@@ -297,6 +289,98 @@ export const staticBuildMenu = () => {
     })
     .filter(filterOutUndefined);
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
+};
+
+const staticBuildComponentMenu = (type?: string) => {
+  let menu = [];
+  let components = fetchComponents();
+  if (type) {
+    components = components.filter((c) => c.type === type);
+  }
+  // Build the submenu of exportables (components)
+  const groupedComponents = groupBy(components, (e) => e.group ?? '');
+  Object.keys(groupedComponents).forEach((group) => {
+    const menuGroup = { title: group, menu: [] };
+    groupedComponents[group].forEach((component) => {
+      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      let title = startCase(component.id);
+      if (docs.metadata.title) {
+        title = docs.metadata.title;
+      }
+      if (component.name) {
+        title = component.name;
+      }
+      menuGroup.menu.push({ path: `system/component/${component.id}`, title });
+    });
+    // sort the menu group by name alphabetical
+    menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
+    menu.push(menuGroup);
+  });
+  // sort the menu by name alphabetical
+  menu = menu.sort((a, b) => a.title.localeCompare(b.title));
+  return menu;
+};
+
+const staticBuildTokensMenu = () => {
+  const menu = [
+    {
+      title: `Foundations`,
+      path: `system/tokens/foundations`,
+      menu: [
+        {
+          title: `Colors`,
+          path: `system/tokens/foundations/colors`,
+        },
+        {
+          title: `Effects`,
+          path: `system/tokens/foundations/effects`,
+        },
+        {
+          title: `Typography`,
+          path: `system/tokens/foundations/typography`,
+        },
+      ],
+    },
+  ];
+
+  const componentMenuItems = [];
+  const components = fetchComponents(false);
+  // Build the submenu of exportables (components)
+  const groupedComponents = groupBy(components, (e) => e.group ?? '');
+  Object.keys(groupedComponents).forEach((group) => {
+    groupedComponents[group].forEach((component) => {
+      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      let title = startCase(component.id);
+      if (docs.metadata.title) {
+        title = docs.metadata.title;
+      }
+      if (component.name) {
+        title = component.name;
+      }
+      componentMenuItems.push({ path: `system/tokens/components/${component.id}`, title });
+    });
+  });
+
+  if (componentMenuItems.length > 0) {
+    menu.push({
+      title: `Components`,
+      path: `system/tokens/components`,
+      menu: componentMenuItems,
+    });
+  }
+
+  return menu;
+};
+
+const staticBuildTokenMenu = () => {
+  let subSections = {
+    title: 'Tokens',
+    path: 'system/tokens',
+    menu: [],
+  };
+  const tokens = getTokens();
+
+  return subSections;
 };
 
 /**
@@ -324,7 +408,7 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       content,
       options,
       menu,
-      current: getCurrentSection(menu, `${id}`) ?? [],
+      current: getCurrentSection(menu, `${id}`) ?? null,
     },
   };
 };
@@ -363,16 +447,70 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * Fetch exportables id's from the JSON files in the exportables directory
  * @returns {string[]}
  */
-export const fetchComponents = () => {
-  try {
-    return (
-      Object.entries(getTokens().components).map(([id, obj]) => ({
-        id,
-        group: '', // TODO
-      })) ?? []
+export const fetchComponents = (fetchAll: boolean = true) => {
+  let components = getTokens().components;
+
+  if (fetchAll) {
+    const componentIds = Array.from(
+      new Set<string>(
+        (
+          JSON.parse(
+            fs.readFileSync(
+              path.resolve(
+                process.env.HANDOFF_MODULE_PATH ?? '',
+                '.handoff',
+                `${process.env.HANDOFF_PROJECT_ID}`,
+                'public',
+                'api',
+                'components.json'
+              ),
+              'utf-8'
+            )
+          ) as ComponentListObject[]
+        ).map((c) => c.id)
+      )
     );
+
+    for (const componentId of componentIds) {
+      const metadata = getLatestComponentMetadata(componentId);
+      if (metadata) {
+        components[componentId] = metadata;
+        components[componentId].name = metadata.title;
+      }
+    }
+  }
+
+  const items =
+    Object.entries(components).map(([id, obj]) => ({
+      id,
+      type: obj.type || 'Components',
+      group: obj.group || '',
+      name: obj.name || '',
+      description: obj.description || '',
+    })) ?? [];
+
+  try {
+    return items;
   } catch (e) {
     return [];
+  }
+};
+
+export const getLatestComponentMetadata = (id: string) => {
+  // get the path for the integration templates
+  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+  // find the path to the components
+  const templatesPath = path.resolve(integrationPath, 'components', id);
+  if (!fs.existsSync(templatesPath)) return false;
+  const versions = fs.readdirSync(templatesPath);
+  const latestVersion = versions.sort().pop();
+  const versionPath = path.resolve(templatesPath, latestVersion, `${id}.json`);
+  if (!fs.existsSync(versionPath)) return false;
+  try {
+    const data = fs.readFileSync(versionPath, 'utf-8');
+    return JSON.parse(data.toString());
+  } catch (e) {
+    throw new Error(`Error reading ${versionPath}`);
   }
 };
 
@@ -423,30 +561,30 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-export const getIntegrationObject = (): IntegrationObject => {
-  const defaultObject = null as IntegrationObject;
+// export const getIntegrationObject = (): IntegrationObject => {
+//   const defaultObject = null as IntegrationObject;
 
-  if (!process.env.HANDOFF_WORKING_PATH) {
-    return defaultObject;
-  }
+//   if (!process.env.HANDOFF_WORKING_PATH) {
+//     return defaultObject;
+//   }
 
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
+//   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
 
-  if (!fs.existsSync(integrationPath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationPath)) {
+//     return defaultObject;
+//   }
 
-  const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
+//   const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
 
-  if (!fs.existsSync(integrationFilePath)) {
-    return defaultObject;
-  }
+//   if (!fs.existsSync(integrationFilePath)) {
+//     return defaultObject;
+//   }
 
-  const buffer = fs.readFileSync(integrationFilePath);
-  const integration = JSON.parse(buffer.toString()) as IntegrationObject;
+//   const buffer = fs.readFileSync(integrationFilePath);
+//   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
 
-  return prepareIntegrationObject(integration, integrationPath);
-};
+//   return prepareIntegrationObject(integration, integrationPath);
+// };
 
 export const getTokens = (): ExportResult => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
@@ -552,6 +690,12 @@ export const titleString = (prefix: string | null): string => {
   return `${prefix}${config?.app?.client} Design System`;
 };
 
+/**
+ * Get the tokens for a component
+ * @param component
+ * @param type
+ * @returns
+ */
 export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'styleDictionary' | 'types'): string => {
   let tokens = '';
   const baseSearchPath = process.env.HANDOFF_EXPORT_PATH
@@ -570,7 +714,7 @@ export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'sty
     if (fs.existsSync(sdSearchPath)) {
       // Foundations
       tokens = fs.readFileSync(sdSearchPath).toString();
-    } else {
+    } else if (fs.existsSync(sdAltSearchPath)) {
       // Components
       tokens = fs.readFileSync(sdAltSearchPath).toString();
     }
@@ -579,4 +723,3 @@ export const fetchTokensString = (component: string, type: 'css' | 'scss' | 'sty
   }
   return tokens;
 };
-

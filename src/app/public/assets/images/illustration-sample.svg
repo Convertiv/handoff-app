@@ -1,0 +1,110 @@
+<svg width="300" height="185" viewBox="0 0 300 185" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_250_5899)">
+<rect width="300" height="185" rx="8" fill="#F3F4F9"/>
+<g clip-path="url(#clip1_250_5899)">
+<rect x="146.5" y="18" width="0.5" height="149" fill="url(#paint0_linear_250_5899)"/>
+<rect x="233" y="18" width="0.5" height="149" fill="url(#paint1_linear_250_5899)"/>
+<rect x="36" y="59.5" width="228" height="0.5" fill="url(#paint2_linear_250_5899)"/>
+<rect x="36" y="83" width="228" height="0.5" fill="url(#paint3_linear_250_5899)"/>
+<g clip-path="url(#clip2_250_5899)">
+<rect x="67" y="96" width="166" height="28" rx="4" stroke="black" stroke-opacity="0.4" stroke-dasharray="1 2"/>
+<g clip-path="url(#clip3_250_5899)">
+<path d="M214.5 117.583C218.412 117.583 221.583 114.412 221.583 110.5C221.583 106.588 218.412 103.417 214.5 103.417C210.588 103.417 207.417 106.588 207.417 110.5C207.417 114.412 210.588 117.583 214.5 117.583Z" stroke="#FD3146" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M214.5 113.333V110.5" stroke="#FD3146" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M214.5 107.667H214.51" stroke="#FD3146" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<rect x="79" y="109" width="52" height="3" rx="1.5" fill="#E1E1E1"/>
+<mask id="mask0_250_5899" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="220" y="0" width="80" height="185">
+<rect x="220" width="80" height="185" fill="url(#paint4_linear_250_5899)"/>
+</mask>
+<g mask="url(#mask0_250_5899)">
+<rect x="220" width="80" height="185" fill="#F3F4F9"/>
+</g>
+<mask id="mask1_250_5899" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="185">
+<rect width="80" height="185" fill="url(#paint5_linear_250_5899)"/>
+</mask>
+<g mask="url(#mask1_250_5899)">
+<rect width="80" height="185" fill="#F3F4F9"/>
+</g>
+</g>
+<g filter="url(#filter0_ddd_250_5899)">
+<rect x="147" y="60" width="86" height="23" rx="4" fill="url(#paint6_linear_250_5899)"/>
+<rect opacity="0.9" x="155" y="70.5" width="28" height="2" rx="1" fill="white"/>
+<rect opacity="0.9" x="189" y="70.5" width="12" height="2" rx="1" fill="white"/>
+<rect x="209" y="82.5" width="8" height="8" transform="rotate(-45 209 82.5)" fill="#FD3146"/>
+</g>
+</g>
+</g>
+<defs>
+<filter id="filter0_ddd_250_5899" x="93" y="39" width="194" height="136.157" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2.40731"/>
+<feGaussianBlur stdDeviation="1.79553"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.992157 0 0 0 0 0.192157 0 0 0 0 0.27451 0 0 0 0.125207 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_250_5899"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="7.81586"/>
+<feGaussianBlur stdDeviation="6.0308"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.992157 0 0 0 0 0.192157 0 0 0 0 0.27451 0 0 0 0.184793 0"/>
+<feBlend mode="normal" in2="effect1_dropShadow_250_5899" result="effect2_dropShadow_250_5899"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="33"/>
+<feGaussianBlur stdDeviation="27"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.992157 0 0 0 0 0.192157 0 0 0 0 0.27451 0 0 0 0.31 0"/>
+<feBlend mode="normal" in2="effect2_dropShadow_250_5899" result="effect3_dropShadow_250_5899"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect3_dropShadow_250_5899" result="shape"/>
+</filter>
+<linearGradient id="paint0_linear_250_5899" x1="146.75" y1="18" x2="146.75" y2="167" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D1D1D1" stop-opacity="0"/>
+<stop offset="0.2" stop-color="#D4D4D4"/>
+<stop offset="0.8" stop-color="#D4D4D4"/>
+<stop offset="1" stop-color="#D1D1D1" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint1_linear_250_5899" x1="233.25" y1="18" x2="233.25" y2="167" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D1D1D1" stop-opacity="0"/>
+<stop offset="0.2" stop-color="#D4D4D4"/>
+<stop offset="0.8" stop-color="#D4D4D4"/>
+<stop offset="1" stop-color="#D1D1D1" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint2_linear_250_5899" x1="36" y1="59.75" x2="264" y2="59.75" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D1D1D1" stop-opacity="0"/>
+<stop offset="0.2" stop-color="#D4D4D4"/>
+<stop offset="0.8" stop-color="#D4D4D4"/>
+<stop offset="1" stop-color="#D1D1D1" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint3_linear_250_5899" x1="36" y1="83.25" x2="264" y2="83.25" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D1D1D1" stop-opacity="0"/>
+<stop offset="0.2" stop-color="#D4D4D4"/>
+<stop offset="0.8" stop-color="#D4D4D4"/>
+<stop offset="1" stop-color="#D1D1D1" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint4_linear_250_5899" x1="220" y1="92.5" x2="300" y2="92.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F8F8F8" stop-opacity="0"/>
+<stop offset="0.647491" stop-color="#F8F8F8"/>
+<stop offset="1" stop-color="#F8F8F8"/>
+</linearGradient>
+<linearGradient id="paint5_linear_250_5899" x1="0" y1="92.5" x2="80" y2="92.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F8F8F8"/>
+<stop offset="0.352509" stop-color="#F8F8F8"/>
+<stop offset="1" stop-color="#F8F8F8" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint6_linear_250_5899" x1="190" y1="60" x2="190" y2="83" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FD3146"/>
+<stop offset="0.48" stop-color="#FE3347"/>
+<stop offset="1" stop-color="#F8273B"/>
+</linearGradient>
+<clipPath id="clip0_250_5899">
+<rect width="300" height="185" rx="8" fill="white"/>
+</clipPath>
+<clipPath id="clip1_250_5899">
+<rect width="300" height="185" fill="white"/>
+</clipPath>
+<clipPath id="clip2_250_5899">
+<rect width="300" height="185" fill="white"/>
+</clipPath>
+<clipPath id="clip3_250_5899">
+<rect width="17" height="17" fill="white" transform="translate(206 102)"/>
+</clipPath>
+</defs>
+</svg>

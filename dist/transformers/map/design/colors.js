@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function transformColors(colors) {
-    var result = {};
-    colors.forEach(function (color) {
-        result["color-".concat(color.group, "-").concat(color.machineName)] = "".concat(color.value);
+    const result = {};
+    colors.forEach(color => {
+        result[`color-${color.group}-${color.machineName}`] = `${color.value}`;
     });
     return result;
 }

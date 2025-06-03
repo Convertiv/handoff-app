@@ -1,38 +1,27 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var component_1 = require("./component");
-var colors_1 = __importDefault(require("./design/colors"));
-var effects_1 = __importDefault(require("./design/effects"));
-var typography_1 = __importDefault(require("./design/typography"));
+const component_1 = require("./component");
+const colors_1 = __importDefault(require("./design/colors"));
+const effects_1 = __importDefault(require("./design/effects"));
+const typography_1 = __importDefault(require("./design/typography"));
 function mapTransformer(documentationObject, integrationObject) {
     var _a;
-    var flatMap = {};
-    var components = {};
-    for (var componentId in documentationObject.components) {
-        var map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
+    let flatMap = {};
+    const components = {};
+    for (const componentId in documentationObject.components) {
+        const map = (0, component_1.transformComponentsToMap)(componentId, documentationObject.components[componentId], (_a = integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options[componentId]) !== null && _a !== void 0 ? _a : integrationObject === null || integrationObject === void 0 ? void 0 : integrationObject.options['*']);
         components[componentId] = JSON.stringify(map, null, 2);
-        flatMap = __assign(__assign({}, flatMap), map);
+        flatMap = Object.assign(Object.assign({}, flatMap), map);
     }
-    var colors = (0, colors_1.default)(documentationObject.design.color);
-    var typography = (0, typography_1.default)(documentationObject.design.typography);
-    var effects = (0, effects_1.default)(documentationObject.design.effect);
-    flatMap = __assign(__assign(__assign(__assign({}, flatMap), colors), typography), effects);
+    const colors = (0, colors_1.default)(documentationObject.design.color);
+    const typography = (0, typography_1.default)(documentationObject.design.typography);
+    const effects = (0, effects_1.default)(documentationObject.design.effect);
+    flatMap = Object.assign(Object.assign(Object.assign(Object.assign({}, flatMap), colors), typography), effects);
     return {
-        components: components,
+        components,
         design: {
             colors: JSON.stringify(colors, null, 2),
             typography: JSON.stringify(typography, null, 2),

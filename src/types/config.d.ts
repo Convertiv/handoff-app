@@ -1,6 +1,7 @@
 export default config;
+import { ComponentListObject } from 'handoff/transformers/preview/types';
 import { FileComponentsObject } from '../exporters/components/types';
-import type { ColorObject, TypographyObject, AssetObject, EffectObject } from '../types';
+import type { AssetObject, ColorObject, EffectObject, TypographyObject } from '../types';
 
 export interface ImageStyle {
   name: string;
@@ -34,10 +35,9 @@ export interface ExportResult {
 }
 
 export interface Breakpoints {
-  [key: string]: {
-    size: number;
-    name: string;
-  };
+  mobile: { size: number; name: string };
+  tablet: { size: number; name: string };
+  desktop: { size: number; name: string };
 }
 
 interface NextAppConfig {
@@ -62,6 +62,11 @@ export interface Config {
   sitesOutputDirectory?: string;
   useVariables?: boolean;
   app?: NextAppConfig;
+  entries?: {
+    scss?: string;
+    js?: string;
+    components?: string[];
+  };
   /**
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
    */
@@ -89,16 +94,21 @@ export interface IntegrationObjectComponentOptions {
     [variantProperty: string]: string;
   };
   replace: { [variantProperty: string]: { [source: string]: string } };
-};
-
+}
 
 export interface IntegrationObject {
   name: string;
   entries?: {
-    integration?: string;
+    integration?: string; // scss
+    bundle?: string; // js
     templates?: string;
-    bundle?: string;
-  }
+    // styles?: string;
+    components: {
+      [id: string]: {
+        [version: string]: ComponentListObject;
+      };
+    };
+  };
   options: {
     [key: string]: IntegrationObjectComponentOptions;
   };

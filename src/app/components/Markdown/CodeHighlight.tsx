@@ -1,19 +1,27 @@
-import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+import { PreviewObject } from '@handoff/types';
 import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
-import html from 'refractor/lang/xml-doc';
+import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+import js from 'refractor/lang/javascript';
+import json from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
-import js from 'refractor/lang/javascript';
-import { PreviewObject } from '@handoff/types';
-import CopyCode from '../CopyCode';
+import html from 'refractor/lang/xml-doc';
 // @ts-ignore
+import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
+import { Select } from '@radix-ui/react-select';
+import Handlebars from 'handlebars';
+import { useEffect, useState } from 'react';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
-import { useState } from 'react';
+import CopyCode from '../CopyCode';
+import { Button } from '../ui/button';
+import { Collapsible } from '../ui/collapsible';
+import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 const SyntaxHighlighter = highlight(refractor, {});
 SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
 SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('js', js);
+SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('scss', scss);
 
@@ -29,69 +37,173 @@ export const CodeHighlight: React.FC<{
   dark?: boolean;
   title?: string;
   language?: string;
-}> = ({ data, collapsible, type, title, dark }) => {
-  const [collapsed, setCollapsed] = useState<boolean>(true);
+  height?: string;
+  currentValues?: Record<string, string>;
+}> = ({ data, collapsible, type, title, dark, height, currentValues }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
-    data = { id: '', preview: '', code: '' };
+    data = {
+      id: '',
+      image: '',
+      tags: [],
+      categories: [],
+      figma: '',
+      title: '',
+      description: '',
+      should_do: [],
+      should_not_do: [],
+      previews: {},
+      preview: '',
+      html: '',
+      code: '',
+    };
   } else if (typeof data === 'string') {
-    data = { id: '', preview: '', code: data };
+    data = data = {
+      id: '',
+      title: '',
+      categories: [],
+      figma: '',
+      tags: [],
+      image: '',
+      description: '',
+      previews: {},
+      should_do: [],
+      should_not_do: [],
+      preview: '',
+      html: data,
+      code: data,
+    };
   }
   if (!type) type = 'html';
 
-  const states = Object.keys(data).filter((key) => ['id', 'preview'].indexOf(key) === -1);
+  const states = Object.keys(data)
+    .filter(
+      (key) =>
+        [
+          'id',
+          'preview',
+          'image',
+          'categories',
+          'title',
+          'code',
+          'description',
+          'type',
+          'group',
+          'tags',
+          'previews',
+          'properties',
+          'should_do',
+          'should_not_do',
+          'figma',
+        ].indexOf(key) === -1
+    )
+    .map((key) => key);
   const [activeState, setActiveState] = useState<string>(states[0]);
-  const [code, setCode] = useState<string>(data.code);
+  const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
   theme['pre[class*="language-"]'].overflow = 'auto';
-  theme['pre[class*="language-"]'].maxHeight = '450px';
+  theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
   theme['pre[class*="language-"]'].margin = '0';
 
+  useEffect(() => {
+    Handlebars.registerHelper('eq', (a, b) => a === b);
+  }, [data]);
+
+  useEffect(() => {
+    // check if data is a string
+    if (typeof data === 'string') {
+      setCode(data);
+      return;
+    }
+
+    // check if data is an object with an html key
+    if ('html' in data && !!data.html) {
+      setCode(data.html);
+      return;
+    }
+
+    if ('code' in data && !!data.code) {
+      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
+      return;
+    }
+  }, [currentValues, data]);
+
   return (
-    <div className={`c-code-block${collapsible && collapsed ? ' collapsed' : ''}`}>
-      <div className="c-code-block__title" data-language={activeState === 'code' ? type : activeState}>
-        {title && <div>{title}</div>} 
+    <Collapsible className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
+      <div
+        className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800"
+        data-language={activeState === 'html' ? type : activeState}
+      >
+        {title && <div>{title}</div>}
+        <div className="flex items-center gap-2">
+          {states.length > 2 && (
+            <Select
+              defaultValue={activeState}
+              onValueChange={(key) => {
+                setActiveState(key);
+                if (typeof data === 'string') {
+                  setCode(data);
+                  return;
+                } else if (key === 'html') {
+                  if ('html' in data && !!data.html) {
+                    setCode(data.html);
+                  } else {
+                    setCode(Handlebars.compile(data.code)({ properties: currentValues }));
+                  }
+                } else {
+                  setCode(data[key]);
+                }
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Breakpoint" />
+              </SelectTrigger>
+              <SelectContent>
+                {states
+                  .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                  .map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state === 'html'
+                        ? 'HTML'
+                        : state === 'css'
+                          ? 'CSS'
+                          : state === 'js'
+                            ? 'Javascript'
+                            : state === 'sass'
+                              ? 'SASS'
+                              : state === 'sharedStyles'
+                                ? 'Shared CSS'
+                                : state}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <CopyCode code={code} />
+        </div>
       </div>
 
       <SyntaxHighlighter
         style={theme}
-        language={activeState === 'code' ? type : activeState}
+        language={activeState === 'html' ? type : activeState}
         PreTag="div"
         showLineNumbers={true}
-        wrapLines={false}
+        wrapLines={true}
+        wrapLongLines={true}
         useInlineStyles={true}
       >
         {code}
       </SyntaxHighlighter>
 
-      <CopyCode code={code} />
-      {states.length > 2 && (
-        <select
-          className="c-code-block__select"
-          value={activeState}
-          onChange={(e) => {
-            setActiveState(e.target.value);
-            setCode(data[e.target.value]);
-          }}
-        >
-          {states.map((state) => (
-            <option key={state} value={state}>
-              {
-                state === 'code' ? 'HTML' : 
-                state === 'css' ? 'CSS' : 
-                state === 'js' ? 'Javascript' : 
-                state === 'sass' ? 'SASS' : 
-                state === 'sharedStyles' ? 'Shared CSS' : 
-                state}
-            </option>
-          ))}
-        </select>
-      )}
       {collapsible && (
-        <button className="c-code-block__toggle" onClick={(e) => setCollapsed(!collapsed)}>
-          {collapsed ? 'Show more' : 'Show less'}
-        </button>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="w-9 p-0">
+            <span className="sr-only">Toggle</span>
+          </Button>
+        </CollapsibleTrigger>
       )}
-    </div>
+    </Collapsible>
   );
 };

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var plugin = '';
+const plugin = '';
 // import { NodeVM } from 'vm2';
 // import { DocumentationObject } from '../../types';
 // import { CssTransformerOutput } from '../css';

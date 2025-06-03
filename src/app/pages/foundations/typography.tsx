@@ -1,47 +1,19 @@
-import * as React from 'react';
-import type * as next from 'next';
-import sortedUniq from 'lodash/sortedUniq';
-import type { TypographyObject } from '@handoff/types';
 import { getClientConfig } from '@handoff/config';
-import Icon from '../../components/Icon';
-import NavLink from '../../components/NavLink';
 import { FontFamily } from '@handoff/types/font';
-import Head from 'next/head';
-import Header from '../../components/Header';
-import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
-import CustomNav from '../../components/SideNav/Custom';
+import sortedUniq from 'lodash/sortedUniq';
+import type * as next from 'next';
 import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
-import Footer from '../../components/Footer';
+import TypographyExamples from '../../components/Foundations/TypographyExample';
+import Layout from '../../components/Layout/Main';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
 
-const pluckStyle = (type: TypographyObject) => {
-  return {
-    fontFamily: type.values.fontFamily,
-    fontSize: type.values.fontSize,
-    fontWeight: type.values.fontWeight,
-    lineHeight: type.values.lineHeightPx + 'px',
-  };
-};
-
-interface typographyTypes {
+export interface typographyTypes {
   [key: string]: ReactElement;
 }
-
-const renderTypes: (type: TypographyObject, content: string) => typographyTypes = (type: TypographyObject, content: string) => ({
-  Subheading: <h1 style={pluckStyle(type)}></h1>,
-  'Heading 1': <h1 style={pluckStyle(type)}>{content}</h1>,
-  'Heading 2': <h2 style={pluckStyle(type)}>{content}</h2>,
-  'Heading 3': <h3 style={pluckStyle(type)}>{content}</h3>,
-  'Heading 4': <h4 style={pluckStyle(type)}>{content}</h4>,
-  'Heading 5': <h5 style={pluckStyle(type)}>{content}</h5>,
-  'Heading 6': <h6 style={pluckStyle(type)}>{content}</h6>,
-  'Input Labels': <label style={pluckStyle(type)}>{content}</label>,
-  Blockquote: <blockquote style={pluckStyle(type)}>{content}</blockquote>,
-  Link: <a style={pluckStyle(type)}>{content}</a>,
-  Paragraph: <p style={pluckStyle(type)}>{content}</p>,
-});
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -73,8 +45,6 @@ const Typography = ({
   config,
   design,
 }: FoundationDocumentationProps) => {
-  const [copy, setCopy] = React.useState('Copy link to clipboard');
-
   const typography = design.typography.slice().sort((a, b) => {
     const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
     const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;
@@ -94,60 +64,78 @@ const Typography = ({
   const type_copy = config?.app?.type_copy ?? 'Almost before we knew it, we had left the ground.';
 
   return (
-    <div className="c-page">
-      <Head>
-        <title>{metadata.metaTitle}</title>
-        <meta name="description" content={metadata.metaDescription} />
-      </Head>
-      <Header menu={menu} config={config} />
-      {current.subSections.length > 0 && <CustomNav menu={current} />}
-      <section className="c-content">
-        <div className="o-container-fluid">
-          <div className="c-hero">
-            <div>
-              <h1 className="c-title--extra-large">{metadata.title}</h1>
-              <p className="u-mb-2">{metadata.description}</p>
-              <DownloadTokens componentId="typography" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
+    <Layout config={config} menu={menu} metadata={metadata} current={current}>
+      <div className="flex flex-col gap-2 pb-7">
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
+      </div>
+      <div className="mb-10">
+        <h2 className="mb-3 text-2xl font-medium">Typography</h2>
+        <p className="mb-8">Typographic system establishes scale, sizes and weight of text.</p>
+        {Object.keys(families).map((key) => (
+          <div className="rounded-lg bg-gray-50 p-10" key={key}>
+            <p className="mb-1 text-sm">Typeface</p>
+            <div className="" style={{ fontFamily: key }}>
+              <p className="mb-3 text-3xl leading-relaxed text-gray-900 dark:text-gray-100">{key}</p>
+              <p className="mb-2 break-all text-xs  tracking-[0.3em] text-gray-400">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
+              <p className=" break-all text-xs  tracking-[0.3em] text-gray-400">
+                1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*
+              </p>
             </div>
-            {metadata.image && <Icon name={metadata.image} className="c-hero__img c-hero__img--small" />}
           </div>
-          {Object.keys(families).map((key) => (
-            <div className="c-typography__preview-big" key={`family-${key}`}>
-              <div className="o-row u-justify-between">
-                <div className="o-col-4@md u-mb-4 u-mb-0@md">
-                  <small>Typeface</small>
-                  <h2 style={{ fontFamily: key }}>{key}</h2>
-                  <hr />
-                  <p>Primary font used, related assets can be found in the assets page.</p>
-                  <p>
-                    <NavLink href="/assets/fonts">
-                      Download Fonts <Icon name="arrow-right" className="o-icon" />
-                    </NavLink>
-                  </p>
-                </div>
-                <div className="o-col-7@md">
-                  <div className="o-row o-row--no-gutters">
-                    {families[key].map((weight) => (
-                      <div
-                        className="c-typography__preview-weight"
-                        style={{ fontWeight: weight, fontFamily: key }}
-                        key={`family-${weight}-${key}`}
-                      >
-                        <h2>Aa</h2>
-                        <p>{weight}</p>
-                      </div>
-                    ))}
+        ))}
+      </div>
+
+      <HeadersType.H2>Hierarchy</HeadersType.H2>
+      <p className="mb-8">Use for palette of colors containing many shades.</p>
+      <TypographyExamples types={typography} />
+
+      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        {content}
+      </ReactMarkdown>
+    </Layout>
+  );
+};
+export default Typography;
+
+/**
+ *       
+ *       {Object.keys(families).map((key) => (
+        <div className="c-typography__preview-big" key={`family-${key}`}>
+          <div className="o-row u-justify-between">
+            <div className="o-col-4@md u-mb-4 u-mb-0@md">
+              <small>Typeface</small>
+              <h2 style={{ fontFamily: key }}>{key}</h2>
+              <hr />
+              <p>Primary font used, related assets can be found in the assets page.</p>
+              <p>
+                <NavLink href="/assets/fonts">Download Fonts</NavLink>
+              </p>
+            </div>
+            <div className="o-col-7@md">
+              <div className="o-row o-row--no-gutters">
+                {families[key].map((weight) => (
+                  <div
+                    className="c-typography__preview-weight"
+                    style={{ fontWeight: weight, fontFamily: key }}
+                    key={`family-${weight}-${key}`}
+                  >
+                    <h2>Aa</h2>
+                    <p>{weight}</p>
                   </div>
-                  <div className="o-row" style={{ fontFamily: key }}>
-                    <h3>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</h3>
-                    <h3>1234567890‘?’“!”(%)[#]@/&\-+÷×=®©$€£¥¢:;,.*</h3>
-                  </div>
-                </div>
+                ))}
+              </div>
+              <div className="o-row" style={{ fontFamily: key }}>
+                <h3>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</h3>
+                <h3>1234567890‘?’“!”(%)[#]@/&\-+÷×=®©$€£¥¢:;,.*</h3>
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+      ))}
 
-          <div className="o-row">
+ *   <div className="o-row">
             <div className="o-col-10@md">
               <div>
                 <h3>Type Scale</h3>
@@ -201,13 +189,4 @@ const Typography = ({
             ))}
           </div>
         </div>
-
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-      </section>
-      <Footer config={config} />
-    </div>
-  );
-};
-export default Typography;
+ */

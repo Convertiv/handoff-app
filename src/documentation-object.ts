@@ -1,4 +1,7 @@
-import assetsExporter from './exporters/assets';
+import chalk from 'chalk';
+import startCase from 'lodash/startCase';
+import Handoff from '.';
+import assetsExporter, { writeAssets } from './exporters/assets';
 import { getFigmaFileComponents } from './exporters/components/index';
 import { getFigmaFileDesignTokens } from './exporters/design';
 import {
@@ -10,9 +13,6 @@ import {
   ReferenceObject,
   TypographyObject,
 } from './types';
-import startCase from 'lodash/startCase';
-import chalk from 'chalk';
-import Handoff from '.';
 
 export const createDocumentationObject = async (
   handoff: Handoff,
@@ -20,7 +20,9 @@ export const createDocumentationObject = async (
 ): Promise<DocumentationObject> => {
   const design = await getFigmaFileDesignTokens(handoff.config.figma_project_id, handoff.config.dev_access_token);
   const icons = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons');
+  await writeAssets(handoff, icons, 'icons');
   const logos = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo');
+  await writeAssets(handoff, logos, 'logos');
 
   /// create a design map of node ids and references
   handoff.designMap = {
