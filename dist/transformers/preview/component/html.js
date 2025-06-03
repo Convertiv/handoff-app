@@ -57,7 +57,7 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
         yield (0, vite_1.build)(viteConfig);
     }
     catch (error) {
-        console.error('Error building component previews:', error);
+        console.error(`Error building component previews: ${data.entries.template}`, error);
     }
     finally {
         // Restore the original NODE_ENV value after vite build completes
