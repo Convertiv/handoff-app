@@ -129,8 +129,10 @@ function handlebarsPreviewsPlugin(data, components) {
                     previews[key] = htmlNormal;
                     data.previews[key].url = `${id}-${key}.html`;
                 }
+                data.format = 'html';
                 data.preview = '';
                 data.code = trimPreview(template);
+                data.html = trimPreview(previews[Object.keys(previews)[0]]);
             });
         },
     };
@@ -160,6 +162,7 @@ function ssrRenderPlugin(data, components) {
                 }
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
+                const code = fs_extra_1.default.readFileSync(entry, 'utf8');
                 // 1. Compile the component to CommonJS in memory
                 const result = yield esbuild_1.default.build({
                     entryPoints: [entry],
@@ -192,6 +195,7 @@ function ssrRenderPlugin(data, components) {
                 }
                 for (const key in data.previews) {
                     const html = server_1.default.renderToStaticMarkup(react_1.default.createElement(Component, Object.assign({}, data.previews[key].values)));
+                    const pretty = yield prettier_1.default.format(html, { parser: 'html' });
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,
@@ -202,14 +206,16 @@ function ssrRenderPlugin(data, components) {
   <link rel="stylesheet" href="/assets/css/preview.css">
 </head>
 <body>
-  ${html}
+  ${pretty}
 </body>`,
                     });
-                    previews[key] = html;
+                    previews[key] = pretty;
                     data.previews[key].url = `${id}-${key}.html`;
                 }
+                data.format = 'react';
                 data.preview = '';
-                data.code = trimPreview('');
+                data.html = trimPreview(previews[Object.keys(previews)[0]]);
+                data.code = code;
             });
         },
     };

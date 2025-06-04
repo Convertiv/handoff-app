@@ -134,9 +134,10 @@ export function handlebarsPreviewsPlugin(
         previews[key] = htmlNormal;
         data.previews[key].url = `${id}-${key}.html`;
       }
-
+      data.format = 'html';
       data.preview = '';
       data.code = trimPreview(template);
+      data.html = trimPreview(previews[Object.keys(previews)[0]]);
     },
   };
 }
@@ -169,6 +170,7 @@ export function ssrRenderPlugin(
       const id = data.id;
 
       const entry = path.resolve(data.entries.template);
+      const code = fs.readFileSync(entry, 'utf8');
 
       // 1. Compile the component to CommonJS in memory
       const result = await esbuild.build({
@@ -207,7 +209,7 @@ export function ssrRenderPlugin(
 
       for (const key in data.previews) {
         const html = ReactDOMServer.renderToStaticMarkup(React.createElement(Component, { ...data.previews[key].values }));
-
+        const pretty = await prettier.format(html, { parser: 'html' });
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}.html`,
@@ -218,16 +220,17 @@ export function ssrRenderPlugin(
   <link rel="stylesheet" href="/assets/css/preview.css">
 </head>
 <body>
-  ${html}
+  ${pretty}
 </body>`,
         });
 
-        previews[key] = html;
+        previews[key] = pretty;
         data.previews[key].url = `${id}-${key}.html`;
       }
-
+      data.format = 'react';
       data.preview = '';
-      data.code = trimPreview('');
+      data.html = trimPreview(previews[Object.keys(previews)[0]]);
+      data.code = code;
     },
   };
 }
