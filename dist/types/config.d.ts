@@ -1,5 +1,7 @@
+import { BuildOptions } from 'esbuild';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
+import { SlotMetadata } from '../transformers/preview/component';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from '../types';
 export interface ImageStyle {
@@ -138,6 +140,48 @@ export interface Config {
          * ```
          */
         validateComponent?: (component: TransformComponentTokensResult) => Promise<Record<string, ValidationResult>>;
+        /**
+         * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
+         * @param config - The default esbuild configuration
+         * @returns Modified esbuild configuration
+         * @example
+         * ```typescript
+         * ssrBuildConfig: (config) => {
+         *   ... // Modify the esbuild config as needed
+         *   return config;
+         * }
+         * ```
+         */
+        ssrBuildConfig?: (config: BuildOptions) => BuildOptions;
+        /**
+         * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
+         * @param config - The default esbuild configuration
+         * @returns Modified esbuild configuration
+         * @example
+         * ```typescript
+         * clientBuildConfig: (config) => {
+         *   ... // Modify the esbuild config as needed
+         *   return config;
+         * }
+         * ```
+         */
+        clientBuildConfig?: (config: BuildOptions) => BuildOptions;
+        /**
+         * Optional hook to map a component's schema to SlotMetadata properties
+         * @param schema - The exported schema object from the component
+         * @returns A mapping of property names to SlotMetadata
+         * @example
+         * ```typescript
+         * schemaToProperties: (schema) => {
+         *   const properties = {};
+         *   // Custom mapping logic here
+         *   return properties;
+         * }
+         * ```
+         */
+        schemaToProperties?: (schema: any) => {
+            [key: string]: SlotMetadata;
+        };
         /**
          * Optional hook to override the JavaScript Vite configuration
          * @param config - The default Vite configuration
