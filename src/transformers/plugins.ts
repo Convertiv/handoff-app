@@ -169,11 +169,10 @@ export function ssrRenderPlugin(
       }
 
       const id = data.id;
-
       const entry = path.resolve(data.entries.template);
 
-      // 1. Compile the component to CommonJS in memory
-      const ssrBuild = await esbuild.build({
+      // Default esbuild configuration
+      const defaultBuildConfig: esbuild.BuildOptions = {
         entryPoints: [entry],
         bundle: true,
         write: false,
@@ -181,7 +180,15 @@ export function ssrRenderPlugin(
         platform: 'node',
         jsx: 'automatic',
         external: ['react', 'react-dom'],
-      });
+      };
+
+      // Apply user's SSR build config hook if provided
+      const buildConfig = handoff?.config?.hooks?.ssrBuildConfig
+        ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
+        : defaultBuildConfig;
+
+      // 1. Compile the component to CommonJS in memory
+      const ssrBuild = await esbuild.build(buildConfig);
 
       // 2. Evaluate the compiled code
       const { text: serverCode } = ssrBuild.outputFiles[0];
@@ -190,6 +197,13 @@ export function ssrRenderPlugin(
       func(require, mod, mod.exports);
 
       const Component = mod.exports.default;
+
+      // Look for exported schema and apply user's schema mapping hook if provided
+      if (mod.exports.schema && mod.exports.schema.type === 'object' && Array.isArray(mod.exports.schema.fields)) {
+        if (handoff?.config?.hooks?.schemaToProperties) {
+          data.properties = handoff.config.hooks.schemaToProperties(mod.exports.schema);
+        }
+      }
 
       if (!components) components = {};
 
@@ -208,6 +222,8 @@ export function ssrRenderPlugin(
         }
       }
 
+      let html = '';
+
       for (const key in data.previews) {
         const props = { properties: data.previews[key].values };
         const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, { properties: data.previews[key].values }));
@@ -223,7 +239,8 @@ export function ssrRenderPlugin(
           hydrateRoot(document.getElementById('root'), <Component {...props} />);
         `;
 
-        const bundledClient = await esbuild.build({
+        // Default client-side build configuration
+        const defaultClientBuildConfig: esbuild.BuildOptions = {
           stdin: {
             contents: clientSource,
             resolveDir: process.cwd(),
@@ -237,12 +254,19 @@ export function ssrRenderPlugin(
           sourcemap: false,
           minify: false,
           plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
-        });
+        };
+
+        // Apply user's client build config hook if provided
+        const clientBuildConfig = handoff?.config?.hooks?.clientBuildConfig
+          ? handoff.config.hooks.clientBuildConfig(defaultClientBuildConfig)
+          : defaultClientBuildConfig;
+
+        const bundledClient = await esbuild.build(clientBuildConfig);
 
         const inlinedJs = bundledClient.outputFiles[0].text;
 
         // 4. Emit fully inlined HTML
-        const fullHtml = `<!DOCTYPE html>
+        html = `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="UTF-8" />
@@ -259,22 +283,23 @@ export function ssrRenderPlugin(
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}.html`,
-          source: fullHtml,
+          source: `<!DOCTYPE html>\n${html}`,
         });
 
-        // TODO: Currently contains the same data as the first emitted file. Should be resolved before release.
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}-inspect.html`,
-          source: `<!DOCTYPE html>\n${fullHtml}`,
+          source: `<!DOCTYPE html>\n${html}`,
         });
 
-        previews[key] = fullHtml;
+        previews[key] = html;
         data.previews[key].url = `${id}-${key}.html`;
       }
 
+      html = await prettier.format(html, { parser: 'html' });
+
       data.preview = '';
-      data.code = trimPreview('TEST');
+      data.code = trimPreview(html);
     },
   };
 }

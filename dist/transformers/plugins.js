@@ -151,6 +151,7 @@ function ssrRenderPlugin(data, components, handoff) {
             }
         },
         generateBundle(_, bundle) {
+            var _a, _b, _c, _d, _e, _f;
             return __awaiter(this, void 0, void 0, function* () {
                 // Delete all JS chunks
                 for (const [fileName, chunkInfo] of Object.entries(bundle)) {
@@ -160,8 +161,8 @@ function ssrRenderPlugin(data, components, handoff) {
                 }
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
-                // 1. Compile the component to CommonJS in memory
-                const ssrBuild = yield esbuild_1.default.build({
+                // Default esbuild configuration
+                const defaultBuildConfig = {
                     entryPoints: [entry],
                     bundle: true,
                     write: false,
@@ -169,13 +170,25 @@ function ssrRenderPlugin(data, components, handoff) {
                     platform: 'node',
                     jsx: 'automatic',
                     external: ['react', 'react-dom'],
-                });
+                };
+                // Apply user's SSR build config hook if provided
+                const buildConfig = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig)
+                    ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
+                    : defaultBuildConfig;
+                // 1. Compile the component to CommonJS in memory
+                const ssrBuild = yield esbuild_1.default.build(buildConfig);
                 // 2. Evaluate the compiled code
                 const { text: serverCode } = ssrBuild.outputFiles[0];
                 const mod = { exports: {} };
                 const func = new Function('require', 'module', 'exports', serverCode);
                 func(require, mod, mod.exports);
                 const Component = mod.exports.default;
+                // Look for exported schema and apply user's schema mapping hook if provided
+                if (mod.exports.schema && mod.exports.schema.type === 'object' && Array.isArray(mod.exports.schema.fields)) {
+                    if ((_d = (_c = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _c === void 0 ? void 0 : _c.hooks) === null || _d === void 0 ? void 0 : _d.schemaToProperties) {
+                        data.properties = handoff.config.hooks.schemaToProperties(mod.exports.schema);
+                    }
+                }
                 if (!components)
                     components = {};
                 const previews = {};
@@ -190,6 +203,7 @@ function ssrRenderPlugin(data, components, handoff) {
                         };
                     }
                 }
+                let html = '';
                 for (const key in data.previews) {
                     const props = { properties: data.previews[key].values };
                     const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, { properties: data.previews[key].values }));
@@ -203,7 +217,8 @@ function ssrRenderPlugin(data, components, handoff) {
           const props = JSON.parse(raw);
           hydrateRoot(document.getElementById('root'), <Component {...props} />);
         `;
-                    const bundledClient = yield esbuild_1.default.build({
+                    // Default client-side build configuration
+                    const defaultClientBuildConfig = {
                         stdin: {
                             contents: clientSource,
                             resolveDir: process.cwd(),
@@ -217,10 +232,15 @@ function ssrRenderPlugin(data, components, handoff) {
                         sourcemap: false,
                         minify: false,
                         plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
-                    });
+                    };
+                    // Apply user's client build config hook if provided
+                    const clientBuildConfig = ((_f = (_e = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _e === void 0 ? void 0 : _e.hooks) === null || _f === void 0 ? void 0 : _f.clientBuildConfig)
+                        ? handoff.config.hooks.clientBuildConfig(defaultClientBuildConfig)
+                        : defaultClientBuildConfig;
+                    const bundledClient = yield esbuild_1.default.build(clientBuildConfig);
                     const inlinedJs = bundledClient.outputFiles[0].text;
                     // 4. Emit fully inlined HTML
-                    const fullHtml = `<!DOCTYPE html>
+                    html = `<!DOCTYPE html>
         <html>
           <head>
             <meta charset="UTF-8" />
@@ -236,19 +256,19 @@ function ssrRenderPlugin(data, components, handoff) {
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,
-                        source: fullHtml,
+                        source: `<!DOCTYPE html>\n${html}`,
                     });
-                    // TODO: Currently contains the same data as the first emitted file. Should be resolved before release.
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}-inspect.html`,
-                        source: `<!DOCTYPE html>\n${fullHtml}`,
+                        source: `<!DOCTYPE html>\n${html}`,
                     });
-                    previews[key] = fullHtml;
+                    previews[key] = html;
                     data.previews[key].url = `${id}-${key}.html`;
                 }
+                html = yield prettier_1.default.format(html, { parser: 'html' });
                 data.preview = '';
-                data.code = trimPreview('TEST');
+                data.code = trimPreview(html);
             });
         },
     };
