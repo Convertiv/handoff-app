@@ -135,9 +135,10 @@ export function handlebarsPreviewsPlugin(
         previews[key] = htmlNormal;
         data.previews[key].url = `${id}-${key}.html`;
       }
-
+      data.format = 'html';
       data.preview = '';
       data.code = trimPreview(template);
+      data.html = trimPreview(previews[Object.keys(previews)[0]]);
     },
   };
 }
@@ -170,6 +171,7 @@ export function ssrRenderPlugin(
 
       const id = data.id;
       const entry = path.resolve(data.entries.template);
+      const code = fs.readFileSync(entry, 'utf8');
 
       // Default esbuild configuration
       const defaultBuildConfig: esbuild.BuildOptions = {
@@ -290,7 +292,7 @@ export function ssrRenderPlugin(
   <link rel="stylesheet" href="/assets/css/preview.css">
 </head>
 <body>
-  ${html}
+  ${pretty}
 </body>`,
         });
 

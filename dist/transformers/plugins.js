@@ -129,8 +129,10 @@ function handlebarsPreviewsPlugin(data, components, handoff) {
                     previews[key] = htmlNormal;
                     data.previews[key].url = `${id}-${key}.html`;
                 }
+                data.format = 'html';
                 data.preview = '';
                 data.code = trimPreview(template);
+                data.html = trimPreview(previews[Object.keys(previews)[0]]);
             });
         },
     };
@@ -263,7 +265,7 @@ function ssrRenderPlugin(data, components, handoff) {
   <link rel="stylesheet" href="/assets/css/preview.css">
 </head>
 <body>
-  ${html}
+  ${pretty}
 </body>`,
                     });
                     this.emitFile({

@@ -58,6 +58,7 @@ export const CodeHighlight: React.FC<{
       preview: '',
       html: '',
       code: '',
+      format: 'html',
     };
   } else if (typeof data === 'string') {
     data = data = {
@@ -74,6 +75,7 @@ export const CodeHighlight: React.FC<{
       preview: '',
       html: data,
       code: data,
+      format: 'html',
     };
   }
   if (!type) type = 'html';
@@ -87,7 +89,7 @@ export const CodeHighlight: React.FC<{
           'image',
           'categories',
           'title',
-          'code',
+          'format',
           'description',
           'type',
           'group',
@@ -100,6 +102,7 @@ export const CodeHighlight: React.FC<{
         ].indexOf(key) === -1
     )
     .map((key) => key);
+  console.log(states);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
@@ -113,6 +116,7 @@ export const CodeHighlight: React.FC<{
   });
 
   const labels = {
+    code: 'Code',
     html: 'HTML',
     css: 'CSS',
     js: 'Javascript',
@@ -120,12 +124,12 @@ export const CodeHighlight: React.FC<{
     sharedStyles: 'Shared CSS',
   };
   const getLabel = (state: string) => {
-    if (state === 'html' && data.format === 'react') return 'React';
+    if (state === 'code' && data.format === 'react') return 'React';
     return labels[state] || state;
   };
 
   const language = (activeState: string) => {
-    if (activeState === 'html' && data.format === 'react') return 'tsx';
+    if ('code' in data && !!data.code && activeState === 'code' && data.format === 'react') return 'tsx';
     return activeState === 'html' ? type : activeState;
   };
 
@@ -136,14 +140,14 @@ export const CodeHighlight: React.FC<{
       return;
     }
 
-    // check if data is an object with an html key
-    if ('html' in data && !!data.html) {
-      setCode(data.html);
+    if ('code' in data && !!data.code) {
+      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
       return;
     }
 
-    if ('code' in data && !!data.code) {
-      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
+    // check if data is an object with an html key
+    if ('html' in data && !!data.html) {
+      setCode(data.html);
       return;
     }
   }, [currentValues, data]);
@@ -164,23 +168,17 @@ export const CodeHighlight: React.FC<{
                 if (typeof data === 'string') {
                   setCode(data);
                   return;
-                } else if (key === 'html') {
-                  if ('html' in data && !!data.html) {
-                    setCode(data.html);
-                  } else {
-                    setCode(Handlebars.compile(data.code)({ properties: currentValues }));
-                  }
                 } else {
                   setCode(data[key]);
                 }
               }}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Breakpoint" />
+                <SelectValue placeholder="Code View" />
               </SelectTrigger>
               <SelectContent>
                 {states
-                  .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                  .filter((value) => ['code', 'html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
                   .map((state) => {
                     return (
                       <SelectItem key={state} value={state}>

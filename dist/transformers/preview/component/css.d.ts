@@ -11,7 +11,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
-    format?: "html" | "react";
+    format: string;
     code: string;
     html?: string;
     preview: string;
