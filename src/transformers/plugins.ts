@@ -135,9 +135,10 @@ export function handlebarsPreviewsPlugin(
         previews[key] = htmlNormal;
         data.previews[key].url = `${id}-${key}.html`;
       }
-
+      data.format = 'html';
       data.preview = '';
       data.code = trimPreview(template);
+      data.html = trimPreview(previews[Object.keys(previews)[0]]);
     },
   };
 }
@@ -170,6 +171,7 @@ export function ssrRenderPlugin(
 
       const id = data.id;
       const entry = path.resolve(data.entries.template);
+      const code = fs.readFileSync(entry, 'utf8');
 
       // Default esbuild configuration
       const defaultBuildConfig: esbuild.BuildOptions = {
@@ -226,8 +228,8 @@ export function ssrRenderPlugin(
 
       for (const key in data.previews) {
         const props = { properties: data.previews[key].values };
-        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, { properties: data.previews[key].values }));
-
+        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, { ...data.previews[key].values }));
+        const pretty = await prettier.format(renderedHtml, { parser: 'html' });
         // 3. Hydration source: baked-in, references user entry
         const clientSource = `
           import React from 'react';
@@ -270,21 +272,18 @@ export function ssrRenderPlugin(
         <html>
           <head>
             <meta charset="UTF-8" />
+            <link rel="stylesheet" href="/api/component/main.css">
+            <link rel="stylesheet" href="/api/component/${id}.css">
+            <link rel="stylesheet" href="/assets/css/preview.css">
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
             </script>
           </head>
           <body>
-            <div id="root">${renderedHtml}</div>
+            <div id="root">${pretty}</div>
           </body>
         </html>`;
-
-        this.emitFile({
-          type: 'asset',
-          fileName: `${id}-${key}.html`,
-          source: `<!DOCTYPE html>\n${html}`,
-        });
 
         this.emitFile({
           type: 'asset',
@@ -297,9 +296,11 @@ export function ssrRenderPlugin(
       }
 
       html = await prettier.format(html, { parser: 'html' });
+      data.format = 'react';
 
       data.preview = '';
-      data.code = trimPreview(html);
+      data.code = trimPreview(code);
+      data.html = trimPreview(html);
     },
   };
 }
