@@ -138,6 +138,31 @@ function handlebarsPreviewsPlugin(data, components, handoff) {
     };
 }
 exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
+function buildAndEvaluateModule(entryPath, handoff) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        // Default esbuild configuration
+        const defaultBuildConfig = {
+            entryPoints: [entryPath],
+            bundle: true,
+            write: false,
+            format: 'cjs',
+            platform: 'node',
+            jsx: 'automatic',
+            external: ['react', 'react-dom'],
+        };
+        // Apply user's SSR build config hook if provided
+        const buildConfig = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig) ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig) : defaultBuildConfig;
+        // Compile the module
+        const build = yield esbuild_1.default.build(buildConfig);
+        const { text: code } = build.outputFiles[0];
+        // Evaluate the compiled code
+        const mod = { exports: {} };
+        const func = new Function('require', 'module', 'exports', code);
+        func(require, mod, mod.exports);
+        return mod;
+    });
+}
 function ssrRenderPlugin(data, components, handoff) {
     return {
         name: 'vite-plugin-ssr-static-render',
@@ -153,7 +178,7 @@ function ssrRenderPlugin(data, components, handoff) {
             }
         },
         generateBundle(_, bundle) {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
             return __awaiter(this, void 0, void 0, function* () {
                 // Delete all JS chunks
                 for (const [fileName, chunkInfo] of Object.entries(bundle)) {
@@ -163,32 +188,38 @@ function ssrRenderPlugin(data, components, handoff) {
                 }
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
-                // Default esbuild configuration
-                const defaultBuildConfig = {
-                    entryPoints: [entry],
-                    bundle: true,
-                    write: false,
-                    format: 'cjs',
-                    platform: 'node',
-                    jsx: 'automatic',
-                    external: ['react', 'react-dom'],
-                };
-                // Apply user's SSR build config hook if provided
-                const buildConfig = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig)
-                    ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
-                    : defaultBuildConfig;
-                // 1. Compile the component to CommonJS in memory
-                const ssrBuild = yield esbuild_1.default.build(buildConfig);
-                // 2. Evaluate the compiled code
-                const { text: serverCode } = ssrBuild.outputFiles[0];
-                const mod = { exports: {} };
-                const func = new Function('require', 'module', 'exports', serverCode);
-                func(require, mod, mod.exports);
+                // Load schema if schema entry exists
+                if ((_a = data.entries) === null || _a === void 0 ? void 0 : _a.schema) {
+                    const schemaPath = path_1.default.resolve(data.entries.schema);
+                    const ext = path_1.default.extname(schemaPath);
+                    if (ext === '.ts' || ext === '.tsx') {
+                        // Build and evaluate schema module
+                        const schemaMod = yield buildAndEvaluateModule(schemaPath, handoff);
+                        // Get schema from exports using hook or default to exports.default
+                        const schema = ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.getSchemaFromExports)
+                            ? handoff.config.hooks.getSchemaFromExports(schemaMod.exports)
+                            : schemaMod.exports.default;
+                        // Apply schema to properties if schema exists and is valid
+                        if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
+                            if ((_e = (_d = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _d === void 0 ? void 0 : _d.hooks) === null || _e === void 0 ? void 0 : _e.schemaToProperties) {
+                                data.properties = handoff.config.hooks.schemaToProperties(schema);
+                            }
+                        }
+                    }
+                }
+                // Build and evaluate component module
+                const mod = yield buildAndEvaluateModule(entry, handoff);
                 const Component = mod.exports.default;
-                // Look for exported schema and apply user's schema mapping hook if provided
-                if (mod.exports.schema && mod.exports.schema.type === 'object' && Array.isArray(mod.exports.schema.fields)) {
-                    if ((_d = (_c = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _c === void 0 ? void 0 : _c.hooks) === null || _d === void 0 ? void 0 : _d.schemaToProperties) {
-                        data.properties = handoff.config.hooks.schemaToProperties(mod.exports.schema);
+                // Look for exported schema in component file only if no separate schema file was provided
+                if (!((_f = data.entries) === null || _f === void 0 ? void 0 : _f.schema)) {
+                    // Get schema from exports using hook or default to exports.schema
+                    const schema = ((_h = (_g = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _g === void 0 ? void 0 : _g.hooks) === null || _h === void 0 ? void 0 : _h.getSchemaFromExports)
+                        ? handoff.config.hooks.getSchemaFromExports(mod.exports)
+                        : mod.exports.schema;
+                    if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
+                        if ((_k = (_j = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _j === void 0 ? void 0 : _j.hooks) === null || _k === void 0 ? void 0 : _k.schemaToProperties) {
+                            data.properties = handoff.config.hooks.schemaToProperties(schema);
+                        }
                     }
                 }
                 if (!components)
@@ -207,8 +238,8 @@ function ssrRenderPlugin(data, components, handoff) {
                 }
                 let html = '';
                 for (const key in data.previews) {
-                    const props = { properties: data.previews[key].values };
-                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, { properties: data.previews[key].values }));
+                    const props = data.previews[key].values;
+                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, data.previews[key].values));
                     // 3. Hydration source: baked-in, references user entry
                     const clientSource = `
           import React from 'react';
@@ -236,7 +267,7 @@ function ssrRenderPlugin(data, components, handoff) {
                         plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
                     };
                     // Apply user's client build config hook if provided
-                    const clientBuildConfig = ((_f = (_e = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _e === void 0 ? void 0 : _e.hooks) === null || _f === void 0 ? void 0 : _f.clientBuildConfig)
+                    const clientBuildConfig = ((_m = (_l = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _l === void 0 ? void 0 : _l.hooks) === null || _m === void 0 ? void 0 : _m.clientBuildConfig)
                         ? handoff.config.hooks.clientBuildConfig(defaultClientBuildConfig)
                         : defaultClientBuildConfig;
                     const bundledClient = yield esbuild_1.default.build(clientBuildConfig);

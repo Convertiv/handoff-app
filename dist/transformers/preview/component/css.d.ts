@@ -32,6 +32,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
         js?: string;
         scss?: string;
         template?: string;
+        schema?: string;
     };
     options?: {
         preview?: {

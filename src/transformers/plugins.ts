@@ -143,6 +143,33 @@ export function handlebarsPreviewsPlugin(
   };
 }
 
+async function buildAndEvaluateModule(entryPath: string, handoff?: Handoff): Promise<{ exports: any }> {
+  // Default esbuild configuration
+  const defaultBuildConfig: esbuild.BuildOptions = {
+    entryPoints: [entryPath],
+    bundle: true,
+    write: false,
+    format: 'cjs',
+    platform: 'node',
+    jsx: 'automatic',
+    external: ['react', 'react-dom'],
+  };
+
+  // Apply user's SSR build config hook if provided
+  const buildConfig = handoff?.config?.hooks?.ssrBuildConfig ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig) : defaultBuildConfig;
+
+  // Compile the module
+  const build = await esbuild.build(buildConfig);
+  const { text: code } = build.outputFiles[0];
+
+  // Evaluate the compiled code
+  const mod: any = { exports: {} };
+  const func = new Function('require', 'module', 'exports', code);
+  func(require, mod, mod.exports);
+
+  return mod;
+}
+
 export function ssrRenderPlugin(
   data: TransformComponentTokensResult,
   components: CoreTypes.IDocumentationObject['components'],
@@ -173,37 +200,43 @@ export function ssrRenderPlugin(
       const entry = path.resolve(data.entries.template);
       const code = fs.readFileSync(entry, 'utf8');
 
-      // Default esbuild configuration
-      const defaultBuildConfig: esbuild.BuildOptions = {
-        entryPoints: [entry],
-        bundle: true,
-        write: false,
-        format: 'cjs',
-        platform: 'node',
-        jsx: 'automatic',
-        external: ['react', 'react-dom'],
-      };
+      // Load schema if schema entry exists
+      if (data.entries?.schema) {
+        const schemaPath = path.resolve(data.entries.schema);
+        const ext = path.extname(schemaPath);
+        if (ext === '.ts' || ext === '.tsx') {
+          // Build and evaluate schema module
+          const schemaMod = await buildAndEvaluateModule(schemaPath, handoff);
 
-      // Apply user's SSR build config hook if provided
-      const buildConfig = handoff?.config?.hooks?.ssrBuildConfig
-        ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
-        : defaultBuildConfig;
+          // Get schema from exports using hook or default to exports.default
+          const schema = handoff?.config?.hooks?.getSchemaFromExports
+            ? handoff.config.hooks.getSchemaFromExports(schemaMod.exports)
+            : schemaMod.exports.default;
 
-      // 1. Compile the component to CommonJS in memory
-      const ssrBuild = await esbuild.build(buildConfig);
+          // Apply schema to properties if schema exists and is valid
+          if (schema?.type === 'object') {
+            if (handoff?.config?.hooks?.schemaToProperties) {
+              data.properties = handoff.config.hooks.schemaToProperties(schema);
+            }
+          }
+        }
+      }
 
-      // 2. Evaluate the compiled code
-      const { text: serverCode } = ssrBuild.outputFiles[0];
-      const mod: any = { exports: {} };
-      const func = new Function('require', 'module', 'exports', serverCode);
-      func(require, mod, mod.exports);
-
+      // Build and evaluate component module
+      const mod = await buildAndEvaluateModule(entry, handoff);
       const Component = mod.exports.default;
 
-      // Look for exported schema and apply user's schema mapping hook if provided
-      if (mod.exports.schema && mod.exports.schema.type === 'object' && Array.isArray(mod.exports.schema.fields)) {
-        if (handoff?.config?.hooks?.schemaToProperties) {
-          data.properties = handoff.config.hooks.schemaToProperties(mod.exports.schema);
+      // Look for exported schema in component file only if no separate schema file was provided
+      if (!data.entries?.schema) {
+        // Get schema from exports using hook or default to exports.schema
+        const schema = handoff?.config?.hooks?.getSchemaFromExports
+          ? handoff.config.hooks.getSchemaFromExports(mod.exports)
+          : mod.exports.schema;
+
+        if (schema?.type === 'object') {
+          if (handoff?.config?.hooks?.schemaToProperties) {
+            data.properties = handoff.config.hooks.schemaToProperties(schema);
+          }
         }
       }
 
@@ -227,8 +260,8 @@ export function ssrRenderPlugin(
       let html = '';
 
       for (const key in data.previews) {
-        const props = { properties: data.previews[key].values };
-        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, { properties: data.previews[key].values }));
+        const props = data.previews[key].values;
+        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, data.previews[key].values));
 
         // 3. Hydration source: baked-in, references user entry
         const clientSource = `
