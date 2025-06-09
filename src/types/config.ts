@@ -168,17 +168,20 @@ export interface Config {
     clientBuildConfig?: (config: BuildOptions) => BuildOptions;
 
     /**
-     * Optional hook to map a component's schema to SlotMetadata properties
-     * @param schema - The exported schema object from the component
-     * @returns A mapping of property names to SlotMetadata
+     * Optional hook to specify which export property contains the schema
+     * @param exports - The module exports object containing the schema
+     * @returns The schema object from the exports
      * @example
      * ```typescript
-     * schemaToProperties: (schema) => {
-     *   const properties = {};
-     *   // Custom mapping logic here
-     *   return properties;
-     * }
+     * getSchemaFromExports: (exports) => exports.customSchema || exports.default
      * ```
+     */
+    getSchemaFromExports?: (exports: any) => any;
+
+    /**
+     * Optional hook to transform the schema into properties
+     * @param schema - The schema object to transform
+     * @returns The transformed properties object
      */
     schemaToProperties?: (schema: any) => { [key: string]: SlotMetadata };
 
