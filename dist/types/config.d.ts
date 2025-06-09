@@ -55,7 +55,7 @@ export interface Breakpoints {
         name: string;
     };
 }
-interface NextAppConfig {
+export interface NextAppConfig {
     theme?: string;
     title: string;
     client: string;
@@ -67,6 +67,10 @@ interface NextAppConfig {
     component_sort: string[];
     base_path: string;
     attribution: boolean;
+    ports?: {
+        app: number;
+        websocket: number;
+    };
 }
 export interface Config {
     dev_access_token?: string | null | undefined;
