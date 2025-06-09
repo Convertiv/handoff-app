@@ -279,9 +279,9 @@ function ssrRenderPlugin(data, components, handoff) {
         <html>
           <head>
             <meta charset="UTF-8" />
-            <link rel="stylesheet" href="/api/component/main.css">
-            <link rel="stylesheet" href="/api/component/${id}.css">
-            <link rel="stylesheet" href="/assets/css/preview.css">
+            <link rel="stylesheet" href="/api/component/main.css" />
+            <link rel="stylesheet" href="/api/component/${id}.css" />
+            <link rel="stylesheet" href="/assets/css/preview.css" />
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
@@ -291,6 +291,12 @@ function ssrRenderPlugin(data, components, handoff) {
             <div id="root">${pretty}</div>
           </body>
         </html>`;
+                    this.emitFile({
+                        type: 'asset',
+                        fileName: `${id}-${key}.html`,
+                        source: html,
+                    });
+                    // TODO: remove this once we have a way to render inspect mode
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}-inspect.html`,

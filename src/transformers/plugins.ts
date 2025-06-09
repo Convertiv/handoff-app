@@ -321,6 +321,12 @@ export function ssrRenderPlugin(
 
         this.emitFile({
           type: 'asset',
+          fileName: `${id}-${key}.html`,
+          source: html,
+        });
+        // TODO: remove this once we have a way to render inspect mode
+        this.emitFile({
+          type: 'asset',
           fileName: `${id}-${key}-inspect.html`,
           source: html,
         });
