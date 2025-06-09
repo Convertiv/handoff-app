@@ -302,7 +302,7 @@ function ssrRenderPlugin(data, components, handoff) {
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}-inspect.html`,
-                        source: `<!DOCTYPE html>\n${html}`,
+                        source: html,
                     });
                     previews[key] = html;
                     data.previews[key].url = `${id}-${key}.html`;

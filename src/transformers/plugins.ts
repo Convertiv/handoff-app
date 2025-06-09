@@ -332,7 +332,7 @@ export function ssrRenderPlugin(
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}-inspect.html`,
-          source: `<!DOCTYPE html>\n${html}`,
+          source: html,
         });
 
         previews[key] = html;
