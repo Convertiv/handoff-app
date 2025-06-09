@@ -221,7 +221,7 @@ const publishTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, function
     }
 });
 const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     const srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
     const appPath = getAppPath(handoff);
     // Publish tokens API
@@ -239,6 +239,7 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     const handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
     const nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
     const handoffUseReferences = (_c = handoff.config.useVariables) !== null && _c !== void 0 ? _c : false;
+    const handoffWebsocketPort = (_e = (_d = handoff.config.app.ports) === null || _d === void 0 ? void 0 : _d.websocket) !== null && _e !== void 0 ? _e : 3001;
     const nextConfigContent = (yield fs_extra_1.default.readFile(nextConfigPath, 'utf-8'))
         .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
         .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -246,7 +247,7 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
         .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
         .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
         .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-        .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
+        .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
         .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
     yield fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent);
     return appPath;
@@ -298,7 +299,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e, _f, _g;
+    var _f, _g, _h, _j, _k, _l, _m, _o;
     const tokensJsonFilePath = handoff.getTokensFilePath();
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -330,7 +331,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // };
     const dev = true;
     const hostname = 'localhost';
-    const port = 3000;
+    const port = (_g = (_f = handoff.config.app.ports) === null || _f === void 0 ? void 0 : _f.app) !== null && _g !== void 0 ? _g : 3000;
     // when using middleware `hostname` and `port` must be provided below
     const app = (0, next_1.default)({
         dev,
@@ -370,7 +371,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    const wss = yield (0, component_1.createWebSocketServer)(3001);
+    const wss = yield (0, component_1.createWebSocketServer)((_j = (_h = handoff.config.app.ports) === null || _h === void 0 ? void 0 : _h.websocket) !== null && _j !== void 0 ? _j : 3001);
     const chokidarConfig = {
         ignored: /(^|[\/\\])\../,
         persistent: true,
@@ -515,7 +516,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
       */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
-    if (((_e = (_d = handoff.integrationObject) === null || _d === void 0 ? void 0 : _d.entries) === null || _e === void 0 ? void 0 : _e.integration) && fs_extra_1.default.existsSync((_g = (_f = handoff.integrationObject) === null || _f === void 0 ? void 0 : _f.entries) === null || _g === void 0 ? void 0 : _g.integration)) {
+    if (((_l = (_k = handoff.integrationObject) === null || _k === void 0 ? void 0 : _k.entries) === null || _l === void 0 ? void 0 : _l.integration) && fs_extra_1.default.existsSync((_o = (_m = handoff.integrationObject) === null || _m === void 0 ? void 0 : _m.entries) === null || _o === void 0 ? void 0 : _o.integration)) {
         const stat = yield fs_extra_1.default.stat(handoff.integrationObject.entries.integration);
         chokidar_1.default
             .watch(stat.isDirectory() ? handoff.integrationObject.entries.integration : path_1.default.dirname(handoff.integrationObject.entries.integration), chokidarConfig)
@@ -553,6 +554,7 @@ exports.watchApp = watchApp;
  * @param handoff
  */
 const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    var _p, _q;
     if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
@@ -564,7 +566,7 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         fs_extra_1.default.removeSync(moduleOutput);
     }
     // Run
-    return yield (0, next_dev_1.nextDev)({ port: 3000 }, 'cli', appPath);
+    return yield (0, next_dev_1.nextDev)({ port: (_q = (_p = handoff.config.app.ports) === null || _p === void 0 ? void 0 : _p.app) !== null && _q !== void 0 ? _q : 3000 }, 'cli', appPath);
 });
 exports.devApp = devApp;
 exports.default = buildApp;

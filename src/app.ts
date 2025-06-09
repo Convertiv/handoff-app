@@ -217,6 +217,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const handoffUseReferences = handoff.config.useVariables ?? false;
+  const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -224,7 +225,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-    .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
+    .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
@@ -327,7 +328,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   // };
   const dev = true;
   const hostname = 'localhost';
-  const port = 3000;
+  const port = handoff.config.app.ports?.app ?? 3000;
   // when using middleware `hostname` and `port` must be provided below
   const app = next({
     dev,
@@ -369,7 +370,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       });
   });
 
-  const wss = await createWebSocketServer(3001);
+  const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -585,7 +586,7 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   }
 
   // Run
-  return await nextDev({ port: 3000 }, 'cli', appPath);
+  return await nextDev({ port: handoff.config.app.ports?.app ?? 3000 }, 'cli', appPath);
 };
 
 export default buildApp;

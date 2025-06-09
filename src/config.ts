@@ -43,6 +43,10 @@ export const defaultConfig = (): Config => ({
       tablet: { size: 800, name: 'Medium' },
       desktop: { size: 1100, name: 'Large' },
     },
+    ports: {
+      app: Number(process.env.HANDOFF_APP_PORT) || 3000,
+      websocket: Number(process.env.HANDOFF_WEBSOCKET_PORT) || 3001
+    }
   },
 });
 
