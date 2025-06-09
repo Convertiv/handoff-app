@@ -306,9 +306,9 @@ export function ssrRenderPlugin(
         <html>
           <head>
             <meta charset="UTF-8" />
-            <link rel="stylesheet" href="/api/component/main.css">
-            <link rel="stylesheet" href="/api/component/${id}.css">
-            <link rel="stylesheet" href="/assets/css/preview.css">
+            <link rel="stylesheet" href="/api/component/main.css" />
+            <link rel="stylesheet" href="/api/component/${id}.css" />
+            <link rel="stylesheet" href="/assets/css/preview.css" />
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
@@ -322,7 +322,7 @@ export function ssrRenderPlugin(
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}-inspect.html`,
-          source: `<!DOCTYPE html>\n${html}`,
+          source: html,
         });
 
         previews[key] = html;
