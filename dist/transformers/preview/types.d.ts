@@ -80,6 +80,7 @@ export declare type TransformComponentTokensResult = {
         js?: string;
         scss?: string;
         template?: string;
+        schema?: string;
     };
     options?: {
         preview?: {
