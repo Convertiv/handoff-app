@@ -99,9 +99,10 @@ export function handlebarsPreviewsPlugin(
           script: `<script src="/api/component/${id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
           properties: previewData.values || {},
           fields: ensureIds(data.properties),
+          title: data.title,
         });
 
-        return await prettier.format(compiled, { parser: 'html' });
+        return await prettier.format(`<html lang="en">${compiled}</html>`, { parser: 'html' });
       };
 
       if (components[data.id]) {
@@ -303,7 +304,7 @@ export function ssrRenderPlugin(
 
         // 4. Emit fully inlined HTML
         html = `<!DOCTYPE html>
-        <html>
+        <html lang="en">
           <head>
             <meta charset="UTF-8" />
             <link rel="stylesheet" href="/api/component/main.css" />
@@ -313,6 +314,7 @@ export function ssrRenderPlugin(
             <script type="module">
               ${inlinedJs}
             </script>
+            <title>${data.previews[key].title}</title>
           </head>
           <body>
             <div id="root">${pretty}</div>
