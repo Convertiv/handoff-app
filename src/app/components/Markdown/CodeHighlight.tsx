@@ -129,7 +129,7 @@ export const CodeHighlight: React.FC<{
   };
 
   const language = (activeState: string) => {
-    if ('code' in data && !!data.code && activeState === 'code' && typeof data === 'object' && data.format === 'react') return 'tsx';
+    if (typeof data === 'object' && 'code' in data && !!data.code && activeState === 'code' && data.format === 'react') return 'tsx';
     return activeState === 'html' ? type : activeState;
   };
 
