@@ -99,8 +99,9 @@ function handlebarsPreviewsPlugin(data, components, handoff) {
                         script: `<script src="/api/component/${id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
                         properties: previewData.values || {},
                         fields: ensureIds(data.properties),
+                        title: data.title,
                     });
-                    return yield prettier_1.default.format(compiled, { parser: 'html' });
+                    return yield prettier_1.default.format(`<html lang="en">${compiled}</html>`, { parser: 'html' });
                 });
                 if (components[data.id]) {
                     for (const instance of components[data.id].instances) {
@@ -274,13 +275,14 @@ function ssrRenderPlugin(data, components, handoff) {
                     const inlinedJs = bundledClient.outputFiles[0].text;
                     // 4. Emit fully inlined HTML
                     html = `<!DOCTYPE html>
-        <html>
+        <html lang="en">
           <head>
             <meta charset="UTF-8" />
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
             </script>
+            <title>${data.previews[key].title}</title>
           </head>
           <body>
             <div id="root">${renderedHtml}</div>
