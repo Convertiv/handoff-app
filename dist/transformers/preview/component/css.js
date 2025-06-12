@@ -30,8 +30,8 @@ const component_1 = require("../component");
  * @param options.loadPaths - Array of paths for SASS to look for imports
  * @param options.handoff - The Handoff configuration object
  */
-const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff, }) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entry, outputPath, outputFilename, loadPaths, handoff, }) {
+    var _b, _c;
     // Store the current NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
@@ -50,15 +50,23 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff,
                 } }), css: {
                 preprocessorOptions: {
                     scss: {
-                        includePaths: loadPaths,
+                        loadPaths,
                         quietDeps: true,
                         // Maintain compatibility with older sass imports
-                        importer: [
-                            (url) => {
-                                if (url.startsWith('~')) {
-                                    return { file: url.slice(1) };
-                                }
-                                return null;
+                        importers: [
+                            {
+                                canonicalize(url) {
+                                    if (url.startsWith('~')) {
+                                        return new URL(url.slice(1));
+                                    }
+                                    return new URL(url);
+                                },
+                                load(canonicalUrl) {
+                                    return {
+                                        contents: canonicalUrl.pathname,
+                                        syntax: 'scss',
+                                    };
+                                },
                             },
                         ],
                         // Use modern API settings
@@ -68,7 +76,7 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff,
                 },
             } });
         // Allow configuration to be modified through hooks
-        if ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.cssBuildConfig) {
+        if ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.cssBuildConfig) {
             viteConfig = handoff.config.hooks.cssBuildConfig(viteConfig);
         }
         yield (0, vite_1.build)(viteConfig);
@@ -84,9 +92,9 @@ const buildCssBundle = ({ entry, outputPath, outputFilename, loadPaths, handoff,
     }
 });
 const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e;
+    var _a, _b, _c;
     const id = data.id;
-    const entry = (_c = data.entries) === null || _c === void 0 ? void 0 : _c.scss;
+    const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
     if (!entry) {
         return data;
     }
@@ -108,7 +116,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
                 path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                 path_1.default.resolve(handoff.workingPath, 'node_modules'),
             ];
-            if ((_e = (_d = handoff.integrationObject) === null || _d === void 0 ? void 0 : _d.entries) === null || _e === void 0 ? void 0 : _e.integration) {
+            if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
                 loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
             }
             yield buildCssBundle({
@@ -149,10 +157,10 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
  * Build the main CSS file using Vite
  */
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g, _h;
+    var _a, _b, _c;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
     const integration = (0, index_1.initIntegrationObject)(handoff)[0];
-    if (((_f = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
+    if (((_a = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _a === void 0 ? void 0 : _a.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
         const stat = yield fs_extra_1.default.stat(integration.entries.integration);
         const entryPath = stat.isDirectory() ? path_1.default.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
         if (entryPath === integration.entries.integration || fs_extra_1.default.existsSync(entryPath)) {
@@ -164,7 +172,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                     path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                 ];
-                if ((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration) {
+                if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
                     loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
                 }
                 yield buildCssBundle({

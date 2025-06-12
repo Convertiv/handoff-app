@@ -229,7 +229,7 @@ export interface Config {
         htmlBuildConfig?: (config: InlineConfig) => InlineConfig;
     };
 }
-export declare type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
+export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
 export interface IntegrationObjectComponentOptions {
     cssRootClass?: string;
     tokenNameSegments?: string[];

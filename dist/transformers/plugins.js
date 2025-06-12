@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ssrRenderPlugin = exports.handlebarsPreviewsPlugin = void 0;
+exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
+exports.ssrRenderPlugin = ssrRenderPlugin;
 const esbuild_1 = __importDefault(require("esbuild"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
@@ -138,10 +139,9 @@ function handlebarsPreviewsPlugin(data, components, handoff) {
         },
     };
 }
-exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
 function buildAndEvaluateModule(entryPath, handoff) {
-    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         // Default esbuild configuration
         const defaultBuildConfig = {
             entryPoints: [entryPath],
@@ -169,6 +169,7 @@ function ssrRenderPlugin(data, components, handoff) {
         name: 'vite-plugin-ssr-static-render',
         apply: 'build',
         resolveId(id) {
+            console.log('resolveId', id);
             if (id === 'script') {
                 return id;
             }
@@ -179,8 +180,8 @@ function ssrRenderPlugin(data, components, handoff) {
             }
         },
         generateBundle(_, bundle) {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
             return __awaiter(this, void 0, void 0, function* () {
+                var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
                 // Delete all JS chunks
                 for (const [fileName, chunkInfo] of Object.entries(bundle)) {
                     if (chunkInfo.type === 'chunk' && fileName.includes('script')) {
@@ -316,7 +317,6 @@ function ssrRenderPlugin(data, components, handoff) {
         },
     };
 }
-exports.ssrRenderPlugin = ssrRenderPlugin;
 function resolveModule(id, searchDirs) {
     for (const dir of searchDirs) {
         try {

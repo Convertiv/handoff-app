@@ -35,7 +35,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSharedStyles = exports.componentTransformer = exports.getComponentOutputPath = exports.SlotType = void 0;
+exports.getComponentOutputPath = exports.SlotType = void 0;
+exports.componentTransformer = componentTransformer;
+exports.processSharedStyles = processSharedStyles;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
@@ -53,7 +55,7 @@ var SlotType;
     SlotType["NUMBER"] = "number";
     SlotType["BOOLEAN"] = "boolean";
     SlotType["OBJECT"] = "object";
-})(SlotType = exports.SlotType || (exports.SlotType = {}));
+})(SlotType || (exports.SlotType = SlotType = {}));
 const getComponentOutputPath = (handoff) => path_1.default.resolve((0, api_1.getAPIPath)(handoff), 'component');
 exports.getComponentOutputPath = getComponentOutputPath;
 /**
@@ -70,7 +72,6 @@ function componentTransformer(handoff) {
         yield (0, css_1.buildMainCss)(handoff);
     });
 }
-exports.componentTransformer = componentTransformer;
 /**
  * Process the shared styles with sass compileAsync
  * @param handoff
@@ -114,4 +115,3 @@ function processSharedStyles(handoff) {
         }
     });
 }
-exports.processSharedStyles = processSharedStyles;

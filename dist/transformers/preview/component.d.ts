@@ -36,7 +36,7 @@ export interface SlotMetadata {
     key?: string;
     rules?: RuleObject;
 }
-export declare type RuleObject = {
+export type RuleObject = {
     required?: boolean;
     content?: {
         min: number;

@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildPreviews = void 0;
-const plugin_react_1 = __importDefault(require("@vitejs/plugin-react"));
 const vite_1 = require("vite");
 const config_1 = __importDefault(require("../../config"));
 const plugins_1 = require("../../plugins");
@@ -39,7 +38,7 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     const plugins = [
         ...(config_1.default.plugins || []),
         ...(data.entries.template.includes('.hbs') ? [(0, plugins_1.handlebarsPreviewsPlugin)(data, components, handoff)] : []),
-        ...(data.entries.template.includes('.tsx') ? [(0, plugin_react_1.default)(), (0, plugins_1.ssrRenderPlugin)(data, components, handoff)] : []),
+        //...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
     ];
     // Store the current NODE_ENV value before vite build
     // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
