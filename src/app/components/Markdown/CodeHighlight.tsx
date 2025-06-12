@@ -124,12 +124,12 @@ export const CodeHighlight: React.FC<{
     sharedStyles: 'Shared CSS',
   };
   const getLabel = (state: string) => {
-    if (state === 'code' && data.format === 'react') return 'React';
+    if (state === 'code' && typeof data === 'object' && data.format === 'react') return 'React';
     return labels[state] || state;
   };
 
   const language = (activeState: string) => {
-    if ('code' in data && !!data.code && activeState === 'code' && data.format === 'react') return 'tsx';
+    if ('code' in data && !!data.code && activeState === 'code' && typeof data === 'object' && data.format === 'react') return 'tsx';
     return activeState === 'html' ? type : activeState;
   };
 
