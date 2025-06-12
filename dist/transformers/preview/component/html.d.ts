@@ -15,5 +15,5 @@ import { TransformComponentTokensResult } from '../types';
  * const result = await buildPreviews(transformedData, handoffConfig, fileComponents);
  * ```
  */
-export declare const buildPreviews: (data: TransformComponentTokensResult, handoff: Handoff, components?: CoreTypes.IDocumentationObject['components']) => Promise<TransformComponentTokensResult>;
+export declare const buildPreviews: (data: TransformComponentTokensResult, handoff: Handoff, components?: CoreTypes.IDocumentationObject["components"]) => Promise<TransformComponentTokensResult>;
 export default buildPreviews;

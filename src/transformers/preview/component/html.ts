@@ -1,9 +1,8 @@
-import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff from '../../../index';
 import viteBaseConfig from '../../config';
-import { handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
+import { handlebarsPreviewsPlugin } from '../../plugins';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
@@ -31,7 +30,7 @@ export const buildPreviews = async (
   const plugins = [
     ...(viteBaseConfig.plugins || []),
     ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
-    ...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
+    //...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
   ];
 
   // Store the current NODE_ENV value before vite build

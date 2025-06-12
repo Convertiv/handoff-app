@@ -418,8 +418,8 @@ const initIntegrationObject = (handoff) => {
     const result = {
         options: {},
         entries: {
-            integration: undefined,
-            bundle: undefined,
+            integration: undefined, // scss
+            bundle: undefined, // js
             components: {},
         },
     };

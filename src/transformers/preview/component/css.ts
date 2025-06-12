@@ -57,15 +57,23 @@ const buildCssBundle = async ({
       css: {
         preprocessorOptions: {
           scss: {
-            includePaths: loadPaths,
+            loadPaths,
             quietDeps: true,
             // Maintain compatibility with older sass imports
-            importer: [
-              (url: string) => {
-                if (url.startsWith('~')) {
-                  return { file: url.slice(1) };
-                }
-                return null;
+            importers: [
+              {
+                canonicalize(url: string) {
+                  if (url.startsWith('~')) {
+                    return new URL(url.slice(1));
+                  }
+                  return new URL(url);
+                },
+                load(canonicalUrl) {
+                  return {
+                    contents: canonicalUrl.pathname,
+                    syntax: 'scss',
+                  };
+                },
               },
             ],
             // Use modern API settings

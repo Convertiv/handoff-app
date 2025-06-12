@@ -35,7 +35,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processSharedStyles = exports.componentTransformer = exports.getComponentOutputPath = exports.createWebSocketServer = exports.SlotType = void 0;
+exports.getComponentOutputPath = exports.createWebSocketServer = exports.SlotType = void 0;
+exports.componentTransformer = componentTransformer;
+exports.processSharedStyles = processSharedStyles;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
@@ -54,7 +56,7 @@ var SlotType;
     SlotType["NUMBER"] = "number";
     SlotType["BOOLEAN"] = "boolean";
     SlotType["OBJECT"] = "object";
-})(SlotType = exports.SlotType || (exports.SlotType = {}));
+})(SlotType || (exports.SlotType = SlotType = {}));
 /**
  * Creates a WebSocket server that broadcasts messages to connected clients.
  * Designed for development mode to help with hot-reloading.
@@ -62,7 +64,7 @@ var SlotType;
  * @param port - Optional port number for the WebSocket server; defaults to 3001.
  * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
-const createWebSocketServer = (port = 3001) => __awaiter(void 0, void 0, void 0, function* () {
+const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (port = 3001) {
     const wss = new ws_1.default.Server({ port });
     // Heartbeat function to mark a connection as alive.
     const heartbeat = function () {
@@ -120,7 +122,6 @@ function componentTransformer(handoff) {
         yield (0, css_1.buildMainCss)(handoff);
     });
 }
-exports.componentTransformer = componentTransformer;
 /**
  * Process the shared styles with sass compileAsync
  * @param handoff
@@ -164,4 +165,3 @@ function processSharedStyles(handoff) {
         }
     });
 }
-exports.processSharedStyles = processSharedStyles;

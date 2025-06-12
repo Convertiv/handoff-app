@@ -293,7 +293,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g, _h, _j, _k, _l, _m, _o;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const tokensJsonFilePath = handoff.getTokensFilePath();
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
@@ -304,7 +304,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // Include any changes made within the app source during watch
     chokidar_1.default
         .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
-        ignored: /(^|[\/\\])\../,
+        ignored: /(^|[\/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true,
     })
@@ -325,7 +325,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // };
     const dev = true;
     const hostname = 'localhost';
-    const port = (_g = (_f = handoff.config.app.ports) === null || _f === void 0 ? void 0 : _f.app) !== null && _g !== void 0 ? _g : 3000;
+    const port = (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000;
     // when using middleware `hostname` and `port` must be provided below
     const app = (0, next_1.default)({
         dev,
@@ -365,9 +365,9 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    const wss = yield (0, component_1.createWebSocketServer)((_j = (_h = handoff.config.app.ports) === null || _h === void 0 ? void 0 : _h.websocket) !== null && _j !== void 0 ? _j : 3001);
+    const wss = yield (0, component_1.createWebSocketServer)((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);
     const chokidarConfig = {
-        ignored: /(^|[\/\\])\../,
+        ignored: /(^|[\/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true,
     };
@@ -510,7 +510,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
       */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
-    if (((_l = (_k = handoff.integrationObject) === null || _k === void 0 ? void 0 : _k.entries) === null || _l === void 0 ? void 0 : _l.integration) && fs_extra_1.default.existsSync((_o = (_m = handoff.integrationObject) === null || _m === void 0 ? void 0 : _m.entries) === null || _o === void 0 ? void 0 : _o.integration)) {
+    if (((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration)) {
         const stat = yield fs_extra_1.default.stat(handoff.integrationObject.entries.integration);
         chokidar_1.default
             .watch(stat.isDirectory() ? handoff.integrationObject.entries.integration : path_1.default.dirname(handoff.integrationObject.entries.integration), chokidarConfig)
@@ -548,7 +548,7 @@ exports.watchApp = watchApp;
  * @param handoff
  */
 const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _p, _q;
+    var _a, _b;
     if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
@@ -560,7 +560,7 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         fs_extra_1.default.removeSync(moduleOutput);
     }
     // Run
-    return yield (0, next_dev_1.nextDev)({ port: (_q = (_p = handoff.config.app.ports) === null || _p === void 0 ? void 0 : _p.app) !== null && _q !== void 0 ? _q : 3000 }, 'cli', appPath);
+    return yield (0, next_dev_1.nextDev)({ port: (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000 }, 'cli', appPath);
 });
 exports.devApp = devApp;
 exports.default = buildApp;

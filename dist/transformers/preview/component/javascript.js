@@ -28,8 +28,8 @@ const component_1 = require("../component");
  * @param options.outputPath - The directory where the bundle will be output
  * @param options.outputFilename - The name of the output file
  */
-const buildJsBundle = ({ entry, outputPath, outputFilename }, handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+const buildJsBundle = (_a, handoff_1) => __awaiter(void 0, [_a, handoff_1], void 0, function* ({ entry, outputPath, outputFilename }, handoff) {
+    var _b, _c, _d;
     const absEntryPath = path_1.default.resolve(entry);
     // Store the current NODE_ENV value before vite build
     // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
@@ -42,10 +42,10 @@ const buildJsBundle = ({ entry, outputPath, outputFilename }, handoff) => __awai
                     name: path_1.default.basename(outputFilename, '.js'),
                     formats: ['cjs'],
                     fileName: () => outputFilename,
-                }, rollupOptions: Object.assign(Object.assign({}, (_a = config_1.default.build) === null || _a === void 0 ? void 0 : _a.rollupOptions), { output: {
+                }, rollupOptions: Object.assign(Object.assign({}, (_b = config_1.default.build) === null || _b === void 0 ? void 0 : _b.rollupOptions), { output: {
                         exports: 'named',
                     } }), outDir: outputPath }) });
-        if ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.jsBuildConfig) {
+        if ((_d = (_c = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _c === void 0 ? void 0 : _c.hooks) === null || _d === void 0 ? void 0 : _d.jsBuildConfig) {
             viteConfig = handoff.config.hooks.jsBuildConfig(viteConfig);
         }
         yield (0, vite_1.build)(viteConfig);
@@ -75,9 +75,9 @@ const buildJsBundle = ({ entry, outputPath, outputFilename }, handoff) => __awai
  * @returns The updated component transformation result with JavaScript data
  */
 const buildComponentJs = (data, handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _a;
     const id = data.id;
-    const entry = (_d = data.entries) === null || _d === void 0 ? void 0 : _d.js;
+    const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.js;
     if (!entry)
         return data;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);

@@ -175,11 +175,12 @@ export function ssrRenderPlugin(
   data: TransformComponentTokensResult,
   components: CoreTypes.IDocumentationObject['components'],
   handoff?: Handoff
-): import('vite').Plugin {
+): Plugin {
   return {
     name: 'vite-plugin-ssr-static-render',
     apply: 'build',
     resolveId(id) {
+      console.log('resolveId', id);
       if (id === 'script') {
         return id;
       }
