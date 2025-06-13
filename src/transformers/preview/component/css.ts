@@ -46,12 +46,8 @@ const buildCssBundle = async ({
             style: entry,
           },
           output: {
-            assetFileNames: (assetInfo) => {
-              if (assetInfo.name === 'style.css') {
-                return outputFilename;
-              }
-              return assetInfo.name as string;
-            },
+            // TODO: This was an edge case where we needed to output a different filename for the CSS file
+            assetFileNames: outputFilename,
           },
         },
       },
@@ -60,17 +56,19 @@ const buildCssBundle = async ({
           scss: {
             loadPaths,
             quietDeps: true,
+            // TODO: Discuss this with Domagoj
             // Maintain compatibility with older sass imports
-            importers: [
-              {
-                findFileUrl(url) {
-                  if (!url.startsWith('~')) return null;
-                  return new URL(url.substring(1), pathToFileURL('node_modules'));
-                },
-              },
-            ],
+            // importers: [
+            //   {
+            //     findFileUrl(url) {
+            //       console.log('findFileUrl', url);
+            //       if (!url.startsWith('~')) return null;
+            //       return new URL(url.substring(1), pathToFileURL('node_modules'));
+            //     },
+            //   },
+            // ],
             // Use modern API settings
-            api: 'modern',
+            api: 'modern-compiler',
             silenceDeprecations: ['import', 'legacy-js-api'],
           },
         },
@@ -83,6 +81,9 @@ const buildCssBundle = async ({
     }
 
     await viteBuild(viteConfig);
+  } catch (e) {
+    console.log(chalk.red(`Error building CSS for ${entry}`));
+    throw e;
   } finally {
     // Restore the original NODE_ENV value
     if (oldNodeEnv === 'development' || oldNodeEnv === 'production' || oldNodeEnv === 'test') {
@@ -95,8 +96,8 @@ const buildCssBundle = async ({
 
 const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => {
   const id = data.id;
+  console.log('buildComponentCss ------------------------------', id);
   const entry = data.entries?.scss;
-
   if (!entry) {
     return data;
   }

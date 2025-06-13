@@ -41,30 +41,27 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
                         style: entry,
                     },
                     output: {
-                        assetFileNames: (assetInfo) => {
-                            if (assetInfo.name === 'style.css') {
-                                return outputFilename;
-                            }
-                            return assetInfo.name;
-                        },
+                        // TODO: This was an edge case where we needed to output a different filename for the CSS file
+                        assetFileNames: outputFilename,
                     },
                 } }), css: {
                 preprocessorOptions: {
                     scss: {
                         loadPaths,
                         quietDeps: true,
+                        // TODO: Discuss this with Domagoj
                         // Maintain compatibility with older sass imports
-                        importers: [
-                            {
-                                findFileUrl(url) {
-                                    if (!url.startsWith('~'))
-                                        return null;
-                                    return new URL(url.substring(1), pathToFileURL('node_modules'));
-                                },
-                            },
-                        ],
+                        // importers: [
+                        //   {
+                        //     findFileUrl(url) {
+                        //       console.log('findFileUrl', url);
+                        //       if (!url.startsWith('~')) return null;
+                        //       return new URL(url.substring(1), pathToFileURL('node_modules'));
+                        //     },
+                        //   },
+                        // ],
                         // Use modern API settings
-                        api: 'modern',
+                        api: 'modern-compiler',
                         silenceDeprecations: ['import', 'legacy-js-api'],
                     },
                 },
@@ -74,6 +71,10 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
             viteConfig = handoff.config.hooks.cssBuildConfig(viteConfig);
         }
         yield (0, vite_1.build)(viteConfig);
+    }
+    catch (e) {
+        console.log(chalk_1.default.red(`Error building CSS for ${entry}`));
+        throw e;
     }
     finally {
         // Restore the original NODE_ENV value
@@ -88,6 +89,7 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
 const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     const id = data.id;
+    console.log('buildComponentCss ------------------------------', id);
     const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
     if (!entry) {
         return data;
