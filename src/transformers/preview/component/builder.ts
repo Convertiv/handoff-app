@@ -86,7 +86,6 @@ export async function processComponents(
         if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentJs(data, handoff);
         }
-
         if (!segmentToProcess || segmentToProcess === ComponentSegment.Style || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentCss(data, handoff, sharedStyles);
         }
