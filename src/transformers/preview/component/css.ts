@@ -6,6 +6,7 @@ import Handoff, { initIntegrationObject } from '../../../index';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
+const { pathToFileURL } = require('url');
 
 /**
  * Builds a CSS bundle using Vite
@@ -62,17 +63,9 @@ const buildCssBundle = async ({
             // Maintain compatibility with older sass imports
             importers: [
               {
-                canonicalize(url: string) {
-                  if (url.startsWith('~')) {
-                    return new URL(url.slice(1));
-                  }
-                  return new URL(url);
-                },
-                load(canonicalUrl) {
-                  return {
-                    contents: canonicalUrl.pathname,
-                    syntax: 'scss',
-                  };
+                findFileUrl(url) {
+                  if (!url.startsWith('~')) return null;
+                  return new URL(url.substring(1), pathToFileURL('node_modules'));
                 },
               },
             ],

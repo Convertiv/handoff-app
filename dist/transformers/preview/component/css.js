@@ -20,6 +20,7 @@ const vite_1 = require("vite");
 const index_1 = require("../../../index");
 const config_1 = __importDefault(require("../../config"));
 const component_1 = require("../component");
+const { pathToFileURL } = require('url');
 /**
  * Builds a CSS bundle using Vite
  *
@@ -55,17 +56,10 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
                         // Maintain compatibility with older sass imports
                         importers: [
                             {
-                                canonicalize(url) {
-                                    if (url.startsWith('~')) {
-                                        return new URL(url.slice(1));
-                                    }
-                                    return new URL(url);
-                                },
-                                load(canonicalUrl) {
-                                    return {
-                                        contents: canonicalUrl.pathname,
-                                        syntax: 'scss',
-                                    };
+                                findFileUrl(url) {
+                                    if (!url.startsWith('~'))
+                                        return null;
+                                    return new URL(url.substring(1), pathToFileURL('node_modules'));
                                 },
                             },
                         ],
