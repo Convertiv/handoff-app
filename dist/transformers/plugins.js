@@ -242,7 +242,7 @@ function ssrRenderPlugin(data, components, handoff) {
                 let html = '';
                 for (const key in data.previews) {
                     const props = data.previews[key].values;
-                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, data.previews[key].values));
+                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, Object.assign(Object.assign({}, data.previews[key].values), { block: Object.assign({}, data.previews[key].values) })));
                     const pretty = yield prettier_1.default.format(renderedHtml, { parser: 'html' });
                     // 3. Hydration source: baked-in, references user entry
                     const clientSource = `

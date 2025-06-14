@@ -263,7 +263,9 @@ export function ssrRenderPlugin(
 
       for (const key in data.previews) {
         const props = data.previews[key].values;
-        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, data.previews[key].values));
+        const renderedHtml = ReactDOMServer.renderToString(
+          React.createElement(Component, { ...data.previews[key].values, block: { ...data.previews[key].values } })
+        );
         const pretty = await prettier.format(renderedHtml, { parser: 'html' });
 
         // 3. Hydration source: baked-in, references user entry
