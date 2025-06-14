@@ -273,7 +273,7 @@ export function ssrRenderPlugin(
 
           const raw = document.getElementById('__APP_PROPS__')?.textContent || '{}';
           const props = JSON.parse(raw);
-          hydrateRoot(document.getElementById('root'), <Component {...props} />);
+          hydrateRoot(document.getElementById('root'), <Component {...props} block={props} />);
         `;
 
         // Default client-side build configuration
