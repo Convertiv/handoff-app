@@ -46,10 +46,65 @@ const next_build_1 = require("next/dist/cli/next-build");
 const next_dev_1 = require("next/dist/cli/next-dev");
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
+const ws_1 = __importDefault(require("ws"));
 const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
-const component_1 = require("./transformers/preview/component");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
+/**
+ * Creates a WebSocket server that broadcasts messages to connected clients.
+ * Designed for development mode to help with hot-reloading.
+ *
+ * @param port - Optional port number for the WebSocket server; defaults to 3001.
+ * @returns A function that accepts a message string and broadcasts it to all connected clients.
+ */
+const createWebSocketServer = (port = 3001) => __awaiter(void 0, void 0, void 0, function* () {
+    const wss = new ws_1.default.Server({ port });
+    // Heartbeat function to mark a connection as alive.
+    const heartbeat = function () {
+        this.isAlive = true;
+    };
+    // Setup a new connection
+    wss.on('connection', (ws) => {
+        const extWs = ws;
+        extWs.isAlive = true;
+        extWs.send(JSON.stringify({ type: 'WELCOME' }));
+        extWs.on('error', (error) => console.error('WebSocket error:', error));
+        extWs.on('pong', heartbeat);
+    });
+    // Periodically ping clients to ensure they are still connected
+    const pingInterval = setInterval(() => {
+        wss.clients.forEach((client) => {
+            const extWs = client;
+            if (!extWs.isAlive) {
+                console.log(chalk_1.default.yellow('Terminating inactive client'));
+                return client.terminate();
+            }
+            extWs.isAlive = false;
+            client.ping();
+        });
+    }, 30000);
+    // Clean up the interval when the server closes
+    wss.on('close', () => {
+        clearInterval(pingInterval);
+    });
+    console.log(chalk_1.default.green(`WebSocket server started on ws://localhost:${port}`));
+    // Return a function to broadcast a message to all connected clients
+    return (message) => {
+        console.log(chalk_1.default.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+        wss.clients.forEach((client) => {
+            if (client.readyState === ws_1.default.OPEN) {
+                client.send(message);
+            }
+        });
+    };
+});
+/**
+ * Gets the working public directory path for a given handoff instance
+ * Checks for both project-specific and default public directories
+ *
+ * @param handoff - The handoff instance containing working path and figma project configuration
+ * @returns The resolved path to the public directory if it exists, null otherwise
+ */
 const getWorkingPublicPath = (handoff) => {
     const paths = [
         path_1.default.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
@@ -62,6 +117,11 @@ const getWorkingPublicPath = (handoff) => {
     }
     return null;
 };
+/**
+ * Gets the application path for a given handoff instance
+ * @param handoff - The handoff instance containing module path and figma project configuration
+ * @returns The resolved path to the application directory
+ */
 const getAppPath = (handoff) => {
     return path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
@@ -195,6 +255,13 @@ export default function Layout(props) {
 }`;
     fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
 };
+/**
+ * Performs cleanup of the application directory by removing the existing app directory if it exists.
+ * This is typically used before rebuilding the application to ensure a clean state.
+ *
+ * @param handoff - The Handoff instance containing configuration and working paths
+ * @returns Promise that resolves when cleanup is complete
+ */
 const performCleanup = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
     // Clean project app dir
@@ -371,7 +438,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    const wss = yield (0, component_1.createWebSocketServer)((_j = (_h = handoff.config.app.ports) === null || _h === void 0 ? void 0 : _h.websocket) !== null && _j !== void 0 ? _j : 3001);
+    const wss = yield createWebSocketServer((_j = (_h = handoff.config.app.ports) === null || _h === void 0 ? void 0 : _h.websocket) !== null && _j !== void 0 ? _j : 3001);
     const chokidarConfig = {
         ignored: /(^|[\/\\])\../,
         persistent: true,

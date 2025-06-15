@@ -8,13 +8,79 @@ import { nextBuild } from 'next/dist/cli/next-build';
 import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
+import WebSocket from 'ws';
 import Handoff from '.';
 import { getClientConfig } from './config';
 import { buildComponents } from './pipeline';
-import { createWebSocketServer } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
 
+interface ExtWebSocket extends WebSocket {
+  isAlive: boolean;
+}
+
+/**
+ * Creates a WebSocket server that broadcasts messages to connected clients.
+ * Designed for development mode to help with hot-reloading.
+ *
+ * @param port - Optional port number for the WebSocket server; defaults to 3001.
+ * @returns A function that accepts a message string and broadcasts it to all connected clients.
+ */
+const createWebSocketServer = async (port: number = 3001) => {
+  const wss = new WebSocket.Server({ port });
+
+  // Heartbeat function to mark a connection as alive.
+  const heartbeat = function (this: ExtWebSocket) {
+    this.isAlive = true;
+  };
+
+  // Setup a new connection
+  wss.on('connection', (ws) => {
+    const extWs = ws as ExtWebSocket;
+    extWs.isAlive = true;
+    extWs.send(JSON.stringify({ type: 'WELCOME' }));
+    extWs.on('error', (error) => console.error('WebSocket error:', error));
+    extWs.on('pong', heartbeat);
+  });
+
+  // Periodically ping clients to ensure they are still connected
+  const pingInterval = setInterval(() => {
+    wss.clients.forEach((client) => {
+      const extWs = client as ExtWebSocket;
+      if (!extWs.isAlive) {
+        console.log(chalk.yellow('Terminating inactive client'));
+        return client.terminate();
+      }
+      extWs.isAlive = false;
+      client.ping();
+    });
+  }, 30000);
+
+  // Clean up the interval when the server closes
+  wss.on('close', () => {
+    clearInterval(pingInterval);
+  });
+
+  console.log(chalk.green(`WebSocket server started on ws://localhost:${port}`));
+
+  // Return a function to broadcast a message to all connected clients
+  return (message: string) => {
+    console.log(chalk.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  };
+};
+
+/**
+ * Gets the working public directory path for a given handoff instance
+ * Checks for both project-specific and default public directories
+ * 
+ * @param handoff - The handoff instance containing working path and figma project configuration
+ * @returns The resolved path to the public directory if it exists, null otherwise
+ */
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
     path.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
@@ -30,6 +96,11 @@ const getWorkingPublicPath = (handoff: Handoff): string | null => {
   return null;
 };
 
+/**
+ * Gets the application path for a given handoff instance
+ * @param handoff - The handoff instance containing module path and figma project configuration
+ * @returns The resolved path to the application directory
+ */
 const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
@@ -164,6 +235,13 @@ export default function Layout(props) {
   fs.writeFileSync(dest, mdx, 'utf-8');
 };
 
+/**
+ * Performs cleanup of the application directory by removing the existing app directory if it exists.
+ * This is typically used before rebuilding the application to ensure a clean state.
+ * 
+ * @param handoff - The Handoff instance containing configuration and working paths
+ * @returns Promise that resolves when cleanup is complete
+ */
 const performCleanup = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
 
