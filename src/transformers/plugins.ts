@@ -153,7 +153,7 @@ async function buildAndEvaluateModule(entryPath: string, handoff?: Handoff): Pro
     format: 'cjs',
     platform: 'node',
     jsx: 'automatic',
-    external: ['react', 'react-dom'],
+    external: ['react', 'react-dom', '@opentelemetry/api'],
   };
 
   // Apply user's SSR build config hook if provided

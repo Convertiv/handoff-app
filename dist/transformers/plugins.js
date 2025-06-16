@@ -150,7 +150,7 @@ function buildAndEvaluateModule(entryPath, handoff) {
             format: 'cjs',
             platform: 'node',
             jsx: 'automatic',
-            external: ['react', 'react-dom'],
+            external: ['react', 'react-dom', '@opentelemetry/api'],
         };
         // Apply user's SSR build config hook if provided
         const buildConfig = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig) ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig) : defaultBuildConfig;
