@@ -633,7 +633,7 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         fs_extra_1.default.removeSync(moduleOutput);
     }
     // Run
-    return yield (0, next_dev_1.nextDev)({ port: (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000 }, 'cli', appPath);
+    return yield (0, next_dev_1.nextDev)({ port: (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000, disableSourceMaps: true }, 'cli', appPath);
 });
 exports.devApp = devApp;
 exports.default = buildApp;

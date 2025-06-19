@@ -664,7 +664,7 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   }
 
   // Run
-  return await nextDev({ port: handoff.config.app.ports?.app ?? 3000 }, 'cli', appPath);
+  return await nextDev({ port: handoff.config.app.ports?.app ?? 3000, disableSourceMaps: true }, 'cli', appPath);
 };
 
 export default buildApp;
