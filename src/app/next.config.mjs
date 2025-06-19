@@ -42,7 +42,6 @@ const nextConfig = {
   reactStrictMode: true,
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
-  swcMinify: true,
   trailingSlash: true,
   experimental: {
     externalDir: true,
