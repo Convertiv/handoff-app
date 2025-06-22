@@ -190,6 +190,7 @@ function ssrRenderPlugin(data, components, handoff) {
                 }
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
+                const code = fs_extra_1.default.readFileSync(entry, 'utf8');
                 // Load schema if schema entry exists
                 if ((_a = data.entries) === null || _a === void 0 ? void 0 : _a.schema) {
                     const schemaPath = path_1.default.resolve(data.entries.schema);
@@ -241,7 +242,8 @@ function ssrRenderPlugin(data, components, handoff) {
                 let html = '';
                 for (const key in data.previews) {
                     const props = data.previews[key].values;
-                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, data.previews[key].values));
+                    const renderedHtml = server_1.default.renderToString(react_1.default.createElement(Component, Object.assign(Object.assign({}, data.previews[key].values), { block: Object.assign({}, data.previews[key].values) })));
+                    const pretty = yield prettier_1.default.format(renderedHtml, { parser: 'html' });
                     // 3. Hydration source: baked-in, references user entry
                     const clientSource = `
           import React from 'react';
@@ -279,6 +281,9 @@ function ssrRenderPlugin(data, components, handoff) {
         <html lang="en">
           <head>
             <meta charset="UTF-8" />
+            <link rel="stylesheet" href="/api/component/main.css" />
+            <link rel="stylesheet" href="/api/component/${id}.css" />
+            <link rel="stylesheet" href="/assets/css/preview.css" />
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
@@ -286,22 +291,15 @@ function ssrRenderPlugin(data, components, handoff) {
             <title>${data.previews[key].title}</title>
           </head>
           <body>
-            <div id="root">${renderedHtml}</div>
+            <div id="root">${pretty}</div>
           </body>
         </html>`;
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}.html`,
-                        source: `<!DOCTYPE html>
-<head>
-  <link rel="stylesheet" href="/api/component/shared.css">
-  <link rel="stylesheet" href="/api/component/${id}.css">
-  <link rel="stylesheet" href="/assets/css/preview.css">
-</head>
-<body>
-  ${pretty}
-</body>`,
+                        source: html,
                     });
+                    // TODO: remove this once we have a way to render inspect mode
                     this.emitFile({
                         type: 'asset',
                         fileName: `${id}-${key}-inspect.html`,
@@ -311,8 +309,10 @@ function ssrRenderPlugin(data, components, handoff) {
                     data.previews[key].url = `${id}-${key}.html`;
                 }
                 html = yield prettier_1.default.format(html, { parser: 'html' });
+                data.format = 'react';
                 data.preview = '';
-                data.code = trimPreview(html);
+                data.code = trimPreview(code);
+                data.html = trimPreview(html);
             });
         },
     };

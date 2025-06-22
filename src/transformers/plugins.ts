@@ -263,7 +263,10 @@ export function ssrRenderPlugin(
 
       for (const key in data.previews) {
         const props = data.previews[key].values;
-        const renderedHtml = ReactDOMServer.renderToString(React.createElement(Component, data.previews[key].values));
+        const renderedHtml = ReactDOMServer.renderToString(
+          React.createElement(Component, { ...data.previews[key].values, block: { ...data.previews[key].values } })
+        );
+        const pretty = await prettier.format(renderedHtml, { parser: 'html' });
 
         // 3. Hydration source: baked-in, references user entry
         const clientSource = `
@@ -307,6 +310,9 @@ export function ssrRenderPlugin(
         <html lang="en">
           <head>
             <meta charset="UTF-8" />
+            <link rel="stylesheet" href="/api/component/main.css" />
+            <link rel="stylesheet" href="/api/component/${id}.css" />
+            <link rel="stylesheet" href="/assets/css/preview.css" />
             <script id="__APP_PROPS__" type="application/json">${JSON.stringify(props)}</script>
             <script type="module">
               ${inlinedJs}
@@ -314,24 +320,16 @@ export function ssrRenderPlugin(
             <title>${data.previews[key].title}</title>
           </head>
           <body>
-            <div id="root">${renderedHtml}</div>
+            <div id="root">${pretty}</div>
           </body>
         </html>`;
 
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}.html`,
-          source: `<!DOCTYPE html>
-<head>
-  <link rel="stylesheet" href="/api/component/shared.css">
-  <link rel="stylesheet" href="/api/component/${id}.css">
-  <link rel="stylesheet" href="/assets/css/preview.css">
-</head>
-<body>
-  ${pretty}
-</body>`,
+          source: html,
         });
-
+        // TODO: remove this once we have a way to render inspect mode
         this.emitFile({
           type: 'asset',
           fileName: `${id}-${key}-inspect.html`,
@@ -343,9 +341,11 @@ export function ssrRenderPlugin(
       }
 
       html = await prettier.format(html, { parser: 'html' });
+      data.format = 'react';
 
       data.preview = '';
-      data.code = trimPreview(html);
+      data.code = trimPreview(code);
+      data.html = trimPreview(html);
     },
   };
 }
