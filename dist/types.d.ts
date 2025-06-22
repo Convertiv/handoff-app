@@ -1,5 +1,6 @@
 import { Types as CoreTypes } from 'handoff-core';
 import { SlotMetadata } from './transformers/preview/component';
+import { type Filter } from './utils/filter';
 export interface ValidationResult {
     /**
      * Description of what this validation check does
@@ -60,6 +61,7 @@ export interface PreviewObject {
     options?: {
         preview?: {
             groupBy?: string;
+            filterBy?: Filter;
         };
     };
     /**

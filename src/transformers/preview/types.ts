@@ -1,4 +1,5 @@
 import { ValidationResult } from '../../types';
+import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
 
 export enum ComponentType {
@@ -31,6 +32,7 @@ export type ComponentListObject = {
   options?: {
     preview?: {
       groupBy?: string;
+      filterBy?: Filter;
     };
     transformer: {
       cssRootClass?: string;
