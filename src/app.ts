@@ -1,11 +1,10 @@
 import chalk from 'chalk';
 import chokidar from 'chokidar';
+import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import matter from 'gray-matter';
 import { createServer } from 'http';
 import next from 'next';
-import { nextBuild } from 'next/dist/cli/next-build';
-import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
 import WebSocket from 'ws';
@@ -337,17 +336,22 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   persistRuntimeCache(handoff);
 
   // Build app
-  await nextBuild(
-    {
-      lint: true,
-      mangling: true,
-      experimentalDebugMemoryUsage: false,
-      experimentalAppOnly: false,
-      experimentalTurbo: false,
-      experimentalBuildMode: 'default',
-    },
-    appPath
-  );
+  const buildResult = spawn.sync('npx', ['next', 'build'], { 
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production'
+    }
+  });
+
+  if (buildResult.status !== 0) {
+    let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
+    if (buildResult.error) {
+      errorMsg += `\nSpawn error: ${buildResult.error.message}`;
+    }
+    throw new Error(errorMsg);
+  }
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -663,8 +667,25 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
     fs.removeSync(moduleOutput);
   }
 
+  persistRuntimeCache(handoff);
+
   // Run
-  return await nextDev({ port: handoff.config.app.ports?.app ?? 3000, disableSourceMaps: true }, 'cli', appPath);
+  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development'
+    }
+  });
+
+  if (devResult.status !== 0) {
+    let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
+    if (devResult.error) {
+      errorMsg += `\nSpawn error: ${devResult.error.message}`;
+    }
+    throw new Error(errorMsg);
+  }
 };
 
 export default buildApp;

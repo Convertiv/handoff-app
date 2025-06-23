@@ -38,12 +38,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.devApp = exports.watchApp = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const chokidar_1 = __importDefault(require("chokidar"));
+const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const gray_matter_1 = __importDefault(require("gray-matter"));
 const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
-const next_build_1 = require("next/dist/cli/next-build");
-const next_dev_1 = require("next/dist/cli/next-dev");
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
 const ws_1 = __importDefault(require("ws"));
@@ -340,14 +339,18 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = yield prepareProjectApp(handoff);
     persistRuntimeCache(handoff);
     // Build app
-    yield (0, next_build_1.nextBuild)({
-        lint: true,
-        mangling: true,
-        experimentalDebugMemoryUsage: false,
-        experimentalAppOnly: false,
-        experimentalTurbo: false,
-        experimentalBuildMode: 'default',
-    }, appPath);
+    const buildResult = cross_spawn_1.default.sync('npx', ['next', 'build'], {
+        cwd: appPath,
+        stdio: 'inherit',
+        env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'production' })
+    });
+    if (buildResult.status !== 0) {
+        let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
+        if (buildResult.error) {
+            errorMsg += `\nSpawn error: ${buildResult.error.message}`;
+        }
+        throw new Error(errorMsg);
+    }
     // Ensure output root directory exists
     const outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
     if (!fs_extra_1.default.existsSync(outputRoot)) {
@@ -632,8 +635,20 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         fs_extra_1.default.removeSync(moduleOutput);
     }
+    persistRuntimeCache(handoff);
     // Run
-    return yield (0, next_dev_1.nextDev)({ port: (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000, disableSourceMaps: true }, 'cli', appPath);
+    const devResult = cross_spawn_1.default.sync('npx', ['next', 'dev', '--port', String((_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000)], {
+        cwd: appPath,
+        stdio: 'inherit',
+        env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'development' })
+    });
+    if (devResult.status !== 0) {
+        let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
+        if (devResult.error) {
+            errorMsg += `\nSpawn error: ${devResult.error.message}`;
+        }
+        throw new Error(errorMsg);
+    }
 });
 exports.devApp = devApp;
 exports.default = buildApp;
