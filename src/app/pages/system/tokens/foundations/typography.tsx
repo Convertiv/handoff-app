@@ -59,9 +59,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
       </div>
       <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
           <FontsTable types={typography} />
         </div>
         <AnchorNav

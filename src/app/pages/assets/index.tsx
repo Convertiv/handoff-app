@@ -76,9 +76,11 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
             </div>
           </div>
 
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
       </section>
       <Footer config={config} />

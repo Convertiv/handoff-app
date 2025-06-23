@@ -4,7 +4,7 @@ import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import type { GetStaticProps } from 'next';
 import * as React from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
@@ -127,9 +127,11 @@ const EffectsPage = ({
           ]}
         />
 
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </Layout>
   );

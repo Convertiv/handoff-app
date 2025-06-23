@@ -210,7 +210,7 @@ export interface ComponentDesignTokensProps {
   previewObjectOptions?: CoreTypes.IHandoffConfigurationComponentOptions;
   componentInstances: CoreTypes.IComponentInstance[];
   overrides?: { [variantProp: string]: string[] };
-  children?: JSX.Element;
+  children?: React.ReactNode;
   renderPreviews: boolean;
   useReferences: boolean;
 }

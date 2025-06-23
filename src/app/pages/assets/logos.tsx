@@ -1,7 +1,7 @@
 import { FileArchive } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
@@ -56,9 +56,11 @@ const AssetsLogosPage = ({ content, menu, metadata, current, config }: Documenta
               </div>
             </div>
           </div>
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
           <hr />
         </div>
       </section>

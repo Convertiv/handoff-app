@@ -132,13 +132,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
       <div className="flex flex-col gap-3 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
-          <ReactMarkdown
-            className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300"
-            components={MarkdownComponents}
-            rehypePlugins={[rehypeRaw]}
-          >
-            {metadata.description}
-          </ReactMarkdown>
+          <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {metadata.description}
+            </ReactMarkdown>
+          </div>
           {/*<p className="">
              {component.tags &&
               Array.isArray(component.tags) &&

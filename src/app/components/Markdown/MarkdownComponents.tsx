@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
-import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
-
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
+//import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
+
 import bash from 'refractor/lang/bash';
 import { default as json, default as markdown } from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
@@ -23,13 +23,13 @@ SyntaxHighlighter.registerLanguage('html', html);
  * Custom renderer type that we support
  */
 export type CustomRenderers = {
-  code: (props: CodeProps) => ReactElement;
-  h1: (props: HeadingProps) => ReactElement;
-  h2: (props: HeadingProps) => ReactElement;
-  h3: (props: HeadingProps) => ReactElement;
-  h4: (props: HeadingProps) => ReactElement;
-  h5: (props: HeadingProps) => ReactElement;
-  h6: (props: HeadingProps) => ReactElement;
+  code: (props: any) => ReactElement;
+  h1: (props: any) => ReactElement;
+  h2: (props: any) => ReactElement;
+  h3: (props: any) => ReactElement;
+  h4: (props: any) => ReactElement;
+  h5: (props: any) => ReactElement;
+  h6: (props: any) => ReactElement;
   paragraph: (props: { children: React.ReactNode }) => ReactElement;
 };
 
@@ -38,7 +38,7 @@ export type CustomRenderers = {
  * @param param0
  * @returns
  */
-const Headings = ({ level, children }: HeadingProps) => {
+const Headings = ({ level, children }: any) => {
   // Access actual (string) value of heading
   if (children[0]) {
     const heading = children[0];
@@ -53,7 +53,7 @@ const Headings = ({ level, children }: HeadingProps) => {
     anchor = anchor.replace(/ /g, '-');
 
     // Utility
-    const container = (children: React.ReactNode): JSX.Element => (
+    const container = (children: React.ReactNode): React.ReactNode => (
       <>
         {children}
         <a id={anchor} href={`#${anchor}`} className="doc-link" onClick={(e) => console.log(e)}></a>

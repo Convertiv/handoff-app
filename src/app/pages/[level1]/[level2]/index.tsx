@@ -1,6 +1,6 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
@@ -77,9 +77,11 @@ export default function DocSubPage({ content, menu, metadata, current, config }:
                 <p>{metadata.description}</p>
               </div>
             </div>
-            <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-              {content}
-            </ReactMarkdown>
+            <div className="prose">
+              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+                {content}
+              </ReactMarkdown>
+            </div>
           </div>
         </section>
         <Footer config={config} />
