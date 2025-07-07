@@ -230,10 +230,6 @@ export default function Layout(props) {
         metaDescription: "${metaDescription}",
         metaTitle: "${metaTitle}",
         title: "${title}",
-        weight: ${weight},
-        image: "${image}",
-        menuTitle: "${menuTitle}",
-        enabled: ${enabled},
       }}
       wide={${wide}}
       config={props.config}
