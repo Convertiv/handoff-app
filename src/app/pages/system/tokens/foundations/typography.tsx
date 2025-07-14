@@ -9,13 +9,7 @@ import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComp
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableRow } from '../../../../components/ui/table';
-import {
-  fetchComponents,
-  fetchDocPageMarkdown,
-  FoundationDocumentationProps,
-  getClientRuntimeConfig,
-  getTokens,
-} from '../../../../components/util';
+import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -27,7 +21,6 @@ import {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
   const config = getClientRuntimeConfig();
   return {
     ...{

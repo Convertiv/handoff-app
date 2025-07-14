@@ -26,7 +26,7 @@ import { filterOutNull } from '../../../../../lib/utils';
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchComponents().map((exportable) => ({ params: { component: exportable.id } })),
+    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -36,8 +36,6 @@ export const getStaticProps = async (context) => {
   // get previews for components on this page
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = await fetchComponents().filter((c) => c.id === component)[0];
-
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
 

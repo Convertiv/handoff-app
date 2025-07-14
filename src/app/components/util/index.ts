@@ -493,7 +493,7 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   try {
     return items;
   } catch (e) {
-    return [];
+    return null;
   }
 };
 

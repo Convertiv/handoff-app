@@ -29,7 +29,7 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
+  const components = fetchComponents()?.map((c) => c.id) ?? [];
   const config = getClientRuntimeConfig();
   return {
     ...{
