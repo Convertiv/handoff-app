@@ -89,11 +89,11 @@ function processComponents(handoff, id, segmentToProcess) {
             }
             const versions = Object.keys(runtimeComponents[runtimeComponentId]);
             const latest = (0, versions_1.getLatestVersionForComponent)(versions);
-            let latestVersion = undefined;
+            let latestVersion;
             yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
                 var _a, _b;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
-                let { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
+                const { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
                 let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
                 if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, javascript_1.default)(data, handoff);
@@ -104,11 +104,9 @@ function processComponents(handoff, id, segmentToProcess) {
                 if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, html_1.default)(data, handoff, components);
                 }
-                if (segmentToProcess === ComponentSegment.Validation) {
-                    if (((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent) && data) {
-                        const validationResults = yield handoff.config.hooks.validateComponent(data);
-                        data.validations = validationResults;
-                    }
+                if (segmentToProcess === ComponentSegment.Validation && ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent)) {
+                    const validationResults = yield handoff.config.hooks.validateComponent(data);
+                    data.validations = validationResults;
                 }
                 data.sharedStyles = sharedStyles;
                 yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, true);
@@ -120,13 +118,14 @@ function processComponents(handoff, id, segmentToProcess) {
                 yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, true);
                 const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
                 yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
-                yield (0, api_1.updateComponentSummaryApi)(handoff, summary);
                 result.push(summary);
             }
             else {
                 throw new Error(`No latest version found for ${runtimeComponentId}`);
             }
         }
+        // Always merge and write summary file, even if no components processed
+        yield (0, api_1.updateComponentSummaryApi)(handoff, result);
         return result;
     });
 }

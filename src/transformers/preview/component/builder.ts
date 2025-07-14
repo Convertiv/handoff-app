@@ -61,7 +61,6 @@ export async function processComponents(
 
   const components = (await handoff.getDocumentationObject()).components;
   const sharedStyles = await handoff.getSharedStyles();
-
   const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
 
   for (const runtimeComponentId of Object.keys(runtimeComponents)) {
@@ -71,12 +70,13 @@ export async function processComponents(
 
     const versions = Object.keys(runtimeComponents[runtimeComponentId]);
     const latest = getLatestVersionForComponent(versions);
-    let latestVersion: TransformComponentTokensResult | undefined = undefined;
+    let latestVersion: TransformComponentTokensResult | undefined;
 
     await Promise.all(
       versions.map(async (version) => {
         const runtimeComponent = runtimeComponents[runtimeComponentId][version];
-        let { type, ...restMetadata } = runtimeComponent;
+        const { type, ...restMetadata } = runtimeComponent;
+
         let data: TransformComponentTokensResult = {
           ...defaultComponent,
           ...restMetadata,
@@ -94,11 +94,9 @@ export async function processComponents(
           data = await buildPreviews(data, handoff, components);
         }
 
-        if (segmentToProcess === ComponentSegment.Validation) {
-          if (handoff.config?.hooks?.validateComponent && data) {
-            const validationResults = await handoff.config.hooks.validateComponent(data);
-            data.validations = validationResults;
-          }
+        if (segmentToProcess === ComponentSegment.Validation && handoff.config?.hooks?.validateComponent) {
+          const validationResults = await handoff.config.hooks.validateComponent(data);
+          data.validations = validationResults;
         }
 
         data.sharedStyles = sharedStyles;
@@ -115,12 +113,14 @@ export async function processComponents(
       await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, true);
       const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
-      await updateComponentSummaryApi(handoff, summary);
       result.push(summary);
     } else {
       throw new Error(`No latest version found for ${runtimeComponentId}`);
     }
   }
+
+  // Always merge and write summary file, even if no components processed
+  await updateComponentSummaryApi(handoff, result);
 
   return result;
 }
