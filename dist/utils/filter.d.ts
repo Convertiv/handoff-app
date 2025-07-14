@@ -1,15 +1,15 @@
-export declare type Operator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in' | 'nin';
+export type Operator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in' | 'nin';
 export interface FieldFilter {
     field: string;
     op: Operator;
     value: any;
 }
-export declare type LogicalFilter = {
+export type LogicalFilter = {
     and?: Filter[];
     or?: Filter[];
     not?: Filter;
 };
-export declare type Filter = LogicalFilter | FieldFilter[];
+export type Filter = LogicalFilter | FieldFilter[];
 interface FilterResult {
     matches: boolean;
     order?: number;

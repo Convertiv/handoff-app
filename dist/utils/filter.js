@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterAndSort = exports.evaluateFilter = void 0;
+exports.evaluateFilter = evaluateFilter;
+exports.filterAndSort = filterAndSort;
 /**
  * Evaluates a filter against an object
  * @param obj The object to evaluate the filter against
@@ -44,7 +45,6 @@ function evaluateFilter(obj, filter) {
     }
     return { matches: false };
 }
-exports.evaluateFilter = evaluateFilter;
 /**
  * Evaluates a single field filter against an object
  * @param obj The object to evaluate the filter against
@@ -104,4 +104,3 @@ function filterAndSort(items, filter) {
     })
         .map(({ item }) => item);
 }
-exports.filterAndSort = filterAndSort;
