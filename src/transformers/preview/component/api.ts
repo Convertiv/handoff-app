@@ -78,22 +78,29 @@ export const writeComponentMetadataApi = async (id: string, summary: ComponentLi
  * @param handoff
  * @param componentData
  */
-export const updateComponentSummaryApi = async (handoff: Handoff, componentData: ComponentListObject) => {
-  const apiPath = path.resolve(handoff.workingPath, `public/api/components.json`);
-  let newComponentData = [componentData as ComponentListObject],
-    existingData: ComponentListObject[] = [];
+export const updateComponentSummaryApi = async (
+  handoff: Handoff,
+  componentData: ComponentListObject[] // Partial list (may be empty)
+) => {
+  const apiPath = path.resolve(handoff.workingPath, 'public/api/components.json');
+  let existingData: ComponentListObject[] = [];
+
   if (fs.existsSync(apiPath)) {
-    const existing = await fs.readFile(apiPath, 'utf8');
-    if (existing) {
-      try {
-        existingData = JSON.parse(existing);
-        existingData = existingData.filter((component) => component.id !== componentData.id);
-      } catch (_) {
-        // Unable to parse existing file
-      }
+    try {
+      const existing = await fs.readFile(apiPath, 'utf8');
+      existingData = JSON.parse(existing);
+    } catch {
+      // Corrupt or missing JSON — treat as empty
+      existingData = [];
     }
   }
-  await writeComponentSummaryAPI(handoff, newComponentData.concat(existingData));
+
+  // Replace existing entries with same ID
+  const incomingIds = new Set(componentData.map((c) => c.id));
+  const merged = [...componentData, ...existingData.filter((c) => !incomingIds.has(c.id))];
+
+  // Always write the file (even if merged is empty)
+  await writeComponentSummaryAPI(handoff, merged);
 };
 
 export default writeComponentSummaryAPI;

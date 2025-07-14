@@ -14,5 +14,5 @@ export declare const writeComponentMetadataApi: (id: string, summary: ComponentL
  * @param handoff
  * @param componentData
  */
-export declare const updateComponentSummaryApi: (handoff: Handoff, componentData: ComponentListObject) => Promise<void>;
+export declare const updateComponentSummaryApi: (handoff: Handoff, componentData: ComponentListObject[]) => Promise<void>;
 export default writeComponentSummaryAPI;
