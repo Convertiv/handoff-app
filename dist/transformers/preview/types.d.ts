@@ -6,7 +6,7 @@ export declare enum ComponentType {
     Navigation = "navigation",
     Utility = "utility"
 }
-export declare type ComponentListObject = {
+export type ComponentListObject = {
     id?: string;
     version: string;
     image: string;
@@ -48,7 +48,7 @@ export declare type ComponentListObject = {
         };
     };
 };
-export declare type TransformComponentTokensResult = {
+export type TransformComponentTokensResult = {
     id: string;
     source?: 'figma' | 'custom';
     type?: ComponentType;
@@ -59,6 +59,7 @@ export declare type TransformComponentTokensResult = {
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
+    format: string;
     code: string;
     html?: string;
     preview: string;
@@ -79,6 +80,7 @@ export declare type TransformComponentTokensResult = {
         js?: string;
         scss?: string;
         template?: string;
+        schema?: string;
     };
     options?: {
         preview?: {
@@ -91,7 +93,7 @@ export declare type TransformComponentTokensResult = {
      */
     validations?: Record<string, ValidationResult>;
 } | null;
-export declare type OptionalPreviewRender = {
+export type OptionalPreviewRender = {
     title: string;
     values: {
         [key: string]: string | string[] | any;

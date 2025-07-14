@@ -1,5 +1,7 @@
+import { BuildOptions } from 'esbuild';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
+import { SlotMetadata } from '../transformers/preview/component';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from '../types';
 
@@ -50,7 +52,7 @@ export interface Breakpoints {
   desktop: { size: number; name: string };
 }
 
-interface NextAppConfig {
+export interface NextAppConfig {
   theme?: string;
   title: string;
   client: string;
@@ -62,6 +64,10 @@ interface NextAppConfig {
   component_sort: string[];
   base_path: string;
   attribution: boolean;
+  ports?: {
+    app: number;
+    websocket: number;
+  };
 }
 
 export interface Config {
@@ -136,6 +142,52 @@ export interface Config {
      * ```
      */
     validateComponent?: (component: TransformComponentTokensResult) => Promise<Record<string, ValidationResult>>;
+
+    /**
+     * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
+     * @param config - The default esbuild configuration
+     * @returns Modified esbuild configuration
+     * @example
+     * ```typescript
+     * ssrBuildConfig: (config) => {
+     *   ... // Modify the esbuild config as needed
+     *   return config;
+     * }
+     * ```
+     */
+    ssrBuildConfig?: (config: BuildOptions) => BuildOptions;
+
+    /**
+     * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
+     * @param config - The default esbuild configuration
+     * @returns Modified esbuild configuration
+     * @example
+     * ```typescript
+     * clientBuildConfig: (config) => {
+     *   ... // Modify the esbuild config as needed
+     *   return config;
+     * }
+     * ```
+     */
+    clientBuildConfig?: (config: BuildOptions) => BuildOptions;
+
+    /**
+     * Optional hook to specify which export property contains the schema
+     * @param exports - The module exports object containing the schema
+     * @returns The schema object from the exports
+     * @example
+     * ```typescript
+     * getSchemaFromExports: (exports) => exports.customSchema || exports.default
+     * ```
+     */
+    getSchemaFromExports?: (exports: any) => any;
+
+    /**
+     * Optional hook to transform the schema into properties
+     * @param schema - The schema object to transform
+     * @returns The transformed properties object
+     */
+    schemaToProperties?: (schema: any) => { [key: string]: SlotMetadata };
 
     /**
      * Optional hook to override the JavaScript Vite configuration

@@ -42,7 +42,7 @@ const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, v
     componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
-const writeComponentApi = (id, component, version, handoff, isPartialUpdate = false) => __awaiter(void 0, void 0, void 0, function* () {
+const writeComponentApi = (id_1, component_1, version_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, version_1, handoff_1, ...args_1], void 0, function* (id, component, version, handoff, isPartialUpdate = false) {
     const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
     if (isPartialUpdate) {
         const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);

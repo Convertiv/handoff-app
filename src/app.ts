@@ -1,20 +1,85 @@
 import chalk from 'chalk';
 import chokidar from 'chokidar';
+import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import matter from 'gray-matter';
 import { createServer } from 'http';
 import next from 'next';
-import { nextBuild } from 'next/dist/cli/next-build';
-import { nextDev } from 'next/dist/cli/next-dev';
 import path from 'path';
 import { parse } from 'url';
+import WebSocket from 'ws';
 import Handoff from '.';
 import { getClientConfig } from './config';
 import { buildComponents } from './pipeline';
-import { createWebSocketServer } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
 
+interface ExtWebSocket extends WebSocket {
+  isAlive: boolean;
+}
+
+/**
+ * Creates a WebSocket server that broadcasts messages to connected clients.
+ * Designed for development mode to help with hot-reloading.
+ *
+ * @param port - Optional port number for the WebSocket server; defaults to 3001.
+ * @returns A function that accepts a message string and broadcasts it to all connected clients.
+ */
+const createWebSocketServer = async (port: number = 3001) => {
+  const wss = new WebSocket.Server({ port });
+
+  // Heartbeat function to mark a connection as alive.
+  const heartbeat = function (this: ExtWebSocket) {
+    this.isAlive = true;
+  };
+
+  // Setup a new connection
+  wss.on('connection', (ws) => {
+    const extWs = ws as ExtWebSocket;
+    extWs.isAlive = true;
+    extWs.send(JSON.stringify({ type: 'WELCOME' }));
+    extWs.on('error', (error) => console.error('WebSocket error:', error));
+    extWs.on('pong', heartbeat);
+  });
+
+  // Periodically ping clients to ensure they are still connected
+  const pingInterval = setInterval(() => {
+    wss.clients.forEach((client) => {
+      const extWs = client as ExtWebSocket;
+      if (!extWs.isAlive) {
+        console.log(chalk.yellow('Terminating inactive client'));
+        return client.terminate();
+      }
+      extWs.isAlive = false;
+      client.ping();
+    });
+  }, 30000);
+
+  // Clean up the interval when the server closes
+  wss.on('close', () => {
+    clearInterval(pingInterval);
+  });
+
+  console.log(chalk.green(`WebSocket server started on ws://localhost:${port}`));
+
+  // Return a function to broadcast a message to all connected clients
+  return (message: string) => {
+    console.log(chalk.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  };
+};
+
+/**
+ * Gets the working public directory path for a given handoff instance
+ * Checks for both project-specific and default public directories
+ *
+ * @param handoff - The handoff instance containing working path and figma project configuration
+ * @returns The resolved path to the public directory if it exists, null otherwise
+ */
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
     path.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
@@ -30,6 +95,11 @@ const getWorkingPublicPath = (handoff: Handoff): string | null => {
   return null;
 };
 
+/**
+ * Gets the application path for a given handoff instance
+ * @param handoff - The handoff instance containing module path and figma project configuration
+ * @returns The resolved path to the application directory
+ */
 const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
@@ -47,10 +117,10 @@ const mergePublicDir = async (handoff: Handoff): Promise<void> => {
 };
 
 /**
- * Copy the mdx files from the working dir to the module dir
+ * Publish the mdx files from the working dir to the module dir
  * @param handoff
  */
-const mergeMDX = async (handoff: Handoff): Promise<void> => {
+const publishMDX = async (handoff: Handoff): Promise<void> => {
   console.log(chalk.yellow('Merging MDX files...'));
   const appPath = getAppPath(handoff);
   const pages = path.resolve(handoff.workingPath, `pages`);
@@ -100,9 +170,7 @@ const mergeMDX = async (handoff: Handoff): Promise<void> => {
 const transformMdx = (src: string, dest: string, id: string) => {
   const content = fs.readFileSync(src);
   const { data, content: body } = matter(content);
-  let mdx = body;
   const title = data.title ?? '';
-  const menu = data.menu ?? '';
   const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
   const metaDescription = data.metaDescription ?? '';
   const metaTitle = data.metaTitle ?? '';
@@ -111,18 +179,33 @@ const transformMdx = (src: string, dest: string, id: string) => {
   const menuTitle = data.menuTitle ?? '';
   const enabled = data.enabled ?? true;
   const wide = data.wide ? 'true' : 'false';
-  //
-  mdx = `
-\n\n${mdx}\n\n
-import {staticBuildMenu, getCurrentSection} from "@handoff/app/components/util";
-import { getClientConfig } from '@handoff/config';
-import { getPreview } from "@handoff/app/components/util";
 
-export const getStaticProps = async () => {
+  const mdxHeader = `// This file is auto-generated by transformMdx(). Do not edit manually.
+// Source: ${src}
+// Generated at: ${new Date().toISOString()}
+
+`;
+
+  const mdx = `${mdxHeader}import { getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '@handoff/app/components/util';
+import fs from 'fs-extra';
+import matter from 'gray-matter';
+import { MDXRemote } from 'next-mdx-remote';
+import { serialize } from 'next-mdx-remote/serialize';
+import path from 'path';
+
+export async function getStaticProps() {
+  const mdxFilePath = path.join(process.env.HANDOFF_WORKING_PATH, 'pages', '${id}.mdx');
+  const mdxSource = fs.readFileSync(mdxFilePath, 'utf8');
+
+  const { data, content: body } = matter(mdxSource); // extract frontmatter and body
+  const mdx = await serialize(body); // serialize only the body
+
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
+
   return {
     props: {
+      mdx,
       menu,
       config,
       current: getCurrentSection(menu, "/${id}") ?? [],
@@ -131,13 +214,13 @@ export const getStaticProps = async () => {
       image: "${image}",
     },
   };
-};
-
-export const preview = (name) => {
-  return previews.components[name];
-};
+}
 
 import MarkdownLayout from "@handoff/app/components/Layout/Markdown";
+import { Hero } from "@handoff/app/components/Hero";
+
+const components = { Hero };
+
 export default function Layout(props) {
   return (
     <MarkdownLayout
@@ -147,23 +230,25 @@ export default function Layout(props) {
         metaDescription: "${metaDescription}",
         metaTitle: "${metaTitle}",
         title: "${title}",
-        weight: ${weight},
-        image: "${image}",
-        menuTitle: "${menuTitle}",
-        enabled: ${enabled},
       }}
       wide={${wide}}
       config={props.config}
       current={props.current}
     >
-      {props.children}
+      <MDXRemote {...props.mdx} components={components} />
     </MarkdownLayout>
   );
-
 }`;
-  fs.writeFileSync(dest, mdx, 'utf-8');
+  fs.writeFileSync(dest.replaceAll('.mdx', '.tsx'), mdx, 'utf-8');
 };
 
+/**
+ * Performs cleanup of the application directory by removing the existing app directory if it exists.
+ * This is typically used before rebuilding the application to ensure a clean state.
+ *
+ * @param handoff - The Handoff instance containing configuration and working paths
+ * @returns Promise that resolves when cleanup is complete
+ */
 const performCleanup = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
 
@@ -207,7 +292,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   await fs.promises.mkdir(appPath, { recursive: true });
   await fs.copy(srcPath, appPath, { overwrite: true });
   await mergePublicDir(handoff);
-  await mergeMDX(handoff);
+  await publishMDX(handoff);
 
   // Prepare project app configuration
   const handoffProjectId = handoff.config.figma_project_id ?? '';
@@ -217,6 +302,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const handoffUseReferences = handoff.config.useVariables ?? false;
+  const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
     .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -224,7 +310,7 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
     .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-    .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
+    .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
@@ -258,17 +344,22 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   persistRuntimeCache(handoff);
 
   // Build app
-  await nextBuild(
-    {
-      lint: true,
-      mangling: true,
-      experimentalDebugMemoryUsage: false,
-      experimentalAppOnly: false,
-      experimentalTurbo: false,
-      experimentalBuildMode: 'default',
+  const buildResult = spawn.sync('npx', ['next', 'build'], {
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
     },
-    appPath
-  );
+  });
+
+  if (buildResult.status !== 0) {
+    let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
+    if (buildResult.error) {
+      errorMsg += `\nSpawn error: ${buildResult.error.message}`;
+    }
+    throw new Error(errorMsg);
+  }
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -327,7 +418,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   // };
   const dev = true;
   const hostname = 'localhost';
-  const port = 3000;
+  const port = handoff.config.app.ports?.app ?? 3000;
   // when using middleware `hostname` and `port` must be provided below
   const app = next({
     dev,
@@ -369,7 +460,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       });
   });
 
-  const wss = await createWebSocketServer(3001);
+  const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -557,7 +648,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'change':
         case 'unlink':
           if (path.endsWith('.mdx')) {
-            mergeMDX(handoff);
+            publishMDX(handoff);
           }
           console.log(chalk.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
           break;
@@ -584,8 +675,25 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
     fs.removeSync(moduleOutput);
   }
 
+  persistRuntimeCache(handoff);
+
   // Run
-  return await nextDev({ port: 3000 }, 'cli', appPath);
+  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+    },
+  });
+
+  if (devResult.status !== 0) {
+    let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
+    if (devResult.error) {
+      errorMsg += `\nSpawn error: ${devResult.error.message}`;
+    }
+    throw new Error(errorMsg);
+  }
 };
 
 export default buildApp;

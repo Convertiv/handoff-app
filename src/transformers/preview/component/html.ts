@@ -1,8 +1,9 @@
+import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff from '../../../index';
 import viteBaseConfig from '../../config';
-import { handlebarsPreviewsPlugin } from '../../plugins';
+import { handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
@@ -27,6 +28,12 @@ export const buildPreviews = async (
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
+  const plugins = [
+    ...(viteBaseConfig.plugins || []),
+    ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
+    ...(data.entries.template.includes('.tsx') ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
+  ];
+
   // Store the current NODE_ENV value before vite build
   // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
   // which can cause issues with subsequent Next.js operations that rely on
@@ -36,16 +43,14 @@ export const buildPreviews = async (
   try {
     let viteConfig: InlineConfig = {
       ...viteBaseConfig,
+      plugins,
       build: {
         outDir: getComponentOutputPath(handoff),
         emptyOutDir: false,
         rollupOptions: {
-          input: {
-            script: 'script',
-          },
+          input: { script: 'script' },
         },
       },
-      plugins: [...(viteBaseConfig.plugins || []), handlebarsPreviewsPlugin(data, components)],
     };
 
     // Allow configuration to be modified through hooks

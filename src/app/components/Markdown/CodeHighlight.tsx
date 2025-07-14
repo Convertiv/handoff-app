@@ -5,6 +5,7 @@ import js from 'refractor/lang/javascript';
 import json from 'refractor/lang/json';
 import sass from 'refractor/lang/sass';
 import scss from 'refractor/lang/scss';
+import tsx from 'refractor/lang/tsx';
 import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
@@ -24,7 +25,7 @@ SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('sass', sass);
 SyntaxHighlighter.registerLanguage('scss', scss);
-
+SyntaxHighlighter.registerLanguage('tsx', tsx);
 /**
  * Highlight code for preview elements
  * @param param0
@@ -57,6 +58,7 @@ export const CodeHighlight: React.FC<{
       preview: '',
       html: '',
       code: '',
+      format: 'html',
     };
   } else if (typeof data === 'string') {
     data = data = {
@@ -73,6 +75,7 @@ export const CodeHighlight: React.FC<{
       preview: '',
       html: data,
       code: data,
+      format: 'html',
     };
   }
   if (!type) type = 'html';
@@ -86,7 +89,7 @@ export const CodeHighlight: React.FC<{
           'image',
           'categories',
           'title',
-          'code',
+          'format',
           'description',
           'type',
           'group',
@@ -99,6 +102,7 @@ export const CodeHighlight: React.FC<{
         ].indexOf(key) === -1
     )
     .map((key) => key);
+  console.log(states);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
@@ -111,6 +115,24 @@ export const CodeHighlight: React.FC<{
     Handlebars.registerHelper('field', (_, options) => options.fn(this));
   });
 
+  const labels = {
+    code: 'Code',
+    html: 'HTML',
+    css: 'CSS',
+    js: 'Javascript',
+    sass: 'SASS',
+    sharedStyles: 'Shared CSS',
+  };
+  const getLabel = (state: string) => {
+    if (state === 'code' && typeof data === 'object' && data.format === 'react') return 'React';
+    return labels[state] || state;
+  };
+
+  const language = (activeState: string) => {
+    if (typeof data === 'object' && 'code' in data && !!data.code && activeState === 'code' && data.format === 'react') return 'tsx';
+    return activeState === 'html' ? type : activeState;
+  };
+
   useEffect(() => {
     // check if data is a string
     if (typeof data === 'string') {
@@ -118,14 +140,14 @@ export const CodeHighlight: React.FC<{
       return;
     }
 
-    // check if data is an object with an html key
-    if ('html' in data && !!data.html) {
-      setCode(data.html);
+    if ('code' in data && !!data.code) {
+      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
       return;
     }
 
-    if ('code' in data && !!data.code) {
-      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
+    // check if data is an object with an html key
+    if ('html' in data && !!data.html) {
+      setCode(data.html);
       return;
     }
   }, [currentValues, data]);
@@ -146,38 +168,24 @@ export const CodeHighlight: React.FC<{
                 if (typeof data === 'string') {
                   setCode(data);
                   return;
-                } else if (key === 'html') {
-                  if ('html' in data && !!data.html) {
-                    setCode(data.html);
-                  } else {
-                    setCode(Handlebars.compile(data.code)({ properties: currentValues }));
-                  }
                 } else {
                   setCode(data[key]);
                 }
               }}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Breakpoint" />
+                <SelectValue placeholder="Code View" />
               </SelectTrigger>
               <SelectContent>
                 {states
-                  .filter((value) => ['html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
-                  .map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state === 'html'
-                        ? 'HTML'
-                        : state === 'css'
-                          ? 'CSS'
-                          : state === 'js'
-                            ? 'Javascript'
-                            : state === 'sass'
-                              ? 'SASS'
-                              : state === 'sharedStyles'
-                                ? 'Shared CSS'
-                                : state}
-                    </SelectItem>
-                  ))}
+                  .filter((value) => ['code', 'html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                  .map((state) => {
+                    return (
+                      <SelectItem key={state} value={state}>
+                        {getLabel(state)}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           )}
@@ -188,7 +196,7 @@ export const CodeHighlight: React.FC<{
 
       <SyntaxHighlighter
         style={theme}
-        language={activeState === 'html' ? type : activeState}
+        language={language(activeState)}
         PreTag="div"
         showLineNumbers={true}
         wrapLines={true}

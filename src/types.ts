@@ -56,6 +56,7 @@ export interface PreviewObject {
   properties?: { [key: string]: SlotMetadata };
   code: string;
   html?: string;
+  format: string;
   variant?: Record<string, string>;
   options?: {
     preview?: {

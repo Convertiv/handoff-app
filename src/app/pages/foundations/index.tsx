@@ -32,9 +32,11 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
-      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
+      <div className="prose">
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
+      </div>
       <div>
         <CardsWithIcons
           items={[

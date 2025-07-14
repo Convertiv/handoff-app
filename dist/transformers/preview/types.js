@@ -7,4 +7,4 @@ var ComponentType;
     ComponentType["Block"] = "block";
     ComponentType["Navigation"] = "navigation";
     ComponentType["Utility"] = "utility";
-})(ComponentType = exports.ComponentType || (exports.ComponentType = {}));
+})(ComponentType || (exports.ComponentType = ComponentType = {}));

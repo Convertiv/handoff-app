@@ -191,9 +191,11 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           </Link>
         </div>
         <hr />
-        <ReactMarkdown className="prose mt-16 hidden" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
+        <div className="prose mt-16 hidden">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
       <Footer config={config} />
     </Layout>

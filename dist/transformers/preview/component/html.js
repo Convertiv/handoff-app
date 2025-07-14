@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildPreviews = void 0;
+const plugin_react_1 = __importDefault(require("@vitejs/plugin-react"));
 const vite_1 = require("vite");
 const config_1 = __importDefault(require("../../config"));
 const plugins_1 = require("../../plugins");
@@ -35,21 +36,24 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     var _a, _b, _c;
     if (!((_a = data.entries) === null || _a === void 0 ? void 0 : _a.template))
         return data;
+    const plugins = [
+        ...(config_1.default.plugins || []),
+        ...(data.entries.template.includes('.hbs') ? [(0, plugins_1.handlebarsPreviewsPlugin)(data, components, handoff)] : []),
+        ...(data.entries.template.includes('.tsx') ? [(0, plugin_react_1.default)(), (0, plugins_1.ssrRenderPlugin)(data, components, handoff)] : []),
+    ];
     // Store the current NODE_ENV value before vite build
     // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
     // which can cause issues with subsequent Next.js operations that rely on
     // the original NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
-        let viteConfig = Object.assign(Object.assign({}, config_1.default), { build: {
+        let viteConfig = Object.assign(Object.assign({}, config_1.default), { plugins, build: {
                 outDir: (0, component_1.getComponentOutputPath)(handoff),
                 emptyOutDir: false,
                 rollupOptions: {
-                    input: {
-                        script: 'script',
-                    },
+                    input: { script: 'script' },
                 },
-            }, plugins: [...(config_1.default.plugins || []), (0, plugins_1.handlebarsPreviewsPlugin)(data, components)] });
+            } });
         // Allow configuration to be modified through hooks
         if ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.htmlBuildConfig) {
             viteConfig = handoff.config.hooks.htmlBuildConfig(viteConfig);

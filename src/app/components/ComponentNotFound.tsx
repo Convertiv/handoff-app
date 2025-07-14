@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Footer from './Footer';
 import * as util from './util';
 export interface ComponentNotFoundProps extends util.DocumentationProps {
-  children?: JSX.Element;
+  children?: React.ReactNode;
 }
 export const ComponentNotFound: React.FC<ComponentNotFoundProps> = ({ metadata, menu, current, children, config }) => {
   return (

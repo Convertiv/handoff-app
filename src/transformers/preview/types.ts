@@ -54,6 +54,7 @@ export type TransformComponentTokensResult = {
   tags?: string[];
   should_do?: string[];
   should_not_do?: string[];
+  format: string;
   code: string;
   html?: string;
   preview: string;
@@ -70,6 +71,7 @@ export type TransformComponentTokensResult = {
     js?: string;
     scss?: string;
     template?: string;
+    schema?: string;
   };
   options?: {
     preview?: {

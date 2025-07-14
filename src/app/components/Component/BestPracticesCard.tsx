@@ -1,5 +1,6 @@
 import { PreviewObject } from '@handoff/types';
 import { Check, X } from 'lucide-react';
+import React from 'react';
 
 const PracticeLine: React.FC<{ rule: string; yes: boolean }> = ({ rule, yes }) => (
   <li className="flex items-start gap-3">

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import 'dotenv/config';
 import { Types as HandoffTypes } from 'handoff-core';
 import * as stream from 'node:stream';

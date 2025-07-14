@@ -418,8 +418,8 @@ const initIntegrationObject = (handoff) => {
     const result = {
         options: {},
         entries: {
-            integration: undefined,
-            bundle: undefined,
+            integration: undefined, // scss
+            bundle: undefined, // js
             components: {},
         },
     };
@@ -554,13 +554,7 @@ const getVersionsForComponent = (componentPath) => {
         // and each directory inside should be a version
         for (const versionDirectory of versionDirectories) {
             if (semver_1.default.valid(versionDirectory)) {
-                const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(componentPath, versionDirectory));
-                for (const versionFile of versionFiles) {
-                    if (versionFile.endsWith('.hbs')) {
-                        versions.push(versionDirectory);
-                        break;
-                    }
-                }
+                versions.push(versionDirectory);
             }
             else {
                 console.error(`Invalid version directory ${versionDirectory}`);

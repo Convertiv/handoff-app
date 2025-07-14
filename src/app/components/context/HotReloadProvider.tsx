@@ -14,7 +14,8 @@ export const HotReloadProvider = ({ connect, children }: { connect: boolean; chi
       return;
     }
 
-    const ws = new WebSocket('ws://localhost:3001');
+    const websocketPort = process.env.HANDOFF_WEBSOCKET_PORT || '3001';
+    const ws = new WebSocket(`ws://localhost:${websocketPort}`);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);

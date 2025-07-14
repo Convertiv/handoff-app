@@ -56,6 +56,7 @@ export interface PreviewObject {
     };
     code: string;
     html?: string;
+    format: string;
     variant?: Record<string, string>;
     options?: {
         preview?: {
@@ -68,7 +69,7 @@ export interface PreviewObject {
      */
     validations?: Record<string, ValidationResult>;
 }
-export declare type PreviewJson = {
+export type PreviewJson = {
     components: {
         [key in keyof CoreTypes.IDocumentationObject['components']]: PreviewObject[];
     };
@@ -84,7 +85,7 @@ export interface ComponentDocumentationOptions {
         };
     };
 }
-declare type ComponentViewFilterValue = string | string[] | {
+type ComponentViewFilterValue = string | string[] | {
     [value: string]: {
         [prop: string]: string;
     };

@@ -23,7 +23,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processComponents = exports.ComponentSegment = void 0;
+exports.ComponentSegment = void 0;
+exports.processComponents = processComponents;
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
@@ -53,6 +54,7 @@ const defaultComponent = {
     properties: {},
     code: '',
     html: '',
+    format: 'html',
     js: null,
     css: null,
     sass: null,
@@ -66,7 +68,7 @@ var ComponentSegment;
     ComponentSegment["Style"] = "style";
     ComponentSegment["Previews"] = "previews";
     ComponentSegment["Validation"] = "validation";
-})(ComponentSegment = exports.ComponentSegment || (exports.ComponentSegment = {}));
+})(ComponentSegment || (exports.ComponentSegment = ComponentSegment = {}));
 /**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
@@ -75,8 +77,8 @@ var ComponentSegment;
  * @returns Promise resolving to an array of processed components
  */
 function processComponents(handoff, id, segmentToProcess) {
-    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
         const result = [];
         const components = (yield handoff.getDocumentationObject()).components;
         const sharedStyles = yield handoff.getSharedStyles();
@@ -89,7 +91,7 @@ function processComponents(handoff, id, segmentToProcess) {
             const latest = (0, versions_1.getLatestVersionForComponent)(versions);
             let latestVersion = undefined;
             yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
-                var _d, _e;
+                var _a, _b;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
                 let { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
                 let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
@@ -103,7 +105,7 @@ function processComponents(handoff, id, segmentToProcess) {
                     data = yield (0, html_1.default)(data, handoff, components);
                 }
                 if (segmentToProcess === ComponentSegment.Validation) {
-                    if (((_e = (_d = handoff.config) === null || _d === void 0 ? void 0 : _d.hooks) === null || _e === void 0 ? void 0 : _e.validateComponent) && data) {
+                    if (((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent) && data) {
                         const validationResults = yield handoff.config.hooks.validateComponent(data);
                         data.validations = validationResults;
                     }
@@ -128,7 +130,6 @@ function processComponents(handoff, id, segmentToProcess) {
         return result;
     });
 }
-exports.processComponents = processComponents;
 /**
  * Build a summary for the component list
  * @param id

@@ -23,12 +23,8 @@ export interface Metadata {
   description: string;
   metaTitle: string;
   metaDescription: string;
-  image: string;
-  date: string;
-  tags: string[];
-  menu: string[];
-  enabled: boolean;
 }
+
 // Define what a section link looks like
 export interface SectionLink {
   title: string;
@@ -48,7 +44,7 @@ export interface SectionLink {
 // Documentation Page Properties
 export interface DocumentationProps {
   metadata: Metadata;
-  content: string;
+  content?: string;
   options?: ComponentDocumentationOptions;
   menu: SectionLink[];
   current: SectionLink;

@@ -114,10 +114,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
         </div>
       </div>
       <div className="mt-10">
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
         <APIComponentList components={components} />
       </div>
     </Layout>

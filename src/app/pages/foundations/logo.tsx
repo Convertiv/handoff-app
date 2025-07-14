@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../components/util';
 
 import { Download } from 'lucide-react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DisplayLogo } from '../../components/Foundations/DisplayLogo';
 import Layout from '../../components/Layout/Main';
@@ -72,10 +72,11 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
       </div>
       <hr />
       <hr />
-
-      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
+      <div className="prose">
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
+      </div>
     </Layout>
   );
 };
