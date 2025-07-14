@@ -1,6 +1,7 @@
 'use client';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
+import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -94,6 +95,12 @@ export const getStaticProps = async (context) => {
   };
 };
 
+function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter: Filter): Record<string, OptionalPreviewRender> {
+  return Object.fromEntries(
+    Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter))
+  );
+}
+
 const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -112,8 +119,13 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   useEffect(() => {
     if (!component) return;
 
+    let filteredPreviews = component.previews;
+    if (component.options?.preview?.filterBy) {
+      filteredPreviews = filterPreviews(component.previews, component.options.preview.filterBy);
+    }
+
     if (!!component.options?.preview?.groupBy) {
-      const groups = groupPreviewsByVariantProperty(component.previews, component.options.preview.groupBy);
+      const groups = groupPreviewsByVariantProperty(filteredPreviews, component.options.preview.groupBy);
       setComponentPreviews(
         groups.map(([group, previewObjects]) => [
           toTitleCase(`${group} ${id}`),
@@ -121,7 +133,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
         ])
       );
     } else {
-      setComponentPreviews(component);
+      setComponentPreviews({ ...component, previews: filteredPreviews });
     }
   }, [component, id]);
 
