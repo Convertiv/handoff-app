@@ -44,9 +44,7 @@ function groupVariantProperties(items: Record<string, string>[]): Record<string,
 }
 
 function filterPreviews(previews: Record<string, any>, filter: Filter): Record<string, any> {
-  return Object.fromEntries(
-    Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter))
-  );
+  return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
 }
 
 export const PreviewContext = createContext<IPreviewContext | undefined>(undefined);
@@ -92,27 +90,23 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   useEffect(() => {
     if (!preview) return;
 
+    if (!preview.options?.preview?.groupBy) return;
+
     let filteredPreviews = preview.previews;
     if (preview.options?.preview?.filterBy) {
       filteredPreviews = filterPreviews(preview.previews, preview.options.preview.filterBy);
     }
 
-    if (!preview.options?.preview?.groupBy) {
-      setVariants(groupVariantProperties(Object.values(filteredPreviews).map((p) => {
-        return Object.keys(p.values).reduce((acc, next) => {
-          acc[next] = p.values[next];
-          return acc;
-        }, {});
-      })));
-      return;
-    }
-
-    setVariants(groupVariantProperties(Object.values(filteredPreviews).map((p) => {
-      return Object.keys(p.values).reduce((acc, next) => {
-        acc[next] = p.values[next];
-        return acc;
-      }, {});
-    })));
+    setVariants(
+      groupVariantProperties(
+        Object.values(filteredPreviews).map((p) => {
+          return Object.keys(p.values).reduce((acc, next) => {
+            acc[next] = p.values[next];
+            return acc;
+          }, {});
+        })
+      )
+    );
   }, [preview]);
 
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
