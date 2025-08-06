@@ -3,16 +3,16 @@ import * as React from 'react';
 import { PreviewContextProvider } from '../context/PreviewContext';
 import { PageTOC } from '../Navigation/AnchorNav';
 import HeadersType from '../Typography/Headers';
-import { ComponentDocumentationProps } from '../util';
+import { DocumentationProps } from '../util';
 import Layout from './Main';
 
-interface MarkdownLayoutProps extends ComponentDocumentationProps {
+interface MarkdownLayoutProps extends DocumentationProps {
   children: React.ReactNode;
   wide?: boolean;
   allPreviews?: PreviewJson;
 }
 
-const MdxLayout = ({ menu, metadata, current, id, config, children, wide, allPreviews }: MarkdownLayoutProps) => {
+const MdxLayout = ({ menu, metadata, current, config, children }: MarkdownLayoutProps) => {
   if (!menu) menu = [];
   const ref = React.useRef<HTMLDivElement>(null);
   return (

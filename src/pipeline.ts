@@ -1,39 +1,18 @@
+import archiver from 'archiver';
 import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
-import { merge } from 'lodash';
+import { Types as HandoffTypes, Transformers } from 'handoff-core';
+import { sortedUniq } from 'lodash';
 import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '.';
-import { zipAssets } from './api';
 import buildApp from './app';
 import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
-import { getRequestCount } from './figma/api';
-import cssTransformer from './transformers/css/index';
-import fontTransformer from './transformers/font/index';
-import integrationTransformer, { getPathToIntegration } from './transformers/integration/index';
-import mapTransformer from './transformers/map';
 import { componentTransformer } from './transformers/preview/component';
-import previewTransformer from './transformers/preview/index';
-import scssTransformer, { scssTypesTransformer } from './transformers/scss/index';
-import sdTransformer from './transformers/sd';
-import { getTokenSetNameByProperty } from './transformers/tokens';
-import { DocumentationObject, LegacyComponentDefinition, LegacyComponentDefinitionOptions } from './types';
-import { ComponentIntegrationRecipe, ComponentIntegrations } from './types/recipes';
-import { filterOutNull, filterOutUndefined } from './utils';
-import { findFilesByExtension } from './utils/fs';
+import { FontFamily } from './types/font';
 import { maskPrompt, prompt } from './utils/prompt';
-
-let config;
-export const outputPath = (handoff: Handoff) =>
-  path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
-export const tokensFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens.json');
-export const previewFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'preview.json');
-export const changelogFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'changelog.json');
-export const variablesFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'tokens');
-export const iconsZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'icons.zip');
-export const logosZipFilePath = (handoff: Handoff) => path.join(outputPath(handoff), 'logos.zip');
 
 /**
  * Read Previous Json File
@@ -49,32 +28,92 @@ export const readPrevJSONFile = async (path: string) => {
 };
 
 /**
+ * Zips the contents of a directory and writes the resulting archive to a writable stream.
+ *
+ * @param dirPath - The path to the directory whose contents will be zipped.
+ * @param destination - A writable stream where the zip archive will be written.
+ * @returns A Promise that resolves with the destination stream when the archive has been finalized.
+ * @throws Will throw an error if the archiving process fails.
+ */
+const zip = async (dirPath: string, destination: stream.Writable): Promise<stream.Writable> => {
+  return new Promise((resolve, reject) => {
+    const archive = archiver('zip', {
+      zlib: { level: 9 },
+    });
+
+    // Set up event handlers
+    archive.on('error', reject);
+    destination.on('error', reject);
+
+    // When the destination closes, resolve the promise
+    destination.on('close', () => resolve(destination));
+
+    archive.pipe(destination);
+
+    fs.readdir(dirPath)
+      .then((fontDir) => {
+        for (const file of fontDir) {
+          const filePath = path.join(dirPath, file);
+          archive.append(fs.createReadStream(filePath), { name: path.basename(file) });
+        }
+        return archive.finalize();
+      })
+      .catch(reject);
+  });
+};
+
+export const zipAssets = async (assets: HandoffTypes.IAssetObject[], destination: stream.Writable) => {
+  const archive = archiver('zip', {
+    zlib: { level: 9 }, // Sets the compression level.
+  });
+
+  // good practice to catch this error explicitly
+  archive.on('error', function (err) {
+    throw err;
+  });
+
+  archive.pipe(destination);
+
+  assets.forEach((asset) => {
+    archive.append(asset.data, { name: asset.path });
+  });
+
+  await archive.finalize();
+
+  return destination;
+};
+
+/**
  * Build just the custom fonts
  * @param documentationObject
  * @returns
  */
-const buildCustomFonts = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  return await fontTransformer(handoff, documentationObject);
-};
+const buildCustomFonts = async (handoff: Handoff, documentationObject: HandoffTypes.IDocumentationObject) => {
+  const { localStyles } = documentationObject;
+  const fontLocation = path.join(handoff?.workingPath, 'fonts');
+  const families: FontFamily = localStyles.typography.reduce((result, current) => {
+    return {
+      ...result,
+      [current.values.fontFamily]: result[current.values.fontFamily]
+        ? // sorts and returns unique font weights
+          sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
+        : [current.values.fontWeight],
+    };
+  }, {} as FontFamily);
 
-/**
- * Build integration
- * @param documentationObject
- * @returns
- */
-const buildIntegration = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  await integrationTransformer(handoff, documentationObject);
-};
-
-/**
- * Build previews
- * @param documentationObject
- * @returns
- */
-const buildPreviews = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  await Promise.all([
-    previewTransformer(handoff, documentationObject).then((out) => fs.writeJSON(previewFilePath(handoff), out, { spaces: 2 })),
-  ]);
+  Object.keys(families).map(async (key) => {
+    const name = key.replace(/\s/g, '');
+    const fontDirName = path.join(fontLocation, name);
+    if (fs.existsSync(fontDirName)) {
+      const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
+      await zip(fontDirName, stream);
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
+      if (!fs.existsSync(fontsFolder)) {
+        fs.mkdirSync(fontsFolder);
+      }
+      fs.copySync(fontDirName, fontsFolder);
+    }
+  });
 };
 
 /**
@@ -83,110 +122,122 @@ const buildPreviews = async (handoff: Handoff, documentationObject: Documentatio
  * @returns
  */
 export const buildComponents = async (handoff: Handoff) => {
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
-  await Promise.all([componentTransformer(handoff, documentationObject.components)]);
+  await Promise.all([componentTransformer(handoff)]);
 };
 
 /**
  * Build only the styles pipeline
  * @param documentationObject
  */
-const buildStyles = async (handoff: Handoff, documentationObject: DocumentationObject) => {
-  let typeFiles = scssTypesTransformer(documentationObject, handoff.integrationObject);
-  typeFiles = handoff.hooks.typeTransformer(documentationObject, typeFiles);
-  let cssFiles = cssTransformer(documentationObject, handoff, handoff.integrationObject);
-  cssFiles = handoff.hooks.cssTransformer(documentationObject, cssFiles);
-  let scssFiles = scssTransformer(documentationObject, handoff, handoff.integrationObject);
-  scssFiles = handoff.hooks.scssTransformer(documentationObject, scssFiles);
-  let sdFiles = sdTransformer(documentationObject, handoff, handoff.integrationObject);
-  sdFiles = handoff.hooks.styleDictionaryTransformer(documentationObject, sdFiles);
-  let mapFiles = mapTransformer(documentationObject, handoff.integrationObject);
-  mapFiles = handoff.hooks.mapTransformer(documentationObject, mapFiles);
+const buildStyles = async (handoff: Handoff, documentationObject: HandoffTypes.IDocumentationObject) => {
+  // Core transformers that should always be included
+  const coreTransformers = [
+    {
+      transformer: Transformers.ScssTransformer,
+      outDir: 'sass',
+      format: 'scss',
+    },
+    {
+      transformer: Transformers.ScssTypesTransformer,
+      outDir: 'types',
+      format: 'scss',
+    },
+    {
+      transformer: Transformers.CssTransformer,
+      outDir: 'css',
+      format: 'css',
+    },
+  ];
 
-  await Promise.all([
-    fs
-      .ensureDir(variablesFilePath(handoff))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/types`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/css`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sass`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens`))
-      .then(() => fs.ensureDir(`${variablesFilePath(handoff)}/maps`))
-      .then(() =>
-        Promise.all(Object.entries(sdFiles.components).map(([name, _]) => fs.ensureDir(`${variablesFilePath(handoff)}/sd/tokens/${name}`)))
-      )
+  // Get user-configured transformers
+  const userTransformers = handoff.config?.pipeline?.transformers || [];
 
-      .then(() =>
-        Promise.all(
-          Object.entries(typeFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(typeFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/types/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(cssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(cssFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/css/${name}.css`, content))
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(scssFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sass/${name}.scss`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(sdFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}/${name}.tokens.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(sdFiles.design).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/sd/tokens/${name}.tokens.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.components).map(([name, content]) =>
-            fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content)
-          )
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.design).map(([name, content]) => fs.writeFile(`${variablesFilePath(handoff)}/maps/${name}.json`, content))
-        )
-      )
-      .then(() =>
-        Promise.all(
-          Object.entries(mapFiles.attachments).map(([name, content]) => fs.writeFile(`${outputPath(handoff)}/${name}.json`, content))
-        )
+  // Merge core transformers with user transformers
+  // If a user transformer matches a core transformer, use user's outDir and format
+  const transformers = coreTransformers.map((coreTransformer) => {
+    const userTransformer = userTransformers.find((t) => t.transformer === coreTransformer.transformer);
+    return userTransformer ? { ...coreTransformer, outDir: userTransformer.outDir, format: userTransformer.format } : coreTransformer;
+  });
+
+  // Add any additional user transformers that aren't core transformers
+  userTransformers.forEach((userTransformer) => {
+    if (!coreTransformers.some((core) => core.transformer === userTransformer.transformer)) {
+      transformers.push(userTransformer);
+    }
+  });
+
+  const baseDir = handoff.getVariablesFilePath();
+  const runner = await handoff.getRunner();
+
+  // Create transformer instances and transform documentation object
+  const transformedFiles = transformers.map(({ transformer }) => ({
+    transformer,
+    files: runner.transform(transformer({ useVariables: handoff.config?.useVariables }), documentationObject),
+  }));
+
+  // Ensure base directory exists
+  await fs.ensureDir(baseDir);
+
+  // Create all necessary subdirectories
+  const directories = transformers.map(({ outDir }) => path.join(baseDir, outDir));
+  await Promise.all(directories.map((dir) => fs.ensureDir(dir)));
+
+  // Special case for SD tokens components directory
+  const sdTransformer = transformers.find((t) => t.transformer === Transformers.StyleDictionaryTransformer);
+  if (sdTransformer) {
+    const sdFiles = transformedFiles.find((t) => t.transformer === Transformers.StyleDictionaryTransformer)?.files;
+    if (sdFiles?.components) {
+      await Promise.all(Object.keys(sdFiles.components).map((name) => fs.ensureDir(path.join(baseDir, sdTransformer.outDir, name))));
+    }
+  }
+
+  // Write all files
+  const writePromises = transformedFiles.flatMap(({ transformer: TransformerClass, files }) => {
+    const { outDir, format } = transformers.find((t) => t.transformer === TransformerClass) || {};
+    if (!outDir || !files) return [];
+
+    const componentPromises = Object.entries(files.components || {}).map(([name, content]) => {
+      const filePath =
+        TransformerClass === Transformers.StyleDictionaryTransformer
+          ? path.join(baseDir, outDir, name, `${name}.tokens.json`)
+          : path.join(baseDir, outDir, `${name}.${format}`);
+      return fs.writeFile(filePath, content);
+    });
+
+    const designPromises = Object.entries(files.design || {}).map(([name, content]) => {
+      const filePath =
+        TransformerClass === Transformers.StyleDictionaryTransformer
+          ? path.join(baseDir, outDir, `${name}.tokens.json`)
+          : path.join(baseDir, outDir, `${name}.${format}`);
+      return fs.writeFile(filePath, content);
+    });
+
+    return [...componentPromises, ...designPromises];
+  });
+
+  // Generate tokens-map.json
+  const mapFiles = transformedFiles.find((t) => t.transformer === Transformers.MapTransformer)?.files;
+  if (mapFiles) {
+    const tokensMapContent = JSON.stringify(
+      Object.entries(mapFiles.components || {}).reduce(
+        (acc, [_, data]) => ({
+          ...acc,
+          ...JSON.parse(data as string),
+        }),
+        {
+          ...JSON.parse(mapFiles.design.colors as string),
+          ...JSON.parse(mapFiles.design.typography as string),
+          ...JSON.parse(mapFiles.design.effects as string),
+        }
       ),
-  ]);
+      null,
+      2
+    );
+    writePromises.push(fs.writeFile(path.join(handoff.getOutputPath(), 'tokens-map.json'), tokensMapContent));
+  }
+
+  // Write all files
+  await Promise.all(writePromises);
 };
 
 const validateHandoffRequirements = async (handoff: Handoff) => {
@@ -296,171 +347,56 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
   handoff.config.figma_project_id = FIGMA_PROJECT_ID;
 };
 
-const figmaExtract = async (handoff: Handoff): Promise<DocumentationObject> => {
+const figmaExtract = async (handoff: Handoff) => {
   console.log(chalk.green(`Starting Figma data extraction.`));
-  let prevDocumentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
-  let changelog: ChangelogRecord[] = (await readPrevJSONFile(changelogFilePath(handoff))) || [];
-  await fs.emptyDir(outputPath(handoff));
-  const legacyDefinitions = await getLegacyDefinitions(handoff);
-  const documentationObject = await createDocumentationObject(handoff, legacyDefinitions);
+
+  let prevDocumentationObject = await handoff.getDocumentationObject();
+  let changelog: ChangelogRecord[] = (await readPrevJSONFile(handoff.getChangelogFilePath())) || [];
+
+  await fs.emptyDir(handoff.getOutputPath());
+
+  const documentationObject = await createDocumentationObject(handoff);
   const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
+
   if (changelogRecord) {
     changelog = [changelogRecord, ...changelog];
   }
-  handoff.hooks.build(documentationObject);
+
   await Promise.all([
-    fs.writeJSON(tokensFilePath(handoff), documentationObject, { spaces: 2 }),
-    fs.writeJSON(changelogFilePath(handoff), changelog, { spaces: 2 }),
+    fs.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
+    fs.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
-          zipAssets(documentationObject.assets.icons, fs.createWriteStream(iconsZipFilePath(handoff))).then((writeStream) =>
+          zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
             stream.promises.finished(writeStream)
           ),
-          zipAssets(documentationObject.assets.logos, fs.createWriteStream(logosZipFilePath(handoff))).then((writeStream) =>
+          zipAssets(documentationObject.assets.logos, fs.createWriteStream(handoff.getLogosZipFilePath())).then((writeStream) =>
             stream.promises.finished(writeStream)
           ),
         ]
       : []),
   ]);
+
   // define the output folder
   const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
+
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
     await fs.promises.mkdir(outputFolder, { recursive: true });
   }
+
   // copy assets to output folder
   fs.copyFileSync(
-    iconsZipFilePath(handoff),
+    handoff.getIconsZipFilePath(),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
   );
+
   fs.copyFileSync(
-    logosZipFilePath(handoff),
+    handoff.getLogosZipFilePath(),
     path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
   );
+
   return documentationObject;
-};
-
-export const buildRecipe = async (handoff: Handoff) => {
-  const TOKEN_REGEX = /{{\s*(scss-token|css-token|value)\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"\s*}}/;
-
-  const processToken = (content: string, records: ComponentIntegrations): void => {
-    let match;
-    const regex = new RegExp(TOKEN_REGEX, 'g');
-    while ((match = regex.exec(content)) !== null) {
-      const [_, __, component, part, variants, cssProperty] = match;
-
-      let componentRecord = records.components.find((c) => c.name === component);
-      if (!componentRecord) {
-        componentRecord = { name: component, common: { parts: [] }, recipes: [] };
-        records.components.push(componentRecord);
-      }
-
-      const requiredTokenSet = getTokenSetNameByProperty(cssProperty);
-      const existingPartIndex = (componentRecord.common.parts ?? []).findIndex((p) => typeof p !== 'string' && p.name === part);
-
-      if (existingPartIndex === -1) {
-        componentRecord.common.parts.push({
-          name: part,
-          require: [getTokenSetNameByProperty(cssProperty)].filter(filterOutUndefined),
-        });
-      } else if (requiredTokenSet && !componentRecord.common.parts[existingPartIndex].require.includes(requiredTokenSet)) {
-        componentRecord.common.parts[existingPartIndex].require = [
-          ...componentRecord.common.parts[existingPartIndex].require,
-          requiredTokenSet,
-        ];
-      }
-
-      const variantPairs = variants.split(',').map((v) => v.split(':'));
-      const variantGroup: ComponentIntegrationRecipe['require'] = { variantProps: [], variantValues: {} };
-
-      variantPairs.forEach(([key, value]) => {
-        if (!variantGroup.variantProps.includes(key)) {
-          variantGroup.variantProps.push(key);
-        }
-
-        if (!variantGroup.variantValues[key]) {
-          variantGroup.variantValues[key] = [];
-        }
-
-        if (/^[a-zA-Z0-9]+$/.test(value) && !variantGroup.variantValues[key].includes(value)) {
-          variantGroup.variantValues[key].push(value);
-        }
-      });
-
-      const existingGroupIndex = componentRecord.recipes.findIndex(
-        (recipe) =>
-          recipe.require.variantProps.length === variantGroup.variantProps.length &&
-          recipe.require.variantProps.every((prop) => variantGroup.variantProps.includes(prop)) &&
-          Object.keys(recipe.require.variantValues).every(
-            (key) =>
-              recipe.require.variantValues[key].length === variantGroup.variantValues[key]?.length &&
-              recipe.require.variantValues[key].every((val) => variantGroup.variantValues[key].includes(val))
-          )
-      );
-
-      if (existingGroupIndex === -1) {
-        componentRecord.recipes.push({ require: variantGroup });
-      }
-    }
-  };
-
-  const traverseDirectory = (directory: string, records: ComponentIntegrations): void => {
-    const files = fs.readdirSync(directory);
-
-    files.forEach((file) => {
-      const fullPath = path.join(directory, file);
-      const stat = fs.statSync(fullPath);
-
-      if (stat.isDirectory()) {
-        traverseDirectory(fullPath, records);
-      } else if (stat.isFile()) {
-        const content = fs.readFileSync(fullPath, 'utf8');
-        processToken(content, records);
-      }
-    });
-  };
-
-  const integrationPath = getPathToIntegration(handoff, false);
-
-  if (!integrationPath) {
-    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration not found.'));
-    return;
-  }
-
-  const directoryToTraverse = handoff?.integrationObject?.entries?.integration;
-  if (!directoryToTraverse) {
-    console.log(chalk.yellow('Unable to build integration recipe. Reason: Integration entry not specified.'));
-    return;
-  }
-
-  const componentRecords: ComponentIntegrations = { components: [] };
-  const stat = await fs.stat(directoryToTraverse);
-
-  traverseDirectory(stat.isDirectory() ? directoryToTraverse : path.dirname(directoryToTraverse), componentRecords);
-
-  componentRecords.components.forEach((component) => {
-    component.common.parts.sort();
-  });
-
-  const writePath = path.resolve(handoff.workingPath, 'recipes.json');
-
-  await fs.writeFile(writePath, JSON.stringify(componentRecords, null, 2));
-
-  console.log(chalk.green(`Integration recipe has been successfully written to ${writePath}`));
-};
-
-/**
- * Build only integrations and previews
- * @param handoff
- */
-export const buildIntegrationOnly = async (handoff: Handoff) => {
-  const documentationObject: DocumentationObject | undefined = await readPrevJSONFile(tokensFilePath(handoff));
-  if (documentationObject) {
-    // Ensure that the integration object is set if possible
-    // handoff.integrationObject = initIntegrationObject(handoff);
-    await buildIntegration(handoff, documentationObject);
-    await buildPreviews(handoff, documentationObject);
-  }
 };
 
 /**
@@ -476,46 +412,9 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   const documentationObject = await figmaExtract(handoff);
   await buildCustomFonts(handoff, documentationObject);
   await buildStyles(handoff, documentationObject);
-  await buildIntegration(handoff, documentationObject);
-  await buildPreviews(handoff, documentationObject);
   // await buildComponents(handoff);
   if (build) {
     await buildApp(handoff);
   }
-  // (await pluginTransformer()).postBuild(documentationObject);
-  console.log(chalk.green(`Figma pipeline complete:`, `${getRequestCount()} requests`));
 };
 export default pipeline;
-
-/**
- * Returns configured legacy component definitions in array form.
- * @deprecated Will be removed before 1.0.0 release.
- */
-const getLegacyDefinitions = async (handoff: Handoff): Promise<LegacyComponentDefinition[] | null> => {
-  try {
-    const sourcePath = path.resolve(handoff.workingPath, 'exportables');
-
-    if (!fs.existsSync(sourcePath)) {
-      return null;
-    }
-
-    const definitionPaths = findFilesByExtension(sourcePath, '.json');
-
-    const exportables = definitionPaths
-      .map((definitionPath) => {
-        const defBuffer = fs.readFileSync(definitionPath);
-        const exportable = JSON.parse(defBuffer.toString()) as LegacyComponentDefinition;
-
-        const exportableOptions = {};
-        merge(exportableOptions, exportable.options);
-        exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
-
-        return exportable;
-      })
-      .filter(filterOutNull);
-
-    return exportables ? exportables : null;
-  } catch (e) {
-    return [];
-  }
-};

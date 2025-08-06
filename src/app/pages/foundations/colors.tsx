@@ -1,8 +1,7 @@
-import { getClientConfig } from '@handoff/config';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import type { GetStaticProps } from 'next';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import ColorGrid from '../..//components/Foundations/ColorGrid';
 import { DownloadTokens } from '../../components/DownloadTokens';
@@ -25,8 +24,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
-      config: getClientConfig(),
-      design: getTokens().design,
+      config: util.getClientRuntimeConfig(),
+      design: getTokens().localStyles,
     },
   };
 };
@@ -87,9 +86,11 @@ const ColorsPage = ({
           ]}
         />
 
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </Layout>
   );

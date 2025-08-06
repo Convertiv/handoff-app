@@ -1,30 +1,20 @@
 import 'dotenv/config';
+import { Types as HandoffTypes } from 'handoff-core';
+import * as stream from 'node:stream';
 import Handoff from '.';
-export declare const outputPath: (handoff: Handoff) => string;
-export declare const tokensFilePath: (handoff: Handoff) => string;
-export declare const previewFilePath: (handoff: Handoff) => string;
-export declare const changelogFilePath: (handoff: Handoff) => string;
-export declare const variablesFilePath: (handoff: Handoff) => string;
-export declare const iconsZipFilePath: (handoff: Handoff) => string;
-export declare const logosZipFilePath: (handoff: Handoff) => string;
 /**
  * Read Previous Json File
  * @param path
  * @returns
  */
 export declare const readPrevJSONFile: (path: string) => Promise<any>;
+export declare const zipAssets: (assets: HandoffTypes.IAssetObject[], destination: stream.Writable) => Promise<stream.Writable>;
 /**
  * Build previews
  * @param documentationObject
  * @returns
  */
 export declare const buildComponents: (handoff: Handoff) => Promise<void>;
-export declare const buildRecipe: (handoff: Handoff) => Promise<void>;
-/**
- * Build only integrations and previews
- * @param handoff
- */
-export declare const buildIntegrationOnly: (handoff: Handoff) => Promise<void>;
 /**
  * Run the entire pipeline
  */

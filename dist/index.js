@@ -35,10 +35,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLatestVersionForComponent = exports.initIntegrationObject = void 0;
+exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initIntegrationObject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
+const handoff_core_1 = require("handoff-core");
+const lodash_1 = require("lodash");
 const path_1 = __importDefault(require("path"));
 const semver_1 = __importDefault(require("semver"));
 const app_1 = __importStar(require("./app"));
@@ -46,11 +48,12 @@ const eject_1 = require("./cli/eject");
 const make_1 = require("./cli/make");
 const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
-const integration_1 = require("./transformers/integration");
-const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
+const component_1 = require("./transformers/preview/component");
+const builder_1 = __importStar(require("./transformers/preview/component/builder"));
 const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
-const rename_1 = require("./transformers/preview/component/rename");
+const utils_1 = require("./utils");
+const fs_1 = require("./utils/fs");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -60,7 +63,7 @@ class Handoff {
         this.exportsDirectory = 'exported';
         this.sitesDirectory = 'out';
         this._initialArgs = {};
-        this._configs = [];
+        this._configFilePaths = [];
         this._initialArgs = { debug, force, config };
         this.construct(debug, force, config);
     }
@@ -68,31 +71,16 @@ class Handoff {
         this.config = null;
         this.debug = debug !== null && debug !== void 0 ? debug : false;
         this.force = force !== null && force !== void 0 ? force : false;
-        this.hooks = {
-            init: (config) => config,
-            fetch: () => { },
-            build: (documentationObject) => { },
-            typeTransformer: (documentationObject, types) => types,
-            integration: (documentationObject, data) => data,
-            cssTransformer: (documentationObject, css) => css,
-            scssTransformer: (documentationObject, scss) => scss,
-            styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
-            mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
-            webpack: (webpackConfig) => webpackConfig,
-            preview: (webpackConfig, preview) => preview,
-        };
         this.init(config);
-        this.integrationHooks = (0, integration_1.instantiateIntegration)(this);
         global.handoff = this;
     }
     init(configOverride) {
         var _a, _b;
         const config = initConfig(configOverride !== null && configOverride !== void 0 ? configOverride : {});
         this.config = config;
-        this.config = this.hooks.init(this.config);
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        [this.integrationObject, this._configs] = (0, exports.initIntegrationObject)(this);
+        [this.integrationObject, this._configFilePaths] = (0, exports.initIntegrationObject)(this);
         return this;
     }
     reload() {
@@ -110,52 +98,19 @@ class Handoff {
     }
     fetch() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, pipeline_1.default)(this);
-                this.hooks.fetch();
-            }
-            return this;
-        });
-    }
-    recipe() {
-        return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, pipeline_1.buildRecipe)(this);
-            }
+            yield (0, pipeline_1.default)(this);
             return this;
         });
     }
     component(name) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                if (name) {
-                    name = name.replace('.hbs', '');
-                    yield (0, builder_1.default)(this, name);
-                }
-                else {
-                    yield (0, pipeline_1.buildComponents)(this);
-                }
+            if (name) {
+                name = name.replace('.hbs', '');
+                yield (0, builder_1.default)(this, name);
             }
-            return this;
-        });
-    }
-    renameComponent(oldName, target) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            if (this.config) {
-                (0, rename_1.renameComponent)(this, oldName, target);
-            }
-            return this;
-        });
-    }
-    integration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            if (this.config) {
-                yield (0, pipeline_1.buildIntegrationOnly)(this);
+            else {
                 yield (0, pipeline_1.buildComponents)(this);
             }
             return this;
@@ -164,152 +119,287 @@ class Handoff {
     build() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, app_1.default)(this);
-            }
+            yield (0, app_1.default)(this);
             return this;
         });
     }
     ejectConfig() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            if (this.config) {
-                yield (0, eject_1.ejectConfig)(this);
-            }
-            return this;
-        });
-    }
-    ejectIntegration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.makeIntegration)(this);
-            }
+            yield (0, eject_1.ejectConfig)(this);
             return this;
         });
     }
     ejectExportables() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectExportables)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectExportables)(this);
             return this;
         });
     }
     ejectPages() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectPages)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectPages)(this);
             return this;
         });
     }
     ejectTheme() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.ejectTheme)(this);
-            }
+            this.preRunner();
+            yield (0, eject_1.ejectTheme)(this);
             return this;
         });
     }
     makeExportable(type, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeExportable)(this, type, name);
-            }
+            this.preRunner();
+            yield (0, make_1.makeExportable)(this, type, name);
             return this;
         });
     }
     makeTemplate(component, state) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeTemplate)(this, component, state);
-            }
+            this.preRunner();
+            yield (0, make_1.makeTemplate)(this, component, state);
             return this;
         });
     }
     makePage(name, parent) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makePage)(this, name, parent);
-            }
+            this.preRunner();
+            yield (0, make_1.makePage)(this, name, parent);
             return this;
         });
     }
     makeComponent(name) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, make_1.makeComponent)(this, name);
-            }
-            return this;
-        });
-    }
-    makeIntegration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, eject_1.makeIntegration)(this);
-            }
+            this.preRunner();
+            yield (0, make_1.makeComponent)(this, name);
             return this;
         });
     }
     makeIntegrationStyles() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                yield (0, javascript_1.buildMainJS)(this);
-                yield (0, css_1.buildMainCss)(this);
-            }
+            this.preRunner();
+            yield (0, javascript_1.buildMainJS)(this);
+            yield (0, css_1.buildMainCss)(this);
             return this;
         });
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, app_1.watchApp)(this);
-            }
+            this.preRunner();
+            yield (0, app_1.watchApp)(this);
             return this;
         });
     }
     dev() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.config) {
-                this.preRunner();
-                yield (0, app_1.devApp)(this);
-            }
+            this.preRunner();
+            yield (0, app_1.devApp)(this);
             return this;
         });
     }
-    postInit(callback) {
-        this.hooks.init = callback;
+    validateComponents() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.preRunner();
+            yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
+            return this;
+        });
     }
-    postTypeTransformer(callback) {
-        this.hooks.typeTransformer = callback;
+    /**
+     * Retrieves the documentation object, using cached version if available
+     * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
+     */
+    getDocumentationObject() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._documentationObjectCache) {
+                return this._documentationObjectCache;
+            }
+            const documentationObject = yield this.readJsonFile(this.getTokensFilePath());
+            this._documentationObjectCache = documentationObject;
+            return documentationObject;
+        });
     }
-    postCssTransformer(callback) {
-        this.hooks.cssTransformer = callback;
+    /**
+     * Retrieves shared styles, using cached version if available
+     * @returns {Promise<string | null>} The shared styles string or null if not found
+     */
+    getSharedStyles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._sharedStylesCache !== undefined) {
+                return this._sharedStylesCache;
+            }
+            const sharedStyles = yield (0, component_1.processSharedStyles)(this);
+            this._sharedStylesCache = sharedStyles;
+            return sharedStyles;
+        });
     }
-    postScssTransformer(callback) {
-        this.hooks.scssTransformer = callback;
+    getRunner() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!!this._handoffRunner) {
+                return this._handoffRunner;
+            }
+            const apiCredentials = {
+                projectId: this.config.figma_project_id,
+                accessToken: this.config.dev_access_token,
+            };
+            const legacyDefinitions = yield this.getLegacyDefinitions();
+            const useLegacyDefintions = !!legacyDefinitions;
+            // Initialize the provider
+            const provider = useLegacyDefintions
+                ? handoff_core_1.Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
+                : handoff_core_1.Providers.RestApiProvider(apiCredentials);
+            this._handoffRunner = (0, handoff_core_1.Handoff)(provider, {
+                options: {
+                    transformer: this.integrationObject.options,
+                },
+            }, {
+                log: (msg) => {
+                    console.log(msg);
+                },
+                err: (msg) => {
+                    console.log(chalk_1.default.red(msg));
+                },
+                warn: (msg) => {
+                    console.log(chalk_1.default.yellow(msg));
+                },
+                success: (msg) => {
+                    console.log(chalk_1.default.green(msg));
+                },
+            });
+            return this._handoffRunner;
+        });
     }
-    postPreview(callback) {
-        this.hooks.preview = callback;
+    /**
+     * Returns configured legacy component definitions in array form.
+     * @deprecated Will be removed before 1.0.0 release.
+     */
+    getLegacyDefinitions() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const sourcePath = path_1.default.resolve(this.workingPath, 'exportables');
+                if (!fs_extra_1.default.existsSync(sourcePath)) {
+                    return null;
+                }
+                const definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
+                const exportables = definitionPaths
+                    .map((definitionPath) => {
+                    const defBuffer = fs_extra_1.default.readFileSync(definitionPath);
+                    const exportable = JSON.parse(defBuffer.toString());
+                    const exportableOptions = {};
+                    (0, lodash_1.merge)(exportableOptions, exportable.options);
+                    exportable.options = exportableOptions;
+                    return exportable;
+                })
+                    .filter(utils_1.filterOutNull);
+                return exportables ? exportables : null;
+            }
+            catch (e) {
+                return [];
+            }
+        });
     }
-    postBuild(callback) {
-        this.hooks.build = callback;
+    /**
+     * Gets the output path for the current project
+     * @returns {string} The absolute path to the output directory
+     */
+    getOutputPath() {
+        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
     }
-    postIntegration(callback) {
-        this.hooks.integration = callback;
+    /**
+     * Gets the path to the tokens.json file
+     * @returns {string} The absolute path to the tokens.json file
+     */
+    getTokensFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'tokens.json');
     }
-    modifyWebpackConfig(callback) {
-        this.hooks.webpack = callback;
+    /**
+     * Gets the path to the preview.json file
+     * @returns {string} The absolute path to the preview.json file
+     */
+    getPreviewFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'preview.json');
+    }
+    /**
+     * Gets the path to the changelog.json file
+     * @returns {string} The absolute path to the changelog.json file
+     */
+    getChangelogFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'changelog.json');
+    }
+    /**
+     * Gets the path to the tokens directory
+     * @returns {string} The absolute path to the tokens directory
+     */
+    getVariablesFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'tokens');
+    }
+    /**
+     * Gets the path to the icons.zip file
+     * @returns {string} The absolute path to the icons.zip file
+     */
+    getIconsZipFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'icons.zip');
+    }
+    /**
+     * Gets the path to the logos.zip file
+     * @returns {string} The absolute path to the logos.zip file
+     */
+    getLogosZipFilePath() {
+        return path_1.default.join(this.getOutputPath(), 'logos.zip');
+    }
+    /**
+     * Gets the list of config file paths
+     * @returns {string[]} Array of absolute paths to config files
+     */
+    getConfigFilePaths() {
+        return this._configFilePaths;
+    }
+    /**
+     * Clears all cached data
+     * @returns {void}
+     */
+    clearCaches() {
+        this._documentationObjectCache = undefined;
+        this._sharedStylesCache = undefined;
+    }
+    /**
+     * Reads and parses a JSON file
+     * @param {string} path - Path to the JSON file
+     * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+     */
+    readJsonFile(path) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                return yield fs_extra_1.default.readJSON(path);
+            }
+            catch (e) {
+                return undefined;
+            }
+        });
     }
 }
 const initConfig = (configOverride) => {
     let config = {};
-    let configPath = path_1.default.resolve(process.cwd(), 'handoff.config.json');
-    if (fs_extra_1.default.existsSync(configPath)) {
-        const defBuffer = fs_extra_1.default.readFileSync(configPath);
-        config = JSON.parse(defBuffer.toString());
+    const possibleConfigFiles = ['handoff.config.json', 'handoff.config.js', 'handoff.config.cjs'];
+    // Find the first existing config file
+    const configFile = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(process.cwd(), file)));
+    if (configFile) {
+        const configPath = path_1.default.resolve(process.cwd(), configFile);
+        if (configFile.endsWith('.json')) {
+            const defBuffer = fs_extra_1.default.readFileSync(configPath);
+            config = JSON.parse(defBuffer.toString());
+        }
+        else if (configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
+            // Invalidate require cache to ensure fresh read
+            delete require.cache[require.resolve(configPath)];
+            const importedConfig = require(configPath);
+            config = importedConfig.default || importedConfig;
+        }
     }
+    // Apply overrides if provided
     if (configOverride) {
         Object.keys(configOverride).forEach((key) => {
             const value = configOverride[key];
@@ -322,24 +412,28 @@ const initConfig = (configOverride) => {
     return returnConfig;
 };
 const initIntegrationObject = (handoff) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _k;
     const configFiles = [];
     const result = {
-        name: '',
         options: {},
         entries: {
-            integration: undefined,
-            bundle: undefined,
+            integration: undefined, // scss
+            bundle: undefined, // js
             components: {},
         },
     };
     if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
         result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
+    //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
         result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
+    else {
+        console.log(chalk_1.default.red('No js entry found in config'), handoff.debug ? `Path: ${path_1.default.resolve(handoff.workingPath, (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.js)}` : '');
+    }
+    if ((_g = (_f = handoff.config.entries) === null || _f === void 0 ? void 0 : _f.components) === null || _g === void 0 ? void 0 : _g.length) {
         const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
         for (const componentPath of componentPaths) {
             const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
@@ -349,21 +443,29 @@ const initIntegrationObject = (handoff) => {
                 console.warn(`No versions found for component at: ${resolvedComponentPath}`);
                 continue;
             }
-            const latest = (0, exports.getLatestVersionForComponent)(versions);
+            const latest = getLatestVersionForComponent(versions);
             for (const componentVersion of versions) {
                 const resolvedComponentVersionPath = path_1.default.resolve(resolvedComponentPath, componentVersion);
-                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
-                // Skip if config file does not exist
-                if (!fs_extra_1.default.existsSync(resolvedComponentVersionConfigPath)) {
-                    console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+                const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
+                const configFileName = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(resolvedComponentVersionPath, file)));
+                if (!configFileName) {
+                    console.warn(`Missing config: ${path_1.default.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
                     continue;
                 }
+                const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, configFileName);
                 configFiles.push(resolvedComponentVersionConfigPath);
-                let componentJson;
                 let component;
                 try {
-                    componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-                    component = JSON.parse(componentJson);
+                    if (configFileName.endsWith('.json')) {
+                        const componentJson = fs_extra_1.default.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+                        component = JSON.parse(componentJson);
+                    }
+                    else {
+                        // Invalidate require cache to ensure fresh read
+                        delete require.cache[require.resolve(resolvedComponentVersionConfigPath)];
+                        const importedComponent = require(resolvedComponentVersionConfigPath);
+                        component = importedComponent.default || importedComponent;
+                    }
                 }
                 catch (err) {
                     console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
@@ -383,9 +485,10 @@ const initIntegrationObject = (handoff) => {
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
+                (_k = component.options).transformer || (_k.transformer = { defaults: {}, replace: {} });
                 const transformer = component.options.transformer;
-                (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
-                (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);
+                (_h = transformer.cssRootClass) !== null && _h !== void 0 ? _h : (transformer.cssRootClass = null);
+                (_j = transformer.tokenNameSegments) !== null && _j !== void 0 ? _j : (transformer.tokenNameSegments = null);
                 // Normalize keys and values to lowercase
                 transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, transformer.defaults));
                 transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, transformer.replace));
@@ -451,13 +554,7 @@ const getVersionsForComponent = (componentPath) => {
         // and each directory inside should be a version
         for (const versionDirectory of versionDirectories) {
             if (semver_1.default.valid(versionDirectory)) {
-                const versionFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(componentPath, versionDirectory));
-                for (const versionFile of versionFiles) {
-                    if (versionFile.endsWith('.hbs')) {
-                        versions.push(versionDirectory);
-                        break;
-                    }
-                }
+                versions.push(versionDirectory);
             }
             else {
                 console.error(`Invalid version directory ${versionDirectory}`);
@@ -468,7 +565,6 @@ const getVersionsForComponent = (componentPath) => {
     return versions;
 };
 const getLatestVersionForComponent = (versions) => versions.sort(semver_1.default.rcompare)[0];
-exports.getLatestVersionForComponent = getLatestVersionForComponent;
 const toLowerCaseKeysAndValues = (obj) => {
     const loweredObj = {};
     for (const key in obj) {
@@ -486,4 +582,9 @@ const toLowerCaseKeysAndValues = (obj) => {
     }
     return loweredObj;
 };
+// Export transformers and types from handoff-core
+var handoff_core_2 = require("handoff-core");
+Object.defineProperty(exports, "CoreTransformers", { enumerable: true, get: function () { return handoff_core_2.Transformers; } });
+Object.defineProperty(exports, "CoreTransformerUtils", { enumerable: true, get: function () { return handoff_core_2.TransformerUtils; } });
+Object.defineProperty(exports, "CoreTypes", { enumerable: true, get: function () { return handoff_core_2.Types; } });
 exports.default = Handoff;

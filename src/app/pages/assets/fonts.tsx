@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import * as fs from 'fs-extra';
 import uniq from 'lodash/uniq';
 import { FileArchive } from 'lucide-react';
@@ -6,12 +5,12 @@ import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import path from 'path';
 import * as React from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../components/Footer';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
-import { fetchDocPageMarkdown, FontDocumentationProps, getTokens } from '../../components/util';
+import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -38,8 +37,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`).props,
-      design: getTokens().design,
-      config: getClientConfig(),
+      design: getTokens().localStyles,
+      config: getClientRuntimeConfig(),
       customFonts,
     },
   };
@@ -92,9 +91,11 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
             </React.Fragment>
           ))}
 
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
       </section>
       <Footer config={config} />

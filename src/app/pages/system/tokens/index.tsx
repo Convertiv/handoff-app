@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import type { GetStaticProps } from 'next';
 import { useEffect, useState } from 'react';
@@ -13,6 +12,7 @@ import {
   fetchComponents,
   fetchDocPageMarkdown,
   fetchDocPageMetadataAndContent,
+  getClientRuntimeConfig,
   Metadata,
 } from '../../../components/util';
 
@@ -30,22 +30,24 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const components = fetchComponents()?.map((c) => c.id);
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
-        components: components.reduce(
-          (acc, component) => ({
-            ...acc,
-            ...{
-              [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
-            },
-          }),
-          {}
-        ),
+        components: components
+          ? components.reduce(
+              (acc, component) => ({
+                ...acc,
+                ...{
+                  [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
+                },
+              }),
+              {}
+            )
+          : null,
       } as ComponentPageDocumentationProps,
     },
   };
@@ -74,10 +76,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="mt-10">
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
         <APIComponentList components={components} />
       </div>
     </Layout>

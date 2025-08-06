@@ -1,6 +1,8 @@
 import { PreviewObject } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
+import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
 interface IPreviewContext {
   preview?: PreviewObject;
   setPreview: (preview: PreviewObject) => void;
@@ -14,6 +16,7 @@ interface IPreviewContext {
   config?: ClientConfig;
   setConfig?: (config: ClientConfig) => void;
 }
+
 interface IPreviewContextProviderProps {
   children: React.ReactNode;
   id: string;
@@ -38,6 +41,10 @@ function groupVariantProperties(items: Record<string, string>[]): Record<string,
     Object.entries(grouped).map(([key, set]) => [key, Array.from(set)])
     // .filter((i) => i[1].length > 1)
   );
+}
+
+function filterPreviews(previews: Record<string, any>, filter: Filter): Record<string, any> {
+  return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
 }
 
 export const PreviewContext = createContext<IPreviewContext | undefined>(undefined);
@@ -83,16 +90,23 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   useEffect(() => {
     if (!preview) return;
 
-    if (!preview.preview_options?.group_by) return;
+    if (!preview.options?.preview?.groupBy) return;
 
-    const foo = Object.values(preview.previews).map((p) => {
-      return Object.keys(p.values).reduce((acc, next) => {
-        acc[next] = p.values[next];
-        return acc;
-      }, {});
-    });
+    let filteredPreviews = preview.previews;
+    if (preview.options?.preview?.filterBy) {
+      filteredPreviews = filterPreviews(preview.previews, preview.options.preview.filterBy);
+    }
 
-    setVariants(groupVariantProperties(foo));
+    setVariants(
+      groupVariantProperties(
+        Object.values(filteredPreviews).map((p) => {
+          return Object.keys(p.values).reduce((acc, next) => {
+            acc[next] = p.values[next];
+            return acc;
+          }, {});
+        })
+      )
+    );
   }, [preview]);
 
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);

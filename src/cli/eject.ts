@@ -1,17 +1,15 @@
-import path from 'path';
-import Handoff from '../index';
-import fs from 'fs-extra';
 import chalk from 'chalk';
-import { getPathToIntegration } from '../transformers/integration';
+import fs from 'fs-extra';
+import path from 'path';
 import { getClientConfig } from '../config';
-import { buildIntegrationOnly, buildComponents } from '../pipeline';
+import Handoff from '../index';
 
 /**
  * Eject the config to the working directory
  * @param handoff
  */
 export const ejectConfig = async (handoff: Handoff) => {
-  const config = getClientConfig(handoff.config);
+  const config = getClientConfig(handoff);
   const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.json'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
@@ -24,37 +22,10 @@ export const ejectConfig = async (handoff: Handoff) => {
 };
 
 /**
- * Creates a integration within the working directory
- * @param handoff
- */
-export const makeIntegration = async (handoff: Handoff) => {
-  const config = handoff.config;
-
-  // does an local integration exist?
-  const workingPath = path.resolve(path.join(handoff.workingPath, 'integration'));
-  if (fs.existsSync(workingPath)) {
-    if (!handoff.force) {
-      console.log(chalk.red(`An integration already exists in the working directory. Use the --force flag to overwrite.`));
-      return;
-    }
-  }
-
-  // perform integration ejection
-  const integrationPath = getPathToIntegration(handoff, true);
-  fs.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
-  if (handoff.force) handoff.force = false;
-  console.log(chalk.green(`Integration has been successfully created! Path: ${workingPath}`));
-  await buildIntegrationOnly(handoff);
-  await buildComponents(handoff);
-  return handoff;
-};
-
-/**
  * Eject the integration to the working directory
  * @param handoff
  */
 export const ejectExportables = async (handoff: Handoff) => {
-  const config = await handoff.config;
   // does an local integration exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'exportables'));
   if (fs.existsSync(workingPath)) {
@@ -77,7 +48,6 @@ export const ejectExportables = async (handoff: Handoff) => {
  * @param handoff
  */
 export const ejectPages = async (handoff: Handoff) => {
-  const config = await handoff.config;
   // does an local page exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'pages'));
   if (fs.existsSync(workingPath)) {
@@ -103,9 +73,7 @@ export const ejectTheme = async (handoff: Handoff) => {
   const workingPath = path.resolve(path.join(handoff.workingPath, 'theme', 'default.scss'));
   if (fs.existsSync(workingPath)) {
     if (!handoff.force) {
-      console.log(
-        chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`)
-      );
+      console.log(chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`));
       return;
     }
   }

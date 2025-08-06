@@ -1,7 +1,7 @@
 'use client';
-import { getClientConfig } from '@handoff/config';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
+import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -16,7 +16,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { fetchComponents, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -24,7 +24,7 @@ import { fetchComponents, getCurrentSection, IParams, staticBuildMenu } from '..
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchComponents().map((exportable) => ({ params: { component: exportable.id } })),
+    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -67,14 +67,13 @@ const toTitleCase = (str: string): string => {
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  // const previews = getPreview();
 
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
 
   const menu = staticBuildMenu();
-  const config = getClientConfig();
-  const metadata = await fetchComponents().filter((c) => c.id === component)[0];
+  const config = getClientRuntimeConfig();
+  const metadata = fetchComponents()!.filter((c) => c.id === component)[0];
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
 
   return {
@@ -96,6 +95,12 @@ export const getStaticProps = async (context) => {
   };
 };
 
+function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter: Filter): Record<string, OptionalPreviewRender> {
+  return Object.fromEntries(
+    Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter))
+  );
+}
+
 const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -114,8 +119,13 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   useEffect(() => {
     if (!component) return;
 
-    if (!!component.preview_options?.group_by) {
-      const groups = groupPreviewsByVariantProperty(component.previews, component.preview_options.group_by);
+    let filteredPreviews = component.previews;
+    if (component.options?.preview?.filterBy) {
+      filteredPreviews = filterPreviews(component.previews, component.options.preview.filterBy);
+    }
+
+    if (!!component.options?.preview?.groupBy) {
+      const groups = groupPreviewsByVariantProperty(filteredPreviews, component.options.preview.groupBy);
       setComponentPreviews(
         groups.map(([group, previewObjects]) => [
           toTitleCase(`${group} ${id}`),
@@ -123,7 +133,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
         ])
       );
     } else {
-      setComponentPreviews(component);
+      setComponentPreviews({ ...component, previews: filteredPreviews });
     }
   }, [component, id]);
 
@@ -134,13 +144,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
       <div className="flex flex-col gap-3 pb-14">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
-          <ReactMarkdown
-            className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300"
-            components={MarkdownComponents}
-            rehypePlugins={[rehypeRaw]}
-          >
-            {metadata.description}
-          </ReactMarkdown>
+          <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {metadata.description}
+            </ReactMarkdown>
+          </div>
           {/*<p className="">
              {component.tags &&
               Array.isArray(component.tags) &&
@@ -195,7 +203,12 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               {componentPreviews.map(([title, cp], cpi) => (
                 <>
                   <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
-                    <ComponentPreview title={title} bestPracticesCard={cpi === 0} properties={cpi === componentPreviews.length - 1}>
+                    <ComponentPreview
+                      title={title}
+                      bestPracticesCard={cpi === 0}
+                      properties={cpi === componentPreviews.length - 1}
+                      validations={cpi === componentPreviews.length - 1}
+                    >
                       <p>Define a simple contact form</p>
                     </ComponentPreview>
                   </PreviewContextProvider>
@@ -211,7 +224,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 defaultPreview={componentPreviews}
                 defaultConfig={config}
               >
-                <ComponentPreview title={metadata.title}>
+                <ComponentPreview title={metadata.title} properties={true} validations={true}>
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
@@ -242,6 +255,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 ...componentPreviews.reduce((acc, [title, previewObject]) => ({ ...acc, [previewObject.id]: title }), {}),
                 'code-highlight': 'Code Samples',
                 properties: 'Properties',
+                validations: 'Validations',
               },
             ]}
           />
@@ -253,6 +267,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 preview: 'Previews',
                 'code-highlight': 'Code Samples',
                 properties: 'Properties',
+                validations: 'Validations',
               },
             ]}
           />

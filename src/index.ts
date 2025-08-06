@@ -1,23 +1,23 @@
 import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
+import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
+import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
-import webpack from 'webpack';
 import buildApp, { devApp, watchApp } from './app';
-import { ejectConfig, ejectExportables, ejectPages, ejectTheme, makeIntegration } from './cli/eject';
+import { ejectConfig, ejectExportables, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
-import pipeline, { buildComponents, buildIntegrationOnly, buildRecipe } from './pipeline';
-import { HandoffIntegration, instantiateIntegration } from './transformers/integration';
-import processComponents from './transformers/preview/component/builder';
+import pipeline, { buildComponents } from './pipeline';
+import { processSharedStyles } from './transformers/preview/component';
+import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { buildMainCss } from './transformers/preview/component/css';
 import { buildMainJS } from './transformers/preview/component/javascript';
-import { renameComponent } from './transformers/preview/component/rename';
-import { ComponentListObject, TransformedPreviewComponents } from './transformers/preview/types';
-import { TransformerOutput } from './transformers/types';
-import { DocumentationObject, HookReturn } from './types';
+import { ComponentListObject } from './transformers/preview/types';
 import { Config, IntegrationObject } from './types/config';
+import { filterOutNull } from './utils';
+import { findFilesByExtension } from './utils/fs';
 
 class Handoff {
   config: Config | null;
@@ -28,27 +28,17 @@ class Handoff {
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
   integrationObject?: IntegrationObject | null;
-  integrationHooks: HandoffIntegration;
   designMap: {
     colors: {};
     effects: {};
     typography: {};
   };
-  hooks: {
-    init: (config: Config) => Config;
-    fetch: () => void;
-    build: (documentationObject: DocumentationObject) => void;
-    integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
-    typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
-    cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
-    scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
-    styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-    mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-    webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
-    preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-  };
-  _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
-  _configs: string[] = [];
+
+  private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  private _configFilePaths: string[] = [];
+  private _documentationObjectCache?: CoreTypes.IDocumentationObject;
+  private _sharedStylesCache?: string | null;
+  private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
     this._initialArgs = { debug, force, config };
@@ -59,36 +49,24 @@ class Handoff {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
-    this.hooks = {
-      init: (config: Config): Config => config,
-      fetch: () => {},
-      build: (documentationObject) => {},
-      typeTransformer: (documentationObject, types) => types,
-      integration: (documentationObject, data: HookReturn[]) => data,
-      cssTransformer: (documentationObject, css) => css,
-      scssTransformer: (documentationObject, scss) => scss,
-      styleDictionaryTransformer: (documentationObject, styleDictionary) => styleDictionary,
-      mapTransformer: (documentationObject, styleDictionary) => styleDictionary,
-      webpack: (webpackConfig) => webpackConfig,
-      preview: (webpackConfig, preview) => preview,
-    };
     this.init(config);
-    this.integrationHooks = instantiateIntegration(this);
     global.handoff = this;
   }
+
   init(configOverride?: Partial<Config>): Handoff {
     const config = initConfig(configOverride ?? {});
     this.config = config;
-    this.config = this.hooks.init(this.config);
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    [this.integrationObject, this._configs] = initIntegrationObject(this);
+    [this.integrationObject, this._configFilePaths] = initIntegrationObject(this);
     return this;
   }
+
   reload(): Handoff {
     this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
     return this;
   }
+
   preRunner(validate?: boolean): Handoff {
     if (!this.config) {
       throw Error('Handoff not initialized');
@@ -98,174 +76,318 @@ class Handoff {
     }
     return this;
   }
+
   async fetch(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await pipeline(this);
-      this.hooks.fetch();
-    }
-    return this;
-  }
-  async recipe(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await buildRecipe(this);
-    }
+    await pipeline(this);
     return this;
   }
+
   async component(name: string | null): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      if (name) {
-        name = name.replace('.hbs', '');
-        await processComponents(this, name);
-      } else {
-        await buildComponents(this);
-      }
-    }
-    return this;
-  }
-  async renameComponent(oldName: string, target: string): Promise<Handoff> {
-    this.preRunner();
-    if (this.config) {
-      renameComponent(this, oldName, target);
-    }
-    return this;
-  }
-  async integration(): Promise<Handoff> {
-    this.preRunner();
-    if (this.config) {
-      await buildIntegrationOnly(this);
+
+    if (name) {
+      name = name.replace('.hbs', '');
+      await processComponents(this, name);
+    } else {
       await buildComponents(this);
     }
+
     return this;
   }
+
   async build(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await buildApp(this);
-    }
+    await buildApp(this);
     return this;
   }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
-    if (this.config) {
-      await ejectConfig(this);
-    }
+    await ejectConfig(this);
     return this;
   }
-  async ejectIntegration(): Promise<Handoff> {
-    if (this.config) {
-      await makeIntegration(this);
-    }
-    return this;
-  }
+
   async ejectExportables(): Promise<Handoff> {
-    if (this.config) {
-      await ejectExportables(this);
-    }
+    this.preRunner();
+    await ejectExportables(this);
     return this;
   }
+
   async ejectPages(): Promise<Handoff> {
-    if (this.config) {
-      await ejectPages(this);
-    }
+    this.preRunner();
+    await ejectPages(this);
     return this;
   }
+
   async ejectTheme(): Promise<Handoff> {
-    if (this.config) {
-      await ejectTheme(this);
-    }
+    this.preRunner();
+    await ejectTheme(this);
     return this;
   }
+
   async makeExportable(type: string, name: string): Promise<Handoff> {
-    if (this.config) {
-      await makeExportable(this, type, name);
-    }
+    this.preRunner();
+    await makeExportable(this, type, name);
     return this;
   }
+
   async makeTemplate(component: string, state: string): Promise<Handoff> {
-    if (this.config) {
-      await makeTemplate(this, component, state);
-    }
+    this.preRunner();
+    await makeTemplate(this, component, state);
     return this;
   }
+
   async makePage(name: string, parent: string): Promise<Handoff> {
-    if (this.config) {
-      await makePage(this, name, parent);
-    }
+    this.preRunner();
+    await makePage(this, name, parent);
     return this;
   }
+
   async makeComponent(name: string): Promise<Handoff> {
-    if (this.config) {
-      await makeComponent(this, name);
-    }
+    this.preRunner();
+    await makeComponent(this, name);
     return this;
   }
-  async makeIntegration(): Promise<Handoff> {
-    if (this.config) {
-      await makeIntegration(this);
-    }
-    return this;
-  }
+
   async makeIntegrationStyles(): Promise<Handoff> {
-    if (this.config) {
-      await buildMainJS(this);
-      await buildMainCss(this);
-    }
+    this.preRunner();
+    await buildMainJS(this);
+    await buildMainCss(this);
     return this;
   }
+
   async start(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await watchApp(this);
-    }
+    this.preRunner();
+    await watchApp(this);
     return this;
   }
+
   async dev(): Promise<Handoff> {
-    if (this.config) {
-      this.preRunner();
-      await devApp(this);
-    }
+    this.preRunner();
+    await devApp(this);
     return this;
   }
-  postInit(callback: (config: Config) => Config) {
-    this.hooks.init = callback;
+
+  async validateComponents(): Promise<Handoff> {
+    this.preRunner();
+    await processComponents(this, undefined, ComponentSegment.Validation);
+    return this;
   }
-  postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.typeTransformer = callback;
+
+  /**
+   * Retrieves the documentation object, using cached version if available
+   * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
+   */
+  async getDocumentationObject(): Promise<CoreTypes.IDocumentationObject | undefined> {
+    if (this._documentationObjectCache) {
+      return this._documentationObjectCache;
+    }
+    const documentationObject = await this.readJsonFile(this.getTokensFilePath());
+    this._documentationObjectCache = documentationObject;
+    return documentationObject;
   }
-  postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.cssTransformer = callback;
+
+  /**
+   * Retrieves shared styles, using cached version if available
+   * @returns {Promise<string | null>} The shared styles string or null if not found
+   */
+  async getSharedStyles(): Promise<string | null> {
+    if (this._sharedStylesCache !== undefined) {
+      return this._sharedStylesCache;
+    }
+    const sharedStyles = await processSharedStyles(this);
+    this._sharedStylesCache = sharedStyles;
+    return sharedStyles;
   }
-  postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput) {
-    this.hooks.scssTransformer = callback;
+
+  async getRunner(): Promise<ReturnType<typeof HandoffRunner>> {
+    if (!!this._handoffRunner) {
+      return this._handoffRunner;
+    }
+
+    const apiCredentials = {
+      projectId: this.config.figma_project_id,
+      accessToken: this.config.dev_access_token,
+    };
+
+    const legacyDefinitions = await this.getLegacyDefinitions();
+
+    const useLegacyDefintions = !!legacyDefinitions;
+
+    // Initialize the provider
+    const provider = useLegacyDefintions
+      ? Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
+      : Providers.RestApiProvider(apiCredentials);
+
+    this._handoffRunner = HandoffRunner(
+      provider,
+      {
+        options: {
+          transformer: this.integrationObject.options,
+        },
+      },
+      {
+        log: (msg: string): void => {
+          console.log(msg);
+        },
+        err: (msg: string): void => {
+          console.log(chalk.red(msg));
+        },
+        warn: (msg: string): void => {
+          console.log(chalk.yellow(msg));
+        },
+        success: (msg: string): void => {
+          console.log(chalk.green(msg));
+        },
+      }
+    );
+
+    return this._handoffRunner;
   }
-  postPreview(
-    callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents
-  ) {
-    this.hooks.preview = callback;
+
+  /**
+   * Returns configured legacy component definitions in array form.
+   * @deprecated Will be removed before 1.0.0 release.
+   */
+  async getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null> {
+    try {
+      const sourcePath = path.resolve(this.workingPath, 'exportables');
+
+      if (!fs.existsSync(sourcePath)) {
+        return null;
+      }
+
+      const definitionPaths = findFilesByExtension(sourcePath, '.json');
+
+      const exportables = definitionPaths
+        .map((definitionPath) => {
+          const defBuffer = fs.readFileSync(definitionPath);
+          const exportable = JSON.parse(defBuffer.toString()) as CoreTypes.ILegacyComponentDefinition;
+
+          const exportableOptions = {};
+          merge(exportableOptions, exportable.options);
+          exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
+
+          return exportable;
+        })
+        .filter(filterOutNull);
+
+      return exportables ? exportables : null;
+    } catch (e) {
+      return [];
+    }
   }
-  postBuild(callback: (documentationObject: DocumentationObject) => void) {
-    this.hooks.build = callback;
+
+  /**
+   * Gets the output path for the current project
+   * @returns {string} The absolute path to the output directory
+   */
+  getOutputPath(): string {
+    return path.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
   }
-  postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]) {
-    this.hooks.integration = callback;
+
+  /**
+   * Gets the path to the tokens.json file
+   * @returns {string} The absolute path to the tokens.json file
+   */
+  getTokensFilePath(): string {
+    return path.join(this.getOutputPath(), 'tokens.json');
   }
-  modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration) {
-    this.hooks.webpack = callback;
+
+  /**
+   * Gets the path to the preview.json file
+   * @returns {string} The absolute path to the preview.json file
+   */
+  getPreviewFilePath(): string {
+    return path.join(this.getOutputPath(), 'preview.json');
+  }
+
+  /**
+   * Gets the path to the changelog.json file
+   * @returns {string} The absolute path to the changelog.json file
+   */
+  getChangelogFilePath(): string {
+    return path.join(this.getOutputPath(), 'changelog.json');
+  }
+
+  /**
+   * Gets the path to the tokens directory
+   * @returns {string} The absolute path to the tokens directory
+   */
+  getVariablesFilePath(): string {
+    return path.join(this.getOutputPath(), 'tokens');
+  }
+
+  /**
+   * Gets the path to the icons.zip file
+   * @returns {string} The absolute path to the icons.zip file
+   */
+  getIconsZipFilePath(): string {
+    return path.join(this.getOutputPath(), 'icons.zip');
+  }
+
+  /**
+   * Gets the path to the logos.zip file
+   * @returns {string} The absolute path to the logos.zip file
+   */
+  getLogosZipFilePath(): string {
+    return path.join(this.getOutputPath(), 'logos.zip');
+  }
+
+  /**
+   * Gets the list of config file paths
+   * @returns {string[]} Array of absolute paths to config files
+   */
+  getConfigFilePaths(): string[] {
+    return this._configFilePaths;
+  }
+
+  /**
+   * Clears all cached data
+   * @returns {void}
+   */
+  clearCaches(): void {
+    this._documentationObjectCache = undefined;
+    this._sharedStylesCache = undefined;
+  }
+
+  /**
+   * Reads and parses a JSON file
+   * @param {string} path - Path to the JSON file
+   * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+   */
+  private async readJsonFile(path: string) {
+    try {
+      return await fs.readJSON(path);
+    } catch (e) {
+      return undefined;
+    }
   }
 }
 
 const initConfig = (configOverride?: Partial<Config>): Config => {
   let config = {};
-  let configPath = path.resolve(process.cwd(), 'handoff.config.json');
 
-  if (fs.existsSync(configPath)) {
-    const defBuffer = fs.readFileSync(configPath);
-    config = JSON.parse(defBuffer.toString()) as Config;
+  const possibleConfigFiles = ['handoff.config.json', 'handoff.config.js', 'handoff.config.cjs'];
+
+  // Find the first existing config file
+  const configFile = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(process.cwd(), file)));
+
+  if (configFile) {
+    const configPath = path.resolve(process.cwd(), configFile);
+    if (configFile.endsWith('.json')) {
+      const defBuffer = fs.readFileSync(configPath);
+      config = JSON.parse(defBuffer.toString()) as Config;
+    } else if (configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
+      // Invalidate require cache to ensure fresh read
+      delete require.cache[require.resolve(configPath)];
+      const importedConfig = require(configPath);
+      config = importedConfig.default || importedConfig;
+    }
   }
 
+  // Apply overrides if provided
   if (configOverride) {
     Object.keys(configOverride).forEach((key) => {
       const value = configOverride[key as keyof Config];
@@ -282,7 +404,6 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
 export const initIntegrationObject = (handoff: Handoff): [integrationObject: IntegrationObject, configs: string[]] => {
   const configFiles: string[] = [];
   const result: IntegrationObject = {
-    name: '',
     options: {},
     entries: {
       integration: undefined, // scss
@@ -294,19 +415,22 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
   if (!!handoff.config.entries?.scss) {
     result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
-
+  //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
   if (!!handoff.config.entries?.js) {
     result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
+  } else {
+    console.log(
+      chalk.red('No js entry found in config'),
+      handoff.debug ? `Path: ${path.resolve(handoff.workingPath, handoff.config.entries?.js)}` : ''
+    );
   }
 
   if (handoff.config.entries?.components?.length) {
     const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
-
     for (const componentPath of componentPaths) {
       const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
       const componentBaseName = path.basename(resolvedComponentPath);
       const versions = getVersionsForComponent(resolvedComponentPath);
-
       if (!versions.length) {
         console.warn(`No versions found for component at: ${resolvedComponentPath}`);
         continue;
@@ -316,22 +440,30 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
 
       for (const componentVersion of versions) {
         const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
-        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, `${componentBaseName}.json`);
+        const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
 
-        // Skip if config file does not exist
-        if (!fs.existsSync(resolvedComponentVersionConfigPath)) {
-          console.warn(`Missing config: ${resolvedComponentVersionConfigPath}`);
+        const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentVersionPath, file)));
+
+        if (!configFileName) {
+          console.warn(`Missing config: ${path.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
           continue;
         }
 
+        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, configFileName);
         configFiles.push(resolvedComponentVersionConfigPath);
 
-        let componentJson: string;
         let component: ComponentListObject;
 
         try {
-          componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-          component = JSON.parse(componentJson) as ComponentListObject;
+          if (configFileName.endsWith('.json')) {
+            const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
+            component = JSON.parse(componentJson) as ComponentListObject;
+          } else {
+            // Invalidate require cache to ensure fresh read
+            delete require.cache[require.resolve(resolvedComponentVersionConfigPath)];
+            const importedComponent = require(resolvedComponentVersionConfigPath);
+            component = importedComponent.default || importedComponent;
+          }
         } catch (err) {
           console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
           continue;
@@ -353,6 +485,7 @@ export const initIntegrationObject = (handoff: Handoff): [integrationObject: Int
         component.options ||= {
           transformer: { defaults: {}, replace: {} },
         };
+        component.options.transformer ||= { defaults: {}, replace: {} };
 
         const transformer = component.options.transformer;
         transformer.cssRootClass ??= null;
@@ -439,13 +572,7 @@ const getVersionsForComponent = (componentPath: string): string[] => {
     // and each directory inside should be a version
     for (const versionDirectory of versionDirectories) {
       if (semver.valid(versionDirectory)) {
-        const versionFiles = fs.readdirSync(path.resolve(componentPath, versionDirectory));
-        for (const versionFile of versionFiles) {
-          if (versionFile.endsWith('.hbs')) {
-            versions.push(versionDirectory);
-            break;
-          }
-        }
+        versions.push(versionDirectory);
       } else {
         console.error(`Invalid version directory ${versionDirectory}`);
       }
@@ -455,7 +582,7 @@ const getVersionsForComponent = (componentPath: string): string[] => {
   return versions;
 };
 
-export const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
+const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
 
 const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any> => {
   const loweredObj: Record<string, any> = {};
@@ -473,5 +600,11 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
   }
   return loweredObj;
 };
+
+export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { Config } from './types/config';
+
+// Export transformers and types from handoff-core
+export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 
 export default Handoff;

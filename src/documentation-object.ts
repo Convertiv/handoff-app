@@ -1,78 +1,41 @@
-import chalk from 'chalk';
-import startCase from 'lodash/startCase';
+import fs from 'fs';
+import { Types as HandoffTypes } from 'handoff-core';
+import path from 'path';
 import Handoff from '.';
-import assetsExporter, { writeAssets } from './exporters/assets';
-import { getFigmaFileComponents } from './exporters/components/index';
-import { getFigmaFileDesignTokens } from './exporters/design';
-import {
-  ColorObject,
-  DocumentationObject,
-  EffectObject,
-  LegacyComponentDefinition,
-  NodeStyleMap,
-  ReferenceObject,
-  TypographyObject,
-} from './types';
+import { getAPIPath } from './transformers/preview/component/api';
 
-export const createDocumentationObject = async (
-  handoff: Handoff,
-  legacyDefinitions?: LegacyComponentDefinition[]
-): Promise<DocumentationObject> => {
-  const design = await getFigmaFileDesignTokens(handoff.config.figma_project_id, handoff.config.dev_access_token);
-  const icons = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Icons');
+export const createDocumentationObject = async (handoff: Handoff): Promise<HandoffTypes.IDocumentationObject> => {
+  const runner = await handoff.getRunner();
+
+  const localStyles = await runner.extractLocalStyles();
+
+  const icons = await runner.extractAssets('Icons');
   await writeAssets(handoff, icons, 'icons');
-  const logos = await assetsExporter(handoff.config.figma_project_id, handoff.config.dev_access_token, 'Logo');
+
+  const logos = await runner.extractAssets('Logo');
   await writeAssets(handoff, logos, 'logos');
 
-  /// create a design map of node ids and references
-  handoff.designMap = {
-    colors: design.color.reduce((acc: NodeStyleMap, color: ColorObject) => {
-      acc[color.id] = {
-        reference: color.reference,
-        type: 'color',
-        group: color.group,
-        name: color.name,
-      } as ReferenceObject;
-
-      return acc;
-    }, {}),
-    effects: design.effect.reduce((acc: NodeStyleMap, effect: EffectObject) => {
-      acc[effect.id] = {
-        reference: effect.reference,
-        group: effect.group,
-        name: effect.name,
-        type: 'effect',
-      } as ReferenceObject;
-      return acc;
-    }, {}),
-    typography: design.typography.reduce((acc: NodeStyleMap, typo: TypographyObject) => {
-      acc[typo.id] = {
-        reference: typo.reference,
-        type: 'typography',
-        group: typo.group,
-        name: typo.name,
-      } as ReferenceObject;
-      return acc;
-    }, {}),
-  };
-  const components = await getFigmaFileComponents(handoff, legacyDefinitions);
-
-  // Log out components
-  Object.keys(components).map((component: string) => {
-    if (components[component].instances.length === 0) {
-      console.error(chalk.grey(`Skipping "${startCase(component)}". Reason: No matching component instances were found.`));
-    } else {
-      console.log(chalk.green(`${startCase(component)} exported:`), components[component].instances.length);
-    }
-  });
+  const components = await runner.extractComponents(localStyles);
 
   return {
     timestamp: new Date().toISOString(),
-    design,
+    localStyles,
     components,
     assets: {
       icons,
       logos,
     },
   };
+};
+
+const writeAssets = async (handoff: Handoff, assets: HandoffTypes.IAssetObject[], type: 'logos' | 'icons') => {
+  const assetPath = path.join(getAPIPath(handoff), 'assets');
+  if (!fs.existsSync(assetPath)) fs.mkdirSync(assetPath, { recursive: true });
+  // write json file
+  fs.writeFileSync(path.join(assetPath, `${type}.json`), JSON.stringify(assets, null, 2));
+  const assetFolder = path.join(assetPath, type);
+  if (!fs.existsSync(assetFolder)) fs.mkdirSync(assetFolder, { recursive: true });
+  assets.forEach((asset) => {
+    fs.writeFileSync(path.join(assetFolder, asset.path), asset.data);
+  });
 };

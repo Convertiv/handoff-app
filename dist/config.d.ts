@@ -1,3 +1,4 @@
+import Handoff from '.';
 import { ClientConfig, Config } from './types/config';
 export interface ImageStyle {
     name: string;
@@ -8,7 +9,9 @@ export interface ImageStyle {
 }
 export declare const defaultConfig: () => Config;
 /**
- * Get the configuration formatted for the client, either from the root of the project or from the default config.
- * @returns Promise<Config>
+ * Retrieves the client configuration from the provided handoff configuration.
+ *
+ * @param handoff - The handoff object containing the configuration details.
+ * @returns The client configuration object.
  */
-export declare const getClientConfig: (configOverride?: any) => ClientConfig;
+export declare const getClientConfig: (handoff: Handoff) => ClientConfig;

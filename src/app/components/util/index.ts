@@ -1,21 +1,15 @@
 import { ChangelogRecord } from '@handoff/changelog';
-import { getClientConfig } from '@handoff/config';
-import { FileComponentObject } from '@handoff/exporters/components/types';
-import { ComponentListObject } from '@handoff/transformers/preview/types';
-import {
-  ComponentDocumentationOptions,
-  LegacyComponentDefinition,
-  LegacyComponentDefinitionOptions,
-  PreviewJson,
-  PreviewObject,
-} from '@handoff/types';
-import { ClientConfig, ExportResult, IntegrationObject, IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
+import { ClientConfig, IntegrationObject } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
+import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, merge, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import semver from 'semver';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
@@ -29,12 +23,8 @@ export interface Metadata {
   description: string;
   metaTitle: string;
   metaDescription: string;
-  image: string;
-  date: string;
-  tags: string[];
-  menu: string[];
-  enabled: boolean;
 }
+
 // Define what a section link looks like
 export interface SectionLink {
   title: string;
@@ -54,7 +44,7 @@ export interface SectionLink {
 // Documentation Page Properties
 export interface DocumentationProps {
   metadata: Metadata;
-  content: string;
+  content?: string;
   options?: ComponentDocumentationOptions;
   menu: SectionLink[];
   current: SectionLink;
@@ -74,24 +64,24 @@ export interface ChangelogDocumentationProps extends DocumentationProps {
 
 export interface FontDocumentationProps extends DocumentationProps {
   customFonts: string[];
-  design: ExportResult['design'];
+  design: CoreTypes.IDocumentationObject['localStyles'];
 }
 
 export interface AssetDocumentationProps extends DocumentationProps {
-  assets: ExportResult['assets'];
+  assets: CoreTypes.IDocumentationObject['assets'];
 }
 
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
-  component: FileComponentObject;
-  legacyDefinition: LegacyComponentDefinition;
+  component: CoreTypes.IFileComponentObject;
+  legacyDefinition: CoreTypes.ILegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
-  componentOptions: IntegrationObjectComponentOptions;
+  componentOptions: CoreTypes.IHandoffConfigurationComponentOptions;
 }
 
 export interface FoundationDocumentationProps extends DocumentationWithTokensProps {
-  design: ExportResult['design'];
+  design: CoreTypes.IDocumentationObject['localStyles'];
 }
 /**
  * List the default paths
@@ -448,7 +438,10 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
  * @returns {string[]}
  */
 export const fetchComponents = (fetchAll: boolean = true) => {
-  let components = getTokens().components;
+  let components: Record<
+    string,
+    Omit<CoreTypes.IFileComponentObject, 'instances'> & { type?: ComponentType; group?: string; description?: string; name?: string }
+  > = getTokens().components;
 
   if (fetchAll) {
     const componentIds = Array.from(
@@ -474,8 +467,12 @@ export const fetchComponents = (fetchAll: boolean = true) => {
     for (const componentId of componentIds) {
       const metadata = getLatestComponentMetadata(componentId);
       if (metadata) {
-        components[componentId] = metadata;
-        components[componentId].name = metadata.title;
+        components[componentId] = {
+          type: metadata.type as ComponentType,
+          group: metadata.group || '',
+          description: metadata.description || '',
+          name: metadata.title || '',
+        };
       }
     }
   }
@@ -492,26 +489,59 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   try {
     return items;
   } catch (e) {
-    return [];
+    return null;
+  }
+};
+
+type RuntimeCache = IntegrationObject & { config: ClientConfig };
+
+let cachedRuntimeCache: RuntimeCache | null = null;
+
+const loadRuntimeCache = (): RuntimeCache => {
+  if (cachedRuntimeCache) {
+    return cachedRuntimeCache;
+  }
+
+  const runtimeCachePath = path.resolve(process.env.HANDOFF_EXPORT_PATH, 'runtime.cache.json');
+
+  if (!fs.existsSync(runtimeCachePath)) {
+    throw new Error(`Runtime cache not found at: ${runtimeCachePath}`);
+  }
+
+  try {
+    const cacheContent = fs.readFileSync(runtimeCachePath, 'utf-8');
+    cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
+    return cachedRuntimeCache;
+  } catch (e) {
+    throw new Error(`Error reading runtime cache: ${runtimeCachePath}`);
   }
 };
 
 export const getLatestComponentMetadata = (id: string) => {
-  // get the path for the integration templates
-  const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-  // find the path to the components
-  const templatesPath = path.resolve(integrationPath, 'components', id);
-  if (!fs.existsSync(templatesPath)) return false;
-  const versions = fs.readdirSync(templatesPath);
-  const latestVersion = versions.sort().pop();
-  const versionPath = path.resolve(templatesPath, latestVersion, `${id}.json`);
-  if (!fs.existsSync(versionPath)) return false;
-  try {
-    const data = fs.readFileSync(versionPath, 'utf-8');
-    return JSON.parse(data.toString());
-  } catch (e) {
-    throw new Error(`Error reading ${versionPath}`);
+  const runtimeCache = loadRuntimeCache();
+
+  const components = runtimeCache.entries?.components;
+
+  if (!components || !components[id]) {
+    return false;
   }
+
+  const versions = Object.keys(components[id]);
+
+  if (!versions.length) {
+    return false;
+  }
+
+  // Use natural version sorting (optional improvement below!)
+  const latestVersion = semver.rsort(versions).shift();
+
+  if (!latestVersion) {
+    return false;
+  }
+
+  const latestComponent = components[id][latestVersion];
+
+  return latestComponent || false;
 };
 
 /**
@@ -519,7 +549,7 @@ export const getLatestComponentMetadata = (id: string) => {
  * @deprecated Will be removed before 1.0.0 release.
  */
 export const getLegacyDefinition = (name: string) => {
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
 
   const sourcePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'exportables');
 
@@ -534,11 +564,11 @@ export const getLegacyDefinition = (name: string) => {
   }
 
   const data = fs.readFileSync(definitionPaths[0], 'utf-8');
-  const exportable = JSON.parse(data.toString()) as LegacyComponentDefinition;
+  const exportable = JSON.parse(data.toString()) as CoreTypes.ILegacyComponentDefinition;
 
   const exportableOptions = {};
   merge(exportableOptions, exportable.options);
-  exportable.options = exportableOptions as LegacyComponentDefinitionOptions;
+  exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
   return exportable;
 };
 
@@ -561,38 +591,18 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
   };
 };
 
-// export const getIntegrationObject = (): IntegrationObject => {
-//   const defaultObject = null as IntegrationObject;
+export const getClientRuntimeConfig = (): ClientConfig => {
+  const runtimeCache = loadRuntimeCache();
+  return runtimeCache.config;
+};
 
-//   if (!process.env.HANDOFF_WORKING_PATH) {
-//     return defaultObject;
-//   }
-
-//   const integrationPath = process.env.HANDOFF_INTEGRATION_PATH;
-
-//   if (!fs.existsSync(integrationPath)) {
-//     return defaultObject;
-//   }
-
-//   const integrationFilePath = path.resolve(integrationPath, 'integration.config.json');
-
-//   if (!fs.existsSync(integrationFilePath)) {
-//     return defaultObject;
-//   }
-
-//   const buffer = fs.readFileSync(integrationFilePath);
-//   const integration = JSON.parse(buffer.toString()) as IntegrationObject;
-
-//   return prepareIntegrationObject(integration, integrationPath);
-// };
-
-export const getTokens = (): ExportResult => {
+export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
     : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as ExportResult;
+  if (!fs.existsSync(exportedFilePath)) return {} as CoreTypes.IDocumentationObject;
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as ExportResult;
+  return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
 };
 
 export const getChangelog = () => {
@@ -602,15 +612,6 @@ export const getChangelog = () => {
   if (!fs.existsSync(exportedFilePath)) return [];
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as ChangelogRecord[];
-};
-
-export const getPreview = (): PreviewJson => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
-    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'preview.json')
-    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'preview.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as PreviewJson;
-  const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as PreviewJson;
 };
 
 /**
@@ -685,7 +686,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
  * @returns
  */
 export const titleString = (prefix: string | null): string => {
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   const prepend = prefix ? `${prefix} | ` : '';
   return `${prefix}${config?.app?.client} Design System`;
 };

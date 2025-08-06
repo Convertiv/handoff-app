@@ -1,10 +1,9 @@
-import { getClientConfig } from '@handoff/config';
-import type { AssetObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { Download } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import * as React from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Footer from '../../../components/Footer';
 import Layout from '../../../components/Layout/Main';
@@ -12,9 +11,9 @@ import { MarkdownComponents } from '../../../components/Markdown/MarkdownCompone
 import HeadersType from '../../../components/Typography/Headers';
 import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getTokens } from '../../../components/util';
+import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../../components/util';
 
-export const DisplayIcon: React.FC<{ icon: AssetObject }> = ({ icon }) => {
+export const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
     // For SSR
     if (typeof window === 'undefined') {
@@ -56,7 +55,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
       assets: getTokens().assets,
     },
   };
@@ -99,9 +98,11 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
         </div>
       </div>
       <hr className="mb-10" />
-      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
+      <div className="prose">
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
+      </div>
 
       <Input
         type="text"

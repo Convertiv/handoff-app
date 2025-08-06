@@ -1,9 +1,5 @@
 import 'dotenv/config';
-import webpack from 'webpack';
-import { HandoffIntegration } from './transformers/integration';
-import { TransformedPreviewComponents } from './transformers/preview/types';
-import { TransformerOutput } from './transformers/types';
-import { DocumentationObject, HookReturn } from './types';
+import { Types as CoreTypes, Handoff as HandoffRunner } from 'handoff-core';
 import { Config, IntegrationObject } from './types/config';
 declare class Handoff {
     config: Config | null;
@@ -14,44 +10,25 @@ declare class Handoff {
     exportsDirectory: string;
     sitesDirectory: string;
     integrationObject?: IntegrationObject | null;
-    integrationHooks: HandoffIntegration;
     designMap: {
         colors: {};
         effects: {};
         typography: {};
     };
-    hooks: {
-        init: (config: Config) => Config;
-        fetch: () => void;
-        build: (documentationObject: DocumentationObject) => void;
-        integration: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[];
-        typeTransformer: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput;
-        cssTransformer: (documentationObject: DocumentationObject, css: TransformerOutput) => TransformerOutput;
-        scssTransformer: (documentationObject: DocumentationObject, scss: TransformerOutput) => TransformerOutput;
-        styleDictionaryTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-        mapTransformer: (documentationObject: DocumentationObject, styleDictionary: TransformerOutput) => TransformerOutput;
-        webpack: (webpackConfig: webpack.Configuration) => webpack.Configuration;
-        preview: (documentationObject: DocumentationObject, preview: TransformedPreviewComponents) => TransformedPreviewComponents;
-    };
-    _initialArgs: {
-        debug?: boolean;
-        force?: boolean;
-        config?: Partial<Config>;
-    };
-    _configs: string[];
+    private _initialArgs;
+    private _configFilePaths;
+    private _documentationObjectCache?;
+    private _sharedStylesCache?;
+    private _handoffRunner?;
     constructor(debug?: boolean, force?: boolean, config?: Partial<Config>);
     private construct;
     init(configOverride?: Partial<Config>): Handoff;
     reload(): Handoff;
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
-    recipe(): Promise<Handoff>;
     component(name: string | null): Promise<Handoff>;
-    renameComponent(oldName: string, target: string): Promise<Handoff>;
-    integration(): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
-    ejectIntegration(): Promise<Handoff>;
     ejectExportables(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
     ejectTheme(): Promise<Handoff>;
@@ -59,19 +36,80 @@ declare class Handoff {
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
-    makeIntegration(): Promise<Handoff>;
     makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
-    postInit(callback: (config: Config) => Config): void;
-    postTypeTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postCssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postScssTransformer(callback: (documentationObject: DocumentationObject, types: TransformerOutput) => TransformerOutput): void;
-    postPreview(callback: (documentationObject: DocumentationObject, previews: TransformedPreviewComponents) => TransformedPreviewComponents): void;
-    postBuild(callback: (documentationObject: DocumentationObject) => void): void;
-    postIntegration(callback: (documentationObject: DocumentationObject, data: HookReturn[]) => HookReturn[]): void;
-    modifyWebpackConfig(callback: (webpackConfig: webpack.Configuration) => webpack.Configuration): void;
+    validateComponents(): Promise<Handoff>;
+    /**
+     * Retrieves the documentation object, using cached version if available
+     * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
+     */
+    getDocumentationObject(): Promise<CoreTypes.IDocumentationObject | undefined>;
+    /**
+     * Retrieves shared styles, using cached version if available
+     * @returns {Promise<string | null>} The shared styles string or null if not found
+     */
+    getSharedStyles(): Promise<string | null>;
+    getRunner(): Promise<ReturnType<typeof HandoffRunner>>;
+    /**
+     * Returns configured legacy component definitions in array form.
+     * @deprecated Will be removed before 1.0.0 release.
+     */
+    getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
+    /**
+     * Gets the output path for the current project
+     * @returns {string} The absolute path to the output directory
+     */
+    getOutputPath(): string;
+    /**
+     * Gets the path to the tokens.json file
+     * @returns {string} The absolute path to the tokens.json file
+     */
+    getTokensFilePath(): string;
+    /**
+     * Gets the path to the preview.json file
+     * @returns {string} The absolute path to the preview.json file
+     */
+    getPreviewFilePath(): string;
+    /**
+     * Gets the path to the changelog.json file
+     * @returns {string} The absolute path to the changelog.json file
+     */
+    getChangelogFilePath(): string;
+    /**
+     * Gets the path to the tokens directory
+     * @returns {string} The absolute path to the tokens directory
+     */
+    getVariablesFilePath(): string;
+    /**
+     * Gets the path to the icons.zip file
+     * @returns {string} The absolute path to the icons.zip file
+     */
+    getIconsZipFilePath(): string;
+    /**
+     * Gets the path to the logos.zip file
+     * @returns {string} The absolute path to the logos.zip file
+     */
+    getLogosZipFilePath(): string;
+    /**
+     * Gets the list of config file paths
+     * @returns {string[]} Array of absolute paths to config files
+     */
+    getConfigFilePaths(): string[];
+    /**
+     * Clears all cached data
+     * @returns {void}
+     */
+    clearCaches(): void;
+    /**
+     * Reads and parses a JSON file
+     * @param {string} path - Path to the JSON file
+     * @returns {Promise<any>} The parsed JSON content or undefined if file cannot be read
+     */
+    private readJsonFile;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
-export declare const getLatestVersionForComponent: (versions: string[]) => string;
+export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { Config } from './types/config';
+export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 export default Handoff;

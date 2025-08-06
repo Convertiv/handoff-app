@@ -2,8 +2,6 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
-import WebSocket from 'ws';
-import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponents from './component/builder';
@@ -52,7 +50,7 @@ export type RuleObject = {
     min: number;
     max: number;
   };
-  dimension?: {
+  dimensions?: {
     width: number;
     height: number;
     min: {
@@ -73,66 +71,6 @@ export type RuleObject = {
   pattern?: string;
 };
 
-interface ExtWebSocket extends WebSocket {
-  isAlive: boolean;
-}
-
-/**
- * Creates a WebSocket server that broadcasts messages to connected clients.
- * Designed for development mode to help with hot-reloading.
- *
- * @param port - Optional port number for the WebSocket server; defaults to 3001.
- * @returns A function that accepts a message string and broadcasts it to all connected clients.
- */
-export const createWebSocketServer = async (port: number = 3001) => {
-  const wss = new WebSocket.Server({ port });
-
-  // Heartbeat function to mark a connection as alive.
-  const heartbeat = function (this: ExtWebSocket) {
-    this.isAlive = true;
-  };
-
-  // Setup a new connection
-  wss.on('connection', (ws) => {
-    const extWs = ws as ExtWebSocket;
-    extWs.isAlive = true;
-    extWs.send(JSON.stringify({ type: 'WELCOME' }));
-    extWs.on('error', (error) => console.error('WebSocket error:', error));
-    extWs.on('pong', heartbeat);
-  });
-
-  // Periodically ping clients to ensure they are still connected
-  const pingInterval = setInterval(() => {
-    wss.clients.forEach((client) => {
-      const extWs = client as ExtWebSocket;
-      if (!extWs.isAlive) {
-        console.log(chalk.yellow('Terminating inactive client'));
-        return client.terminate();
-      }
-      extWs.isAlive = false;
-      client.ping();
-    });
-  }, 30000);
-
-  // Clean up the interval when the server closes
-  wss.on('close', () => {
-    clearInterval(pingInterval);
-  });
-
-  console.log(chalk.green(`WebSocket server started on ws://localhost:${port}`));
-
-  // Return a function to broadcast a message to all connected clients
-  return (message: string) => {
-    console.log(chalk.green(`Broadcasting message to ${wss.clients.size} client(s)`));
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  };
-};
-
-export const getComponentPath = (handoff: Handoff) => path.resolve(handoff.workingPath, `integration/components`);
 export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 /**
  * Create a component transformer
@@ -140,13 +78,11 @@ export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIP
  * @param documentationObject
  * @returns
  */
-export async function componentTransformer(handoff: Handoff, components?: FileComponentsObject) {
-  const sharedStyles = await processSharedStyles(handoff);
-  const componentData = await processComponents(handoff, undefined, sharedStyles, components);
+export async function componentTransformer(handoff: Handoff) {
+  const componentData = await processComponents(handoff);
   await writeComponentSummaryAPI(handoff, componentData);
   await buildMainJS(handoff);
   await buildMainCss(handoff);
-  return;
 }
 
 /**

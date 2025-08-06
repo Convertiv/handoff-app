@@ -12,19 +12,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.makeIntegration = exports.ejectConfig = void 0;
-const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
+exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.ejectConfig = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const integration_1 = require("../transformers/integration");
+const fs_extra_1 = __importDefault(require("fs-extra"));
+const path_1 = __importDefault(require("path"));
 const config_1 = require("../config");
-const pipeline_1 = require("../pipeline");
 /**
  * Eject the config to the working directory
  * @param handoff
  */
 const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = (0, config_1.getClientConfig)(handoff.config);
+    const config = (0, config_1.getClientConfig)(handoff);
     const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
     if (fs_extra_1.default.existsSync(configPath)) {
         if (!handoff.force) {
@@ -37,36 +35,10 @@ const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.ejectConfig = ejectConfig;
 /**
- * Creates a integration within the working directory
- * @param handoff
- */
-const makeIntegration = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = handoff.config;
-    // does an local integration exist?
-    const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'integration'));
-    if (fs_extra_1.default.existsSync(workingPath)) {
-        if (!handoff.force) {
-            console.log(chalk_1.default.red(`An integration already exists in the working directory. Use the --force flag to overwrite.`));
-            return;
-        }
-    }
-    // perform integration ejection
-    const integrationPath = (0, integration_1.getPathToIntegration)(handoff, true);
-    fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: handoff.force ? true : false });
-    if (handoff.force)
-        handoff.force = false;
-    console.log(chalk_1.default.green(`Integration has been successfully created! Path: ${workingPath}`));
-    yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-    yield (0, pipeline_1.buildComponents)(handoff);
-    return handoff;
-});
-exports.makeIntegration = makeIntegration;
-/**
  * Eject the integration to the working directory
  * @param handoff
  */
 const ejectExportables = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     // does an local integration exist?
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables'));
     if (fs_extra_1.default.existsSync(workingPath)) {
@@ -86,7 +58,6 @@ exports.ejectExportables = ejectExportables;
  * @param handoff
  */
 const ejectPages = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = yield handoff.config;
     // does an local page exist?
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'pages'));
     if (fs_extra_1.default.existsSync(workingPath)) {

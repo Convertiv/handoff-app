@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { PreviewObject } from '@handoff/types';
 import { Badge, Webhook } from 'lucide-react';
 import type { GetStaticProps } from 'next';
@@ -13,7 +12,14 @@ import HeadersType from '../../components/Typography/Headers';
 import { Button } from '../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../components/ui/drawer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
-import { DocumentationProps, fetchComponents, fetchDocPageMarkdown, fetchDocPageMetadataAndContent, Metadata } from '../../components/util';
+import {
+  DocumentationProps,
+  fetchComponents,
+  fetchDocPageMarkdown,
+  fetchDocPageMetadataAndContent,
+  getClientRuntimeConfig,
+  Metadata,
+} from '../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
   components: { [id: string]: Metadata };
@@ -29,22 +35,24 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const components = fetchComponents()?.map((c) => c.id);
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
-        components: components.reduce(
-          (acc, component) => ({
-            ...acc,
-            ...{
-              [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
-            },
-          }),
-          {}
-        ),
+        components: components
+          ? components.reduce(
+              (acc, component) => ({
+                ...acc,
+                ...{
+                  [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
+                },
+              }),
+              {}
+            )
+          : null,
       } as ComponentPageDocumentationProps,
     },
   };
@@ -108,10 +116,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
         </div>
       </div>
       <div className="mt-10">
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
-
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
         <APIComponentList components={components} />
       </div>
     </Layout>

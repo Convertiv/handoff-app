@@ -1,5 +1,4 @@
-import { TypographyObject } from '@handoff/api';
-import { getClientConfig } from '@handoff/config';
+import { Types as CoreTypes } from 'handoff-core';
 import { upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
 import React, { ReactElement } from 'react';
@@ -10,7 +9,7 @@ import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComp
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableRow } from '../../../../components/ui/table';
-import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../../../components/util';
+import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -22,14 +21,13 @@ import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, ge
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system/tokens/foundations/typography', `/system`).props,
-        design: getTokens().design,
+        design: getTokens().localStyles,
       } as FoundationDocumentationProps,
     },
   };
@@ -54,9 +52,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
       </div>
       <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
           <FontsTable types={typography} />
         </div>
         <AnchorNav
@@ -67,7 +67,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
   );
 };
 
-const FontsTable = ({ types }: { types: TypographyObject[] }) => {
+const FontsTable = ({ types }: { types: CoreTypes.ITypographyObject[] }) => {
   return (
     <>
       {types.map((type, index) => {
@@ -112,7 +112,7 @@ const FontsTable = ({ types }: { types: TypographyObject[] }) => {
   );
 };
 
-export const pluckStyle = (type: TypographyObject) => {
+export const pluckStyle = (type: CoreTypes.ITypographyObject) => {
   return {
     fontFamily: type.values.fontFamily,
     fontSize: type.values.fontSize,

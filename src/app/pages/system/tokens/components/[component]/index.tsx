@@ -1,11 +1,5 @@
-import { getClientConfig } from '@handoff/config';
-import { ComponentInstance, FileComponentObject } from '@handoff/exporters/components/types';
-import { tokenReferenceFormat } from '@handoff/transformers/css/component';
-import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
-import { Token } from '@handoff/transformers/types';
-import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
-import { IntegrationObjectComponentOptions } from '@handoff/types/config';
-import { filterOutNull } from '@handoff/utils';
+import { ComponentDocumentationOptions } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { round, startCase } from 'lodash';
 import React from 'react';
 import { ComponentPreview, getComponentPreviewTitle } from '../../../../../components/Component/Preview';
@@ -16,13 +10,15 @@ import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
   fetchComponents,
+  getClientRuntimeConfig,
   getLegacyDefinition,
-  getPreview,
   getTokens,
   IParams,
   reduceSlugToString,
   staticBuildMenu,
 } from '../../../../../components/util';
+import { getComponentInstanceScssTokens, tokenReferenceFormat } from '../../../../../components/util/token';
+import { filterOutNull } from '../../../../../lib/utils';
 
 /**
  * Render all index pages
@@ -30,7 +26,7 @@ import {
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchComponents().map((exportable) => ({ params: { component: exportable.id } })),
+    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -38,21 +34,16 @@ export async function getStaticPaths() {
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  const previews = getPreview();
   const menu = staticBuildMenu();
-  const config = getClientConfig();
-  const metadata = await fetchComponents().filter((c) => c.id === component)[0];
-
+  const config = getClientRuntimeConfig();
   const componentSlug = reduceSlugToString(component);
   const componentObject = getTokens().components[componentSlug!];
-  const componentPreviews = getPreview().components[componentSlug!];
 
   return {
     props: {
       id: component,
       component: componentObject || {},
       legacyDefinition: getLegacyDefinition(componentSlug!),
-      previews: componentPreviews || [],
       menu,
       config,
       ...fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props,
@@ -66,12 +57,11 @@ const GenericComponentPage = ({
   current,
   id,
   config,
-  previews,
   component,
   options,
   componentOptions,
 }: ComponentDocumentationProps) => {
-  const tokensTabComponents = getComponentPreviews('tokens', component, options, previews);
+  const tokensTabComponents = getComponentPreviews('tokens', component, options);
   if (!tokensTabComponents) return <p>Loading...</p>;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
@@ -101,11 +91,9 @@ const GenericComponentPage = ({
 
 export const getComponentPreviews = (
   tab: 'overview' | 'tokens',
-  component: FileComponentObject,
-  options: ComponentDocumentationOptions,
-  previews: PreviewObject[]
+  component: CoreTypes.IFileComponentObject,
+  options: ComponentDocumentationOptions
 ) => {
-  const hasPreviews = previews.length > 0;
   const instances = component.instances;
   const view = (options?.views ?? {})[tab] ?? {};
   const viewFilters = view.condition ?? {};
@@ -165,7 +153,6 @@ export const getComponentPreviews = (
         name: /*hasPreviews*/ false
           ? `${startCase(name)} ${startCase(componentInstance.name)}`
           : `${startCase(componentInstance.name)} (${name})`,
-        preview: previews.find((item) => item.id === componentInstance.id),
         overrides,
       };
     })
@@ -217,16 +204,16 @@ const NormalizeValue = (value: string): string => {
 
 export interface ComponentDesignTokensProps {
   title: string;
-  previewObject: ComponentInstance;
-  previewObjectOptions?: IntegrationObjectComponentOptions;
-  componentInstances: ComponentInstance[];
+  previewObject: CoreTypes.IComponentInstance;
+  previewObjectOptions?: CoreTypes.IHandoffConfigurationComponentOptions;
+  componentInstances: CoreTypes.IComponentInstance[];
   overrides?: { [variantProp: string]: string[] };
-  children?: JSX.Element;
+  children?: React.ReactNode;
   renderPreviews: boolean;
   useReferences: boolean;
 }
 
-interface DataTableRow extends Map<string, [string, string, Token | undefined][]> {}
+interface DataTableRow extends Map<string, [string, string, CoreTypes.IToken | undefined][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
@@ -266,7 +253,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
       }
 
       // Set values for the component
-      transformComponentTokensToScssVariables(component, previewObjectOptions).forEach((token) => {
+      getComponentInstanceScssTokens(component, previewObjectOptions).forEach((token) => {
         // Initialize part if not already initialized
         dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
         // Initialize property for part if not already initialized
@@ -287,7 +274,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
     });
   } else {
     // Set values for the component
-    transformComponentTokensToScssVariables(previewObject, previewObjectOptions).forEach((token) => {
+    getComponentInstanceScssTokens(previewObject, previewObjectOptions).forEach((token) => {
       // Initialize part if not already initialized
       dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized

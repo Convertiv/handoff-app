@@ -13,7 +13,7 @@ interface ComponentMetadata extends Metadata {
 }
 
 export const APIComponentList = ({ components, title, description }: { components; title?; description? }) => {
-  if (components.length === 0) return <p>Loading...</p>;
+  if ((components ?? []).length === 0) return <p>No components found.</p>;
   return <ComponentList components={components} title={title} description={description} />;
 };
 

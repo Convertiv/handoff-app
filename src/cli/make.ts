@@ -9,7 +9,6 @@ import { prompt } from '../utils/prompt';
  * @param handoff
  */
 export const makeExportable = async (handoff: Handoff, type: string, name: string) => {
-  const config = await handoff.config;
   if (type !== 'component' && type !== 'foundation') {
     console.log(chalk.red(`Exportable type must be either 'component' or 'foundation'`));
     return;
@@ -98,7 +97,6 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
  * @param handoff
  */
 export const makePage = async (handoff: Handoff, name: string, parent: string | undefined) => {
-  const config = await handoff.config;
   let type = 'mdx';
   if (!name) {
     console.log(chalk.red(`Page name must be set`));
@@ -157,7 +155,6 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
  * @param handoff
  */
 export const makeComponent = async (handoff: Handoff, name: string) => {
-  const config = await handoff.config;
   if (!name) {
     console.log(chalk.red(`Component name must be set`));
     return;

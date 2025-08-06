@@ -1,5 +1,4 @@
-import { ColorObject } from '@handoff/api';
-import { getClientConfig } from '@handoff/config';
+import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
@@ -9,7 +8,7 @@ import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComp
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
-import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../../../components/util';
+import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -21,14 +20,13 @@ import { fetchComponents, fetchDocPageMarkdown, FoundationDocumentationProps, ge
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {
         config,
         ...fetchDocPageMarkdown('docs/', 'system/tokens/foundations/colors', `/system`).props,
-        design: getTokens().design,
+        design: getTokens().localStyles,
       } as FoundationDocumentationProps,
     },
   };
@@ -68,9 +66,11 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
       </div>
       <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
 
           {Object.keys(colorGroups).map((group) => (
             <div key={group} className="mb-8">
@@ -92,7 +92,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
   );
 };
 
-const ColorGroupTable = ({ group, colors }: { group: string; colors: ColorObject[] }) => {
+const ColorGroupTable = ({ group, colors }: { group: string; colors: CoreTypes.IColorObject[] }) => {
   return (
     <Table className="border-b-[0.5px] border-l-[0.5px] border-r-[0.5px]">
       <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">

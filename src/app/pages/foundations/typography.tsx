@@ -1,18 +1,17 @@
-import { getClientConfig } from '@handoff/config';
 import { FontFamily } from '@handoff/types/font';
 import sortedUniq from 'lodash/sortedUniq';
 import type * as next from 'next';
-import { ReactElement, ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import TypographyExamples from '../../components/Foundations/TypographyExample';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
-import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getTokens } from '../../components/util';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
 export interface typographyTypes {
-  [key: string]: ReactElement;
+  [key: string]: any;
 }
 
 /**
@@ -27,8 +26,8 @@ export const getStaticProps: next.GetStaticProps = async () => {
   return {
     props: {
       ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
-      config: getClientConfig(),
-      design: getTokens().design,
+      config: getClientRuntimeConfig(),
+      design: getTokens().localStyles,
     },
   };
 };
@@ -91,16 +90,18 @@ const Typography = ({
       <p className="mb-8">Use for palette of colors containing many shades.</p>
       <TypographyExamples types={typography} />
 
-      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
+      <div className="prose">
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
+      </div>
     </Layout>
   );
 };
 export default Typography;
 
 /**
- *       
+ *
  *       {Object.keys(families).map((key) => (
         <div className="c-typography__preview-big" key={`family-${key}`}>
           <div className="o-row u-justify-between">

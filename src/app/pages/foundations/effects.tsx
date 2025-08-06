@@ -1,12 +1,10 @@
-import { getClientConfig } from '@handoff/config';
-import { isShadowEffectType } from '@handoff/exporters/utils';
-import { EffectParametersObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { lowerCase } from 'lodash';
 import groupBy from 'lodash/groupBy';
 import upperFirst from 'lodash/upperFirst';
 import type { GetStaticProps } from 'next';
 import * as React from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
@@ -15,6 +13,12 @@ import AnchorNav from '../../components/Navigation/AnchorNav';
 import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
 import { getTokens } from '../../components/util';
+
+type EffectParametersObject = CoreTypes.IEffectObject['effects'][number];
+
+const isShadowEffectType = (effect: 'INNER_SHADOW' | 'DROP_SHADOW' | 'LAYER_BLUR' | 'BACKGROUND_BLUR'): boolean => {
+  return ['DROP_SHADOW', 'INNER_SHADOW'].includes(effect);
+};
 
 export const applyEffectToCssProperties = (effect: EffectParametersObject, cssProperties: React.CSSProperties) => {
   if (isShadowEffectType(effect.type)) {
@@ -35,9 +39,9 @@ export const getStaticProps: GetStaticProps = async () => {
 
   return {
     props: {
-      config: getClientConfig(),
+      config: util.getClientRuntimeConfig(),
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
-      design: getTokens().design,
+      design: getTokens().localStyles,
     },
   };
 };
@@ -123,9 +127,11 @@ const EffectsPage = ({
           ]}
         />
 
-        <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </Layout>
   );

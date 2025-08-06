@@ -1,3 +1,5 @@
+import { ValidationResult } from '../../types';
+import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
 
 export enum ComponentType {
@@ -21,7 +23,6 @@ export type ComponentListObject = {
   properties: { [key: string]: SlotMetadata };
   versions: string[];
   previews: { [key: string]: OptionalPreviewRender };
-  preview_options?: { group_by: boolean };
   paths: string[];
   entries?: {
     js?: string;
@@ -29,6 +30,10 @@ export type ComponentListObject = {
     templates?: string;
   };
   options?: {
+    preview?: {
+      groupBy?: string;
+      filterBy?: Filter;
+    };
     transformer: {
       cssRootClass?: string;
       tokenNameSegments?: string[];
@@ -51,6 +56,7 @@ export type TransformComponentTokensResult = {
   tags?: string[];
   should_do?: string[];
   should_not_do?: string[];
+  format: string;
   code: string;
   html?: string;
   preview: string;
@@ -61,14 +67,24 @@ export type TransformComponentTokensResult = {
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
-  preview_options?: { group_by: boolean };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
   entries?: {
     js?: string;
     scss?: string;
     template?: string;
+    schema?: string;
   };
+  options?: {
+    preview?: {
+      groupBy?: string;
+    };
+  };
+  /**
+   * Validation results for the component
+   * Each key represents a validation type and the value contains detailed validation results
+   */
+  validations?: Record<string, ValidationResult>;
 } | null;
 
 export type OptionalPreviewRender = {
@@ -76,6 +92,7 @@ export type OptionalPreviewRender = {
   values: { [key: string]: string | string[] | any };
   url: string;
 };
+
 export interface TransformedPreviewComponents {
   [key: string]: TransformComponentTokensResult[];
 }

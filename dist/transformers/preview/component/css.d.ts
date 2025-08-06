@@ -11,6 +11,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
+    format: string;
     code: string;
     html?: string;
     preview: string;
@@ -23,9 +24,6 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
     previews?: {
         [key: string]: import("../types").OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     properties?: {
         [key: string]: import("../component").SlotMetadata;
     };
@@ -34,12 +32,17 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
         js?: string;
         scss?: string;
         template?: string;
+        schema?: string;
     };
+    options?: {
+        preview?: {
+            groupBy?: string;
+        };
+    };
+    validations?: Record<string, import("../../../types").ValidationResult>;
 }>;
 /**
- * Check to see if there's an entry point for the main JS file
- * build that javascript and write it to the output folder
- * @param handoff
+ * Build the main CSS file using Vite
  */
 export declare const buildMainCss: (handoff: Handoff) => Promise<void>;
 export default buildComponentCss;

@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import { Grid, Hexagon, Palette, Shapes, Sun, TypeOutline } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
@@ -7,7 +6,7 @@ import CardsWithIcons from '../../components/cards/CardsWithIcons';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
-import { DocumentationProps, fetchDocPageMarkdown } from '../../components/util';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -21,7 +20,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'foundations', `/foundations`).props,
-      config: getClientConfig(),
+      config: getClientRuntimeConfig(),
     },
   };
 };
@@ -33,9 +32,11 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
-      <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-        {content}
-      </ReactMarkdown>
+      <div className="prose">
+        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          {content}
+        </ReactMarkdown>
+      </div>
       <div>
         <CardsWithIcons
           items={[

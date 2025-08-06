@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs';
-import { getSharedOptions } from '../utils';
-import { SharedArgs } from '../types';
 import Handoff from '../../';
+import { SharedArgs } from '../types';
+import { getSharedOptions } from '../utils';
 
 export interface MakeExportableArgs extends SharedArgs {
   type: string;
@@ -23,7 +23,7 @@ const command: CommandModule<{}, MakeExportableArgs> = {
       });
   },
   handler: async (args: MakeExportableArgs) => {
-    const handoff = new Handoff(args.debug, args.force, { integrationPath: args.integration });
+    const handoff = new Handoff(args.debug, args.force);
 
     const type = args.type;
     const name = args.name;

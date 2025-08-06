@@ -1,12 +1,9 @@
-import { ComponentInstance } from '@handoff/exporters/components/types';
-import { transformComponentTokensToScssVariables } from '@handoff/transformers/scss/component';
-import { Token } from '@handoff/transformers/types';
-import { IntegrationObjectComponentOptions } from '@handoff/types/config';
+import { Types as CoreTypes } from 'handoff-core';
 import round from 'lodash/round';
 import startCase from 'lodash/startCase';
 import { Blend } from 'lucide-react';
 import React, { useEffect } from 'react';
-import { tokenReferenceFormat } from './util/token';
+import { getComponentInstanceScssTokens, tokenReferenceFormat } from './util/token';
 
 const PropertyIconPathMap = {
   'border-width': 'token-border-width',
@@ -36,16 +33,16 @@ const NormalizeValue = (value: string): string => {
 
 export interface ComponentDesignTokensProps {
   title: string;
-  previewObject: ComponentInstance;
-  previewObjectOptions?: IntegrationObjectComponentOptions;
-  componentInstances: ComponentInstance[];
+  previewObject: CoreTypes.IComponentInstance;
+  previewObjectOptions?: CoreTypes.IHandoffConfigurationComponentOptions;
+  componentInstances: CoreTypes.IComponentInstance[];
   overrides?: { [variantProp: string]: string[] };
-  children?: JSX.Element;
+  children?: React.ReactNode;
   renderPreviews: boolean;
   useReferences: boolean;
 }
 
-interface DataTableRow extends Map<string, [string, string, Token | undefined][]> {}
+interface DataTableRow extends Map<string, [string, string, CoreTypes.IToken | undefined][]> {}
 interface DataTable extends Map<string, DataTableRow> {}
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
@@ -92,7 +89,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
         }
 
         // Set values for the component
-        transformComponentTokensToScssVariables(component, previewObjectOptions).forEach((token) => {
+        getComponentInstanceScssTokens(component, previewObjectOptions).forEach((token) => {
           // Initialize part if not already initialized
           dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
           // Initialize property for part if not already initialized
@@ -113,7 +110,7 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
       });
   } else {
     // Set values for the component
-    transformComponentTokensToScssVariables(previewObject, previewObjectOptions).forEach((token) => {
+    getComponentInstanceScssTokens(previewObject, previewObjectOptions).forEach((token) => {
       // Initialize part if not already initialized
       dataTable.get(token.metadata.part) ?? dataTable.set(token.metadata.part, new Map() as DataTableRow);
       // Initialize property for part if not already initialized
@@ -214,7 +211,7 @@ const PropertyStateValue: React.FC<{
   property: string;
   variable: string;
   value: string;
-  tokenReference: Token;
+  tokenReference: CoreTypes.IToken;
   showReference: boolean;
 }> = ({ property, variable, value, tokenReference, showReference = false }) => {
   const [tooltip, setTooltip] = React.useState(variable);
@@ -248,7 +245,7 @@ const PropertyStateValue: React.FC<{
         {!showReference ? (
           NormalizeValue(value)
         ) : tokenReference ? (
-          <>{tokenReferenceFormat(tokenReference, 'generic')} </>
+          <>{tokenReferenceFormat(tokenReference, 'sd')} </>
         ) : (
           NormalizeValue(value)
         )}

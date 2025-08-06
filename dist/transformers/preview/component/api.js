@@ -42,7 +42,7 @@ const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, v
     componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
-const writeComponentApi = (id, component, version, handoff, isPartialUpdate = false) => __awaiter(void 0, void 0, void 0, function* () {
+const writeComponentApi = (id_1, component_1, version_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, version_1, handoff_1, ...args_1], void 0, function* (id, component, version, handoff, isPartialUpdate = false) {
     const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
     if (isPartialUpdate) {
         const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
@@ -76,22 +76,25 @@ exports.writeComponentMetadataApi = writeComponentMetadataApi;
  * @param handoff
  * @param componentData
  */
-const updateComponentSummaryApi = (handoff, componentData) => __awaiter(void 0, void 0, void 0, function* () {
-    const apiPath = path_1.default.resolve(handoff.workingPath, `public/api/components.json`);
-    let newComponentData = [componentData], existingData = [];
+const updateComponentSummaryApi = (handoff, componentData // Partial list (may be empty)
+) => __awaiter(void 0, void 0, void 0, function* () {
+    const apiPath = path_1.default.resolve(handoff.workingPath, 'public/api/components.json');
+    let existingData = [];
     if (fs_extra_1.default.existsSync(apiPath)) {
-        const existing = yield fs_extra_1.default.readFile(apiPath, 'utf8');
-        if (existing) {
-            try {
-                existingData = JSON.parse(existing);
-                existingData = existingData.filter((component) => component.id !== componentData.id);
-            }
-            catch (_) {
-                // Unable to parse existing file
-            }
+        try {
+            const existing = yield fs_extra_1.default.readFile(apiPath, 'utf8');
+            existingData = JSON.parse(existing);
+        }
+        catch (_a) {
+            // Corrupt or missing JSON — treat as empty
+            existingData = [];
         }
     }
-    yield writeComponentSummaryAPI(handoff, newComponentData.concat(existingData));
+    // Replace existing entries with same ID
+    const incomingIds = new Set(componentData.map((c) => c.id));
+    const merged = [...componentData, ...existingData.filter((c) => !incomingIds.has(c.id))];
+    // Always write the file (even if merged is empty)
+    yield writeComponentSummaryAPI(handoff, merged);
 });
 exports.updateComponentSummaryApi = updateComponentSummaryApi;
 exports.default = writeComponentSummaryAPI;

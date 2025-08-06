@@ -1,7 +1,4 @@
-import chalk from 'chalk';
-import { FileComponentsObject } from '../../../exporters/components/types';
 import Handoff from '../../../index';
-import { processSharedStyles } from '../component';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
@@ -32,28 +29,38 @@ const defaultComponent: TransformComponentTokensResult = {
   properties: {},
   code: '',
   html: '',
+  format: 'html',
   js: null,
   css: null,
   sass: null,
 };
 
 /**
- * Process process a specific component
- * @param handoff
- * @param file
- * @param sharedStyles
+ * Types of component segments that can be updated
+ */
+export enum ComponentSegment {
+  JavaScript = 'javascript',
+  Style = 'style',
+  Previews = 'previews',
+  Validation = 'validation',
+}
+
+/**
+ * Process components and generate their code, styles, and previews
+ * @param handoff - The Handoff instance containing configuration and state
+ * @param id - Optional component ID to process a specific component
+ * @param segmentToProcess - Optional segment to update
+ * @returns Promise resolving to an array of processed components
  */
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  sharedStyles?: string,
-  components?: FileComponentsObject,
-  segmentToUpdate?: 'js' | 'css' | 'previews'
+  segmentToProcess?: ComponentSegment
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
-  if (!sharedStyles) sharedStyles = await processSharedStyles(handoff);
-
+  const components = (await handoff.getDocumentationObject()).components;
+  const sharedStyles = await handoff.getSharedStyles();
   const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
 
   for (const runtimeComponentId of Object.keys(runtimeComponents)) {
@@ -63,35 +70,38 @@ export async function processComponents(
 
     const versions = Object.keys(runtimeComponents[runtimeComponentId]);
     const latest = getLatestVersionForComponent(versions);
-    let latestVersion: TransformComponentTokensResult | undefined = undefined;
-
-    console.log(chalk.green(`Processing component ${runtimeComponentId} `));
+    let latestVersion: TransformComponentTokensResult | undefined;
 
     await Promise.all(
       versions.map(async (version) => {
         const runtimeComponent = runtimeComponents[runtimeComponentId][version];
-        let { type, ...restMetadata } = runtimeComponent;
+        const { type, ...restMetadata } = runtimeComponent;
+
         let data: TransformComponentTokensResult = {
           ...defaultComponent,
           ...restMetadata,
           type: (type as ComponentType) || ComponentType.Element,
         };
 
-        if (!segmentToUpdate || segmentToUpdate === 'js') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentJs(data, handoff);
         }
-
-        if (!segmentToUpdate || segmentToUpdate === 'css') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.Style || segmentToProcess === ComponentSegment.Validation) {
           data = await buildComponentCss(data, handoff, sharedStyles);
         }
 
-        if (!segmentToUpdate || segmentToUpdate === 'previews') {
+        if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
           data = await buildPreviews(data, handoff, components);
+        }
+
+        if (segmentToProcess === ComponentSegment.Validation && handoff.config?.hooks?.validateComponent) {
+          const validationResults = await handoff.config.hooks.validateComponent(data);
+          data.validations = validationResults;
         }
 
         data.sharedStyles = sharedStyles;
 
-        await writeComponentApi(runtimeComponentId, data, version, handoff, !!segmentToUpdate);
+        await writeComponentApi(runtimeComponentId, data, version, handoff, true);
 
         if (version === latest) {
           latestVersion = data;
@@ -100,15 +110,17 @@ export async function processComponents(
     );
 
     if (latestVersion) {
-      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, !!segmentToUpdate);
+      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, true);
       const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
-      await updateComponentSummaryApi(handoff, summary);
       result.push(summary);
     } else {
       throw new Error(`No latest version found for ${runtimeComponentId}`);
     }
   }
+
+  // Always merge and write summary file, even if no components processed
+  await updateComponentSummaryApi(handoff, result);
 
   return result;
 }

@@ -6,6 +6,69 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-08-06
+
+## Major Highlights
+
+### Vite Migration
+
+The project has transitioned from Webpack to Vite as the new build tool. This significantly improves performance, simplifies configuration, and lays the groundwork for future extensibility. Legacy integration steps and commands related to Webpack have been removed.
+
+### Modularization via `handoff-core`
+
+Core token pipeline logic has been extracted into a new shared package: `handoff-core`.
+This change makes the internal architecture of `handoff-app` cleaner and enables easier maintenance across related tools like the Figma plugin.
+
+### SSR and Hydration Support
+
+Initial support for Server-Side Rendering (SSR) and hydration is now available.
+
+- SSR is enabled for static previews and production-ready rendering
+- Hydration allows React components to become interactive after being statically rendered
+- These features are considered stable but may still evolve in upcoming releases
+
+### JavaScript-Based Configuration
+
+All configuration files now support JavaScript in addition to JSON.
+You can now define your config using `handoff.config.js` or `handoff.config.cjs`, and other related files (such as component config files) also support JS formats.
+JSON is still supported, but JavaScript usage is encouraged for better flexibility.
+
+## Hook-Based Extensibility
+
+A new hook system allows developers to customize parts of the build and schema pipeline.
+**Available hooks:**
+
+- `validateComponent`
+- `ssrBuildConfig`
+- `clientBuildConfig`
+- `getSchemaFromExports`
+- `schemaToProperties`
+- `jsBuildConfig`
+- `cssBuildConfig`
+- `htmlBuildConfig`
+
+## Additional Features
+
+- Component schema export support to help generate documentation tables and property lists
+- Preview filtering to improve navigation in large component libraries
+- New transform generates `.tsx` pages from `.mdx` for better compatibility with typed docs
+- Replaced use of unofficial Next.js APIs with `cross-spawn` for build and dev processes
+- More informative error handling and validation messages
+- Default doc format now set to `.mdx`
+
+## Cleanup and Refactors
+
+- Removed deprecated integrations and plugin code
+- Dropped part of unused dependencies including `axios`
+- Standardized configuration logic and naming
+- Improved fallback behavior for missing component CSS or schema
+- Cleaned up type definitions and utility functions
+
+## Compatibility Notes
+
+- Now tested with React 19 and Next.js 15
+- Older React and Next versions may no longer be compatible
+
 ## [0.16.0] - 2025-06-03
 
 This release is a major reorganization of Handoff. We've preserved the core
@@ -457,7 +520,6 @@ This release fixes a couple of small path issues that affect running 0.13.0 from
 ### Changes
 
 - **Integration System Overhaul**
-
   - **Local Integrations Only:** From this release onward, only local (ejected) integrations are supported. Handoff will automatically use the locally found integration.
     - Create a new local integration using `handoff-app make:integration` (or `eject:integration` which is still supported as an alias).
     - Since there is no need to specify integration information, integration options in `handoff.config.json` such as name and version are no longer recognized, making the integration section of `handoff.config.json` obsolete.

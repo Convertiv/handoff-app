@@ -1,9 +1,6 @@
-import React, { useCallback, useContext, useEffect } from 'react';
-import { CodeHighlight } from '../Markdown/CodeHighlight';
-
-import { ComponentInstance } from '@handoff/exporters/components/types';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PreviewObject } from '@handoff/types';
+import { Types as CoreTypes } from 'handoff-core';
 import { startCase } from 'lodash';
 import {
   Component,
@@ -17,9 +14,11 @@ import {
   Tablet,
   Text,
 } from 'lucide-react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { HotReloadContext } from '../context/HotReloadProvider';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
+import { CodeHighlight } from '../Markdown/CodeHighlight';
 import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -28,12 +27,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Separator } from '../ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { ValidationResults } from '../Validation/ValidationResults';
 import BestPracticesCard from './BestPracticesCard';
 
 export type ComponentPreview = {
-  component: ComponentInstance;
+  component: CoreTypes.IComponentInstance;
   name: string;
-  preview: PreviewObject | undefined;
   overrides?: { states?: string[] | undefined };
 };
 
@@ -41,27 +40,6 @@ export type ComponentPreviews = ComponentPreview[];
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
   return previewableComponent.name ? `${previewableComponent.name}` : `${startCase(previewableComponent.component.name)}`;
-};
-
-export const OverviewComponentPreview: React.FC<{ components: ComponentPreviews }> = ({ components }) => {
-  return (
-    <>
-      {components.map((previewableComponent) => {
-        const component = previewableComponent.component;
-        return (
-          <div key={`${component.id}`} id={component.id}>
-            <h4>{getComponentPreviewTitle(previewableComponent)}</h4>
-            <p>{component.description}</p>
-            <div className="c-component-preview">
-              <ComponentDisplay component={previewableComponent.preview} />
-            </div>
-            <CodeHighlight data={previewableComponent.preview} />
-            <hr />
-          </div>
-        );
-      })}
-    </>
-  );
 };
 
 export const ComponentDisplay: React.FC<{
@@ -316,7 +294,17 @@ export const ComponentPreview: React.FC<{
   bestPracticesCard?: boolean;
   codeHighlight?: boolean;
   properties?: boolean;
-}> = ({ defaultPreview, title, children, height, bestPracticesCard = true, codeHighlight = true, properties = true }) => {
+  validations?: boolean;
+}> = ({
+  defaultPreview,
+  title,
+  children,
+  height,
+  bestPracticesCard = true,
+  codeHighlight = true,
+  properties = true,
+  validations = true,
+}) => {
   const context = usePreviewContext();
   const [loaded, setLoaded] = React.useState(false);
   const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
@@ -358,6 +346,23 @@ export const ComponentPreview: React.FC<{
           </>
         )}
       </div>
+      {validations && preview?.validations && (
+        <div className="mb-5">
+          <HeadersType.H3 id="validations">Validation results</HeadersType.H3>
+          <ValidationResults
+            validations={Object.fromEntries(
+              Object.entries(preview.validations).map(([key, value]) => [
+                key,
+                {
+                  ...value,
+                  description: value.description || '',
+                  passed: value.passed,
+                },
+              ])
+            )}
+          />
+        </div>
+      )}
       {properties && preview?.properties && (
         <>
           <HeadersType.H3 id="properties">Properties</HeadersType.H3>

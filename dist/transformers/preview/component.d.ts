@@ -1,4 +1,3 @@
-import { FileComponentsObject } from '../../exporters/components/types';
 import Handoff from '../../index';
 export interface ComponentMetadata {
     title: string;
@@ -37,13 +36,13 @@ export interface SlotMetadata {
     key?: string;
     rules?: RuleObject;
 }
-export declare type RuleObject = {
+export type RuleObject = {
     required?: boolean;
     content?: {
         min: number;
         max: number;
     };
-    dimension?: {
+    dimensions?: {
         width: number;
         height: number;
         min: {
@@ -63,15 +62,6 @@ export declare type RuleObject = {
     filetype?: string;
     pattern?: string;
 };
-/**
- * Creates a WebSocket server that broadcasts messages to connected clients.
- * Designed for development mode to help with hot-reloading.
- *
- * @param port - Optional port number for the WebSocket server; defaults to 3001.
- * @returns A function that accepts a message string and broadcasts it to all connected clients.
- */
-export declare const createWebSocketServer: (port?: number) => Promise<(message: string) => void>;
-export declare const getComponentPath: (handoff: Handoff) => string;
 export declare const getComponentOutputPath: (handoff: Handoff) => string;
 /**
  * Create a component transformer
@@ -79,7 +69,7 @@ export declare const getComponentOutputPath: (handoff: Handoff) => string;
  * @param documentationObject
  * @returns
  */
-export declare function componentTransformer(handoff: Handoff, components?: FileComponentsObject): Promise<void>;
+export declare function componentTransformer(handoff: Handoff): Promise<void>;
 /**
  * Process the shared styles with sass compileAsync
  * @param handoff

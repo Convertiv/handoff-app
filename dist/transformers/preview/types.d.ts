@@ -1,3 +1,5 @@
+import { ValidationResult } from '../../types';
+import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
 export declare enum ComponentType {
     Element = "element",
@@ -5,7 +7,7 @@ export declare enum ComponentType {
     Navigation = "navigation",
     Utility = "utility"
 }
-export declare type ComponentListObject = {
+export type ComponentListObject = {
     id?: string;
     version: string;
     image: string;
@@ -23,9 +25,6 @@ export declare type ComponentListObject = {
     previews: {
         [key: string]: OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     paths: string[];
     entries?: {
         js?: string;
@@ -33,6 +32,10 @@ export declare type ComponentListObject = {
         templates?: string;
     };
     options?: {
+        preview?: {
+            groupBy?: string;
+            filterBy?: Filter;
+        };
         transformer: {
             cssRootClass?: string;
             tokenNameSegments?: string[];
@@ -47,7 +50,7 @@ export declare type ComponentListObject = {
         };
     };
 };
-export declare type TransformComponentTokensResult = {
+export type TransformComponentTokensResult = {
     id: string;
     source?: 'figma' | 'custom';
     type?: ComponentType;
@@ -58,6 +61,7 @@ export declare type TransformComponentTokensResult = {
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
+    format: string;
     code: string;
     html?: string;
     preview: string;
@@ -70,9 +74,6 @@ export declare type TransformComponentTokensResult = {
     previews?: {
         [key: string]: OptionalPreviewRender;
     };
-    preview_options?: {
-        group_by: boolean;
-    };
     properties?: {
         [key: string]: SlotMetadata;
     };
@@ -81,9 +82,20 @@ export declare type TransformComponentTokensResult = {
         js?: string;
         scss?: string;
         template?: string;
+        schema?: string;
     };
+    options?: {
+        preview?: {
+            groupBy?: string;
+        };
+    };
+    /**
+     * Validation results for the component
+     * Each key represents a validation type and the value contains detailed validation results
+     */
+    validations?: Record<string, ValidationResult>;
 } | null;
-export declare type OptionalPreviewRender = {
+export type OptionalPreviewRender = {
     title: string;
     values: {
         [key: string]: string | string[] | any;

@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,18 +38,72 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.devApp = exports.watchApp = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const chokidar_1 = __importDefault(require("chokidar"));
+const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const gray_matter_1 = __importDefault(require("gray-matter"));
 const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
-const next_build_1 = require("next/dist/cli/next-build");
-const next_dev_1 = require("next/dist/cli/next-dev");
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
+const ws_1 = __importDefault(require("ws"));
+const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
-const component_1 = require("./transformers/preview/component");
-const builder_1 = __importDefault(require("./transformers/preview/component/builder"));
-const preview_1 = require("./utils/preview");
+const builder_1 = __importStar(require("./transformers/preview/component/builder"));
+/**
+ * Creates a WebSocket server that broadcasts messages to connected clients.
+ * Designed for development mode to help with hot-reloading.
+ *
+ * @param port - Optional port number for the WebSocket server; defaults to 3001.
+ * @returns A function that accepts a message string and broadcasts it to all connected clients.
+ */
+const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (port = 3001) {
+    const wss = new ws_1.default.Server({ port });
+    // Heartbeat function to mark a connection as alive.
+    const heartbeat = function () {
+        this.isAlive = true;
+    };
+    // Setup a new connection
+    wss.on('connection', (ws) => {
+        const extWs = ws;
+        extWs.isAlive = true;
+        extWs.send(JSON.stringify({ type: 'WELCOME' }));
+        extWs.on('error', (error) => console.error('WebSocket error:', error));
+        extWs.on('pong', heartbeat);
+    });
+    // Periodically ping clients to ensure they are still connected
+    const pingInterval = setInterval(() => {
+        wss.clients.forEach((client) => {
+            const extWs = client;
+            if (!extWs.isAlive) {
+                console.log(chalk_1.default.yellow('Terminating inactive client'));
+                return client.terminate();
+            }
+            extWs.isAlive = false;
+            client.ping();
+        });
+    }, 30000);
+    // Clean up the interval when the server closes
+    wss.on('close', () => {
+        clearInterval(pingInterval);
+    });
+    console.log(chalk_1.default.green(`WebSocket server started on ws://localhost:${port}`));
+    // Return a function to broadcast a message to all connected clients
+    return (message) => {
+        console.log(chalk_1.default.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+        wss.clients.forEach((client) => {
+            if (client.readyState === ws_1.default.OPEN) {
+                client.send(message);
+            }
+        });
+    };
+});
+/**
+ * Gets the working public directory path for a given handoff instance
+ * Checks for both project-specific and default public directories
+ *
+ * @param handoff - The handoff instance containing working path and figma project configuration
+ * @returns The resolved path to the public directory if it exists, null otherwise
+ */
 const getWorkingPublicPath = (handoff) => {
     const paths = [
         path_1.default.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
@@ -39,6 +116,11 @@ const getWorkingPublicPath = (handoff) => {
     }
     return null;
 };
+/**
+ * Gets the application path for a given handoff instance
+ * @param handoff - The handoff instance containing module path and figma project configuration
+ * @returns The resolved path to the application directory
+ */
 const getAppPath = (handoff) => {
     return path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
 };
@@ -54,10 +136,10 @@ const mergePublicDir = (handoff) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 /**
- * Copy the mdx files from the working dir to the module dir
+ * Publish the mdx files from the working dir to the module dir
  * @param handoff
  */
-const mergeMDX = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const publishMDX = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(chalk_1.default.yellow('Merging MDX files...'));
     const appPath = getAppPath(handoff);
     const pages = path_1.default.resolve(handoff.workingPath, `pages`);
@@ -106,35 +188,43 @@ const mergeMDX = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param id
  */
 const transformMdx = (src, dest, id) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g;
     const content = fs_extra_1.default.readFileSync(src);
     const { data, content: body } = (0, gray_matter_1.default)(content);
-    let mdx = body;
     const title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
-    const menu = (_b = data.menu) !== null && _b !== void 0 ? _b : '';
     const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
-    const metaDescription = (_c = data.metaDescription) !== null && _c !== void 0 ? _c : '';
-    const metaTitle = (_d = data.metaTitle) !== null && _d !== void 0 ? _d : '';
-    const weight = (_e = data.weight) !== null && _e !== void 0 ? _e : 0;
-    const image = (_f = data.image) !== null && _f !== void 0 ? _f : '';
-    const menuTitle = (_g = data.menuTitle) !== null && _g !== void 0 ? _g : '';
-    const enabled = (_h = data.enabled) !== null && _h !== void 0 ? _h : true;
+    const metaDescription = (_b = data.metaDescription) !== null && _b !== void 0 ? _b : '';
+    const metaTitle = (_c = data.metaTitle) !== null && _c !== void 0 ? _c : '';
+    const weight = (_d = data.weight) !== null && _d !== void 0 ? _d : 0;
+    const image = (_e = data.image) !== null && _e !== void 0 ? _e : '';
+    const menuTitle = (_f = data.menuTitle) !== null && _f !== void 0 ? _f : '';
+    const enabled = (_g = data.enabled) !== null && _g !== void 0 ? _g : true;
     const wide = data.wide ? 'true' : 'false';
-    //
-    mdx = `
-\n\n${mdx}\n\n
-import {staticBuildMenu, getCurrentSection} from "@handoff/app/components/util";
-import { getClientConfig } from '@handoff/config';
-import { getPreview } from "@handoff/app/components/util";
+    const mdxHeader = `// This file is auto-generated by transformMdx(). Do not edit manually.
+// Source: ${src}
+// Generated at: ${new Date().toISOString()}
 
-export const getStaticProps = async () => {
-  // get previews for components on this page
-  const previews = getPreview();
+`;
+    const mdx = `${mdxHeader}import { getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '@handoff/app/components/util';
+import fs from 'fs-extra';
+import matter from 'gray-matter';
+import { MDXRemote } from 'next-mdx-remote';
+import { serialize } from 'next-mdx-remote/serialize';
+import path from 'path';
+
+export async function getStaticProps() {
+  const mdxFilePath = path.join(process.env.HANDOFF_WORKING_PATH, 'pages', '${id}.mdx');
+  const mdxSource = fs.readFileSync(mdxFilePath, 'utf8');
+
+  const { data, content: body } = matter(mdxSource); // extract frontmatter and body
+  const mdx = await serialize(body); // serialize only the body
+
   const menu = staticBuildMenu();
-  const config = getClientConfig();
+  const config = getClientRuntimeConfig();
+
   return {
     props: {
-      previews,
+      mdx,
       menu,
       config,
       current: getCurrentSection(menu, "/${id}") ?? [],
@@ -143,13 +233,13 @@ export const getStaticProps = async () => {
       image: "${image}",
     },
   };
-};
-
-export const preview = (name) => {
-  return previews.components[name];
-};
+}
 
 import MarkdownLayout from "@handoff/app/components/Layout/Markdown";
+import { Hero } from "@handoff/app/components/Hero";
+
+const components = { Hero };
+
 export default function Layout(props) {
   return (
     <MarkdownLayout
@@ -159,23 +249,24 @@ export default function Layout(props) {
         metaDescription: "${metaDescription}",
         metaTitle: "${metaTitle}",
         title: "${title}",
-        weight: ${weight},
-        image: "${image}",
-        menuTitle: "${menuTitle}",
-        enabled: ${enabled},
       }}
       wide={${wide}}
-      allPreviews={props.previews}
       config={props.config}
       current={props.current}
     >
-      {props.children}
+      <MDXRemote {...props.mdx} components={components} />
     </MarkdownLayout>
   );
-
 }`;
-    fs_extra_1.default.writeFileSync(dest, mdx, 'utf-8');
+    fs_extra_1.default.writeFileSync(dest.replaceAll('.mdx', '.tsx'), mdx, 'utf-8');
 };
+/**
+ * Performs cleanup of the application directory by removing the existing app directory if it exists.
+ * This is typically used before rebuilding the application to ensure a clean state.
+ *
+ * @param handoff - The Handoff instance containing configuration and working paths
+ * @returns Promise that resolves when cleanup is complete
+ */
 const performCleanup = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
     // Clean project app dir
@@ -183,37 +274,60 @@ const performCleanup = (handoff) => __awaiter(void 0, void 0, void 0, function* 
         yield fs_extra_1.default.rm(appPath, { recursive: true });
     }
 });
+const publishTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    const apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
+    if (!fs_extra_1.default.existsSync(apiPath)) {
+        fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
+    }
+    const tokens = yield handoff.getDocumentationObject();
+    fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
+    if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
+        fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'));
+    }
+    for (const type in tokens) {
+        if (type === 'timestamp')
+            continue;
+        for (const group in tokens[type]) {
+            fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+        }
+    }
+});
 const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
     const appPath = getAppPath(handoff);
+    // Publish tokens API
+    publishTokensApi(handoff);
     // Prepare project app dir
     yield fs_extra_1.default.promises.mkdir(appPath, { recursive: true });
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
     yield mergePublicDir(handoff);
-    yield mergeMDX(handoff);
+    yield publishMDX(handoff);
     // Prepare project app configuration
     const handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
     const handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
     const handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
-    const handoffIntegrationPath = path_1.default.resolve(handoff.workingPath, (_c = handoff.config.integrationPath) !== null && _c !== void 0 ? _c : 'integration');
     const handoffModulePath = path_1.default.resolve(handoff.modulePath);
     const handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
     const nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
-    const handoffUseReferences = (_d = handoff.config.useVariables) !== null && _d !== void 0 ? _d : false;
+    const handoffUseReferences = (_c = handoff.config.useVariables) !== null && _c !== void 0 ? _c : false;
+    const handoffWebsocketPort = (_e = (_d = handoff.config.app.ports) === null || _d === void 0 ? void 0 : _d.websocket) !== null && _e !== void 0 ? _e : 3001;
     const nextConfigContent = (yield fs_extra_1.default.readFile(nextConfigPath, 'utf-8'))
         .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
         .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
         .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
         .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
-        .replace(/HANDOFF_INTEGRATION_PATH:\s+\'\'/g, `HANDOFF_INTEGRATION_PATH: '${handoffIntegrationPath}'`)
         .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
         .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-        .replace(/HANDOFF_USE_REFERENCES:\s+\'\'/g, `HANDOFF_USE_REFERENCES: '${handoffUseReferences}'`)
+        .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
         .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
     yield fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent);
     return appPath;
 });
+const persistRuntimeCache = (handoff) => {
+    const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+    fs_extra_1.default.writeFileSync(destination, JSON.stringify(Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.integrationObject), null, 2), 'utf-8');
+};
 /**
  * Build the next js application
  * @param handoff
@@ -225,26 +339,24 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     }
     // Perform cleanup
     yield performCleanup(handoff);
-    // If we are building the app, ensure the integration is built first
-    yield (0, pipeline_1.buildIntegrationOnly)(handoff);
+    // Build components
     yield (0, pipeline_1.buildComponents)(handoff);
-    // Build client preview styles
-    yield (0, preview_1.buildClientFiles)(handoff)
-        .then((value) => !!value && console.log(chalk_1.default.green(value)))
-        .catch((error) => {
-        throw new Error(error);
-    });
     // Prepare app
     const appPath = yield prepareProjectApp(handoff);
+    persistRuntimeCache(handoff);
     // Build app
-    yield (0, next_build_1.nextBuild)({
-        lint: true,
-        mangling: true,
-        experimentalDebugMemoryUsage: false,
-        experimentalAppOnly: false,
-        experimentalTurbo: false,
-        experimentalBuildMode: 'default',
-    }, appPath);
+    const buildResult = cross_spawn_1.default.sync('npx', ['next', 'build'], {
+        cwd: appPath,
+        stdio: 'inherit',
+        env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'production' }),
+    });
+    if (buildResult.status !== 0) {
+        let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
+        if (buildResult.error) {
+            errorMsg += `\nSpawn error: ${buildResult.error.message}`;
+        }
+        throw new Error(errorMsg);
+    }
     // Ensure output root directory exists
     const outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
     if (!fs_extra_1.default.existsSync(outputRoot)) {
@@ -263,26 +375,18 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g, _h;
-    const tokensJsonFilePath = (0, pipeline_1.tokensFilePath)(handoff);
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const tokensJsonFilePath = handoff.getTokensFilePath();
     if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
-    const documentationObject = yield (0, pipeline_1.readPrevJSONFile)(tokensJsonFilePath);
-    const sharedStyles = yield (0, component_1.processSharedStyles)(handoff);
-    // Build client preview styles
-    yield (0, preview_1.buildClientFiles)(handoff)
-        .then((value) => !!value && console.log(chalk_1.default.green(value)))
-        .catch((error) => {
-        throw new Error(error);
-    });
     // Initial processing of the components
-    yield (0, builder_1.default)(handoff, undefined, sharedStyles, documentationObject.components);
+    yield (0, builder_1.default)(handoff);
     const appPath = yield prepareProjectApp(handoff);
     // Include any changes made within the app source during watch
     chokidar_1.default
         .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
-        ignored: /(^|[\/\\])\../,
+        ignored: /(^|[\/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true,
     })
@@ -303,7 +407,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // };
     const dev = true;
     const hostname = 'localhost';
-    const port = 3000;
+    const port = (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000;
     // when using middleware `hostname` and `port` must be provided below
     const app = (0, next_1.default)({
         dev,
@@ -343,9 +447,9 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             console.log(`> Ready on http://${hostname}:${port}`);
         });
     });
-    const wss = yield (0, component_1.createWebSocketServer)(3001);
+    const wss = yield createWebSocketServer((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);
     const chokidarConfig = {
-        ignored: /(^|[\/\\])\../,
+        ignored: /(^|[\/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true,
     };
@@ -385,19 +489,23 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     }
     let runtimeComponentsWatcher = null;
     let runtimeConfigurationWatcher = null;
-    const persistRuntimeCache = () => {
-        const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-        fs_extra_1.default.writeFileSync(destination, JSON.stringify(handoff.integrationObject, null, 2), 'utf-8');
+    const entryTypeToSegment = (type) => {
+        return {
+            js: builder_1.ComponentSegment.JavaScript,
+            scss: builder_1.ComponentSegment.Style,
+            templates: builder_1.ComponentSegment.Previews,
+        }[type];
     };
     const watchRuntimeComponents = (runtimeComponentPathsToWatch) => {
-        persistRuntimeCache();
+        persistRuntimeCache(handoff);
         if (runtimeComponentsWatcher) {
             runtimeComponentsWatcher.close();
         }
         if (runtimeComponentPathsToWatch.size > 0) {
-            runtimeComponentsWatcher = chokidar_1.default.watch(Array.from(runtimeComponentPathsToWatch), { ignoreInitial: true });
+            const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
+            runtimeComponentsWatcher = chokidar_1.default.watch(pathsToWatch, { ignoreInitial: true });
             runtimeComponentsWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-                if (handoff._configs.includes(file)) {
+                if (handoff.getConfigFilePaths().includes(file)) {
                     return;
                 }
                 switch (event) {
@@ -406,10 +514,14 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                     case 'unlink':
                         if (!debounce) {
                             debounce = true;
-                            file = path_1.default.dirname(path_1.default.dirname(file));
-                            const extension = path_1.default.extname(file);
-                            const segmentToUpdate = extension === '.scss' ? 'css' : extension === '.js' ? 'js' : extension === '.hbs' ? 'previews' : undefined;
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components, segmentToUpdate);
+                            let segmentToUpdate = undefined;
+                            const matchingPath = runtimeComponentPathsToWatch.get(file);
+                            if (matchingPath) {
+                                const entryType = runtimeComponentPathsToWatch.get(matchingPath);
+                                segmentToUpdate = entryTypeToSegment(entryType);
+                            }
+                            const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
+                            yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
                             debounce = false;
                         }
                         break;
@@ -421,8 +533,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         if (runtimeConfigurationWatcher) {
             runtimeConfigurationWatcher.close();
         }
-        if (handoff._configs.length > 0) {
-            runtimeConfigurationWatcher = chokidar_1.default.watch(handoff._configs, { ignoreInitial: true });
+        if (handoff.getConfigFilePaths().length > 0) {
+            runtimeConfigurationWatcher = chokidar_1.default.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
             runtimeConfigurationWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
                 switch (event) {
                     case 'add':
@@ -433,7 +545,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                             file = path_1.default.dirname(path_1.default.dirname(file));
                             handoff.reload();
                             watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file), sharedStyles, documentationObject.components);
+                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
                             debounce = false;
                         }
                         break;
@@ -443,18 +555,19 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     };
     const getRuntimeComponentsPathsToWatch = () => {
         var _a, _b, _c;
-        const result = new Set();
+        const result = new Map();
         for (const runtimeComponentId of Object.keys((_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
             for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
                 const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
-                for (const [_, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
+                for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
                     const normalizedComponentEntryPath = runtimeComponentEntryPath;
                     if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
+                        const entryType = runtimeComponentEntryType;
                         if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
-                            result.add(path_1.default.dirname(normalizedComponentEntryPath));
+                            result.set(path_1.default.dirname(normalizedComponentEntryPath), entryType);
                         }
                         else {
-                            result.add(normalizedComponentEntryPath);
+                            result.set(normalizedComponentEntryPath, entryType);
                         }
                     }
                 }
@@ -462,19 +575,21 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         }
         return result;
     };
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log(chalk_1.default.yellow('handoff.config.json changed. Please restart server to see changes...'));
-            if (!debounce) {
-                debounce = true;
-                handoff.reload();
-                watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-                watchRuntimeConfiguration();
-                yield (0, builder_1.default)(handoff, undefined, sharedStyles, documentationObject.components);
-                debounce = false;
-            }
-        }));
+    /*
+    if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
+      chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
+        console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
+        if (!debounce) {
+          debounce = true;
+          handoff.reload();
+          watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
+          watchRuntimeConfiguration();
+          await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
+          debounce = false;
+        }
+      });
     }
+      */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
     if (((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration)) {
@@ -488,8 +603,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'unlink':
                     if (!debounce) {
                         debounce = true;
-                        yield (0, pipeline_1.buildIntegrationOnly)(handoff);
-                        yield (0, component_1.processSharedStyles)(handoff);
+                        yield handoff.getSharedStyles();
                         debounce = false;
                     }
             }
@@ -502,7 +616,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'change':
                 case 'unlink':
                     if (path.endsWith('.mdx')) {
-                        mergeMDX(handoff);
+                        publishMDX(handoff);
                     }
                     console.log(chalk_1.default.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
                     break;
@@ -516,15 +630,10 @@ exports.watchApp = watchApp;
  * @param handoff
  */
 const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
         throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
     }
-    // Build client preview styles
-    yield (0, preview_1.buildClientFiles)(handoff)
-        .then((value) => !!value && console.log(chalk_1.default.green(value)))
-        .catch((error) => {
-        throw new Error(error);
-    });
     // Prepare app
     const appPath = yield prepareProjectApp(handoff);
     // Purge app cache
@@ -532,8 +641,20 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         fs_extra_1.default.removeSync(moduleOutput);
     }
+    persistRuntimeCache(handoff);
     // Run
-    return yield (0, next_dev_1.nextDev)({ port: 3000 }, 'cli', appPath);
+    const devResult = cross_spawn_1.default.sync('npx', ['next', 'dev', '--port', String((_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000)], {
+        cwd: appPath,
+        stdio: 'inherit',
+        env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'development' }),
+    });
+    if (devResult.status !== 0) {
+        let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
+        if (devResult.error) {
+            errorMsg += `\nSpawn error: ${devResult.error.message}`;
+        }
+        throw new Error(errorMsg);
+    }
 });
 exports.devApp = devApp;
 exports.default = buildApp;

@@ -1,4 +1,3 @@
-import { getClientConfig } from '@handoff/config';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
@@ -8,11 +7,12 @@ import Footer from '../../../components/Footer';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
 import Header from '../../../components/old/Header';
 import {
-    DocumentationProps,
-    fetchComponents,
-    fetchDocPageMarkdown,
-    fetchDocPageMetadataAndContent,
-    Metadata,
+  DocumentationProps,
+  fetchComponents,
+  fetchDocPageMarkdown,
+  fetchDocPageMetadataAndContent,
+  getClientRuntimeConfig,
+  Metadata,
 } from '../../../components/util';
 
 type ComponentPageDocumentationProps = DocumentationProps & {
@@ -29,8 +29,8 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents().map((c) => c.id);
-  const config = getClientConfig();
+  const components = fetchComponents()?.map((c) => c.id) ?? [];
+  const config = getClientRuntimeConfig();
   return {
     ...{
       props: {
@@ -77,9 +77,11 @@ const ComponentsListPage = ({ content, menu, metadata, current, components, conf
               <ComponentSearch />
             </div>
           </div>
-          <ReactMarkdown className="prose" components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
       </section>
       <Footer config={config} />

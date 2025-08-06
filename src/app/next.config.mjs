@@ -42,7 +42,6 @@ const nextConfig = {
   reactStrictMode: true,
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
-  swcMinify: true,
   trailingSlash: true,
   experimental: {
     externalDir: true,
@@ -60,9 +59,9 @@ const nextConfig = {
     HANDOFF_PROJECT_ID: '',
     HANDOFF_APP_BASE_PATH: '',
     HANDOFF_WORKING_PATH: '',
-    HANDOFF_INTEGRATION_PATH: '',
     HANDOFF_MODULE_PATH: '',
     HANDOFF_EXPORT_PATH: '',
+    HANDOFF_WEBSOCKET_PORT: '',
   },
   serverRuntimeConfig: {
     PROJECT_ROOT: path.resolve('public'),
@@ -80,10 +79,9 @@ const nextConfig = {
         HANDOFF_PROJECT_ID: '',
         HANDOFF_APP_BASE_PATH: '',
         HANDOFF_WORKING_PATH: '',
-        HANDOFF_INTEGRATION_PATH: '',
         HANDOFF_MODULE_PATH: '',
         HANDOFF_EXPORT_PATH: '',
-        HANDOFF_USE_REFERENCES: false,
+        HANDOFF_WEBSOCKET_PORT: '',
       };
 
       // Check if client configuration exists
