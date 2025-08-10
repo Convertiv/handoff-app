@@ -45,7 +45,7 @@ const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
-const ws_1 = __importDefault(require("ws"));
+const ws_1 = require("ws");
 const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
@@ -57,7 +57,7 @@ const builder_1 = __importStar(require("./transformers/preview/component/builder
  * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
 const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (port = 3001) {
-    const wss = new ws_1.default.Server({ port });
+    const wss = new ws_1.WebSocket.Server({ port });
     // Heartbeat function to mark a connection as alive.
     const heartbeat = function () {
         this.isAlive = true;
@@ -91,7 +91,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
     return (message) => {
         console.log(chalk_1.default.green(`Broadcasting message to ${wss.clients.size} client(s)`));
         wss.clients.forEach((client) => {
-            if (client.readyState === ws_1.default.OPEN) {
+            if (client.readyState === ws_1.WebSocket.OPEN) {
                 client.send(message);
             }
         });
