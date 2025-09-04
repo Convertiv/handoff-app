@@ -68,7 +68,7 @@ const buildCssBundle = async ({
             //   },
             // ],
             // Use modern API settings
-            api: 'modern-compiler',
+            // api: 'modern-compiler',
             silenceDeprecations: ['import', 'legacy-js-api'],
           },
         },
