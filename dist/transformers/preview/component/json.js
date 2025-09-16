@@ -41,6 +41,7 @@ const parseComponentJson = (id, location, data) => __awaiter(void 0, void 0, voi
                     data.properties = parsed.properties;
                     data.previews = parsed.previews;
                     data.options = parsed.options;
+                    data.page = parsed.page;
                 }
             }
             catch (e) {

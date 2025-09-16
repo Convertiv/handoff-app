@@ -1,3 +1,4 @@
+import { Card } from '../../app/components/Component/Cards';
 import { ValidationResult } from '../../types';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -8,6 +9,66 @@ export enum ComponentType {
   Navigation = 'navigation',
   Utility = 'utility',
 }
+
+export type PageSliceType = 'BEST_PRACTICES' | 'COMPONENT_DISPLAY' | 'VALIDATION_RESULTS' | 'PROPERTIES' | 'TEXT' | 'CARDS';
+
+export interface BasePageSlice {
+  type: PageSliceType;
+}
+
+export interface BestPracticesPageSlice extends BasePageSlice {
+  type: 'BEST_PRACTICES';
+}
+
+export interface ComponentDisplayPageSlice extends BasePageSlice {
+  type: 'COMPONENT_DISPLAY';
+  showPreview?: boolean;
+  showCodeHighlight?: boolean;
+  defaultHeight?: string;
+  filterBy?: Filter;
+}
+
+export interface ValidationResultsPageSlice extends BasePageSlice {
+  type: 'VALIDATION_RESULTS';
+}
+
+export interface PropertiesPageSlice extends BasePageSlice {
+  type: 'PROPERTIES';
+}
+
+export interface TextPageSlice extends BasePageSlice {
+  type: 'TEXT';
+  /** Optional title text (always rendered as H3) */
+  title?: string;
+  /** Optional HTML content to render */
+  content?: string;
+}
+
+export interface CardsPageSlice extends BasePageSlice {
+  type: 'CARDS';
+  /** Array of cards to display */
+  cards: Card[];
+  /** Maximum number of cards per row (default: 2, max: 2, always full width) */
+  maxCardsPerRow?: 1 | 2;
+}
+
+/**
+ * Discriminated union type for all page slices.
+ * Provides type safety by ensuring each slice type has its specific settings.
+ * TypeScript will narrow the type based on the 'type' discriminator property.
+ */
+export type PageSlice =
+  | BestPracticesPageSlice
+  | ComponentDisplayPageSlice
+  | ValidationResultsPageSlice
+  | PropertiesPageSlice
+  | TextPageSlice
+  | CardsPageSlice;
+
+export type ComponentPageDefinition = {
+  slices: PageSlice[];
+  options?: Record<string, unknown>;
+};
 
 export type ComponentListObject = {
   id?: string;
@@ -43,6 +104,7 @@ export type ComponentListObject = {
       replace: { [variantProperty: string]: { [source: string]: string } };
     };
   };
+  page?: ComponentPageDefinition;
 };
 
 export type TransformComponentTokensResult = {
@@ -80,11 +142,8 @@ export type TransformComponentTokensResult = {
       groupBy?: string;
     };
   };
-  /**
-   * Validation results for the component
-   * Each key represents a validation type and the value contains detailed validation results
-   */
   validations?: Record<string, ValidationResult>;
+  page?: ComponentPageDefinition;
 } | null;
 
 export type OptionalPreviewRender = {
