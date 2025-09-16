@@ -12,31 +12,31 @@ function evaluateFilter(obj, filter) {
     var _a, _b, _c;
     // Handle array of field filters (implicit AND)
     if (Array.isArray(filter)) {
-        const results = filter.map(f => evaluateFieldFilter(obj, f));
+        const results = filter.map((f) => evaluateFieldFilter(obj, f));
         // If any filter doesn't match, return false
-        if (!results.every(r => r.matches)) {
+        if (!results.every((r) => r.matches)) {
             return { matches: false };
         }
         // If any filter has an order, use the first one (since we're using AND)
-        const order = (_a = results.find(r => r.order !== undefined)) === null || _a === void 0 ? void 0 : _a.order;
+        const order = (_a = results.find((r) => r.order !== undefined)) === null || _a === void 0 ? void 0 : _a.order;
         return { matches: true, order };
     }
     // Handle logical filter
     if ('and' in filter) {
-        const results = filter.and.map(f => evaluateFilter(obj, f));
-        if (!results.every(r => r.matches)) {
+        const results = filter.and.map((f) => evaluateFilter(obj, f));
+        if (!results.every((r) => r.matches)) {
             return { matches: false };
         }
-        const order = (_b = results.find(r => r.order !== undefined)) === null || _b === void 0 ? void 0 : _b.order;
+        const order = (_b = results.find((r) => r.order !== undefined)) === null || _b === void 0 ? void 0 : _b.order;
         return { matches: true, order };
     }
     if ('or' in filter) {
-        const results = filter.or.map(f => evaluateFilter(obj, f));
-        if (!results.some(r => r.matches)) {
+        const results = filter.or.map((f) => evaluateFilter(obj, f));
+        if (!results.some((r) => r.matches)) {
             return { matches: false };
         }
         // For OR, we use the first matching order
-        const order = (_c = results.find(r => r.matches && r.order !== undefined)) === null || _c === void 0 ? void 0 : _c.order;
+        const order = (_c = results.find((r) => r.matches && r.order !== undefined)) === null || _c === void 0 ? void 0 : _c.order;
         return { matches: true, order };
     }
     if ('not' in filter) {
@@ -54,13 +54,22 @@ function evaluateFilter(obj, filter) {
 function evaluateFieldFilter(obj, filter) {
     const { field, op, value } = filter;
     const actual = obj[field];
+    if (op === 'neq') {
+        console.log('EVAL', filter, actual, actual !== value);
+    }
     switch (op) {
-        case 'eq': return { matches: actual === value };
-        case 'neq': return { matches: actual !== value };
-        case 'gt': return { matches: actual > value };
-        case 'gte': return { matches: actual >= value };
-        case 'lt': return { matches: actual < value };
-        case 'lte': return { matches: actual <= value };
+        case 'eq':
+            return { matches: actual === value };
+        case 'neq':
+            return { matches: actual !== value };
+        case 'gt':
+            return { matches: actual > value };
+        case 'gte':
+            return { matches: actual >= value };
+        case 'lt':
+            return { matches: actual < value };
+        case 'lte':
+            return { matches: actual <= value };
         case 'contains':
             if (typeof actual === 'string')
                 return { matches: actual.includes(value) };
@@ -72,8 +81,10 @@ function evaluateFieldFilter(obj, filter) {
                 return { matches: false };
             const index = value.indexOf(actual);
             return { matches: index !== -1, order: index };
-        case 'nin': return { matches: Array.isArray(value) && !value.includes(actual) };
-        default: return { matches: false };
+        case 'nin':
+            return { matches: Array.isArray(value) && !value.includes(actual) };
+        default:
+            return { matches: false };
     }
 }
 /**
@@ -83,9 +94,9 @@ function evaluateFieldFilter(obj, filter) {
  * @returns Filtered and sorted array of objects
  */
 function filterAndSort(items, filter) {
-    const results = items.map(item => ({
+    const results = items.map((item) => ({
         item,
-        result: evaluateFilter(item, filter)
+        result: evaluateFilter(item, filter),
     }));
     return results
         .filter(({ result }) => result.matches)
