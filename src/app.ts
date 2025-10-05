@@ -509,6 +509,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     return {
       js: ComponentSegment.JavaScript,
       scss: ComponentSegment.Style,
+      template: ComponentSegment.Previews,
       templates: ComponentSegment.Previews,
     }[type];
   };
@@ -534,13 +535,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
           case 'unlink':
             if (!debounce) {
               debounce = true;
-              let segmentToUpdate: ComponentSegment = undefined;
-              const matchingPath = runtimeComponentPathsToWatch.get(file);
-
-              if (matchingPath) {
-                const entryType = runtimeComponentPathsToWatch.get(matchingPath);
-                segmentToUpdate = entryTypeToSegment(entryType);
-              }
+              const entryType = runtimeComponentPathsToWatch.get(file);
+              const segmentToUpdate: ComponentSegment = entryType ? entryTypeToSegment(entryType) : undefined;
 
               const componentDir = path.basename(path.dirname(path.dirname(file)));
               await processComponents(handoff, componentDir, segmentToUpdate);
@@ -589,7 +585,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
           if (fs.existsSync(normalizedComponentEntryPath)) {
             const entryType = runtimeComponentEntryType as keyof ComponentListObject['entries'];
             if (fs.statSync(normalizedComponentEntryPath).isFile()) {
-              result.set(path.dirname(normalizedComponentEntryPath), entryType);
+              result.set(path.resolve(normalizedComponentEntryPath), entryType);
             } else {
               result.set(normalizedComponentEntryPath, entryType);
             }
@@ -600,22 +596,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
 
     return result;
   };
-
-  /*
-  if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
-      console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
-      if (!debounce) {
-        debounce = true;
-        handoff.reload();
-        watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-        watchRuntimeConfiguration();
-        await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
-        debounce = false;
-      }
-    });
-  }
-    */
 
   watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
   watchRuntimeConfiguration();
