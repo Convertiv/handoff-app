@@ -594,26 +594,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       }
     }
 
-    console.log('!!!result', result);
-
     return result;
   };
-
-  /*
-  if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
-      console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
-      if (!debounce) {
-        debounce = true;
-        handoff.reload();
-        watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-        watchRuntimeConfiguration();
-        await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
-        debounce = false;
-      }
-    });
-  }
-    */
 
   watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
   watchRuntimeConfiguration();

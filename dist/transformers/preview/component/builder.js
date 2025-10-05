@@ -75,8 +75,6 @@ var ComponentSegment;
  * to avoid overwriting them with undefined values.
  */
 function getPreserveKeysForSegment(segmentToProcess) {
-    console.log('getPreserveKeysForSegment', segmentToProcess);
-    console.log('segmentToProcess', segmentToProcess);
     if (!segmentToProcess) {
         return []; // No preservation needed for full updates
     }
@@ -115,7 +113,6 @@ function processComponents(handoff, id, segmentToProcess) {
         // This ensures that when processing only specific segments (e.g., JavaScript only),
         // we don't overwrite data from other segments (e.g., CSS, previews) with undefined values
         const preserveKeys = getPreserveKeysForSegment(segmentToProcess);
-        console.log('!!!preserveKeys', preserveKeys);
         for (const runtimeComponentId of Object.keys(runtimeComponents)) {
             if (!!id && runtimeComponentId !== id) {
                 continue;

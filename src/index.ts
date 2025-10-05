@@ -601,7 +601,7 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
   return loweredObj;
 };
 
-export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
 
 // Export transformers and types from handoff-core

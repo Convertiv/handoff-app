@@ -52,50 +52,53 @@ export type ComponentPageDefinition = {
     slices: PageSlice[];
     options?: Record<string, unknown>;
 };
-export type ComponentListObject = {
-    id?: string;
-    version: string;
-    image: string;
+export type ComponentOptions = {
+    preview?: {
+        groupBy?: string;
+        filterBy?: Filter;
+    };
+    transformer: {
+        cssRootClass?: string;
+        tokenNameSegments?: string[];
+        defaults: {
+            [variantProperty: string]: string;
+        };
+        replace: {
+            [variantProperty: string]: {
+                [source: string]: string;
+            };
+        };
+    };
+};
+export type ComponentObject = {
     title: string;
-    type: string;
-    group: string;
-    categories: string[];
-    tags: string[];
     description: string;
-    figma: string;
-    properties: {
-        [key: string]: SlotMetadata;
-    };
-    versions: string[];
-    previews: {
-        [key: string]: OptionalPreviewRender;
-    };
-    paths: string[];
+    image: string;
+    group: string;
+    type: string;
     entries?: {
         js?: string;
         scss?: string;
         templates?: string;
     };
-    options?: {
-        preview?: {
-            groupBy?: string;
-            filterBy?: Filter;
-        };
-        transformer: {
-            cssRootClass?: string;
-            tokenNameSegments?: string[];
-            defaults: {
-                [variantProperty: string]: string;
-            };
-            replace: {
-                [variantProperty: string]: {
-                    [source: string]: string;
-                };
-            };
-        };
+    properties: {
+        [key: string]: SlotMetadata;
     };
+    previews: {
+        [key: string]: OptionalPreviewRender;
+    };
+    categories?: string[];
+    tags?: string[];
+    figma?: string;
     page?: ComponentPageDefinition;
+    options?: ComponentOptions;
 };
+export type ComponentListObject = {
+    id: string;
+    version: string;
+    versions: string[];
+    paths: string[];
+} & ComponentObject;
 export type TransformComponentTokensResult = {
     id: string;
     source?: 'figma' | 'custom';
