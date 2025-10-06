@@ -444,25 +444,39 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   > = getTokens().components;
 
   if (fetchAll) {
-    const componentIds = Array.from(
-      new Set<string>(
-        (
-          JSON.parse(
-            fs.readFileSync(
-              path.resolve(
-                process.env.HANDOFF_MODULE_PATH ?? '',
-                '.handoff',
-                `${process.env.HANDOFF_PROJECT_ID}`,
-                'public',
-                'api',
-                'components.json'
-              ),
-              'utf-8'
-            )
-          ) as ComponentListObject[]
-        ).map((c) => c.id)
+    let componentIds = [];
+    if (
+      fs.existsSync(
+        path.resolve(
+          process.env.HANDOFF_MODULE_PATH ?? '',
+          '.handoff',
+          `${process.env.HANDOFF_PROJECT_ID}`,
+          'public',
+          'api',
+          'components.json'
+        )
       )
-    );
+    ) {
+      componentIds = Array.from(
+        new Set<string>(
+          (
+            JSON.parse(
+              fs.readFileSync(
+                path.resolve(
+                  process.env.HANDOFF_MODULE_PATH ?? '',
+                  '.handoff',
+                  `${process.env.HANDOFF_PROJECT_ID}`,
+                  'public',
+                  'api',
+                  'components.json'
+                ),
+                'utf-8'
+              )
+            ) as ComponentListObject[]
+          ).map((c) => c.id)
+        )
+      );
+    }
 
     for (const componentId of componentIds) {
       const metadata = getLatestComponentMetadata(componentId);
