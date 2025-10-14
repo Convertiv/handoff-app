@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { getClientConfig } from '../config';
 import Handoff from '../index';
 
 /**
@@ -9,14 +8,15 @@ import Handoff from '../index';
  * @param handoff
  */
 export const ejectConfig = async (handoff: Handoff) => {
-  const config = getClientConfig(handoff);
-  const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.json'));
+  const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.js'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
       console.log(chalk.red(`A config already exists in the working directory.  Use the --force flag to overwrite.`));
     }
   }
-  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}`);
+  // load the template as a string
+  const template = fs.readFileSync(path.resolve(handoff.modulePath, 'config/config.template.js'), 'utf8');
+  fs.writeFileSync(configPath, template);
   console.log(chalk.green(`Config ejected to ${configPath}`));
   return handoff;
 };
