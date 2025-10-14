@@ -48,6 +48,8 @@ module.exports = {
       lg: { size: 992, name: 'Large' },
       xl: { size: 1200, name: 'Extra Large' },
     },
+    // Set the ports for the application
+    ports: { app: 3000, websocket: 3001 },
   },
   // These are the entry points used to compile the target application
   entries: {
