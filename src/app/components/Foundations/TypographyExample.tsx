@@ -4,6 +4,8 @@ import { ArrowRightToLine, BookType, Check, Copy, Link, Type } from 'lucide-reac
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { typographyTypes } from '../../pages/foundations/typography';
+import { anchorSlugify } from '../Navigation/AnchorNav';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
 import { Button } from '../ui/button';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -52,43 +54,92 @@ const TypographyExamples: React.FC<{ types: CoreTypes.ITypographyObject[]; type_
     setOpenType(true);
   };
 
+  const categorizedTypes = types.reduce<{
+    categorized: Record<string, CoreTypes.ITypographyObject[]>;
+    uncategorized: CoreTypes.ITypographyObject[];
+  }>(
+    (acc, type) => {
+      if (type.name.includes('/')) {
+        const [categoryRaw] = type.name.split('/');
+        const category = categoryRaw.trim();
+        acc.categorized[category] = acc.categorized[category] ?? [];
+        acc.categorized[category].push(type);
+      } else {
+        acc.uncategorized.push(type);
+      }
+      return acc;
+    },
+    { categorized: {}, uncategorized: [] }
+  );
+
+  const renderTypeCard = (type: CoreTypes.ITypographyObject, key: React.Key) => (
+    <div key={key} className="border-t border-gray-200 dark:border-gray-800">
+      <div className="group relative grid grid-cols-[200px,1fr] gap-4 py-7">
+        <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-sm transition-opacity duration-500 group-hover:opacity-100">
+          <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Copy className="h-3 w-3 text-gray-500" />
+          </button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <Link className="h-3 w-3 text-gray-500" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="px-2 py-1 text-xs">Copy Link</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => openTypeSheet(type)} className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <Type className="h-3 w-3 text-gray-500" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="px-2 py-1 text-xs">Text Info</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-medium">{type.name}</h3>
+          <small className="text-xs text-gray-500">
+            {type.values.fontFamily} <span className="px-[2px] text-[10px] text-gray-400">&bull;</span> {type.values.fontWeight}
+          </small>
+          <small className="text-xs text-gray-500">
+            {type.values.fontSize}px <span className="px-[2px] align-middle text-[10px] text-gray-400">&bull;</span>{' '}
+            {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
+          </small>
+        </div>
+        <div>{renderTypes(type, type_copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}</div>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {types.map((type, index) => (
-        <div key={`type-hier-${index}`} className="">
-          <div className="group relative -mx-5 grid grid-cols-[200px,1fr] gap-4 rounded-lg p-5 duration-200 hover:bg-gray-50 ">
-            <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-sm transition-opacity duration-500 group-hover:opacity-100">
-              <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                <Copy className="h-3 w-3 text-gray-500" />
-              </button>
-              <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                <Link className="h-3 w-3 text-gray-500" />
-              </button>
-              <button onClick={() => openTypeSheet(type)} className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Type className="h-3 w-3 text-gray-500" />
-                    </TooltipTrigger>
-                    <TooltipContent className="px-2 py-1 text-xs">Text Info</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </button>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-base font-semibold">{type.name}</h3>
-              <small className="font-mono text-xs text-gray-500">
-                {type.values.fontFamily} <span className="text-[10px] text-gray-400">/</span> {type.values.fontWeight}
-              </small>
-              <small className="font-mono text-xs text-gray-500">
-                {type.values.fontSize}px <span className="text-[10px] text-gray-400">/</span>{' '}
-                {(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}
-              </small>
-            </div>
-            <div>{renderTypes(type, type_copy)[type.name] ?? <span style={pluckStyle(type)}>{type_copy}</span>}</div>
-          </div>
-        </div>
-      ))}
+      {categorizedTypes.uncategorized.map((type, index) => renderTypeCard(type, `type-uncategorized-${index}`))}
+      <Accordion type="multiple" className="mt-4 space-y-2">
+        {Object.entries(categorizedTypes.categorized).map(([category, categoryTypes]) => {
+          const categoryAnchor = `typography-${anchorSlugify(category)}`;
+          return (
+            <AccordionItem
+              key={`typography-category-${categoryAnchor}`}
+              value={categoryAnchor}
+              id={categoryAnchor}
+              className="scroll-mt-24 py-1"
+            >
+              <AccordionTrigger className="px-0 text-sm font-semibold">
+                <div>
+                  {category} <span className="font-normal text-gray-500">({categoryTypes.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-0">
+                {categoryTypes.map((type, index) => renderTypeCard(type, `type-${categoryAnchor}-${index}`))}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
       <TypographySheet type={selectedType} openType={openType} setOpenType={setOpenType} />
     </>
   );

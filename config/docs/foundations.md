@@ -1,11 +1,11 @@
 ---
 title: Design Foundations
-description: Sets of recommendations on how to apply design principles to provide a positive user experience.
+description: Set of design principles and visual guidelines that define the brand across every experience.
 weight: 0
 image: hero-design
 menuTitle: 'Foundations'
 metaTitle: 'Design Foundations | Handoff Design System'
-metaDescription: 'Sets of recommendations on how to apply design principles to provide a positive user experience.'
+metaDescription: 'Set of design principles and visual guidelines that define the brand across every experience'
 enabled: true
 menu:
   - title: Getting Started
@@ -16,7 +16,7 @@ menu:
     menu:
       - path: foundations/logo
         title: Logo
-        image: react
+        icon: hexagon
         menu:
           - path: foundations/logo
             title: Overview
@@ -24,7 +24,7 @@ menu:
             title: Resources
       - path: foundations/colors
         title: Colors
-        image: hero-colors
+        icon: palette
         menu:
           - path: foundations/colors
             title: Our Colors
@@ -32,7 +32,7 @@ menu:
             title: Guidelines
       - path: foundations/typography
         title: Typography
-        image: hero-design
+        icon: type
         menu:
           - path: foundations/typography
             title: Overview
@@ -42,10 +42,10 @@ menu:
             title: Resources
       - path: foundations/grid
         title: Grid
-        image: hero-effects
+        icon: layout-panel-left
       - path: foundations/effects
         title: Effects
-        image: hero-effects
+        icon: sun
         menu:
           - path: foundations/effects
             title: Our Effects
@@ -55,7 +55,7 @@ menu:
             title: Resources
       - path: foundations/icons
         title: Icons
-        image: hero-effects
+        icon: shapes
         menu:
           - path: foundations/icons
             title: Library
@@ -65,7 +65,7 @@ menu:
     menu:
       - path: foundations/images
         title: Images
-        image: hero-effects
+        icon: image
         menu:
           - path: foundations/icons
             title: Library

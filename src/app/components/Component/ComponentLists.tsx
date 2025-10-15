@@ -4,7 +4,6 @@ import { LayoutGrid, Rows } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 import { cn } from '../../lib/utils';
-import HeadersType from '../Typography/Headers';
 import { Metadata } from '../util';
 
 interface ComponentMetadata extends Metadata {
@@ -35,10 +34,12 @@ export const ComponentList = ({
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
     <div className="mx-auto w-full">
+      {/*
       <div className="flex flex-col gap-2 pb-7">
         <HeadersType.H2>{title}</HeadersType.H2>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
       </div>
+      */}
       <div className="mb-4 flex justify-end">
         <ToggleGroup type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
           <ToggleGroupItem value="grid" aria-label="Grid layout">

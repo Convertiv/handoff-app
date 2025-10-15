@@ -1,6 +1,6 @@
 ---
 title: Design System
-description: Element that represents a control that provides a menu of options, collection of UI components used.
+description: Library of production-ready UI components built to deliver consistency, accessibility, and scalability across every digital experience.
 weight: 5
 image: hero-components
 menuTitle: 'Design System'

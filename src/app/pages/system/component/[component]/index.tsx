@@ -2,6 +2,7 @@
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -96,9 +97,7 @@ export const getStaticProps = async (context) => {
 };
 
 function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter: Filter): Record<string, OptionalPreviewRender> {
-  return Object.fromEntries(
-    Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter))
-  );
+  return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
 }
 
 const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
@@ -142,6 +141,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
+        <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
@@ -245,6 +245,21 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 <SelectItem value="full">Latest</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <hr className="mt-8" />
+          <div className="mt-10 flex items-center justify-between gap-8">
+            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-start gap-0 px-6 py-4 [&_svg]:!size-3">
+              <span className="flex items-center gap-2 font-light text-gray-500">
+                <ChevronLeft className="opacity-50" /> Previous
+              </span>
+              <span className="text-base font-normal">Accordion</span>
+            </Button>
+            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-end gap-0 px-6 py-4 [&_svg]:!size-3">
+              <span className="flex items-center gap-2 font-light text-gray-500">
+                Next <ChevronRight className="opacity-50" />
+              </span>
+              <span className="text-base font-normal">Button</span>
+            </Button>
           </div>
         </div>
         {Array.isArray(componentPreviews) ? (

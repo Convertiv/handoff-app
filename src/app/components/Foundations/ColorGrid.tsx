@@ -94,14 +94,12 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
     setOpen(true);
   };
   return (
-    <>
-      <h3 className="mb-2 text-lg font-medium" id={`${group}-colors`}>
-        {title}
-      </h3>
+    <div id={`${group}-colors`} className="scroll-mt-24 scroll-smooth pb-10">
+      <h3 className="mb-2 text-lg font-medium">{title}</h3>
       <p className="mb-8">{description}</p>
       {colors.length < 5 ? <LargeColorGrid colors={colors} setOpen={openSheet} /> : <SmallColorGrid colors={colors} setOpen={openSheet} />}
       <ColorSheet color={selectedColor} open={open} setOpen={setOpen} />
-    </>
+    </div>
   );
 };
 

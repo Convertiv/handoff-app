@@ -68,7 +68,7 @@ const ColorsPage = ({
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
-        <div>
+        <div className="flex flex-col gap-0">
           {Object.keys(colorGroups).map((group) => (
             <ColorGrid
               title={upperFirst(group)}
