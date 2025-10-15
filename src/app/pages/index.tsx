@@ -35,7 +35,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
-      <div className="w-full bg-gradient-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
+      <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System

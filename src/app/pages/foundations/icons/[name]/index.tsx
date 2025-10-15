@@ -97,13 +97,13 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
             <div className="flex flex-row flex-wrap items-center gap-4">
               <small className="font-mono">{icon.size}b</small>
               <small>/</small>
-              <Link className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'} href="#">
+              <Link className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'} href="#">
                 Share Asset <Share strokeWidth={1.5} />
               </Link>
 
               <Link
                 onClick={copySvg}
-                className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+                className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
                 href="#"
               >
                 Copy SVG <Code strokeWidth={1.5} />
@@ -112,7 +112,7 @@ export default function SingleIcon({ content, menu, metadata, current, config, a
               <Link
                 href={'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data)}
                 download={icon.name}
-                className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+                className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
               >
                 Download SVG <Download strokeWidth={1.5} />
               </Link>

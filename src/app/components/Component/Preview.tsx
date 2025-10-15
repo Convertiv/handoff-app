@@ -188,15 +188,15 @@ export const ComponentDisplay: React.FC<{
                 </TooltipProvider>
                 <Separator orientation="vertical" className="mx-3 h-6" />
                 <RadioGroup className="flex items-center gap-0" defaultValue="1100" onValueChange={(value) => setWidth(`${value}px`)}>
-                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl ring-inset transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-blue-50 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 has-[[data-state=checked]]:ring-1 has-[[data-state=checked]]:ring-blue-500/20 [&_svg]:size-3">
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl ring-inset transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3">
                     <RadioGroupItem value="1100" className="sr-only after:absolute after:inset-0" />
                     <Monitor />
                   </label>
-                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-blue-50 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 has-[[data-state=checked]]:ring-1 has-[[data-state=checked]]:ring-blue-500/20 [&_svg]:size-3">
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3">
                     <RadioGroupItem value="800" className="sr-only after:absolute after:inset-0" />
                     <Tablet />
                   </label>
-                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-[[data-disabled]]:cursor-not-allowed has-[[data-state=checked]]:bg-blue-50 has-[[data-disabled]]:opacity-50 has-[[data-state=checked]]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring/70 has-[[data-state=checked]]:ring-1 has-[[data-state=checked]]:ring-blue-500/20 [&_svg]:size-2.5">
+                  <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-2.5">
                     <RadioGroupItem value="400" className="sr-only after:absolute after:inset-0" />
                     <Smartphone />
                   </label>
@@ -422,7 +422,7 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
       <p className="mb-5">These are the properties associated with the component.</p>
       <Table>
         <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
-          <TableRow className="!border-b-[0.5px]">
+          <TableRow className="border-b-[0.5px]!">
             <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
               <Component className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Name

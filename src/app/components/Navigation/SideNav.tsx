@@ -63,7 +63,7 @@ const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
           <SidebarMenuButton className="h-9 gap-3">
             <MenuIcon icon={icon} isActive={isActive} />
             <span className={isActive ? 'font-medium text-sidebar-accent-foreground [&_svg]:opacity-100' : undefined}>{title}</span>
-            <ChevronRight className="ml-auto !size-[14px] stroke-[1.5] text-slate-700 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            <ChevronRight className="ml-auto size-[14px]! stroke-[1.5] text-slate-700 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>

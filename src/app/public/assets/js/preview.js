@@ -53,7 +53,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
     // bind blur to disable contenteditable
     element.addEventListener(
-      'blur',
+      'blur-sm',
       function () {
         this.removeAttribute('contenteditable');
       },

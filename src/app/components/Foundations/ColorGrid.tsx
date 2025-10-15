@@ -106,7 +106,7 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
 const ColorDropdown: React.FC<{ color: CoreTypes.IColorObject; openSheet: (color) => void }> = ({ color, openSheet }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <div className="absolute right-1 top-1 flex cursor-pointer items-center justify-center rounded-sm bg-white/100 p-[6px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <div className="absolute right-1 top-1 flex cursor-pointer items-center justify-center rounded-sm bg-white p-[6px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <span className="inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
         <span className="mx-[2px] inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
         <span className="inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
@@ -215,13 +215,13 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
             <span className="text-sm font-normal">Color Spaces</span>
           </p>
           <ul className="flex flex-col gap-3">
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">HEX</p>
               <div className="relative">
                 <p
                   className={cn(
                     'duration-400 absolute font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-sm'
+                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-xs'
                   )}
                 >
                   {color.value}
@@ -229,20 +229,20 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
                 <p
                   className={cn(
                     'duration-400 font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-sm'
+                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-xs'
                   )}
                 >
                   {color.value}
                 </p>
               </div>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">RGB</p>
               <div className="relative">
                 <p
                   className={cn(
                     'duration-400 absolute font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-sm'
+                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-xs'
                   )}
                 >
                   {hexToRgb(color.value)}
@@ -250,18 +250,18 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
                 <p
                   className={cn(
                     'duration-400 font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-sm'
+                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-xs'
                   )}
                 >
                   {hexToRgb(color.value)}
                 </p>
               </div>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">HSL</p>
               <p className="font-mono text-xs">{selectedValue === 'on' ? 'hsl(210deg, 100%, 40%)' : '210°, 100%, 40%'}</p>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">LCH</p>
               <p className="font-mono text-xs">{selectedValue === 'on' ? 'lch(49 50 273)' : '49, 50, 273'}</p>
             </li>
@@ -271,7 +271,7 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
               <RadioGroup
                 value={selectedValue}
                 onValueChange={setSelectedValue}
-                className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-sm after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-[:focus-visible]:after:outline has-[:focus-visible]:after:outline-2 has-[:focus-visible]:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
+                className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-xs after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-focus-visible:after:outline-solid has-focus-visible:after:outline-2 has-focus-visible:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
                 data-state={selectedValue}
               >
                 <label className="relative z-10 inline-flex h-full min-w-6 cursor-pointer select-none items-center justify-center whitespace-nowrap px-3 transition-colors group-data-[state=on]:text-muted-foreground/70">

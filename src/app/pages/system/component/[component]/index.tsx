@@ -163,7 +163,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
           </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
-              <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
+              <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
                 <a href={component.figma} target="_blank">
                   Figma Reference
                 </a>
@@ -171,7 +171,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             )}
             <Drawer direction="right">
               <DrawerTrigger>
-                <Button variant="outline" size={'sm'} className="font-normal [&_svg]:!size-3">
+                <Button variant="outline" size={'sm'} className="font-normal [&_svg]:size-3!">
                   API Reference
                 </Button>
               </DrawerTrigger>
@@ -248,13 +248,13 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
           </div>
           <hr className="mt-8" />
           <div className="mt-10 flex items-center justify-between gap-8">
-            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-start gap-0 px-6 py-4 [&_svg]:!size-3">
+            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-start gap-0 px-6 py-4 [&_svg]:size-3!">
               <span className="flex items-center gap-2 font-light text-gray-500">
                 <ChevronLeft className="opacity-50" /> Previous
               </span>
               <span className="text-base font-normal">Accordion</span>
             </Button>
-            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-end gap-0 px-6 py-4 [&_svg]:!size-3">
+            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-end gap-0 px-6 py-4 [&_svg]:size-3!">
               <span className="flex items-center gap-2 font-light text-gray-500">
                 Next <ChevronRight className="opacity-50" />
               </span>

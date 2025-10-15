@@ -33,7 +33,7 @@ export function MainNav() {
                         href={section.path}
                         passHref
                         className={cn(
-                          'block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
+                          'block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
                         )}
                         {...(isActive ? { 'data-active': 'true' } : {})}
                       >
@@ -47,7 +47,7 @@ export function MainNav() {
                       href={section.path}
                       passHref
                       legacyBehavior
-                      className="block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      className="block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                     >
                       <div className="text-sm leading-none">{section.title}</div>
                     </Link>

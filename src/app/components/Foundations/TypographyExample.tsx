@@ -74,8 +74,8 @@ const TypographyExamples: React.FC<{ types: CoreTypes.ITypographyObject[]; type_
 
   const renderTypeCard = (type: CoreTypes.ITypographyObject, key: React.Key) => (
     <div key={key} className="border-t border-gray-200 dark:border-gray-800">
-      <div className="group relative grid grid-cols-[200px,1fr] gap-4 py-7">
-        <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-sm transition-opacity duration-500 group-hover:opacity-100">
+      <div className="group relative grid grid-cols-[200px_1fr] gap-4 py-7">
+        <div className="absolute right-2 top-2 inline-flex items-center justify-center gap-0 rounded-md border border-input bg-background p-1 opacity-0 shadow-xs transition-opacity duration-500 group-hover:opacity-100">
           <button className="rounded-sm p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
             <Copy className="h-3 w-3 text-gray-500" />
           </button>
@@ -227,19 +227,19 @@ const TypographySheet: React.FC<{ type: CoreTypes.ITypographyObject; openType: b
             <span className="text-sm font-normal">Style Details</span>
           </p>
           <ul className="flex flex-col gap-3">
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">Font Size</p>
               <p className="font-mono text-xs">{type.values.fontSize}px</p>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">Line Height</p>
               <p className="font-mono text-xs">{(type.values.lineHeightPx / type.values.fontSize).toFixed(1)}</p>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">Font Family</p>
               <p className="font-mono text-xs">{type.values.fontFamily}</p>
             </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
+            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-xs">
               <p className="font-mono text-xs text-gray-400">Font Weight</p>
               <p className="font-mono text-xs">{type.values.fontWeight}</p>
             </li>
@@ -249,7 +249,7 @@ const TypographySheet: React.FC<{ type: CoreTypes.ITypographyObject; openType: b
               <RadioGroup
                 value={selectedValue}
                 onValueChange={setSelectedValue}
-                className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-sm after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-[:focus-visible]:after:outline has-[:focus-visible]:after:outline-2 has-[:focus-visible]:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
+                className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-xs after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-focus-visible:after:outline-solid has-focus-visible:after:outline-2 has-focus-visible:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
                 data-state={selectedValue}
               >
                 <label className="relative z-10 inline-flex h-full min-w-6 cursor-pointer select-none items-center justify-center whitespace-nowrap px-3 transition-colors group-data-[state=on]:text-muted-foreground/70">

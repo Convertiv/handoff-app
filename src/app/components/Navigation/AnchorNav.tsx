@@ -74,7 +74,7 @@ export const AnchorNav: React.FC<AnchorNavProps> = ({ title, groups }) => {
   return (
     <div className="hidden text-sm xl:block">
       <div className="sticky top-24">
-        <p className="relative mb-7 flex items-center gap-3 text-sm text-gray-500 after:absolute after:bottom-[-12px] after:left-0 after:h-[1px] after:w-[130px] after:bg-gray-200 dark:text-gray-400 dark:after:bg-gray-800">
+        <p className="relative mb-7 flex items-center gap-3 text-sm text-gray-500 after:absolute after:bottom-[-12px] after:left-0 after:h-px after:w-[130px] after:bg-gray-200 dark:text-gray-400 dark:after:bg-gray-800">
           <TextQuote className="h-[14px] w-[14px] opacity-50" strokeWidth={2} /> {title ?? 'On This Page'}
         </p>
         <ul className="space-y-3">
