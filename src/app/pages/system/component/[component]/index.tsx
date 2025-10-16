@@ -2,7 +2,6 @@
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -13,6 +12,7 @@ import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
+import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
@@ -247,20 +247,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             </Select>
           </div>
           <hr className="mt-8" />
-          <div className="mt-10 flex items-center justify-between gap-8">
-            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-start gap-0 px-6 py-4 [&_svg]:size-3!">
-              <span className="flex items-center gap-2 font-light text-gray-500">
-                <ChevronLeft className="opacity-50" /> Previous
-              </span>
-              <span className="text-base font-normal">Accordion</span>
-            </Button>
-            <Button variant="outline" size="sm" className="flex h-full w-full flex-col items-end gap-0 px-6 py-4 [&_svg]:size-3!">
-              <span className="flex items-center gap-2 font-light text-gray-500">
-                Next <ChevronRight className="opacity-50" />
-              </span>
-              <span className="text-base font-normal">Button</span>
-            </Button>
-          </div>
+          <PrevNextNav />
         </div>
         {Array.isArray(componentPreviews) ? (
           <AnchorNav
