@@ -76,8 +76,13 @@ exports.writeComponentMetadataApi = writeComponentMetadataApi;
  * @param handoff
  * @param componentData
  */
-const updateComponentSummaryApi = (handoff, componentData // Partial list (may be empty)
-) => __awaiter(void 0, void 0, void 0, function* () {
+const updateComponentSummaryApi = (handoff_1, componentData_1, ...args_1) => __awaiter(void 0, [handoff_1, componentData_1, ...args_1], void 0, function* (handoff, componentData, isFullRebuild = false) {
+    if (isFullRebuild) {
+        // Full rebuild: replace the entire file
+        yield writeComponentSummaryAPI(handoff, componentData);
+        return;
+    }
+    // Partial update: merge with existing data
     const apiPath = path_1.default.resolve(handoff.workingPath, 'public/api/components.json');
     let existingData = [];
     if (fs_extra_1.default.existsSync(apiPath)) {

@@ -125,7 +125,8 @@ function processComponents(handoff, id, segmentToProcess) {
             }
         }
         // Always merge and write summary file, even if no components processed
-        yield (0, api_1.updateComponentSummaryApi)(handoff, result);
+        const isFullRebuild = !id;
+        yield (0, api_1.updateComponentSummaryApi)(handoff, result, isFullRebuild);
         return result;
     });
 }
