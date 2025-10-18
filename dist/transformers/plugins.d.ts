@@ -1,6 +1,13 @@
-import { Types as CoreTypes } from 'handoff-core';
-import { Plugin } from 'vite';
-import Handoff from '..';
-import { TransformComponentTokensResult } from './preview/types';
-export declare function handlebarsPreviewsPlugin(data: TransformComponentTokensResult, components: CoreTypes.IDocumentationObject['components'], handoff: Handoff): Plugin;
-export declare function ssrRenderPlugin(data: TransformComponentTokensResult, components: CoreTypes.IDocumentationObject['components'], handoff?: Handoff): Plugin;
+/**
+ * @fileoverview Main plugins module for the transformers package
+ *
+ * This module provides the primary entry point for Vite plugins used in
+ * component transformation and preview generation. It exports specialized
+ * plugins for different rendering approaches.
+ *
+ * Available plugins:
+ * - handlebarsPreviewsPlugin: Handlebars-based template rendering
+ * - ssrRenderPlugin: React server-side rendering with hydration
+ */
+export { handlebarsPreviewsPlugin } from './plugins/handlebars-previews';
+export { ssrRenderPlugin } from './plugins/ssr-render';

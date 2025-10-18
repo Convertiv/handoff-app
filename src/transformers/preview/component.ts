@@ -24,6 +24,9 @@ export enum SlotType {
   NUMBER = 'number',
   BOOLEAN = 'boolean',
   OBJECT = 'object',
+  FUNCTION = 'function',
+  ENUM = 'enum',
+  ANY = 'any',
 }
 
 export interface SlotMetadata {

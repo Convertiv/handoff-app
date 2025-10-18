@@ -15,7 +15,10 @@ export declare enum SlotType {
     ARRAY = "array",
     NUMBER = "number",
     BOOLEAN = "boolean",
-    OBJECT = "object"
+    OBJECT = "object",
+    FUNCTION = "function",
+    ENUM = "enum",
+    ANY = "any"
 }
 export interface SlotMetadata {
     id?: string;
