@@ -6,10 +6,11 @@ import { parse } from 'node-html-parser';
 import path from 'path';
 import prettier from 'prettier';
 import React from 'react';
+import { withCustomConfig } from 'react-docgen-typescript';
 import ReactDOMServer from 'react-dom/server';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '..';
-import { SlotMetadata } from './preview/component';
+import { SlotMetadata, SlotType } from './preview/component';
 import { OptionalPreviewRender, TransformComponentTokensResult } from './preview/types';
 
 const ensureIds = (properties: { [key: string]: SlotMetadata }) => {
@@ -23,6 +24,128 @@ const ensureIds = (properties: { [key: string]: SlotMetadata }) => {
     }
   }
   return properties;
+};
+
+const convertDocgenToProperties = (docgenProps: any[]): { [key: string]: SlotMetadata } => {
+  const properties: { [key: string]: SlotMetadata } = {};
+  
+  for (const prop of docgenProps) {
+    const { name, type, required, description, defaultValue } = prop;
+    
+    // Convert react-docgen-typescript type to our SlotType enum
+    let propType = SlotType.TEXT;
+    if (type?.name === 'boolean') {
+      propType = SlotType.BOOLEAN;
+    } else if (type?.name === 'number') {
+      propType = SlotType.NUMBER;
+    } else if (type?.name === 'array') {
+      propType = SlotType.ARRAY;
+    } else if (type?.name === 'object') {
+      propType = SlotType.OBJECT;
+    } else if (type?.name === 'function') {
+      propType = SlotType.FUNCTION;
+    } else if (type?.name === 'enum') {
+      propType = SlotType.ENUM;
+    }
+    
+    properties[name] = {
+      id: name,
+      name: name,
+      description: description || '',
+      generic: '',
+      type: propType,
+      default: defaultValue?.value || undefined,
+      rules: {
+        required: required || false,
+      },
+    };
+  }
+  
+  return properties;
+};
+
+/**
+ * Validates if a schema object is valid for property conversion
+ * @param schema - The schema object to validate
+ * @returns True if schema is valid, false otherwise
+ */
+const isValidSchemaObject = (schema: any): boolean => {
+  return schema && 
+         typeof schema === 'object' && 
+         schema.type === 'object' && 
+         schema.properties && 
+         typeof schema.properties === 'object';
+};
+
+/**
+ * Safely loads schema from module exports
+ * @param moduleExports - The module exports object
+ * @param handoff - Handoff instance for configuration
+ * @param exportKey - The export key to look for ('default' or 'schema')
+ * @returns The schema object or null if not found/invalid
+ */
+const loadSchemaFromExports = (
+  moduleExports: any, 
+  handoff: Handoff, 
+  exportKey: 'default' | 'schema' = 'default'
+): any => {
+  try {
+    const schema = handoff.config?.hooks?.getSchemaFromExports
+      ? handoff.config.hooks.getSchemaFromExports(moduleExports)
+      : moduleExports[exportKey];
+    
+    return schema;
+  } catch (error) {
+    console.warn(`Failed to load schema from exports (${exportKey}):`, error);
+    return null;
+  }
+};
+
+/**
+ * Generates component properties using react-docgen-typescript
+ * @param entry - Path to the component/schema file
+ * @param handoff - Handoff instance for configuration
+ * @returns Generated properties or null if failed
+ */
+const generatePropertiesFromDocgen = async (
+  entry: string, 
+  handoff: Handoff
+): Promise<{ [key: string]: SlotMetadata } | null> => {
+  try {
+    // Use root project's tsconfig.json
+    const tsconfigPath = path.resolve(handoff.workingPath, 'tsconfig.json');
+    
+    // Check if tsconfig exists
+    if (!fs.existsSync(tsconfigPath)) {
+      console.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
+    }
+    
+    const parser = withCustomConfig(tsconfigPath, {
+      savePropValueAsString: true,
+      shouldExtractLiteralValuesFromEnum: true,
+      shouldRemoveUndefinedFromOptional: true,
+      propFilter: (prop) => {
+        if (prop.parent) {
+          return !prop.parent.fileName.includes('node_modules');
+        }
+        return true;
+      },
+    });
+    
+    const docgenResults = parser.parse(entry);
+    
+    if (docgenResults.length > 0) {
+      const componentDoc = docgenResults[0];
+      if (componentDoc.props && Object.keys(componentDoc.props).length > 0) {
+        return convertDocgenToProperties(Object.values(componentDoc.props));
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn(`Failed to generate docs with react-docgen-typescript for ${entry}:`, error);
+    return null;
+  }
 };
 
 const trimPreview = (preview: string) => {
@@ -144,7 +267,7 @@ export function handlebarsPreviewsPlugin(
   };
 }
 
-async function buildAndEvaluateModule(entryPath: string, handoff?: Handoff): Promise<{ exports: any }> {
+async function buildAndEvaluateModule(entryPath: string, handoff: Handoff): Promise<{ exports: any }> {
   // Default esbuild configuration
   const defaultBuildConfig: esbuild.BuildOptions = {
     entryPoints: [entryPath],
@@ -157,7 +280,9 @@ async function buildAndEvaluateModule(entryPath: string, handoff?: Handoff): Pro
   };
 
   // Apply user's SSR build config hook if provided
-  const buildConfig = handoff?.config?.hooks?.ssrBuildConfig ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig) : defaultBuildConfig;
+  const buildConfig = handoff.config?.hooks?.ssrBuildConfig
+    ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
+    : defaultBuildConfig;
 
   // Compile the module
   const build = await esbuild.build(buildConfig);
@@ -174,7 +299,7 @@ async function buildAndEvaluateModule(entryPath: string, handoff?: Handoff): Pro
 export function ssrRenderPlugin(
   data: TransformComponentTokensResult,
   components: CoreTypes.IDocumentationObject['components'],
-  handoff?: Handoff
+  handoff: Handoff
 ): Plugin {
   return {
     name: 'vite-plugin-ssr-static-render',
@@ -202,44 +327,81 @@ export function ssrRenderPlugin(
       const entry = path.resolve(data.entries.template);
       const code = fs.readFileSync(entry, 'utf8');
 
-      // Load schema if schema entry exists
+      // Determine properties using a hierarchical approach
+      let properties: { [key: string]: SlotMetadata } | null = null;
+      let Component: any = null;
+
+      // Step 1: Handle separate schema file (if exists)
       if (data.entries?.schema) {
         const schemaPath = path.resolve(data.entries.schema);
         const ext = path.extname(schemaPath);
+        
         if (ext === '.ts' || ext === '.tsx') {
-          // Build and evaluate schema module
-          const schemaMod = await buildAndEvaluateModule(schemaPath, handoff);
+          try {
+            const schemaMod = await buildAndEvaluateModule(schemaPath, handoff);
+            
+            // Get schema from exports.default (separate schema files export as default)
+            const schema = loadSchemaFromExports(schemaMod.exports, handoff, 'default');
 
-          // Get schema from exports using hook or default to exports.default
-          const schema = handoff?.config?.hooks?.getSchemaFromExports
-            ? handoff.config.hooks.getSchemaFromExports(schemaMod.exports)
-            : schemaMod.exports.default;
-
-          // Apply schema to properties if schema exists and is valid
-          if (schema?.type === 'object') {
-            if (handoff?.config?.hooks?.schemaToProperties) {
-              data.properties = handoff.config.hooks.schemaToProperties(schema);
+            if (isValidSchemaObject(schema)) {
+              // Valid schema object - convert to properties
+              if (handoff.config?.hooks?.schemaToProperties) {
+                properties = handoff.config.hooks.schemaToProperties(schema);
+              }
+            } else if (schema) {
+              // Schema exists but is not a valid schema object (e.g., type/interface)
+              // Use react-docgen-typescript to document the schema file
+              properties = await generatePropertiesFromDocgen(schemaPath, handoff);
             }
+          } catch (error) {
+            console.warn(`Failed to load separate schema file ${schemaPath}:`, error);
           }
+        } else {
+          console.warn(`Schema file has unsupported extension: ${ext}`);
         }
       }
 
-      // Build and evaluate component module
-      const mod = await buildAndEvaluateModule(entry, handoff);
-      const Component = mod.exports.default;
-
-      // Look for exported schema in component file only if no separate schema file was provided
+      // Step 2: Load component and handle component-embedded schema (only if no separate schema)
       if (!data.entries?.schema) {
-        // Get schema from exports using hook or default to exports.schema
-        const schema = handoff?.config?.hooks?.getSchemaFromExports
-          ? handoff.config.hooks.getSchemaFromExports(mod.exports)
-          : mod.exports.schema;
+        try {
+          const mod = await buildAndEvaluateModule(entry, handoff);
+          Component = mod.exports.default;
 
-        if (schema?.type === 'object') {
-          if (handoff?.config?.hooks?.schemaToProperties) {
-            data.properties = handoff.config.hooks.schemaToProperties(schema);
+          // Check for exported schema in component file (exports.schema)
+          const schema = loadSchemaFromExports(mod.exports, handoff, 'schema');
+
+          if (isValidSchemaObject(schema)) {
+            // Valid schema object - convert to properties
+            if (handoff.config?.hooks?.schemaToProperties) {
+              properties = handoff.config.hooks.schemaToProperties(schema);
+            }
+          } else if (schema) {
+            // Schema exists but is not a valid schema object (e.g., type/interface)
+            // Use react-docgen-typescript to document the schema
+            properties = await generatePropertiesFromDocgen(entry, handoff);
+          } else {
+            // No schema found - use react-docgen-typescript to analyze component props
+            properties = await generatePropertiesFromDocgen(entry, handoff);
           }
+        } catch (error) {
+          console.warn(`Failed to load component file ${entry}:`, error);
         }
+      }
+
+      // Step 3: Load component for rendering (if not already loaded)
+      if (!Component) {
+        try {
+          const mod = await buildAndEvaluateModule(entry, handoff);
+          Component = mod.exports.default;
+        } catch (error) {
+          console.error(`Failed to load component for rendering: ${entry}`, error);
+          return;
+        }
+      }
+
+      // Apply the determined properties
+      if (properties) {
+        data.properties = properties;
       }
 
       if (!components) components = {};
@@ -297,7 +459,7 @@ export function ssrRenderPlugin(
         };
 
         // Apply user's client build config hook if provided
-        const clientBuildConfig = handoff?.config?.hooks?.clientBuildConfig
+        const clientBuildConfig = handoff.config?.hooks?.clientBuildConfig
           ? handoff.config.hooks.clientBuildConfig(defaultClientBuildConfig)
           : defaultClientBuildConfig;
 

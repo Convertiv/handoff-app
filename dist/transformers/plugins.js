@@ -21,8 +21,10 @@ const node_html_parser_1 = require("node-html-parser");
 const path_1 = __importDefault(require("path"));
 const prettier_1 = __importDefault(require("prettier"));
 const react_1 = __importDefault(require("react"));
+const react_docgen_typescript_1 = require("react-docgen-typescript");
 const server_1 = __importDefault(require("react-dom/server"));
 const vite_1 = require("vite");
+const component_1 = require("./preview/component");
 const ensureIds = (properties) => {
     var _a;
     for (const key in properties) {
@@ -36,6 +38,115 @@ const ensureIds = (properties) => {
     }
     return properties;
 };
+const convertDocgenToProperties = (docgenProps) => {
+    const properties = {};
+    for (const prop of docgenProps) {
+        const { name, type, required, description, defaultValue } = prop;
+        // Convert react-docgen-typescript type to our SlotType enum
+        let propType = component_1.SlotType.TEXT;
+        if ((type === null || type === void 0 ? void 0 : type.name) === 'boolean') {
+            propType = component_1.SlotType.BOOLEAN;
+        }
+        else if ((type === null || type === void 0 ? void 0 : type.name) === 'number') {
+            propType = component_1.SlotType.NUMBER;
+        }
+        else if ((type === null || type === void 0 ? void 0 : type.name) === 'array') {
+            propType = component_1.SlotType.ARRAY;
+        }
+        else if ((type === null || type === void 0 ? void 0 : type.name) === 'object') {
+            propType = component_1.SlotType.OBJECT;
+        }
+        else if ((type === null || type === void 0 ? void 0 : type.name) === 'function') {
+            propType = component_1.SlotType.FUNCTION;
+        }
+        else if ((type === null || type === void 0 ? void 0 : type.name) === 'enum') {
+            propType = component_1.SlotType.ENUM;
+        }
+        properties[name] = {
+            id: name,
+            name: name,
+            description: description || '',
+            generic: '',
+            type: propType,
+            default: (defaultValue === null || defaultValue === void 0 ? void 0 : defaultValue.value) || undefined,
+            rules: {
+                required: required || false,
+            },
+        };
+    }
+    return properties;
+};
+/**
+ * Validates if a schema object is valid for property conversion
+ * @param schema - The schema object to validate
+ * @returns True if schema is valid, false otherwise
+ */
+const isValidSchemaObject = (schema) => {
+    return schema &&
+        typeof schema === 'object' &&
+        schema.type === 'object' &&
+        schema.properties &&
+        typeof schema.properties === 'object';
+};
+/**
+ * Safely loads schema from module exports
+ * @param moduleExports - The module exports object
+ * @param handoff - Handoff instance for configuration
+ * @param exportKey - The export key to look for ('default' or 'schema')
+ * @returns The schema object or null if not found/invalid
+ */
+const loadSchemaFromExports = (moduleExports, handoff, exportKey = 'default') => {
+    var _a, _b;
+    try {
+        const schema = ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.getSchemaFromExports)
+            ? handoff.config.hooks.getSchemaFromExports(moduleExports)
+            : moduleExports[exportKey];
+        return schema;
+    }
+    catch (error) {
+        console.warn(`Failed to load schema from exports (${exportKey}):`, error);
+        return null;
+    }
+};
+/**
+ * Generates component properties using react-docgen-typescript
+ * @param entry - Path to the component/schema file
+ * @param handoff - Handoff instance for configuration
+ * @returns Generated properties or null if failed
+ */
+const generatePropertiesFromDocgen = (entry, handoff) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Use root project's tsconfig.json
+        const tsconfigPath = path_1.default.resolve(handoff.workingPath, 'tsconfig.json');
+        // Check if tsconfig exists
+        if (!fs_extra_1.default.existsSync(tsconfigPath)) {
+            console.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
+        }
+        const parser = (0, react_docgen_typescript_1.withCustomConfig)(tsconfigPath, {
+            savePropValueAsString: true,
+            shouldExtractLiteralValuesFromEnum: true,
+            shouldRemoveUndefinedFromOptional: true,
+            propFilter: (prop) => {
+                if (prop.parent) {
+                    return !prop.parent.fileName.includes('node_modules');
+                }
+                return true;
+            },
+        });
+        const docgenResults = parser.parse(entry);
+        if (docgenResults.length > 0) {
+            const componentDoc = docgenResults[0];
+            if (componentDoc.props && Object.keys(componentDoc.props).length > 0) {
+                return convertDocgenToProperties(Object.values(componentDoc.props));
+            }
+        }
+        return null;
+    }
+    catch (error) {
+        console.warn(`Failed to generate docs with react-docgen-typescript for ${entry}:`, error);
+        return null;
+    }
+});
 const trimPreview = (preview) => {
     const bodyEl = (0, node_html_parser_1.parse)(preview).querySelector('body');
     const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
@@ -153,7 +264,9 @@ function buildAndEvaluateModule(entryPath, handoff) {
             external: ['react', 'react-dom', '@opentelemetry/api'],
         };
         // Apply user's SSR build config hook if provided
-        const buildConfig = ((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig) ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig) : defaultBuildConfig;
+        const buildConfig = ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.ssrBuildConfig)
+            ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
+            : defaultBuildConfig;
         // Compile the module
         const build = yield esbuild_1.default.build(buildConfig);
         const { text: code } = build.outputFiles[0];
@@ -181,7 +294,7 @@ function ssrRenderPlugin(data, components, handoff) {
         },
         generateBundle(_, bundle) {
             return __awaiter(this, void 0, void 0, function* () {
-                var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+                var _a, _b, _c, _d, _e, _f, _g, _h;
                 // Delete all JS chunks
                 for (const [fileName, chunkInfo] of Object.entries(bundle)) {
                     if (chunkInfo.type === 'chunk' && fileName.includes('script')) {
@@ -191,39 +304,79 @@ function ssrRenderPlugin(data, components, handoff) {
                 const id = data.id;
                 const entry = path_1.default.resolve(data.entries.template);
                 const code = fs_extra_1.default.readFileSync(entry, 'utf8');
-                // Load schema if schema entry exists
+                // Determine properties using a hierarchical approach
+                let properties = null;
+                let Component = null;
+                // Step 1: Handle separate schema file (if exists)
                 if ((_a = data.entries) === null || _a === void 0 ? void 0 : _a.schema) {
                     const schemaPath = path_1.default.resolve(data.entries.schema);
                     const ext = path_1.default.extname(schemaPath);
                     if (ext === '.ts' || ext === '.tsx') {
-                        // Build and evaluate schema module
-                        const schemaMod = yield buildAndEvaluateModule(schemaPath, handoff);
-                        // Get schema from exports using hook or default to exports.default
-                        const schema = ((_c = (_b = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.getSchemaFromExports)
-                            ? handoff.config.hooks.getSchemaFromExports(schemaMod.exports)
-                            : schemaMod.exports.default;
-                        // Apply schema to properties if schema exists and is valid
-                        if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
-                            if ((_e = (_d = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _d === void 0 ? void 0 : _d.hooks) === null || _e === void 0 ? void 0 : _e.schemaToProperties) {
-                                data.properties = handoff.config.hooks.schemaToProperties(schema);
+                        try {
+                            const schemaMod = yield buildAndEvaluateModule(schemaPath, handoff);
+                            // Get schema from exports.default (separate schema files export as default)
+                            const schema = loadSchemaFromExports(schemaMod.exports, handoff, 'default');
+                            if (isValidSchemaObject(schema)) {
+                                // Valid schema object - convert to properties
+                                if ((_c = (_b = handoff.config) === null || _b === void 0 ? void 0 : _b.hooks) === null || _c === void 0 ? void 0 : _c.schemaToProperties) {
+                                    properties = handoff.config.hooks.schemaToProperties(schema);
+                                }
+                            }
+                            else if (schema) {
+                                // Schema exists but is not a valid schema object (e.g., type/interface)
+                                // Use react-docgen-typescript to document the schema file
+                                properties = yield generatePropertiesFromDocgen(schemaPath, handoff);
                             }
                         }
-                    }
-                }
-                // Build and evaluate component module
-                const mod = yield buildAndEvaluateModule(entry, handoff);
-                const Component = mod.exports.default;
-                // Look for exported schema in component file only if no separate schema file was provided
-                if (!((_f = data.entries) === null || _f === void 0 ? void 0 : _f.schema)) {
-                    // Get schema from exports using hook or default to exports.schema
-                    const schema = ((_h = (_g = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _g === void 0 ? void 0 : _g.hooks) === null || _h === void 0 ? void 0 : _h.getSchemaFromExports)
-                        ? handoff.config.hooks.getSchemaFromExports(mod.exports)
-                        : mod.exports.schema;
-                    if ((schema === null || schema === void 0 ? void 0 : schema.type) === 'object') {
-                        if ((_k = (_j = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _j === void 0 ? void 0 : _j.hooks) === null || _k === void 0 ? void 0 : _k.schemaToProperties) {
-                            data.properties = handoff.config.hooks.schemaToProperties(schema);
+                        catch (error) {
+                            console.warn(`Failed to load separate schema file ${schemaPath}:`, error);
                         }
                     }
+                    else {
+                        console.warn(`Schema file has unsupported extension: ${ext}`);
+                    }
+                }
+                // Step 2: Load component and handle component-embedded schema (only if no separate schema)
+                if (!((_d = data.entries) === null || _d === void 0 ? void 0 : _d.schema)) {
+                    try {
+                        const mod = yield buildAndEvaluateModule(entry, handoff);
+                        Component = mod.exports.default;
+                        // Check for exported schema in component file (exports.schema)
+                        const schema = loadSchemaFromExports(mod.exports, handoff, 'schema');
+                        if (isValidSchemaObject(schema)) {
+                            // Valid schema object - convert to properties
+                            if ((_f = (_e = handoff.config) === null || _e === void 0 ? void 0 : _e.hooks) === null || _f === void 0 ? void 0 : _f.schemaToProperties) {
+                                properties = handoff.config.hooks.schemaToProperties(schema);
+                            }
+                        }
+                        else if (schema) {
+                            // Schema exists but is not a valid schema object (e.g., type/interface)
+                            // Use react-docgen-typescript to document the schema
+                            properties = yield generatePropertiesFromDocgen(entry, handoff);
+                        }
+                        else {
+                            // No schema found - use react-docgen-typescript to analyze component props
+                            properties = yield generatePropertiesFromDocgen(entry, handoff);
+                        }
+                    }
+                    catch (error) {
+                        console.warn(`Failed to load component file ${entry}:`, error);
+                    }
+                }
+                // Step 3: Load component for rendering (if not already loaded)
+                if (!Component) {
+                    try {
+                        const mod = yield buildAndEvaluateModule(entry, handoff);
+                        Component = mod.exports.default;
+                    }
+                    catch (error) {
+                        console.error(`Failed to load component for rendering: ${entry}`, error);
+                        return;
+                    }
+                }
+                // Apply the determined properties
+                if (properties) {
+                    data.properties = properties;
                 }
                 if (!components)
                     components = {};
@@ -271,7 +424,7 @@ function ssrRenderPlugin(data, components, handoff) {
                         plugins: [handoffResolveReactEsbuildPlugin(handoff.workingPath, handoff.modulePath)],
                     };
                     // Apply user's client build config hook if provided
-                    const clientBuildConfig = ((_m = (_l = handoff === null || handoff === void 0 ? void 0 : handoff.config) === null || _l === void 0 ? void 0 : _l.hooks) === null || _m === void 0 ? void 0 : _m.clientBuildConfig)
+                    const clientBuildConfig = ((_h = (_g = handoff.config) === null || _g === void 0 ? void 0 : _g.hooks) === null || _h === void 0 ? void 0 : _h.clientBuildConfig)
                         ? handoff.config.hooks.clientBuildConfig(defaultClientBuildConfig)
                         : defaultClientBuildConfig;
                     const bundledClient = yield esbuild_1.default.build(clientBuildConfig);
