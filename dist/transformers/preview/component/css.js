@@ -61,7 +61,7 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
                         //   },
                         // ],
                         // Use modern API settings
-                        api: 'modern-compiler',
+                        // api: 'modern-compiler',
                         silenceDeprecations: ['import', 'legacy-js-api'],
                     },
                 },

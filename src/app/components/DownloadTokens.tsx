@@ -15,7 +15,7 @@ export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css
   return (
     <div className="mt-3 flex flex-row flex-wrap gap-3">
       <Link
-        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
         href={'data:text/plain;charset=utf-8,' + encodeURIComponent(css)}
         download={`${componentId}.css`}
       >
@@ -23,7 +23,7 @@ export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css
       </Link>
 
       <Link
-        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
         href={'data:text/plain;charset=utf-8,' + encodeURIComponent(scss)}
         download={`${componentId}.scss`}
       >
@@ -31,7 +31,7 @@ export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css
       </Link>
 
       <Link
-        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
         href={'data:text/plain;charset=utf-8,' + encodeURIComponent(styleDictionary)}
         download={`${componentId}.tokens.json`}
       >
@@ -39,7 +39,7 @@ export const DownloadTokens: React.FC<DownloadTokensProps> = ({ componentId, css
       </Link>
 
       <Link
-        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+        className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
         href={'data:text/plain;charset=utf-8,' + encodeURIComponent(types)}
         download={`${componentId}.scss`}
       >

@@ -12,6 +12,7 @@ import Layout from '../../../../components/Layout/Main';
 import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
+import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
@@ -96,9 +97,7 @@ export const getStaticProps = async (context) => {
 };
 
 function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter: Filter): Record<string, OptionalPreviewRender> {
-  return Object.fromEntries(
-    Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter))
-  );
+  return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
 }
 
 const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
@@ -142,6 +141,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
+        <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
@@ -163,7 +163,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
           </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
-              <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:!size-3">
+              <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
                 <a href={component.figma} target="_blank">
                   Figma Reference
                 </a>
@@ -171,7 +171,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             )}
             <Drawer direction="right">
               <DrawerTrigger>
-                <Button variant="outline" size={'sm'} className="font-normal [&_svg]:!size-3">
+                <Button variant="outline" size={'sm'} className="font-normal [&_svg]:size-3!">
                   API Reference
                 </Button>
               </DrawerTrigger>
@@ -246,6 +246,8 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               </SelectContent>
             </Select>
           </div>
+          <hr className="mt-8" />
+          <PrevNextNav />
         </div>
         {Array.isArray(componentPreviews) ? (
           <AnchorNav

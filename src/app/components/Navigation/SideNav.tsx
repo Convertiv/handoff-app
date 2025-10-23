@@ -1,6 +1,19 @@
 'use client';
 
-import { Blend, ChevronRight, Grid, Hexagon, Image, Layers, Palette, Pickaxe, SquareChartGantt, TypeOutline } from 'lucide-react';
+import {
+  ChevronRight,
+  Grid,
+  Hexagon,
+  Image,
+  Layers,
+  LayoutPanelLeft,
+  Palette,
+  Pickaxe,
+  Shapes,
+  SquareChartGantt,
+  Sun,
+  TypeOutline,
+} from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
 import { useRouter } from 'next/router';
@@ -29,8 +42,8 @@ const NormalMenuItem = ({ title, icon, path }) => {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <a href={`/${path}`}>
-          <MenuIcon icon={icon} />
+        <a href={`/${path}`} className="gap-3">
+          <MenuIcon icon={icon} isActive={isActive} />
           <span>{title}</span>
         </a>
       </SidebarMenuButton>
@@ -47,14 +60,14 @@ const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
     <Collapsible defaultOpen={isActive} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton>
-            <MenuIcon icon={icon} />
-            <span>{title}</span>
-            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          <SidebarMenuButton className="h-9 gap-3">
+            <MenuIcon icon={icon} isActive={isActive} />
+            <span className={isActive ? 'font-medium text-sidebar-accent-foreground [&_svg]:opacity-100' : undefined}>{title}</span>
+            <ChevronRight className="ml-auto size-[14px]! stroke-[1.5] text-slate-700 opacity-50 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub>
+          <SidebarMenuSub className="pl-3">
             <SidebarMenu>
               {menu.map((item) => (
                 <MenuItem key={item.path} item={item} />
@@ -75,28 +88,34 @@ const MenuItem = ({ item }) => {
   }
 };
 
-const MenuIcon = ({ icon }) => {
+const MenuIcon = ({ icon, isActive = false }) => {
+  const iconClass = isActive ? 'text-slate-800 opacity-100' : 'text-slate-700 opacity-50';
+
   switch (icon) {
     case 'layers':
-      return <Layers className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Layers className={iconClass} strokeWidth={1.5} />;
     case 'square-chart-gantt':
-      return <SquareChartGantt className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <SquareChartGantt className={iconClass} strokeWidth={1.5} />;
     case 'pickaxe':
-      return <Pickaxe className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Pickaxe className={iconClass} strokeWidth={1.5} />;
     case 'hexagon':
-      return <Hexagon className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Hexagon className={iconClass} strokeWidth={1.5} />;
     case 'palette':
-      return <Palette className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Palette className={iconClass} strokeWidth={1.5} />;
     case 'type':
-      return <TypeOutline className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <TypeOutline className={iconClass} strokeWidth={1.5} />;
     case 'grid':
-      return <Grid className="text-slate-700 opacity-50" strokeWidth={1.5} />;
-    case 'effect':
-      return <Blend className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Grid className={iconClass} strokeWidth={1.5} />;
+    case 'layout-panel-left':
+      return <LayoutPanelLeft className={iconClass} strokeWidth={1.5} />;
+    case 'sun':
+      return <Sun className={iconClass} strokeWidth={1.5} />;
     case 'blend':
-      return <Blend className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Sun className={iconClass} strokeWidth={1.5} />;
     case 'image':
-      return <Image className="text-slate-700 opacity-50" strokeWidth={1.5} />;
+      return <Image className={iconClass} strokeWidth={1.5} />;
+    case 'shapes':
+      return <Shapes className={iconClass} strokeWidth={1.5} />;
     default:
       return null;
   }

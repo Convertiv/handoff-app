@@ -90,7 +90,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
         <p className="max-w-[800px] text-lg font-light text-gray-500 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
           <Link
-            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
             href={config?.assets_zip_links?.icons ?? '/icons.zip'}
           >
             Download Icons <Download strokeWidth={1.5} />

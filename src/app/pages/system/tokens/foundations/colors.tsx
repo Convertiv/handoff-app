@@ -96,7 +96,7 @@ const ColorGroupTable = ({ group, colors }: { group: string; colors: CoreTypes.I
   return (
     <Table className="border-b-[0.5px] border-l-[0.5px] border-r-[0.5px]">
       <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
-        <TableRow className="!border-b-[0.5px]">
+        <TableRow className="border-b-[0.5px]!">
           <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Name</TableHead>
           <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Value</TableHead>
         </TableRow>
