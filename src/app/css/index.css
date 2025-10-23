@@ -7,6 +7,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));

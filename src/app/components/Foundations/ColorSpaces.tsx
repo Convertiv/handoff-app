@@ -29,10 +29,10 @@ const ColorSpaces: React.FC<ColorSpacesProps> = ({ color, selectedColorSpace, se
       <ul className="flex flex-col gap-3">
         <li className="flex w-full justify-between rounded-md bg-gray-100 px-4 py-2">
           <p className="font-mono text-xs text-gray-400">HEX</p>
-          <div className="relative flex items-end gap-2">
+          <div className="relative flex items-end gap-2 grow justify-end">
             <p
               className={cn(
-                'duration-300 absolute right-6 font-mono text-xs transition-all',
+                'duration-300 absolute right-6 font-mono text-xs uppercase transition-all',
                 selectedColorSpace === 'css' ? 'translate-y-0 opacity-100 rotate-x-0' : 'translate-y-2 opacity-0 rotate-x-90'
               )}
             >
@@ -40,18 +40,18 @@ const ColorSpaces: React.FC<ColorSpacesProps> = ({ color, selectedColorSpace, se
             </p>
             <p
               className={cn(
-                'duration-300 font-mono text-xs transition-all',
+                'duration-300 font-mono text-xs uppercase transition-all',
                 selectedColorSpace === 'raw' ? 'translate-y-0 opacity-100 rotate-x-0' : 'translate-y-[-10px] opacity-0 rotate-x-90'
               )}
             >
               {color.value}
             </p>
-            <CopyToClipboard value={color.value} tooltip="Click to copy" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400 bg-transparent shadow-none" />
+            <CopyToClipboard value={color.value} tooltip="Copy HEX" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400 bg-transparent shadow-none" />
           </div>
         </li>
         <li className="flex w-full justify-between rounded-md bg-gray-100 px-4 py-2">
           <p className="font-mono text-xs text-gray-400">RGB</p>
-          <div className="relative flex items-end gap-2">
+          <div className="relative flex items-end gap-2 grow justify-end">
             <p
               className={cn(
                 'duration-300 absolute right-6 font-mono text-xs transition-all',
@@ -68,12 +68,12 @@ const ColorSpaces: React.FC<ColorSpacesProps> = ({ color, selectedColorSpace, se
             >
               {hexToRgb(color.value)}
             </p>
-            <CopyToClipboard value={selectedColorSpace === 'css' ? hexToRgbaCss(color.value) : hexToRgb(color.value)} tooltip="Click to copy" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400  bg-transparent shadow-none" />
+            <CopyToClipboard value={selectedColorSpace === 'css' ? hexToRgbaCss(color.value) : hexToRgb(color.value)} tooltip="Copy RGB" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400  bg-transparent shadow-none" />
           </div>
         </li>
         <li className="flex w-full justify-between rounded-md bg-gray-100 px-4 py-2">
           <p className="font-mono text-xs text-gray-400">OKLCH</p>
-          <div className="relative flex items-end gap-2">
+          <div className="relative flex items-end gap-2 grow justify-end">
             <p 
               className={cn(
                   'duration-300 absolute right-6 font-mono text-xs transition-all',
@@ -88,12 +88,12 @@ const ColorSpaces: React.FC<ColorSpacesProps> = ({ color, selectedColorSpace, se
               )}>
               0.49 0.50 273
             </p>
-            <CopyToClipboard value={selectedColorSpace === 'css' ? 'oklch(49% 0.50 273)' : '0.49 0.50 273'} tooltip="Click to copy" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400 bg-transparent shadow-none" />
+            <CopyToClipboard value={selectedColorSpace === 'css' ? 'oklch(49% 0.50 273)' : '0.49 0.50 273'} tooltip="Copy OKLCH" className="border-none size-4 [&_svg]:size-2.5 [&_svg]:stroke-gray-400 bg-transparent shadow-none" />
           </div>
         </li>
       </ul>
       <div className="flex justify-end">
-        <div className="mt-3 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
+        <div className="mt-5 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
           <RadioGroup
             value={selectedColorSpace}
             onValueChange={setSelectedColorSpace}

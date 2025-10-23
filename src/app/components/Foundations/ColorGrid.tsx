@@ -16,7 +16,7 @@ import {
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetHeader } from '../ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { calculateContrastRatio, hexToRgb } from '../util/colors';
+import { hexToRgb } from '../util/colors';
 import ColorContrast from './ColorContrast';
 import ColorInfo from './ColorInfo';
 import ColorSpaces from './ColorSpaces';
@@ -144,7 +144,7 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
     setTimeout(() => setCopied(false), 2000);
   };
   if (!color) return null;
-  const contrast = calculateContrastRatio(color.value, '#FFFFFF');
+  
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
@@ -186,9 +186,9 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
           <Separator className="mb-6 mt-6" />
           <ColorSpaces color={color} selectedColorSpace={selectedColorSpace} setSelectedColorSpace={setSelectedColorSpace} />
           <Separator className="mb-6 mt-6" />
-          <ColorTailwind />
+          <ColorContrast color={color} />
           <Separator className="mb-6 mt-6" />
-          <ColorContrast contrast={contrast} />
+          <ColorTailwind />
         </div>
       </SheetContent>
     </Sheet>

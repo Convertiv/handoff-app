@@ -2,6 +2,7 @@ import { Types as CoreTypes } from 'handoff-core';
 import React from 'react';
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
+import { calculateContrastRatio } from '../util/colors';
 
 type ColorInfoProps = {
   color: CoreTypes.IColorObject;
@@ -11,13 +12,26 @@ const ColorInfo: React.FC<ColorInfoProps> = ({ color }) => {
   if (!color) {
     return null;
   }
-
+  const contrast = calculateContrastRatio(color.value, '#FFFFFF');
   return (
     <>
-      <div className="relative mb-3 block h-32 w-full rounded-md" style={{ background: color.value }}>
+      <div
+        className={`relative mb-3 block h-32 w-full rounded-md ${contrast < 1.05 ? 'shadow-md' : 'shadow-none'}`}
+        style={{ background: color.value }}
+      >
         <div className="absolute bottom-0 left-0 flex flex-col px-4 py-4">
-          <p className="font-medium text-white text-shadow-xs">{color.name}</p>
-          <p className="font-mono text-xs text-white text-shadow-xs">{color.value}</p>
+          <p
+            className={
+              `font-medium ${contrast < 2.0 ? 'text-gray-900 text-shadow-none' : 'text-white text-shadow-xs'}`
+            }
+          >
+            {color.name}
+          </p>
+          <p
+            className={`font-mono text-xs uppercase ${contrast < 2.0 ? 'text-gray-900 text-shadow-none' : 'text-white text-shadow-xs'}`}
+          >
+            {color.value}
+          </p>
         </div>
       </div>
       <p className="leading-relaxed text-sm text-gray-500">
