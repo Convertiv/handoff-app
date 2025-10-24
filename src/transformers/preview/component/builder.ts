@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash/cloneDeep';
 import Handoff from '../../../index';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
@@ -78,7 +79,7 @@ export async function processComponents(
         const { type, ...restMetadata } = runtimeComponent;
 
         let data: TransformComponentTokensResult = {
-          ...defaultComponent,
+          ...cloneDeep(defaultComponent),
           ...restMetadata,
           type: (type as ComponentType) || ComponentType.Element,
         };

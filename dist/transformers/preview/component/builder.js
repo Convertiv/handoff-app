@@ -25,6 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComponentSegment = void 0;
 exports.processComponents = processComponents;
+const cloneDeep_1 = __importDefault(require("lodash/cloneDeep"));
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
@@ -94,7 +95,7 @@ function processComponents(handoff, id, segmentToProcess) {
                 var _a, _b;
                 const runtimeComponent = runtimeComponents[runtimeComponentId][version];
                 const { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
-                let data = Object.assign(Object.assign(Object.assign({}, defaultComponent), restMetadata), { type: type || types_1.ComponentType.Element });
+                let data = Object.assign(Object.assign(Object.assign({}, (0, cloneDeep_1.default)(defaultComponent)), restMetadata), { type: type || types_1.ComponentType.Element });
                 if (!segmentToProcess || segmentToProcess === ComponentSegment.JavaScript || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, javascript_1.default)(data, handoff);
                 }
