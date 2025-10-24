@@ -7,7 +7,7 @@ import { createServer } from 'http';
 import next from 'next';
 import path from 'path';
 import { parse } from 'url';
-import WebSocket from 'ws';
+import { WebSocket } from 'ws';
 import Handoff from '.';
 import { getClientConfig } from './config';
 import { buildComponents } from './pipeline';
