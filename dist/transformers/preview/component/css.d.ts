@@ -40,6 +40,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
         };
     };
     validations?: Record<string, import("../../../types").ValidationResult>;
+    page?: import("../types").ComponentPageDefinition;
 }>;
 /**
  * Build the main CSS file using Vite

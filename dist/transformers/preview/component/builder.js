@@ -71,6 +71,32 @@ var ComponentSegment;
     ComponentSegment["Validation"] = "validation";
 })(ComponentSegment || (exports.ComponentSegment = ComponentSegment = {}));
 /**
+ * Determines which keys should be preserved based on the segment being processed.
+ * When processing a specific segment, we want to preserve data from other segments
+ * to avoid overwriting them with undefined values.
+ */
+function getPreserveKeysForSegment(segmentToProcess) {
+    if (!segmentToProcess) {
+        return []; // No preservation needed for full updates
+    }
+    switch (segmentToProcess) {
+        case ComponentSegment.JavaScript:
+            // When processing JavaScript segment, preserve CSS and previews data
+            return ['css', 'sass', 'sharedStyles', 'previews', 'validations'];
+        case ComponentSegment.Style:
+            // When processing Style segment, preserve JavaScript and previews data
+            return ['js', 'jsCompiled', 'previews', 'validations'];
+        case ComponentSegment.Previews:
+            // When processing Previews segment, preserve JavaScript and CSS data
+            return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'validations'];
+        case ComponentSegment.Validation:
+            // When processing Validation segment, preserve all other data
+            return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
+        default:
+            return [];
+    }
+}
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
@@ -84,6 +110,10 @@ function processComponents(handoff, id, segmentToProcess) {
         const components = (yield handoff.getDocumentationObject()).components;
         const sharedStyles = yield handoff.getSharedStyles();
         const runtimeComponents = (_c = (_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.components) !== null && _c !== void 0 ? _c : {};
+        // Determine which keys to preserve based on the segment being processed
+        // This ensures that when processing only specific segments (e.g., JavaScript only),
+        // we don't overwrite data from other segments (e.g., CSS, previews) with undefined values
+        const preserveKeys = getPreserveKeysForSegment(segmentToProcess);
         for (const runtimeComponentId of Object.keys(runtimeComponents)) {
             if (!!id && runtimeComponentId !== id) {
                 continue;
@@ -110,13 +140,13 @@ function processComponents(handoff, id, segmentToProcess) {
                     data.validations = validationResults;
                 }
                 data.sharedStyles = sharedStyles;
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, true);
+                yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, preserveKeys);
                 if (version === latest) {
                     latestVersion = data;
                 }
             })));
             if (latestVersion) {
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, true);
+                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, preserveKeys);
                 const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
                 yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
                 result.push(summary);

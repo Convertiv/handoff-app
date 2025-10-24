@@ -109,7 +109,7 @@ declare class Handoff {
     private readJsonFile;
 }
 export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
-export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 export default Handoff;

@@ -493,6 +493,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         return {
             js: builder_1.ComponentSegment.JavaScript,
             scss: builder_1.ComponentSegment.Style,
+            template: builder_1.ComponentSegment.Previews,
             templates: builder_1.ComponentSegment.Previews,
         }[type];
     };
@@ -514,12 +515,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                     case 'unlink':
                         if (!debounce) {
                             debounce = true;
-                            let segmentToUpdate = undefined;
-                            const matchingPath = runtimeComponentPathsToWatch.get(file);
-                            if (matchingPath) {
-                                const entryType = runtimeComponentPathsToWatch.get(matchingPath);
-                                segmentToUpdate = entryTypeToSegment(entryType);
-                            }
+                            const entryType = runtimeComponentPathsToWatch.get(file);
+                            const segmentToUpdate = entryType ? entryTypeToSegment(entryType) : undefined;
                             const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
                             yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
                             debounce = false;
@@ -564,7 +561,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                     if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
                         const entryType = runtimeComponentEntryType;
                         if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
-                            result.set(path_1.default.dirname(normalizedComponentEntryPath), entryType);
+                            result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
                         }
                         else {
                             result.set(normalizedComponentEntryPath, entryType);
@@ -575,21 +572,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         }
         return result;
     };
-    /*
-    if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-      chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
-        console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
-        if (!debounce) {
-          debounce = true;
-          handoff.reload();
-          watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-          watchRuntimeConfiguration();
-          await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
-          debounce = false;
-        }
-      });
-    }
-      */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
     if (((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration)) {
