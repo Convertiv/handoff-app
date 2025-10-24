@@ -120,7 +120,8 @@ export async function processComponents(
   }
 
   // Always merge and write summary file, even if no components processed
-  await updateComponentSummaryApi(handoff, result);
+  const isFullRebuild = !id;
+  await updateComponentSummaryApi(handoff, result, isFullRebuild);
 
   return result;
 }
