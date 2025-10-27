@@ -18,6 +18,7 @@ const handlebars_1 = __importDefault(require("handlebars"));
 const path_1 = __importDefault(require("path"));
 const handlebars_2 = require("../utils/handlebars");
 const html_1 = require("../utils/html");
+const string_1 = require("../utils/string");
 /**
  * Constants for the Handlebars previews plugin
  */
@@ -34,15 +35,19 @@ const PLUGIN_CONSTANTS = {
  * @param documentationComponents - Documentation components
  */
 function processComponentInstances(componentData, documentationComponents) {
-    if (documentationComponents[componentData.id]) {
-        for (const instance of documentationComponents[componentData.id].instances) {
-            const variationId = instance.id;
-            const instanceValues = Object.fromEntries(instance.variantProperties);
-            componentData.previews[variationId] = {
-                title: variationId,
-                url: '',
-                values: instanceValues,
-            };
+    // Use figmaComponentId if provided, otherwise skip implicit matching
+    if (componentData.figmaComponentId) {
+        const figmaComponentKey = (0, string_1.slugify)(componentData.figmaComponentId);
+        if (documentationComponents[figmaComponentKey]) {
+            for (const instance of documentationComponents[figmaComponentKey].instances) {
+                const variationId = instance.id;
+                const instanceValues = Object.fromEntries(instance.variantProperties);
+                componentData.previews[variationId] = {
+                    title: variationId,
+                    url: '',
+                    values: instanceValues,
+                };
+            }
         }
     }
 }

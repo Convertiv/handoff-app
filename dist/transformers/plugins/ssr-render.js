@@ -24,6 +24,7 @@ const build_1 = require("../utils/build");
 const html_1 = require("../utils/html");
 const module_1 = require("../utils/module");
 const schema_loader_1 = require("../utils/schema-loader");
+const string_1 = require("../utils/string");
 /**
  * Constants for the SSR render plugin
  */
@@ -176,15 +177,19 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
                 }
                 const generatedPreviews = {};
                 // Process component instances from documentation
-                if (documentationComponents[componentId]) {
-                    for (const instance of documentationComponents[componentId].instances) {
-                        const variationId = instance.id;
-                        const instanceValues = Object.fromEntries(instance.variantProperties);
-                        componentData.previews[variationId] = {
-                            title: variationId,
-                            url: '',
-                            values: instanceValues,
-                        };
+                // Use figmaComponentId if provided, otherwise skip implicit matching
+                if (componentData.figmaComponentId) {
+                    const figmaComponentKey = (0, string_1.slugify)(componentData.figmaComponentId);
+                    if (documentationComponents[figmaComponentKey]) {
+                        for (const instance of documentationComponents[figmaComponentKey].instances) {
+                            const variationId = instance.id;
+                            const instanceValues = Object.fromEntries(instance.variantProperties);
+                            componentData.previews[variationId] = {
+                                title: variationId,
+                                url: '',
+                                values: instanceValues,
+                            };
+                        }
                     }
                 }
                 let finalHtml = '';

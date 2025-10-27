@@ -70,27 +70,48 @@ export type ComponentOptions = {
         };
     };
 };
+/**
+ * Represents a full component definition with metadata, property schema, preview definitions, and other optional configuration.
+ */
 export type ComponentObject = {
+    /** Human-friendly name for this component (e.g. "Button") */
     title: string;
+    /** Short description of the component, shown in lists or documentation */
     description: string;
+    /** Preview image URL or file path for the component's main preview */
     image: string;
+    /** Group or category under which this component falls (e.g. "Inputs", "Atoms") */
     group: string;
+    /** String identifier for the component type (e.g. "element", "compound") */
     type: string;
+    /** Optional file entry references for the component's implementation */
     entries?: {
+        /** Optional path to the main JS module (if available) */
         js?: string;
+        /** Optional path to the main SCSS/CSS file (if available) */
         scss?: string;
+        /** Optional path(s) to component template file(s) (if available) */
         templates?: string;
     };
+    /** Schema describing the expected properties (props/slots) for the component */
     properties: {
         [key: string]: SlotMetadata;
     };
+    /** Mapping of preview variations with values and titles for each (used to render sample states) */
     previews: {
         [key: string]: OptionalPreviewRender;
     };
+    /** Optional array of high-level categories for search/filtering */
     categories?: string[];
+    /** Optional array of tags for search/filtering (e.g. "primary", "interactive") */
     tags?: string[];
+    /** Optional source Figma file or node URL for the component */
     figma?: string;
+    /** Optional canonical Figma component name or ID (used for matching back to design tokens) */
+    figmaComponentId?: string;
+    /** Optional page definition containing slices for the documentation site */
     page?: ComponentPageDefinition;
+    /** Optional additional options for preview and transformer behaviors */
     options?: ComponentOptions;
 };
 export type ComponentListObject = {
@@ -101,12 +122,12 @@ export type ComponentListObject = {
 } & ComponentObject;
 export type TransformComponentTokensResult = {
     id: string;
-    source?: 'figma' | 'custom';
     type?: ComponentType;
     image?: string;
     group?: string;
     categories?: string[];
     figma?: string;
+    figmaComponentId?: string;
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
