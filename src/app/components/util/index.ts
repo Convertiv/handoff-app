@@ -283,7 +283,7 @@ export const staticBuildMenu = () => {
 
 const staticBuildComponentMenu = () => {
   let menu = [];
-  let components = fetchComponents();
+  let components = fetchComponents({ includeTokens: false });
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -331,7 +331,7 @@ const staticBuildTokensMenu = () => {
   ];
 
   const componentMenuItems = [];
-  const components = fetchComponents(false);
+  const components = fetchComponents({ includeApi: false });
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -430,17 +430,34 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   };
 };
 
+type FetchComponentsOptions = {
+  includeTokens?: boolean;
+  includeApi?: boolean;
+};
+
 /**
  * Fetch exportables id's from the JSON files in the exportables directory
- * @returns {string[]}
+ * @param options - Configuration object to specify which component sources to include
+ * @param options.includeTokens - Include components from tokens.json (default: true)
+ * @param options.includeApi - Include components from components.json API (default: true)
+ * @returns {string[]} Array of component objects with id, type, group, name, and description
  */
-export const fetchComponents = (fetchAll: boolean = true) => {
+export const fetchComponents = (options?: FetchComponentsOptions) => {
+  const includeTokens = options?.includeTokens ?? true;
+  const includeApi = options?.includeApi ?? true;
+  
   let components: Record<
     string,
     Omit<CoreTypes.IFileComponentObject, 'instances'> & { type?: ComponentType; group?: string; description?: string; name?: string }
-  > = getTokens().components;
-
-  if (fetchAll) {
+  > = {};
+  
+  // Include components from tokens.json if requested
+  if (includeTokens) {
+    components = getTokens().components;
+  }
+  
+  // Include components from components.json API if requested
+  if (includeApi) {
     const componentIds = Array.from(
       new Set<string>(
         (
