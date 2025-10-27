@@ -97,7 +97,7 @@ function generateClientHydrationSource(componentPath: string): string {
 
     const raw = document.getElementById('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')?.textContent || '{}';
     const props = JSON.parse(raw);
-    hydrateRoot(document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}'), <Component {...props} block={props} />);
+    hydrateRoot(document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}'), <Component {...props} />);
   `;
 }
 
@@ -220,7 +220,7 @@ export function ssrRenderPlugin(
         
         // Server-side render the component
         const serverRenderedHtml = ReactDOMServer.renderToString(
-          React.createElement(ReactComponent, { ...previewProps, block: { ...previewProps } })
+          React.createElement(ReactComponent, previewProps)
         );
         const formattedHtml = await formatHtml(serverRenderedHtml);
 
