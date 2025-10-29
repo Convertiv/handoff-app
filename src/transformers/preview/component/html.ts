@@ -43,6 +43,7 @@ export const buildPreviews = async (
   try {
     let viteConfig: InlineConfig = {
       ...viteBaseConfig,
+      // @ts-ignore - its easy to have mismatched types here
       plugins,
       build: {
         outDir: getComponentOutputPath(handoff),
