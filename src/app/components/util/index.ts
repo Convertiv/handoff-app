@@ -221,7 +221,7 @@ export const staticBuildMenu = () => {
   const sections: SectionLink[] = [];
   // Build path tree
   const custom = uniq(list)
-    .map((fileName) => {
+    .map((fileName: string) => {
       let search = '';
       if (pages.includes(fileName)) {
         search = path.resolve(workingPages, fileName);
