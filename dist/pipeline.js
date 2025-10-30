@@ -129,7 +129,7 @@ const buildCustomFonts = (handoff, documentationObject) => __awaiter(void 0, voi
         if (fs_extra_1.default.existsSync(fontDirName)) {
             const stream = fs_extra_1.default.createWriteStream(path_1.default.join(fontLocation, `${name}.zip`));
             yield zip(fontDirName, stream);
-            const fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
+            const fontsFolder = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId(), 'fonts');
             if (!fs_extra_1.default.existsSync(fontsFolder)) {
                 fs_extra_1.default.mkdirSync(fontsFolder);
             }
@@ -331,14 +331,14 @@ const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
             : []),
     ]);
     // define the output folder
-    const outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
+    const outputFolder = path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public');
     // ensure output folder exists
     if (!fs_extra_1.default.existsSync(outputFolder)) {
         yield fs_extra_1.default.promises.mkdir(outputFolder, { recursive: true });
     }
     // copy assets to output folder
-    fs_extra_1.default.copyFileSync(handoff.getIconsZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip'));
-    fs_extra_1.default.copyFileSync(handoff.getLogosZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip'));
+    fs_extra_1.default.copyFileSync(handoff.getIconsZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'icons.zip'));
+    fs_extra_1.default.copyFileSync(handoff.getLogosZipFilePath(), path_1.default.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'logos.zip'));
     return documentationObject;
 });
 /**

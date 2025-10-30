@@ -57,6 +57,11 @@ declare class Handoff {
      */
     getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
     /**
+     * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+     * @returns {string} The project ID to use for path construction
+     */
+    getProjectId(): string;
+    /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
      */

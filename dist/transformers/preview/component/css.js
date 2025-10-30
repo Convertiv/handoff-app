@@ -109,7 +109,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
             // Setup SASS load paths
             const loadPaths = [
                 path_1.default.resolve(handoff.workingPath),
-                path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                 path_1.default.resolve(handoff.workingPath, 'node_modules'),
             ];
             if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
@@ -165,7 +165,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                 // Setup SASS load paths
                 const loadPaths = [
                     path_1.default.resolve(handoff.workingPath),
-                    path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                    path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                 ];
                 if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {

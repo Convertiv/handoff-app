@@ -95,7 +95,7 @@ function processSharedStyles(handoff) {
                         path_1.default.resolve(handoff.workingPath, 'integration/sass'),
                         path_1.default.resolve(handoff.workingPath, 'node_modules'),
                         path_1.default.resolve(handoff.workingPath),
-                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                        path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                     ],
                 });
                 if (result.css) {

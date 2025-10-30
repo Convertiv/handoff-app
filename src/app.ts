@@ -82,7 +82,7 @@ const createWebSocketServer = async (port: number = 3001) => {
  */
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
   const paths = [
-    path.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
+    path.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`),
     path.resolve(handoff.workingPath, `public`),
   ];
 
@@ -101,7 +101,7 @@ const getWorkingPublicPath = (handoff: Handoff): string | null => {
  * @returns The resolved path to the application directory
  */
 const getAppPath = (handoff: Handoff): string => {
-  return path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
+  return path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`);
 };
 
 /**
@@ -266,17 +266,29 @@ const publishTokensApi = async (handoff: Handoff) => {
   }
 
   const tokens = await handoff.getDocumentationObject();
+  
+  // Early return if no tokens
+  if (!tokens) {
+    // Write empty tokens.json for API consistency
+    fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify({}, null, 2));
+    return;
+  }
 
   fs.writeFileSync(path.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
 
   if (!fs.existsSync(path.join(apiPath, 'tokens'))) {
-    fs.mkdirSync(path.join(apiPath, 'tokens'));
+    fs.mkdirSync(path.join(apiPath, 'tokens'), { recursive: true });
   }
 
-  for (const type in tokens) {
-    if (type === 'timestamp') continue;
-    for (const group in tokens[type]) {
-      fs.writeFileSync(path.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+  // Only iterate if tokens has properties
+  if (tokens && typeof tokens === 'object') {
+    for (const type in tokens) {
+      if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object') continue;
+      for (const group in tokens[type]) {
+        if (tokens[type][group]) {
+          fs.writeFileSync(path.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+        }
+      }
     }
   }
 };
@@ -295,11 +307,11 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
   await publishMDX(handoff);
 
   // Prepare project app configuration
-  const handoffProjectId = handoff.config.figma_project_id ?? '';
+  const handoffProjectId = handoff.getProjectId();
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
-  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
+  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const handoffUseReferences = handoff.config.useVariables ?? false;
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
@@ -318,7 +330,12 @@ const prepareProjectApp = async (handoff: Handoff): Promise<string> => {
 };
 
 const persistRuntimeCache = (handoff: Handoff) => {
-  const destination = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
+  const appPath = getAppPath(handoff);
+  const destination = path.resolve(appPath, 'runtime.cache.json');
+  // Ensure directory exists
+  if (!fs.existsSync(appPath)) {
+    fs.mkdirSync(appPath, { recursive: true });
+  }
   fs.writeFileSync(destination, JSON.stringify({ config: getClientConfig(handoff), ...handoff.integrationObject }, null, 2), 'utf-8');
 };
 
@@ -328,10 +345,6 @@ const persistRuntimeCache = (handoff: Handoff) => {
  * @returns
  */
 const buildApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
-    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-  }
-
   // Perform cleanup
   await performCleanup(handoff);
 
@@ -368,7 +381,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   }
 
   // Clean the project output directory (if exists)
-  const output = path.resolve(outputRoot, handoff.config.figma_project_id);
+  const output = path.resolve(outputRoot, handoff.getProjectId());
   if (fs.existsSync(output)) {
     fs.removeSync(output);
   }
@@ -382,12 +395,6 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  const tokensJsonFilePath = handoff.getTokensFilePath();
-
-  if (!fs.existsSync(tokensJsonFilePath)) {
-    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-  }
-
   // Initial processing of the components
   await processComponents(handoff);
 
@@ -642,10 +649,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
-  if (!fs.existsSync(path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
-    throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-  }
-
   // Prepare app
   const appPath = await prepareProjectApp(handoff);
 

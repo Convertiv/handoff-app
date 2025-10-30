@@ -47,7 +47,9 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     // the original NODE_ENV value
     const oldNodeEnv = process.env.NODE_ENV;
     try {
-        let viteConfig = Object.assign(Object.assign({}, config_1.default), { plugins, build: {
+        let viteConfig = Object.assign(Object.assign({}, config_1.default), { 
+            // @ts-ignore - its easy to have mismatched types here
+            plugins, build: {
                 outDir: (0, component_1.getComponentOutputPath)(handoff),
                 emptyOutDir: false,
                 rollupOptions: {

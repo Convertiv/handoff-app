@@ -109,7 +109,7 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
           path.resolve(handoff.workingPath, 'integration/sass'),
           path.resolve(handoff.workingPath, 'node_modules'),
           path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
         ],
       });
 

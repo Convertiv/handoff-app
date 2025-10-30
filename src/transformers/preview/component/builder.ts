@@ -1,3 +1,4 @@
+import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
 import Handoff from '../../../index';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
@@ -92,7 +93,8 @@ export async function processComponents(
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
-  const components = (await handoff.getDocumentationObject()).components;
+  const documentationObject = await handoff.getDocumentationObject();
+  const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   const sharedStyles = await handoff.getSharedStyles();
   const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
   

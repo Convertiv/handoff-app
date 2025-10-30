@@ -18,6 +18,7 @@ import { ComponentListObject } from './transformers/preview/types';
 import { Config, IntegrationObject } from './types/config';
 import { filterOutNull } from './utils';
 import { findFilesByExtension } from './utils/fs';
+import { generateFilesystemSafeId } from './utils/path';
 
 class Handoff {
   config: Config | null;
@@ -280,11 +281,23 @@ class Handoff {
   }
 
   /**
+   * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+   * @returns {string} The project ID to use for path construction
+   */
+  getProjectId(): string {
+    if (this.config?.figma_project_id) {
+      return this.config.figma_project_id;
+    }
+    // Fallback to filesystem-safe transformation of working path
+    return generateFilesystemSafeId(this.workingPath);
+  }
+
+  /**
    * Gets the output path for the current project
    * @returns {string} The absolute path to the output directory
    */
   getOutputPath(): string {
-    return path.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+    return path.resolve(this.workingPath, this.exportsDirectory, this.getProjectId());
   }
 
   /**
