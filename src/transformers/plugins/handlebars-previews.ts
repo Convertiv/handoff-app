@@ -7,6 +7,7 @@ import Handoff from '../..';
 import { TransformComponentTokensResult } from '../preview/types';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
+import { slugify } from '../utils/string';
 
 /**
  * Preview data interface for Handlebars rendering
@@ -36,16 +37,20 @@ function processComponentInstances(
   componentData: TransformComponentTokensResult,
   documentationComponents: CoreTypes.IDocumentationObject['components']
 ): void {
-  if (documentationComponents[componentData.id]) {
-    for (const instance of documentationComponents[componentData.id].instances) {
-      const variationId = instance.id;
-      const instanceValues = Object.fromEntries(instance.variantProperties);
+  // Use figmaComponentId if provided, otherwise skip implicit matching
+  if (componentData.figmaComponentId) {
+    const figmaComponentKey = slugify(componentData.figmaComponentId);
+    if (documentationComponents[figmaComponentKey]) {
+      for (const instance of documentationComponents[figmaComponentKey].instances) {
+        const variationId = instance.id;
+        const instanceValues = Object.fromEntries(instance.variantProperties);
 
-      componentData.previews[variationId] = {
-        title: variationId,
-        url: '',
-        values: instanceValues,
-      };
+        componentData.previews[variationId] = {
+          title: variationId,
+          url: '',
+          values: instanceValues,
+        };
+      }
     }
   }
 }

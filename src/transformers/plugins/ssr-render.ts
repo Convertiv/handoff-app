@@ -13,6 +13,7 @@ import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
+import { slugify } from '../utils/string';
 
 /**
  * React component type for SSR rendering
@@ -97,7 +98,7 @@ function generateClientHydrationSource(componentPath: string): string {
 
     const raw = document.getElementById('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')?.textContent || '{}';
     const props = JSON.parse(raw);
-    hydrateRoot(document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}'), <Component {...props} block={props} />);
+    hydrateRoot(document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}'), <Component {...props} />);
   `;
 }
 
@@ -199,16 +200,20 @@ export function ssrRenderPlugin(
       const generatedPreviews: { [key: string]: string } = {};
 
       // Process component instances from documentation
-      if (documentationComponents[componentId]) {
-        for (const instance of documentationComponents[componentId].instances) {
-          const variationId = instance.id;
-          const instanceValues = Object.fromEntries(instance.variantProperties);
+      // Use figmaComponentId if provided, otherwise skip implicit matching
+      if (componentData.figmaComponentId) {
+        const figmaComponentKey = slugify(componentData.figmaComponentId);
+        if (documentationComponents[figmaComponentKey]) {
+          for (const instance of documentationComponents[figmaComponentKey].instances) {
+            const variationId = instance.id;
+            const instanceValues = Object.fromEntries(instance.variantProperties);
 
-          componentData.previews[variationId] = {
-            title: variationId,
-            url: '',
-            values: instanceValues,
-          };
+            componentData.previews[variationId] = {
+              title: variationId,
+              url: '',
+              values: instanceValues,
+            };
+          }
         }
       }
 
@@ -220,7 +225,7 @@ export function ssrRenderPlugin(
         
         // Server-side render the component
         const serverRenderedHtml = ReactDOMServer.renderToString(
-          React.createElement(ReactComponent, { ...previewProps, block: { ...previewProps } })
+          React.createElement(ReactComponent, previewProps)
         );
         const formattedHtml = await formatHtml(serverRenderedHtml);
 
