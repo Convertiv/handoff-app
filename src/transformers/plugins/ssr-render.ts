@@ -13,6 +13,7 @@ import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
+import { slugify } from '../utils/string';
 
 /**
  * React component type for SSR rendering
@@ -199,16 +200,20 @@ export function ssrRenderPlugin(
       const generatedPreviews: { [key: string]: string } = {};
 
       // Process component instances from documentation
-      if (documentationComponents[componentId]) {
-        for (const instance of documentationComponents[componentId].instances) {
-          const variationId = instance.id;
-          const instanceValues = Object.fromEntries(instance.variantProperties);
+      // Use figmaComponentId if provided, otherwise skip implicit matching
+      if (componentData.figmaComponentId) {
+        const figmaComponentKey = slugify(componentData.figmaComponentId);
+        if (documentationComponents[figmaComponentKey]) {
+          for (const instance of documentationComponents[figmaComponentKey].instances) {
+            const variationId = instance.id;
+            const instanceValues = Object.fromEntries(instance.variantProperties);
 
-          componentData.previews[variationId] = {
-            title: variationId,
-            url: '',
-            values: instanceValues,
-          };
+            componentData.previews[variationId] = {
+              title: variationId,
+              url: '',
+              values: instanceValues,
+            };
+          }
         }
       }
 
