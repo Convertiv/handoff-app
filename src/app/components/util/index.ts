@@ -248,11 +248,12 @@ export const staticBuildMenu = () => {
           subSections = Object.keys(metadata.menu)
             .map((key) => {
               const sub = metadata.menu[key];
+              console.log(sub);
               if (sub.components) {
                 // The user wants to inject the component menu here
                 return {
                   title: sub.title,
-                  menu: staticBuildComponentMenu(),
+                  menu: staticBuildComponentMenu(sub.components),
                 };
               }
               if (sub.tokens) {
@@ -281,9 +282,12 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
-const staticBuildComponentMenu = () => {
+const staticBuildComponentMenu = (type?: string) => {
   let menu = [];
   let components = fetchComponents({ includeTokens: false });
+  if (type) {
+    components = components.filter((component) => component.type == type);
+  }
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -445,17 +449,17 @@ type FetchComponentsOptions = {
 export const fetchComponents = (options?: FetchComponentsOptions) => {
   const includeTokens = options?.includeTokens ?? true;
   const includeApi = options?.includeApi ?? true;
-  
+
   let components: Record<
     string,
     Omit<CoreTypes.IFileComponentObject, 'instances'> & { type?: ComponentType; group?: string; description?: string; name?: string }
   > = {};
-  
+
   // Include components from tokens.json if requested
   if (includeTokens) {
     components = getTokens().components;
   }
-  
+
   // Include components from components.json API if requested
   if (includeApi) {
     const componentIds = Array.from(
