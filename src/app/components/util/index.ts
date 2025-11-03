@@ -248,7 +248,6 @@ export const staticBuildMenu = () => {
           subSections = Object.keys(metadata.menu)
             .map((key) => {
               const sub = metadata.menu[key];
-              console.log(sub);
               if (sub.components) {
                 // The user wants to inject the component menu here
                 return {
