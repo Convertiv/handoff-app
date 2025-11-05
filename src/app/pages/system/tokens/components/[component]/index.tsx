@@ -37,12 +37,13 @@ export const getStaticProps = async (context) => {
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
   const componentSlug = reduceSlugToString(component);
-  const componentObject = getTokens().components[componentSlug!];
+  const tokens = getTokens();
+  const componentObject = tokens?.components?.[componentSlug!] ?? null;
 
   return {
     props: {
       id: component,
-      component: componentObject || {},
+      component: componentObject ?? {},
       legacyDefinition: getLegacyDefinition(componentSlug!),
       menu,
       config,

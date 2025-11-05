@@ -107,7 +107,7 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: HandoffTy
     if (fs.existsSync(fontDirName)) {
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zip(fontDirName, stream);
-      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId(), 'fonts');
       if (!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }
@@ -378,7 +378,7 @@ const figmaExtract = async (handoff: Handoff) => {
   ]);
 
   // define the output folder
-  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
+  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public');
 
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
@@ -388,12 +388,12 @@ const figmaExtract = async (handoff: Handoff) => {
   // copy assets to output folder
   fs.copyFileSync(
     handoff.getIconsZipFilePath(),
-    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'icons.zip')
   );
 
   fs.copyFileSync(
     handoff.getLogosZipFilePath(),
-    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'logos.zip')
   );
 
   return documentationObject;

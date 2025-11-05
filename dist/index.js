@@ -54,6 +54,7 @@ const css_1 = require("./transformers/preview/component/css");
 const javascript_1 = require("./transformers/preview/component/javascript");
 const utils_1 = require("./utils");
 const fs_1 = require("./utils/fs");
+const path_2 = require("./utils/path");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -302,11 +303,23 @@ class Handoff {
         });
     }
     /**
+     * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+     * @returns {string} The project ID to use for path construction
+     */
+    getProjectId() {
+        var _a;
+        if ((_a = this.config) === null || _a === void 0 ? void 0 : _a.figma_project_id) {
+            return this.config.figma_project_id;
+        }
+        // Fallback to filesystem-safe transformation of working path
+        return (0, path_2.generateFilesystemSafeId)(this.workingPath);
+    }
+    /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
      */
     getOutputPath() {
-        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.getProjectId());
     }
     /**
      * Gets the path to the tokens.json file

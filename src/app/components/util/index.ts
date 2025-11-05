@@ -456,7 +456,8 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
 
   // Include components from tokens.json if requested
   if (includeTokens) {
-    components = getTokens().components;
+    const tokens = getTokens();
+    components = tokens?.components ?? {};
   }
 
   // Include components from components.json API if requested
@@ -514,15 +515,30 @@ type RuntimeCache = IntegrationObject & { config: ClientConfig };
 
 let cachedRuntimeCache: RuntimeCache | null = null;
 
+const getDefaultRuntimeCache = (): RuntimeCache => {
+  return {
+    config: {} as ClientConfig,
+    entries: {
+      integration: undefined,
+      bundle: undefined,
+      components: {},
+    },
+    options: {},
+  } as RuntimeCache;
+};
+
 const loadRuntimeCache = (): RuntimeCache => {
   if (cachedRuntimeCache) {
     return cachedRuntimeCache;
   }
 
-  const runtimeCachePath = path.resolve(process.env.HANDOFF_EXPORT_PATH, 'runtime.cache.json');
+  const modulePath = process.env.HANDOFF_MODULE_PATH ?? '';
+  const projectId = process.env.HANDOFF_PROJECT_ID ?? '';
+  const runtimeCachePath = path.resolve(modulePath, '.handoff', projectId, 'runtime.cache.json');
 
   if (!fs.existsSync(runtimeCachePath)) {
-    throw new Error(`Runtime cache not found at: ${runtimeCachePath}`);
+    // Return empty default instead of throwing to support running without fetch
+    return getDefaultRuntimeCache();
   }
 
   try {
@@ -530,7 +546,8 @@ const loadRuntimeCache = (): RuntimeCache => {
     cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
     return cachedRuntimeCache;
   } catch (e) {
-    throw new Error(`Error reading runtime cache: ${runtimeCachePath}`);
+    // Return empty default on error instead of throwing
+    return getDefaultRuntimeCache();
   }
 };
 
@@ -617,7 +634,21 @@ export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
     : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as CoreTypes.IDocumentationObject;
+  
+  if (!fs.existsSync(exportedFilePath)) {
+    // Return proper default structure to prevent Next.js serialization errors
+    // and ensure components can safely access design properties
+    return {
+      localStyles: {
+        color: [],
+        typography: [],
+        effect: [],
+      },
+      components: {},
+      assets: {},
+    } as CoreTypes.IDocumentationObject;
+  }
+  
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
 };

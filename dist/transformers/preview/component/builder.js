@@ -105,11 +105,12 @@ function getPreserveKeysForSegment(segmentToProcess) {
  */
 function processComponents(handoff, id, segmentToProcess) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         const result = [];
-        const components = (yield handoff.getDocumentationObject()).components;
+        const documentationObject = yield handoff.getDocumentationObject();
+        const components = (_a = documentationObject === null || documentationObject === void 0 ? void 0 : documentationObject.components) !== null && _a !== void 0 ? _a : {};
         const sharedStyles = yield handoff.getSharedStyles();
-        const runtimeComponents = (_c = (_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.components) !== null && _c !== void 0 ? _c : {};
+        const runtimeComponents = (_d = (_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.components) !== null && _d !== void 0 ? _d : {};
         // Determine which keys to preserve based on the segment being processed
         // This ensures that when processing only specific segments (e.g., JavaScript only),
         // we don't overwrite data from other segments (e.g., CSS, previews) with undefined values
