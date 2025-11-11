@@ -1,15 +1,17 @@
-// Mock chalk and ora before importing
+// Mock chalk, ora, and interactive modules before importing
 jest.mock('chalk', () => ({
   default: {
     green: jest.fn((str: string) => str),
     cyan: jest.fn((str: string) => str),
     gray: jest.fn((str: string) => str),
     red: jest.fn((str: string) => str),
+    bold: jest.fn((str: string) => str),
   },
   green: jest.fn((str: string) => str),
   cyan: jest.fn((str: string) => str),
   gray: jest.fn((str: string) => str),
   red: jest.fn((str: string) => str),
+  bold: jest.fn((str: string) => str),
 }));
 
 jest.mock('ora', () => ({
@@ -19,6 +21,10 @@ jest.mock('ora', () => ({
     fail: jest.fn().mockReturnThis(),
     text: '',
   })),
+}));
+
+jest.mock('../interactive/mode-selection', () => ({
+  promptModeSelection: jest.fn().mockResolvedValue('balanced'),
 }));
 
 import { extractCommand } from './extract';

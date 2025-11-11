@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { runDiscovery, recommendMode, displayDiscoveryResults } from '../discovery';
-import type { ExtractorConfig } from '../types/config';
+import { promptModeSelection } from '../interactive/mode-selection';
+import type { ExtractorConfig, AnalysisMode } from '../types/config';
 
 interface ExtractOptions {
   mode?: 'quick' | 'balanced' | 'thorough';
@@ -18,7 +19,24 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
 
     displayDiscoveryResults(discovery, recommendation);
 
-    // Placeholder - will implement mode selection in next task
+    // Determine mode: use CLI option, interactive prompt, or recommendation
+    let selectedMode: AnalysisMode;
+
+    if (options.mode) {
+      // Mode explicitly provided via CLI
+      selectedMode = options.mode;
+      console.log(chalk.cyan(`\n✓ Using mode from CLI: ${chalk.bold(selectedMode.toUpperCase())}`));
+    } else if (options.interactive !== false) {
+      // Interactive mode (default)
+      selectedMode = await promptModeSelection(discovery, recommendation);
+      console.log(chalk.green(`\n✓ Mode selected: ${chalk.bold(selectedMode.toUpperCase())}`));
+    } else {
+      // Non-interactive: use recommendation
+      selectedMode = recommendation.mode;
+      console.log(chalk.cyan(`\n✓ Using recommended mode: ${chalk.bold(selectedMode.toUpperCase())}`));
+    }
+
+    // Placeholder - will implement extraction in later tasks
     console.log(chalk.cyan('\n📄 Files written:'));
     console.log(chalk.gray(`   • ${options.output || './figma-tokens.json'}`));
 
