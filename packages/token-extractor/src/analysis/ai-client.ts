@@ -46,24 +46,45 @@ export class AnthropicProvider implements AIProvider {
     const fullPrompt = this.buildPrompt(prompt, context);
 
     return this.retryWithBackoff(async () => {
-      const response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: this.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: fullPrompt,
-          },
-        ],
-      });
+      try {
+        const response = await this.client.messages.create({
+          model: this.model,
+          max_tokens: this.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: fullPrompt,
+            },
+          ],
+        });
 
-      // Extract text content from response
-      const textContent = response.content.find((block) => block.type === 'text');
-      if (!textContent || textContent.type !== 'text') {
-        throw new Error('No text content in response');
+        // Extract text content from response
+        const textContent = response.content.find((block) => block.type === 'text');
+        if (!textContent || textContent.type !== 'text') {
+          throw new Error('No text content in AI response. Please try again or check your API key.');
+        }
+
+        return textContent.text;
+      } catch (error: any) {
+        // Provide more helpful error messages
+        if (error.status === 401) {
+          throw new Error('Invalid Anthropic API key. Please check your API key and try again.\n' +
+            'Get your API key at: https://console.anthropic.com/');
+        }
+        if (error.status === 429) {
+          throw new Error('Anthropic API rate limit exceeded. Please wait a moment and try again.\n' +
+            'Consider upgrading your API tier for higher limits.');
+        }
+        if (error.status === 400) {
+          throw new Error('Invalid request to Anthropic API. This may be due to:\n' +
+            '  - Context size exceeding model limits (try Quick mode)\n' +
+            '  - Invalid input format (try Balanced mode)');
+        }
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          throw new Error('Unable to connect to Anthropic API. Please check your internet connection.');
+        }
+        throw error;
       }
-
-      return textContent.text;
     });
   }
 
@@ -91,7 +112,13 @@ export class AnthropicProvider implements AIProvider {
 
         if (attempt === maxRetries) {
           throw new Error(
-            `Failed to analyze after ${maxRetries} attempts: ${lastError.message}`
+            `AI analysis failed after ${maxRetries} attempts.\n` +
+            `Last error: ${lastError.message}\n\n` +
+            `Suggestions:\n` +
+            `  - Check your internet connection\n` +
+            `  - Verify your API key is valid\n` +
+            `  - Try a different analysis mode (use --mode quick or --mode balanced)\n` +
+            `  - Check API status: Anthropic (status.anthropic.com) or OpenAI (status.openai.com)`
           );
         }
 
@@ -136,24 +163,45 @@ export class OpenAIProvider implements AIProvider {
     const fullPrompt = this.buildPrompt(prompt, context);
 
     return this.retryWithBackoff(async () => {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        max_tokens: this.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: fullPrompt,
-          },
-        ],
-      });
+      try {
+        const response = await this.client.chat.completions.create({
+          model: this.model,
+          max_tokens: this.maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: fullPrompt,
+            },
+          ],
+        });
 
-      // Extract content from response
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('No content in response');
+        // Extract content from response
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          throw new Error('No content in AI response. Please try again or check your API key.');
+        }
+
+        return content;
+      } catch (error: any) {
+        // Provide more helpful error messages
+        if (error.status === 401) {
+          throw new Error('Invalid OpenAI API key. Please check your API key and try again.\n' +
+            'Get your API key at: https://platform.openai.com/api-keys');
+        }
+        if (error.status === 429) {
+          throw new Error('OpenAI API rate limit exceeded. Please wait a moment and try again.\n' +
+            'Check your rate limits at: https://platform.openai.com/account/limits');
+        }
+        if (error.status === 400) {
+          throw new Error('Invalid request to OpenAI API. This may be due to:\n' +
+            '  - Context size exceeding model limits (try Quick mode)\n' +
+            '  - Invalid input format (try Balanced mode)');
+        }
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          throw new Error('Unable to connect to OpenAI API. Please check your internet connection.');
+        }
+        throw error;
       }
-
-      return content;
     });
   }
 

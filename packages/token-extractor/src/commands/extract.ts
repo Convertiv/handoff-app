@@ -41,7 +41,15 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
     console.log(chalk.gray(`   • ${options.output || './figma-tokens.json'}`));
 
   } catch (error) {
-    console.error(chalk.red('Token extraction failed:'), error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('\nToken extraction failed:'));
+    console.error(chalk.red(errorMessage));
+
+    // Provide helpful guidance
+    console.error(chalk.yellow('\nFor help, see:'));
+    console.error(chalk.gray('  • Troubleshooting guide: https://github.com/Convertiv/handoff/blob/main/packages/token-extractor/TROUBLESHOOTING.md'));
+    console.error(chalk.gray('  • Report issues: https://github.com/Convertiv/handoff/issues'));
+
     throw error;
   }
 }

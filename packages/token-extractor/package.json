@@ -1,7 +1,7 @@
 {
   "name": "@handoff/token-extractor",
   "version": "0.1.0",
-  "description": "Extract design tokens from code and generate Figma Tokens JSON",
+  "description": "AI-powered tool to extract design tokens from CSS, SCSS, and JavaScript codebases and generate Figma Tokens Plugin JSON",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {

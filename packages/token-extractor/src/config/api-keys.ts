@@ -39,7 +39,10 @@ export class APIKeyManager {
    */
   public saveKey(provider: AIProvider, apiKey: string): void {
     if (!apiKey || apiKey.trim() === '') {
-      throw new Error('API key cannot be empty');
+      throw new Error('API key cannot be empty. Please provide a valid API key from:\n' +
+        (provider === 'anthropic'
+          ? '  https://console.anthropic.com/'
+          : '  https://platform.openai.com/api-keys'));
     }
 
     let config: Record<string, any> = {};
@@ -50,7 +53,11 @@ export class APIKeyManager {
         try {
           config = JSON.parse(content);
         } catch (parseError) {
-          throw new Error(`Failed to parse config file at ${this.configPath}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+          throw new Error(`Failed to parse config file at ${this.configPath}.\n` +
+            `The file may be corrupted. You can:\n` +
+            `  1. Delete the file: rm ${this.configPath}\n` +
+            `  2. Re-run the tool to create a new config\n\n` +
+            `Parse error: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
         }
       }
 

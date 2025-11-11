@@ -8,47 +8,63 @@ export class PostCSSParser {
    * Parse a single CSS/SCSS file and extract tokens
    */
   async parseFile(filePath: string): Promise<ExtractedToken[]> {
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    const isSCSS = filePath.endsWith('.scss') || filePath.endsWith('.sass');
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      const isSCSS = filePath.endsWith('.scss') || filePath.endsWith('.sass');
 
-    // Parse with appropriate syntax
-    const root = isSCSS
-      ? postcss().process(content, {
-          from: filePath,
-          syntax: postcssScss
-        }).root
-      : postcss.parse(content, { from: filePath });
+      // Parse with appropriate syntax
+      const root = isSCSS
+        ? postcss().process(content, {
+            from: filePath,
+            syntax: postcssScss
+          }).root
+        : postcss.parse(content, { from: filePath });
 
-    const tokens: ExtractedToken[] = [];
+      const tokens: ExtractedToken[] = [];
 
-    // Extract tokens from the AST
-    root.walkDecls((decl: Declaration) => {
-      const prop = decl.prop;
-      const value = decl.value.trim();
-      const line = decl.source?.start?.line || 0;
+      // Extract tokens from the AST
+      root.walkDecls((decl: Declaration) => {
+        const prop = decl.prop;
+        const value = decl.value.trim();
+        const line = decl.source?.start?.line || 0;
 
-      // Extract CSS custom properties (--variable-name)
-      if (prop.startsWith('--')) {
-        const token = this.createToken(prop, value, filePath, line);
-        if (token) {
-          tokens.push(token);
+        // Extract CSS custom properties (--variable-name)
+        if (prop.startsWith('--')) {
+          const token = this.createToken(prop, value, filePath, line);
+          if (token) {
+            tokens.push(token);
+          }
         }
-      }
-      // Extract SCSS variables ($variable-name)
-      else if (prop.startsWith('$')) {
-        const token = this.createToken(prop, value, filePath, line);
-        if (token) {
-          tokens.push(token);
+        // Extract SCSS variables ($variable-name)
+        else if (prop.startsWith('$')) {
+          const token = this.createToken(prop, value, filePath, line);
+          if (token) {
+            tokens.push(token);
+          }
         }
-      }
-      // Extract inline color and spacing values from regular properties
-      else {
-        const inlineTokens = this.extractInlineTokens(prop, value, filePath, line);
-        tokens.push(...inlineTokens);
-      }
-    });
+        // Extract inline color and spacing values from regular properties
+        else {
+          const inlineTokens = this.extractInlineTokens(prop, value, filePath, line);
+          tokens.push(...inlineTokens);
+        }
+      });
 
-    return tokens;
+      return tokens;
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`File not found: ${filePath}\nPlease verify the file path is correct.`);
+      }
+      if (error.name === 'CssSyntaxError') {
+        throw new Error(`CSS/SCSS syntax error in ${filePath} at line ${error.line}:\n` +
+          `  ${error.reason}\n\n` +
+          `Suggestions:\n` +
+          `  - Fix syntax errors in the file\n` +
+          `  - Run your project's linter to identify issues\n` +
+          `  - Try using Balanced mode (--mode balanced) which is more forgiving`);
+      }
+      throw new Error(`Failed to parse ${filePath}: ${error.message}\n` +
+        `Try using a different analysis mode if parsing continues to fail.`);
+    }
   }
 
   /**
