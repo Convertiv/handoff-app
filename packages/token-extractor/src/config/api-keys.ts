@@ -38,17 +38,39 @@ export class APIKeyManager {
    * Save API key to config file (gitignored)
    */
   public saveKey(provider: AIProvider, apiKey: string): void {
-    let config: Record<string, any> = {};
-
-    if (fs.existsSync(this.configPath)) {
-      const content = fs.readFileSync(this.configPath, 'utf-8');
-      config = JSON.parse(content);
+    if (!apiKey || apiKey.trim() === '') {
+      throw new Error('API key cannot be empty');
     }
 
-    config[`${provider}ApiKey`] = apiKey;
+    let config: Record<string, any> = {};
 
-    fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
-    fs.chmodSync(this.configPath, 0o600); // Readable only by owner
+    try {
+      if (fs.existsSync(this.configPath)) {
+        const content = fs.readFileSync(this.configPath, 'utf-8');
+        try {
+          config = JSON.parse(content);
+        } catch (parseError) {
+          throw new Error(`Failed to parse config file at ${this.configPath}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+        }
+      }
+
+      config[`${provider}ApiKey`] = apiKey;
+
+      fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+
+      // Try to set file permissions (may fail on Windows)
+      try {
+        fs.chmodSync(this.configPath, 0o600); // Readable only by owner
+      } catch (chmodError) {
+        // Log warning but don't fail - Windows doesn't support chmod
+        console.warn(`Warning: Could not set file permissions on ${this.configPath}: ${chmodError instanceof Error ? chmodError.message : 'Unknown error'}`);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Failed to parse config file')) {
+        throw error;
+      }
+      throw new Error(`Failed to save API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private getKeyFromEnv(provider: AIProvider): string | null {
@@ -68,7 +90,8 @@ export class APIKeyManager {
       const content = fs.readFileSync(this.configPath, 'utf-8');
       const config = JSON.parse(content);
       return config[`${provider}ApiKey`] || null;
-    } catch {
+    } catch (error) {
+      console.warn(`Warning: Could not read config file at ${this.configPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return null;
     }
   }
