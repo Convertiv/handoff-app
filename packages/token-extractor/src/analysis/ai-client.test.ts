@@ -113,7 +113,7 @@ describe('AIProvider Interface', () => {
       mockCreate.mockRejectedValue(mockError);
 
       await expect(provider.analyze('Test prompt', {})).rejects.toThrow(
-        'Failed to analyze after 3 attempts'
+        /AI analysis failed after 3 attempts/
       );
 
       expect(mockCreate).toHaveBeenCalledTimes(3);
@@ -195,7 +195,7 @@ describe('AIProvider Interface', () => {
       mockCreate.mockResolvedValue(mockResponse as any);
 
       await expect(provider.analyze('Test prompt', {})).rejects.toThrow(
-        /No text content in response|Failed to analyze after 3 attempts/
+        /No text content in (AI )?response|AI analysis failed after 3 attempts/
       );
     });
   });

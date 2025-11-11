@@ -5,12 +5,14 @@ jest.mock('chalk', () => ({
     cyan: jest.fn((str: string) => str),
     gray: jest.fn((str: string) => str),
     red: jest.fn((str: string) => str),
+    yellow: jest.fn((str: string) => str),
     bold: jest.fn((str: string) => str),
   },
   green: jest.fn((str: string) => str),
   cyan: jest.fn((str: string) => str),
   gray: jest.fn((str: string) => str),
   red: jest.fn((str: string) => str),
+  yellow: jest.fn((str: string) => str),
   bold: jest.fn((str: string) => str),
 }));
 
@@ -23,8 +25,146 @@ jest.mock('ora', () => ({
   })),
 }));
 
+jest.mock('fs', () => ({
+  existsSync: jest.fn(() => true),
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  promises: {
+    readFile: jest.fn(),
+  },
+}));
+
 jest.mock('../interactive/mode-selection', () => ({
   promptModeSelection: jest.fn().mockResolvedValue('balanced'),
+}));
+
+jest.mock('../discovery', () => ({
+  runDiscovery: jest.fn().mockResolvedValue({
+    fileCount: 10,
+    lineCount: 1000,
+    frameworks: ['react'],
+    hasExistingTokens: false,
+    directories: {
+      styles: ['./src/styles'],
+      components: ['./src/components'],
+    },
+  }),
+  recommendMode: jest.fn().mockReturnValue({
+    mode: 'balanced',
+    reasoning: 'Test reasoning',
+    estimatedCost: 0.5,
+    estimatedTime: 30,
+    expectedAccuracy: 85,
+  }),
+  displayDiscoveryResults: jest.fn(),
+}));
+
+jest.mock('../config/api-keys', () => ({
+  APIKeyManager: jest.fn().mockImplementation(() => ({
+    detectProvider: jest.fn().mockReturnValue('anthropic'),
+    getKey: jest.fn().mockReturnValue('test-api-key'),
+  })),
+}));
+
+jest.mock('../config/prompt-api-key', () => ({
+  promptForAPIKey: jest.fn().mockResolvedValue({
+    provider: 'anthropic',
+    apiKey: 'test-api-key',
+  }),
+}));
+
+jest.mock('../analysis/ai-client', () => ({
+  createProvider: jest.fn().mockReturnValue({
+    analyze: jest.fn().mockResolvedValue('{}'),
+  }),
+}));
+
+jest.mock('../analysis/modes/quick', () => ({
+  QuickMode: jest.fn().mockImplementation(() => ({
+    extract: jest.fn().mockResolvedValue({
+      tokens: [],
+      metadata: {
+        extractedAt: new Date().toISOString(),
+        fileCount: 0,
+        mode: 'quick',
+      },
+    }),
+  })),
+}));
+
+jest.mock('../analysis/modes/balanced', () => ({
+  BalancedMode: jest.fn().mockImplementation(() => ({
+    extract: jest.fn().mockResolvedValue({
+      tokens: [],
+      metadata: {
+        extractedAt: new Date().toISOString(),
+        fileCount: 0,
+        mode: 'balanced',
+      },
+    }),
+  })),
+}));
+
+jest.mock('../analysis/modes/thorough', () => ({
+  ThoroughMode: jest.fn().mockImplementation(() => ({
+    extract: jest.fn().mockResolvedValue({
+      tokens: [],
+      metadata: {
+        extractedAt: new Date().toISOString(),
+        fileCount: 0,
+        mode: 'thorough',
+      },
+    }),
+  })),
+}));
+
+jest.mock('../extraction/parsers/postcss-parser', () => ({
+  PostCSSParser: jest.fn().mockImplementation(() => ({
+    parseFile: jest.fn().mockResolvedValue([]),
+  })),
+}));
+
+jest.mock('../extraction/parsers/babel-parser', () => ({
+  BabelParser: jest.fn().mockImplementation(() => ({
+    parse: jest.fn().mockResolvedValue([]),
+  })),
+}));
+
+jest.mock('../interactive/questions', () => ({
+  askClarifyingQuestions: jest.fn().mockImplementation((tokenSet) => tokenSet),
+}));
+
+jest.mock('../output/figma-tokens', () => ({
+  FigmaTokensGenerator: jest.fn().mockImplementation(() => ({
+    generate: jest.fn().mockReturnValue({}),
+  })),
+}));
+
+jest.mock('../output/report', () => ({
+  ReportGenerator: jest.fn().mockImplementation(() => ({
+    generate: jest.fn().mockReturnValue('# Report'),
+  })),
+}));
+
+jest.mock('../output/audit', () => ({
+  AuditGenerator: jest.fn().mockImplementation(() => ({
+    audit: jest.fn().mockReturnValue({
+      issues: [],
+      summary: { critical: 0, warnings: 0, info: 0 },
+    }),
+  })),
+}));
+
+jest.mock('../output/cleanup', () => ({
+  CleanupTaskGenerator: jest.fn().mockImplementation(() => ({
+    generateMarkdown: jest.fn().mockReturnValue('# Cleanup Tasks'),
+  })),
+}));
+
+jest.mock('../discovery/scanner', () => ({
+  FileScanner: jest.fn().mockImplementation(() => ({
+    findStyleFiles: jest.fn().mockResolvedValue([]),
+  })),
 }));
 
 import { extractCommand } from './extract';
