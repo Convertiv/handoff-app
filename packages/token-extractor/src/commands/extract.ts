@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import ora from 'ora';
+import { runDiscovery, recommendMode, displayDiscoveryResults } from '../discovery';
 import type { ExtractorConfig } from '../types/config';
 
 interface ExtractOptions {
@@ -11,19 +11,19 @@ interface ExtractOptions {
 }
 
 export async function extractCommand(options: ExtractOptions): Promise<void> {
-  const spinner = ora('Starting token extraction').start();
-
   try {
-    spinner.text = 'Analyzing repository structure...';
+    // Run discovery pass
+    const discovery = await runDiscovery();
+    const recommendation = recommendMode(discovery);
 
-    // Placeholder - will implement in later tasks
-    spinner.succeed(chalk.green('Token extraction complete!'));
+    displayDiscoveryResults(discovery, recommendation);
 
+    // Placeholder - will implement mode selection in next task
     console.log(chalk.cyan('\n📄 Files written:'));
     console.log(chalk.gray(`   • ${options.output || './figma-tokens.json'}`));
 
   } catch (error) {
-    spinner.fail(chalk.red('Token extraction failed'));
+    console.error(chalk.red('Token extraction failed:'), error);
     throw error;
   }
 }
