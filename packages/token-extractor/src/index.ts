@@ -1,0 +1,1 @@
+export { TokenExtractor } from './extractor';
