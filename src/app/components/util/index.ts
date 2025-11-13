@@ -252,7 +252,7 @@ export const staticBuildMenu = () => {
                 // The user wants to inject the component menu here
                 return {
                   title: sub.title,
-                  menu: staticBuildComponentMenu(sub.components),
+                  menu: staticBuildComponentMenu(),
                 };
               }
               if (sub.tokens) {
@@ -281,16 +281,13 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
-const staticBuildComponentMenu = (type?: string) => {
+const staticBuildComponentMenu = () => {
   let menu = [];
   let components = fetchComponents();
-  if (type) {
-    components = components.filter((c) => c.type === type);
-  }
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
-    const menuGroup = { title: group, menu: [] };
+    const menuGroup = { title: group || 'Uncategorized', menu: [] };
     groupedComponents[group].forEach((component) => {
       const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
       let title = startCase(component.id);

@@ -3,6 +3,7 @@ import path from 'path';
 import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 
+
 function updateObject<T extends TransformComponentTokensResult>(target: T, source: Partial<T>): T {
   return Object.entries(source).reduce(
     (acc, [key, value]) => {
@@ -80,8 +81,16 @@ export const writeComponentMetadataApi = async (id: string, summary: ComponentLi
  */
 export const updateComponentSummaryApi = async (
   handoff: Handoff,
-  componentData: ComponentListObject[] // Partial list (may be empty)
+  componentData: ComponentListObject[],
+  isFullRebuild: boolean = false
 ) => {
+  if (isFullRebuild) {
+    // Full rebuild: replace the entire file
+    await writeComponentSummaryAPI(handoff, componentData);
+    return;
+  }
+
+  // Partial update: merge with existing data
   const apiPath = path.resolve(handoff.workingPath, 'public/api/components.json');
   let existingData: ComponentListObject[] = [];
 
