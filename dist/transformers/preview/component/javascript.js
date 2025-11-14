@@ -110,10 +110,10 @@ exports.buildComponentJs = buildComponentJs;
  */
 const buildMainJS = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const integration = (0, index_1.initIntegrationObject)(handoff)[0];
-    if (integration && integration.entries.bundle && fs_extra_1.default.existsSync(path_1.default.resolve(integration.entries.bundle))) {
+    const runtimeConfig = (0, index_1.initRuntimeConfig)(handoff)[0];
+    if (runtimeConfig && runtimeConfig.entries.js && fs_extra_1.default.existsSync(path_1.default.resolve(runtimeConfig.entries.js))) {
         yield buildJsBundle({
-            entry: integration.entries.bundle,
+            entry: runtimeConfig.entries.js,
             outputPath,
             outputFilename: 'main.js',
         }, handoff);

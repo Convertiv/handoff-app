@@ -48,8 +48,8 @@ export const makeExportable = async (handoff: Handoff, type: string, name: strin
  * @param handoff
  */
 export const makeTemplate = async (handoff: Handoff, component: string, state: string) => {
-  if (!handoff?.integrationObject?.entries?.templates) {
-    console.log(chalk.red(`Integration does not specify entry for templates.`));
+  if (!handoff?.runtimeConfig?.entries?.templates) {
+    console.log(chalk.red(`Runtime config does not specify entry for templates.`));
     return;
   }
 
@@ -72,7 +72,7 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
     return;
   }
 
-  const workingPath = path.resolve(handoff.integrationObject.entries.templates, component);
+  const workingPath = path.resolve(handoff.runtimeConfig.entries.templates, component);
 
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });

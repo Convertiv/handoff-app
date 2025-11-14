@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initIntegrationObject = void 0;
+exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initRuntimeConfig = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -50,8 +50,6 @@ const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const component_1 = require("./transformers/preview/component");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
-const css_1 = require("./transformers/preview/component/css");
-const javascript_1 = require("./transformers/preview/component/javascript");
 const utils_1 = require("./utils");
 const fs_1 = require("./utils/fs");
 const path_2 = require("./utils/path");
@@ -81,7 +79,7 @@ class Handoff {
         this.config = config;
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        [this.integrationObject, this._configFilePaths] = (0, exports.initIntegrationObject)(this);
+        [this.runtimeConfig, this._configFilePaths] = (0, exports.initRuntimeConfig)(this);
         return this;
     }
     reload() {
@@ -180,14 +178,6 @@ class Handoff {
             return this;
         });
     }
-    makeIntegrationStyles() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, javascript_1.buildMainJS)(this);
-            yield (0, css_1.buildMainCss)(this);
-            return this;
-        });
-    }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -254,7 +244,7 @@ class Handoff {
                 : handoff_core_1.Providers.RestApiProvider(apiCredentials);
             this._handoffRunner = (0, handoff_core_1.Handoff)(provider, {
                 options: {
-                    transformer: this.integrationObject.options,
+                    transformer: this.runtimeConfig.options,
                 },
             }, {
                 log: (msg) => {
@@ -424,24 +414,24 @@ const initConfig = (configOverride) => {
     const returnConfig = Object.assign(Object.assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
 };
-const initIntegrationObject = (handoff) => {
+const initRuntimeConfig = (handoff) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     var _k;
     const configFiles = [];
     const result = {
         options: {},
         entries: {
-            integration: undefined, // scss
-            bundle: undefined, // js
+            scss: undefined,
+            js: undefined,
             components: {},
         },
     };
     if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
-        result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
+        result.entries.scss = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
-    //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
+    //console.log('result.entries.scss', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
-        result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
+        result.entries.js = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
     else {
         console.log(chalk_1.default.red('No js entry found in config'), handoff.debug ? `Path: ${path_1.default.resolve(handoff.workingPath, (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.js)}` : '');
@@ -516,7 +506,7 @@ const initIntegrationObject = (handoff) => {
     }
     return [result, Array.from(configFiles)];
 };
-exports.initIntegrationObject = initIntegrationObject;
+exports.initRuntimeConfig = initRuntimeConfig;
 /**
  * Returns a list of component directories for a given path.
  *

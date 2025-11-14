@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Types as CoreTypes, Handoff as HandoffRunner } from 'handoff-core';
-import { Config, IntegrationObject } from './types/config';
+import { Config, RuntimeConfig } from './types/config';
 declare class Handoff {
     config: Config | null;
     debug: boolean;
@@ -9,7 +9,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
-    integrationObject?: IntegrationObject | null;
+    runtimeConfig?: RuntimeConfig | null;
     designMap: {
         colors: {};
         effects: {};
@@ -36,7 +36,6 @@ declare class Handoff {
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
-    makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
     validateComponents(): Promise<Handoff>;
@@ -113,7 +112,7 @@ declare class Handoff {
      */
     private readJsonFile;
 }
-export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
+export declare const initRuntimeConfig: (handoff: Handoff) => [runtimeConfig: RuntimeConfig, configs: string[]];
 export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

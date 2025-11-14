@@ -15,7 +15,6 @@ const theme_1 = __importDefault(require("./eject/theme"));
 const fetch_1 = __importDefault(require("./fetch"));
 const component_1 = __importDefault(require("./make/component"));
 const exportable_1 = __importDefault(require("./make/exportable"));
-const integrationStyles_1 = __importDefault(require("./make/integrationStyles"));
 const page_1 = __importDefault(require("./make/page"));
 const schema_1 = __importDefault(require("./make/schema"));
 const template_1 = __importDefault(require("./make/template"));
@@ -36,7 +35,6 @@ exports.commands = [
     schema_1.default,
     component_1.default,
     template_1.default,
-    integrationStyles_1.default,
     start_1.default,
     components_2.default,
 ];

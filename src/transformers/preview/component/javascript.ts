@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initIntegrationObject } from '../../../index';
+import Handoff, { initRuntimeConfig } from '../../../index';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
@@ -116,12 +116,12 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
  */
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff)[0];
+  const runtimeConfig = initRuntimeConfig(handoff)[0];
 
-  if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
+  if (runtimeConfig && runtimeConfig.entries.js && fs.existsSync(path.resolve(runtimeConfig.entries.js))) {
     await buildJsBundle(
       {
-        entry: integration.entries.bundle,
+        entry: runtimeConfig.entries.js,
         outputPath,
         outputFilename: 'main.js',
       },

@@ -9,7 +9,6 @@ import ejectThemeCommand from './eject/theme';
 import fetchCommand from './fetch';
 import makeComponentCommand from './make/component';
 import makeExportableCommand from './make/exportable';
-import makeIntegrationStylesCommand from './make/integrationStyles';
 import makePageCommand from './make/page';
 import makeSchemaCommand from './make/schema';
 import makeTemplateCommand from './make/template';
@@ -31,7 +30,6 @@ export const commands = [
   makeSchemaCommand,
   makeComponentCommand,
   makeTemplateCommand,
-  makeIntegrationStylesCommand,
   startCommand,
   validateComponentsCommand,
 ];

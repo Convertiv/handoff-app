@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initIntegrationObject } from '../../../index';
+import Handoff, { initRuntimeConfig } from '../../../index';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
@@ -125,8 +125,8 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
         path.resolve(handoff.workingPath, 'node_modules'),
       ];
 
-      if (handoff.integrationObject?.entries?.integration) {
-        loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+      if (handoff.runtimeConfig?.entries?.scss) {
+        loadPaths.unshift(path.dirname(handoff.runtimeConfig.entries.scss));
       }
 
       await buildCssBundle({
@@ -170,13 +170,13 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
  */
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff)[0];
+  const runtimeConfig = initRuntimeConfig(handoff)[0];
 
-  if (integration?.entries?.integration && fs.existsSync(integration.entries.integration)) {
-    const stat = await fs.stat(integration.entries.integration);
-    const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
+  if (runtimeConfig?.entries?.scss && fs.existsSync(runtimeConfig.entries.scss)) {
+    const stat = await fs.stat(runtimeConfig.entries.scss);
+    const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
-    if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
+    if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
       console.log(chalk.green(`Building main CSS file`));
 
       try {
@@ -187,8 +187,8 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           path.resolve(handoff.workingPath, 'node_modules'),
         ];
 
-        if (handoff.integrationObject?.entries?.integration) {
-          loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+        if (handoff.runtimeConfig?.entries?.scss) {
+          loadPaths.unshift(path.dirname(handoff.runtimeConfig.entries.scss));
         }
 
         await buildCssBundle({

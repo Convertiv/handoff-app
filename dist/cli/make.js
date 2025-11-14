@@ -62,8 +62,8 @@ exports.makeExportable = makeExportable;
  */
 const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
-        console.log(chalk_1.default.red(`Integration does not specify entry for templates.`));
+    if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
+        console.log(chalk_1.default.red(`Runtime config does not specify entry for templates.`));
         return;
     }
     if (!component) {
@@ -81,7 +81,7 @@ const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, vo
         console.log(chalk_1.default.red(`Template state must be alphanumeric and may contain dashes or underscores`));
         return;
     }
-    const workingPath = path_1.default.resolve(handoff.integrationObject.entries.templates, component);
+    const workingPath = path_1.default.resolve(handoff.runtimeConfig.entries.templates, component);
     if (!fs_extra_1.default.existsSync(workingPath)) {
         fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
     }
