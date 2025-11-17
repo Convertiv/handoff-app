@@ -104,7 +104,7 @@ exports.makeTemplate = makeTemplate;
  * @param handoff
  */
 const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, function* () {
-    let type = 'mdx';
+    let type = 'md';
     if (!name) {
         console.log(chalk_1.default.red(`Page name must be set`));
         return;
@@ -112,10 +112,6 @@ const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, fu
     if (!/^[a-z0-9]+$/i.test(name)) {
         console.log(chalk_1.default.red(`Page name must be alphanumeric and may contain dashes or underscores`));
         return;
-    }
-    const checkType = yield (0, prompt_1.prompt)(chalk_1.default.green(`By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `));
-    if (checkType === 'markdown') {
-        type = 'md';
     }
     let workingPath, sourcePath, templatePath;
     if (parent) {
