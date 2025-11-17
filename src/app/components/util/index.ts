@@ -29,6 +29,7 @@ export interface Metadata {
 export interface SectionLink {
   title: string;
   weight: number;
+  external?: string | boolean;
   path: string;
   subSections: {
     title: string;
@@ -269,8 +270,17 @@ export const staticBuildMenu = () => {
             .filter(filterOutUndefined);
         }
 
+        let external: string | boolean = false;
+        if (
+          typeof metadata.external === 'string' &&
+          (metadata.external.startsWith('http://') || metadata.external.startsWith('https://') || metadata.external.startsWith('/'))
+        ) {
+          external = metadata.external;
+        }
+
         return {
           title: metadata.menuTitle ?? metadata.title,
+          external,
           weight: metadata.weight,
           path: filepath,
           subSections,
