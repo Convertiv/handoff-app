@@ -25,8 +25,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComponentSegment = void 0;
 exports.processComponents = processComponents;
-const schema_1 = require("handoff/transformers/utils/schema");
 const cloneDeep_1 = __importDefault(require("lodash/cloneDeep"));
+const schema_1 = require("../../utils/schema");
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));

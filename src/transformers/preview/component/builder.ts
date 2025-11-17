@@ -1,7 +1,7 @@
 import { Types as CoreTypes } from 'handoff-core';
-import { ensureIds } from 'handoff/transformers/utils/schema';
 import cloneDeep from 'lodash/cloneDeep';
 import Handoff from '../../../index';
+import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
