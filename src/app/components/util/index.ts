@@ -413,17 +413,6 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
   };
 };
 
-export const fetchMdxPageMarkdown = () => {
-  //const menu = staticBuildMenu();
-  // Return props
-  return {
-    props: {
-      menu: [],
-      current: [],
-    },
-  };
-};
-
 /**
  * Fetch Component Doc Page Markdown
  * @param path
