@@ -4,7 +4,7 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import {
   buildL2StaticPaths,
   DocumentationProps,
@@ -12,7 +12,7 @@ import {
   getClientRuntimeConfig,
   IParams,
   reduceSlugToString,
-} from '../../../components/util';
+} from '../../components/util';
 
 export interface SubPageType {
   params: {
@@ -40,14 +40,13 @@ export async function getStaticPaths() {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const { level1 } = context.params as IParams;
   let { level2 } = context.params as IParams;
   if (!level2) {
     level2 = '404';
   }
   return {
     props: {
-      ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props,
+      ...fetchDocPageMarkdown(`docs/system/`, reduceSlugToString(level2), `/system`).props,
       config: getClientRuntimeConfig(),
     },
   };
