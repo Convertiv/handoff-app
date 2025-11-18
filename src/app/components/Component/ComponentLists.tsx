@@ -107,7 +107,7 @@ export const ComponentList = ({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" onClick={() => setGroupBy(true)}>
+              <Button variant="outline" className={cn(groupBy && 'border-blue-400')} onClick={() => setGroupBy(!groupBy)}>
                 <Group className="h-4 w-4" />
                 <span className="sr-only">Group</span>
               </Button>
@@ -120,11 +120,11 @@ export const ComponentList = ({
         </div>
         <div className="flex items-center gap-2">
           <ToggleGroup type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
-            <ToggleGroupItem value="grid" aria-label="Grid layout">
-              <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
+            <ToggleGroupItem value="grid" aria-label="Grid layout" >
+              <LayoutGrid className={cn(layout === 'grid' && 'text-blue-400', 'h-4 w-4')} strokeWidth={1.5} />
             </ToggleGroupItem>
-            <ToggleGroupItem value="single" aria-label="Single column layout">
-              <Rows className="h-4 w-4" strokeWidth={1.5} />
+            <ToggleGroupItem value="single" aria-label="Single column layout" >
+              <Rows className={cn(layout === 'single' && 'text-blue-400', 'h-4 w-4')} strokeWidth={1.5} />
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
