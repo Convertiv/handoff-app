@@ -41,6 +41,7 @@ export interface PreviewObject {
     figma: string;
     should_do: string[];
     should_not_do: string[];
+    group?: string;
     categories?: string[];
     tags?: string[];
     preview: string;

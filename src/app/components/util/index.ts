@@ -90,10 +90,11 @@ export const knownPaths = [
   'assets/fonts',
   'assets/icons',
   'assets/logos',
-  // 'foundations',
+  'foundations',
   'foundations/colors',
   'foundations/effects',
   'foundations/logos',
+  'foundations/logo',
   'foundations/typography',
   'system',
   'system/component',
@@ -185,13 +186,15 @@ export const buildL2StaticPaths = () => {
           .filter((subFile) => subFile.endsWith('.md'))
           .flatMap((subFile) => {
             const childPath = fileName.replace('.md', '');
-            if (knownPaths.indexOf(childPath) < 0) {
+            if (knownPaths.indexOf(fileName + '/' + subFile.replace('.md', '')) < 0) {
               return {
                 params: {
                   level1: fileName,
                   level2: subFile.replace('.md', ''),
                 },
               };
+            } else {
+              console.log('file path already exists', fileName + '/' + subFile.replace('.md', ''));
             }
           })
           .filter(filterOutUndefined);
