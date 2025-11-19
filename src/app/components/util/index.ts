@@ -289,10 +289,10 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
-const staticBuildComponentMenu = (type?: string) => {
+const staticBuildComponentMenu = (type?: boolean | string) => {
   let menu = [];
   let components = fetchComponents({ includeTokens: false });
-  if (type) {
+  if (typeof type === 'string' && type !== '') {
     components = components.filter((component) => component.type == type);
   }
   // Build the submenu of exportables (components)
