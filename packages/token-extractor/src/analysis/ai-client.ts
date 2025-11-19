@@ -1,3 +1,5 @@
+// Import shims for Web Fetch API compatibility in Node/test environments
+import '@anthropic-ai/sdk/shims/node';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import type { AIProvider as AIProviderType } from '../types/config';

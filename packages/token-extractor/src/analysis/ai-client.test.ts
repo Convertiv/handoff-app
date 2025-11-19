@@ -1,10 +1,21 @@
+// Import shims for Web Fetch API compatibility (must be before mocks)
+import '@anthropic-ai/sdk/shims/node';
+
+// Mock the SDKs (but don't mock the shims)
+jest.mock('@anthropic-ai/sdk', () => {
+  return jest.fn().mockImplementation(() => ({
+    messages: { create: jest.fn() }
+  }));
+});
+jest.mock('openai', () => {
+  return jest.fn().mockImplementation(() => ({
+    chat: { completions: { create: jest.fn() } }
+  }));
+});
+
 import { AIProvider, AnthropicProvider, OpenAIProvider, createProvider } from './ai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-
-// Mock the SDKs
-jest.mock('@anthropic-ai/sdk');
-jest.mock('openai');
 
 describe('AIProvider Interface', () => {
   describe('AnthropicProvider', () => {
