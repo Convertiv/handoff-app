@@ -97,7 +97,7 @@ export async function processComponents(
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   const sharedStyles = await handoff.getSharedStyles();
-  const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
+  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
   
   // Determine which keys to preserve based on the segment being processed
   // This ensures that when processing only specific segments (e.g., JavaScript only),

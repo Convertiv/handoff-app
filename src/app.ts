@@ -205,7 +205,7 @@ const persistRuntimeCache = (handoff: Handoff) => {
   if (!fs.existsSync(appPath)) {
     fs.mkdirSync(appPath, { recursive: true });
   }
-  fs.writeFileSync(destination, JSON.stringify({ config: getClientConfig(handoff), ...handoff.integrationObject }, null, 2), 'utf-8');
+  fs.writeFileSync(destination, JSON.stringify({ config: getClientConfig(handoff), ...handoff.runtimeConfig }, null, 2), 'utf-8');
 };
 
 /**
@@ -344,22 +344,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     ignoreInitial: true,
   };
   let debounce = false;
-  if (fs.existsSync(path.resolve(handoff.workingPath, 'exportables'))) {
-    chokidar.watch(path.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', async (event, path) => {
-      switch (event) {
-        case 'add':
-        case 'change':
-        case 'unlink':
-          if (path.includes('json') && !debounce) {
-            console.log(chalk.yellow('Exportables changed. Handoff will fetch new tokens...'));
-            debounce = true;
-            await handoff.fetch();
-            debounce = false;
-          }
-          break;
-      }
-    });
-  }
   if (fs.existsSync(path.resolve(handoff.workingPath, 'public'))) {
     chokidar.watch(path.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', async (event, path) => {
       switch (event) {
@@ -453,9 +437,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const getRuntimeComponentsPathsToWatch = () => {
     const result: Map<string, keyof ComponentListObject['entries']> = new Map();
 
-    for (const runtimeComponentId of Object.keys(handoff.integrationObject?.entries.components ?? {})) {
-      for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
-        const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
+    for (const runtimeComponentId of Object.keys(handoff.runtimeConfig?.entries.components ?? {})) {
+      for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
+        const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
         for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
           const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
           if (fs.existsSync(normalizedComponentEntryPath)) {
@@ -476,11 +460,11 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
   watchRuntimeConfiguration();
 
-  if (handoff.integrationObject?.entries?.integration && fs.existsSync(handoff.integrationObject?.entries?.integration)) {
-    const stat = await fs.stat(handoff.integrationObject.entries.integration);
+  if (handoff.runtimeConfig?.entries?.scss && fs.existsSync(handoff.runtimeConfig?.entries?.scss)) {
+    const stat = await fs.stat(handoff.runtimeConfig.entries.scss);
     chokidar
       .watch(
-        stat.isDirectory() ? handoff.integrationObject.entries.integration : path.dirname(handoff.integrationObject.entries.integration),
+        stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path.dirname(handoff.runtimeConfig.entries.scss),
         chokidarConfig
       )
       .on('all', async (event, file) => {

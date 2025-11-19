@@ -1,7 +1,7 @@
 import { ChangelogRecord } from '@handoff/changelog';
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
-import { ClientConfig, IntegrationObject } from '@handoff/types/config';
+import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
@@ -75,7 +75,6 @@ export interface AssetDocumentationProps extends DocumentationProps {
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
   component: CoreTypes.IFileComponentObject;
-  legacyDefinition: CoreTypes.ILegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
   componentOptions: CoreTypes.IHandoffConfigurationComponentOptions;
@@ -398,9 +397,9 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string, integrationObject?: IntegrationObject) => {
+export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
   const menu = staticBuildMenu();
-  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, integrationObject);
+  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
   // Return props
   return {
     props: {
@@ -420,10 +419,10 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
  * @param id
  * @returns
  */
-export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string, integrationObject?: IntegrationObject) => {
+export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
   return {
     props: {
-      ...fetchDocPageMarkdown(path, slug, id, integrationObject).props,
+      ...fetchDocPageMarkdown(path, slug, id, runtimeConfig).props,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
       styleDictionary: slug ? fetchTokensString(slug, 'styleDictionary') : '',
@@ -510,7 +509,7 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
   }
 };
 
-type RuntimeCache = IntegrationObject & { config: ClientConfig };
+type RuntimeCache = RuntimeConfig & { config: ClientConfig };
 
 let cachedRuntimeCache: RuntimeCache | null = null;
 
@@ -518,8 +517,8 @@ const getDefaultRuntimeCache = (): RuntimeCache => {
   return {
     config: {} as ClientConfig,
     entries: {
-      integration: undefined,
-      bundle: undefined,
+      scss: undefined,
+      js: undefined,
       components: {},
     },
     options: {},
@@ -575,34 +574,6 @@ export const getLatestComponentMetadata = (id: string) => {
   const latestComponent = components[id][latestVersion];
 
   return latestComponent || false;
-};
-
-/**
- * Returns the legacy component definition for component with the given name.
- * @deprecated Will be removed before 1.0.0 release.
- */
-export const getLegacyDefinition = (name: string) => {
-  const config = getClientRuntimeConfig();
-
-  const sourcePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'exportables');
-
-  if (!fs.existsSync(sourcePath)) {
-    return null;
-  }
-
-  const definitionPaths = (findFilesByExtension(sourcePath, '.json') ?? []).filter((path) => path.split('/').pop() === name);
-
-  if (definitionPaths.length === 0) {
-    return null;
-  }
-
-  const data = fs.readFileSync(definitionPaths[0], 'utf-8');
-  const exportable = JSON.parse(data.toString()) as CoreTypes.ILegacyComponentDefinition;
-
-  const exportableOptions = {};
-  merge(exportableOptions, exportable.options);
-  exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
-  return exportable;
 };
 
 /**
@@ -688,7 +659,7 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
 export const fetchDocPageMetadataAndContent = (
   localPath: string,
   slug: string | string[] | undefined,
-  integrationObject?: IntegrationObject
+  runtimeConfig?: RuntimeConfig
 ) => {
   const pagePath = localPath.replace('docs/', 'pages/');
   const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? '';
@@ -710,8 +681,8 @@ export const fetchDocPageMetadataAndContent = (
 
   const { data: metadata, content } = matter(currentContents);
 
-  if (typeof slug === 'string' && integrationObject?.entries?.templates) {
-    const viewConfigFilePath = path.resolve(integrationObject.entries.templates, slug, 'view.config.json');
+  if (typeof slug === 'string' && runtimeConfig?.entries?.templates) {
+    const viewConfigFilePath = path.resolve(runtimeConfig.entries.templates, slug, 'view.config.json');
     if (fs.existsSync(viewConfigFilePath)) {
       options = JSON.parse(fs.readFileSync(viewConfigFilePath, 'utf-8').toString()) as ComponentDocumentationOptions;
     }
