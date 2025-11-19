@@ -1,10 +1,10 @@
-import Layout from '@/components/Layout/Main';
-import HeadersType from '@/components/Typography/Headers';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import HeadersType from '../../components/Typography/Headers';
 import {
   buildL1StaticPaths,
   DocumentationProps,
