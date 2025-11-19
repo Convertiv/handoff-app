@@ -55,6 +55,9 @@ var SlotType;
     SlotType["NUMBER"] = "number";
     SlotType["BOOLEAN"] = "boolean";
     SlotType["OBJECT"] = "object";
+    SlotType["FUNCTION"] = "function";
+    SlotType["ENUM"] = "enum";
+    SlotType["ANY"] = "any";
 })(SlotType || (exports.SlotType = SlotType = {}));
 const getComponentOutputPath = (handoff) => path_1.default.resolve((0, api_1.getAPIPath)(handoff), 'component');
 exports.getComponentOutputPath = getComponentOutputPath;
@@ -92,7 +95,7 @@ function processSharedStyles(handoff) {
                         path_1.default.resolve(handoff.workingPath, 'integration/sass'),
                         path_1.default.resolve(handoff.workingPath, 'node_modules'),
                         path_1.default.resolve(handoff.workingPath),
-                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                        path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                     ],
                 });
                 if (result.css) {

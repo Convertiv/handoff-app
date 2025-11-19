@@ -15,10 +15,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-function updateObject(target, source) {
-    return Object.entries(source).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-            acc[key] = value;
+/**
+ * Merges values from a source object into a target object, returning a new object.
+ * For each key present in either object:
+ *   - If the key is listed in preserveKeys and the source value is undefined, null, or an empty string,
+ *     the target's value is preserved.
+ *   - Otherwise, the value from the source is used (even if undefined, null, or empty string).
+ * This is useful for partial updates where some properties should not be overwritten unless explicitly set.
+ *
+ * @param target - The original object to merge into
+ * @param source - The object containing new values
+ * @param preserveKeys - Keys for which the target's value should be preserved if the source value is undefined, null, or empty string
+ * @returns A new object with merged values
+ */
+function updateObject(target, source, preserveKeys = []) {
+    // Collect all unique keys from both target and source
+    const allKeys = Array.from(new Set([...Object.keys(target), ...Object.keys(source)]));
+    return allKeys.reduce((acc, key) => {
+        const sourceValue = source[key];
+        const targetValue = target[key];
+        // Preserve existing values for specified keys when source value is undefined
+        if (preserveKeys.includes(key) && (sourceValue === undefined || sourceValue === null || sourceValue === '')) {
+            acc[key] = targetValue;
+        }
+        else {
+            acc[key] = sourceValue;
         }
         return acc;
     }, Object.assign({}, target));
@@ -42,22 +63,23 @@ const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, v
     componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
-const writeComponentApi = (id_1, component_1, version_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, version_1, handoff_1, ...args_1], void 0, function* (id, component, version, handoff, isPartialUpdate = false) {
+const writeComponentApi = (id_1, component_1, version_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, version_1, handoff_1, ...args_1], void 0, function* (id, component, version, handoff, preserveKeys = []) {
     const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
-    if (isPartialUpdate) {
-        const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
-        if (fs_extra_1.default.existsSync(outputFilePath)) {
-            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
-            if (existingJson) {
-                try {
-                    const existingData = JSON.parse(existingJson);
-                    const mergedData = updateObject(existingData, component);
-                    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
-                    return;
-                }
-                catch (_) {
-                    // Unable to parse existing file
-                }
+    const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
+    if (fs_extra_1.default.existsSync(outputFilePath)) {
+        const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+        if (existingJson) {
+            try {
+                const existingData = JSON.parse(existingJson);
+                // Special case: always allow page to be cleared when undefined
+                // This handles the case where page slices are removed
+                const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
+                const mergedData = updateObject(existingData, component, finalPreserveKeys);
+                yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+                return;
+            }
+            catch (_) {
+                // Unable to parse existing file
             }
         }
     }
@@ -76,8 +98,13 @@ exports.writeComponentMetadataApi = writeComponentMetadataApi;
  * @param handoff
  * @param componentData
  */
-const updateComponentSummaryApi = (handoff, componentData // Partial list (may be empty)
-) => __awaiter(void 0, void 0, void 0, function* () {
+const updateComponentSummaryApi = (handoff_1, componentData_1, ...args_1) => __awaiter(void 0, [handoff_1, componentData_1, ...args_1], void 0, function* (handoff, componentData, isFullRebuild = false) {
+    if (isFullRebuild) {
+        // Full rebuild: replace the entire file
+        yield writeComponentSummaryAPI(handoff, componentData);
+        return;
+    }
+    // Partial update: merge with existing data
     const apiPath = path_1.default.resolve(handoff.workingPath, 'public/api/components.json');
     let existingData = [];
     if (fs_extra_1.default.existsSync(apiPath)) {

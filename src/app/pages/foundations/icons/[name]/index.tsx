@@ -38,11 +38,11 @@ const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
  * @returns
  */
 export async function getStaticPaths() {
-  const paths = getTokens().assets.icons.map((icon) => ({
+  const paths = getTokens().assets?.icons?.map((icon) => ({
     params: {
       name: icon.name,
     },
-  }));
+  })) ?? [];
 
   return {
     paths,

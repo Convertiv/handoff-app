@@ -25,28 +25,6 @@ export const ejectConfig = async (handoff: Handoff) => {
  * Eject the integration to the working directory
  * @param handoff
  */
-export const ejectExportables = async (handoff: Handoff) => {
-  // does an local integration exist?
-  const workingPath = path.resolve(path.join(handoff.workingPath, 'exportables'));
-  if (fs.existsSync(workingPath)) {
-    if (!handoff.force) {
-      console.log(
-        chalk.yellow(
-          `It appears you already have customized the exportables.  Use the --force flag to merge in any schemas you haven't customized.`
-        )
-      );
-      return;
-    }
-  }
-  const integrationPath = path.resolve(path.join(handoff.modulePath, 'config/exportables'));
-  fs.copySync(integrationPath, workingPath, { overwrite: false });
-  console.log(chalk.green(`All exportables ejected to ${workingPath}`));
-  return handoff;
-};
-/**
- * Eject the integration to the working directory
- * @param handoff
- */
 export const ejectPages = async (handoff: Handoff) => {
   // does an local page exist?
   const workingPath = path.resolve(path.join(handoff.workingPath, 'pages'));

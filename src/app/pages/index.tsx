@@ -40,6 +40,11 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
           </HeadersType.H1>
+          <div className="prose mt-16">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
           <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
             A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
             digital experiences.
@@ -191,11 +196,6 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           </Link>
         </div>
         <hr />
-        <div className="prose mt-16 hidden">
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
-        </div>
       </div>
       <Footer config={config} />
     </Layout>

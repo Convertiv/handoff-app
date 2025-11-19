@@ -3,12 +3,35 @@ import path from 'path';
 import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 
-function updateObject<T extends TransformComponentTokensResult>(target: T, source: Partial<T>): T {
-  return Object.entries(source).reduce(
-    (acc, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        acc[key as keyof T] = value;
+/**
+ * Merges values from a source object into a target object, returning a new object.
+ * For each key present in either object:
+ *   - If the key is listed in preserveKeys and the source value is undefined, null, or an empty string,
+ *     the target's value is preserved.
+ *   - Otherwise, the value from the source is used (even if undefined, null, or empty string).
+ * This is useful for partial updates where some properties should not be overwritten unless explicitly set.
+ *
+ * @param target - The original object to merge into
+ * @param source - The object containing new values
+ * @param preserveKeys - Keys for which the target's value should be preserved if the source value is undefined, null, or empty string
+ * @returns A new object with merged values
+ */
+function updateObject<T extends TransformComponentTokensResult>(target: T, source: Partial<T>, preserveKeys: string[] = []): T {
+  // Collect all unique keys from both target and source
+  const allKeys = Array.from(new Set([...Object.keys(target), ...Object.keys(source)]));
+
+  return allKeys.reduce(
+    (acc, key) => {
+      const sourceValue = source[key as keyof T];
+      const targetValue = target[key as keyof T];
+
+      // Preserve existing values for specified keys when source value is undefined
+      if (preserveKeys.includes(key) && (sourceValue === undefined || sourceValue === null || sourceValue === '')) {
+        acc[key as keyof T] = targetValue;
+      } else {
+        acc[key as keyof T] = sourceValue;
       }
+
       return acc;
     },
     { ...target }
@@ -40,24 +63,26 @@ export const writeComponentApi = async (
   component: TransformComponentTokensResult,
   version: string,
   handoff: Handoff,
-  isPartialUpdate: boolean = false
+  preserveKeys: string[] = []
 ) => {
   const outputDirPath = path.resolve(getAPIPath(handoff), 'component', id);
+  const outputFilePath = path.resolve(outputDirPath, `${version}.json`);
 
-  if (isPartialUpdate) {
-    const outputFilePath = path.resolve(outputDirPath, `${version}.json`);
+  if (fs.existsSync(outputFilePath)) {
+    const existingJson = await fs.readFile(outputFilePath, 'utf8');
+    if (existingJson) {
+      try {
+        const existingData = JSON.parse(existingJson) as TransformComponentTokensResult;
 
-    if (fs.existsSync(outputFilePath)) {
-      const existingJson = await fs.readFile(outputFilePath, 'utf8');
-      if (existingJson) {
-        try {
-          const existingData = JSON.parse(existingJson) as TransformComponentTokensResult;
-          const mergedData = updateObject(existingData, component);
-          await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
-          return;
-        } catch (_) {
-          // Unable to parse existing file
-        }
+        // Special case: always allow page to be cleared when undefined
+        // This handles the case where page slices are removed
+        const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
+
+        const mergedData = updateObject(existingData, component, finalPreserveKeys);
+        await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+        return;
+      } catch (_) {
+        // Unable to parse existing file
       }
     }
   }
@@ -78,10 +103,14 @@ export const writeComponentMetadataApi = async (id: string, summary: ComponentLi
  * @param handoff
  * @param componentData
  */
-export const updateComponentSummaryApi = async (
-  handoff: Handoff,
-  componentData: ComponentListObject[] // Partial list (may be empty)
-) => {
+export const updateComponentSummaryApi = async (handoff: Handoff, componentData: ComponentListObject[], isFullRebuild: boolean = false) => {
+  if (isFullRebuild) {
+    // Full rebuild: replace the entire file
+    await writeComponentSummaryAPI(handoff, componentData);
+    return;
+  }
+
+  // Partial update: merge with existing data
   const apiPath = path.resolve(handoff.workingPath, 'public/api/components.json');
   let existingData: ComponentListObject[] = [];
 

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeComponent = exports.makePage = exports.makeTemplate = exports.makeExportable = void 0;
+exports.makeComponent = exports.makePage = exports.makeTemplate = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
@@ -21,49 +21,10 @@ const prompt_1 = require("../utils/prompt");
  * Make a new exportable component
  * @param handoff
  */
-const makeExportable = (handoff, type, name) => __awaiter(void 0, void 0, void 0, function* () {
-    if (type !== 'component' && type !== 'foundation') {
-        console.log(chalk_1.default.red(`Exportable type must be either 'component' or 'foundation'`));
-        return;
-    }
-    if (!/^[a-z0-9]+$/i.test(name)) {
-        console.log(chalk_1.default.red(`Exportable name must be alphanumeric and may contain dashes or underscores`));
-        return;
-    }
-    const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables'));
-    if (!fs_extra_1.default.existsSync(workingPath)) {
-        fs_extra_1.default.mkdirSync(workingPath);
-    }
-    const targetDir = path_1.default.resolve(workingPath, `${type}s`);
-    if (!fs_extra_1.default.existsSync(targetDir)) {
-        fs_extra_1.default.mkdirSync(targetDir);
-    }
-    const target = path_1.default.resolve(targetDir, `${name}.json`);
-    if (fs_extra_1.default.existsSync(target)) {
-        if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`'${name}' already exists as an exportable.  Use the --force flag revert it to default.`));
-            return;
-        }
-    }
-    const templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'exportable.json'));
-    const template = JSON.parse(fs_extra_1.default.readFileSync(templatePath, 'utf8'));
-    template.id = name;
-    template.group = type.slice(0, 1).toUpperCase() + type.slice(1, type.length) + 's';
-    template.options.exporter.search = name.slice(0, 1).toUpperCase() + name.slice(1, type.length);
-    template.options.transformer.cssRootClass = name;
-    fs_extra_1.default.writeFileSync(target, `${JSON.stringify(template, null, 2)}`);
-    console.log(chalk_1.default.green(`New exportable schema ${name}.json was created in ${targetDir}`));
-    return handoff;
-});
-exports.makeExportable = makeExportable;
-/**
- * Make a new exportable component
- * @param handoff
- */
 const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
-        console.log(chalk_1.default.red(`Integration does not specify entry for templates.`));
+    if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
+        console.log(chalk_1.default.red(`Runtime config does not specify entry for templates.`));
         return;
     }
     if (!component) {
@@ -81,7 +42,7 @@ const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, vo
         console.log(chalk_1.default.red(`Template state must be alphanumeric and may contain dashes or underscores`));
         return;
     }
-    const workingPath = path_1.default.resolve(handoff.integrationObject.entries.templates, component);
+    const workingPath = path_1.default.resolve(handoff.runtimeConfig.entries.templates, component);
     if (!fs_extra_1.default.existsSync(workingPath)) {
         fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
     }
@@ -104,7 +65,7 @@ exports.makeTemplate = makeTemplate;
  * @param handoff
  */
 const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, function* () {
-    let type = 'mdx';
+    let type = 'md';
     if (!name) {
         console.log(chalk_1.default.red(`Page name must be set`));
         return;
@@ -112,10 +73,6 @@ const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, fu
     if (!/^[a-z0-9]+$/i.test(name)) {
         console.log(chalk_1.default.red(`Page name must be alphanumeric and may contain dashes or underscores`));
         return;
-    }
-    const checkType = yield (0, prompt_1.prompt)(chalk_1.default.green(`By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `));
-    if (checkType === 'markdown') {
-        type = 'md';
     }
     let workingPath, sourcePath, templatePath;
     if (parent) {

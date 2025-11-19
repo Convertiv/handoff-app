@@ -6,18 +6,17 @@ import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
-import { ejectConfig, ejectExportables, ejectPages, ejectTheme } from './cli/eject';
-import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
+import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
+import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
 import pipeline, { buildComponents } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
-import { buildMainCss } from './transformers/preview/component/css';
-import { buildMainJS } from './transformers/preview/component/javascript';
 import { ComponentListObject } from './transformers/preview/types';
-import { Config, IntegrationObject } from './types/config';
+import { Config, RuntimeConfig } from './types/config';
 import { filterOutNull } from './utils';
 import { findFilesByExtension } from './utils/fs';
+import { generateFilesystemSafeId } from './utils/path';
 
 class Handoff {
   config: Config | null;
@@ -27,7 +26,7 @@ class Handoff {
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
-  integrationObject?: IntegrationObject | null;
+  runtimeConfig?: RuntimeConfig | null;
   designMap: {
     colors: {};
     effects: {};
@@ -58,7 +57,7 @@ class Handoff {
     this.config = config;
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    [this.integrationObject, this._configFilePaths] = initIntegrationObject(this);
+    [this.runtimeConfig, this._configFilePaths] = initRuntimeConfig(this);
     return this;
   }
 
@@ -108,12 +107,6 @@ class Handoff {
     return this;
   }
 
-  async ejectExportables(): Promise<Handoff> {
-    this.preRunner();
-    await ejectExportables(this);
-    return this;
-  }
-
   async ejectPages(): Promise<Handoff> {
     this.preRunner();
     await ejectPages(this);
@@ -123,12 +116,6 @@ class Handoff {
   async ejectTheme(): Promise<Handoff> {
     this.preRunner();
     await ejectTheme(this);
-    return this;
-  }
-
-  async makeExportable(type: string, name: string): Promise<Handoff> {
-    this.preRunner();
-    await makeExportable(this, type, name);
     return this;
   }
 
@@ -150,12 +137,6 @@ class Handoff {
     return this;
   }
 
-  async makeIntegrationStyles(): Promise<Handoff> {
-    this.preRunner();
-    await buildMainJS(this);
-    await buildMainCss(this);
-    return this;
-  }
 
   async start(): Promise<Handoff> {
     this.preRunner();
@@ -211,20 +192,14 @@ class Handoff {
       accessToken: this.config.dev_access_token,
     };
 
-    const legacyDefinitions = await this.getLegacyDefinitions();
-
-    const useLegacyDefintions = !!legacyDefinitions;
-
     // Initialize the provider
-    const provider = useLegacyDefintions
-      ? Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
-      : Providers.RestApiProvider(apiCredentials);
+    const provider = Providers.RestApiProvider(apiCredentials);
 
     this._handoffRunner = HandoffRunner(
       provider,
       {
         options: {
-          transformer: this.integrationObject.options,
+          transformer: this.runtimeConfig.options,
         },
       },
       {
@@ -247,36 +222,15 @@ class Handoff {
   }
 
   /**
-   * Returns configured legacy component definitions in array form.
-   * @deprecated Will be removed before 1.0.0 release.
+   * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+   * @returns {string} The project ID to use for path construction
    */
-  async getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null> {
-    try {
-      const sourcePath = path.resolve(this.workingPath, 'exportables');
-
-      if (!fs.existsSync(sourcePath)) {
-        return null;
-      }
-
-      const definitionPaths = findFilesByExtension(sourcePath, '.json');
-
-      const exportables = definitionPaths
-        .map((definitionPath) => {
-          const defBuffer = fs.readFileSync(definitionPath);
-          const exportable = JSON.parse(defBuffer.toString()) as CoreTypes.ILegacyComponentDefinition;
-
-          const exportableOptions = {};
-          merge(exportableOptions, exportable.options);
-          exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
-
-          return exportable;
-        })
-        .filter(filterOutNull);
-
-      return exportables ? exportables : null;
-    } catch (e) {
-      return [];
+  getProjectId(): string {
+    if (this.config?.figma_project_id) {
+      return this.config.figma_project_id;
     }
+    // Fallback to filesystem-safe transformation of working path
+    return generateFilesystemSafeId(this.workingPath);
   }
 
   /**
@@ -284,7 +238,7 @@ class Handoff {
    * @returns {string} The absolute path to the output directory
    */
   getOutputPath(): string {
-    return path.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+    return path.resolve(this.workingPath, this.exportsDirectory, this.getProjectId());
   }
 
   /**
@@ -401,23 +355,23 @@ const initConfig = (configOverride?: Partial<Config>): Config => {
   return returnConfig;
 };
 
-export const initIntegrationObject = (handoff: Handoff): [integrationObject: IntegrationObject, configs: string[]] => {
+export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConfig, configs: string[]] => {
   const configFiles: string[] = [];
-  const result: IntegrationObject = {
+  const result: RuntimeConfig = {
     options: {},
     entries: {
-      integration: undefined, // scss
-      bundle: undefined, // js
+      scss: undefined,
+      js: undefined,
       components: {},
     },
   };
 
   if (!!handoff.config.entries?.scss) {
-    result.entries.integration = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
+    result.entries.scss = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
-  //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
+  //console.log('result.entries.scss', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
   if (!!handoff.config.entries?.js) {
-    result.entries.bundle = path.resolve(handoff.workingPath, handoff.config.entries?.js);
+    result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   } else {
     console.log(
       chalk.red('No js entry found in config'),
@@ -601,7 +555,7 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
   return loweredObj;
 };
 
-export type { ComponentListObject as Component } from './transformers/preview/types';
+export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
 
 // Export transformers and types from handoff-core

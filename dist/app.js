@@ -40,12 +40,11 @@ const chalk_1 = __importDefault(require("chalk"));
 const chokidar_1 = __importDefault(require("chokidar"));
 const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const gray_matter_1 = __importDefault(require("gray-matter"));
 const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
 const path_1 = __importDefault(require("path"));
 const url_1 = require("url");
-const ws_1 = __importDefault(require("ws"));
+const ws_1 = require("ws");
 const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
@@ -57,7 +56,7 @@ const builder_1 = __importStar(require("./transformers/preview/component/builder
  * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
 const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (port = 3001) {
-    const wss = new ws_1.default.Server({ port });
+    const wss = new ws_1.WebSocket.Server({ port });
     // Heartbeat function to mark a connection as alive.
     const heartbeat = function () {
         this.isAlive = true;
@@ -91,7 +90,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
     return (message) => {
         console.log(chalk_1.default.green(`Broadcasting message to ${wss.clients.size} client(s)`));
         wss.clients.forEach((client) => {
-            if (client.readyState === ws_1.default.OPEN) {
+            if (client.readyState === ws_1.WebSocket.OPEN) {
                 client.send(message);
             }
         });
@@ -105,10 +104,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
  * @returns The resolved path to the public directory if it exists, null otherwise
  */
 const getWorkingPublicPath = (handoff) => {
-    const paths = [
-        path_1.default.resolve(handoff.workingPath, `public-${handoff.config.figma_project_id}`),
-        path_1.default.resolve(handoff.workingPath, `public`),
-    ];
+    const paths = [path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`), path_1.default.resolve(handoff.workingPath, `public`)];
     for (const path of paths) {
         if (fs_extra_1.default.existsSync(path)) {
             return path;
@@ -122,7 +118,7 @@ const getWorkingPublicPath = (handoff) => {
  * @returns The resolved path to the application directory
  */
 const getAppPath = (handoff) => {
-    return path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`);
+    return path_1.default.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`);
 };
 /**
  * Copy the public dir from the working dir to the module dir
@@ -135,131 +131,6 @@ const mergePublicDir = (handoff) => __awaiter(void 0, void 0, void 0, function* 
         fs_extra_1.default.copySync(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
     }
 });
-/**
- * Publish the mdx files from the working dir to the module dir
- * @param handoff
- */
-const publishMDX = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(chalk_1.default.yellow('Merging MDX files...'));
-    const appPath = getAppPath(handoff);
-    const pages = path_1.default.resolve(handoff.workingPath, `pages`);
-    if (fs_extra_1.default.existsSync(pages)) {
-        // Find all mdx files in path
-        const files = fs_extra_1.default.readdirSync(pages);
-        for (const file of files) {
-            if (file.endsWith('.mdx')) {
-                // transform the file
-                transformMdx(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
-            }
-            else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file)).isDirectory()) {
-                // Recursion - find all mdx files in sub directories
-                const subFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file));
-                for (const subFile of subFiles) {
-                    if (subFile.endsWith('.mdx')) {
-                        // transform the file
-                        const target = path_1.default.resolve(appPath, 'pages', file);
-                        if (!fs_extra_1.default.existsSync(target)) {
-                            fs_extra_1.default.mkdirSync(target, { recursive: true });
-                        }
-                        transformMdx(path_1.default.resolve(pages, file, subFile), path_1.default.resolve(appPath, 'pages', file, subFile), file);
-                    }
-                    else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file, subFile)).isDirectory()) {
-                        const thirdFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file, subFile));
-                        for (const thirdFile of thirdFiles) {
-                            if (thirdFile.endsWith('.mdx')) {
-                                const target = path_1.default.resolve(appPath, 'pages', file, subFile);
-                                if (!fs_extra_1.default.existsSync(target)) {
-                                    fs_extra_1.default.mkdirSync(target, { recursive: true });
-                                }
-                                transformMdx(path_1.default.resolve(pages, file, subFile, thirdFile), path_1.default.resolve(appPath, 'pages', file, subFile, thirdFile), file);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-});
-/**
- * Remove the frontmatter from the mdx file, convert it to an import, and
- * add the metadata to the export.  Then write the file to the destination.
- * @param src
- * @param dest
- * @param id
- */
-const transformMdx = (src, dest, id) => {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const content = fs_extra_1.default.readFileSync(src);
-    const { data, content: body } = (0, gray_matter_1.default)(content);
-    const title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
-    const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
-    const metaDescription = (_b = data.metaDescription) !== null && _b !== void 0 ? _b : '';
-    const metaTitle = (_c = data.metaTitle) !== null && _c !== void 0 ? _c : '';
-    const weight = (_d = data.weight) !== null && _d !== void 0 ? _d : 0;
-    const image = (_e = data.image) !== null && _e !== void 0 ? _e : '';
-    const menuTitle = (_f = data.menuTitle) !== null && _f !== void 0 ? _f : '';
-    const enabled = (_g = data.enabled) !== null && _g !== void 0 ? _g : true;
-    const wide = data.wide ? 'true' : 'false';
-    const mdxHeader = `// This file is auto-generated by transformMdx(). Do not edit manually.
-// Source: ${src}
-// Generated at: ${new Date().toISOString()}
-
-`;
-    const mdx = `${mdxHeader}import { getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '@handoff/app/components/util';
-import fs from 'fs-extra';
-import matter from 'gray-matter';
-import { MDXRemote } from 'next-mdx-remote';
-import { serialize } from 'next-mdx-remote/serialize';
-import path from 'path';
-
-export async function getStaticProps() {
-  const mdxFilePath = path.join(process.env.HANDOFF_WORKING_PATH, 'pages', '${id}.mdx');
-  const mdxSource = fs.readFileSync(mdxFilePath, 'utf8');
-
-  const { data, content: body } = matter(mdxSource); // extract frontmatter and body
-  const mdx = await serialize(body); // serialize only the body
-
-  const menu = staticBuildMenu();
-  const config = getClientRuntimeConfig();
-
-  return {
-    props: {
-      mdx,
-      menu,
-      config,
-      current: getCurrentSection(menu, "/${id}") ?? [],
-      title: "${title}",
-      description: "${description}",
-      image: "${image}",
-    },
-  };
-}
-
-import MarkdownLayout from "@handoff/app/components/Layout/Markdown";
-import { Hero } from "@handoff/app/components/Hero";
-
-const components = { Hero };
-
-export default function Layout(props) {
-  return (
-    <MarkdownLayout
-      menu={props.menu}
-      metadata={{
-        description: "${description}",
-        metaDescription: "${metaDescription}",
-        metaTitle: "${metaTitle}",
-        title: "${title}",
-      }}
-      wide={${wide}}
-      config={props.config}
-      current={props.current}
-    >
-      <MDXRemote {...props.mdx} components={components} />
-    </MarkdownLayout>
-  );
-}`;
-    fs_extra_1.default.writeFileSync(dest.replaceAll('.mdx', '.tsx'), mdx, 'utf-8');
-};
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
  * This is typically used before rebuilding the application to ensure a clean state.
@@ -280,20 +151,31 @@ const publishTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, function
         fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
     }
     const tokens = yield handoff.getDocumentationObject();
+    // Early return if no tokens
+    if (!tokens) {
+        // Write empty tokens.json for API consistency
+        fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify({}, null, 2));
+        return;
+    }
     fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
     if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
-        fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'));
+        fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'), { recursive: true });
     }
-    for (const type in tokens) {
-        if (type === 'timestamp')
-            continue;
-        for (const group in tokens[type]) {
-            fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+    // Only iterate if tokens has properties
+    if (tokens && typeof tokens === 'object') {
+        for (const type in tokens) {
+            if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object')
+                continue;
+            for (const group in tokens[type]) {
+                if (tokens[type][group]) {
+                    fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+                }
+            }
         }
     }
 });
 const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     const srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
     const appPath = getAppPath(handoff);
     // Publish tokens API
@@ -302,16 +184,15 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     yield fs_extra_1.default.promises.mkdir(appPath, { recursive: true });
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
     yield mergePublicDir(handoff);
-    yield publishMDX(handoff);
     // Prepare project app configuration
-    const handoffProjectId = (_a = handoff.config.figma_project_id) !== null && _a !== void 0 ? _a : '';
-    const handoffAppBasePath = (_b = handoff.config.app.base_path) !== null && _b !== void 0 ? _b : '';
+    const handoffProjectId = handoff.getProjectId();
+    const handoffAppBasePath = (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '';
     const handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
     const handoffModulePath = path_1.default.resolve(handoff.modulePath);
-    const handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id);
+    const handoffExportPath = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
     const nextConfigPath = path_1.default.resolve(appPath, 'next.config.mjs');
-    const handoffUseReferences = (_c = handoff.config.useVariables) !== null && _c !== void 0 ? _c : false;
-    const handoffWebsocketPort = (_e = (_d = handoff.config.app.ports) === null || _d === void 0 ? void 0 : _d.websocket) !== null && _e !== void 0 ? _e : 3001;
+    const handoffUseReferences = (_b = handoff.config.useVariables) !== null && _b !== void 0 ? _b : false;
+    const handoffWebsocketPort = (_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001;
     const nextConfigContent = (yield fs_extra_1.default.readFile(nextConfigPath, 'utf-8'))
         .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
         .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
@@ -325,8 +206,13 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     return appPath;
 });
 const persistRuntimeCache = (handoff) => {
-    const destination = path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'runtime.cache.json');
-    fs_extra_1.default.writeFileSync(destination, JSON.stringify(Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.integrationObject), null, 2), 'utf-8');
+    const appPath = getAppPath(handoff);
+    const destination = path_1.default.resolve(appPath, 'runtime.cache.json');
+    // Ensure directory exists
+    if (!fs_extra_1.default.existsSync(appPath)) {
+        fs_extra_1.default.mkdirSync(appPath, { recursive: true });
+    }
+    fs_extra_1.default.writeFileSync(destination, JSON.stringify(Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.runtimeConfig), null, 2), 'utf-8');
 };
 /**
  * Build the next js application
@@ -334,9 +220,6 @@ const persistRuntimeCache = (handoff) => {
  * @returns
  */
 const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
-        throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-    }
     // Perform cleanup
     yield performCleanup(handoff);
     // Build components
@@ -363,7 +246,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
     }
     // Clean the project output directory (if exists)
-    const output = path_1.default.resolve(outputRoot, handoff.config.figma_project_id);
+    const output = path_1.default.resolve(outputRoot, handoff.getProjectId());
     if (fs_extra_1.default.existsSync(output)) {
         fs_extra_1.default.removeSync(output);
     }
@@ -376,10 +259,6 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h;
-    const tokensJsonFilePath = handoff.getTokensFilePath();
-    if (!fs_extra_1.default.existsSync(tokensJsonFilePath)) {
-        throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-    }
     // Initial processing of the components
     yield (0, builder_1.default)(handoff);
     const appPath = yield prepareProjectApp(handoff);
@@ -454,22 +333,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         ignoreInitial: true,
     };
     let debounce = false;
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
-            switch (event) {
-                case 'add':
-                case 'change':
-                case 'unlink':
-                    if (path.includes('json') && !debounce) {
-                        console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
-                        debounce = true;
-                        yield handoff.fetch();
-                        debounce = false;
-                    }
-                    break;
-            }
-        }));
-    }
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
         chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
@@ -493,6 +356,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         return {
             js: builder_1.ComponentSegment.JavaScript,
             scss: builder_1.ComponentSegment.Style,
+            template: builder_1.ComponentSegment.Previews,
             templates: builder_1.ComponentSegment.Previews,
         }[type];
     };
@@ -514,12 +378,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                     case 'unlink':
                         if (!debounce) {
                             debounce = true;
-                            let segmentToUpdate = undefined;
-                            const matchingPath = runtimeComponentPathsToWatch.get(file);
-                            if (matchingPath) {
-                                const entryType = runtimeComponentPathsToWatch.get(matchingPath);
-                                segmentToUpdate = entryTypeToSegment(entryType);
-                            }
+                            const entryType = runtimeComponentPathsToWatch.get(file);
+                            const segmentToUpdate = entryType ? entryTypeToSegment(entryType) : undefined;
                             const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
                             yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
                             debounce = false;
@@ -556,15 +416,15 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const getRuntimeComponentsPathsToWatch = () => {
         var _a, _b, _c;
         const result = new Map();
-        for (const runtimeComponentId of Object.keys((_b = (_a = handoff.integrationObject) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
-            for (const runtimeComponentVersion of Object.keys(handoff.integrationObject.entries.components[runtimeComponentId])) {
-                const runtimeComponent = handoff.integrationObject.entries.components[runtimeComponentId][runtimeComponentVersion];
+        for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
+            for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
+                const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
                 for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
                     const normalizedComponentEntryPath = runtimeComponentEntryPath;
                     if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
                         const entryType = runtimeComponentEntryType;
                         if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
-                            result.set(path_1.default.dirname(normalizedComponentEntryPath), entryType);
+                            result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
                         }
                         else {
                             result.set(normalizedComponentEntryPath, entryType);
@@ -575,27 +435,12 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         }
         return result;
     };
-    /*
-    if (fs.existsSync(path.resolve(handoff.workingPath, 'handoff.config.json'))) {
-      chokidar.watch(path.resolve(handoff.workingPath, 'handoff.config.json'), { ignoreInitial: true }).on('all', async (event, file) => {
-        console.log(chalk.yellow('handoff.config.json changed. Please restart server to see changes...'));
-        if (!debounce) {
-          debounce = true;
-          handoff.reload();
-          watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-          watchRuntimeConfiguration();
-          await processComponents(handoff, undefined, sharedStyles, documentationObject.components);
-          debounce = false;
-        }
-      });
-    }
-      */
     watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
     watchRuntimeConfiguration();
-    if (((_f = (_e = handoff.integrationObject) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.integration) && fs_extra_1.default.existsSync((_h = (_g = handoff.integrationObject) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.integration)) {
-        const stat = yield fs_extra_1.default.stat(handoff.integrationObject.entries.integration);
+    if (((_f = (_e = handoff.runtimeConfig) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.scss) && fs_extra_1.default.existsSync((_h = (_g = handoff.runtimeConfig) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.scss)) {
+        const stat = yield fs_extra_1.default.stat(handoff.runtimeConfig.entries.scss);
         chokidar_1.default
-            .watch(stat.isDirectory() ? handoff.integrationObject.entries.integration : path_1.default.dirname(handoff.integrationObject.entries.integration), chokidarConfig)
+            .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
             .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
@@ -615,9 +460,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'add':
                 case 'change':
                 case 'unlink':
-                    if (path.endsWith('.mdx')) {
-                        publishMDX(handoff);
-                    }
                     console.log(chalk_1.default.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
                     break;
             }
@@ -631,9 +473,6 @@ exports.watchApp = watchApp;
  */
 const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    if (!fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'tokens.json'))) {
-        throw new Error('Tokens not exported. Run `handoff-app fetch` first.');
-    }
     // Prepare app
     const appPath = yield prepareProjectApp(handoff);
     // Purge app cache

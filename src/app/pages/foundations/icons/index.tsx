@@ -65,11 +65,11 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
   const [search, setSearch] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const icons = search
-    ? assets.icons.filter((icon) => {
-        return icon.index.includes(search);
-      })
-    : assets.icons;
+  const icons = React.useMemo(() => {
+    if (!assets || !Array.isArray(assets.icons)) return [];
+    if (!search) return assets.icons;
+    return assets.icons.filter(icon => icon.index.includes(search));
+  }, [assets, search]);
 
   const filterList = React.useCallback<React.ChangeEventHandler<HTMLInputElement>>((event) => {
     setSearch(event.currentTarget.value.toLowerCase().replace(/[\W_]+/g, ' '));

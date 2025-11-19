@@ -1,4 +1,7 @@
+import { Types as CoreTypes } from 'handoff-core';
+import cloneDeep from 'lodash/cloneDeep';
 import Handoff from '../../../index';
+import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
@@ -46,6 +49,38 @@ export enum ComponentSegment {
 }
 
 /**
+ * Determines which keys should be preserved based on the segment being processed.
+ * When processing a specific segment, we want to preserve data from other segments
+ * to avoid overwriting them with undefined values.
+ */
+function getPreserveKeysForSegment(segmentToProcess?: ComponentSegment): string[] {
+  if (!segmentToProcess) {
+    return []; // No preservation needed for full updates
+  }
+
+  switch (segmentToProcess) {
+    case ComponentSegment.JavaScript:
+      // When processing JavaScript segment, preserve CSS and previews data
+      return ['css', 'sass', 'sharedStyles', 'previews', 'validations'];
+    
+    case ComponentSegment.Style:
+      // When processing Style segment, preserve JavaScript and previews data
+      return ['js', 'jsCompiled', 'previews', 'validations'];
+    
+    case ComponentSegment.Previews:
+      // When processing Previews segment, preserve JavaScript and CSS data
+      return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'validations'];
+    
+    case ComponentSegment.Validation:
+      // When processing Validation segment, preserve all other data
+      return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
+    
+    default:
+      return [];
+  }
+}
+
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
@@ -59,9 +94,15 @@ export async function processComponents(
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
-  const components = (await handoff.getDocumentationObject()).components;
+  const documentationObject = await handoff.getDocumentationObject();
+  const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   const sharedStyles = await handoff.getSharedStyles();
-  const runtimeComponents = handoff.integrationObject?.entries?.components ?? {};
+  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  
+  // Determine which keys to preserve based on the segment being processed
+  // This ensures that when processing only specific segments (e.g., JavaScript only),
+  // we don't overwrite data from other segments (e.g., CSS, previews) with undefined values
+  const preserveKeys = getPreserveKeysForSegment(segmentToProcess);
 
   for (const runtimeComponentId of Object.keys(runtimeComponents)) {
     if (!!id && runtimeComponentId !== id) {
@@ -78,7 +119,7 @@ export async function processComponents(
         const { type, ...restMetadata } = runtimeComponent;
 
         let data: TransformComponentTokensResult = {
-          ...defaultComponent,
+          ...cloneDeep(defaultComponent),
           ...restMetadata,
           type: (type as ComponentType) || ComponentType.Element,
         };
@@ -100,8 +141,10 @@ export async function processComponents(
         }
 
         data.sharedStyles = sharedStyles;
+        // recurse through all properties and ensure that every property has an id
+        data.properties = ensureIds(data.properties);
 
-        await writeComponentApi(runtimeComponentId, data, version, handoff, true);
+        await writeComponentApi(runtimeComponentId, data, version, handoff, preserveKeys);
 
         if (version === latest) {
           latestVersion = data;
@@ -110,7 +153,7 @@ export async function processComponents(
     );
 
     if (latestVersion) {
-      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, true);
+      await writeComponentApi(runtimeComponentId, latestVersion, 'latest', handoff, preserveKeys);
       const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
       result.push(summary);
@@ -120,7 +163,8 @@ export async function processComponents(
   }
 
   // Always merge and write summary file, even if no components processed
-  await updateComponentSummaryApi(handoff, result);
+  const isFullRebuild = !id;
+  await updateComponentSummaryApi(handoff, result, isFullRebuild);
 
   return result;
 }

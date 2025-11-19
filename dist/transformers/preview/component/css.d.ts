@@ -2,12 +2,12 @@ import Handoff from '../../../index';
 import { TransformComponentTokensResult } from '../types';
 declare const buildComponentCss: (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => Promise<{
     id: string;
-    source?: "figma" | "custom";
     type?: import("../types").ComponentType;
     image?: string;
     group?: string;
     categories?: string[];
     figma?: string;
+    figmaComponentId?: string;
     tags?: string[];
     should_do?: string[];
     should_not_do?: string[];
@@ -40,6 +40,7 @@ declare const buildComponentCss: (data: TransformComponentTokensResult, handoff:
         };
     };
     validations?: Record<string, import("../../../types").ValidationResult>;
+    page?: import("../types").ComponentPageDefinition;
 }>;
 /**
  * Build the main CSS file using Vite

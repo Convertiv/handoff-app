@@ -109,11 +109,11 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
             // Setup SASS load paths
             const loadPaths = [
                 path_1.default.resolve(handoff.workingPath),
-                path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                 path_1.default.resolve(handoff.workingPath, 'node_modules'),
             ];
-            if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
-                loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
+            if ((_c = (_b = handoff.runtimeConfig) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.scss) {
+                loadPaths.unshift(path_1.default.dirname(handoff.runtimeConfig.entries.scss));
             }
             yield buildCssBundle({
                 entry,
@@ -155,21 +155,21 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
 const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     const outputPath = (0, component_1.getComponentOutputPath)(handoff);
-    const integration = (0, index_1.initIntegrationObject)(handoff)[0];
-    if (((_a = integration === null || integration === void 0 ? void 0 : integration.entries) === null || _a === void 0 ? void 0 : _a.integration) && fs_extra_1.default.existsSync(integration.entries.integration)) {
-        const stat = yield fs_extra_1.default.stat(integration.entries.integration);
-        const entryPath = stat.isDirectory() ? path_1.default.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
-        if (entryPath === integration.entries.integration || fs_extra_1.default.existsSync(entryPath)) {
+    const runtimeConfig = (0, index_1.initRuntimeConfig)(handoff)[0];
+    if (((_a = runtimeConfig === null || runtimeConfig === void 0 ? void 0 : runtimeConfig.entries) === null || _a === void 0 ? void 0 : _a.scss) && fs_extra_1.default.existsSync(runtimeConfig.entries.scss)) {
+        const stat = yield fs_extra_1.default.stat(runtimeConfig.entries.scss);
+        const entryPath = stat.isDirectory() ? path_1.default.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
+        if (entryPath === runtimeConfig.entries.scss || fs_extra_1.default.existsSync(entryPath)) {
             console.log(chalk_1.default.green(`Building main CSS file`));
             try {
                 // Setup SASS load paths
                 const loadPaths = [
                     path_1.default.resolve(handoff.workingPath),
-                    path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                    path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                     path_1.default.resolve(handoff.workingPath, 'node_modules'),
                 ];
-                if ((_c = (_b = handoff.integrationObject) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.integration) {
-                    loadPaths.unshift(path_1.default.dirname(handoff.integrationObject.entries.integration));
+                if ((_c = (_b = handoff.runtimeConfig) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.scss) {
+                    loadPaths.unshift(path_1.default.dirname(handoff.runtimeConfig.entries.scss));
                 }
                 yield buildCssBundle({
                     entry: entryPath,
