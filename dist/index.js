@@ -40,7 +40,6 @@ const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handoff_core_1 = require("handoff-core");
-const lodash_1 = require("lodash");
 const path_1 = __importDefault(require("path"));
 const semver_1 = __importDefault(require("semver"));
 const app_1 = __importStar(require("./app"));
@@ -50,8 +49,6 @@ const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const component_1 = require("./transformers/preview/component");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
-const utils_1 = require("./utils");
-const fs_1 = require("./utils/fs");
 const path_2 = require("./utils/path");
 class Handoff {
     constructor(debug, force, config) {
@@ -129,13 +126,6 @@ class Handoff {
             return this;
         });
     }
-    ejectExportables() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, eject_1.ejectExportables)(this);
-            return this;
-        });
-    }
     ejectPages() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -147,13 +137,6 @@ class Handoff {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             yield (0, eject_1.ejectTheme)(this);
-            return this;
-        });
-    }
-    makeExportable(type, name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, make_1.makeExportable)(this, type, name);
             return this;
         });
     }
@@ -236,12 +219,8 @@ class Handoff {
                 projectId: this.config.figma_project_id,
                 accessToken: this.config.dev_access_token,
             };
-            const legacyDefinitions = yield this.getLegacyDefinitions();
-            const useLegacyDefintions = !!legacyDefinitions;
             // Initialize the provider
-            const provider = useLegacyDefintions
-                ? handoff_core_1.Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
-                : handoff_core_1.Providers.RestApiProvider(apiCredentials);
+            const provider = handoff_core_1.Providers.RestApiProvider(apiCredentials);
             this._handoffRunner = (0, handoff_core_1.Handoff)(provider, {
                 options: {
                     transformer: this.runtimeConfig.options,
@@ -261,35 +240,6 @@ class Handoff {
                 },
             });
             return this._handoffRunner;
-        });
-    }
-    /**
-     * Returns configured legacy component definitions in array form.
-     * @deprecated Will be removed before 1.0.0 release.
-     */
-    getLegacyDefinitions() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const sourcePath = path_1.default.resolve(this.workingPath, 'exportables');
-                if (!fs_extra_1.default.existsSync(sourcePath)) {
-                    return null;
-                }
-                const definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
-                const exportables = definitionPaths
-                    .map((definitionPath) => {
-                    const defBuffer = fs_extra_1.default.readFileSync(definitionPath);
-                    const exportable = JSON.parse(defBuffer.toString());
-                    const exportableOptions = {};
-                    (0, lodash_1.merge)(exportableOptions, exportable.options);
-                    exportable.options = exportableOptions;
-                    return exportable;
-                })
-                    .filter(utils_1.filterOutNull);
-                return exportables ? exportables : null;
-            }
-            catch (e) {
-                return [];
-            }
         });
     }
     /**

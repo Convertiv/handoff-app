@@ -29,10 +29,8 @@ declare class Handoff {
     component(name: string | null): Promise<Handoff>;
     build(): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
-    ejectExportables(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
     ejectTheme(): Promise<Handoff>;
-    makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
@@ -50,11 +48,6 @@ declare class Handoff {
      */
     getSharedStyles(): Promise<string | null>;
     getRunner(): Promise<ReturnType<typeof HandoffRunner>>;
-    /**
-     * Returns configured legacy component definitions in array form.
-     * @deprecated Will be removed before 1.0.0 release.
-     */
-    getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
     /**
      * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
      * @returns {string} The project ID to use for path construction

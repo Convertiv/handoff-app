@@ -463,22 +463,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         ignoreInitial: true,
     };
     let debounce = false;
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'exportables'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'exportables'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
-            switch (event) {
-                case 'add':
-                case 'change':
-                case 'unlink':
-                    if (path.includes('json') && !debounce) {
-                        console.log(chalk_1.default.yellow('Exportables changed. Handoff will fetch new tokens...'));
-                        debounce = true;
-                        yield handoff.fetch();
-                        debounce = false;
-                    }
-                    break;
-            }
-        }));
-    }
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
         chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {

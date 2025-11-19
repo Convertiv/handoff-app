@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ejectTheme = exports.ejectPages = exports.ejectExportables = exports.ejectConfig = void 0;
+exports.ejectTheme = exports.ejectPages = exports.ejectConfig = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
@@ -34,25 +34,6 @@ const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () 
     return handoff;
 });
 exports.ejectConfig = ejectConfig;
-/**
- * Eject the integration to the working directory
- * @param handoff
- */
-const ejectExportables = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    // does an local integration exist?
-    const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'exportables'));
-    if (fs_extra_1.default.existsSync(workingPath)) {
-        if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`It appears you already have customized the exportables.  Use the --force flag to merge in any schemas you haven't customized.`));
-            return;
-        }
-    }
-    const integrationPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/exportables'));
-    fs_extra_1.default.copySync(integrationPath, workingPath, { overwrite: false });
-    console.log(chalk_1.default.green(`All exportables ejected to ${workingPath}`));
-    return handoff;
-});
-exports.ejectExportables = ejectExportables;
 /**
  * Eject the integration to the working directory
  * @param handoff

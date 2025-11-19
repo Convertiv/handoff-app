@@ -6,8 +6,8 @@ import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
-import { ejectConfig, ejectExportables, ejectPages, ejectTheme } from './cli/eject';
-import { makeComponent, makeExportable, makePage, makeTemplate } from './cli/make';
+import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
+import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { defaultConfig } from './config';
 import pipeline, { buildComponents } from './pipeline';
 import { processSharedStyles } from './transformers/preview/component';
@@ -107,12 +107,6 @@ class Handoff {
     return this;
   }
 
-  async ejectExportables(): Promise<Handoff> {
-    this.preRunner();
-    await ejectExportables(this);
-    return this;
-  }
-
   async ejectPages(): Promise<Handoff> {
     this.preRunner();
     await ejectPages(this);
@@ -122,12 +116,6 @@ class Handoff {
   async ejectTheme(): Promise<Handoff> {
     this.preRunner();
     await ejectTheme(this);
-    return this;
-  }
-
-  async makeExportable(type: string, name: string): Promise<Handoff> {
-    this.preRunner();
-    await makeExportable(this, type, name);
     return this;
   }
 
@@ -204,14 +192,8 @@ class Handoff {
       accessToken: this.config.dev_access_token,
     };
 
-    const legacyDefinitions = await this.getLegacyDefinitions();
-
-    const useLegacyDefintions = !!legacyDefinitions;
-
     // Initialize the provider
-    const provider = useLegacyDefintions
-      ? Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
-      : Providers.RestApiProvider(apiCredentials);
+    const provider = Providers.RestApiProvider(apiCredentials);
 
     this._handoffRunner = HandoffRunner(
       provider,
@@ -237,39 +219,6 @@ class Handoff {
     );
 
     return this._handoffRunner;
-  }
-
-  /**
-   * Returns configured legacy component definitions in array form.
-   * @deprecated Will be removed before 1.0.0 release.
-   */
-  async getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null> {
-    try {
-      const sourcePath = path.resolve(this.workingPath, 'exportables');
-
-      if (!fs.existsSync(sourcePath)) {
-        return null;
-      }
-
-      const definitionPaths = findFilesByExtension(sourcePath, '.json');
-
-      const exportables = definitionPaths
-        .map((definitionPath) => {
-          const defBuffer = fs.readFileSync(definitionPath);
-          const exportable = JSON.parse(defBuffer.toString()) as CoreTypes.ILegacyComponentDefinition;
-
-          const exportableOptions = {};
-          merge(exportableOptions, exportable.options);
-          exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
-
-          return exportable;
-        })
-        .filter(filterOutNull);
-
-      return exportables ? exportables : null;
-    } catch (e) {
-      return [];
-    }
   }
 
   /**

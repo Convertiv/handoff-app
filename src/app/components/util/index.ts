@@ -74,7 +74,6 @@ export interface AssetDocumentationProps extends DocumentationProps {
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
   component: CoreTypes.IFileComponentObject;
-  legacyDefinition: CoreTypes.ILegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
   componentOptions: CoreTypes.IHandoffConfigurationComponentOptions;
@@ -576,34 +575,6 @@ export const getLatestComponentMetadata = (id: string) => {
   const latestComponent = components[id][latestVersion];
 
   return latestComponent || false;
-};
-
-/**
- * Returns the legacy component definition for component with the given name.
- * @deprecated Will be removed before 1.0.0 release.
- */
-export const getLegacyDefinition = (name: string) => {
-  const config = getClientRuntimeConfig();
-
-  const sourcePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'exportables');
-
-  if (!fs.existsSync(sourcePath)) {
-    return null;
-  }
-
-  const definitionPaths = (findFilesByExtension(sourcePath, '.json') ?? []).filter((path) => path.split('/').pop() === name);
-
-  if (definitionPaths.length === 0) {
-    return null;
-  }
-
-  const data = fs.readFileSync(definitionPaths[0], 'utf-8');
-  const exportable = JSON.parse(data.toString()) as CoreTypes.ILegacyComponentDefinition;
-
-  const exportableOptions = {};
-  merge(exportableOptions, exportable.options);
-  exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
-  return exportable;
 };
 
 /**

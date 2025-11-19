@@ -11,7 +11,6 @@ import {
   fetchCompDocPageMarkdown,
   fetchComponents,
   getClientRuntimeConfig,
-  getLegacyDefinition,
   getTokens,
   IParams,
   reduceSlugToString,
@@ -44,7 +43,6 @@ export const getStaticProps = async (context) => {
     props: {
       id: component,
       component: componentObject ?? {},
-      legacyDefinition: getLegacyDefinition(componentSlug!),
       menu,
       config,
       ...fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props,
