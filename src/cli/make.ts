@@ -97,7 +97,7 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
  * @param handoff
  */
 export const makePage = async (handoff: Handoff, name: string, parent: string | undefined) => {
-  let type = 'mdx';
+  let type = 'md';
   if (!name) {
     console.log(chalk.red(`Page name must be set`));
     return;
@@ -107,14 +107,6 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
     return;
   }
 
-  const checkType = await prompt(
-    chalk.green(
-      `By default this will create an MDX (.mdx) page supporting react components in your markdown. If you'd prefer normal markdown (.md), type 'markdown': `
-    )
-  );
-  if (checkType === 'markdown') {
-    type = 'md';
-  }
   let workingPath, sourcePath, templatePath;
   if (parent) {
     if (!/^[a-z0-9]+$/i.test(parent)) {

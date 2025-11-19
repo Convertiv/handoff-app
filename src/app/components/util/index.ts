@@ -29,6 +29,7 @@ export interface Metadata {
 export interface SectionLink {
   title: string;
   weight: number;
+  external?: string | boolean;
   path: string;
   subSections: {
     title: string;
@@ -91,7 +92,7 @@ export const knownPaths = [
   'assets/fonts',
   'assets/icons',
   'assets/logos',
-  'foundations',
+  // 'foundations',
   'foundations/colors',
   'foundations/effects',
   'foundations/logos',
@@ -232,7 +233,7 @@ export const staticBuildMenu = () => {
         !fs.lstatSync(search).isDirectory() &&
         search !== path.resolve(docRoot, 'index.md') &&
         search !== path.resolve(workingPages, 'index.md') &&
-        (fileName.endsWith('md') || fileName.endsWith('mdx'))
+        fileName.endsWith('md')
       ) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
@@ -240,7 +241,7 @@ export const staticBuildMenu = () => {
           return undefined;
         }
 
-        const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
+        const filepath = `/${fileName.replace('.md', '')}`;
         let subSections = [];
 
         if (metadata.menu) {
@@ -269,8 +270,17 @@ export const staticBuildMenu = () => {
             .filter(filterOutUndefined);
         }
 
+        let external: string | boolean = false;
+        if (
+          typeof metadata.external === 'string' &&
+          (metadata.external.startsWith('http://') || metadata.external.startsWith('https://') || metadata.external.startsWith('/'))
+        ) {
+          external = metadata.external;
+        }
+
         return {
           title: metadata.menuTitle ?? metadata.title,
+          external,
           weight: metadata.weight,
           path: filepath,
           subSections,
@@ -399,17 +409,6 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
       options,
       menu,
       current: getCurrentSection(menu, `${id}`) ?? null,
-    },
-  };
-};
-
-export const fetchMdxPageMarkdown = () => {
-  //const menu = staticBuildMenu();
-  // Return props
-  return {
-    props: {
-      menu: [],
-      current: [],
     },
   };
 };
@@ -634,7 +633,7 @@ export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
     : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  
+
   if (!fs.existsSync(exportedFilePath)) {
     // Return proper default structure to prevent Next.js serialization errors
     // and ensure components can safely access design properties
@@ -648,7 +647,7 @@ export const getTokens = (): CoreTypes.IDocumentationObject => {
       assets: {},
     } as CoreTypes.IDocumentationObject;
   }
-  
+
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
 };

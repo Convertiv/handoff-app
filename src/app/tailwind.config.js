@@ -6,7 +6,7 @@ const __dirname = dirname(__filename);
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [join(__dirname, './components/**/*.{js,ts,jsx,tsx,mdx}'), join(__dirname, './pages/**/*.{js,ts,jsx,tsx,mdx}')],
+  content: [join(__dirname, './components/**/*.{js,ts,jsx,tsx}'), join(__dirname, './pages/**/*.{js,ts,jsx,tsx}')],
   darkMode: ['class'],
   theme: {
     extend: {

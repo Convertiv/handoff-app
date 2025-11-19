@@ -40,7 +40,6 @@ const chalk_1 = __importDefault(require("chalk"));
 const chokidar_1 = __importDefault(require("chokidar"));
 const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const gray_matter_1 = __importDefault(require("gray-matter"));
 const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
 const path_1 = __importDefault(require("path"));
@@ -105,10 +104,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
  * @returns The resolved path to the public directory if it exists, null otherwise
  */
 const getWorkingPublicPath = (handoff) => {
-    const paths = [
-        path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`),
-        path_1.default.resolve(handoff.workingPath, `public`),
-    ];
+    const paths = [path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`), path_1.default.resolve(handoff.workingPath, `public`)];
     for (const path of paths) {
         if (fs_extra_1.default.existsSync(path)) {
             return path;
@@ -135,131 +131,6 @@ const mergePublicDir = (handoff) => __awaiter(void 0, void 0, void 0, function* 
         fs_extra_1.default.copySync(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
     }
 });
-/**
- * Publish the mdx files from the working dir to the module dir
- * @param handoff
- */
-const publishMDX = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(chalk_1.default.yellow('Merging MDX files...'));
-    const appPath = getAppPath(handoff);
-    const pages = path_1.default.resolve(handoff.workingPath, `pages`);
-    if (fs_extra_1.default.existsSync(pages)) {
-        // Find all mdx files in path
-        const files = fs_extra_1.default.readdirSync(pages);
-        for (const file of files) {
-            if (file.endsWith('.mdx')) {
-                // transform the file
-                transformMdx(path_1.default.resolve(pages, file), path_1.default.resolve(appPath, 'pages', file), file.replace('.mdx', ''));
-            }
-            else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file)).isDirectory()) {
-                // Recursion - find all mdx files in sub directories
-                const subFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file));
-                for (const subFile of subFiles) {
-                    if (subFile.endsWith('.mdx')) {
-                        // transform the file
-                        const target = path_1.default.resolve(appPath, 'pages', file);
-                        if (!fs_extra_1.default.existsSync(target)) {
-                            fs_extra_1.default.mkdirSync(target, { recursive: true });
-                        }
-                        transformMdx(path_1.default.resolve(pages, file, subFile), path_1.default.resolve(appPath, 'pages', file, subFile), file);
-                    }
-                    else if (fs_extra_1.default.lstatSync(path_1.default.resolve(pages, file, subFile)).isDirectory()) {
-                        const thirdFiles = fs_extra_1.default.readdirSync(path_1.default.resolve(pages, file, subFile));
-                        for (const thirdFile of thirdFiles) {
-                            if (thirdFile.endsWith('.mdx')) {
-                                const target = path_1.default.resolve(appPath, 'pages', file, subFile);
-                                if (!fs_extra_1.default.existsSync(target)) {
-                                    fs_extra_1.default.mkdirSync(target, { recursive: true });
-                                }
-                                transformMdx(path_1.default.resolve(pages, file, subFile, thirdFile), path_1.default.resolve(appPath, 'pages', file, subFile, thirdFile), file);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-});
-/**
- * Remove the frontmatter from the mdx file, convert it to an import, and
- * add the metadata to the export.  Then write the file to the destination.
- * @param src
- * @param dest
- * @param id
- */
-const transformMdx = (src, dest, id) => {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const content = fs_extra_1.default.readFileSync(src);
-    const { data, content: body } = (0, gray_matter_1.default)(content);
-    const title = (_a = data.title) !== null && _a !== void 0 ? _a : '';
-    const description = data.description ? data.description.replace(/(\r\n|\n|\r)/gm, '') : '';
-    const metaDescription = (_b = data.metaDescription) !== null && _b !== void 0 ? _b : '';
-    const metaTitle = (_c = data.metaTitle) !== null && _c !== void 0 ? _c : '';
-    const weight = (_d = data.weight) !== null && _d !== void 0 ? _d : 0;
-    const image = (_e = data.image) !== null && _e !== void 0 ? _e : '';
-    const menuTitle = (_f = data.menuTitle) !== null && _f !== void 0 ? _f : '';
-    const enabled = (_g = data.enabled) !== null && _g !== void 0 ? _g : true;
-    const wide = data.wide ? 'true' : 'false';
-    const mdxHeader = `// This file is auto-generated by transformMdx(). Do not edit manually.
-// Source: ${src}
-// Generated at: ${new Date().toISOString()}
-
-`;
-    const mdx = `${mdxHeader}import { getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '@handoff/app/components/util';
-import fs from 'fs-extra';
-import matter from 'gray-matter';
-import { MDXRemote } from 'next-mdx-remote';
-import { serialize } from 'next-mdx-remote/serialize';
-import path from 'path';
-
-export async function getStaticProps() {
-  const mdxFilePath = path.join(process.env.HANDOFF_WORKING_PATH, 'pages', '${id}.mdx');
-  const mdxSource = fs.readFileSync(mdxFilePath, 'utf8');
-
-  const { data, content: body } = matter(mdxSource); // extract frontmatter and body
-  const mdx = await serialize(body); // serialize only the body
-
-  const menu = staticBuildMenu();
-  const config = getClientRuntimeConfig();
-
-  return {
-    props: {
-      mdx,
-      menu,
-      config,
-      current: getCurrentSection(menu, "/${id}") ?? [],
-      title: "${title}",
-      description: "${description}",
-      image: "${image}",
-    },
-  };
-}
-
-import MarkdownLayout from "@handoff/app/components/Layout/Markdown";
-import { Hero } from "@handoff/app/components/Hero";
-
-const components = { Hero };
-
-export default function Layout(props) {
-  return (
-    <MarkdownLayout
-      menu={props.menu}
-      metadata={{
-        description: "${description}",
-        metaDescription: "${metaDescription}",
-        metaTitle: "${metaTitle}",
-        title: "${title}",
-      }}
-      wide={${wide}}
-      config={props.config}
-      current={props.current}
-    >
-      <MDXRemote {...props.mdx} components={components} />
-    </MarkdownLayout>
-  );
-}`;
-    fs_extra_1.default.writeFileSync(dest.replaceAll('.mdx', '.tsx'), mdx, 'utf-8');
-};
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
  * This is typically used before rebuilding the application to ensure a clean state.
@@ -313,7 +184,6 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     yield fs_extra_1.default.promises.mkdir(appPath, { recursive: true });
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
     yield mergePublicDir(handoff);
-    yield publishMDX(handoff);
     // Prepare project app configuration
     const handoffProjectId = handoff.getProjectId();
     const handoffAppBasePath = (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '';
@@ -606,9 +476,6 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'add':
                 case 'change':
                 case 'unlink':
-                    if (path.endsWith('.mdx')) {
-                        publishMDX(handoff);
-                    }
                     console.log(chalk_1.default.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
                     break;
             }

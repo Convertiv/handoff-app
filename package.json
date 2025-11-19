@@ -54,9 +54,6 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.18.6",
-    "@mdx-js/loader": "^3.0.1",
-    "@mdx-js/react": "^3.0.1",
-    "@next/mdx": "^15.3.4",
     "@popperjs/core": "^2.11.6",
     "@radix-ui/react-accordion": "^1.2.8",
     "@radix-ui/react-collapsible": "^1.1.2",
@@ -77,12 +74,12 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/bootstrap": "^5.2.6",
     "@types/lodash": "^4.14.185",
-    "@types/mdx": "^2.0.13",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@types/react-scroll": "^1.8.6",
     "@types/react-syntax-highlighter": "^15.5.7",
     "@types/refractor": "^3.0.2",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.5.2",
     "archiver": "^5.3.1",
     "autoprefixer": "^10.4.14",
@@ -106,7 +103,6 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.518.0",
     "next": "^15.3.4",
-    "next-mdx-remote": "^5.0.0",
     "next-themes": "^0.4.4",
     "node-html-parser": "^6.1.4",
     "postcss": "^8.4.16",
@@ -130,8 +126,7 @@
     "vaul": "^1.1.2",
     "vite": "^6.3.5",
     "ws": "^8.18.3",
-    "yargs": "^17.7.2",
-    "@types/ws": "^8.18.1"
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@types/archiver": "^5.3.1",
