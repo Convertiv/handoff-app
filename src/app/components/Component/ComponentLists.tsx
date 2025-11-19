@@ -134,8 +134,8 @@ export const ComponentList = ({
         <>
           {Object.keys(groupedList).map((group) => {
             return (
-              <div key={`group-${group}`} className="mb-8 border-b border-gray-200 pb-4">
-                <HeadersType.H3 className="mb-4 text-lg font-medium">{group}</HeadersType.H3>
+              <div key={`group-${group}`} className="mb-8">
+                <HeadersType.H3 className="mb-4 text-lg font-medium border-b border-gray-200 pb-2">{group}</HeadersType.H3>
                 <div
                   className={cn(
                     'grid',
