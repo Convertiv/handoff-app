@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComponentSegment = void 0;
 exports.processComponents = processComponents;
 const cloneDeep_1 = __importDefault(require("lodash/cloneDeep"));
+const schema_1 = require("../../utils/schema");
 const types_1 = require("../types");
 const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
@@ -141,6 +142,8 @@ function processComponents(handoff, id, segmentToProcess) {
                     data.validations = validationResults;
                 }
                 data.sharedStyles = sharedStyles;
+                // recurse through all properties and ensure that every property has an id
+                data.properties = (0, schema_1.ensureIds)(data.properties);
                 yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, preserveKeys);
                 if (version === latest) {
                     latestVersion = data;

@@ -1,6 +1,7 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
 import Handoff from '../../../index';
+import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
@@ -140,6 +141,8 @@ export async function processComponents(
         }
 
         data.sharedStyles = sharedStyles;
+        // recurse through all properties and ensure that every property has an id
+        data.properties = ensureIds(data.properties);
 
         await writeComponentApi(runtimeComponentId, data, version, handoff, preserveKeys);
 
