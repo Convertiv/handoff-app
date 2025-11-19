@@ -2,11 +2,10 @@ import { ChangelogRecord } from '@handoff/changelog';
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
-import { findFilesByExtension } from '@handoff/utils/fs';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { Types as CoreTypes } from 'handoff-core';
-import { groupBy, merge, startCase, uniq } from 'lodash';
+import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 import semver from 'semver';
@@ -460,25 +459,38 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
 
   // Include components from components.json API if requested
   if (includeApi) {
-    const componentIds = Array.from(
-      new Set<string>(
-        (
-          JSON.parse(
-            fs.readFileSync(
-              path.resolve(
-                process.env.HANDOFF_MODULE_PATH ?? '',
-                '.handoff',
-                `${process.env.HANDOFF_PROJECT_ID}`,
-                'public',
-                'api',
-                'components.json'
-              ),
-              'utf-8'
-            )
-          ) as ComponentListObject[]
-        ).map((c) => c.id)
+    const compontnsFileExists = fs.existsSync(
+      path.resolve(
+        process.env.HANDOFF_MODULE_PATH ?? '',
+        '.handoff',
+        `${process.env.HANDOFF_PROJECT_ID}`,
+        'public',
+        'api',
+        'components.json'
       )
     );
+
+    const componentIds = compontnsFileExists
+      ? Array.from(
+          new Set<string>(
+            (
+              JSON.parse(
+                fs.readFileSync(
+                  path.resolve(
+                    process.env.HANDOFF_MODULE_PATH ?? '',
+                    '.handoff',
+                    `${process.env.HANDOFF_PROJECT_ID}`,
+                    'public',
+                    'api',
+                    'components.json'
+                  ),
+                  'utf-8'
+                )
+              ) as ComponentListObject[]
+            ).map((c) => c.id)
+          )
+        )
+      : [];
 
     for (const componentId of componentIds) {
       const metadata = getLatestComponentMetadata(componentId);
@@ -656,11 +668,7 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @param slug
  * @returns
  */
-export const fetchDocPageMetadataAndContent = (
-  localPath: string,
-  slug: string | string[] | undefined,
-  runtimeConfig?: RuntimeConfig
-) => {
+export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined, runtimeConfig?: RuntimeConfig) => {
   const pagePath = localPath.replace('docs/', 'pages/');
   const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? '';
   const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? '';

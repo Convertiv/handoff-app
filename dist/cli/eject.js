@@ -16,20 +16,20 @@ exports.ejectTheme = exports.ejectPages = exports.ejectConfig = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-const config_1 = require("../config");
 /**
  * Eject the config to the working directory
  * @param handoff
  */
 const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    const config = (0, config_1.getClientConfig)(handoff);
-    const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.json'));
+    const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.js'));
     if (fs_extra_1.default.existsSync(configPath)) {
         if (!handoff.force) {
             console.log(chalk_1.default.red(`A config already exists in the working directory.  Use the --force flag to overwrite.`));
         }
     }
-    fs_extra_1.default.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}`);
+    // load the template as a string
+    const template = fs_extra_1.default.readFileSync(path_1.default.resolve(handoff.modulePath, 'config/config.template.js'), 'utf8');
+    fs_extra_1.default.writeFileSync(configPath, template);
     console.log(chalk_1.default.green(`Config ejected to ${configPath}`));
     return handoff;
 });
