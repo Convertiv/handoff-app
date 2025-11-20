@@ -10,6 +10,12 @@ Token Extractor analyzes your CSS, SCSS, JavaScript, and TypeScript files to ide
 - **Multiple Analysis Modes**: Choose between Quick, Balanced, or Thorough analysis based on your needs
 - **Framework Agnostic**: Supports CSS, SCSS, styled-components, CSS-in-JS, and JavaScript/TypeScript theme objects
 - **Semantic Naming**: Automatically generates hierarchical token names following Figma Tokens conventions
+- **Design System Health Analysis**: Automatic health check with 0-100 scoring
+  - Identifies undefined token references (used but not defined)
+  - Detects orphaned tokens (defined but never used)
+  - Finds naming inconsistencies across your codebase
+  - Provides exact file:line locations for all findings
+  - Suggests actionable remediation steps
 - **Duplicate Detection**: Identifies and consolidates duplicate token values
 - **Comprehensive Reports**: Generates detailed reports with recommendations and next steps
 - **Interactive CLI**: Guides you through the extraction process with smart defaults
@@ -294,6 +300,32 @@ The primary output file containing all extracted tokens in Figma Tokens Plugin v
     }
   }
 }
+```
+
+### figma-tokens.health.md
+
+Design system health analysis report with:
+- **Health Score**: 0-100 rating based on token quality
+- **Undefined Tokens**: Tokens referenced but never defined, with:
+  - Exact file:line locations where they're used
+  - Usage counts
+  - Suggested remediation actions
+- **Orphaned Tokens**: Tokens defined but never used, with:
+  - Definition locations
+  - Recommendations (remove/document/review)
+- **Naming Inconsistencies**: Format/case/prefix mismatches, with:
+  - List of conflicting token names
+  - Standardization suggestions
+
+Example findings:
+```markdown
+## Undefined Token References
+### `spacing.lg`
+**Usage Count:** 3
+**Suggested Action:** Add SCSS variable: $spacing-lg: <value>;
+**Locations:**
+- `src/components/Button.tsx:45`
+- `src/layouts/Header.tsx:23`
 ```
 
 ### token-extraction-report.md (optional)

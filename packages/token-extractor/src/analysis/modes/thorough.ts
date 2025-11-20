@@ -77,6 +77,7 @@ interface Pass4Result {
  */
 export class ThoroughMode {
   private aiProvider: AIProvider;
+  private readonly DELAY_BETWEEN_PASSES = 3000; // 3 seconds delay between passes
 
   constructor(aiProvider: AIProvider) {
     this.aiProvider = aiProvider;
@@ -120,13 +121,22 @@ export class ThoroughMode {
       };
     }
 
+    // Delay between passes to avoid rate limits
+    await this.sleep(this.DELAY_BETWEEN_PASSES);
+
     // Pass 2: Pattern detection
     onProgress?.('Pass 2: Pattern detection');
     const pass2Result = await this.executePass2(pass1Result);
 
+    // Delay between passes
+    await this.sleep(this.DELAY_BETWEEN_PASSES);
+
     // Pass 3: Semantic grouping
     onProgress?.('Pass 3: Semantic grouping');
     const pass3Result = await this.executePass3(pass1Result, pass2Result);
+
+    // Delay between passes
+    await this.sleep(this.DELAY_BETWEEN_PASSES);
 
     // Pass 4: Alias detection
     onProgress?.('Pass 4: Alias detection');
@@ -436,5 +446,12 @@ Important:
 - Include both base tokens and aliases in the tokens array
 - Preserve metadata (file, line) from earlier passes
 - Create a clean, logical token hierarchy`;
+  }
+
+  /**
+   * Sleep for specified milliseconds (for rate limiting)
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

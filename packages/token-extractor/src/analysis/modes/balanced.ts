@@ -24,7 +24,8 @@ interface FileContent {
  */
 export class BalancedMode {
   private aiProvider: AIProvider;
-  private readonly BATCH_SIZE = 5; // Further reduced to prevent JSON truncation
+  private readonly BATCH_SIZE = 10; // Increased with JSONL format (prevents truncation)
+  private readonly DELAY_BETWEEN_BATCHES = 2000; // 2 seconds delay to avoid rate limits
 
   constructor(aiProvider: AIProvider) {
     this.aiProvider = aiProvider;
@@ -57,11 +58,21 @@ export class BalancedMode {
     // Step 2: Batch files into reasonable sizes
     const batches = this.batchFiles(fileContents, this.BATCH_SIZE);
 
-    // Step 3: Process each batch through AI
+    // Step 3: Process each batch through AI with rate limiting
     const allTokens: ExtractedToken[] = [];
-    for (const batch of batches) {
-      const batchTokens = await this.processBatch(batch);
+    for (let i = 0; i < batches.length; i++) {
+      console.log(`Processing batch ${i + 1}/${batches.length} (${batches[i].length} files)...`);
+
+      const batchTokens = await this.processBatch(batches[i]);
       allTokens.push(...batchTokens);
+
+      console.log(`✓ Batch ${i + 1} complete: ${batchTokens.length} tokens extracted`);
+
+      // Add delay between batches to avoid rate limits (except for last batch)
+      if (i < batches.length - 1) {
+        console.log(`Waiting ${this.DELAY_BETWEEN_BATCHES / 1000}s before next batch...`);
+        await this.sleep(this.DELAY_BETWEEN_BATCHES);
+      }
     }
 
     // Step 4: Build TokenSet with metadata
@@ -123,7 +134,7 @@ export class BalancedMode {
   }
 
   /**
-   * Build comprehensive extraction prompt for AI
+   * Build comprehensive extraction prompt for AI with JSONL format
    */
   private buildExtractionPrompt(): string {
     return `You are a design token extraction expert. Your task is to analyze these files and extract ALL design tokens from them.
@@ -161,21 +172,16 @@ Token Categories to Extract:
 - breakpoint: media query breakpoints
 - zIndex: z-index values
 
-Return your response as valid JSON with this structure:
-{
-  "tokens": [
-    {
-      "name": "semantic.name.here",
-      "value": "token value",
-      "type": "tokenType",
-      "file": "original file path",
-      "line": lineNumber
-    }
-  ]
-}
+Return your response as JSONL (JSON Lines) format - one token per line:
+{"name": "colors.primary.500", "value": "#3b82f6", "type": "color", "file": "src/theme.ts", "line": 10}
+{"name": "spacing.md", "value": "1rem", "type": "spacing", "file": "src/theme.ts", "line": 15}
+{"name": "borderRadius.base", "value": "0.5rem", "type": "borderRadius", "file": "src/theme.ts", "line": 20}
 
 Important:
-- Only return valid JSON, no markdown or code fences
+- ONE token per line (JSONL format)
+- NO array wrapper, NO "tokens" key
+- NO markdown code fences or formatting
+- Each line must be a complete, valid JSON object
 - Extract tokens from ALL provided files
 - Preserve file paths and line numbers accurately
 - Be consistent with naming conventions across all files
@@ -184,39 +190,54 @@ Important:
   }
 
   /**
-   * Parse AI response into tokens
+   * Parse AI response from JSONL format (one token per line)
    */
   private parseAIResponse(response: string): { tokens: ExtractedToken[] } {
     try {
       // Remove markdown code fences if present
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+      if (cleanResponse.startsWith('```jsonl') || cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```(?:jsonl|json)\n?/, '').replace(/\n?```$/, '');
       } else if (cleanResponse.startsWith('```')) {
         cleanResponse = cleanResponse.replace(/^```\n?/, '').replace(/\n?```$/, '');
       }
 
-      const parsed = JSON.parse(cleanResponse);
+      // Parse JSONL format (one JSON object per line)
+      const lines = cleanResponse.split('\n').filter(line => line.trim());
+      const tokens: ExtractedToken[] = [];
 
-      if (!parsed.tokens || !Array.isArray(parsed.tokens)) {
-        throw new Error('AI response missing tokens array');
+      for (const line of lines) {
+        try {
+          const token = JSON.parse(line);
+          tokens.push({
+            name: token.name,
+            value: token.value,
+            type: token.type,
+            file: token.file,
+            line: token.line,
+            context: token.context,
+          });
+        } catch (lineError) {
+          // Skip invalid lines but continue processing
+          // This is normal if a file has no design tokens
+          console.warn(`Skipping invalid JSONL line: ${line.substring(0, 100)}...`);
+        }
       }
 
-      return {
-        tokens: parsed.tokens.map((token: any) => ({
-          name: token.name,
-          value: token.value,
-          type: token.type,
-          file: token.file,
-          line: token.line,
-          context: token.context,
-        })),
-      };
+      // Empty batches are OK (e.g., test files with no design tokens)
+      return { tokens };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new Error(`Failed to parse AI response as JSON: ${error.message}`);
+        throw new Error(`Failed to parse AI response as JSONL: ${error.message}`);
       }
       throw error;
     }
+  }
+
+  /**
+   * Sleep for specified milliseconds (for rate limiting)
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

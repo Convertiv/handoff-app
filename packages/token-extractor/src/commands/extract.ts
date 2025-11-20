@@ -17,6 +17,7 @@ import { FigmaTokensGenerator } from '../output/figma-tokens';
 import { ReportGenerator } from '../output/report';
 import { AuditGenerator } from '../output/audit';
 import { CleanupTaskGenerator } from '../output/cleanup';
+import { analyzeDesignSystemHealth, type HealthReport } from '../analysis/health-checker';
 import type { AnalysisMode, AIProvider as AIProviderType } from '../types/config';
 import type { TokenSet } from '../types/tokens';
 
@@ -155,6 +156,30 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
       tokenSet = await askClarifyingQuestions(tokenSet, { interactive: true });
     }
 
+    // ========== HEALTH ANALYSIS PHASE ==========
+    console.log(chalk.cyan('\n🔍 Health Analysis Phase'));
+    const healthSpinner = ora('Analyzing design system health...').start();
+
+    let healthReport: HealthReport | null = null;
+    try {
+      healthReport = await analyzeDesignSystemHealth(tokenSet.tokens, process.cwd());
+      healthSpinner.succeed(`Health analysis complete (Score: ${healthReport.summary.healthScore}/100)`);
+
+      // Display key findings
+      if (healthReport.undefinedTokens.length > 0) {
+        console.log(chalk.yellow(`⚠️  Found ${healthReport.undefinedTokens.length} undefined token references`));
+      }
+      if (healthReport.orphanedTokens.length > 0) {
+        console.log(chalk.gray(`ℹ️  Found ${healthReport.orphanedTokens.length} orphaned tokens (defined but unused)`));
+      }
+      if (healthReport.namingInconsistencies.length > 0) {
+        console.log(chalk.gray(`ℹ️  Found ${healthReport.namingInconsistencies.length} naming inconsistencies`));
+      }
+    } catch (error) {
+      healthSpinner.warn('Health analysis skipped (optional feature)');
+      console.log(chalk.gray(`   Reason: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    }
+
     // ========== OUTPUT PHASE ==========
     console.log(chalk.cyan('\n📄 Output Phase'));
 
@@ -192,6 +217,14 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
       console.log(chalk.green(`✓ Audit/cleanup tasks written to ${auditPath}`));
     }
 
+    // Generate and write health report (always generated if health analysis succeeded)
+    if (healthReport) {
+      const healthPath = outputPath.replace(/\.json$/, '.health.md');
+      const healthContent = generateHealthReportMarkdown(healthReport);
+      fs.writeFileSync(healthPath, healthContent);
+      console.log(chalk.green(`✓ Health report written to ${healthPath}`));
+    }
+
     // ========== SUMMARY ==========
     console.log(chalk.cyan('\n✨ Summary'));
     console.log(chalk.green(`✓ Successfully extracted ${tokenSet.tokens.length} tokens`));
@@ -199,6 +232,11 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
     console.log(chalk.gray(`   • Files analyzed: ${tokenSet.metadata.fileCount}`));
     if (tokenSet.metadata.lineCount) {
       console.log(chalk.gray(`   • Lines processed: ${tokenSet.metadata.lineCount.toLocaleString()}`));
+    }
+    if (healthReport) {
+      console.log(chalk.gray(`   • Health score: ${healthReport.summary.healthScore}/100`));
+      console.log(chalk.gray(`   • Definitions: ${healthReport.summary.definitions}`));
+      console.log(chalk.gray(`   • References: ${healthReport.summary.references}`));
     }
 
     // Display next steps
@@ -225,4 +263,115 @@ export async function extractCommand(options: ExtractOptions): Promise<void> {
 
     throw error;
   }
+}
+
+/**
+ * Generate health report markdown
+ */
+function generateHealthReportMarkdown(healthReport: HealthReport): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push('# Design System Health Report');
+  lines.push('');
+  lines.push(`**Generated:** ${new Date().toISOString()}`);
+  lines.push('');
+
+  // Summary
+  lines.push('## Summary');
+  lines.push('');
+  lines.push(`**Health Score:** ${healthReport.summary.healthScore}/100`);
+  lines.push('');
+  lines.push('| Metric | Count |');
+  lines.push('|--------|-------|');
+  lines.push(`| Total Tokens Extracted | ${healthReport.summary.totalTokensExtracted} |`);
+  lines.push(`| Token Definitions | ${healthReport.summary.definitions} |`);
+  lines.push(`| Token References | ${healthReport.summary.references} |`);
+  lines.push(`| Undefined Tokens | ${healthReport.summary.undefinedCount} |`);
+  lines.push(`| Orphaned Tokens | ${healthReport.summary.orphanedCount} |`);
+  lines.push('');
+
+  // Undefined Tokens
+  if (healthReport.undefinedTokens.length > 0) {
+    lines.push('## Undefined Token References');
+    lines.push('');
+    lines.push('These tokens are referenced in your code but never defined. This can cause runtime errors or visual inconsistencies.');
+    lines.push('');
+
+    for (const undefinedToken of healthReport.undefinedTokens) {
+      lines.push(`### \`${undefinedToken.token}\``);
+      lines.push('');
+      lines.push(`**Usage Count:** ${undefinedToken.usageCount}`);
+      lines.push('');
+
+      if (undefinedToken.suggestedAction) {
+        lines.push(`**Suggested Action:** ${undefinedToken.suggestedAction}`);
+        lines.push('');
+      }
+
+      if (undefinedToken.locations.length > 0) {
+        lines.push('**Locations:**');
+        lines.push('');
+        for (const location of undefinedToken.locations.slice(0, 5)) {
+          lines.push(`- \`${location.file}:${location.line}\``);
+          if (location.context) {
+            lines.push(`  \`\`\`${location.context}\`\`\``);
+          }
+        }
+        if (undefinedToken.locations.length > 5) {
+          lines.push(`- *...and ${undefinedToken.locations.length - 5} more locations*`);
+        }
+        lines.push('');
+      }
+    }
+  }
+
+  // Orphaned Tokens
+  if (healthReport.orphanedTokens.length > 0) {
+    lines.push('## Orphaned Tokens');
+    lines.push('');
+    lines.push('These tokens are defined but never used in your code. Consider removing them to reduce maintenance burden.');
+    lines.push('');
+
+    for (const orphanedToken of healthReport.orphanedTokens) {
+      lines.push(`### \`${orphanedToken.token}\``);
+      lines.push('');
+      lines.push(`**Defined in:** \`${orphanedToken.definedIn.file}:${orphanedToken.definedIn.line}\``);
+      if (orphanedToken.definedIn.context) {
+        lines.push(`\`\`\`${orphanedToken.definedIn.context}\`\`\``);
+      }
+      lines.push('');
+      lines.push(`**Recommendation:** ${orphanedToken.recommendation}`);
+      lines.push('');
+    }
+  }
+
+  // Naming Inconsistencies
+  if (healthReport.namingInconsistencies.length > 0) {
+    lines.push('## Naming Inconsistencies');
+    lines.push('');
+    lines.push('These tokens have similar names but inconsistent formatting. Standardizing names improves maintainability.');
+    lines.push('');
+
+    for (const inconsistency of healthReport.namingInconsistencies) {
+      lines.push(`### ${inconsistency.issue}`);
+      lines.push('');
+      lines.push('**Tokens:**');
+      for (const token of inconsistency.tokens) {
+        lines.push(`- \`${token}\``);
+      }
+      lines.push('');
+      lines.push(`**Suggestion:** ${inconsistency.suggestion}`);
+      lines.push('');
+    }
+  }
+
+  // Closing
+  if (healthReport.undefinedTokens.length === 0 && healthReport.orphanedTokens.length === 0 && healthReport.namingInconsistencies.length === 0) {
+    lines.push('## All Clear!');
+    lines.push('');
+    lines.push('Your design system is in good health. All tokens are properly defined and used consistently.');
+  }
+
+  return lines.join('\n');
 }
