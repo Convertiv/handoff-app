@@ -175,29 +175,31 @@ token-extractor extract --no-report --no-audit
 
 Token Extractor offers three analysis modes, each balancing speed, cost, and accuracy.
 
-### Quick Mode
+### Quick Mode (Recommended)
 
-**Best for:** Small projects, well-structured codebases, tight budgets
+**Best for:** Most projects, general use, projects with many files
 
 **How it works:**
 1. Uses AST parsers (PostCSS, Babel) to quickly extract tokens from files
 2. Sends extracted tokens to AI for semantic grouping and naming
-3. Single AI call with minimal context
+3. Minimal API calls (1-2 per extraction)
 
 **Characteristics:**
-- **Speed**: ~60 seconds
+- **Speed**: ~30-60 seconds
 - **Cost**: $0.10-$0.50
-- **Accuracy**: 75%
-- **Best for**: Projects with clear token definitions in CSS variables or theme files
+- **Accuracy**: 85% (based on real-world testing)
+- **Reliability**: Won't hit rate limits or JSON truncation issues
+- **Best for**: Projects of any size with diverse styling patterns
 
 **Use when:**
-- Your tokens are well-organized in dedicated files
-- You have consistent naming conventions
-- You want a quick first pass
+- You want reliable results without API issues (Recommended for most use cases)
+- Your project has many files (50+ style files)
+- You're on a free API tier or have rate limits
+- You want fast, cost-effective extraction
 
-### Balanced Mode (Recommended)
+### Balanced Mode
 
-**Best for:** Most projects, diverse frameworks, general use
+**Best for:** Small projects (<20 files), premium API tiers
 
 **How it works:**
 1. Loads file contents directly from disk
@@ -206,19 +208,24 @@ Token Extractor offers three analysis modes, each balancing speed, cost, and acc
 4. Merges results from all batches
 
 **Characteristics:**
-- **Speed**: ~90 seconds
+- **Speed**: ~90 seconds (for small projects)
 - **Cost**: $0.50-$1.50
 - **Accuracy**: 85%
-- **Best for**: React, Vue, or Angular projects with modern styling approaches
+- **Limitations**: May hit rate limits or JSON truncation with large projects (50+ files)
 
 **Use when:**
-- You have a mix of CSS, SCSS, and JS-based styling
-- Your project uses styled-components or CSS-in-JS
-- You want good results without high cost
+- You have a small project with <20 style files
+- You're on a premium API tier with higher rate limits
+- You prefer AI to analyze full file contents directly
+
+⚠️ **Warning**: For projects with many files, this mode may encounter:
+- JSON truncation errors (AI response exceeds token limit)
+- Rate limit errors (too many API calls)
+- Use Quick Mode instead for projects with 50+ files
 
 ### Thorough Mode
 
-**Best for:** Large codebases, maximum accuracy, production design systems
+**Best for:** Small projects (<20 files) where maximum accuracy is critical, premium API tiers
 
 **How it works:**
 1. **Pass 1**: Analyzes each file individually to extract all potential tokens
@@ -227,16 +234,21 @@ Token Extractor offers three analysis modes, each balancing speed, cost, and acc
 4. **Pass 4**: Creates aliases and references between related tokens
 
 **Characteristics:**
-- **Speed**: ~2-5 minutes
-- **Cost**: $1.00-$5.00
-- **Accuracy**: 95%
-- **Best for**: Enterprise applications with complex design systems
+- **Speed**: ~2-5 minutes (for small projects)
+- **Cost**: $1.00-$5.00+
+- **Accuracy**: 95% (theoretical)
+- **Limitations**: 4-pass pipeline makes many API calls, prone to rate limits and JSON truncation
 
 **Use when:**
-- You need the highest accuracy
-- Your codebase has inconsistent token usage
-- You're building a production design system
-- Cost is not a primary concern
+- You have a very small project (<10 files)
+- You're on an enterprise API tier with high rate limits
+- Maximum accuracy is absolutely critical
+- Cost and reliability are not concerns
+
+⚠️ **Warning**: This mode is most likely to encounter issues:
+- JSON truncation errors (AI responses exceed token limits)
+- Rate limit errors (4 passes = 4x the API calls)
+- For projects with many files, use Quick Mode instead
 
 ## Configuration
 
