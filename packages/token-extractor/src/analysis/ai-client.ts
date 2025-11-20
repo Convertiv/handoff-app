@@ -39,7 +39,7 @@ export class AnthropicProvider implements AIProvider {
     this.client = new Anthropic({
       apiKey,
     });
-    this.model = options.model || 'claude-3-5-sonnet-20241022';
+    this.model = options.model || 'claude-3-opus-20240229';
     this.maxTokens = options.maxTokens || 8192;
     this.temperature = options.temperature || 0.7;
   }
