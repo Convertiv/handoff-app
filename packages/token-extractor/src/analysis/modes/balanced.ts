@@ -24,7 +24,7 @@ interface FileContent {
  */
 export class BalancedMode {
   private aiProvider: AIProvider;
-  private readonly BATCH_SIZE = 50;
+  private readonly BATCH_SIZE = 15; // Reduced from 50 to prevent JSON truncation
 
   constructor(aiProvider: AIProvider) {
     this.aiProvider = aiProvider;

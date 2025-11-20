@@ -40,7 +40,7 @@ export class AnthropicProvider implements AIProvider {
       apiKey,
     });
     this.model = options.model || 'claude-3-7-sonnet-20250219';
-    this.maxTokens = options.maxTokens || 8192;
+    this.maxTokens = options.maxTokens || 16384; // Increased for large JSON responses
     this.temperature = options.temperature || 0.7;
   }
 
