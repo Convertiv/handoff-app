@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.evaluateFilter = evaluateFilter;
 exports.filterAndSort = filterAndSort;
-const logger_1 = require("./logger");
 /**
  * Evaluates a filter against an object
  * @param obj The object to evaluate the filter against
@@ -55,9 +54,6 @@ function evaluateFilter(obj, filter) {
 function evaluateFieldFilter(obj, filter) {
     const { field, op, value } = filter;
     const actual = obj[field];
-    if (op === 'neq') {
-        logger_1.Logger.debug('EVAL', { filter, actual, result: actual !== value });
-    }
     switch (op) {
         case 'eq':
             return { matches: actual === value };

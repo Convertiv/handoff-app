@@ -20,9 +20,7 @@ const command: CommandModule<{}, MakeComponentArgs> = {
 
   handler: async (args: MakeComponentArgs) => {
     const handoff = new Handoff(args.debug, args.force);
-
     const componentName = args.name;
-    const version = args.version;
 
     if (!/^[a-z0-9_-]+$/i.test(componentName)) {
       Logger.error(`Component name must be alphanumeric and may contain dashes or underscores`);
