@@ -63,7 +63,7 @@ async function loadComponentSchemaAndModule(
 
       // Try to load schema from component exports
       properties = await loadSchemaFromComponent(moduleExports.exports, handoff);
-      
+
       // If no schema found, use react-docgen-typescript
       if (!properties) {
         properties = await generatePropertiesFromDocgen(componentPath, handoff);
@@ -113,13 +113,7 @@ function generateClientHydrationSource(componentPath: string): string {
  * @param props - Component props as JSON
  * @returns Complete HTML document
  */
-function generateHtmlDocument(
-  componentId: string,
-  previewTitle: string,
-  renderedHtml: string,
-  clientJs: string,
-  props: any
-): string {
+function generateHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string, clientJs: string, props: any): string {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -181,11 +175,7 @@ export function ssrRenderPlugin(
       const componentSourceCode = fs.readFileSync(componentPath, 'utf8');
 
       // Load component schema and module
-      const [schemaProperties, ReactComponent] = await loadComponentSchemaAndModule(
-        componentData,
-        componentPath,
-        handoff
-      );
+      const [schemaProperties, ReactComponent] = await loadComponentSchemaAndModule(componentData, componentPath, handoff);
 
       if (!ReactComponent) {
         Logger.error(`Failed to load React component for ${componentId}`);
@@ -227,11 +217,9 @@ export function ssrRenderPlugin(
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
         const previewProps = componentData.previews[previewKey].values;
-        
+
         // Server-side render the component
-        const serverRenderedHtml = ReactDOMServer.renderToString(
-          React.createElement(ReactComponent, previewProps)
-        );
+        const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(ReactComponent, previewProps));
         const formattedHtml = await formatHtml(serverRenderedHtml);
 
         // Generate client-side hydration code
@@ -286,7 +274,7 @@ export function ssrRenderPlugin(
           fileName: `${componentId}-${previewKey}.html`,
           source: finalHtml,
         });
-        
+
         // TODO: remove this once we have a way to render inspect mode
         this.emitFile({
           type: 'asset',
