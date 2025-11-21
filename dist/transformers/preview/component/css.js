@@ -13,11 +13,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildMainCss = void 0;
-const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const vite_1 = require("vite");
 const index_1 = require("../../../index");
+const logger_1 = require("../../../utils/logger");
 const config_1 = __importDefault(require("../../config"));
 const component_1 = require("../component");
 const { pathToFileURL } = require('url');
@@ -73,7 +73,7 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
         yield (0, vite_1.build)(viteConfig);
     }
     catch (e) {
-        console.log(chalk_1.default.red(`Error building CSS for ${entry}`));
+        logger_1.Logger.error(`Error building CSS for ${entry}`);
         throw e;
     }
     finally {
@@ -89,7 +89,7 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
 const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     const id = data.id;
-    console.log('buildComponentCss ------------------------------', id);
+    logger_1.Logger.debug(`buildComponentCss`, id);
     const entry = (_a = data.entries) === null || _a === void 0 ? void 0 : _a.scss;
     if (!entry) {
         return data;
@@ -144,7 +144,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
         }
     }
     catch (e) {
-        console.log(chalk_1.default.red(`Error building CSS for ${id}`));
+        logger_1.Logger.error(`Error building CSS for ${id}`);
         throw e;
     }
     return data;
@@ -160,7 +160,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         const stat = yield fs_extra_1.default.stat(runtimeConfig.entries.scss);
         const entryPath = stat.isDirectory() ? path_1.default.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
         if (entryPath === runtimeConfig.entries.scss || fs_extra_1.default.existsSync(entryPath)) {
-            console.log(chalk_1.default.green(`Building main CSS file`));
+            logger_1.Logger.success(`Building main CSS file`);
             try {
                 // Setup SASS load paths
                 const loadPaths = [
@@ -180,8 +180,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                 });
             }
             catch (e) {
-                console.log(chalk_1.default.red(`Error building main CSS`));
-                console.log(e);
+                logger_1.Logger.error(`Error building main CSS`, e);
             }
         }
     }

@@ -13,11 +13,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildMainJS = exports.buildComponentJs = void 0;
-const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const vite_1 = require("vite");
 const index_1 = require("../../../index");
+const logger_1 = require("../../../utils/logger");
 const config_1 = __importDefault(require("../../config"));
 const component_1 = require("../component");
 /**
@@ -51,7 +51,7 @@ const buildJsBundle = (_a, handoff_1) => __awaiter(void 0, [_a, handoff_1], void
         yield (0, vite_1.build)(viteConfig);
     }
     catch (e) {
-        console.error(chalk_1.default.red(`Error building ${outputFilename}`), e);
+        logger_1.Logger.error(`Error building ${outputFilename}`, e);
     }
     finally {
         // Restore the original NODE_ENV value after vite build completes
@@ -93,7 +93,7 @@ const buildComponentJs = (data, handoff) => __awaiter(void 0, void 0, void 0, fu
         data['jsCompiled'] = compiled;
     }
     catch (e) {
-        console.error(`[Component JS Build Error] ${id}:`, e);
+        logger_1.Logger.error(`[Component JS Build Error] ${id}:`, e);
     }
     return data;
 });

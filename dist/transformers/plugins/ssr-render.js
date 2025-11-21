@@ -19,6 +19,7 @@ const path_1 = __importDefault(require("path"));
 const react_1 = __importDefault(require("react"));
 const server_1 = __importDefault(require("react-dom/server"));
 const vite_1 = require("vite");
+const logger_1 = require("../../utils/logger");
 const docgen_1 = require("../docgen");
 const build_1 = require("../utils/build");
 const html_1 = require("../utils/html");
@@ -66,7 +67,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 }
             }
             catch (error) {
-                console.warn(`Failed to load component file ${componentPath}:`, error);
+                logger_1.Logger.warn(`Failed to load component file ${componentPath}: ${error}`);
             }
         }
         // Step 3: Load component for rendering (if not already loaded)
@@ -76,7 +77,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 component = moduleExports.exports.default;
             }
             catch (error) {
-                console.error(`Failed to load component for rendering: ${componentPath}`, error);
+                logger_1.Logger.error(`Failed to load component for rendering: ${componentPath}`, error);
                 return [null, null];
             }
         }
@@ -139,7 +140,7 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
         name: PLUGIN_CONSTANTS.PLUGIN_NAME,
         apply: 'build',
         resolveId(resolveId) {
-            console.log('resolveId', resolveId);
+            logger_1.Logger.debug('resolveId', resolveId);
             if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
                 return resolveId;
             }
@@ -164,7 +165,7 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
                 // Load component schema and module
                 const [schemaProperties, ReactComponent] = yield loadComponentSchemaAndModule(componentData, componentPath, handoff);
                 if (!ReactComponent) {
-                    console.error(`Failed to load React component for ${componentId}`);
+                    logger_1.Logger.error(`Failed to load React component for ${componentId}`);
                     return;
                 }
                 // Apply schema properties if found

@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = __importDefault(require("../.."));
+const logger_1 = require("../../utils/logger");
 const utils_1 = require("../utils");
 const command = {
     command: 'make:component <name> <version>',
@@ -28,7 +29,7 @@ const command = {
         const componentName = args.name;
         const version = args.version;
         if (!/^[a-z0-9_-]+$/i.test(componentName)) {
-            console.error(`Component name must be alphanumeric and may contain dashes or underscores`);
+            logger_1.Logger.error(`Component name must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         yield handoff.makeComponent(componentName);

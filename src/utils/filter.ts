@@ -1,3 +1,5 @@
+import { Logger } from './logger';
+
 export type Operator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in' | 'nin';
 
 export interface FieldFilter {
@@ -78,7 +80,7 @@ function evaluateFieldFilter(obj: Record<string, any>, filter: FieldFilter): Fil
   const actual = obj[field];
 
   if (op === 'neq') {
-    console.log('EVAL', filter, actual, actual !== value);
+    Logger.debug('EVAL', { filter, actual, result: actual !== value });
   }
 
   switch (op) {

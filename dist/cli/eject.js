@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ejectTheme = exports.ejectPages = exports.ejectConfig = void 0;
-const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
+const logger_1 = require("../utils/logger");
 /**
  * Eject the config to the working directory
  * @param handoff
@@ -24,13 +24,13 @@ const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () 
     const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.js'));
     if (fs_extra_1.default.existsSync(configPath)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.red(`A config already exists in the working directory.  Use the --force flag to overwrite.`));
+            logger_1.Logger.error(`A config already exists in the working directory.  Use the --force flag to overwrite.`);
         }
     }
     // load the template as a string
     const template = fs_extra_1.default.readFileSync(path_1.default.resolve(handoff.modulePath, 'config/config.template.js'), 'utf8');
     fs_extra_1.default.writeFileSync(configPath, template);
-    console.log(chalk_1.default.green(`Config ejected to ${configPath}`));
+    logger_1.Logger.success(`Config ejected to ${configPath}`);
     return handoff;
 });
 exports.ejectConfig = ejectConfig;
@@ -43,13 +43,13 @@ const ejectPages = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'pages'));
     if (fs_extra_1.default.existsSync(workingPath)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`It appears you already have custom pages.  Use the --force flag to merge in any pages you haven't customized.`));
+            logger_1.Logger.warn(`It appears you already have custom pages.  Use the --force flag to merge in any pages you haven't customized.`);
             return;
         }
     }
     const docsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/docs'));
     fs_extra_1.default.copySync(docsPath, workingPath, { overwrite: false });
-    console.log(chalk_1.default.green(`Customizable pages ejected to ${workingPath}`));
+    logger_1.Logger.success(`Customizable pages ejected to ${workingPath}`);
     return handoff;
 });
 exports.ejectPages = ejectPages;
@@ -63,7 +63,7 @@ const ejectTheme = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'theme', 'default.scss'));
     if (fs_extra_1.default.existsSync(workingPath)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`));
+            logger_1.Logger.warn(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`);
             return;
         }
     }
@@ -71,11 +71,11 @@ const ejectTheme = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const docsPath = path_1.default.resolve(path_1.default.join(handoff.modulePath, `src/app/sass/themes/_${currentTheme}.scss`));
     if (fs_extra_1.default.existsSync(docsPath)) {
         fs_extra_1.default.copySync(docsPath, workingPath, { overwrite: false });
-        console.log(chalk_1.default.green(`Customizable theme ejected to ${workingPath}`));
+        logger_1.Logger.success(`Customizable theme ejected to ${workingPath}`);
     }
     else {
         fs_extra_1.default.copySync(path_1.default.resolve(path_1.default.join(handoff.modulePath, `src/app/sass/themes/_default.scss`)), workingPath, { overwrite: false });
-        console.log(chalk_1.default.green(`Customizable theme ejected to ${workingPath}`));
+        logger_1.Logger.success(`Customizable theme ejected to ${workingPath}`);
     }
     return handoff;
 });

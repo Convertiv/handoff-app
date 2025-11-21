@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import chokidar from 'chokidar';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
@@ -12,6 +11,7 @@ import { getClientConfig } from './config';
 import { buildComponents } from './pipeline';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
+import { Logger } from './utils/logger';
 
 interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
@@ -37,7 +37,7 @@ const createWebSocketServer = async (port: number = 3001) => {
     const extWs = ws as ExtWebSocket;
     extWs.isAlive = true;
     extWs.send(JSON.stringify({ type: 'WELCOME' }));
-    extWs.on('error', (error) => console.error('WebSocket error:', error));
+    extWs.on('error', (error) => Logger.error('WebSocket error:', error));
     extWs.on('pong', heartbeat);
   });
 
@@ -46,7 +46,7 @@ const createWebSocketServer = async (port: number = 3001) => {
     wss.clients.forEach((client) => {
       const extWs = client as ExtWebSocket;
       if (!extWs.isAlive) {
-        console.log(chalk.yellow('Terminating inactive client'));
+        Logger.warn('Terminating inactive client');
         return client.terminate();
       }
       extWs.isAlive = false;
@@ -59,11 +59,11 @@ const createWebSocketServer = async (port: number = 3001) => {
     clearInterval(pingInterval);
   });
 
-  console.log(chalk.green(`WebSocket server started on ws://localhost:${port}`));
+  Logger.success(`WebSocket server started on ws://localhost:${port}`);
 
   // Return a function to broadcast a message to all connected clients
   return (message: string) => {
-    console.log(chalk.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+    Logger.success(`Broadcasting message to ${wss.clients.size} client(s)`);
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);
@@ -322,17 +322,17 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
 
         await handle(req, res, parsedUrl);
       } catch (err) {
-        console.error('Error occurred handling', req.url, err);
+        Logger.error(`Error occurred handling ${req.url}`, err);
         res.statusCode = 500;
         res.end('internal server error');
       }
     })
       .once('error', (err: string) => {
-        console.error(err);
+        Logger.error(err);
         process.exit(1);
       })
       .listen(port, () => {
-        console.log(`> Ready on http://${hostname}:${port}`);
+        Logger.log(`> Ready on http://${hostname}:${port}`);
       });
   });
 
@@ -352,7 +352,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'unlink':
           if (!debounce) {
             debounce = true;
-            console.log(chalk.yellow('Public directory changed. Handoff will ingest the new data...'));
+            Logger.warn('Public directory changed. Handoff will ingest the new data...');
             await mergePublicDir(handoff);
             wss(JSON.stringify({ type: 'reload' }));
             debounce = false;
@@ -487,7 +487,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         case 'add':
         case 'change':
         case 'unlink':
-          console.log(chalk.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
+          Logger.warn(`Doc page ${event}ed. Please reload browser to see changes...`);
+          Logger.debug(`Path: ${path}`);
           break;
       }
     });

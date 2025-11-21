@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
@@ -13,6 +12,7 @@ import { processSharedStyles } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
 import { Config, RuntimeConfig } from './types/config';
+import { Logger } from './utils/logger';
 import { generateFilesystemSafeId } from './utils/path';
 
 class Handoff {
@@ -45,6 +45,7 @@ class Handoff {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
+    Logger.init({ debug: this.debug });
     this.init(config);
     global.handoff = this;
   }
@@ -134,7 +135,6 @@ class Handoff {
     return this;
   }
 
-
   async start(): Promise<Handoff> {
     this.preRunner();
     await watchApp(this);
@@ -207,16 +207,16 @@ class Handoff {
       },
       {
         log: (msg: string): void => {
-          console.log(msg);
+          Logger.log(msg);
         },
         err: (msg: string): void => {
-          console.log(chalk.red(msg));
+          Logger.error(msg);
         },
         warn: (msg: string): void => {
-          console.log(chalk.yellow(msg));
+          Logger.warn(msg);
         },
         success: (msg: string): void => {
-          console.log(chalk.green(msg));
+          Logger.success(msg);
         },
       }
     );
@@ -376,10 +376,7 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
   if (!!handoff.config.entries?.js) {
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   } else {
-    console.log(
-      chalk.red('No js entry found in config'),
-      handoff.debug ? `Path: ${path.resolve(handoff.workingPath, handoff.config.entries?.js)}` : ''
-    );
+    Logger.error('No js entry found in config');
   }
 
   if (handoff.config.entries?.components?.length) {
@@ -389,7 +386,7 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
       const componentBaseName = path.basename(resolvedComponentPath);
       const versions = getVersionsForComponent(resolvedComponentPath);
       if (!versions.length) {
-        console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+        Logger.warn(`No versions found for component at: ${resolvedComponentPath}`);
         continue;
       }
 
@@ -402,7 +399,7 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
         const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentVersionPath, file)));
 
         if (!configFileName) {
-          console.warn(`Missing config: ${path.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
+          Logger.warn(`Missing config: ${path.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
           continue;
         }
 
@@ -422,7 +419,7 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
             component = importedComponent.default || importedComponent;
           }
         } catch (err) {
-          console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+          Logger.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
           continue;
         }
 
@@ -509,12 +506,12 @@ const validateConfig = (config: Config): Config => {
   // TODO: Check to see if the exported folder exists before we run start
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
     // check to see if we can get this from the env
-    console.error(chalk.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+    Logger.error('Figma project id not found in config or env. Please run `handoff-app fetch` first.');
     throw new Error('Cannot initialize configuration');
   }
   if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
     // check to see if we can get this from the env
-    console.error(chalk.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+    Logger.error('Dev access token not found in config or env. Please run `handoff-app fetch` first.');
     throw new Error('Cannot initialize configuration');
   }
   return config;
@@ -531,7 +528,7 @@ const getVersionsForComponent = (componentPath: string): string[] => {
       if (semver.valid(versionDirectory)) {
         versions.push(versionDirectory);
       } else {
-        console.error(`Invalid version directory ${versionDirectory}`);
+        Logger.error(`Invalid version directory ${versionDirectory}`);
       }
     }
   }
