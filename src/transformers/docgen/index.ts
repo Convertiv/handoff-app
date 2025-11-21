@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { withCustomConfig } from 'react-docgen-typescript';
+import { Logger } from '../../utils/logger';
 import { DocgenParserConfig, DocgenResult } from '../types';
 import { convertDocgenToProperties } from '../utils/schema';
 
@@ -20,7 +21,7 @@ export const generatePropertiesFromDocgen = async (
     
     // Check if tsconfig exists
     if (!fs.existsSync(tsconfigPath)) {
-      console.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
+      Logger.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
     }
     
     const parserConfig: DocgenParserConfig = {
@@ -47,7 +48,7 @@ export const generatePropertiesFromDocgen = async (
     
     return null;
   } catch (error) {
-    console.warn(`Failed to generate docs with react-docgen-typescript for ${entry}:`, error);
+    Logger.warn(`Failed to generate docs with react-docgen-typescript for ${entry}: ${error}`);
     return null;
   }
 };

@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars';
+import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
 import { HandlebarsContext } from '../types';
 
@@ -15,7 +16,7 @@ export const registerHandlebarsHelpers = (
   Handlebars.registerHelper('field', function (field: string, options: any) {
     if (injectFieldWrappers) {
       if (!field) {
-        console.error(`Missing field declaration for ${data.id}`);
+        Logger.error(`Missing field declaration for ${data.id}`);
         return options.fn(this);
       }
       
@@ -29,7 +30,7 @@ export const registerHandlebarsHelpers = (
       }
       
       if (!current) {
-        console.error(`Undefined field path for ${data.id}`);
+        Logger.error(`Undefined field path for ${data.id}`);
         return options.fn(this);
       }
       

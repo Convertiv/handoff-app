@@ -19,12 +19,14 @@ const path_1 = __importDefault(require("path"));
 const react_1 = __importDefault(require("react"));
 const server_1 = __importDefault(require("react-dom/server"));
 const vite_1 = require("vite");
+const logger_1 = require("../../utils/logger");
 const docgen_1 = require("../docgen");
 const build_1 = require("../utils/build");
 const html_1 = require("../utils/html");
 const module_1 = require("../utils/module");
 const schema_loader_1 = require("../utils/schema-loader");
 const string_1 = require("../utils/string");
+const vite_logger_1 = require("../utils/vite-logger");
 /**
  * Constants for the SSR render plugin
  */
@@ -66,7 +68,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 }
             }
             catch (error) {
-                console.warn(`Failed to load component file ${componentPath}:`, error);
+                logger_1.Logger.warn(`Failed to load component file "${componentPath}": ${error}`);
             }
         }
         // Step 3: Load component for rendering (if not already loaded)
@@ -76,7 +78,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 component = moduleExports.exports.default;
             }
             catch (error) {
-                console.error(`Failed to load component for rendering: ${componentPath}`, error);
+                logger_1.Logger.error(`Failed to load component for rendering "${componentPath}":`, error);
                 return [null, null];
             }
         }
@@ -138,8 +140,11 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
     return {
         name: PLUGIN_CONSTANTS.PLUGIN_NAME,
         apply: 'build',
+        config: () => ({
+            customLogger: (0, vite_logger_1.createViteLogger)(),
+        }),
         resolveId(resolveId) {
-            console.log('resolveId', resolveId);
+            logger_1.Logger.debug('resolveId', resolveId);
             if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
                 return resolveId;
             }
@@ -164,7 +169,7 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
                 // Load component schema and module
                 const [schemaProperties, ReactComponent] = yield loadComponentSchemaAndModule(componentData, componentPath, handoff);
                 if (!ReactComponent) {
-                    console.error(`Failed to load React component for ${componentId}`);
+                    logger_1.Logger.error(`Failed to load React component for ${componentId}`);
                     return;
                 }
                 // Apply schema properties if found
@@ -202,7 +207,7 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
                     // Generate client-side hydration code
                     const clientHydrationSource = generateClientHydrationSource(componentPath);
                     // Build client-side bundle
-                    const clientBuildConfig = Object.assign(Object.assign({}, build_1.DEFAULT_CLIENT_BUILD_CONFIG), { stdin: {
+                    const clientBuildConfig = Object.assign(Object.assign({}, build_1.DEFAULT_CLIENT_BUILD_CONFIG), { logLevel: 'silent', stdin: {
                             contents: clientHydrationSource,
                             resolveDir: process.cwd(),
                             loader: 'tsx',
@@ -211,8 +216,23 @@ function ssrRenderPlugin(componentData, documentationComponents, handoff) {
                     const finalClientBuildConfig = ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.clientBuildConfig)
                         ? handoff.config.hooks.clientBuildConfig(clientBuildConfig)
                         : clientBuildConfig;
-                    const bundledClient = yield esbuild_1.default.build(finalClientBuildConfig);
-                    const clientBundleJs = bundledClient.outputFiles[0].text;
+                    let clientBundleJs;
+                    try {
+                        const bundledClient = yield esbuild_1.default.build(finalClientBuildConfig);
+                        if (bundledClient.warnings.length > 0) {
+                            const messages = yield esbuild_1.default.formatMessages(bundledClient.warnings, { kind: 'warning', color: true });
+                            messages.forEach((msg) => logger_1.Logger.warn(msg));
+                        }
+                        clientBundleJs = bundledClient.outputFiles[0].text;
+                    }
+                    catch (error) {
+                        logger_1.Logger.error(`Failed to build client bundle for ${componentId}`);
+                        if (error.errors) {
+                            const messages = yield esbuild_1.default.formatMessages(error.errors, { kind: 'error', color: true });
+                            messages.forEach((msg) => logger_1.Logger.error(msg));
+                        }
+                        continue;
+                    }
                     // Generate complete HTML document
                     finalHtml = generateHtmlDocument(componentId, componentData.previews[previewKey].title, formattedHtml, clientBundleJs, previewProps);
                     // Emit preview files

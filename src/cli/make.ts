@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
+import { Logger } from '../utils/logger';
 import { prompt } from '../utils/prompt';
 
 /**
@@ -10,12 +11,12 @@ import { prompt } from '../utils/prompt';
  */
 export const makeTemplate = async (handoff: Handoff, component: string, state: string) => {
   if (!handoff?.runtimeConfig?.entries?.templates) {
-    console.log(chalk.red(`Runtime config does not specify entry for templates.`));
+    Logger.error(`Runtime config does not specify entry for templates.`);
     return;
   }
 
   if (!component) {
-    console.log(chalk.red(`Template component must be set`));
+    Logger.error(`Template component must be set`);
     return;
   }
 
@@ -24,12 +25,12 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
   }
 
   if (!/^[a-z0-9]+$/i.test(component)) {
-    console.log(chalk.red(`Template component must be alphanumeric and may contain dashes or underscores`));
+    Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
     return;
   }
 
   if (!/^[a-z0-9]+$/i.test(state)) {
-    console.log(chalk.red(`Template state must be alphanumeric and may contain dashes or underscores`));
+    Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
     return;
   }
 
@@ -42,14 +43,14 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
   const target = path.resolve(workingPath, `${state}.html`);
   if (fs.existsSync(target)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`));
+      Logger.warn(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`);
       return;
     }
   }
   const templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'template.html'));
   const template = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(target, template);
-  console.log(chalk.green(`New template ${state}.html was created in ${workingPath}`));
+  Logger.success(`New template ${state}.html was created in ${workingPath}`);
   return handoff;
 };
 
@@ -60,18 +61,18 @@ export const makeTemplate = async (handoff: Handoff, component: string, state: s
 export const makePage = async (handoff: Handoff, name: string, parent: string | undefined) => {
   let type = 'md';
   if (!name) {
-    console.log(chalk.red(`Page name must be set`));
+    Logger.error(`Page name must be set`);
     return;
   }
   if (!/^[a-z0-9]+$/i.test(name)) {
-    console.log(chalk.red(`Page name must be alphanumeric and may contain dashes or underscores`));
+    Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
     return;
   }
 
   let workingPath, sourcePath, templatePath;
   if (parent) {
     if (!/^[a-z0-9]+$/i.test(parent)) {
-      console.log(chalk.red(`Parent name must be alphanumeric and may contain dashes or underscores`));
+      Logger.error(`Parent name must be alphanumeric and may contain dashes or underscores`);
       return;
     }
     workingPath = path.resolve(path.join(handoff.workingPath, `pages`, parent));
@@ -88,7 +89,7 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
   const target = path.resolve(workingPath, `${name}.${type}`);
   if (fs.existsSync(target)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`'${name}' already exists as custom page.  Use the --force flag revert it to default.`));
+      Logger.warn(`'${name}' already exists as custom page.  Use the --force flag revert it to default.`);
       return;
     }
   }
@@ -99,7 +100,7 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
   }
   const template = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(target, template);
-  console.log(chalk.green(`New template ${name}.${type} was created in ${workingPath}`));
+  Logger.success(`New template ${name}.${type} was created in ${workingPath}`);
   return handoff;
 };
 
@@ -109,7 +110,7 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
  */
 export const makeComponent = async (handoff: Handoff, name: string) => {
   if (!name) {
-    console.log(chalk.red(`Component name must be set`));
+    Logger.error(`Component name must be set`);
     return;
   }
 
@@ -124,7 +125,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   const targetHtml = path.resolve(workingPath, `${name}.hbs`);
   if (fs.existsSync(targetHtml)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`'${name}' already exists as custom component.`));
+      Logger.warn(`'${name}' already exists as custom component.`);
       return;
     }
   }
@@ -132,7 +133,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   const htmlPath = path.resolve(templatePath, 'template.hbs');
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);
-  console.log(chalk.green(`New component ${name}.hbs was created in ${workingPath}`));
+  Logger.success(`New component ${name}.hbs was created in ${workingPath}`);
 
   const jsonpath = path.resolve(templatePath, 'template.json');
   const jsonTemplate = fs.readFileSync(jsonpath, 'utf8');
@@ -140,7 +141,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
   const writeJSFile = await prompt(chalk.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
   if (writeJSFile === 'y') {
-    console.log(chalk.green(`Writing ${name}.js.\n`));
+    Logger.success(`Writing ${name}.js.\n`);
     const jsPath = path.resolve(templatePath, 'template.js');
     const jsTemplate = fs.readFileSync(jsPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.js`), jsTemplate);
@@ -148,7 +149,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   const writeSassFile = await prompt(chalk.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
 
   if (writeSassFile === 'y') {
-    console.log(chalk.green(`Writing ${name}.scss.\n`));
+    Logger.success(`Writing ${name}.scss.\n`);
     const scssPath = path.resolve(templatePath, 'template.scss');
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
