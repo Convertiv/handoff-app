@@ -124,11 +124,11 @@ const getAppPath = (handoff) => {
  * Copy the public dir from the working dir to the module dir
  * @param handoff
  */
-const mergePublicDir = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const syncPublicFiles = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
     const workingPublicPath = getWorkingPublicPath(handoff);
     if (workingPublicPath) {
-        fs_extra_1.default.copySync(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
+        yield fs_extra_1.default.copy(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
     }
 });
 /**
@@ -138,53 +138,64 @@ const mergePublicDir = (handoff) => __awaiter(void 0, void 0, void 0, function* 
  * @param handoff - The Handoff instance containing configuration and working paths
  * @returns Promise that resolves when cleanup is complete
  */
-const performCleanup = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const cleanupAppDirectory = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
     // Clean project app dir
     if (fs_extra_1.default.existsSync(appPath)) {
-        yield fs_extra_1.default.rm(appPath, { recursive: true });
+        yield fs_extra_1.default.remove(appPath);
     }
 });
-const publishTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Publishes the tokens API files to the public directory.
+ *
+ * @param handoff - The Handoff instance
+ */
+const generateTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const apiPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'public/api'));
-    if (!fs_extra_1.default.existsSync(apiPath)) {
-        fs_extra_1.default.mkdirSync(apiPath, { recursive: true });
-    }
+    yield fs_extra_1.default.ensureDir(apiPath);
     const tokens = yield handoff.getDocumentationObject();
     // Early return if no tokens
     if (!tokens) {
         // Write empty tokens.json for API consistency
-        fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify({}, null, 2));
+        yield fs_extra_1.default.writeJson(path_1.default.join(apiPath, 'tokens.json'), {}, { spaces: 2 });
         return;
     }
-    fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens.json'), JSON.stringify(tokens, null, 2));
-    if (!fs_extra_1.default.existsSync(path_1.default.join(apiPath, 'tokens'))) {
-        fs_extra_1.default.mkdirSync(path_1.default.join(apiPath, 'tokens'), { recursive: true });
-    }
+    yield fs_extra_1.default.writeJson(path_1.default.join(apiPath, 'tokens.json'), tokens, { spaces: 2 });
+    const tokensDir = path_1.default.join(apiPath, 'tokens');
+    yield fs_extra_1.default.ensureDir(tokensDir);
     // Only iterate if tokens has properties
     if (tokens && typeof tokens === 'object') {
+        const promises = [];
         for (const type in tokens) {
             if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object')
                 continue;
             for (const group in tokens[type]) {
                 if (tokens[type][group]) {
-                    fs_extra_1.default.writeFileSync(path_1.default.join(apiPath, 'tokens', `${group}.json`), JSON.stringify(tokens[type][group], null, 2));
+                    promises.push(fs_extra_1.default.writeJson(path_1.default.join(tokensDir, `${group}.json`), tokens[type][group], { spaces: 2 }));
                 }
             }
         }
+        yield Promise.all(promises);
     }
 });
-const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Prepares the project application by copying source files and configuring Next.js.
+ *
+ * @param handoff - The Handoff instance
+ * @returns The path to the prepared application directory
+ */
+const initializeProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     const srcPath = path_1.default.resolve(handoff.modulePath, 'src', 'app');
     const appPath = getAppPath(handoff);
     // Publish tokens API
-    publishTokensApi(handoff);
+    yield generateTokensApi(handoff);
     // Prepare project app dir
-    yield fs_extra_1.default.promises.mkdir(appPath, { recursive: true });
+    yield fs_extra_1.default.ensureDir(appPath);
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
-    yield mergePublicDir(handoff);
+    yield syncPublicFiles(handoff);
     // Prepare project app configuration
+    // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
     const handoffProjectId = handoff.getProjectId();
     const handoffAppBasePath = (_a = handoff.config.app.base_path) !== null && _a !== void 0 ? _a : '';
     const handoffWorkingPath = path_1.default.resolve(handoff.workingPath);
@@ -205,14 +216,256 @@ const prepareProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, functio
     yield fs_extra_1.default.writeFile(nextConfigPath, nextConfigContent);
     return appPath;
 });
-const persistRuntimeCache = (handoff) => {
+/**
+ * Persists the runtime configuration and client config to a JSON file.
+ *
+ * @param handoff - The Handoff instance
+ */
+const persistRuntimeCache = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
     const destination = path_1.default.resolve(appPath, 'runtime.cache.json');
     // Ensure directory exists
-    if (!fs_extra_1.default.existsSync(appPath)) {
-        fs_extra_1.default.mkdirSync(appPath, { recursive: true });
+    yield fs_extra_1.default.ensureDir(appPath);
+    yield fs_extra_1.default.writeJson(destination, Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.runtimeConfig), { spaces: 2 });
+});
+/**
+ * Watches the working public directory for changes and updates the app.
+ *
+ * @param handoff - The Handoff instance
+ * @param wss - The WebSocket broadcaster
+ * @param state - The shared watcher state
+ * @param chokidarConfig - Configuration for chokidar
+ */
+const watchPublicDirectory = (handoff, wss, state, chokidarConfig) => {
+    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
+        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    if (!state.debounce) {
+                        state.debounce = true;
+                        try {
+                            logger_1.Logger.warn('Public directory changed. Handoff will ingest the new data...');
+                            yield syncPublicFiles(handoff);
+                            wss(JSON.stringify({ type: 'reload' }));
+                        }
+                        catch (e) {
+                            logger_1.Logger.error('Error syncing public directory:', e);
+                        }
+                        finally {
+                            state.debounce = false;
+                        }
+                    }
+                    break;
+            }
+        }));
     }
-    fs_extra_1.default.writeFileSync(destination, JSON.stringify(Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.runtimeConfig), null, 2), 'utf-8');
+};
+/**
+ * Watches the application source code for changes.
+ *
+ * @param handoff - The Handoff instance
+ */
+const watchAppSource = (handoff) => {
+    chokidar_1.default
+        .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
+        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        persistent: true,
+        ignoreInitial: true,
+    })
+        .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+        switch (event) {
+            case 'add':
+            case 'change':
+            case 'unlink':
+                try {
+                    yield initializeProjectApp(handoff);
+                }
+                catch (e) {
+                    logger_1.Logger.error('Error initializing project app:', e);
+                }
+                break;
+        }
+    }));
+};
+/**
+ * Watches the user's pages directory for changes.
+ *
+ * @param handoff - The Handoff instance
+ * @param chokidarConfig - Configuration for chokidar
+ */
+const watchPages = (handoff, chokidarConfig) => {
+    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
+        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    try {
+                        logger_1.Logger.warn(`Doc page ${event}ed. Please reload browser to see changes...`);
+                        logger_1.Logger.debug(`Path: ${path}`);
+                    }
+                    catch (e) {
+                        logger_1.Logger.error('Error watching pages:', e);
+                    }
+                    break;
+            }
+        }));
+    }
+};
+/**
+ * Watches the SCSS entry point for changes.
+ *
+ * @param handoff - The Handoff instance
+ * @param state - The shared watcher state
+ * @param chokidarConfig - Configuration for chokidar
+ */
+const watchScss = (handoff, state, chokidarConfig) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.scss) && fs_extra_1.default.existsSync((_d = (_c = handoff.runtimeConfig) === null || _c === void 0 ? void 0 : _c.entries) === null || _d === void 0 ? void 0 : _d.scss)) {
+        const stat = yield fs_extra_1.default.stat(handoff.runtimeConfig.entries.scss);
+        chokidar_1.default
+            .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
+            .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    if (!state.debounce) {
+                        state.debounce = true;
+                        try {
+                            yield handoff.getSharedStyles();
+                        }
+                        catch (e) {
+                            logger_1.Logger.error('Error processing shared styles:', e);
+                        }
+                        finally {
+                            state.debounce = false;
+                        }
+                    }
+            }
+        }));
+    }
+});
+/**
+ * Maps configuration entry types to component segments.
+ */
+const mapEntryTypeToSegment = (type) => {
+    return {
+        js: builder_1.ComponentSegment.JavaScript,
+        scss: builder_1.ComponentSegment.Style,
+        template: builder_1.ComponentSegment.Previews,
+        templates: builder_1.ComponentSegment.Previews,
+    }[type];
+};
+/**
+ * Gets the paths of runtime components to watch.
+ *
+ * @param handoff - The Handoff instance
+ * @returns A Map of paths to watch and their entry types
+ */
+const getRuntimeComponentsPathsToWatch = (handoff) => {
+    var _a, _b, _c;
+    const result = new Map();
+    for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
+        for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
+            const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
+            for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
+                const normalizedComponentEntryPath = runtimeComponentEntryPath;
+                if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
+                    const entryType = runtimeComponentEntryType;
+                    if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
+                        result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
+                    }
+                    else {
+                        result.set(normalizedComponentEntryPath, entryType);
+                    }
+                }
+            }
+        }
+    }
+    return result;
+};
+/**
+ * Watches runtime components for changes.
+ *
+ * @param handoff - The Handoff instance
+ * @param state - The shared watcher state
+ * @param runtimeComponentPathsToWatch - Map of paths to watch
+ */
+const watchRuntimeComponents = (handoff, state, runtimeComponentPathsToWatch) => {
+    persistRuntimeCache(handoff);
+    if (state.runtimeComponentsWatcher) {
+        state.runtimeComponentsWatcher.close();
+    }
+    if (runtimeComponentPathsToWatch.size > 0) {
+        const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
+        state.runtimeComponentsWatcher = chokidar_1.default.watch(pathsToWatch, { ignoreInitial: true });
+        state.runtimeComponentsWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+            if (handoff.getConfigFilePaths().includes(file)) {
+                return;
+            }
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    if (!state.debounce) {
+                        state.debounce = true;
+                        try {
+                            const entryType = runtimeComponentPathsToWatch.get(file);
+                            const segmentToUpdate = entryType ? mapEntryTypeToSegment(entryType) : undefined;
+                            const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
+                            yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
+                        }
+                        catch (e) {
+                            logger_1.Logger.error('Error processing component:', e);
+                        }
+                        finally {
+                            state.debounce = false;
+                        }
+                    }
+                    break;
+            }
+        }));
+    }
+};
+/**
+ * Watches the runtime configuration for changes.
+ *
+ * @param handoff - The Handoff instance
+ * @param state - The shared watcher state
+ */
+const watchRuntimeConfiguration = (handoff, state) => {
+    if (state.runtimeConfigurationWatcher) {
+        state.runtimeConfigurationWatcher.close();
+    }
+    if (handoff.getConfigFilePaths().length > 0) {
+        state.runtimeConfigurationWatcher = chokidar_1.default.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
+        state.runtimeConfigurationWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
+            switch (event) {
+                case 'add':
+                case 'change':
+                case 'unlink':
+                    if (!state.debounce) {
+                        state.debounce = true;
+                        try {
+                            file = path_1.default.dirname(path_1.default.dirname(file));
+                            handoff.reload();
+                            watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
+                        }
+                        catch (e) {
+                            logger_1.Logger.error('Error reloading runtime configuration:', e);
+                        }
+                        finally {
+                            state.debounce = false;
+                        }
+                    }
+                    break;
+            }
+        }));
+    }
 };
 /**
  * Build the next js application
@@ -221,11 +474,11 @@ const persistRuntimeCache = (handoff) => {
  */
 const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // Perform cleanup
-    yield performCleanup(handoff);
+    yield cleanupAppDirectory(handoff);
     // Build components
     yield (0, pipeline_1.buildComponents)(handoff);
     // Prepare app
-    const appPath = yield prepareProjectApp(handoff);
+    const appPath = yield initializeProjectApp(handoff);
     persistRuntimeCache(handoff);
     // Build app
     const buildResult = cross_spawn_1.default.sync('npx', ['next', 'build'], {
@@ -242,42 +495,28 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     }
     // Ensure output root directory exists
     const outputRoot = path_1.default.resolve(handoff.workingPath, handoff.sitesDirectory);
-    if (!fs_extra_1.default.existsSync(outputRoot)) {
-        fs_extra_1.default.mkdirSync(outputRoot, { recursive: true });
-    }
+    yield fs_extra_1.default.ensureDir(outputRoot);
     // Clean the project output directory (if exists)
     const output = path_1.default.resolve(outputRoot, handoff.getProjectId());
     if (fs_extra_1.default.existsSync(output)) {
-        fs_extra_1.default.removeSync(output);
+        yield fs_extra_1.default.remove(output);
     }
     // Copy the build files into the project output directory
-    fs_extra_1.default.copySync(path_1.default.resolve(appPath, 'out'), output);
+    yield fs_extra_1.default.copy(path_1.default.resolve(appPath, 'out'), output);
 });
 /**
- * Watch the next js application
+ * Watch the next js application.
+ * Starts a custom dev server with Handoff-specific watchers and hot-reloading.
+ *
  * @param handoff
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d;
     // Initial processing of the components
     yield (0, builder_1.default)(handoff);
-    const appPath = yield prepareProjectApp(handoff);
-    // Include any changes made within the app source during watch
-    chokidar_1.default
-        .watch(path_1.default.resolve(handoff.modulePath, 'src', 'app'), {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
-        persistent: true,
-        ignoreInitial: true,
-    })
-        .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
-        switch (event) {
-            case 'add':
-            case 'change':
-            case 'unlink':
-                yield prepareProjectApp(handoff);
-                break;
-        }
-    }));
+    const appPath = yield initializeProjectApp(handoff);
+    // Watch app source
+    watchAppSource(handoff);
     // // does a ts config exist?
     // let tsconfigPath = 'tsconfig.json';
     // config.typescript = {
@@ -299,7 +538,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // purge out cache
     const moduleOutput = path_1.default.resolve(appPath, 'out');
     if (fs_extra_1.default.existsSync(moduleOutput)) {
-        fs_extra_1.default.removeSync(moduleOutput);
+        yield fs_extra_1.default.remove(moduleOutput);
     }
     app.prepare().then(() => {
         (0, http_1.createServer)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -332,154 +571,32 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         persistent: true,
         ignoreInitial: true,
     };
-    let debounce = false;
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
-            switch (event) {
-                case 'add':
-                case 'change':
-                case 'unlink':
-                    if (!debounce) {
-                        debounce = true;
-                        logger_1.Logger.warn('Public directory changed. Handoff will ingest the new data...');
-                        yield mergePublicDir(handoff);
-                        wss(JSON.stringify({ type: 'reload' }));
-                        debounce = false;
-                    }
-                    break;
-            }
-        }));
-    }
-    let runtimeComponentsWatcher = null;
-    let runtimeConfigurationWatcher = null;
-    const entryTypeToSegment = (type) => {
-        return {
-            js: builder_1.ComponentSegment.JavaScript,
-            scss: builder_1.ComponentSegment.Style,
-            template: builder_1.ComponentSegment.Previews,
-            templates: builder_1.ComponentSegment.Previews,
-        }[type];
+    const state = {
+        debounce: false,
+        runtimeComponentsWatcher: null,
+        runtimeConfigurationWatcher: null,
     };
-    const watchRuntimeComponents = (runtimeComponentPathsToWatch) => {
-        persistRuntimeCache(handoff);
-        if (runtimeComponentsWatcher) {
-            runtimeComponentsWatcher.close();
-        }
-        if (runtimeComponentPathsToWatch.size > 0) {
-            const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
-            runtimeComponentsWatcher = chokidar_1.default.watch(pathsToWatch, { ignoreInitial: true });
-            runtimeComponentsWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-                if (handoff.getConfigFilePaths().includes(file)) {
-                    return;
-                }
-                switch (event) {
-                    case 'add':
-                    case 'change':
-                    case 'unlink':
-                        if (!debounce) {
-                            debounce = true;
-                            const entryType = runtimeComponentPathsToWatch.get(file);
-                            const segmentToUpdate = entryType ? entryTypeToSegment(entryType) : undefined;
-                            const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
-                            yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
-                            debounce = false;
-                        }
-                        break;
-                }
-            }));
-        }
-    };
-    const watchRuntimeConfiguration = () => {
-        if (runtimeConfigurationWatcher) {
-            runtimeConfigurationWatcher.close();
-        }
-        if (handoff.getConfigFilePaths().length > 0) {
-            runtimeConfigurationWatcher = chokidar_1.default.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
-            runtimeConfigurationWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-                switch (event) {
-                    case 'add':
-                    case 'change':
-                    case 'unlink':
-                        if (!debounce) {
-                            debounce = true;
-                            file = path_1.default.dirname(path_1.default.dirname(file));
-                            handoff.reload();
-                            watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-                            yield (0, builder_1.default)(handoff, path_1.default.basename(file));
-                            debounce = false;
-                        }
-                        break;
-                }
-            }));
-        }
-    };
-    const getRuntimeComponentsPathsToWatch = () => {
-        var _a, _b, _c;
-        const result = new Map();
-        for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
-            for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
-                const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
-                for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
-                    const normalizedComponentEntryPath = runtimeComponentEntryPath;
-                    if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
-                        const entryType = runtimeComponentEntryType;
-                        if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
-                            result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
-                        }
-                        else {
-                            result.set(normalizedComponentEntryPath, entryType);
-                        }
-                    }
-                }
-            }
-        }
-        return result;
-    };
-    watchRuntimeComponents(getRuntimeComponentsPathsToWatch());
-    watchRuntimeConfiguration();
-    if (((_f = (_e = handoff.runtimeConfig) === null || _e === void 0 ? void 0 : _e.entries) === null || _f === void 0 ? void 0 : _f.scss) && fs_extra_1.default.existsSync((_h = (_g = handoff.runtimeConfig) === null || _g === void 0 ? void 0 : _g.entries) === null || _h === void 0 ? void 0 : _h.scss)) {
-        const stat = yield fs_extra_1.default.stat(handoff.runtimeConfig.entries.scss);
-        chokidar_1.default
-            .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
-            .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
-            switch (event) {
-                case 'add':
-                case 'change':
-                case 'unlink':
-                    if (!debounce) {
-                        debounce = true;
-                        yield handoff.getSharedStyles();
-                        debounce = false;
-                    }
-            }
-        }));
-    }
-    if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
-            switch (event) {
-                case 'add':
-                case 'change':
-                case 'unlink':
-                    logger_1.Logger.warn(`Doc page ${event}ed. Please reload browser to see changes...`);
-                    logger_1.Logger.debug(`Path: ${path}`);
-                    break;
-            }
-        }));
-    }
+    watchPublicDirectory(handoff, wss, state, chokidarConfig);
+    watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+    watchRuntimeConfiguration(handoff, state);
+    yield watchScss(handoff, state, chokidarConfig);
+    watchPages(handoff, chokidarConfig);
 });
 exports.watchApp = watchApp;
 /**
- * Watch the next js application
+ * Watch the next js application using the standard Next.js dev server.
+ * This is useful for debugging the Next.js app itself without the Handoff overlay.
+ *
  * @param handoff
  */
 const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     // Prepare app
-    const appPath = yield prepareProjectApp(handoff);
+    const appPath = yield initializeProjectApp(handoff);
     // Purge app cache
     const moduleOutput = path_1.default.resolve(appPath, 'out');
     if (fs_extra_1.default.existsSync(moduleOutput)) {
-        fs_extra_1.default.removeSync(moduleOutput);
+        yield fs_extra_1.default.remove(moduleOutput);
     }
     persistRuntimeCache(handoff);
     // Run
