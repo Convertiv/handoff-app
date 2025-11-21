@@ -54,7 +54,7 @@ const buildJsBundle = async (
 
     await viteBuild(viteConfig);
   } catch (e) {
-    Logger.error(`Error building ${outputFilename}`, e);
+    Logger.error(`Failed to build JS for "${outputFilename}":`, e);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
@@ -98,7 +98,7 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
     const compiled = await fs.readFile(path.resolve(outputPath, `${id}.js`), 'utf8');
     data['jsCompiled'] = compiled;
   } catch (e) {
-    Logger.error(`[Component JS Build Error] ${id}:`, e);
+    Logger.error(`JS build failed for component "${id}":`, e);
   }
 
   return data;

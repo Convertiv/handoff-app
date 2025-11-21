@@ -11,7 +11,7 @@ export const ejectConfig = async (handoff: Handoff) => {
   const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.js'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
-      Logger.error(`A config already exists in the working directory.  Use the --force flag to overwrite.`);
+      Logger.error(`Config file already exists. Use "--force" to overwrite.`);
     }
   }
   // load the template as a string

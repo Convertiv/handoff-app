@@ -376,7 +376,7 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
   if (!!handoff.config.entries?.js) {
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   } else {
-    Logger.error('No js entry found in config');
+    Logger.error('No JavaScript entry point found in configuration.');
   }
 
   if (handoff.config.entries?.components?.length) {
@@ -506,12 +506,12 @@ const validateConfig = (config: Config): Config => {
   // TODO: Check to see if the exported folder exists before we run start
   if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
     // check to see if we can get this from the env
-    Logger.error('Figma project id not found in config or env. Please run `handoff-app fetch` first.');
+    Logger.error('Figma Project ID missing. Please set HANDOFF_FIGMA_PROJECT_ID or run "handoff-app fetch".');
     throw new Error('Cannot initialize configuration');
   }
   if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
     // check to see if we can get this from the env
-    Logger.error('Dev access token not found in config or env. Please run `handoff-app fetch` first.');
+    Logger.error('Figma Access Token missing. Please set HANDOFF_DEV_ACCESS_TOKEN or run "handoff-app fetch".');
     throw new Error('Cannot initialize configuration');
   }
   return config;

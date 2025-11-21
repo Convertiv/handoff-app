@@ -18,7 +18,7 @@ export const loadSchemaFromFile = async (
   const ext = path.extname(schemaPath);
   
   if (ext !== '.ts' && ext !== '.tsx') {
-    Logger.warn(`Schema file has unsupported extension: ${ext}`);
+    Logger.warn(`Unsupported schema file extension: ${ext}`);
     return null;
   }
 
@@ -41,7 +41,7 @@ export const loadSchemaFromFile = async (
     
     return null;
   } catch (error) {
-    Logger.warn(`Failed to load separate schema file ${schemaPath}: ${error}`);
+    Logger.warn(`Failed to load schema file "${schemaPath}": ${error}`);
     return null;
   }
 };

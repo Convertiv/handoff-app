@@ -73,7 +73,7 @@ const buildCssBundle = (_a) => __awaiter(void 0, [_a], void 0, function* ({ entr
         yield (0, vite_1.build)(viteConfig);
     }
     catch (e) {
-        logger_1.Logger.error(`Error building CSS for ${entry}`);
+        logger_1.Logger.error(`Failed to build CSS for "${entry}"`);
         throw e;
     }
     finally {
@@ -144,7 +144,7 @@ const buildComponentCss = (data, handoff, sharedStyles) => __awaiter(void 0, voi
         }
     }
     catch (e) {
-        logger_1.Logger.error(`Error building CSS for ${id}`);
+        logger_1.Logger.error(`Failed to build CSS for "${id}"`);
         throw e;
     }
     return data;
@@ -160,7 +160,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
         const stat = yield fs_extra_1.default.stat(runtimeConfig.entries.scss);
         const entryPath = stat.isDirectory() ? path_1.default.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
         if (entryPath === runtimeConfig.entries.scss || fs_extra_1.default.existsSync(entryPath)) {
-            logger_1.Logger.success(`Building main CSS file`);
+            logger_1.Logger.success(`Building main CSS file...`);
             try {
                 // Setup SASS load paths
                 const loadPaths = [
@@ -180,7 +180,7 @@ const buildMainCss = (handoff) => __awaiter(void 0, void 0, void 0, function* ()
                 });
             }
             catch (e) {
-                logger_1.Logger.error(`Error building main CSS`, e);
+                logger_1.Logger.error(`Failed to build main CSS:`, e);
             }
         }
     }

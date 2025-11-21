@@ -59,7 +59,7 @@ const createWebSocketServer = async (port: number = 3001) => {
     clearInterval(pingInterval);
   });
 
-  Logger.success(`WebSocket server started on ws://localhost:${port}`);
+  Logger.success(`WebSocket server listening on ws://localhost:${port}`);
 
   // Return a function to broadcast a message to all connected clients
   return (message: string) => {
@@ -332,7 +332,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
         process.exit(1);
       })
       .listen(port, () => {
-        Logger.log(`> Ready on http://${hostname}:${port}`);
+        Logger.log(`Ready on http://${hostname}:${port}`);
       });
   });
 

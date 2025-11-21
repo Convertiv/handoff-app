@@ -51,7 +51,7 @@ const buildJsBundle = (_a, handoff_1) => __awaiter(void 0, [_a, handoff_1], void
         yield (0, vite_1.build)(viteConfig);
     }
     catch (e) {
-        logger_1.Logger.error(`Error building ${outputFilename}`, e);
+        logger_1.Logger.error(`Failed to build JS for "${outputFilename}":`, e);
     }
     finally {
         // Restore the original NODE_ENV value after vite build completes
@@ -93,7 +93,7 @@ const buildComponentJs = (data, handoff) => __awaiter(void 0, void 0, void 0, fu
         data['jsCompiled'] = compiled;
     }
     catch (e) {
-        logger_1.Logger.error(`[Component JS Build Error] ${id}:`, e);
+        logger_1.Logger.error(`JS build failed for component "${id}":`, e);
     }
     return data;
 });
