@@ -92,6 +92,7 @@ export const knownPaths = [
   'assets/logos',
   'foundations',
   'foundations/colors',
+  'foundations/icons',
   'foundations/effects',
   'foundations/logos',
   'foundations/logo',
