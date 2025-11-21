@@ -1,4 +1,5 @@
 import path from 'path';
+import { Logger } from '../../utils/logger';
 import { generatePropertiesFromDocgen } from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import { buildAndEvaluateModule } from './module';
@@ -17,7 +18,7 @@ export const loadSchemaFromFile = async (
   const ext = path.extname(schemaPath);
   
   if (ext !== '.ts' && ext !== '.tsx') {
-    console.warn(`Schema file has unsupported extension: ${ext}`);
+    Logger.warn(`Schema file has unsupported extension: ${ext}`);
     return null;
   }
 
@@ -40,7 +41,7 @@ export const loadSchemaFromFile = async (
     
     return null;
   } catch (error) {
-    console.warn(`Failed to load separate schema file ${schemaPath}:`, error);
+    Logger.warn(`Failed to load separate schema file ${schemaPath}: ${error}`);
     return null;
   }
 };

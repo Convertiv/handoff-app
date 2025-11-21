@@ -16,6 +16,7 @@ exports.makeComponent = exports.makePage = exports.makeTemplate = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
+const logger_1 = require("../utils/logger");
 const prompt_1 = require("../utils/prompt");
 /**
  * Make a new exportable component
@@ -24,22 +25,22 @@ const prompt_1 = require("../utils/prompt");
 const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     if (!((_b = (_a = handoff === null || handoff === void 0 ? void 0 : handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.templates)) {
-        console.log(chalk_1.default.red(`Runtime config does not specify entry for templates.`));
+        logger_1.Logger.error(`Runtime config does not specify entry for templates.`);
         return;
     }
     if (!component) {
-        console.log(chalk_1.default.red(`Template component must be set`));
+        logger_1.Logger.error(`Template component must be set`);
         return;
     }
     if (!state) {
         state = 'default';
     }
     if (!/^[a-z0-9]+$/i.test(component)) {
-        console.log(chalk_1.default.red(`Template component must be alphanumeric and may contain dashes or underscores`));
+        logger_1.Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
         return;
     }
     if (!/^[a-z0-9]+$/i.test(state)) {
-        console.log(chalk_1.default.red(`Template state must be alphanumeric and may contain dashes or underscores`));
+        logger_1.Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
         return;
     }
     const workingPath = path_1.default.resolve(handoff.runtimeConfig.entries.templates, component);
@@ -49,14 +50,14 @@ const makeTemplate = (handoff, component, state) => __awaiter(void 0, void 0, vo
     const target = path_1.default.resolve(workingPath, `${state}.html`);
     if (fs_extra_1.default.existsSync(target)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`));
+            logger_1.Logger.warn(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`);
             return;
         }
     }
     const templatePath = path_1.default.resolve(path_1.default.join(handoff.modulePath, 'config/templates', 'template.html'));
     const template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
     fs_extra_1.default.writeFileSync(target, template);
-    console.log(chalk_1.default.green(`New template ${state}.html was created in ${workingPath}`));
+    logger_1.Logger.success(`New template ${state}.html was created in ${workingPath}`);
     return handoff;
 });
 exports.makeTemplate = makeTemplate;
@@ -67,17 +68,17 @@ exports.makeTemplate = makeTemplate;
 const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, function* () {
     let type = 'md';
     if (!name) {
-        console.log(chalk_1.default.red(`Page name must be set`));
+        logger_1.Logger.error(`Page name must be set`);
         return;
     }
     if (!/^[a-z0-9]+$/i.test(name)) {
-        console.log(chalk_1.default.red(`Page name must be alphanumeric and may contain dashes or underscores`));
+        logger_1.Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
         return;
     }
     let workingPath, sourcePath, templatePath;
     if (parent) {
         if (!/^[a-z0-9]+$/i.test(parent)) {
-            console.log(chalk_1.default.red(`Parent name must be alphanumeric and may contain dashes or underscores`));
+            logger_1.Logger.error(`Parent name must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `pages`, parent));
@@ -93,7 +94,7 @@ const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, fu
     const target = path_1.default.resolve(workingPath, `${name}.${type}`);
     if (fs_extra_1.default.existsSync(target)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`'${name}' already exists as custom page.  Use the --force flag revert it to default.`));
+            logger_1.Logger.warn(`'${name}' already exists as custom page.  Use the --force flag revert it to default.`);
             return;
         }
     }
@@ -103,7 +104,7 @@ const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, fu
     }
     const template = fs_extra_1.default.readFileSync(templatePath, 'utf8');
     fs_extra_1.default.writeFileSync(target, template);
-    console.log(chalk_1.default.green(`New template ${name}.${type} was created in ${workingPath}`));
+    logger_1.Logger.success(`New template ${name}.${type} was created in ${workingPath}`);
     return handoff;
 });
 exports.makePage = makePage;
@@ -113,7 +114,7 @@ exports.makePage = makePage;
  */
 const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, function* () {
     if (!name) {
-        console.log(chalk_1.default.red(`Component name must be set`));
+        logger_1.Logger.error(`Component name must be set`);
         return;
     }
     const version = '1.0.0';
@@ -125,7 +126,7 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
     const targetHtml = path_1.default.resolve(workingPath, `${name}.hbs`);
     if (fs_extra_1.default.existsSync(targetHtml)) {
         if (!handoff.force) {
-            console.log(chalk_1.default.yellow(`'${name}' already exists as custom component.`));
+            logger_1.Logger.warn(`'${name}' already exists as custom component.`);
             return;
         }
     }
@@ -133,20 +134,20 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
     const htmlPath = path_1.default.resolve(templatePath, 'template.hbs');
     const htmlTemplate = fs_extra_1.default.readFileSync(htmlPath, 'utf8');
     fs_extra_1.default.writeFileSync(targetHtml, htmlTemplate);
-    console.log(chalk_1.default.green(`New component ${name}.hbs was created in ${workingPath}`));
+    logger_1.Logger.success(`New component ${name}.hbs was created in ${workingPath}`);
     const jsonpath = path_1.default.resolve(templatePath, 'template.json');
     const jsonTemplate = fs_extra_1.default.readFileSync(jsonpath, 'utf8');
     fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.json`), jsonTemplate);
     const writeJSFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
     if (writeJSFile === 'y') {
-        console.log(chalk_1.default.green(`Writing ${name}.js.\n`));
+        logger_1.Logger.success(`Writing ${name}.js.\n`);
         const jsPath = path_1.default.resolve(templatePath, 'template.js');
         const jsTemplate = fs_extra_1.default.readFileSync(jsPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.js`), jsTemplate);
     }
     const writeSassFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
     if (writeSassFile === 'y') {
-        console.log(chalk_1.default.green(`Writing ${name}.scss.\n`));
+        logger_1.Logger.success(`Writing ${name}.scss.\n`);
         const scssPath = path_1.default.resolve(templatePath, 'template.scss');
         const scssTemplate = fs_extra_1.default.readFileSync(scssPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.scss`), scssTemplate);

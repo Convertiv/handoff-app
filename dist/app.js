@@ -36,7 +36,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.devApp = exports.watchApp = void 0;
-const chalk_1 = __importDefault(require("chalk"));
 const chokidar_1 = __importDefault(require("chokidar"));
 const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
@@ -48,6 +47,7 @@ const ws_1 = require("ws");
 const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
+const logger_1 = require("./utils/logger");
 /**
  * Creates a WebSocket server that broadcasts messages to connected clients.
  * Designed for development mode to help with hot-reloading.
@@ -66,7 +66,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
         const extWs = ws;
         extWs.isAlive = true;
         extWs.send(JSON.stringify({ type: 'WELCOME' }));
-        extWs.on('error', (error) => console.error('WebSocket error:', error));
+        extWs.on('error', (error) => logger_1.Logger.error('WebSocket error:', error));
         extWs.on('pong', heartbeat);
     });
     // Periodically ping clients to ensure they are still connected
@@ -74,7 +74,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
         wss.clients.forEach((client) => {
             const extWs = client;
             if (!extWs.isAlive) {
-                console.log(chalk_1.default.yellow('Terminating inactive client'));
+                logger_1.Logger.warn('Terminating inactive client');
                 return client.terminate();
             }
             extWs.isAlive = false;
@@ -85,10 +85,10 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
     wss.on('close', () => {
         clearInterval(pingInterval);
     });
-    console.log(chalk_1.default.green(`WebSocket server started on ws://localhost:${port}`));
+    logger_1.Logger.success(`WebSocket server started on ws://localhost:${port}`);
     // Return a function to broadcast a message to all connected clients
     return (message) => {
-        console.log(chalk_1.default.green(`Broadcasting message to ${wss.clients.size} client(s)`));
+        logger_1.Logger.success(`Broadcasting message to ${wss.clients.size} client(s)`);
         wss.clients.forEach((client) => {
             if (client.readyState === ws_1.WebSocket.OPEN) {
                 client.send(message);
@@ -313,17 +313,17 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 yield handle(req, res, parsedUrl);
             }
             catch (err) {
-                console.error('Error occurred handling', req.url, err);
+                logger_1.Logger.error(`Error occurred handling ${req.url}`, err);
                 res.statusCode = 500;
                 res.end('internal server error');
             }
         }))
             .once('error', (err) => {
-            console.error(err);
+            logger_1.Logger.error(err);
             process.exit(1);
         })
             .listen(port, () => {
-            console.log(`> Ready on http://${hostname}:${port}`);
+            logger_1.Logger.log(`> Ready on http://${hostname}:${port}`);
         });
     });
     const wss = yield createWebSocketServer((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);
@@ -341,7 +341,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'unlink':
                     if (!debounce) {
                         debounce = true;
-                        console.log(chalk_1.default.yellow('Public directory changed. Handoff will ingest the new data...'));
+                        logger_1.Logger.warn('Public directory changed. Handoff will ingest the new data...');
                         yield mergePublicDir(handoff);
                         wss(JSON.stringify({ type: 'reload' }));
                         debounce = false;
@@ -460,7 +460,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
                 case 'add':
                 case 'change':
                 case 'unlink':
-                    console.log(chalk_1.default.yellow(`Doc page ${event}ed. Please reload browser to see changes...`), path);
+                    logger_1.Logger.warn(`Doc page ${event}ed. Please reload browser to see changes...`);
+                    logger_1.Logger.debug(`Path: ${path}`);
                     break;
             }
         }));
