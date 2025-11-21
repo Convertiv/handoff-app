@@ -28,7 +28,7 @@ const loadSchemaFromFile = (schemaPath, handoff) => __awaiter(void 0, void 0, vo
     var _a, _b;
     const ext = path_1.default.extname(schemaPath);
     if (ext !== '.ts' && ext !== '.tsx') {
-        logger_1.Logger.warn(`Schema file has unsupported extension: ${ext}`);
+        logger_1.Logger.warn(`Unsupported schema file extension: ${ext}`);
         return null;
     }
     try {
@@ -49,7 +49,7 @@ const loadSchemaFromFile = (schemaPath, handoff) => __awaiter(void 0, void 0, vo
         return null;
     }
     catch (error) {
-        logger_1.Logger.warn(`Failed to load separate schema file ${schemaPath}: ${error}`);
+        logger_1.Logger.warn(`Failed to load schema file "${schemaPath}": ${error}`);
         return null;
     }
 });
