@@ -85,7 +85,7 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
     wss.on('close', () => {
         clearInterval(pingInterval);
     });
-    logger_1.Logger.success(`WebSocket server started on ws://localhost:${port}`);
+    logger_1.Logger.success(`WebSocket server listening on ws://localhost:${port}`);
     // Return a function to broadcast a message to all connected clients
     return (message) => {
         logger_1.Logger.success(`Broadcasting message to ${wss.clients.size} client(s)`);
@@ -323,7 +323,7 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
             process.exit(1);
         })
             .listen(port, () => {
-            logger_1.Logger.log(`> Ready on http://${hostname}:${port}`);
+            logger_1.Logger.log(`Ready on http://${hostname}:${port}`);
         });
     });
     const wss = yield createWebSocketServer((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);

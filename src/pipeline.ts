@@ -252,7 +252,7 @@ const validateHandoffRequirements = async (handoff: Handoff) => {
     // couldn't find the right version, but ...
   }
   if (!requirements) {
-    Logger.error('Handoff Installation failed');
+    Logger.error('Handoff installation failed.');
     Logger.warn(
       '- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'
     );
@@ -297,7 +297,7 @@ your id would be IGYfyraLDa0BpVXkxHY2tE\n`);
     const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
 
     if (writeEnvFile !== 'y') {
-      Logger.success(`Skipping .env file creation. You will need to supply these variables in the future.\n`);
+      Logger.success(`Skipped .env file creation. Please provide these variables manually.`);
     } else {
       const envFilePath = path.resolve(handoff.workingPath, '.env');
       const envFileContent = `

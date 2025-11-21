@@ -20,13 +20,13 @@ const react_1 = __importDefault(require("react"));
 const server_1 = __importDefault(require("react-dom/server"));
 const vite_1 = require("vite");
 const logger_1 = require("../../utils/logger");
-const vite_logger_1 = require("../utils/vite-logger");
 const docgen_1 = require("../docgen");
 const build_1 = require("../utils/build");
 const html_1 = require("../utils/html");
 const module_1 = require("../utils/module");
 const schema_loader_1 = require("../utils/schema-loader");
 const string_1 = require("../utils/string");
+const vite_logger_1 = require("../utils/vite-logger");
 /**
  * Constants for the SSR render plugin
  */
@@ -68,7 +68,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 }
             }
             catch (error) {
-                logger_1.Logger.warn(`Failed to load component file ${componentPath}: ${error}`);
+                logger_1.Logger.warn(`Failed to load component file "${componentPath}": ${error}`);
             }
         }
         // Step 3: Load component for rendering (if not already loaded)
@@ -78,7 +78,7 @@ function loadComponentSchemaAndModule(componentData, componentPath, handoff) {
                 component = moduleExports.exports.default;
             }
             catch (error) {
-                logger_1.Logger.error(`Failed to load component for rendering: ${componentPath}`, error);
+                logger_1.Logger.error(`Failed to load component for rendering "${componentPath}":`, error);
                 return [null, null];
             }
         }

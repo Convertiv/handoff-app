@@ -24,7 +24,7 @@ const ejectConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () 
     const configPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, 'handoff.config.js'));
     if (fs_extra_1.default.existsSync(configPath)) {
         if (!handoff.force) {
-            logger_1.Logger.error(`A config already exists in the working directory.  Use the --force flag to overwrite.`);
+            logger_1.Logger.error(`Config file already exists. Use "--force" to overwrite.`);
         }
     }
     // load the template as a string

@@ -7,7 +7,6 @@ import ReactDOMServer from 'react-dom/server';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
-import { createViteLogger } from '../utils/vite-logger';
 import { generatePropertiesFromDocgen } from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
@@ -16,6 +15,7 @@ import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
 import { slugify } from '../utils/string';
+import { createViteLogger } from '../utils/vite-logger';
 
 /**
  * React component type for SSR rendering
@@ -69,7 +69,7 @@ async function loadComponentSchemaAndModule(
         properties = await generatePropertiesFromDocgen(componentPath, handoff);
       }
     } catch (error) {
-      Logger.warn(`Failed to load component file ${componentPath}: ${error}`);
+      Logger.warn(`Failed to load component file "${componentPath}": ${error}`);
     }
   }
 
@@ -79,7 +79,7 @@ async function loadComponentSchemaAndModule(
       const moduleExports = await buildAndEvaluateModule(componentPath, handoff);
       component = moduleExports.exports.default;
     } catch (error) {
-      Logger.error(`Failed to load component for rendering: ${componentPath}`, error);
+      Logger.error(`Failed to load component for rendering "${componentPath}":`, error);
       return [null, null];
     }
   }

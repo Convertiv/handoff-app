@@ -82,7 +82,7 @@ const buildCssBundle = async ({
 
     await viteBuild(viteConfig);
   } catch (e) {
-    Logger.error(`Error building CSS for ${entry}`);
+    Logger.error(`Failed to build CSS for "${entry}"`);
     throw e;
   } finally {
     // Restore the original NODE_ENV value
@@ -158,7 +158,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       }
     }
   } catch (e) {
-    Logger.error(`Error building CSS for ${id}`);
+    Logger.error(`Failed to build CSS for "${id}"`);
     throw e;
   }
 
@@ -177,7 +177,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
     if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
-      Logger.success(`Building main CSS file`);
+      Logger.success(`Building main CSS file...`);
 
       try {
         // Setup SASS load paths
@@ -199,7 +199,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           handoff,
         });
       } catch (e) {
-        Logger.error(`Error building main CSS`, e);
+        Logger.error(`Failed to build main CSS:`, e);
       }
     }
   }
