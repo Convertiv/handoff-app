@@ -48,6 +48,7 @@ const app_1 = __importDefault(require("./app"));
 const changelog_1 = __importDefault(require("./changelog"));
 const documentation_object_1 = require("./documentation-object");
 const component_1 = require("./transformers/preview/component");
+const logger_1 = require("./utils/logger");
 const prompt_1 = require("./utils/prompt");
 /**
  * Read Previous Json File
@@ -247,8 +248,8 @@ const validateHandoffRequirements = (handoff) => __awaiter(void 0, void 0, void 
         // couldn't find the right version, but ...
     }
     if (!requirements) {
-        console.log(chalk_1.default.redBright('Handoff Installation failed'));
-        console.log(chalk_1.default.yellow('- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'));
+        logger_1.Logger.error('Handoff Installation failed');
+        logger_1.Logger.warn('- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/');
         throw new Error('Could not run handoff');
     }
 });
@@ -265,22 +266,22 @@ const validateFigmaAuth = (handoff) => __awaiter(void 0, void 0, void 0, functio
     let missingEnvVars = false;
     if (!DEV_ACCESS_TOKEN) {
         missingEnvVars = true;
-        console.log(chalk_1.default.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
-Use these instructions to generate them ${chalk_1.default.blue(`https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`)}\n`));
+        logger_1.Logger.warn(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
+Use these instructions to generate them https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens\n`);
         DEV_ACCESS_TOKEN = yield (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '));
     }
     if (!FIGMA_PROJECT_ID) {
         missingEnvVars = true;
-        console.log(chalk_1.default.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
-You can find this by looking at the url of your Figma file. If the url is ${chalk_1.default.blue(`https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`)}
-your id would be IGYfyraLDa0BpVXkxHY2tE\n`));
+        logger_1.Logger.warn(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
+You can find this by looking at the url of your Figma file. If the url is https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D
+your id would be IGYfyraLDa0BpVXkxHY2tE\n`);
         FIGMA_PROJECT_ID = yield (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '));
     }
     if (missingEnvVars) {
-        console.log(chalk_1.default.yellow(`\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`));
+        logger_1.Logger.warn(`\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`);
         const writeEnvFile = yield (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '));
         if (writeEnvFile !== 'y') {
-            console.log(chalk_1.default.green(`Skipping .env file creation. You will need to supply these variables in the future.\n`));
+            logger_1.Logger.success(`Skipping .env file creation. You will need to supply these variables in the future.\n`);
         }
         else {
             const envFilePath = path_1.default.resolve(handoff.workingPath, '.env');
@@ -295,15 +296,15 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
                     .catch(() => false);
                 if (fileExists) {
                     yield fs_extra_1.default.appendFile(envFilePath, envFileContent);
-                    console.log(chalk_1.default.green(`\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`));
+                    logger_1.Logger.success(`\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`);
                 }
                 else {
                     yield fs_extra_1.default.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
-                    console.log(chalk_1.default.green(`\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`));
+                    logger_1.Logger.success(`\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`);
                 }
             }
             catch (error) {
-                console.error(chalk_1.default.red('Error handling the .env file:', error));
+                logger_1.Logger.error('Error handling the .env file:', error);
             }
         }
     }
@@ -311,7 +312,7 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
     handoff.config.figma_project_id = FIGMA_PROJECT_ID;
 });
 const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(chalk_1.default.green(`Starting Figma data extraction.`));
+    logger_1.Logger.success(`Starting Figma data extraction.`);
     let prevDocumentationObject = yield handoff.getDocumentationObject();
     let changelog = (yield (0, exports.readPrevJSONFile)(handoff.getChangelogFilePath())) || [];
     yield fs_extra_1.default.emptyDir(handoff.getOutputPath());
@@ -348,7 +349,7 @@ const pipeline = (handoff, build) => __awaiter(void 0, void 0, void 0, function*
     if (!handoff.config) {
         throw new Error('Handoff config not found');
     }
-    console.log(chalk_1.default.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
+    logger_1.Logger.success(`Starting Handoff Figma data pipeline. Checking for environment and config.`);
     yield validateHandoffRequirements(handoff);
     yield validateFigmaAuth(handoff);
     const documentationObject = yield figmaExtract(handoff);

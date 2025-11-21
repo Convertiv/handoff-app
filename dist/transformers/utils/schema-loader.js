@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loadSchemaFromComponent = exports.loadSchemaFromFile = void 0;
 const path_1 = __importDefault(require("path"));
+const logger_1 = require("../../utils/logger");
 const docgen_1 = require("../docgen");
 const module_1 = require("./module");
 const schema_1 = require("./schema");
@@ -27,7 +28,7 @@ const loadSchemaFromFile = (schemaPath, handoff) => __awaiter(void 0, void 0, vo
     var _a, _b;
     const ext = path_1.default.extname(schemaPath);
     if (ext !== '.ts' && ext !== '.tsx') {
-        console.warn(`Schema file has unsupported extension: ${ext}`);
+        logger_1.Logger.warn(`Schema file has unsupported extension: ${ext}`);
         return null;
     }
     try {
@@ -48,7 +49,7 @@ const loadSchemaFromFile = (schemaPath, handoff) => __awaiter(void 0, void 0, vo
         return null;
     }
     catch (error) {
-        console.warn(`Failed to load separate schema file ${schemaPath}:`, error);
+        logger_1.Logger.warn(`Failed to load separate schema file ${schemaPath}: ${error}`);
         return null;
     }
 });
