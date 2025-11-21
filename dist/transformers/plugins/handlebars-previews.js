@@ -16,6 +16,8 @@ exports.handlebarsPreviewsPlugin = handlebarsPreviewsPlugin;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handlebars_1 = __importDefault(require("handlebars"));
 const path_1 = __importDefault(require("path"));
+const logger_1 = require("../../utils/logger");
+const vite_logger_1 = require("../utils/vite-logger");
 const handlebars_2 = require("../utils/handlebars");
 const html_1 = require("../utils/html");
 const string_1 = require("../utils/string");
@@ -103,6 +105,9 @@ function handlebarsPreviewsPlugin(componentData, documentationComponents, handof
     return {
         name: PLUGIN_CONSTANTS.PLUGIN_NAME,
         apply: 'build',
+        config: () => ({
+            customLogger: (0, vite_logger_1.createViteLogger)(),
+        }),
         resolveId(resolveId) {
             if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
                 return resolveId;
@@ -127,14 +132,20 @@ function handlebarsPreviewsPlugin(componentData, documentationComponents, handof
                 const generatedPreviews = {};
                 // Generate previews for each variation
                 for (const previewKey in componentData.previews) {
-                    const previewData = componentData.previews[previewKey];
-                    // Render both normal and inspect modes
-                    const normalModeHtml = yield renderHandlebarsTemplate(templateContent, componentData, previewData, false);
-                    const inspectModeHtml = yield renderHandlebarsTemplate(templateContent, componentData, previewData, true);
-                    // Emit preview files
-                    emitPreviewFiles(componentId, previewKey, normalModeHtml, inspectModeHtml, (file) => this.emitFile(file));
-                    generatedPreviews[previewKey] = normalModeHtml;
-                    componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+                    try {
+                        const previewData = componentData.previews[previewKey];
+                        // Render both normal and inspect modes
+                        const normalModeHtml = yield renderHandlebarsTemplate(templateContent, componentData, previewData, false);
+                        const inspectModeHtml = yield renderHandlebarsTemplate(templateContent, componentData, previewData, true);
+                        // Emit preview files
+                        emitPreviewFiles(componentId, previewKey, normalModeHtml, inspectModeHtml, (file) => this.emitFile(file));
+                        generatedPreviews[previewKey] = normalModeHtml;
+                        componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+                        logger_1.Logger.debug(`Generated Handlebars preview: ${componentId}-${previewKey}`);
+                    }
+                    catch (err) {
+                        logger_1.Logger.error(`Failed to generate Handlebars preview for ${componentId}-${previewKey}`, err);
+                    }
                 }
                 // Update component data with results
                 componentData.format = PLUGIN_CONSTANTS.OUTPUT_FORMAT;
