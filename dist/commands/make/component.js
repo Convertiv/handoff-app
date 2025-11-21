@@ -27,7 +27,6 @@ const command = {
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
         const handoff = new __1.default(args.debug, args.force);
         const componentName = args.name;
-        const version = args.version;
         if (!/^[a-z0-9_-]+$/i.test(componentName)) {
             logger_1.Logger.error(`Component name must be alphanumeric and may contain dashes or underscores`);
             return;
