@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
-import { merge } from 'lodash';
 import path from 'path';
 import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
@@ -14,8 +13,6 @@ import { processSharedStyles } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
 import { Config, RuntimeConfig } from './types/config';
-import { filterOutNull } from './utils';
-import { findFilesByExtension } from './utils/fs';
 import { generateFilesystemSafeId } from './utils/path';
 
 class Handoff {
@@ -150,9 +147,15 @@ class Handoff {
     return this;
   }
 
-  async validateComponents(): Promise<Handoff> {
+  async validateComponents(skipBuild?: boolean): Promise<Handoff> {
+    let segmentToProcess = ComponentSegment.Validation;
+    if (skipBuild) {
+      segmentToProcess = ComponentSegment.ValidationOnly;
+    }
     this.preRunner();
-    await processComponents(this, undefined, ComponentSegment.Validation);
+    if (!skipBuild) {
+      await processComponents(this, undefined, segmentToProcess);
+    }
     return this;
   }
 
