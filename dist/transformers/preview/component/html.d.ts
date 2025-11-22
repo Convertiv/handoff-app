@@ -16,4 +16,46 @@ import { TransformComponentTokensResult } from '../types';
  * ```
  */
 export declare const buildPreviews: (data: TransformComponentTokensResult, handoff: Handoff, components?: CoreTypes.IDocumentationObject["components"]) => Promise<TransformComponentTokensResult>;
+export declare const getPreviewUrls: (data: TransformComponentTokensResult) => Promise<{
+    id: string;
+    type?: import("../types").ComponentType;
+    image?: string;
+    group?: string;
+    categories?: string[];
+    figma?: string;
+    figmaComponentId?: string;
+    tags?: string[];
+    should_do?: string[];
+    should_not_do?: string[];
+    format: string;
+    code: string;
+    html?: string;
+    preview: string;
+    js?: string;
+    css?: string;
+    sass?: string;
+    sharedStyles?: string;
+    title?: string;
+    description?: string;
+    previews?: {
+        [key: string]: import("../types").OptionalPreviewRender;
+    };
+    properties?: {
+        [key: string]: import("../component").SlotMetadata;
+    };
+    variant?: Record<string, string>;
+    entries?: {
+        js?: string;
+        scss?: string;
+        template?: string;
+        schema?: string;
+    };
+    options?: {
+        preview?: {
+            groupBy?: string;
+        };
+    };
+    validations?: Record<string, import("../../../types").ValidationResult>;
+    page?: import("../types").ComponentPageDefinition;
+}>;
 export default buildPreviews;

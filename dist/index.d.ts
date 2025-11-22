@@ -36,7 +36,7 @@ declare class Handoff {
     makeComponent(name: string): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
-    validateComponents(): Promise<Handoff>;
+    validateComponents(skipBuild?: boolean): Promise<Handoff>;
     /**
      * Retrieves the documentation object, using cached version if available
      * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found

@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { CommandModule } from 'yargs';
 import Handoff from '../../';
 import { SharedArgs } from '../types';
@@ -20,6 +21,9 @@ const command: CommandModule<{}, ValidateComponentsArgs> = {
   },
   handler: async (args: ValidateComponentsArgs) => {
     const handoff = new Handoff(args.debug, args.force);
+    if(args.skipBuild) {
+      console.log(chalk.yellow('Skipping build step before validating components'));
+    }
     await handoff.validateComponents(args.skipBuild ?? false);
   },
 };

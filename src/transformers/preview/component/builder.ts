@@ -5,7 +5,7 @@ import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
-import buildPreviews from './html';
+import buildPreviews, { getPreviewUrls } from './html';
 import buildComponentJs from './javascript';
 import { getLatestVersionForComponent } from './versions';
 
@@ -137,6 +137,8 @@ export async function processComponents(
 
         if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
           data = await buildPreviews(data, handoff, components);
+        }else if (segmentToProcess === ComponentSegment.ValidationOnly) {
+          data = await getPreviewUrls(data);
         }
 
         if (

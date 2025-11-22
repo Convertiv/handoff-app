@@ -153,9 +153,7 @@ class Handoff {
       segmentToProcess = ComponentSegment.ValidationOnly;
     }
     this.preRunner();
-    if (!skipBuild) {
-      await processComponents(this, undefined, segmentToProcess);
-    }
+    await processComponents(this, undefined, segmentToProcess);
     return this;
   }
 

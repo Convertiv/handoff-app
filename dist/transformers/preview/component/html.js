@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildPreviews = void 0;
+exports.getPreviewUrls = exports.buildPreviews = void 0;
 const plugin_react_1 = __importDefault(require("@vitejs/plugin-react"));
 const vite_1 = require("vite");
 const config_1 = __importDefault(require("../../config"));
@@ -79,4 +79,11 @@ const buildPreviews = (data, handoff, components) => __awaiter(void 0, void 0, v
     return data;
 });
 exports.buildPreviews = buildPreviews;
+const getPreviewUrls = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    for (const preview of Object.keys(data.previews)) {
+        data.previews[preview].url = `${data.id}-${preview}.html`;
+    }
+    return data;
+});
+exports.getPreviewUrls = getPreviewUrls;
 exports.default = exports.buildPreviews;

@@ -76,4 +76,11 @@ export const buildPreviews = async (
   return data;
 };
 
+export const getPreviewUrls = async (data: TransformComponentTokensResult) => {
+  for (const preview of Object.keys(data.previews)) {
+      data.previews[preview].url = `${data.id}-${preview}.html`;
+  }
+  return data;
+}
+
 export default buildPreviews;

@@ -175,10 +175,14 @@ class Handoff {
             return this;
         });
     }
-    validateComponents() {
+    validateComponents(skipBuild) {
         return __awaiter(this, void 0, void 0, function* () {
+            let segmentToProcess = builder_1.ComponentSegment.Validation;
+            if (skipBuild) {
+                segmentToProcess = builder_1.ComponentSegment.ValidationOnly;
+            }
             this.preRunner();
-            yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
+            yield (0, builder_1.default)(this, undefined, segmentToProcess);
             return this;
         });
     }
