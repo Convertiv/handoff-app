@@ -375,8 +375,6 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
   //console.log('result.entries.scss', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
   if (!!handoff.config.entries?.js) {
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
-  } else {
-    Logger.error('No JavaScript entry point found in configuration.');
   }
 
   if (handoff.config.entries?.components?.length) {

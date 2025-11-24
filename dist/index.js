@@ -390,9 +390,6 @@ const initRuntimeConfig = (handoff) => {
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
         result.entries.js = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    else {
-        logger_1.Logger.error('No JavaScript entry point found in configuration.');
-    }
     if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
         const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
         for (const componentPath of componentPaths) {
