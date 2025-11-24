@@ -8,7 +8,6 @@ import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
-import semver from 'semver';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
@@ -463,7 +462,7 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
 
   // Include components from components.json API if requested
   if (includeApi) {
-    const compontnsFileExists = fs.existsSync(
+    const componentsFileExists = fs.existsSync(
       path.resolve(
         process.env.HANDOFF_MODULE_PATH ?? '',
         '.handoff',
@@ -474,38 +473,29 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
       )
     );
 
-    const componentIds = compontnsFileExists
-      ? Array.from(
-          new Set<string>(
-            (
-              JSON.parse(
-                fs.readFileSync(
-                  path.resolve(
-                    process.env.HANDOFF_MODULE_PATH ?? '',
-                    '.handoff',
-                    `${process.env.HANDOFF_PROJECT_ID}`,
-                    'public',
-                    'api',
-                    'components.json'
-                  ),
-                  'utf-8'
-                )
-              ) as ComponentListObject[]
-            ).map((c) => c.id)
-          )
+    if (componentsFileExists) {
+      const componentList = JSON.parse(
+        fs.readFileSync(
+          path.resolve(
+            process.env.HANDOFF_MODULE_PATH ?? '',
+            '.handoff',
+            `${process.env.HANDOFF_PROJECT_ID}`,
+            'public',
+            'api',
+            'components.json'
+          ),
+          'utf-8'
         )
-      : [];
+      ) as ComponentListObject[];
 
-    for (const componentId of componentIds) {
-      const metadata = getLatestComponentMetadata(componentId);
-      if (metadata) {
-        components[componentId] = {
-          type: metadata.type as ComponentType,
-          group: metadata.group || '',
-          description: metadata.description || '',
-          name: metadata.title || '',
+      componentList.forEach((component) => {
+        components[component.id] = {
+          type: (component.type as ComponentType) || ComponentType.Element,
+          group: component.group || '',
+          description: component.description || '',
+          name: component.title || '',
         };
-      }
+      });
     }
   }
 
@@ -525,72 +515,41 @@ export const fetchComponents = (options?: FetchComponentsOptions) => {
   }
 };
 
-type RuntimeCache = RuntimeConfig & { config: ClientConfig };
+type ClientConfigCache = { config: ClientConfig };
 
-let cachedRuntimeCache: RuntimeCache | null = null;
+let cachedClientConfig: ClientConfigCache | null = null;
 
-const getDefaultRuntimeCache = (): RuntimeCache => {
+const getDefaultClientConfig = (): ClientConfigCache => {
   return {
     config: {} as ClientConfig,
-    entries: {
-      scss: undefined,
-      js: undefined,
-      components: {},
-    },
-    options: {},
-  } as RuntimeCache;
+  };
 };
 
-const loadRuntimeCache = (): RuntimeCache => {
-  if (cachedRuntimeCache) {
-    return cachedRuntimeCache;
+const loadClientConfig = (): ClientConfigCache => {
+  if (cachedClientConfig) {
+    return cachedClientConfig;
   }
 
   const modulePath = process.env.HANDOFF_MODULE_PATH ?? '';
   const projectId = process.env.HANDOFF_PROJECT_ID ?? '';
-  const runtimeCachePath = path.resolve(modulePath, '.handoff', projectId, 'runtime.cache.json');
+  const clientConfigPath = path.resolve(modulePath, '.handoff', projectId, 'client.config.json');
 
-  if (!fs.existsSync(runtimeCachePath)) {
+  if (!fs.existsSync(clientConfigPath)) {
     // Return empty default instead of throwing to support running without fetch
-    return getDefaultRuntimeCache();
+    return getDefaultClientConfig();
   }
 
   try {
-    const cacheContent = fs.readFileSync(runtimeCachePath, 'utf-8');
-    cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
-    return cachedRuntimeCache;
+    const cacheContent = fs.readFileSync(clientConfigPath, 'utf-8');
+    cachedClientConfig = JSON.parse(cacheContent) as ClientConfigCache;
+    return cachedClientConfig;
   } catch (e) {
     // Return empty default on error instead of throwing
-    return getDefaultRuntimeCache();
+    return getDefaultClientConfig();
   }
 };
 
-export const getLatestComponentMetadata = (id: string) => {
-  const runtimeCache = loadRuntimeCache();
 
-  const components = runtimeCache.entries?.components;
-
-  if (!components || !components[id]) {
-    return false;
-  }
-
-  const versions = Object.keys(components[id]);
-
-  if (!versions.length) {
-    return false;
-  }
-
-  // Use natural version sorting (optional improvement below!)
-  const latestVersion = semver.rsort(versions).shift();
-
-  if (!latestVersion) {
-    return false;
-  }
-
-  const latestComponent = components[id][latestVersion];
-
-  return latestComponent || false;
-};
 
 /**
  * Fetch Component Doc Page Markdown
@@ -612,8 +571,8 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getClientRuntimeConfig = (): ClientConfig => {
-  const runtimeCache = loadRuntimeCache();
-  return runtimeCache.config;
+  const clientConfig = loadClientConfig();
+  return clientConfig.config;
 };
 
 export const getTokens = (): CoreTypes.IDocumentationObject => {

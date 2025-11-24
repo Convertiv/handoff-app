@@ -217,16 +217,16 @@ const initializeProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, func
     return appPath;
 });
 /**
- * Persists the runtime configuration and client config to a JSON file.
+ * Persists the client config to a JSON file.
  *
  * @param handoff - The Handoff instance
  */
-const persistRuntimeCache = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const persistClientConfig = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const appPath = getAppPath(handoff);
-    const destination = path_1.default.resolve(appPath, 'runtime.cache.json');
+    const destination = path_1.default.resolve(appPath, 'client.config.json');
     // Ensure directory exists
     yield fs_extra_1.default.ensureDir(appPath);
-    yield fs_extra_1.default.writeJson(destination, Object.assign({ config: (0, config_1.getClientConfig)(handoff) }, handoff.runtimeConfig), { spaces: 2 });
+    yield fs_extra_1.default.writeJson(destination, { config: (0, config_1.getClientConfig)(handoff) }, { spaces: 2 });
 });
 /**
  * Watches the working public directory for changes and updates the app.
@@ -395,7 +395,6 @@ const getRuntimeComponentsPathsToWatch = (handoff) => {
  * @param runtimeComponentPathsToWatch - Map of paths to watch
  */
 const watchRuntimeComponents = (handoff, state, runtimeComponentPathsToWatch) => {
-    persistRuntimeCache(handoff);
     if (state.runtimeComponentsWatcher) {
         state.runtimeComponentsWatcher.close();
     }
@@ -451,8 +450,13 @@ const watchRuntimeConfiguration = (handoff, state) => {
                         state.debounce = true;
                         try {
                             file = path_1.default.dirname(path_1.default.dirname(file));
+                            // Reload the Handoff instance to pick up configuration changes
                             handoff.reload();
+                            // After reloading, persist the updated client configuration
+                            yield persistClientConfig(handoff);
+                            // Restart the runtime components watcher to track potentially updated/added/removed components
                             watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+                            // Process components based on the updated configuration and file path
                             yield (0, builder_1.default)(handoff, path_1.default.basename(file));
                         }
                         catch (e) {
@@ -479,7 +483,7 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, pipeline_1.buildComponents)(handoff);
     // Prepare app
     const appPath = yield initializeProjectApp(handoff);
-    persistRuntimeCache(handoff);
+    yield persistClientConfig(handoff);
     // Build app
     const buildResult = cross_spawn_1.default.sync('npx', ['next', 'build'], {
         cwd: appPath,
@@ -515,6 +519,8 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     // Initial processing of the components
     yield (0, builder_1.default)(handoff);
     const appPath = yield initializeProjectApp(handoff);
+    // Persist client configuration
+    yield persistClientConfig(handoff);
     // Watch app source
     watchAppSource(handoff);
     // // does a ts config exist?
@@ -598,7 +604,8 @@ const devApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         yield fs_extra_1.default.remove(moduleOutput);
     }
-    persistRuntimeCache(handoff);
+    // Persist client configuration
+    yield persistClientConfig(handoff);
     // Run
     const devResult = cross_spawn_1.default.sync('npx', ['next', 'dev', '--port', String((_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000)], {
         cwd: appPath,
