@@ -216,16 +216,16 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 };
 
 /**
- * Persists the runtime configuration and client config to a JSON file.
+ * Persists the client config to a JSON file.
  *
  * @param handoff - The Handoff instance
  */
-const persistRuntimeCache = async (handoff: Handoff) => {
+const persistClientConfig = async (handoff: Handoff) => {
   const appPath = getAppPath(handoff);
-  const destination = path.resolve(appPath, 'runtime.cache.json');
+  const destination = path.resolve(appPath, 'client.config.json');
   // Ensure directory exists
   await fs.ensureDir(appPath);
-  await fs.writeJson(destination, { config: getClientConfig(handoff), ...handoff.runtimeConfig }, { spaces: 2 });
+  await fs.writeJson(destination, { config: getClientConfig(handoff) }, { spaces: 2 });
 };
 
 /**
@@ -397,8 +397,6 @@ const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
  * @param runtimeComponentPathsToWatch - Map of paths to watch
  */
 const watchRuntimeComponents = (handoff: Handoff, state: WatcherState, runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>) => {
-  persistRuntimeCache(handoff);
-
   if (state.runtimeComponentsWatcher) {
     state.runtimeComponentsWatcher.close();
   }
@@ -457,8 +455,13 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
             state.debounce = true;
             try {
               file = path.dirname(path.dirname(file));
+              // Reload the Handoff instance to pick up configuration changes
               handoff.reload();
+              // After reloading, persist the updated client configuration
+              await persistClientConfig(handoff);
+              // Restart the runtime components watcher to track potentially updated/added/removed components
               watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+              // Process components based on the updated configuration and file path
               await processComponents(handoff, path.basename(file));
             } catch (e) {
               Logger.error('Error reloading runtime configuration:', e);
@@ -487,7 +490,7 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
   // Prepare app
   const appPath = await initializeProjectApp(handoff);
 
-  persistRuntimeCache(handoff);
+  await persistClientConfig(handoff);
 
   // Build app
   const buildResult = spawn.sync('npx', ['next', 'build'], {
@@ -532,6 +535,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   await processComponents(handoff);
 
   const appPath = await initializeProjectApp(handoff);
+
+  // Persist client configuration
+  await persistClientConfig(handoff);
 
   // Watch app source
   watchAppSource(handoff);
@@ -624,7 +630,8 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
     await fs.remove(moduleOutput);
   }
 
-  persistRuntimeCache(handoff);
+  // Persist client configuration
+  await persistClientConfig(handoff);
 
   // Run
   const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
