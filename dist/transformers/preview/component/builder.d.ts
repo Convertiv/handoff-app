@@ -7,8 +7,7 @@ export declare enum ComponentSegment {
     JavaScript = "javascript",
     Style = "style",
     Previews = "previews",
-    Validation = "validation",
-    ValidationOnly = "validation-only"
+    Validation = "validation"
 }
 /**
  * Process components and generate their code, styles, and previews

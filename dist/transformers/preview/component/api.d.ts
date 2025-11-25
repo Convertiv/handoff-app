@@ -15,4 +15,12 @@ export declare const writeComponentMetadataApi: (id: string, summary: ComponentL
  * @param componentData
  */
 export declare const updateComponentSummaryApi: (handoff: Handoff, componentData: ComponentListObject[], isFullRebuild?: boolean) => Promise<void>;
+/**
+ * Read the component API data for a specific version
+ * @param handoff
+ * @param id
+ * @param version
+ * @returns
+ */
+export declare const readComponentApi: (handoff: Handoff, id: string, version: string) => Promise<TransformComponentTokensResult | null>;
 export default writeComponentSummaryAPI;

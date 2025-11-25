@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
+exports.readComponentApi = exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 /**
@@ -124,4 +124,28 @@ const updateComponentSummaryApi = (handoff_1, componentData_1, ...args_1) => __a
     yield writeComponentSummaryAPI(handoff, merged);
 });
 exports.updateComponentSummaryApi = updateComponentSummaryApi;
+/**
+ * Read the component API data for a specific version
+ * @param handoff
+ * @param id
+ * @param version
+ * @returns
+ */
+const readComponentApi = (handoff, id, version) => __awaiter(void 0, void 0, void 0, function* () {
+    const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
+    const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
+    if (fs_extra_1.default.existsSync(outputFilePath)) {
+        try {
+            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+            if (existingJson) {
+                return JSON.parse(existingJson);
+            }
+        }
+        catch (_) {
+            // Unable to parse existing file
+        }
+    }
+    return null;
+});
+exports.readComponentApi = readComponentApi;
 exports.default = writeComponentSummaryAPI;
