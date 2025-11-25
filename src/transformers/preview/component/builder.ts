@@ -46,6 +46,7 @@ export enum ComponentSegment {
   Style = 'style',
   Previews = 'previews',
   Validation = 'validation',
+  ValidationOnly = 'validation-only',
 }
 
 /**
@@ -73,6 +74,9 @@ function getPreserveKeysForSegment(segmentToProcess?: ComponentSegment): string[
     
     case ComponentSegment.Validation:
       // When processing Validation segment, preserve all other data
+      return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
+    case ComponentSegment.ValidationOnly:
+      // When processing ValidationOnly segment, preserve only validation data
       return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
     
     default:
@@ -135,7 +139,9 @@ export async function processComponents(
           data = await buildPreviews(data, handoff, components);
         }
 
-        if (segmentToProcess === ComponentSegment.Validation && handoff.config?.hooks?.validateComponent) {
+        if (
+          (segmentToProcess === ComponentSegment.Validation || segmentToProcess === ComponentSegment.ValidationOnly)
+          && handoff.config?.hooks?.validateComponent) {
           const validationResults = await handoff.config.hooks.validateComponent(data);
           data.validations = validationResults;
         }
