@@ -324,10 +324,7 @@ const watchScss = async (handoff: Handoff, state: WatcherState, chokidarConfig: 
   if (handoff.runtimeConfig?.entries?.scss && fs.existsSync(handoff.runtimeConfig?.entries?.scss)) {
     const stat = await fs.stat(handoff.runtimeConfig.entries.scss);
     chokidar
-      .watch(
-        stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path.dirname(handoff.runtimeConfig.entries.scss),
-        chokidarConfig
-      )
+      .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
       .on('all', async (event, file) => {
         switch (event) {
           case 'add':
@@ -396,7 +393,11 @@ const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
  * @param state - The shared watcher state
  * @param runtimeComponentPathsToWatch - Map of paths to watch
  */
-const watchRuntimeComponents = (handoff: Handoff, state: WatcherState, runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>) => {
+const watchRuntimeComponents = (
+  handoff: Handoff,
+  state: WatcherState,
+  runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>
+) => {
   if (state.runtimeComponentsWatcher) {
     state.runtimeComponentsWatcher.close();
   }

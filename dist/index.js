@@ -178,13 +178,9 @@ class Handoff {
     }
     validateComponents(skipBuild) {
         return __awaiter(this, void 0, void 0, function* () {
-            let segmentToProcess = builder_1.ComponentSegment.Validation;
-            if (skipBuild) {
-                segmentToProcess = builder_1.ComponentSegment.ValidationOnly;
-            }
             this.preRunner();
             if (!skipBuild) {
-                yield (0, builder_1.default)(this, undefined, segmentToProcess);
+                yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
             }
             return this;
         });

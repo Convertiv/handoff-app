@@ -148,13 +148,9 @@ class Handoff {
   }
 
   async validateComponents(skipBuild?: boolean): Promise<Handoff> {
-    let segmentToProcess = ComponentSegment.Validation;
-    if (skipBuild) {
-      segmentToProcess = ComponentSegment.ValidationOnly;
-    }
     this.preRunner();
     if (!skipBuild) {
-      await processComponents(this, undefined, segmentToProcess);
+      await processComponents(this, undefined, ComponentSegment.Validation);
     }
     return this;
   }
