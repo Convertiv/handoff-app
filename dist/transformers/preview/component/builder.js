@@ -26,6 +26,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComponentSegment = void 0;
 exports.processComponents = processComponents;
 const cloneDeep_1 = __importDefault(require("lodash/cloneDeep"));
+const cache_1 = require("../../../cache");
+const logger_1 = require("../../../utils/logger");
 const schema_1 = require("../../utils/schema");
 const types_1 = require("../types");
 const api_1 = require("./api");
@@ -98,18 +100,105 @@ const createComponentBuildPlan = (segmentToProcess, existingData) => {
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
  * @param segmentToProcess - Optional segment to update
+ * @param options - Optional processing options including cache settings
  * @returns Promise resolving to an array of processed components
  */
-function processComponents(handoff, id, segmentToProcess) {
+function processComponents(handoff, id, segmentToProcess, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         const result = [];
         const documentationObject = yield handoff.getDocumentationObject();
         const components = (_a = documentationObject === null || documentationObject === void 0 ? void 0 : documentationObject.components) !== null && _a !== void 0 ? _a : {};
         const sharedStyles = yield handoff.getSharedStyles();
         const runtimeComponents = (_d = (_c = (_b = handoff.runtimeConfig) === null || _b === void 0 ? void 0 : _b.entries) === null || _c === void 0 ? void 0 : _c.components) !== null && _d !== void 0 ? _d : {};
-        for (const runtimeComponentId of Object.keys(runtimeComponents)) {
+        const allComponentIds = Object.keys(runtimeComponents);
+        // Determine which components need building based on cache (when enabled)
+        let componentsToBuild;
+        let cache = null;
+        let currentGlobalDeps = {};
+        const componentFileStatesMap = new Map();
+        // Only use caching when:
+        // - useCache option is enabled
+        // - No specific component ID is requested (full build scenario)
+        // - No specific segment is requested (full build scenario)
+        // - Force flag is not set
+        const shouldUseCache = (options === null || options === void 0 ? void 0 : options.useCache) && !id && !segmentToProcess && !handoff.force;
+        if (shouldUseCache) {
+            logger_1.Logger.debug('Loading build cache...');
+            cache = yield (0, cache_1.loadBuildCache)(handoff);
+            currentGlobalDeps = yield (0, cache_1.computeGlobalDepsState)(handoff);
+            const globalDepsChanged = (0, cache_1.haveGlobalDepsChanged)(cache === null || cache === void 0 ? void 0 : cache.globalDeps, currentGlobalDeps);
+            if (globalDepsChanged) {
+                logger_1.Logger.info('Global dependencies changed, rebuilding all components');
+                componentsToBuild = new Set(allComponentIds);
+            }
+            else {
+                logger_1.Logger.debug('Global dependencies unchanged');
+                componentsToBuild = new Set();
+                // Evaluate each component independently
+                for (const componentId of allComponentIds) {
+                    const versions = Object.keys(runtimeComponents[componentId]);
+                    let needsBuild = false;
+                    // Store file states for later cache update
+                    const versionStatesMap = new Map();
+                    componentFileStatesMap.set(componentId, versionStatesMap);
+                    for (const version of versions) {
+                        const currentFileStates = yield (0, cache_1.computeComponentFileStates)(handoff, componentId, version);
+                        versionStatesMap.set(version, currentFileStates);
+                        const cachedEntry = (_f = (_e = cache === null || cache === void 0 ? void 0 : cache.components) === null || _e === void 0 ? void 0 : _e[componentId]) === null || _f === void 0 ? void 0 : _f[version];
+                        if (!cachedEntry) {
+                            logger_1.Logger.info(`Component '${componentId}@${version}': new component, will build`);
+                            needsBuild = true;
+                        }
+                        else if ((0, cache_1.hasComponentChanged)(cachedEntry, currentFileStates)) {
+                            logger_1.Logger.info(`Component '${componentId}@${version}': source files changed, will rebuild`);
+                            needsBuild = true;
+                        }
+                        else if (!(yield (0, cache_1.checkOutputExists)(handoff, componentId, version))) {
+                            logger_1.Logger.info(`Component '${componentId}@${version}': output missing, will rebuild`);
+                            needsBuild = true;
+                        }
+                    }
+                    if (needsBuild) {
+                        componentsToBuild.add(componentId);
+                    }
+                    else {
+                        logger_1.Logger.info(`Component '${componentId}': unchanged, skipping`);
+                    }
+                }
+            }
+            // Prune removed components from cache
+            if (cache) {
+                (0, cache_1.pruneRemovedComponents)(cache, allComponentIds);
+            }
+            const skippedCount = allComponentIds.length - componentsToBuild.size;
+            if (skippedCount > 0) {
+                logger_1.Logger.info(`Building ${componentsToBuild.size} of ${allComponentIds.length} components (${skippedCount} unchanged)`);
+            }
+            else if (componentsToBuild.size > 0) {
+                logger_1.Logger.info(`Building all ${componentsToBuild.size} components`);
+            }
+            else {
+                logger_1.Logger.info('All components up to date, nothing to build');
+            }
+        }
+        else {
+            // No caching - build all requested components
+            componentsToBuild = new Set(allComponentIds);
+        }
+        for (const runtimeComponentId of allComponentIds) {
+            // Skip if specific ID requested and doesn't match
             if (!!id && runtimeComponentId !== id) {
+                continue;
+            }
+            // Skip if caching is enabled and this component doesn't need building
+            if (shouldUseCache && !componentsToBuild.has(runtimeComponentId)) {
+                // Even though we're skipping the build, we need to include this component's
+                // existing summary in the result to prevent data loss in components.json
+                const existingSummary = yield (0, api_1.readComponentMetadataApi)(handoff, runtimeComponentId);
+                if (existingSummary) {
+                    result.push(existingSummary);
+                }
                 continue;
             }
             const versions = Object.keys(runtimeComponents[runtimeComponentId]);
@@ -210,11 +299,35 @@ function processComponents(handoff, id, segmentToProcess) {
                 yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
                 // Add to the cumulative results, to later update the global components summary file.
                 result.push(summary);
+                // Update cache entries for this component after successful build
+                if (shouldUseCache) {
+                    if (!cache) {
+                        cache = (0, cache_1.createEmptyCache)();
+                    }
+                    const versionStatesMap = componentFileStatesMap.get(runtimeComponentId);
+                    if (versionStatesMap) {
+                        for (const [version, fileStates] of versionStatesMap) {
+                            (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, version, fileStates);
+                        }
+                    }
+                    else {
+                        // Compute file states if not already computed (e.g., when global deps changed)
+                        for (const version of versions) {
+                            const fileStates = yield (0, cache_1.computeComponentFileStates)(handoff, runtimeComponentId, version);
+                            (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, version, fileStates);
+                        }
+                    }
+                }
             }
             else {
                 // Defensive: Throw a clear error if somehow no version was processed for this component.
                 throw new Error(`No latest version found for ${runtimeComponentId}`);
             }
+        }
+        // Save the updated cache
+        if (shouldUseCache && cache) {
+            cache.globalDeps = currentGlobalDeps;
+            yield (0, cache_1.saveBuildCache)(handoff, cache);
         }
         // Always merge and write summary file, even if no components processed
         const isFullRebuild = !id;

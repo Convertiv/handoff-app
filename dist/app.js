@@ -516,8 +516,9 @@ const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
  */
 const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    // Initial processing of the components
-    yield (0, builder_1.default)(handoff);
+    // Initial processing of the components with caching enabled
+    // This will skip rebuilding components whose source files haven't changed
+    yield (0, builder_1.default)(handoff, undefined, undefined, { useCache: true });
     const appPath = yield initializeProjectApp(handoff);
     // Persist client configuration
     yield persistClientConfig(handoff);

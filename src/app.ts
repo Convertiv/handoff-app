@@ -532,8 +532,9 @@ const buildApp = async (handoff: Handoff): Promise<void> => {
  * @param handoff
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  // Initial processing of the components
-  await processComponents(handoff);
+  // Initial processing of the components with caching enabled
+  // This will skip rebuilding components whose source files haven't changed
+  await processComponents(handoff, undefined, undefined, { useCache: true });
 
   const appPath = await initializeProjectApp(handoff);
 
