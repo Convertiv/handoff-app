@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readComponentApi = exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
+exports.readComponentMetadataApi = exports.readComponentApi = exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 /**
@@ -148,4 +148,26 @@ const readComponentApi = (handoff, id, version) => __awaiter(void 0, void 0, voi
     return null;
 });
 exports.readComponentApi = readComponentApi;
+/**
+ * Read the component metadata/summary (the {id}.json file)
+ * @param handoff
+ * @param id
+ * @returns The component summary or null if not found
+ */
+const readComponentMetadataApi = (handoff, id) => __awaiter(void 0, void 0, void 0, function* () {
+    const outputFilePath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', `${id}.json`);
+    if (fs_extra_1.default.existsSync(outputFilePath)) {
+        try {
+            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+            if (existingJson) {
+                return JSON.parse(existingJson);
+            }
+        }
+        catch (_) {
+            // Unable to parse existing file
+        }
+    }
+    return null;
+});
+exports.readComponentMetadataApi = readComponentMetadataApi;
 exports.default = writeComponentSummaryAPI;

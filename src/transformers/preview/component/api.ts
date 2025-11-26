@@ -156,4 +156,26 @@ export const readComponentApi = async (handoff: Handoff, id: string, version: st
   return null;
 };
 
+/**
+ * Read the component metadata/summary (the {id}.json file)
+ * @param handoff
+ * @param id
+ * @returns The component summary or null if not found
+ */
+export const readComponentMetadataApi = async (handoff: Handoff, id: string): Promise<ComponentListObject | null> => {
+  const outputFilePath = path.resolve(getAPIPath(handoff), 'component', `${id}.json`);
+
+  if (fs.existsSync(outputFilePath)) {
+    try {
+      const existingJson = await fs.readFile(outputFilePath, 'utf8');
+      if (existingJson) {
+        return JSON.parse(existingJson) as ComponentListObject;
+      }
+    } catch (_) {
+      // Unable to parse existing file
+    }
+  }
+  return null;
+};
+
 export default writeComponentSummaryAPI;

@@ -1,9 +1,23 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
+import {
+  BuildCache,
+  checkOutputExists,
+  computeComponentFileStates,
+  computeGlobalDepsState,
+  createEmptyCache,
+  hasComponentChanged,
+  haveGlobalDepsChanged,
+  loadBuildCache,
+  pruneRemovedComponents,
+  saveBuildCache,
+  updateComponentCacheEntry,
+} from '../../../cache';
 import Handoff from '../../../index';
+import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
-import { readComponentApi, updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
+import { readComponentApi, readComponentMetadataApi, updateComponentSummaryApi, writeComponentApi, writeComponentMetadataApi } from './api';
 import buildComponentCss from './css';
 import buildPreviews from './html';
 import buildComponentJs from './javascript';
@@ -84,16 +98,26 @@ const createComponentBuildPlan = (
 };
 
 /**
+ * Options for processing components
+ */
+export interface ProcessComponentsOptions {
+  /** Enable caching to skip unchanged components */
+  useCache?: boolean;
+}
+
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
  * @param segmentToProcess - Optional segment to update
+ * @param options - Optional processing options including cache settings
  * @returns Promise resolving to an array of processed components
  */
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  segmentToProcess?: ComponentSegment
+  segmentToProcess?: ComponentSegment,
+  options?: ProcessComponentsOptions
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
@@ -101,9 +125,101 @@ export async function processComponents(
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   const sharedStyles = await handoff.getSharedStyles();
   const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  const allComponentIds = Object.keys(runtimeComponents);
 
-  for (const runtimeComponentId of Object.keys(runtimeComponents)) {
+  // Determine which components need building based on cache (when enabled)
+  let componentsToBuild: Set<string>;
+  let cache: BuildCache | null = null;
+  let currentGlobalDeps = {};
+  const componentFileStatesMap: Map<string, Map<string, Awaited<ReturnType<typeof computeComponentFileStates>>>> = new Map();
+
+  // Only use caching when:
+  // - useCache option is enabled
+  // - No specific component ID is requested (full build scenario)
+  // - No specific segment is requested (full build scenario)
+  // - Force flag is not set
+  const shouldUseCache = options?.useCache && !id && !segmentToProcess && !handoff.force;
+
+  if (shouldUseCache) {
+    Logger.debug('Loading build cache...');
+    cache = await loadBuildCache(handoff);
+    currentGlobalDeps = await computeGlobalDepsState(handoff);
+    const globalDepsChanged = haveGlobalDepsChanged(cache?.globalDeps, currentGlobalDeps);
+
+    if (globalDepsChanged) {
+      Logger.info('Global dependencies changed, rebuilding all components');
+      componentsToBuild = new Set(allComponentIds);
+    } else {
+      Logger.debug('Global dependencies unchanged');
+      componentsToBuild = new Set();
+
+      // Evaluate each component independently
+      for (const componentId of allComponentIds) {
+        const versions = Object.keys(runtimeComponents[componentId]);
+        let needsBuild = false;
+
+        // Store file states for later cache update
+        const versionStatesMap = new Map<string, Awaited<ReturnType<typeof computeComponentFileStates>>>();
+        componentFileStatesMap.set(componentId, versionStatesMap);
+
+        for (const version of versions) {
+          const currentFileStates = await computeComponentFileStates(handoff, componentId, version);
+          versionStatesMap.set(version, currentFileStates);
+
+          const cachedEntry = cache?.components?.[componentId]?.[version];
+
+          if (!cachedEntry) {
+            Logger.info(`Component '${componentId}@${version}': new component, will build`);
+            needsBuild = true;
+          } else if (hasComponentChanged(cachedEntry, currentFileStates)) {
+            Logger.info(`Component '${componentId}@${version}': source files changed, will rebuild`);
+            needsBuild = true;
+          } else if (!(await checkOutputExists(handoff, componentId, version))) {
+            Logger.info(`Component '${componentId}@${version}': output missing, will rebuild`);
+            needsBuild = true;
+          }
+        }
+
+        if (needsBuild) {
+          componentsToBuild.add(componentId);
+        } else {
+          Logger.info(`Component '${componentId}': unchanged, skipping`);
+        }
+      }
+    }
+
+    // Prune removed components from cache
+    if (cache) {
+      pruneRemovedComponents(cache, allComponentIds);
+    }
+
+    const skippedCount = allComponentIds.length - componentsToBuild.size;
+    if (skippedCount > 0) {
+      Logger.info(`Building ${componentsToBuild.size} of ${allComponentIds.length} components (${skippedCount} unchanged)`);
+    } else if (componentsToBuild.size > 0) {
+      Logger.info(`Building all ${componentsToBuild.size} components`);
+    } else {
+      Logger.info('All components up to date, nothing to build');
+    }
+  } else {
+    // No caching - build all requested components
+    componentsToBuild = new Set(allComponentIds);
+  }
+
+  for (const runtimeComponentId of allComponentIds) {
+    // Skip if specific ID requested and doesn't match
     if (!!id && runtimeComponentId !== id) {
+      continue;
+    }
+
+    // Skip if caching is enabled and this component doesn't need building
+    if (shouldUseCache && !componentsToBuild.has(runtimeComponentId)) {
+      // Even though we're skipping the build, we need to include this component's
+      // existing summary in the result to prevent data loss in components.json
+      const existingSummary = await readComponentMetadataApi(handoff, runtimeComponentId);
+      if (existingSummary) {
+        result.push(existingSummary);
+      }
       continue;
     }
 
@@ -222,10 +338,35 @@ export async function processComponents(
       await writeComponentMetadataApi(runtimeComponentId, summary, handoff);
       // Add to the cumulative results, to later update the global components summary file.
       result.push(summary);
+
+      // Update cache entries for this component after successful build
+      if (shouldUseCache) {
+        if (!cache) {
+          cache = createEmptyCache();
+        }
+        const versionStatesMap = componentFileStatesMap.get(runtimeComponentId);
+        if (versionStatesMap) {
+          for (const [version, fileStates] of versionStatesMap) {
+            updateComponentCacheEntry(cache, runtimeComponentId, version, fileStates);
+          }
+        } else {
+          // Compute file states if not already computed (e.g., when global deps changed)
+          for (const version of versions) {
+            const fileStates = await computeComponentFileStates(handoff, runtimeComponentId, version);
+            updateComponentCacheEntry(cache, runtimeComponentId, version, fileStates);
+          }
+        }
+      }
     } else {
       // Defensive: Throw a clear error if somehow no version was processed for this component.
       throw new Error(`No latest version found for ${runtimeComponentId}`);
     }
+  }
+
+  // Save the updated cache
+  if (shouldUseCache && cache) {
+    cache.globalDeps = currentGlobalDeps;
+    await saveBuildCache(handoff, cache);
   }
 
   // Always merge and write summary file, even if no components processed
