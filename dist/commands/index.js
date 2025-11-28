@@ -14,6 +14,7 @@ const fetch_1 = __importDefault(require("./fetch"));
 const component_1 = __importDefault(require("./make/component"));
 const page_1 = __importDefault(require("./make/page"));
 const template_1 = __importDefault(require("./make/template"));
+const scaffold_1 = __importDefault(require("./scaffold"));
 const start_1 = __importDefault(require("./start"));
 const components_2 = __importDefault(require("./validate/components"));
 exports.commands = [
@@ -27,6 +28,7 @@ exports.commands = [
     page_1.default,
     component_1.default,
     template_1.default,
+    scaffold_1.default,
     start_1.default,
     components_2.default,
 ];
