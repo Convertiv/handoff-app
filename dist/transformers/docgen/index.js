@@ -16,6 +16,7 @@ exports.generatePropertiesFromDocgen = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const react_docgen_typescript_1 = require("react-docgen-typescript");
+const logger_1 = require("../../utils/logger");
 const schema_1 = require("../utils/schema");
 /**
  * Generates component properties using react-docgen-typescript
@@ -29,7 +30,7 @@ const generatePropertiesFromDocgen = (entry, handoff) => __awaiter(void 0, void 
         const tsconfigPath = path_1.default.resolve(handoff.workingPath, 'tsconfig.json');
         // Check if tsconfig exists
         if (!fs_extra_1.default.existsSync(tsconfigPath)) {
-            console.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
+            logger_1.Logger.warn(`TypeScript config not found at ${tsconfigPath}, using default configuration`);
         }
         const parserConfig = {
             savePropValueAsString: true,
@@ -53,7 +54,7 @@ const generatePropertiesFromDocgen = (entry, handoff) => __awaiter(void 0, void 
         return null;
     }
     catch (error) {
-        console.warn(`Failed to generate docs with react-docgen-typescript for ${entry}:`, error);
+        logger_1.Logger.warn(`Failed to generate docs with react-docgen-typescript for ${entry}: ${error}`);
         return null;
     }
 });

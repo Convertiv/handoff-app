@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff from '../../../index';
+import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../config';
 import { handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import { getComponentOutputPath } from '../component';
@@ -61,7 +62,7 @@ export const buildPreviews = async (
 
     await viteBuild(viteConfig);
   } catch (error) {
-    console.error(`Error building component previews: ${data.entries.template}`, error);
+    Logger.error(`Error building component previews: ${data.entries.template}`, error);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes

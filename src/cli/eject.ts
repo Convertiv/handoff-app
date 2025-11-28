@@ -1,7 +1,7 @@
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
+import { Logger } from '../utils/logger';
 
 /**
  * Eject the config to the working directory
@@ -11,13 +11,13 @@ export const ejectConfig = async (handoff: Handoff) => {
   const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.js'));
   if (fs.existsSync(configPath)) {
     if (!handoff.force) {
-      console.log(chalk.red(`A config already exists in the working directory.  Use the --force flag to overwrite.`));
+      Logger.error(`Config file already exists. Use "--force" to overwrite.`);
     }
   }
   // load the template as a string
   const template = fs.readFileSync(path.resolve(handoff.modulePath, 'config/config.template.js'), 'utf8');
   fs.writeFileSync(configPath, template);
-  console.log(chalk.green(`Config ejected to ${configPath}`));
+  Logger.success(`Config ejected to ${configPath}`);
   return handoff;
 };
 
@@ -30,15 +30,13 @@ export const ejectPages = async (handoff: Handoff) => {
   const workingPath = path.resolve(path.join(handoff.workingPath, 'pages'));
   if (fs.existsSync(workingPath)) {
     if (!handoff.force) {
-      console.log(
-        chalk.yellow(`It appears you already have custom pages.  Use the --force flag to merge in any pages you haven't customized.`)
-      );
+      Logger.warn(`It appears you already have custom pages.  Use the --force flag to merge in any pages you haven't customized.`);
       return;
     }
   }
   const docsPath = path.resolve(path.join(handoff.modulePath, 'config/docs'));
   fs.copySync(docsPath, workingPath, { overwrite: false });
-  console.log(chalk.green(`Customizable pages ejected to ${workingPath}`));
+  Logger.success(`Customizable pages ejected to ${workingPath}`);
   return handoff;
 };
 
@@ -51,7 +49,7 @@ export const ejectTheme = async (handoff: Handoff) => {
   const workingPath = path.resolve(path.join(handoff.workingPath, 'theme', 'default.scss'));
   if (fs.existsSync(workingPath)) {
     if (!handoff.force) {
-      console.log(chalk.yellow(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`));
+      Logger.warn(`It appears you already have custom theme.  Use the --force flag to replace you haven't customized.`);
       return;
     }
   }
@@ -61,10 +59,10 @@ export const ejectTheme = async (handoff: Handoff) => {
 
   if (fs.existsSync(docsPath)) {
     fs.copySync(docsPath, workingPath, { overwrite: false });
-    console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
+    Logger.success(`Customizable theme ejected to ${workingPath}`);
   } else {
     fs.copySync(path.resolve(path.join(handoff.modulePath, `src/app/sass/themes/_default.scss`)), workingPath, { overwrite: false });
-    console.log(chalk.green(`Customizable theme ejected to ${workingPath}`));
+    Logger.success(`Customizable theme ejected to ${workingPath}`);
   }
 
   return handoff;

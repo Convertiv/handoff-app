@@ -1,5 +1,6 @@
 import { CommandModule } from 'yargs';
 import Handoff from '../../';
+import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
@@ -28,14 +29,14 @@ const command: CommandModule<{}, MakePageArgs> = {
     const pageName = args.name;
 
     if (!/^[a-z0-9]+$/i.test(pageName)) {
-      console.error(`Page name must be alphanumeric and may contain dashes or underscores`);
+      Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 
     let pageParent = args.parent;
 
     if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
-      console.error(`Page parent must be alphanumeric and may contain dashes or underscores`);
+      Logger.error(`Page parent must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 
