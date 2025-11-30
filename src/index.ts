@@ -257,14 +257,6 @@ class Handoff {
   }
 
   /**
-   * Gets the path to the changelog.json file
-   * @returns {string} The absolute path to the changelog.json file
-   */
-  getChangelogFilePath(): string {
-    return path.join(this.getOutputPath(), 'changelog.json');
-  }
-
-  /**
    * Gets the path to the tokens directory
    * @returns {string} The absolute path to the tokens directory
    */

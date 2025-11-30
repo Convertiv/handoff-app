@@ -1,4 +1,3 @@
-import { ChangelogRecord } from '@handoff/changelog';
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
@@ -57,10 +56,6 @@ export interface DocumentationWithTokensProps extends DocumentationProps {
   types: string;
 }
 
-export interface ChangelogDocumentationProps extends DocumentationProps {
-  changelog: ChangelogRecord[];
-}
-
 export interface FontDocumentationProps extends DocumentationProps {
   customFonts: string[];
   design: CoreTypes.IDocumentationObject['localStyles'];
@@ -98,7 +93,6 @@ export const knownPaths = [
   'foundations/typography',
   'system',
   'system/component',
-  'changelog',
 ];
 
 /**
@@ -596,15 +590,6 @@ export const getTokens = (): CoreTypes.IDocumentationObject => {
 
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
-};
-
-export const getChangelog = () => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
-    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json')
-    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
-  if (!fs.existsSync(exportedFilePath)) return [];
-  const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 /**
