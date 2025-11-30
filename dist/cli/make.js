@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,11 +36,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeComponent = exports.makePage = exports.makeTemplate = void 0;
-const chalk_1 = __importDefault(require("chalk"));
+const p = __importStar(require("@clack/prompts"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const logger_1 = require("../utils/logger");
-const prompt_1 = require("../utils/prompt");
 /**
  * Make a new exportable component
  * @param handoff
@@ -138,15 +160,21 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
     const jsonpath = path_1.default.resolve(templatePath, 'template.json');
     const jsonTemplate = fs_extra_1.default.readFileSync(jsonpath, 'utf8');
     fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.json`), jsonTemplate);
-    const writeJSFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
-    if (writeJSFile === 'y') {
+    const writeJSFile = yield p.confirm({
+        message: `Generate a supporting javascript file ${name}.js?`,
+        initialValue: false,
+    });
+    if (writeJSFile === true) {
         logger_1.Logger.success(`Writing ${name}.js.\n`);
         const jsPath = path_1.default.resolve(templatePath, 'template.js');
         const jsTemplate = fs_extra_1.default.readFileSync(jsPath, 'utf8');
         fs_extra_1.default.writeFileSync(path_1.default.resolve(workingPath, `${name}.js`), jsTemplate);
     }
-    const writeSassFile = yield (0, prompt_1.prompt)(chalk_1.default.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
-    if (writeSassFile === 'y') {
+    const writeSassFile = yield p.confirm({
+        message: `Generate a supporting SASS file ${name}.scss?`,
+        initialValue: false,
+    });
+    if (writeSassFile === true) {
         logger_1.Logger.success(`Writing ${name}.scss.\n`);
         const scssPath = path_1.default.resolve(templatePath, 'template.scss');
         const scssTemplate = fs_extra_1.default.readFileSync(scssPath, 'utf8');
