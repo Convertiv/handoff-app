@@ -10,7 +10,7 @@ import Layout from '../components/Layout/Main';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog, getClientRuntimeConfig } from '../components/util';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -25,12 +25,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
       config: getClientRuntimeConfig(),
-      changelog: getChangelog(),
     },
   };
 };
 
-const Home = ({ content, menu, metadata, config, changelog, current }: ChangelogDocumentationProps) => {
+const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
   const router = useRouter();
 
   return (
