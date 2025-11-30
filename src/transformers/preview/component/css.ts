@@ -1,8 +1,8 @@
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff, { initRuntimeConfig } from '../../../index';
+import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
@@ -82,7 +82,7 @@ const buildCssBundle = async ({
 
     await viteBuild(viteConfig);
   } catch (e) {
-    console.log(chalk.red(`Error building CSS for ${entry}`));
+    Logger.error(`Failed to build CSS for "${entry}"`);
     throw e;
   } finally {
     // Restore the original NODE_ENV value
@@ -96,7 +96,7 @@ const buildCssBundle = async ({
 
 const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => {
   const id = data.id;
-  console.log('buildComponentCss ------------------------------', id);
+  Logger.debug(`buildComponentCss`, id);
   const entry = data.entries?.scss;
   if (!entry) {
     return data;
@@ -158,7 +158,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       }
     }
   } catch (e) {
-    console.log(chalk.red(`Error building CSS for ${id}`));
+    Logger.error(`Failed to build CSS for "${id}"`);
     throw e;
   }
 
@@ -177,7 +177,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
     if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
-      console.log(chalk.green(`Building main CSS file`));
+      Logger.success(`Building main CSS file...`);
 
       try {
         // Setup SASS load paths
@@ -199,8 +199,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           handoff,
         });
       } catch (e) {
-        console.log(chalk.red(`Error building main CSS`));
-        console.log(e);
+        Logger.error(`Failed to build main CSS:`, e);
       }
     }
   }

@@ -4,6 +4,8 @@ import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
 import { Plugin } from 'vite';
 import Handoff from '../..';
+import { Logger } from '../../utils/logger';
+import { createViteLogger } from '../utils/vite-logger';
 import { TransformComponentTokensResult } from '../preview/types';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
@@ -128,6 +130,9 @@ export function handlebarsPreviewsPlugin(
   return {
     name: PLUGIN_CONSTANTS.PLUGIN_NAME,
     apply: 'build',
+    config: () => ({
+      customLogger: createViteLogger(),
+    }),
     resolveId(resolveId) {
       if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
         return resolveId;
@@ -155,34 +160,40 @@ export function handlebarsPreviewsPlugin(
 
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
-        const previewData = componentData.previews[previewKey];
-        
-        // Render both normal and inspect modes
-        const normalModeHtml = await renderHandlebarsTemplate(
-          templateContent,
-          componentData,
-          previewData,
-          false
-        );
-        
-        const inspectModeHtml = await renderHandlebarsTemplate(
-          templateContent,
-          componentData,
-          previewData,
-          true
-        );
+        try {
+          const previewData = componentData.previews[previewKey];
 
-        // Emit preview files
-        emitPreviewFiles(
-          componentId,
-          previewKey,
-          normalModeHtml,
-          inspectModeHtml,
-          (file) => this.emitFile(file)
-        );
+          // Render both normal and inspect modes
+          const normalModeHtml = await renderHandlebarsTemplate(
+            templateContent,
+            componentData,
+            previewData,
+            false
+          );
 
-        generatedPreviews[previewKey] = normalModeHtml;
-        componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+          const inspectModeHtml = await renderHandlebarsTemplate(
+            templateContent,
+            componentData,
+            previewData,
+            true
+          );
+
+          // Emit preview files
+          emitPreviewFiles(
+            componentId,
+            previewKey,
+            normalModeHtml,
+            inspectModeHtml,
+            (file) => this.emitFile(file)
+          );
+
+          generatedPreviews[previewKey] = normalModeHtml;
+          componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+          
+          Logger.debug(`Generated Handlebars preview: ${componentId}-${previewKey}`);
+        } catch (err) {
+          Logger.error(`Failed to generate Handlebars preview for ${componentId}-${previewKey}`, err);
+        }
       }
 
       // Update component data with results
