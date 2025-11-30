@@ -36,8 +36,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildComponents = exports.zipAssets = exports.readPrevJSONFile = void 0;
+const p = __importStar(require("@clack/prompts"));
 const archiver_1 = __importDefault(require("archiver"));
-const chalk_1 = __importDefault(require("chalk"));
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handoff_core_1 = require("handoff-core");
@@ -49,7 +49,6 @@ const changelog_1 = __importDefault(require("./changelog"));
 const documentation_object_1 = require("./documentation-object");
 const component_1 = require("./transformers/preview/component");
 const logger_1 = require("./utils/logger");
-const prompt_1 = require("./utils/prompt");
 /**
  * Read Previous Json File
  * @param path
@@ -266,22 +265,42 @@ const validateFigmaAuth = (handoff) => __awaiter(void 0, void 0, void 0, functio
     let missingEnvVars = false;
     if (!DEV_ACCESS_TOKEN) {
         missingEnvVars = true;
-        logger_1.Logger.warn(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
-Use these instructions to generate them https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens\n`);
-        DEV_ACCESS_TOKEN = yield (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Developer Key: '));
+        p.log.warn(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\n` +
+            `Use these instructions to generate them: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`);
+        const token = yield p.password({
+            message: 'Figma Developer Key:',
+        });
+        if (p.isCancel(token)) {
+            p.cancel('Authentication cancelled.');
+            process.exit(0);
+        }
+        DEV_ACCESS_TOKEN = token;
     }
     if (!FIGMA_PROJECT_ID) {
         missingEnvVars = true;
-        logger_1.Logger.warn(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
-You can find this by looking at the url of your Figma file. If the url is https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D
-your id would be IGYfyraLDa0BpVXkxHY2tE\n`);
-        FIGMA_PROJECT_ID = yield (0, prompt_1.maskPrompt)(chalk_1.default.green('Figma Project Id: '));
+        p.log.warn(`Figma project ID not found. Provide HANDOFF_FIGMA_PROJECT_ID via environment variable or .env file.\n` +
+            `Find it in your Figma file URL (e.g., figma.com/file/{PROJECT_ID}/...).`);
+        const projectId = yield p.text({
+            message: 'Figma Project Id:',
+            validate: (value) => {
+                if (!value.trim())
+                    return 'Project ID is required';
+            },
+        });
+        if (p.isCancel(projectId)) {
+            p.cancel('Authentication cancelled.');
+            process.exit(0);
+        }
+        FIGMA_PROJECT_ID = projectId;
     }
     if (missingEnvVars) {
-        logger_1.Logger.warn(`\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`);
-        const writeEnvFile = yield (0, prompt_1.prompt)(chalk_1.default.green('Write environment variables to .env file? (y/n): '));
-        if (writeEnvFile !== 'y') {
-            logger_1.Logger.success(`Skipped .env file creation. Please provide these variables manually.`);
+        p.log.info(`To simplify future runs, we can save these variables to a local .env file.`);
+        const writeEnvFile = yield p.confirm({
+            message: 'Write environment variables to .env file?',
+            initialValue: true,
+        });
+        if (p.isCancel(writeEnvFile) || writeEnvFile === false) {
+            p.log.info(`Skipped .env file creation. Please provide these variables manually.`);
         }
         else {
             const envFilePath = path_1.default.resolve(handoff.workingPath, '.env');
@@ -296,11 +315,11 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
                     .catch(() => false);
                 if (fileExists) {
                     yield fs_extra_1.default.appendFile(envFilePath, envFileContent);
-                    logger_1.Logger.success(`\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`);
+                    p.log.success(`The .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.`);
                 }
                 else {
                     yield fs_extra_1.default.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
-                    logger_1.Logger.success(`\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`);
+                    p.log.success(`Created .env file. Do not commit sensitive variables.`);
                 }
             }
             catch (error) {
