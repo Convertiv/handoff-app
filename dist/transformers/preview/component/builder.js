@@ -306,7 +306,7 @@ function processComponents(handoff, id, segmentToProcess, options) {
                     }
                     const versionStatesMap = componentFileStatesMap.get(runtimeComponentId);
                     if (versionStatesMap) {
-                        for (const [version, fileStates] of versionStatesMap) {
+                        for (const [version, fileStates] of Array.from(versionStatesMap)) {
                             (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, version, fileStates);
                         }
                     }
