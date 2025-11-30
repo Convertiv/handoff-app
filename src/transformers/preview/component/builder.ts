@@ -346,7 +346,7 @@ export async function processComponents(
         }
         const versionStatesMap = componentFileStatesMap.get(runtimeComponentId);
         if (versionStatesMap) {
-          for (const [version, fileStates] of versionStatesMap) {
+          for (const [version, fileStates] of Array.from(versionStatesMap)) {
             updateComponentCacheEntry(cache, runtimeComponentId, version, fileStates);
           }
         } else {
