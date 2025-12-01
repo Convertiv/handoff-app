@@ -40,6 +40,7 @@
     "fetch": "node ./dist/cli.js fetch",
     "lint": "cd src/app && npx next lint",
     "release": "np --any-branch",
+    "release:canary": "np --any-branch --tag=canary --prerelease",
     "test": "npm run lint"
   },
   "prettier": {
