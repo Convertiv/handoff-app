@@ -70,6 +70,7 @@ var ComponentSegment;
     ComponentSegment["Style"] = "style";
     ComponentSegment["Previews"] = "previews";
     ComponentSegment["Validation"] = "validation";
+    ComponentSegment["ValidationOnly"] = "validation-only";
 })(ComponentSegment || (exports.ComponentSegment = ComponentSegment = {}));
 /**
  * Determines which keys should be preserved based on the segment being processed.
@@ -92,6 +93,9 @@ function getPreserveKeysForSegment(segmentToProcess) {
             return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'validations'];
         case ComponentSegment.Validation:
             // When processing Validation segment, preserve all other data
+            return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
+        case ComponentSegment.ValidationOnly:
+            // When processing ValidationOnly segment, preserve only validation data
             return ['js', 'jsCompiled', 'css', 'sass', 'sharedStyles', 'previews'];
         default:
             return [];
@@ -137,7 +141,8 @@ function processComponents(handoff, id, segmentToProcess) {
                 if (!segmentToProcess || segmentToProcess === ComponentSegment.Previews || segmentToProcess === ComponentSegment.Validation) {
                     data = yield (0, html_1.default)(data, handoff, components);
                 }
-                if (segmentToProcess === ComponentSegment.Validation && ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent)) {
+                if ((segmentToProcess === ComponentSegment.Validation || segmentToProcess === ComponentSegment.ValidationOnly)
+                    && ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent)) {
                     const validationResults = yield handoff.config.hooks.validateComponent(data);
                     data.validations = validationResults;
                 }
