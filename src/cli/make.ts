@@ -1,9 +1,8 @@
-import chalk from 'chalk';
+import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
 import { Logger } from '../utils/logger';
-import { prompt } from '../utils/prompt';
 
 /**
  * Make a new exportable component
@@ -139,16 +138,22 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   const jsonTemplate = fs.readFileSync(jsonpath, 'utf8');
   fs.writeFileSync(path.resolve(workingPath, `${name}.json`), jsonTemplate);
 
-  const writeJSFile = await prompt(chalk.green(`Would you like us to generate a supporting javascript file ${name}.js? (y/n): `));
-  if (writeJSFile === 'y') {
+  const writeJSFile = await p.confirm({
+    message: `Generate a supporting javascript file ${name}.js?`,
+    initialValue: false,
+  });
+  if (writeJSFile === true) {
     Logger.success(`Writing ${name}.js.\n`);
     const jsPath = path.resolve(templatePath, 'template.js');
     const jsTemplate = fs.readFileSync(jsPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.js`), jsTemplate);
   }
-  const writeSassFile = await prompt(chalk.green(`Would you like us to generate a supporting SASS file ${name}.scss? (y/n): `));
 
-  if (writeSassFile === 'y') {
+  const writeSassFile = await p.confirm({
+    message: `Generate a supporting SASS file ${name}.scss?`,
+    initialValue: false,
+  });
+  if (writeSassFile === true) {
     Logger.success(`Writing ${name}.scss.\n`);
     const scssPath = path.resolve(templatePath, 'template.scss');
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');

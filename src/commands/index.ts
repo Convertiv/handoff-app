@@ -8,6 +8,7 @@ import fetchCommand from './fetch';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
 import makeTemplateCommand from './make/template';
+import scaffoldCommand from './scaffold';
 import startCommand from './start';
 import validateComponentsCommand from './validate/components';
 
@@ -22,6 +23,7 @@ export const commands = [
   makePageCommand,
   makeComponentCommand,
   makeTemplateCommand,
+  scaffoldCommand,
   startCommand,
   validateComponentsCommand,
 ];

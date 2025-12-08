@@ -1,5 +1,5 @@
+import * as p from '@clack/prompts';
 import archiver from 'archiver';
-import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as HandoffTypes, Transformers } from 'handoff-core';
@@ -12,7 +12,6 @@ import { createDocumentationObject } from './documentation-object';
 import { componentTransformer } from './transformers/preview/component';
 import { FontFamily } from './types/font';
 import { Logger } from './utils/logger';
-import { maskPrompt, prompt } from './utils/prompt';
 
 /**
  * Read Previous Json File
@@ -275,28 +274,49 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
 
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
-    Logger.warn(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
-Use these instructions to generate them https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens\n`);
-    DEV_ACCESS_TOKEN = await maskPrompt(chalk.green('Figma Developer Key: '));
+    p.log.warn(
+      `Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\n` +
+      `Use these instructions to generate them: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
+    );
+    const token = await p.password({
+      message: 'Figma Developer Key:',
+    });
+    if (p.isCancel(token)) {
+      p.cancel('Authentication cancelled.');
+      process.exit(0);
+    }
+    DEV_ACCESS_TOKEN = token as string;
   }
 
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
-    Logger.warn(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
-You can find this by looking at the url of your Figma file. If the url is https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D
-your id would be IGYfyraLDa0BpVXkxHY2tE\n`);
-    FIGMA_PROJECT_ID = await maskPrompt(chalk.green('Figma Project Id: '));
+    p.log.warn(
+      `Figma project ID not found. Provide HANDOFF_FIGMA_PROJECT_ID via environment variable or .env file.\n` +
+      `Find it in your Figma file URL (e.g., figma.com/file/{PROJECT_ID}/...).`
+    );
+    const projectId = await p.text({
+      message: 'Figma Project Id:',
+      validate: (value) => {
+        if (!value.trim()) return 'Project ID is required';
+      },
+    });
+    if (p.isCancel(projectId)) {
+      p.cancel('Authentication cancelled.');
+      process.exit(0);
+    }
+    FIGMA_PROJECT_ID = projectId as string;
   }
 
   if (missingEnvVars) {
-    Logger.warn(
-      `\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`
-    );
+    p.log.info(`To simplify future runs, we can save these variables to a local .env file.`);
 
-    const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
+    const writeEnvFile = await p.confirm({
+      message: 'Write environment variables to .env file?',
+      initialValue: true,
+    });
 
-    if (writeEnvFile !== 'y') {
-      Logger.success(`Skipped .env file creation. Please provide these variables manually.`);
+    if (p.isCancel(writeEnvFile) || writeEnvFile === false) {
+      p.log.info(`Skipped .env file creation. Please provide these variables manually.`);
     } else {
       const envFilePath = path.resolve(handoff.workingPath, '.env');
       const envFileContent = `
@@ -312,14 +332,12 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 
         if (fileExists) {
           await fs.appendFile(envFilePath, envFileContent);
-          Logger.success(
-            `\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`
+          p.log.success(
+            `The .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.`
           );
         } else {
           await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
-          Logger.success(
-            `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
-          );
+          p.log.success(`Created .env file. Do not commit sensitive variables.`);
         }
       } catch (error) {
         Logger.error('Error handling the .env file:', error);
