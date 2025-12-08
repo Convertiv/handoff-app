@@ -8,7 +8,6 @@ import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '.';
 import buildApp from './app';
-import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { componentTransformer } from './transformers/preview/component';
 import { FontFamily } from './types/font';
@@ -335,21 +334,12 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 const figmaExtract = async (handoff: Handoff) => {
   Logger.success(`Starting Figma data extraction.`);
 
-  let prevDocumentationObject = await handoff.getDocumentationObject();
-  let changelog: ChangelogRecord[] = (await readPrevJSONFile(handoff.getChangelogFilePath())) || [];
-
   await fs.emptyDir(handoff.getOutputPath());
 
   const documentationObject = await createDocumentationObject(handoff);
-  const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
-
-  if (changelogRecord) {
-    changelog = [changelogRecord, ...changelog];
-  }
 
   await Promise.all([
     fs.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
-    fs.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
           zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>

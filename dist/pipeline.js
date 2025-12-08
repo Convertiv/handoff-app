@@ -45,7 +45,6 @@ const lodash_1 = require("lodash");
 const stream = __importStar(require("node:stream"));
 const path_1 = __importDefault(require("path"));
 const app_1 = __importDefault(require("./app"));
-const changelog_1 = __importDefault(require("./changelog"));
 const documentation_object_1 = require("./documentation-object");
 const component_1 = require("./transformers/preview/component");
 const logger_1 = require("./utils/logger");
@@ -313,17 +312,10 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 });
 const figmaExtract = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     logger_1.Logger.success(`Starting Figma data extraction.`);
-    let prevDocumentationObject = yield handoff.getDocumentationObject();
-    let changelog = (yield (0, exports.readPrevJSONFile)(handoff.getChangelogFilePath())) || [];
     yield fs_extra_1.default.emptyDir(handoff.getOutputPath());
     const documentationObject = yield (0, documentation_object_1.createDocumentationObject)(handoff);
-    const changelogRecord = (0, changelog_1.default)(prevDocumentationObject, documentationObject);
-    if (changelogRecord) {
-        changelog = [changelogRecord, ...changelog];
-    }
     yield Promise.all([
         fs_extra_1.default.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
-        fs_extra_1.default.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
         ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
             ? [
                 (0, exports.zipAssets)(documentationObject.assets.icons, fs_extra_1.default.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) => stream.promises.finished(writeStream)),

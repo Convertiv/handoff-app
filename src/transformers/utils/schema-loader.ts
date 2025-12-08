@@ -11,12 +11,9 @@ import { isValidSchemaObject, loadSchemaFromExports } from './schema';
  * @param handoff - Handoff instance for configuration
  * @returns Processed properties or null if failed
  */
-export const loadSchemaFromFile = async (
-  schemaPath: string,
-  handoff: any
-): Promise<{ [key: string]: SlotMetadata } | null> => {
+export const loadSchemaFromFile = async (schemaPath: string, handoff: any): Promise<{ [key: string]: SlotMetadata } | null> => {
   const ext = path.extname(schemaPath);
-  
+
   if (ext !== '.ts' && ext !== '.tsx') {
     Logger.warn(`Unsupported schema file extension: ${ext}`);
     return null;
@@ -24,7 +21,7 @@ export const loadSchemaFromFile = async (
 
   try {
     const schemaMod = await buildAndEvaluateModule(schemaPath, handoff);
-    
+
     // Get schema from exports.default (separate schema files export as default)
     const schema = loadSchemaFromExports(schemaMod.exports, handoff, 'default');
 
@@ -38,7 +35,7 @@ export const loadSchemaFromFile = async (
       // Use react-docgen-typescript to document the schema file
       return await generatePropertiesFromDocgen(schemaPath, handoff);
     }
-    
+
     return null;
   } catch (error) {
     Logger.warn(`Failed to load schema file "${schemaPath}": ${error}`);
@@ -52,10 +49,7 @@ export const loadSchemaFromFile = async (
  * @param handoff - Handoff instance for configuration
  * @returns Processed properties or null if failed
  */
-export const loadSchemaFromComponent = async (
-  componentExports: any,
-  handoff: any
-): Promise<{ [key: string]: SlotMetadata } | null> => {
+export const loadSchemaFromComponent = async (componentExports: any, handoff: any): Promise<{ [key: string]: SlotMetadata } | null> => {
   // Check for exported schema in component file (exports.schema)
   const schema = loadSchemaFromExports(componentExports, handoff, 'schema');
 
@@ -69,6 +63,6 @@ export const loadSchemaFromComponent = async (
     // Use react-docgen-typescript to document the schema
     return await generatePropertiesFromDocgen(componentExports.__filename || '', handoff);
   }
-  
+
   return null;
 };

@@ -69,11 +69,6 @@ declare class Handoff {
      */
     getPreviewFilePath(): string;
     /**
-     * Gets the path to the changelog.json file
-     * @returns {string} The absolute path to the changelog.json file
-     */
-    getChangelogFilePath(): string;
-    /**
      * Gets the path to the tokens directory
      * @returns {string} The absolute path to the tokens directory
      */
