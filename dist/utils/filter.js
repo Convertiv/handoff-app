@@ -54,9 +54,6 @@ function evaluateFilter(obj, filter) {
 function evaluateFieldFilter(obj, filter) {
     const { field, op, value } = filter;
     const actual = obj[field];
-    if (op === 'neq') {
-        console.log('EVAL', filter, actual, actual !== value);
-    }
     switch (op) {
         case 'eq':
             return { matches: actual === value };

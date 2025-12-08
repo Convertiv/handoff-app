@@ -1,3 +1,4 @@
+import { Logger } from '../../utils/logger';
 import { SlotMetadata, SlotType } from '../preview/component';
 
 /**
@@ -93,7 +94,7 @@ export const loadSchemaFromExports = (
     
     return schema;
   } catch (error) {
-    console.warn(`Failed to load schema from exports (${exportKey}):`, error);
+    Logger.warn(`Failed to load schema from exports (${exportKey}): ${error}`);
     return null;
   }
 };

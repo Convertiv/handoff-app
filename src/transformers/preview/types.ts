@@ -105,8 +105,8 @@ export type ComponentObject = {
     js?: string;
     /** Optional path to the main SCSS/CSS file (if available) */
     scss?: string;
-    /** Optional path(s) to component template file(s) (if available) */
-    templates?: string;
+    /** Optional path to component template file (if available) */
+    template?: string;
   };
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };

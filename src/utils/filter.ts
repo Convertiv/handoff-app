@@ -77,10 +77,6 @@ function evaluateFieldFilter(obj: Record<string, any>, filter: FieldFilter): Fil
   const { field, op, value } = filter;
   const actual = obj[field];
 
-  if (op === 'neq') {
-    console.log('EVAL', filter, actual, actual !== value);
-  }
-
   switch (op) {
     case 'eq':
       return { matches: actual === value };

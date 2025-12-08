@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createHandlebarsContext = exports.registerHandlebarsHelpers = void 0;
 const handlebars_1 = __importDefault(require("handlebars"));
+const logger_1 = require("../../utils/logger");
 /**
  * Registers common Handlebars helpers
  * @param data - Component data containing properties
@@ -15,7 +16,7 @@ const registerHandlebarsHelpers = (data, injectFieldWrappers) => {
     handlebars_1.default.registerHelper('field', function (field, options) {
         if (injectFieldWrappers) {
             if (!field) {
-                console.error(`Missing field declaration for ${data.id}`);
+                logger_1.Logger.error(`Missing field declaration for ${data.id}`);
                 return options.fn(this);
             }
             let parts = field.split('.');
@@ -28,7 +29,7 @@ const registerHandlebarsHelpers = (data, injectFieldWrappers) => {
                 current = current === null || current === void 0 ? void 0 : current[part];
             }
             if (!current) {
-                console.error(`Undefined field path for ${data.id}`);
+                logger_1.Logger.error(`Undefined field path for ${data.id}`);
                 return options.fn(this);
             }
             return new handlebars_1.default.SafeString(`<span class="handoff-field handoff-field-${(current === null || current === void 0 ? void 0 : current.type) || 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">${options.fn(this)}</span>`);

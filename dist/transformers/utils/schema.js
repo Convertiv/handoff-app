@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loadSchemaFromExports = exports.isValidSchemaObject = exports.convertDocgenToProperties = exports.ensureIds = void 0;
+const logger_1 = require("../../utils/logger");
 const component_1 = require("../preview/component");
 /**
  * Ensures all properties have proper IDs assigned recursively
@@ -94,7 +95,7 @@ const loadSchemaFromExports = (moduleExports, handoff, exportKey = 'default') =>
         return schema;
     }
     catch (error) {
-        console.warn(`Failed to load schema from exports (${exportKey}):`, error);
+        logger_1.Logger.warn(`Failed to load schema from exports (${exportKey}): ${error}`);
         return null;
     }
 };

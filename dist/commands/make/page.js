@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = __importDefault(require("../../"));
+const logger_1 = require("../../utils/logger");
 const utils_1 = require("../utils");
 const command = {
     command: 'make:page <name> [parent]',
@@ -32,12 +33,12 @@ const command = {
         const handoff = new __1.default(args.debug, args.force);
         const pageName = args.name;
         if (!/^[a-z0-9]+$/i.test(pageName)) {
-            console.error(`Page name must be alphanumeric and may contain dashes or underscores`);
+            logger_1.Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         let pageParent = args.parent;
         if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
-            console.error(`Page parent must be alphanumeric and may contain dashes or underscores`);
+            logger_1.Logger.error(`Page parent must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         yield handoff.makePage(pageName, pageParent);
