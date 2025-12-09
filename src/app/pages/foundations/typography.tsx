@@ -7,6 +7,7 @@ import { DownloadTokens } from '../../components/DownloadTokens';
 import TypographyExamples from '../../components/Foundations/TypographyExample';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import AnchorNav, { anchorSlugify } from '../../components/Navigation/AnchorNav';
 import HeadersType from '../../components/Typography/Headers';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
@@ -62,6 +63,14 @@ const Typography = ({
 
   const type_copy = config?.app?.type_copy ?? 'Almost before we knew it, we had left the ground.';
 
+  const typographyCategories = typography.reduce((acc, type) => {
+    if (type.name.includes('/')) {
+      const category = type.name.split('/')[0].trim();
+      acc.add(category);
+    }
+    return acc;
+  }, new Set<string>());
+
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
@@ -69,31 +78,56 @@ const Typography = ({
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
-      <div className="mb-10">
-        <h2 className="mb-3 text-2xl font-medium">Typography</h2>
-        <p className="mb-8">Typographic system establishes scale, sizes and weight of text.</p>
-        {Object.keys(families).map((key) => (
-          <div className="rounded-lg bg-gray-50 p-10" key={key}>
-            <p className="mb-1 text-sm">Typeface</p>
-            <div className="" style={{ fontFamily: key }}>
-              <p className="mb-3 text-3xl leading-relaxed text-gray-900 dark:text-gray-100">{key}</p>
-              <p className="mb-2 break-all text-xs  tracking-[0.3em] text-gray-400">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz</p>
-              <p className=" break-all text-xs  tracking-[0.3em] text-gray-400">
-                1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*
-              </p>
-            </div>
+      <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+        <div>
+          <div id="typefaces" className="scroll-mt-24 pb-10">
+            <HeadersType.H2 className="mb-4 text-2xl font-semibold">Typefaces</HeadersType.H2>
+            <p className="mb-8">
+              Our typeface defines the foundation of our typography system. It ensures readability, consistency, and flexibility across all
+              applications.
+            </p>
+            {Object.keys(families).map((key) => (
+              <div className="rounded-lg bg-gray-50 p-10" key={key} id={`typeface-${anchorSlugify(key)}`}>
+                <p className="mb-1 text-sm">Typeface</p>
+                <div className="" style={{ fontFamily: key }}>
+                  <p className="mb-3 text-3xl leading-relaxed text-gray-900 dark:text-gray-100">{key}</p>
+                  <p className="mb-2 break-all text-xs  tracking-[0.3em] text-gray-400">
+                    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+                  </p>
+                  <p className=" break-all text-xs  tracking-[0.3em] text-gray-400">
+                    1234567890&apos;?&quot;!&quot;(%)[#]@/&amp;\-+÷×=®©$€£¥¢:;,.*
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <HeadersType.H2>Hierarchy</HeadersType.H2>
-      <p className="mb-8">Use for palette of colors containing many shades.</p>
-      <TypographyExamples types={typography} />
+          <div id="typography-scale" className="scroll-mt-24 pb-10">
+            <HeadersType.H2 className="mb-4 text-2xl font-semibold">Typography Scale</HeadersType.H2>
+            <p className="mb-8">
+              This is our typography hierarchy, defining the full range of headings, paragraphs, labels and other text used across the
+              system. It creates a clear and consistent type ramp to maintain readability and visual harmony.
+            </p>
+            <TypographyExamples types={typography} />
+          </div>
+        </div>
 
-      <div className="prose">
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-          {content}
-        </ReactMarkdown>
+        <AnchorNav
+          groups={[
+            {
+              typefaces: 'Typefaces',
+            },
+            {
+              'typography-scale': 'Typography Scale',
+            },
+          ]}
+        />
+
+        <div className="prose">
+          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </Layout>
   );

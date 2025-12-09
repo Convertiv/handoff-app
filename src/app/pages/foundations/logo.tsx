@@ -53,7 +53,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
           <Link
-            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
             href={config?.assets_zip_links?.logos ?? '/logos.zip'}
           >
             Download Logos <Download strokeWidth={1.5} />

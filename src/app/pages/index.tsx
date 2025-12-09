@@ -34,7 +34,7 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
-      <div className="w-full bg-gradient-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
+      <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
@@ -62,14 +62,14 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
             <h3 className="text-2xl font-medium">Foundations that define the brand across every experience</h3>
             <p className="mb-4 leading-relaxed">A set of design principles and visual guidelines, like color and typography.</p>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Link href="/foundations/logo">
+              <Link href="/foundations/logo" className="group flex items-center gap-2">
                 <Hexagon className="size-3 stroke-[1.5]" />
                 Logo
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Link href="/foundations/icons">
+              <Link href="/foundations/icons" className="group flex items-center gap-2">
                 <Shapes className="size-3 stroke-[1.5]" />
                 Icon Library
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
@@ -158,7 +158,7 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <Image
-                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`}
+                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.svg`}
                   alt="Colors"
                   width={'327'}
                   height="220"
@@ -179,7 +179,7 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <Image
-                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`}
+                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/blocks.svg`}
                   alt="Colors"
                   width={'327'}
                   height="220"

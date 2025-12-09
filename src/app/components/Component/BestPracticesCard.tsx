@@ -28,7 +28,7 @@ const BestPracticesCard: React.FC<{ component: PreviewObject }> = ({ component }
   }
 
   return (
-    <div id="best-practices">
+    <div id="best-practices" className="flex flex-col gap-2 pb-7">
       <Cards cards={cards} />
     </div>
   );

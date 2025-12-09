@@ -8,6 +8,7 @@ import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../components/Navigation/AnchorNav';
+import PrevNextNav from '../../components/Navigation/PrevNextNav';
 import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
 import { getTokens } from '../../components/util';
@@ -68,7 +69,7 @@ const ColorsPage = ({
         <DownloadTokens componentId="colors" scss={scss} css={css} styleDictionary={styleDictionary} types={types} />
       </div>
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
-        <div>
+        <div className="flex flex-col gap-0">
           {Object.keys(colorGroups).map((group) => (
             <ColorGrid
               title={upperFirst(group)}
@@ -78,6 +79,7 @@ const ColorsPage = ({
               key={group}
             />
           ))}
+        <PrevNextNav />
         </div>
 
         <AnchorNav

@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react';
 import React from 'react';
 
 /**
@@ -24,42 +25,27 @@ export interface CardsProps {
   className?: string;
 }
 
-const CardIcon: React.FC<{ type: Card['type'] }> = ({ type }) => {
-  switch (type) {
-    case 'positive':
-      return (
-        <svg
-          className="mt-[5px] h-3 w-3 flex-shrink-0 text-emerald-600"
-          strokeWidth={3}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      );
-    case 'negative':
-      return (
-        <svg className="mt-[5px] h-3 w-3 flex-shrink-0 text-gray-400" strokeWidth={3} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      );
-    default:
-      return <></>;
-  }
-};
+const PracticeLine: React.FC<{ line: string; type?: Card['type'] }> = ({ line, type }) => (
+  <li className="flex items-start gap-3">
+    {type === 'positive' ? (
+      <Check className="mt-[5px] h-3 w-3 shrink-0 text-emerald-600" strokeWidth={3} />
+    ) : type === 'negative' ? (
+      <X className="mt-[5px] h-3 w-3 shrink-0 text-gray-400" strokeWidth={3} />
+    ) : (
+      <span className="mt-[5px] h-3 w-3 shrink-0" />
+    )}
+    <p className="text-sm">{line}</p>
+  </li>
+);
 
 const CardItem: React.FC<{ card: Card }> = ({ card }) => {
   // Split content by newlines and render each line as a separate item
   const lines = card.content.split('\n').filter((line) => line.trim());
 
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-3 text-emerald-800">
       {lines.map((line, index) => (
-        <li key={index} className="flex items-start gap-3">
-          <CardIcon type={card.type} />
-          <p className="text-sm">{line}</p>
-        </li>
+        <PracticeLine line={line} type={card.type} key={`do-rule-${index}`} />
       ))}
     </ul>
   );
@@ -70,43 +56,19 @@ const Cards: React.FC<CardsProps> = ({ cards, maxCardsPerRow = 2, className = ''
     return null;
   }
 
-  // Calculate grid columns based on maxCardsPerRow (always full width, max 2 per row)
-  const getGridCols = () => {
-    if (maxCardsPerRow === 1) return 'grid-cols-1';
-    if (maxCardsPerRow === 2) return 'grid-cols-1 sm:grid-cols-2';
-    if (maxCardsPerRow === 3) return 'grid-cols-1 sm:grid-cols-2'; // Cap at 2 per row
-    return 'grid-cols-1 sm:grid-cols-2'; // Default to max 2 per row
-  };
-
   return (
-    <div className={`flex flex-col gap-2 pb-7 ${className}`}>
-      <div className={`grid gap-6 ${getGridCols()}`}>
-        {cards.map((card, index) => (
-          <div
-            key={`card-${index}`}
-            className={`relative rounded-lg border p-8 ${
-              card.type === 'positive'
-                ? 'bg-gray-50 text-gray-600 dark:bg-gray-800'
-                : card.type === 'negative'
-                  ? 'bg-gray-50 text-gray-600 dark:bg-gray-800'
-                  : 'bg-gray-50 text-gray-600 dark:bg-gray-800'
-            }`}
-          >
-            <h2
-              className={`mb-3 font-normal ${
-                card.type === 'positive' ? 'text-gray-700' : card.type === 'negative' ? 'text-gray-900' : 'text-gray-800'
-              }`}
-            >
-              {card.title}
-            </h2>
-            <div
-              className={`${card.type === 'positive' ? 'text-emerald-800' : card.type === 'negative' ? 'text-red-800' : 'text-blue-800'}`}
-            >
-              <CardItem card={card} />
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(100%,1fr))] gap-6 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+      {cards.map((card, index) => (
+        <div
+          key={`card-${index}`}
+          className="relative rounded-lg border bg-gray-50 p-8 text-gray-600 dark:bg-gray-800"
+        >
+          <h2 className="mb-3 font-normal text-gray-700">
+            {card.title}
+          </h2>
+          <CardItem card={card} />
+        </div>
+      ))}
     </div>
   );
 };

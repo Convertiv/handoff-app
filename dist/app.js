@@ -39,10 +39,8 @@ exports.devApp = exports.watchApp = void 0;
 const chokidar_1 = __importDefault(require("chokidar"));
 const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const http_1 = require("http");
 const next_1 = __importDefault(require("next"));
 const path_1 = __importDefault(require("path"));
-const url_1 = require("url");
 const ws_1 = require("ws");
 const config_1 = require("./config");
 const pipeline_1 = require("./pipeline");
@@ -104,7 +102,10 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
  * @returns The resolved path to the public directory if it exists, null otherwise
  */
 const getWorkingPublicPath = (handoff) => {
-    const paths = [path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`), path_1.default.resolve(handoff.workingPath, `public`)];
+    const paths = [
+        path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`),
+        path_1.default.resolve(handoff.workingPath, `public`),
+    ];
     for (const path of paths) {
         if (fs_extra_1.default.existsSync(path)) {
             return path;
@@ -128,7 +129,9 @@ const syncPublicFiles = (handoff) => __awaiter(void 0, void 0, void 0, function*
     const appPath = getAppPath(handoff);
     const workingPublicPath = getWorkingPublicPath(handoff);
     if (workingPublicPath) {
-        yield fs_extra_1.default.copy(workingPublicPath, path_1.default.resolve(appPath, 'public'), { overwrite: true });
+        yield fs_extra_1.default.copy(workingPublicPath, path_1.default.resolve(appPath, 'public'), {
+            overwrite: true,
+        });
     }
 });
 /**
@@ -167,7 +170,9 @@ const generateTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, functio
     if (tokens && typeof tokens === 'object') {
         const promises = [];
         for (const type in tokens) {
-            if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object')
+            if (type === 'timestamp' ||
+                !tokens[type] ||
+                typeof tokens[type] !== 'object')
                 continue;
             for (const group in tokens[type]) {
                 if (tokens[type][group]) {
@@ -238,7 +243,9 @@ const persistClientConfig = (handoff) => __awaiter(void 0, void 0, void 0, funct
  */
 const watchPublicDirectory = (handoff, wss, state, chokidarConfig) => {
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+        chokidar_1.default
+            .watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig)
+            .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':
@@ -297,7 +304,9 @@ const watchAppSource = (handoff) => {
  */
 const watchPages = (handoff, chokidarConfig) => {
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+        chokidar_1.default
+            .watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig)
+            .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':
@@ -323,10 +332,13 @@ const watchPages = (handoff, chokidarConfig) => {
  */
 const watchScss = (handoff, state, chokidarConfig) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    if (((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.scss) && fs_extra_1.default.existsSync((_d = (_c = handoff.runtimeConfig) === null || _c === void 0 ? void 0 : _c.entries) === null || _d === void 0 ? void 0 : _d.scss)) {
+    if (((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.scss) &&
+        fs_extra_1.default.existsSync((_d = (_c = handoff.runtimeConfig) === null || _c === void 0 ? void 0 : _c.entries) === null || _d === void 0 ? void 0 : _d.scss)) {
         const stat = yield fs_extra_1.default.stat(handoff.runtimeConfig.entries.scss);
         chokidar_1.default
-            .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
+            .watch(stat.isDirectory()
+            ? handoff.runtimeConfig.entries.scss
+            : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
             .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
@@ -371,7 +383,7 @@ const getRuntimeComponentsPathsToWatch = (handoff) => {
     for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
         for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
             const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
-            for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
+            for (const [runtimeComponentEntryType, runtimeComponentEntryPath,] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
                 const normalizedComponentEntryPath = runtimeComponentEntryPath;
                 if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
                     const entryType = runtimeComponentEntryType;
@@ -400,7 +412,9 @@ const watchRuntimeComponents = (handoff, state, runtimeComponentPathsToWatch) =>
     }
     if (runtimeComponentPathsToWatch.size > 0) {
         const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
-        state.runtimeComponentsWatcher = chokidar_1.default.watch(pathsToWatch, { ignoreInitial: true });
+        state.runtimeComponentsWatcher = chokidar_1.default.watch(pathsToWatch, {
+            ignoreInitial: true,
+        });
         state.runtimeComponentsWatcher.on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             if (handoff.getConfigFilePaths().includes(file)) {
                 return;
@@ -413,7 +427,9 @@ const watchRuntimeComponents = (handoff, state, runtimeComponentPathsToWatch) =>
                         state.debounce = true;
                         try {
                             const entryType = runtimeComponentPathsToWatch.get(file);
-                            const segmentToUpdate = entryType ? mapEntryTypeToSegment(entryType) : undefined;
+                            const segmentToUpdate = entryType
+                                ? mapEntryTypeToSegment(entryType)
+                                : undefined;
                             const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
                             yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
                         }
@@ -541,36 +557,24 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         port,
         // conf: config,
     });
-    const handle = app.getRequestHandler();
     // purge out cache
     const moduleOutput = path_1.default.resolve(appPath, 'out');
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         yield fs_extra_1.default.remove(moduleOutput);
     }
-    app.prepare().then(() => {
-        (0, http_1.createServer)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-            try {
-                // Be sure to pass `true` as the second argument to `url.parse`.
-                // This tells it to parse the query portion of the URL.
-                if (!req.url)
-                    throw new Error('No url');
-                const parsedUrl = (0, url_1.parse)(req.url, true);
-                const { pathname, query } = parsedUrl;
-                yield handle(req, res, parsedUrl);
-            }
-            catch (err) {
-                logger_1.Logger.error(`Error occurred handling ${req.url}`, err);
-                res.statusCode = 500;
-                res.end('internal server error');
-            }
-        }))
-            .once('error', (err) => {
-            logger_1.Logger.error(err);
-            process.exit(1);
-        })
-            .listen(port, () => {
-            logger_1.Logger.log(`Ready on http://${hostname}:${port}`);
-        });
+    const nextProcess = (0, cross_spawn_1.default)('npx', ['next', 'dev', '--port', String(port)], {
+        cwd: appPath,
+        stdio: 'inherit',
+        env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'development' }),
+    });
+    console.log(`Ready on http://${hostname}:${port}`);
+    nextProcess.on('error', (error) => {
+        console.error(`Next.js dev process error: ${error}`);
+        process.exit(1);
+    });
+    nextProcess.on('close', (code) => {
+        console.log(`Next.js dev process closed with code ${code}`);
+        process.exit(code);
     });
     const wss = yield createWebSocketServer((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);
     const chokidarConfig = {

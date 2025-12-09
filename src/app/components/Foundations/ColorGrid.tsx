@@ -1,11 +1,9 @@
 import { Types as CoreTypes } from 'handoff-core';
 import startCase from 'lodash/startCase';
-import { ArrowRightToLine, Check, Contrast, Copy, Link, SwatchBook } from 'lucide-react';
+import { ArrowRightToLine, Check, Copy, Link, SwatchBook } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../lib/utils';
 import HeadersType from '../Typography/Headers';
-import { Badge } from '../ui/badge';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -15,11 +13,14 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader } from '../ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetHeader } from '../ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { calculateContrastRatio, hexToRgb } from '../util/colors';
+import { hexToRgb } from '../util/colors';
+import ColorContrast from './ColorContrast';
+import ColorInfo from './ColorInfo';
+import ColorSpaces from './ColorSpaces';
+import ColorTailwind from './ColorTailwind';
 
 type ColorGridProps = {
   title: string;
@@ -39,8 +40,8 @@ const LargeColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
           >
             <ColorDropdown color={color} openSheet={setOpen} />
           </div>
-          <p className="mb-1 text-sm font-medium">{color.name}</p>
-          <small className="font-mono text-xs font-light text-gray-400">{color.value}</small>
+          <p className="mb-1 text-sm font-medium line-clamp-1" title={color.name}>{color.name}</p>
+          <small className="font-mono text-xs font-light text-gray-400 line-clamp-1" title={color.value}>{color.value}</small>
         </a>
       ))}
     </div>
@@ -74,8 +75,8 @@ const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
                   >
                     <ColorDropdown color={color} openSheet={setOpen} />
                   </div>
-                  <p className="mb-1 text-xs font-medium">{color.name}</p>
-                  <small className="font-mono text-xs font-light text-gray-400">{color.value}</small>
+                  <p className="mb-1 text-xs font-medium line-clamp-1" title={color.name}>{color.name}</p>
+                  <small className="font-mono text-xs font-light text-gray-400 line-clamp-1" title={color.value}>{color.value}</small>
                 </a>
               </React.Fragment>
             ))}
@@ -94,21 +95,19 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
     setOpen(true);
   };
   return (
-    <>
-      <h3 className="mb-2 text-lg font-medium" id={`${group}-colors`}>
-        {title}
-      </h3>
+    <div id={`${group}-colors`} className="scroll-mt-24 scroll-smooth pb-10">
+      <h3 className="mb-2 text-lg font-medium">{title}</h3>
       <p className="mb-8">{description}</p>
       {colors.length < 5 ? <LargeColorGrid colors={colors} setOpen={openSheet} /> : <SmallColorGrid colors={colors} setOpen={openSheet} />}
       <ColorSheet color={selectedColor} open={open} setOpen={setOpen} />
-    </>
+    </div>
   );
 };
 
 const ColorDropdown: React.FC<{ color: CoreTypes.IColorObject; openSheet: (color) => void }> = ({ color, openSheet }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <div className="absolute right-1 top-1 flex cursor-pointer items-center justify-center rounded-sm bg-white/100 p-[6px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <div className="absolute right-1 top-1 flex cursor-pointer items-center justify-center rounded-sm bg-white p-[6px] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <span className="inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
         <span className="mx-[2px] inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
         <span className="inline-block h-[3px] w-[3px] rounded-full bg-black"></span>
@@ -137,7 +136,7 @@ const ColorDropdown: React.FC<{ color: CoreTypes.IColorObject; openSheet: (color
 );
 
 const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOpen: (boolean) => void }> = ({ color, open, setOpen }) => {
-  const [selectedValue, setSelectedValue] = React.useState('off');
+  const [selectedColorSpace, setSelectedColorSpace] = React.useState('raw');
   const [copied, setCopied] = React.useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(color.value);
@@ -145,7 +144,7 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
     setTimeout(() => setCopied(false), 2000);
   };
   if (!color) return null;
-  const contrast = calculateContrastRatio(color.value, '#FFFFFF');
+  
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
@@ -181,141 +180,15 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
           </div>
         </div>
         <SheetHeader className="space-y-2 px-2">
-          <div className={`relative mb-2 block h-32 w-full rounded-md`} style={{ background: color.value }}>
-            <div className="absolute bottom-0 left-0 flex flex-col gap-0.5 px-4 py-4">
-              <p className="font-medium text-white">{color.name}</p>
-              <p className="font-mono text-xs text-white">{color.value}</p>
-            </div>
-          </div>
-          <SheetDescription className="leading-relaxed">
-            Color description coming from Figma variable or style description. Usually usage guideline like &quot;Use for background&quot;
-            or &quot;Use for text&quot;.
-          </SheetDescription>
-          <div className="mt-2 flex items-center gap-2">
-            <svg className="h-2.5 w-2.5 text-slate-700" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <title>Figma</title>
-              <path d="M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117V7.51zm0 1.471H8.148c-2.476 0-4.49-2.014-4.49-4.49S5.672 0 8.148 0h4.588v8.981zm-4.587-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.354 3.02 3.019 3.02h3.117V1.471H8.148zm4.587 15.019H8.148c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.98zM8.148 8.981c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V8.981H8.148zM8.172 24c-2.489 0-4.515-2.014-4.515-4.49s2.014-4.49 4.49-4.49h4.588v4.441c0 2.503-2.047 4.539-4.563 4.539zm-.024-7.51a3.023 3.023 0 0 0-3.019 3.019c0 1.665 1.365 3.019 3.044 3.019 1.705 0 3.093-1.376 3.093-3.068v-2.97H8.148zm7.704 0h-.098c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h.098c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.49-4.49 4.49zm-.097-7.509c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h.098c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-.098z" />
-            </svg>
-            {color.groups && (
-              <Breadcrumb>
-                <BreadcrumbList className="text-xs text-gray-500">
-                  {color.groups.map((group, index) => (
-                    <BreadcrumbItem key={group}>
-                      <BreadcrumbPage className="text-gray-500">{group}</BreadcrumbPage>
-                      {color.groups.length - 1 !== index && <BreadcrumbSeparator>/</BreadcrumbSeparator>}
-                    </BreadcrumbItem>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            )}
-          </div>
+          <ColorInfo color={color} />
         </SheetHeader>
         <div className="px-2">
-          <Separator className="mb-4 mt-6" />
-          <p className="mb-3 flex items-center gap-3">
-            <SwatchBook className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
-            <span className="text-sm font-normal">Color Spaces</span>
-          </p>
-          <ul className="flex flex-col gap-3">
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
-              <p className="font-mono text-xs text-gray-400">HEX</p>
-              <div className="relative">
-                <p
-                  className={cn(
-                    'duration-400 absolute font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-sm'
-                  )}
-                >
-                  {color.value}
-                </p>
-                <p
-                  className={cn(
-                    'duration-400 font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-sm'
-                  )}
-                >
-                  {color.value}
-                </p>
-              </div>
-            </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
-              <p className="font-mono text-xs text-gray-400">RGB</p>
-              <div className="relative">
-                <p
-                  className={cn(
-                    'duration-400 absolute font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'on' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-2 opacity-0 blur-sm'
-                  )}
-                >
-                  {hexToRgb(color.value)}
-                </p>
-                <p
-                  className={cn(
-                    'duration-400 font-mono text-xs transition-[filter,transform,opacity]',
-                    selectedValue === 'off' ? 'translate-y-0 opacity-100 blur-none' : 'translate-y-[-20px] opacity-0 blur-sm'
-                  )}
-                >
-                  {hexToRgb(color.value)}
-                </p>
-              </div>
-            </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
-              <p className="font-mono text-xs text-gray-400">HSL</p>
-              <p className="font-mono text-xs">{selectedValue === 'on' ? 'hsl(210deg, 100%, 40%)' : '210°, 100%, 40%'}</p>
-            </li>
-            <li className="flex w-full justify-between rounded-md border border-input border-t-[#f3f3f3] bg-gray-100 bg-transparent px-4 py-2 shadow-sm">
-              <p className="font-mono text-xs text-gray-400">LCH</p>
-              <p className="font-mono text-xs">{selectedValue === 'on' ? 'lch(49 50 273)' : '49, 50, 273'}</p>
-            </li>
-          </ul>
-          <div className="flex justify-end">
-            <div className="mt-3 inline-flex h-7 rounded-lg bg-input/50 p-0.5">
-              <RadioGroup
-                value={selectedValue}
-                onValueChange={setSelectedValue}
-                className="group relative inline-grid grid-cols-[1fr_1fr] items-center gap-0 text-xs font-medium after:absolute after:inset-y-0 after:w-1/2 after:rounded-md after:bg-background after:shadow-sm after:shadow-black/5 after:outline-offset-2 after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.16,1,0.3,1)] has-[:focus-visible]:after:outline has-[:focus-visible]:after:outline-2 has-[:focus-visible]:after:outline-ring/70 data-[state=off]:after:translate-x-0 data-[state=on]:after:translate-x-full"
-                data-state={selectedValue}
-              >
-                <label className="relative z-10 inline-flex h-full min-w-6 cursor-pointer select-none items-center justify-center whitespace-nowrap px-3 transition-colors group-data-[state=on]:text-muted-foreground/70">
-                  Raw Value
-                  <RadioGroupItem value="off" className="sr-only" />
-                </label>
-                <label className="relative z-10 inline-flex h-full min-w-8 cursor-pointer select-none items-center justify-center whitespace-nowrap px-4 transition-colors group-data-[state=off]:text-muted-foreground/70">
-                  <span>CSS</span>
-                  <RadioGroupItem value="on" className="sr-only" />
-                </label>
-              </RadioGroup>
-            </div>
-          </div>
-          <Separator className="mb-4 mt-6" />
-          <p className="mb-3 flex items-center gap-3">
-            <Contrast className="h-[14px] w-[14px] text-slate-700 opacity-70" strokeWidth={1.5} />
-            <span className="text-sm font-normal">Contrast against white background</span>
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-md border border-input bg-transparent p-4">
-              <p className="mb-3 text-xs font-medium">Small Text</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">4.5:1</Badge>
-                <span className="text-xs text-gray-500">Required</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant={contrast >= 4.5 ? 'green' : 'default'}>{contrast.toFixed(1)}:1</Badge>
-                <span className="text-xs text-gray-500">Current</span>
-              </div>
-            </div>
-            <div className="rounded-md border border-input bg-transparent p-4">
-              <p className="mb-3 text-xs font-medium">Large Text</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">3:1</Badge>
-                <span className="text-xs text-gray-500">Required</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant={contrast >= 3 ? 'green' : 'default'}>{contrast.toFixed(1)}:1</Badge>
-                <span className="text-xs text-gray-500">Current</span>
-              </div>
-            </div>
-          </div>
+          <Separator className="mb-6 mt-6" />
+          <ColorSpaces color={color} selectedColorSpace={selectedColorSpace} setSelectedColorSpace={setSelectedColorSpace} />
+          <Separator className="mb-6 mt-6" />
+          <ColorContrast color={color} />
+          <Separator className="mb-6 mt-6" />
+          <ColorTailwind />
         </div>
       </SheetContent>
     </Sheet>

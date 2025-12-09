@@ -60,7 +60,7 @@ export const ComponentList = ({
       });
     }
     setList(filteredList);
-    // @ts-ignore 
+    // @ts-ignore
   }, [search, category]);
 
   const storeLayout = (value) => {
@@ -71,10 +71,6 @@ export const ComponentList = ({
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
     <div className="mx-auto w-full">
-      <div className="flex flex-col gap-2 pb-7">
-        <HeadersType.H2>{title}</HeadersType.H2>
-        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
-      </div>
       <div className="mb-4 flex justify-between">
         <div className="mr-auto flex items-center gap-3">
           <Input
@@ -118,7 +114,7 @@ export const ComponentList = ({
           </Tooltip>
 
         </div>
-        <div className="flex items-center gap-2">
+        <div className="mb-4 flex justify-end">
           <ToggleGroup type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
             <ToggleGroupItem value="grid" aria-label="Grid layout" >
               <LayoutGrid className={cn(layout === 'grid' && 'text-blue-400', 'h-4 w-4')} strokeWidth={1.5} />

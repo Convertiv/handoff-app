@@ -149,7 +149,7 @@ export const CodeHighlight: React.FC<{
   }, [currentValues, data]);
 
   return (
-    <Collapsible className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible id="code-samples" className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
       <div
         className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800"
         data-language={activeState === 'html' ? type : activeState}
