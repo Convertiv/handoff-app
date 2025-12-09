@@ -3,10 +3,8 @@ import chokidar from 'chokidar';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import matter from 'gray-matter';
-import { createServer } from 'http';
 import next from 'next';
 import path from 'path';
-import { parse } from 'url';
 import WebSocket from 'ws';
 import Handoff from '.';
 import { getClientConfig } from './config';
@@ -435,29 +433,24 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   if (fs.existsSync(moduleOutput)) {
     fs.removeSync(moduleOutput);
   }
-  app.prepare().then(() => {
-    createServer(async (req, res) => {
-      try {
-        // Be sure to pass `true` as the second argument to `url.parse`.
-        // This tells it to parse the query portion of the URL.
-        if (!req.url) throw new Error('No url');
-        const parsedUrl = parse(req.url, true);
-        const { pathname, query } = parsedUrl;
+  const nextProcess = spawn('npx', ['next', 'dev', '--port', String(port)], {
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+    },
+  });
+  console.log(`> Ready on http://${hostname}:${port}`);
 
-        await handle(req, res, parsedUrl);
-      } catch (err) {
-        console.error('Error occurred handling', req.url, err);
-        res.statusCode = 500;
-        res.end('internal server error');
-      }
-    })
-      .once('error', (err: string) => {
-        console.error(err);
-        process.exit(1);
-      })
-      .listen(port, () => {
-        console.log(`> Ready on http://${hostname}:${port}`);
-      });
+  nextProcess.on('error', (error) => {
+    console.error(`Next.js dev process error: ${error}`);
+    process.exit(1);
+  });
+
+  nextProcess.on('close', (code) => {
+    console.log(`Next.js dev process closed with code ${code}`);
+    process.exit(code);
   });
 
   const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
