@@ -2,12 +2,13 @@ import React, { ReactElement } from 'react';
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
 //import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
 
-import bash from 'refractor/lang/bash';
-import { default as json, default as markdown } from 'refractor/lang/json';
-import sass from 'refractor/lang/sass';
-import html from 'refractor/lang/xml-doc';
-import yaml from 'refractor/lang/yaml';
 // @ts-ignore
+import bash from 'react-syntax-highlighter/dist/esm/languages/hljs/bash';
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown';
+import sass from 'react-syntax-highlighter/dist/esm/languages/hljs/scss';
+import html from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
+import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
 import highlight from 'react-syntax-highlighter/src/highlight';
 import refractor from 'refractor/core';
 const SyntaxHighlighter = highlight(refractor, {});

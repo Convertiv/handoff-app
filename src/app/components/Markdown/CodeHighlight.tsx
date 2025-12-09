@@ -1,12 +1,11 @@
 import { PreviewObject } from '@handoff/types';
 import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
 import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-import js from 'refractor/lang/javascript';
-import json from 'refractor/lang/json';
-import sass from 'refractor/lang/sass';
-import scss from 'refractor/lang/scss';
-import tsx from 'refractor/lang/tsx';
-import html from 'refractor/lang/xml-doc';
+import js from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import sass from 'react-syntax-highlighter/dist/esm/languages/hljs/scss';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
+import html from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
@@ -24,7 +23,7 @@ SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('sass', sass);
-SyntaxHighlighter.registerLanguage('scss', scss);
+SyntaxHighlighter.registerLanguage('scss', sass);
 SyntaxHighlighter.registerLanguage('tsx', tsx);
 /**
  * Highlight code for preview elements
