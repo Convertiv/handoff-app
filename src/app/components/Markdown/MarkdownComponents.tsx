@@ -1,25 +1,18 @@
 import React, { ReactElement } from 'react';
-import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-//import { CodeProps, HeadingProps } from 'react-markdown/lib/ast-to-react';
-
-// @ts-ignore
-import bash from 'react-syntax-highlighter/dist/esm/languages/hljs/bash';
-import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
-import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown';
-import sass from 'react-syntax-highlighter/dist/esm/languages/hljs/scss';
-import html from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
-import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
-import highlight from 'react-syntax-highlighter/src/highlight';
-import refractor from 'refractor/core';
-const SyntaxHighlighter = highlight(refractor, {});
-SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
-SyntaxHighlighter.registerLanguage('yaml', yaml);
-SyntaxHighlighter.registerLanguage('bash', bash);
+import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import sass from 'react-syntax-highlighter/dist/esm/languages/prism/scss';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('markdown', markdown);
 SyntaxHighlighter.registerLanguage('sass', sass);
+SyntaxHighlighter.registerLanguage('tsx', tsx);
 SyntaxHighlighter.registerLanguage('html', html);
-
 /**
  * Custom renderer type that we support
  */
