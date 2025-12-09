@@ -71,11 +71,14 @@ export const getStaticProps = async (context) => {
 
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
-
+  const components = fetchComponents()!;
+  const componentIndex = components.findIndex((c) => c.id === component);
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = fetchComponents()!.filter((c) => c.id === component)[0];
+  const metadata = components.filter((c) => c.id === component)[0];
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
+  const previousComponent = components[componentIndex - 1] ?? null;
+  const nextComponent = components[componentIndex + 1] ?? null;
 
   return {
     props: {
@@ -92,6 +95,8 @@ export const getStaticProps = async (context) => {
         image: 'hero-brand-assets',
       },
       componentHotReloadIsAvailable,
+      previousComponent,
+      nextComponent,
     },
   };
 };
@@ -100,7 +105,7 @@ function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter:
   return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
 }
 
-const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable }) => {
+const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable, previousComponent, nextComponent }) => {
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
@@ -109,6 +114,15 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
     let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
+
+  const previousLink = previousComponent ? {
+    href: previousComponent ? '/system/component/' + previousComponent.id : null,
+    title: previousComponent ? previousComponent.name : null,
+  } : null;
+  const nextLink = nextComponent ? {
+    href: '/system/component/' + nextComponent.id,
+    title: nextComponent.name,
+  } : null;
 
   useEffect(() => {
     fetchComponents();
@@ -247,7 +261,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             </Select>
           </div>
           <hr className="mt-8" />
-          <PrevNextNav />
+          <PrevNextNav previous={previousLink} next={nextLink} />
         </div>
         {Array.isArray(componentPreviews) ? (
           <AnchorNav

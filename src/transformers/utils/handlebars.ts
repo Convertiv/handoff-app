@@ -16,7 +16,8 @@ export const registerHandlebarsHelpers = (
   Handlebars.registerHelper('field', function (field: string, options: any) {
     if (injectFieldWrappers) {
       if (!field) {
-        Logger.error(`Missing field declaration for ${data.id}`);
+        // This deebuging isn't helpful in the context of the component library
+        // Logger.error(`Missing field declaration for ${data.id}`);
         return options.fn(this);
       }
       
