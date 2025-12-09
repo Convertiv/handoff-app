@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = __importDefault(require("../../"));
+const logger_1 = require("../../utils/logger");
 const utils_1 = require("../utils");
 const command = {
     command: 'make:template <component> [state]',
@@ -32,12 +33,12 @@ const command = {
         const handoff = new __1.default(args.debug, args.force);
         const templateComponent = args.component;
         if (!/^[a-z0-9]+$/i.test(templateComponent)) {
-            console.error(`Template component must be alphanumeric and may contain dashes or underscores`);
+            logger_1.Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         let templateState = args.state;
         if (templateState && !/^[a-z0-9]+$/i.test(templateState)) {
-            console.error(`Template state must be alphanumeric and may contain dashes or underscores`);
+            logger_1.Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
             return;
         }
         yield handoff.makeTemplate(templateComponent, templateState);

@@ -66,7 +66,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="mb-8">There is one main {config?.app?.client} logo that supports two variations.</p>
       </div>
       <div className="mb-8 grid grid-cols-2 gap-6">
-        {assets.logos.map((logo) => (
+        {assets?.logos?.map((logo) => (
           <DisplayLogo logo={logo} content={config?.app?.client} key={logo.path} />
         ))}
       </div>

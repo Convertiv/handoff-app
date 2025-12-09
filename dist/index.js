@@ -35,12 +35,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initIntegrationObject = void 0;
-const chalk_1 = __importDefault(require("chalk"));
+exports.CoreTypes = exports.CoreTransformerUtils = exports.CoreTransformers = exports.initRuntimeConfig = void 0;
 require("dotenv/config");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const handoff_core_1 = require("handoff-core");
-const lodash_1 = require("lodash");
 const path_1 = __importDefault(require("path"));
 const semver_1 = __importDefault(require("semver"));
 const app_1 = __importStar(require("./app"));
@@ -50,10 +48,8 @@ const config_1 = require("./config");
 const pipeline_1 = __importStar(require("./pipeline"));
 const component_1 = require("./transformers/preview/component");
 const builder_1 = __importStar(require("./transformers/preview/component/builder"));
-const css_1 = require("./transformers/preview/component/css");
-const javascript_1 = require("./transformers/preview/component/javascript");
-const utils_1 = require("./utils");
-const fs_1 = require("./utils/fs");
+const logger_1 = require("./utils/logger");
+const path_2 = require("./utils/path");
 class Handoff {
     constructor(debug, force, config) {
         this.debug = false;
@@ -71,6 +67,7 @@ class Handoff {
         this.config = null;
         this.debug = debug !== null && debug !== void 0 ? debug : false;
         this.force = force !== null && force !== void 0 ? force : false;
+        logger_1.Logger.init({ debug: this.debug });
         this.init(config);
         global.handoff = this;
     }
@@ -80,7 +77,7 @@ class Handoff {
         this.config = config;
         this.exportsDirectory = (_a = config.exportsOutputDirectory) !== null && _a !== void 0 ? _a : this.exportsDirectory;
         this.sitesDirectory = (_b = config.sitesOutputDirectory) !== null && _b !== void 0 ? _b : this.exportsDirectory;
-        [this.integrationObject, this._configFilePaths] = (0, exports.initIntegrationObject)(this);
+        [this.runtimeConfig, this._configFilePaths] = (0, exports.initRuntimeConfig)(this);
         return this;
     }
     reload() {
@@ -130,13 +127,6 @@ class Handoff {
             return this;
         });
     }
-    ejectExportables() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, eject_1.ejectExportables)(this);
-            return this;
-        });
-    }
     ejectPages() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -148,13 +138,6 @@ class Handoff {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
             yield (0, eject_1.ejectTheme)(this);
-            return this;
-        });
-    }
-    makeExportable(type, name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, make_1.makeExportable)(this, type, name);
             return this;
         });
     }
@@ -179,14 +162,6 @@ class Handoff {
             return this;
         });
     }
-    makeIntegrationStyles() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.preRunner();
-            yield (0, javascript_1.buildMainJS)(this);
-            yield (0, css_1.buildMainCss)(this);
-            return this;
-        });
-    }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
@@ -201,10 +176,12 @@ class Handoff {
             return this;
         });
     }
-    validateComponents() {
+    validateComponents(skipBuild) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
+            if (!skipBuild) {
+                yield (0, builder_1.default)(this, undefined, builder_1.ComponentSegment.Validation);
+            }
             return this;
         });
     }
@@ -245,68 +222,47 @@ class Handoff {
                 projectId: this.config.figma_project_id,
                 accessToken: this.config.dev_access_token,
             };
-            const legacyDefinitions = yield this.getLegacyDefinitions();
-            const useLegacyDefintions = !!legacyDefinitions;
             // Initialize the provider
-            const provider = useLegacyDefintions
-                ? handoff_core_1.Providers.RestApiLegacyDefinitionsProvider(apiCredentials, legacyDefinitions)
-                : handoff_core_1.Providers.RestApiProvider(apiCredentials);
+            const provider = handoff_core_1.Providers.RestApiProvider(apiCredentials);
             this._handoffRunner = (0, handoff_core_1.Handoff)(provider, {
                 options: {
-                    transformer: this.integrationObject.options,
+                    transformer: this.runtimeConfig.options,
                 },
             }, {
                 log: (msg) => {
-                    console.log(msg);
+                    logger_1.Logger.log(msg);
                 },
                 err: (msg) => {
-                    console.log(chalk_1.default.red(msg));
+                    logger_1.Logger.error(msg);
                 },
                 warn: (msg) => {
-                    console.log(chalk_1.default.yellow(msg));
+                    logger_1.Logger.warn(msg);
                 },
                 success: (msg) => {
-                    console.log(chalk_1.default.green(msg));
+                    logger_1.Logger.success(msg);
                 },
             });
             return this._handoffRunner;
         });
     }
     /**
-     * Returns configured legacy component definitions in array form.
-     * @deprecated Will be removed before 1.0.0 release.
+     * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+     * @returns {string} The project ID to use for path construction
      */
-    getLegacyDefinitions() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const sourcePath = path_1.default.resolve(this.workingPath, 'exportables');
-                if (!fs_extra_1.default.existsSync(sourcePath)) {
-                    return null;
-                }
-                const definitionPaths = (0, fs_1.findFilesByExtension)(sourcePath, '.json');
-                const exportables = definitionPaths
-                    .map((definitionPath) => {
-                    const defBuffer = fs_extra_1.default.readFileSync(definitionPath);
-                    const exportable = JSON.parse(defBuffer.toString());
-                    const exportableOptions = {};
-                    (0, lodash_1.merge)(exportableOptions, exportable.options);
-                    exportable.options = exportableOptions;
-                    return exportable;
-                })
-                    .filter(utils_1.filterOutNull);
-                return exportables ? exportables : null;
-            }
-            catch (e) {
-                return [];
-            }
-        });
+    getProjectId() {
+        var _a;
+        if ((_a = this.config) === null || _a === void 0 ? void 0 : _a.figma_project_id) {
+            return this.config.figma_project_id;
+        }
+        // Fallback to filesystem-safe transformation of working path
+        return (0, path_2.generateFilesystemSafeId)(this.workingPath);
     }
     /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
      */
     getOutputPath() {
-        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.config.figma_project_id);
+        return path_1.default.resolve(this.workingPath, this.exportsDirectory, this.getProjectId());
     }
     /**
      * Gets the path to the tokens.json file
@@ -321,13 +277,6 @@ class Handoff {
      */
     getPreviewFilePath() {
         return path_1.default.join(this.getOutputPath(), 'preview.json');
-    }
-    /**
-     * Gets the path to the changelog.json file
-     * @returns {string} The absolute path to the changelog.json file
-     */
-    getChangelogFilePath() {
-        return path_1.default.join(this.getOutputPath(), 'changelog.json');
     }
     /**
      * Gets the path to the tokens directory
@@ -411,36 +360,33 @@ const initConfig = (configOverride) => {
     const returnConfig = Object.assign(Object.assign({}, (0, config_1.defaultConfig)()), config);
     return returnConfig;
 };
-const initIntegrationObject = (handoff) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-    var _k;
+const initRuntimeConfig = (handoff) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _j;
     const configFiles = [];
     const result = {
         options: {},
         entries: {
-            integration: undefined, // scss
-            bundle: undefined, // js
+            scss: undefined,
+            js: undefined,
             components: {},
         },
     };
     if (!!((_a = handoff.config.entries) === null || _a === void 0 ? void 0 : _a.scss)) {
-        result.entries.integration = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
+        result.entries.scss = path_1.default.resolve(handoff.workingPath, (_b = handoff.config.entries) === null || _b === void 0 ? void 0 : _b.scss);
     }
-    //console.log('result.entries.integration', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
+    //console.log('result.entries.scss', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
     if (!!((_c = handoff.config.entries) === null || _c === void 0 ? void 0 : _c.js)) {
-        result.entries.bundle = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
+        result.entries.js = path_1.default.resolve(handoff.workingPath, (_d = handoff.config.entries) === null || _d === void 0 ? void 0 : _d.js);
     }
-    else {
-        console.log(chalk_1.default.red('No js entry found in config'), handoff.debug ? `Path: ${path_1.default.resolve(handoff.workingPath, (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.js)}` : '');
-    }
-    if ((_g = (_f = handoff.config.entries) === null || _f === void 0 ? void 0 : _f.components) === null || _g === void 0 ? void 0 : _g.length) {
+    if ((_f = (_e = handoff.config.entries) === null || _e === void 0 ? void 0 : _e.components) === null || _f === void 0 ? void 0 : _f.length) {
         const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
         for (const componentPath of componentPaths) {
             const resolvedComponentPath = path_1.default.resolve(handoff.workingPath, componentPath);
             const componentBaseName = path_1.default.basename(resolvedComponentPath);
             const versions = getVersionsForComponent(resolvedComponentPath);
             if (!versions.length) {
-                console.warn(`No versions found for component at: ${resolvedComponentPath}`);
+                logger_1.Logger.warn(`No versions found for component at: ${resolvedComponentPath}`);
                 continue;
             }
             const latest = getLatestVersionForComponent(versions);
@@ -449,7 +395,7 @@ const initIntegrationObject = (handoff) => {
                 const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
                 const configFileName = possibleConfigFiles.find((file) => fs_extra_1.default.existsSync(path_1.default.resolve(resolvedComponentVersionPath, file)));
                 if (!configFileName) {
-                    console.warn(`Missing config: ${path_1.default.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
+                    logger_1.Logger.warn(`Missing config: ${path_1.default.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
                     continue;
                 }
                 const resolvedComponentVersionConfigPath = path_1.default.resolve(resolvedComponentVersionPath, configFileName);
@@ -468,7 +414,7 @@ const initIntegrationObject = (handoff) => {
                     }
                 }
                 catch (err) {
-                    console.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
+                    logger_1.Logger.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
                     continue;
                 }
                 // Use component basename as the id
@@ -485,10 +431,10 @@ const initIntegrationObject = (handoff) => {
                 component.options || (component.options = {
                     transformer: { defaults: {}, replace: {} },
                 });
-                (_k = component.options).transformer || (_k.transformer = { defaults: {}, replace: {} });
+                (_j = component.options).transformer || (_j.transformer = { defaults: {}, replace: {} });
                 const transformer = component.options.transformer;
-                (_h = transformer.cssRootClass) !== null && _h !== void 0 ? _h : (transformer.cssRootClass = null);
-                (_j = transformer.tokenNameSegments) !== null && _j !== void 0 ? _j : (transformer.tokenNameSegments = null);
+                (_g = transformer.cssRootClass) !== null && _g !== void 0 ? _g : (transformer.cssRootClass = null);
+                (_h = transformer.tokenNameSegments) !== null && _h !== void 0 ? _h : (transformer.tokenNameSegments = null);
                 // Normalize keys and values to lowercase
                 transformer.defaults = toLowerCaseKeysAndValues(Object.assign({}, transformer.defaults));
                 transformer.replace = toLowerCaseKeysAndValues(Object.assign({}, transformer.replace));
@@ -503,7 +449,7 @@ const initIntegrationObject = (handoff) => {
     }
     return [result, Array.from(configFiles)];
 };
-exports.initIntegrationObject = initIntegrationObject;
+exports.initRuntimeConfig = initRuntimeConfig;
 /**
  * Returns a list of component directories for a given path.
  *
@@ -535,12 +481,12 @@ const validateConfig = (config) => {
     // TODO: Check to see if the exported folder exists before we run start
     if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
         // check to see if we can get this from the env
-        console.error(chalk_1.default.red('Figma project id not found in config or env. Please run `handoff-app fetch` first.'));
+        logger_1.Logger.error('Figma Project ID missing. Please set HANDOFF_FIGMA_PROJECT_ID or run "handoff-app fetch".');
         throw new Error('Cannot initialize configuration');
     }
     if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
         // check to see if we can get this from the env
-        console.error(chalk_1.default.red('Dev access token not found in config or env. Please run `handoff-app fetch` first.'));
+        logger_1.Logger.error('Figma Access Token missing. Please set HANDOFF_DEV_ACCESS_TOKEN or run "handoff-app fetch".');
         throw new Error('Cannot initialize configuration');
     }
     return config;
@@ -557,7 +503,7 @@ const getVersionsForComponent = (componentPath) => {
                 versions.push(versionDirectory);
             }
             else {
-                console.error(`Invalid version directory ${versionDirectory}`);
+                logger_1.Logger.error(`Invalid version directory ${versionDirectory}`);
             }
         }
     }

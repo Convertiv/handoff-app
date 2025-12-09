@@ -1,4 +1,3 @@
-import mdx from '@next/mdx';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
@@ -29,19 +28,11 @@ const CodeTransform = () => {
   };
 };
 
-const withMDX = mdx({
-  options: {
-    remarkPlugins: [CodeTransform],
-    rehypePlugins: [],
-  },
-});
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
   reactStrictMode: true,
-  // Configure `pageExtensions` to include MDX files
-  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
   experimental: {
     externalDir: true,
@@ -153,5 +144,4 @@ const nextConfig = {
   },
 };
 
-// Wrap MDX and Next.js config with each other
-export default withMDX(nextConfig);
+export default nextConfig;

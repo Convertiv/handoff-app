@@ -1,4 +1,5 @@
 import { SlotMetadata } from '@handoff/transformers/preview/component';
+import { PageSlice } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import { Types as CoreTypes } from 'handoff-core';
 import { startCase } from 'lodash';
@@ -18,8 +19,6 @@ import React, { useCallback, useContext, useEffect } from 'react';
 import { HotReloadContext } from '../context/HotReloadProvider';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
-import { CodeHighlight } from '../Markdown/CodeHighlight';
-import HeadersType from '../Typography/Headers';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -27,8 +26,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Separator } from '../ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { ValidationResults } from '../Validation/ValidationResults';
-import BestPracticesCard from './BestPracticesCard';
+import PageSliceResolver from './PageSliceResolver';
+
+const getDefaultSlices = (): PageSlice[] => [
+  { type: 'BEST_PRACTICES' },
+  { type: 'COMPONENT_DISPLAY' },
+  { type: 'VALIDATION_RESULTS' },
+  { type: 'PROPERTIES' },
+];
 
 export type ComponentPreview = {
   component: CoreTypes.IComponentInstance;
@@ -55,6 +60,32 @@ export const ComponentDisplay: React.FC<{
   const [width, setWidth] = React.useState('1100px');
   const [inspect, setInspect] = React.useState(false);
   const [scale, setScale] = React.useState(0.8);
+
+  // Generate variants from component previews if they differ from context
+  const localVariants = React.useMemo(() => {
+    if (!component?.previews) return null;
+
+    // Check if component previews are different from context previews
+    const componentPreviewKeys = Object.keys(component.previews).sort();
+    const contextPreviewKeys = context.preview ? Object.keys(context.preview.previews).sort() : [];
+
+    if (JSON.stringify(componentPreviewKeys) !== JSON.stringify(contextPreviewKeys)) {
+      // Generate variants from component previews
+      const variantMap: Record<string, Set<string>> = {};
+      Object.values(component.previews).forEach((preview: any) => {
+        Object.entries(preview.values).forEach(([key, value]) => {
+          if (!variantMap[key]) {
+            variantMap[key] = new Set();
+          }
+          variantMap[key].add(String(value));
+        });
+      });
+
+      return Object.fromEntries(Object.entries(variantMap).map(([key, values]) => [key, Array.from(values)]));
+    }
+
+    return context.variants;
+  }, [component?.previews, context.preview, context.variants]);
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
@@ -125,14 +156,14 @@ export const ComponentDisplay: React.FC<{
           <>
             <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle @container dark:bg-gray-800">
               <div className="flex items-center gap-2">
-                {context.variants ? (
+                {localVariants ? (
                   <>
-                    {Object.keys(context.variants).length > 0 && (
+                    {Object.keys(localVariants).length > 0 && (
                       <>
                         <p className="font-monospace text-[11px] text-accent-foreground">{title ?? 'Variant'}</p>
                         <Separator orientation="vertical" className="mx-2 h-3" />
-                        {Object.keys(context.variants)
-                          .filter((variantProperty) => context.variants[variantProperty].length > 1)
+                        {Object.keys(localVariants)
+                          .filter((variantProperty) => localVariants[variantProperty].length > 1)
                           .map((variantProperty) => (
                             <Select
                               key={variantProperty}
@@ -143,7 +174,7 @@ export const ComponentDisplay: React.FC<{
                                 <SelectValue placeholder={variantProperty} />
                               </SelectTrigger>
                               <SelectContent>
-                                {context.variants[variantProperty].map((variantPropertyValue) => (
+                                {localVariants[variantProperty].map((variantPropertyValue) => (
                                   <SelectItem key={variantPropertyValue} value={variantPropertyValue}>
                                     {variantPropertyValue}
                                   </SelectItem>
@@ -303,78 +334,56 @@ export const ComponentPreview: React.FC<{
   properties = true,
   validations = true,
 }) => {
-  const context = usePreviewContext();
-  const [loaded, setLoaded] = React.useState(false);
-  const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
-  const [currentValues, setCurrentValues] = React.useState<Record<string, string> | undefined>();
-  React.useEffect(() => {
-    if (context.preview) {
-      setPreview(context.preview);
-      setLoaded(true);
+    const context = usePreviewContext();
+    const [loaded, setLoaded] = React.useState(false);
+    const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
+    const [currentValues, setCurrentValues] = React.useState<Record<string, string> | undefined>();
+    React.useEffect(() => {
+      if (context.preview) {
+        setPreview(context.preview);
+        setLoaded(true);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loaded, setLoaded, context.preview]);
+
+    useEffect(() => {
+      setPreview(defaultPreview);
+    }, [defaultPreview]);
+
+    if (!preview) {
+      return <div>No preview available</div>;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, setLoaded, context.preview]);
+    if (!loaded) {
+      return <div id={preview.id}>Loading Previews</div>;
+    }
 
-  useEffect(() => {
-    setPreview(defaultPreview);
-  }, [defaultPreview]);
+    // Determine which slices to use: custom slices or default slices
+    const slicesToRender =
+      preview.page && Array.isArray(preview.page.slices) && preview.page.slices.length > 0 ? preview.page.slices : getDefaultSlices();
 
-  if (!preview) {
-    return <div>No preview available</div>;
-  }
-  if (!loaded) {
-    return <div id={preview.id}>Loading Previews</div>;
-  }
-  return (
-    <>
-      {bestPracticesCard && <BestPracticesCard component={preview} />}
-      <div id={preview.id}>
-        <ComponentDisplay
-          title={title}
-          component={preview}
-          defaultHeight={height}
-          onValuesChange={(vals) => {
-            setCurrentValues(vals);
-          }}
-        />
-        {codeHighlight && (
-          <>
-            <a id="code-highlight" />
-            <CodeHighlight title={title} data={preview} collapsible={true} currentValues={currentValues} />
-          </>
-        )}
-      </div>
-      {validations && preview?.validations && (
-        <div className="mb-5">
-          <HeadersType.H3 id="validations">Validation results</HeadersType.H3>
-          <ValidationResults
-            validations={Object.fromEntries(
-              Object.entries(preview.validations).map(([key, value]) => [
-                key,
-                {
-                  ...value,
-                  description: value.description || '',
-                  passed: value.passed,
-                },
-              ])
-            )}
+    return (
+      <>
+        {slicesToRender.map((slice, idx) => (
+          <PageSliceResolver
+            key={idx}
+            slice={slice}
+            preview={preview}
+            title={title}
+            height={height}
+            currentValues={currentValues}
+            onValuesChange={(vals) => {
+              setCurrentValues(vals);
+            }}
+            bestPracticesCard={bestPracticesCard}
+            codeHighlight={codeHighlight}
+            properties={properties}
+            validations={validations}
           />
-        </div>
-      )}
-      {properties && preview?.properties && (
-        <div id="properties">
-          <HeadersType.H3>Properties</HeadersType.H3>
-          <ComponentProperties
-            fields={Object.keys(preview.properties).map((key) => {
-              return { ...preview.properties[key], key };
-            })}
-          />
-        </div>
-      )}
-      <hr />
-    </>
-  );
-};
+        ))}
+        <hr />
+      </>
+    );
+  };
 
 export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fields }) => {
   const [open, setOpen] = React.useState(false);

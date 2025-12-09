@@ -38,10 +38,12 @@ export type CustomRenderers = {
  * @param param0
  * @returns
  */
-const Headings = ({ level, children }: any) => {
+const Headings = (element) => {
+  const { children, node } = element;
   // Access actual (string) value of heading
   if (children[0]) {
     const heading = children[0];
+    const type = node.tagName || 'h6';
 
     // If we have a heading, make it lower case
     let anchor = heading.toString().toLowerCase();
@@ -60,22 +62,26 @@ const Headings = ({ level, children }: any) => {
       </>
     );
 
-    switch (level) {
-      case 1:
-        return <h1>{container(children)}</h1>;
-      case 2:
-        return <h2>{container(children)}</h2>;
-      case 3:
-        return <h3>{container(children)}</h3>;
-      case 4:
-        return <h4>{container(children)}</h4>;
-      case 5:
-        return <h5>{container(children)}</h5>;
-      case 6:
-        return <h6>{container(children)}</h6>;
+    switch (type) {
+      case 'h1':
+        return <h1 className="text-2xl font-bold">{container(children)}</h1>;
+      case 'h2':
+        return <h2 className="text-xl font-bold">{container(children)}</h2>;
+      case 'h3':
+        return <h3 className="text-lg font-bold">{container(children)}</h3>;
+      case 'h4':
+        return <h4 className="text-base font-bold">{container(children)}</h4>;
+      case 'h5':
+        return <h5 className="text-sm font-bold">{container(children)}</h5>;
+      case 'h6':
+        return <h6 className="text-xs font-bold">{container(children)}</h6>;
 
       default:
-        return <h6>{container(children)}</h6>;
+        return (
+          <h6 className="text-xs font-bold">
+            {JSON.stringify(type)}: {container(children)}
+          </h6>
+        );
     }
   } else {
     return <h1>children</h1>;

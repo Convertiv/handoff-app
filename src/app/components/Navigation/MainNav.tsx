@@ -41,6 +41,12 @@ export function MainNav() {
                       </Link>
                     </NavigationMenuLink>
                   </>
+                ) : section.external ? (
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                    <Link href={section.external as string} target="_blank" rel="noopener noreferrer">
+                      {section.title}
+                    </Link>
+                  </NavigationMenuLink>
                 ) : (
                   <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
                     <Link

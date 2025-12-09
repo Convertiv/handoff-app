@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2025-11-13
+
+This patch improves docs-site component loading and resolves a state-mutation issue.
+
+### Bug Fixes
+
+- Improved docs-site component loading to ensure components render correctly.
+- Implemented deep cloning to avoid accidental mutations of `defaultComponent`.
+
 ## [0.17.0] - 2025-08-06
 
 ## Major Highlights
