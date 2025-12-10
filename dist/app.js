@@ -552,8 +552,10 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const moduleOutput = path_1.default.resolve(appPath, 'out');
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         yield fs_extra_1.default.remove(moduleOutput);
+        // create empty directory
+        yield fs_extra_1.default.ensureDir(moduleOutput);
     }
-    const nextProcess = (0, cross_spawn_1.default)('npx', ['next', 'dev', moduleOutput, '--port', String(port)], {
+    const nextProcess = (0, cross_spawn_1.default)('npx', ['next', 'dev', '--port', String(port)], {
         cwd: appPath,
         stdio: 'inherit',
         env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'development' }),

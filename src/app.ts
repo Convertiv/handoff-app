@@ -662,8 +662,10 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const moduleOutput = path.resolve(appPath, 'out');
   if (fs.existsSync(moduleOutput)) {
     await fs.remove(moduleOutput);
+    // create empty directory
+    await fs.ensureDir(moduleOutput);
   }
-  const nextProcess = spawn('npx', ['next', 'dev', moduleOutput, '--port', String(port)], {
+  const nextProcess = spawn('npx', ['next', 'dev', '--port', String(port)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {
