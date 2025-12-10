@@ -1,7 +1,7 @@
 import Handoff from '../index';
 import { FileState } from './file-state';
 /**
- * Cache entry for a single component version
+ * Cache entry for a single component
  */
 export interface ComponentCacheEntry {
     /** File states for all source files of this component */
@@ -32,8 +32,8 @@ export interface BuildCache {
     version: string;
     /** State of global dependencies at last build */
     globalDeps: GlobalDepsState;
-    /** Per-component cache entries: componentId -> version -> entry */
-    components: Record<string, Record<string, ComponentCacheEntry>>;
+    /** Per-component cache entries: componentId -> entry */
+    components: Record<string, ComponentCacheEntry>;
 }
 /**
  * Gets the path to the build cache file
@@ -60,14 +60,14 @@ export declare function haveGlobalDepsChanged(cached: GlobalDepsState | null | u
 /**
  * Gets all file paths that should be tracked for a component
  */
-export declare function getComponentFilePaths(handoff: Handoff, componentId: string, version: string): {
+export declare function getComponentFilePaths(handoff: Handoff, componentId: string): {
     files: string[];
     templateDir?: string;
 };
 /**
  * Computes current file states for a component
  */
-export declare function computeComponentFileStates(handoff: Handoff, componentId: string, version: string): Promise<{
+export declare function computeComponentFileStates(handoff: Handoff, componentId: string): Promise<{
     files: Record<string, FileState>;
     templateDirFiles?: Record<string, FileState>;
 }>;
@@ -81,15 +81,15 @@ export declare function hasComponentChanged(cached: ComponentCacheEntry | null |
 /**
  * Checks if the component output files exist
  */
-export declare function checkOutputExists(handoff: Handoff, componentId: string, version: string): Promise<boolean>;
+export declare function checkOutputExists(handoff: Handoff, componentId: string): Promise<boolean>;
 /**
  * Creates an empty cache structure
  */
 export declare function createEmptyCache(): BuildCache;
 /**
- * Updates cache entry for a specific component version
+ * Updates cache entry for a specific component
  */
-export declare function updateComponentCacheEntry(cache: BuildCache, componentId: string, version: string, fileStates: {
+export declare function updateComponentCacheEntry(cache: BuildCache, componentId: string, fileStates: {
     files: Record<string, FileState>;
     templateDirFiles?: Record<string, FileState>;
 }): void;
