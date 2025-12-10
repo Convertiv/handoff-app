@@ -16,7 +16,7 @@ const __1 = __importDefault(require("../.."));
 const logger_1 = require("../../utils/logger");
 const utils_1 = require("../utils");
 const command = {
-    command: 'make:component <name> <version>',
+    command: 'make:component <name>',
     describe: 'Create a new html code component that you can embed in your documentation',
     builder: (yargs) => {
         return (0, utils_1.getSharedOptions)(yargs).positional('name', {

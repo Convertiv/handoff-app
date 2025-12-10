@@ -16,7 +16,6 @@ import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
@@ -111,7 +110,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
 
   const fetchComponents = async () => {
-    let data = await fetch(`/api/component/${id}/latest.json`).then((res) => res.json());
+    let data = await fetch(`/api/component/${id}.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 
@@ -151,7 +150,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   }, [component, id]);
 
   if (!component) return <p>Loading...</p>;
-  const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}/latest.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
@@ -244,22 +243,6 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               </PreviewContextProvider>
             </HotReloadProvider>
           )}
-          <div className="mt-8">
-            <Select
-            // defaultValue={breakpoint}
-            // onValueChange={(key) => {
-            //   setBreakpoint(key);
-            //   setWidth(`${breakpoints[key].size}px`);
-            // }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Version" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full">Latest</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <hr className="mt-8" />
           <PrevNextNav previous={previousLink} next={nextLink} />
         </div>

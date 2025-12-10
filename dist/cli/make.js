@@ -131,7 +131,7 @@ const makePage = (handoff, name, parent) => __awaiter(void 0, void 0, void 0, fu
 });
 exports.makePage = makePage;
 /**
- * Make a new docs page
+ * Make a new component
  * @param handoff
  */
 const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, function* () {
@@ -139,9 +139,8 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
         logger_1.Logger.error(`Component name must be set`);
         return;
     }
-    const version = '1.0.0';
     name = name.replace('.html', '');
-    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components/${name}/${version}`));
+    let workingPath = path_1.default.resolve(path_1.default.join(handoff.workingPath, `integration/components/${name}`));
     if (!fs_extra_1.default.existsSync(workingPath)) {
         fs_extra_1.default.mkdirSync(workingPath, { recursive: true });
     }
@@ -152,7 +151,7 @@ const makeComponent = (handoff, name) => __awaiter(void 0, void 0, void 0, funct
             return;
         }
     }
-    const templatePath = path_1.default.join(handoff.modulePath, 'config', 'templates/integration/components/template/1.0.0');
+    const templatePath = path_1.default.join(handoff.modulePath, 'config', 'templates/integration/components/template');
     const htmlPath = path_1.default.resolve(templatePath, 'template.hbs');
     const htmlTemplate = fs_extra_1.default.readFileSync(htmlPath, 'utf8');
     fs_extra_1.default.writeFileSync(targetHtml, htmlTemplate);

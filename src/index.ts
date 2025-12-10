@@ -2,7 +2,6 @@ import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import path from 'path';
-import semver from 'semver';
 import buildApp, { devApp, watchApp } from './app';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
@@ -360,7 +359,6 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
   if (!!handoff.config.entries?.scss) {
     result.entries.scss = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
   }
-  //console.log('result.entries.scss', handoff.config.entries, path.resolve(handoff.workingPath, handoff.config.entries?.js));
   if (!!handoff.config.entries?.js) {
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
@@ -370,87 +368,71 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
     for (const componentPath of componentPaths) {
       const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
       const componentBaseName = path.basename(resolvedComponentPath);
-      const versions = getVersionsForComponent(resolvedComponentPath);
-      if (!versions.length) {
-        Logger.warn(`No versions found for component at: ${resolvedComponentPath}`);
+      const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
+
+      const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentPath, file)));
+
+      if (!configFileName) {
+        Logger.warn(`Missing config: ${path.resolve(resolvedComponentPath, possibleConfigFiles.join(' or '))}`);
         continue;
       }
 
-      const latest = getLatestVersionForComponent(versions);
+      const resolvedComponentConfigPath = path.resolve(resolvedComponentPath, configFileName);
+      configFiles.push(resolvedComponentConfigPath);
 
-      for (const componentVersion of versions) {
-        const resolvedComponentVersionPath = path.resolve(resolvedComponentPath, componentVersion);
-        const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
+      let component: ComponentListObject;
 
-        const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentVersionPath, file)));
-
-        if (!configFileName) {
-          Logger.warn(`Missing config: ${path.resolve(resolvedComponentVersionPath, possibleConfigFiles.join(' or '))}`);
-          continue;
+      try {
+        if (configFileName.endsWith('.json')) {
+          const componentJson = fs.readFileSync(resolvedComponentConfigPath, 'utf8');
+          component = JSON.parse(componentJson) as ComponentListObject;
+        } else {
+          // Invalidate require cache to ensure fresh read
+          delete require.cache[require.resolve(resolvedComponentConfigPath)];
+          const importedComponent = require(resolvedComponentConfigPath);
+          component = importedComponent.default || importedComponent;
         }
-
-        const resolvedComponentVersionConfigPath = path.resolve(resolvedComponentVersionPath, configFileName);
-        configFiles.push(resolvedComponentVersionConfigPath);
-
-        let component: ComponentListObject;
-
-        try {
-          if (configFileName.endsWith('.json')) {
-            const componentJson = fs.readFileSync(resolvedComponentVersionConfigPath, 'utf8');
-            component = JSON.parse(componentJson) as ComponentListObject;
-          } else {
-            // Invalidate require cache to ensure fresh read
-            delete require.cache[require.resolve(resolvedComponentVersionConfigPath)];
-            const importedComponent = require(resolvedComponentVersionConfigPath);
-            component = importedComponent.default || importedComponent;
-          }
-        } catch (err) {
-          Logger.error(`Failed to read or parse config: ${resolvedComponentVersionConfigPath}`, err);
-          continue;
-        }
-
-        // Use component basename as the id
-        component.id = componentBaseName;
-
-        // Resolve entry paths relative to component version directory
-        if (component.entries) {
-          for (const entryType in component.entries) {
-            if (component.entries[entryType]) {
-              component.entries[entryType] = path.resolve(resolvedComponentVersionPath, component.entries[entryType]);
-            }
-          }
-        }
-
-        // Initialize options with safe defaults
-        component.options ||= {
-          transformer: { defaults: {}, replace: {} },
-        };
-        component.options.transformer ||= { defaults: {}, replace: {} };
-
-        const transformer = component.options.transformer;
-        transformer.cssRootClass ??= null;
-        transformer.tokenNameSegments ??= null;
-
-        // Normalize keys and values to lowercase
-        transformer.defaults = toLowerCaseKeysAndValues({
-          ...transformer.defaults,
-        });
-
-        transformer.replace = toLowerCaseKeysAndValues({
-          ...transformer.replace,
-        });
-
-        // Save transformer config for latest version
-        if (componentVersion === latest) {
-          result.options[component.id] = transformer;
-        }
-
-        // Save full component entry under its version
-        result.entries.components[component.id] = {
-          ...result.entries.components[component.id],
-          [componentVersion]: component,
-        };
+      } catch (err) {
+        Logger.error(`Failed to read or parse config: ${resolvedComponentConfigPath}`, err);
+        continue;
       }
+
+      // Use component basename as the id
+      component.id = componentBaseName;
+
+      // Resolve entry paths relative to component directory
+      if (component.entries) {
+        for (const entryType in component.entries) {
+          if (component.entries[entryType]) {
+            component.entries[entryType] = path.resolve(resolvedComponentPath, component.entries[entryType]);
+          }
+        }
+      }
+
+      // Initialize options with safe defaults
+      component.options ||= {
+        transformer: { defaults: {}, replace: {} },
+      };
+      component.options.transformer ||= { defaults: {}, replace: {} };
+
+      const transformer = component.options.transformer;
+      transformer.cssRootClass ??= null;
+      transformer.tokenNameSegments ??= null;
+
+      // Normalize keys and values to lowercase
+      transformer.defaults = toLowerCaseKeysAndValues({
+        ...transformer.defaults,
+      });
+
+      transformer.replace = toLowerCaseKeysAndValues({
+        ...transformer.replace,
+      });
+
+      // Save transformer config
+      result.options[component.id] = transformer;
+
+      // Save full component entry
+      result.entries.components[component.id] = component;
     }
   }
 
@@ -460,31 +442,41 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
 /**
  * Returns a list of component directories for a given path.
  *
- * This function inspects the immediate subdirectories of the provided `searchPath`.
- * - If **any** subdirectory is **not** a valid semantic version (e.g. "header", "button"),
- *   the function assumes `searchPath` contains multiple component directories, and returns their full paths.
- * - If **all** subdirectories are valid semantic versions (e.g. "1.0.0", "2.1.3"),
- *   the function assumes `searchPath` itself is a component directory, and returns it as a single-element array.
+ * This function determines whether the provided `searchPath` is:
+ * 1. A single component directory (contains a config file named after the directory)
+ * 2. A collection of component directories (subdirectories are components)
  *
- * @param searchPath - The absolute path to check for components or versioned directories.
+ * A directory is considered a component if it contains a config file matching
+ * `{dirname}.json`, `{dirname}.js`, or `{dirname}.cjs`.
+ *
+ * @param searchPath - The absolute path to check for components.
  * @returns An array of string paths to component directories.
  */
 const getComponentsForPath = (searchPath: string): string[] => {
-  // Read all entries in the given path and keep only directories
-  const components = fs
+  const dirName = path.basename(searchPath);
+  const possibleConfigFiles = [`${dirName}.json`, `${dirName}.js`, `${dirName}.cjs`];
+
+  // Check if searchPath itself is a component directory (has a config file named after the directory)
+  const hasOwnConfig = possibleConfigFiles.some((file) => fs.existsSync(path.resolve(searchPath, file)));
+
+  if (hasOwnConfig) {
+    // This directory is a single component
+    return [searchPath];
+  }
+
+  // Otherwise, treat each subdirectory as a potential component
+  const subdirectories = fs
     .readdirSync(searchPath, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
-  // If there's any non-semver-named directory, this is a directory full of components
-  const containsComponents = components.some((name) => !semver.valid(name));
-
-  if (containsComponents) {
-    // Return full paths to each component directory
-    return components.map((component) => path.join(searchPath, component));
+  if (subdirectories.length > 0) {
+    // Return full paths to each subdirectory as potential component directories
+    return subdirectories.map((subdir) => path.join(searchPath, subdir));
   }
 
-  // All subdirectories are semver versions – treat this as a single component directory
+  // Fallback: no config file and no subdirectories, return the path anyway
+  // (will fail gracefully with "missing config" warning later)
   return [searchPath];
 };
 
@@ -502,27 +494,6 @@ const validateConfig = (config: Config): Config => {
   }
   return config;
 };
-
-const getVersionsForComponent = (componentPath: string): string[] => {
-  const versionDirectories = fs.readdirSync(componentPath);
-  const versions: string[] = [];
-  // The directory name must be a semver
-  if (fs.lstatSync(componentPath).isDirectory()) {
-    // this is a directory structure.  this should be the component name,
-    // and each directory inside should be a version
-    for (const versionDirectory of versionDirectories) {
-      if (semver.valid(versionDirectory)) {
-        versions.push(versionDirectory);
-      } else {
-        Logger.error(`Invalid version directory ${versionDirectory}`);
-      }
-    }
-  }
-  versions.sort(semver.rcompare);
-  return versions;
-};
-
-const getLatestVersionForComponent = (versions: string[]): string => versions.sort(semver.rcompare)[0];
 
 const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any> => {
   const loweredObj: Record<string, any> = {};

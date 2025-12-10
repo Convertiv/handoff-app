@@ -9,7 +9,7 @@ export interface MakeComponentArgs extends SharedArgs {
 }
 
 const command: CommandModule<{}, MakeComponentArgs> = {
-  command: 'make:component <name> <version>',
+  command: 'make:component <name>',
   describe: 'Create a new html code component that you can embed in your documentation',
   builder: (yargs) => {
     return getSharedOptions(yargs).positional('name', {

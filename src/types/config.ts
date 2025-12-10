@@ -245,9 +245,7 @@ export interface RuntimeConfig {
     js?: string;
     templates?: string;
     components: {
-      [id: string]: {
-        [version: string]: ComponentListObject;
-      };
+      [id: string]: ComponentListObject;
     };
   };
   options: {

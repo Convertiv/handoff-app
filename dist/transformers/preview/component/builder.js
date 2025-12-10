@@ -34,7 +34,6 @@ const api_1 = require("./api");
 const css_1 = __importDefault(require("./css"));
 const html_1 = __importDefault(require("./html"));
 const javascript_1 = __importDefault(require("./javascript"));
-const versions_1 = require("./versions");
 const defaultComponent = {
     id: '',
     title: 'Untitled',
@@ -105,7 +104,7 @@ const createComponentBuildPlan = (segmentToProcess, existingData) => {
  */
 function processComponents(handoff, id, segmentToProcess, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g;
         const result = [];
         const documentationObject = yield handoff.getDocumentationObject();
         const components = (_a = documentationObject === null || documentationObject === void 0 ? void 0 : documentationObject.components) !== null && _a !== void 0 ? _a : {};
@@ -137,29 +136,19 @@ function processComponents(handoff, id, segmentToProcess, options) {
                 componentsToBuild = new Set();
                 // Evaluate each component independently
                 for (const componentId of allComponentIds) {
-                    const versions = Object.keys(runtimeComponents[componentId]);
-                    let needsBuild = false;
-                    // Store file states for later cache update
-                    const versionStatesMap = new Map();
-                    componentFileStatesMap.set(componentId, versionStatesMap);
-                    for (const version of versions) {
-                        const currentFileStates = yield (0, cache_1.computeComponentFileStates)(handoff, componentId, version);
-                        versionStatesMap.set(version, currentFileStates);
-                        const cachedEntry = (_f = (_e = cache === null || cache === void 0 ? void 0 : cache.components) === null || _e === void 0 ? void 0 : _e[componentId]) === null || _f === void 0 ? void 0 : _f[version];
-                        if (!cachedEntry) {
-                            logger_1.Logger.info(`Component '${componentId}@${version}': new component, will build`);
-                            needsBuild = true;
-                        }
-                        else if ((0, cache_1.hasComponentChanged)(cachedEntry, currentFileStates)) {
-                            logger_1.Logger.info(`Component '${componentId}@${version}': source files changed, will rebuild`);
-                            needsBuild = true;
-                        }
-                        else if (!(yield (0, cache_1.checkOutputExists)(handoff, componentId, version))) {
-                            logger_1.Logger.info(`Component '${componentId}@${version}': output missing, will rebuild`);
-                            needsBuild = true;
-                        }
+                    const currentFileStates = yield (0, cache_1.computeComponentFileStates)(handoff, componentId);
+                    componentFileStatesMap.set(componentId, currentFileStates);
+                    const cachedEntry = (_e = cache === null || cache === void 0 ? void 0 : cache.components) === null || _e === void 0 ? void 0 : _e[componentId];
+                    if (!cachedEntry) {
+                        logger_1.Logger.info(`Component '${componentId}': new component, will build`);
+                        componentsToBuild.add(componentId);
                     }
-                    if (needsBuild) {
+                    else if ((0, cache_1.hasComponentChanged)(cachedEntry, currentFileStates)) {
+                        logger_1.Logger.info(`Component '${componentId}': source files changed, will rebuild`);
+                        componentsToBuild.add(componentId);
+                    }
+                    else if (!(yield (0, cache_1.checkOutputExists)(handoff, componentId))) {
+                        logger_1.Logger.info(`Component '${componentId}': output missing, will rebuild`);
                         componentsToBuild.add(componentId);
                     }
                     else {
@@ -201,127 +190,96 @@ function processComponents(handoff, id, segmentToProcess, options) {
                 }
                 continue;
             }
-            const versions = Object.keys(runtimeComponents[runtimeComponentId]);
-            const latest = (0, versions_1.getLatestVersionForComponent)(versions);
-            let latestVersion;
-            yield Promise.all(versions.map((version) => __awaiter(this, void 0, void 0, function* () {
-                var _a, _b;
-                // Select the current component metadata from the runtime config for this id/version.
-                // Separate out `type` to enforce/rewrite it during build.
-                const runtimeComponent = runtimeComponents[runtimeComponentId][version];
-                const { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
-                // Attempt to load any existing persisted component output (previous build for this id/version).
-                // This is used for incremental/partial rebuilds to retain previously generated segments when not rebuilding all.
-                const existingData = yield (0, api_1.readComponentApi)(handoff, runtimeComponentId, version);
-                // Compose the base in-memory data for building this component:
-                // - Start from a deep clone of the defaultComponent (to avoid mutation bugs)
-                // - Merge in metadata from the current runtime configuration (from config/docs)
-                // - Explicitly set `type` (defaults to Element if not provided)
-                let data = Object.assign(Object.assign(Object.assign({}, (0, cloneDeep_1.default)(defaultComponent)), restMetadata), { type: type || types_1.ComponentType.Element });
-                // buildPlan captures which segments need work for this run.
-                const buildPlan = createComponentBuildPlan(segmentToProcess, existingData);
-                /**
-                 * Merge segment data from existing version if this segment is *not* being rebuilt.
-                 * This ensures that when only one segment (e.g., Javascript, CSS, Previews) is being updated,
-                 * other fields retain their previous values. This avoids unnecessary overwrites or data loss
-                 * when doing segmented or partial builds.
-                 */
-                if (existingData) {
-                    // If we're not building JS, carry forward the previous JS output.
-                    if (!buildPlan.js) {
-                        data.js = existingData.js;
-                    }
-                    // If we're not building CSS/Sass, keep the earlier CSS and Sass outputs.
-                    if (!buildPlan.css) {
-                        data.css = existingData.css;
-                        data.sass = existingData.sass;
-                    }
-                    // If we're not building previews, preserve pre-existing HTML, code snippet, and previews.
-                    if (!buildPlan.previews) {
-                        data.html = existingData.html;
-                        data.code = existingData.code;
-                        data.previews = existingData.previews;
-                    }
-                    /**
-                     * Always keep validation results from the previous data,
-                     * unless this run is specifically doing a validation update.
-                     * This keeps validations current without unnecessary recomputation or accidental removal.
-                     */
-                    if (!buildPlan.validationMode) {
-                        data.validations = existingData.validations;
-                    }
-                }
-                // Build JS if needed (new build, validation missing, or explicit segment request).
-                if (buildPlan.js) {
-                    data = yield (0, javascript_1.default)(data, handoff);
-                }
-                // Build CSS if needed.
-                if (buildPlan.css) {
-                    data = yield (0, css_1.default)(data, handoff, sharedStyles);
-                }
-                // Build previews (HTML, snapshots, etc) if needed.
-                if (buildPlan.previews) {
-                    data = yield (0, html_1.default)(data, handoff, components);
-                }
-                /**
-                 * Run validation if explicitly requested and a hook is configured.
-                 * This allows custom logic to assess the validity of the generated component data.
-                 */
-                if (buildPlan.validationMode && ((_b = (_a = handoff.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.validateComponent)) {
-                    const validationResults = yield handoff.config.hooks.validateComponent(data);
-                    data.validations = validationResults;
-                }
-                // Attach the resolved sharedStyles to the component data for persistence and downstream usage.
-                data.sharedStyles = sharedStyles;
-                // Ensure that every property within the properties array/object contains an 'id' field.
-                // This guarantees unique identification for property entries, which is useful for updates and API consumers.
-                data.properties = (0, schema_1.ensureIds)(data.properties);
-                // Write the updated component data to the corresponding API file (by component ID and version) for external access and caching.
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, data, version, handoff, []);
-                // Store the latest version's full data for potential summary writing after all versions are processed.
-                if (version === latest) {
-                    latestVersion = data;
-                }
-            })));
+            // Select the current component metadata from the runtime config.
+            // Separate out `type` to enforce/rewrite it during build.
+            const runtimeComponent = runtimeComponents[runtimeComponentId];
+            const { type } = runtimeComponent, restMetadata = __rest(runtimeComponent, ["type"]);
+            // Attempt to load any existing persisted component output (previous build).
+            // This is used for incremental/partial rebuilds to retain previously generated segments when not rebuilding all.
+            const existingData = yield (0, api_1.readComponentApi)(handoff, runtimeComponentId);
+            // Compose the base in-memory data for building this component:
+            // - Start from a deep clone of the defaultComponent (to avoid mutation bugs)
+            // - Merge in metadata from the current runtime configuration (from config/docs)
+            // - Explicitly set `type` (defaults to Element if not provided)
+            let data = Object.assign(Object.assign(Object.assign({}, (0, cloneDeep_1.default)(defaultComponent)), restMetadata), { type: type || types_1.ComponentType.Element });
+            // buildPlan captures which segments need work for this run.
+            const buildPlan = createComponentBuildPlan(segmentToProcess, existingData);
             /**
-             * After processing all requested versions for this component:
-             *   - If a latestVersion was produced, write a 'latest.json' API file for the component (points to the most recent/primary version).
-             *   - Build a summary object for this component and write it to its summary API file.
-             *   - Add the summary to the global result list for summary/index construction.
-             * If no version could be processed for this component, throw an error.
+             * Merge segment data from existing component if this segment is *not* being rebuilt.
+             * This ensures that when only one segment (e.g., Javascript, CSS, Previews) is being updated,
+             * other fields retain their previous values. This avoids unnecessary overwrites or data loss
+             * when doing segmented or partial builds.
              */
-            if (latestVersion) {
-                // Write the 'latest.json' snapshot for quick access to the most up-to-date version.
-                yield (0, api_1.writeComponentApi)(runtimeComponentId, latestVersion, 'latest', handoff, []);
-                // Build the summary metadata for this component (includes all versions, properties, previews, etc).
-                const summary = buildComponentSummary(runtimeComponentId, latestVersion, versions);
-                // Store the summary as a per-component JSON file for documentation or API use.
-                yield (0, api_1.writeComponentMetadataApi)(runtimeComponentId, summary, handoff);
-                // Add to the cumulative results, to later update the global components summary file.
-                result.push(summary);
-                // Update cache entries for this component after successful build
-                if (shouldUseCache) {
-                    if (!cache) {
-                        cache = (0, cache_1.createEmptyCache)();
-                    }
-                    const versionStatesMap = componentFileStatesMap.get(runtimeComponentId);
-                    if (versionStatesMap) {
-                        for (const [version, fileStates] of Array.from(versionStatesMap)) {
-                            (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, version, fileStates);
-                        }
-                    }
-                    else {
-                        // Compute file states if not already computed (e.g., when global deps changed)
-                        for (const version of versions) {
-                            const fileStates = yield (0, cache_1.computeComponentFileStates)(handoff, runtimeComponentId, version);
-                            (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, version, fileStates);
-                        }
-                    }
+            if (existingData) {
+                // If we're not building JS, carry forward the previous JS output.
+                if (!buildPlan.js) {
+                    data.js = existingData.js;
+                }
+                // If we're not building CSS/Sass, keep the earlier CSS and Sass outputs.
+                if (!buildPlan.css) {
+                    data.css = existingData.css;
+                    data.sass = existingData.sass;
+                }
+                // If we're not building previews, preserve pre-existing HTML, code snippet, and previews.
+                if (!buildPlan.previews) {
+                    data.html = existingData.html;
+                    data.code = existingData.code;
+                    data.previews = existingData.previews;
+                }
+                /**
+                 * Always keep validation results from the previous data,
+                 * unless this run is specifically doing a validation update.
+                 * This keeps validations current without unnecessary recomputation or accidental removal.
+                 */
+                if (!buildPlan.validationMode) {
+                    data.validations = existingData.validations;
                 }
             }
-            else {
-                // Defensive: Throw a clear error if somehow no version was processed for this component.
-                throw new Error(`No latest version found for ${runtimeComponentId}`);
+            // Build JS if needed (new build, validation missing, or explicit segment request).
+            if (buildPlan.js) {
+                data = yield (0, javascript_1.default)(data, handoff);
+            }
+            // Build CSS if needed.
+            if (buildPlan.css) {
+                data = yield (0, css_1.default)(data, handoff, sharedStyles);
+            }
+            // Build previews (HTML, snapshots, etc) if needed.
+            if (buildPlan.previews) {
+                data = yield (0, html_1.default)(data, handoff, components);
+            }
+            /**
+             * Run validation if explicitly requested and a hook is configured.
+             * This allows custom logic to assess the validity of the generated component data.
+             */
+            if (buildPlan.validationMode && ((_g = (_f = handoff.config) === null || _f === void 0 ? void 0 : _f.hooks) === null || _g === void 0 ? void 0 : _g.validateComponent)) {
+                const validationResults = yield handoff.config.hooks.validateComponent(data);
+                data.validations = validationResults;
+            }
+            // Attach the resolved sharedStyles to the component data for persistence and downstream usage.
+            data.sharedStyles = sharedStyles;
+            // Ensure that every property within the properties array/object contains an 'id' field.
+            // This guarantees unique identification for property entries, which is useful for updates and API consumers.
+            data.properties = (0, schema_1.ensureIds)(data.properties);
+            // Write the updated component data to the API file for external access and caching.
+            yield (0, api_1.writeComponentApi)(runtimeComponentId, data, handoff, []);
+            // Build the summary metadata for this component.
+            const summary = buildComponentSummary(runtimeComponentId, data);
+            // Add to the cumulative results, to later update the global components summary file.
+            result.push(summary);
+            // Update cache entry for this component after successful build
+            if (shouldUseCache) {
+                if (!cache) {
+                    cache = (0, cache_1.createEmptyCache)();
+                }
+                const fileStates = componentFileStatesMap.get(runtimeComponentId);
+                if (fileStates) {
+                    (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, fileStates);
+                }
+                else {
+                    // Compute file states if not already computed (e.g., when global deps changed)
+                    const computedFileStates = yield (0, cache_1.computeComponentFileStates)(handoff, runtimeComponentId);
+                    (0, cache_1.updateComponentCacheEntry)(cache, runtimeComponentId, computedFileStates);
+                }
             }
         }
         // Save the updated cache
@@ -338,26 +296,23 @@ function processComponents(handoff, id, segmentToProcess, options) {
 /**
  * Build a summary for the component list
  * @param id
- * @param latest
- * @param versions
+ * @param data
  * @returns
  */
-const buildComponentSummary = (id, latest, versions) => {
+const buildComponentSummary = (id, data) => {
     return {
         id,
-        version: versions[0],
-        title: latest.title,
-        description: latest.description,
-        type: latest.type,
-        group: latest.group,
-        image: latest.image ? latest.image : '',
-        figma: latest.figma ? latest.figma : '',
-        categories: latest.categories ? latest.categories : [],
-        tags: latest.tags ? latest.tags : [],
-        properties: latest.properties,
-        previews: latest.previews,
-        versions,
-        paths: versions.map((version) => `/api/component/${id}/${version}.json`),
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        group: data.group,
+        image: data.image ? data.image : '',
+        figma: data.figma ? data.figma : '',
+        categories: data.categories ? data.categories : [],
+        tags: data.tags ? data.tags : [],
+        properties: data.properties,
+        previews: data.previews,
+        path: `/api/component/${id}.json`,
     };
 };
 exports.default = processComponents;

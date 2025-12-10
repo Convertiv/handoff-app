@@ -8,7 +8,7 @@ import { computeDirectoryState, computeFileState, directoryStatesMatch, FileStat
 const CACHE_VERSION = '1.0.0';
 
 /**
- * Cache entry for a single component version
+ * Cache entry for a single component
  */
 export interface ComponentCacheEntry {
   /** File states for all source files of this component */
@@ -41,8 +41,8 @@ export interface BuildCache {
   version: string;
   /** State of global dependencies at last build */
   globalDeps: GlobalDepsState;
-  /** Per-component cache entries: componentId -> version -> entry */
-  components: Record<string, Record<string, ComponentCacheEntry>>;
+  /** Per-component cache entries: componentId -> entry */
+  components: Record<string, ComponentCacheEntry>;
 }
 
 /**
@@ -169,8 +169,8 @@ export function haveGlobalDepsChanged(cached: GlobalDepsState | null | undefined
 /**
  * Gets all file paths that should be tracked for a component
  */
-export function getComponentFilePaths(handoff: Handoff, componentId: string, version: string): { files: string[]; templateDir?: string } {
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId]?.[version];
+export function getComponentFilePaths(handoff: Handoff, componentId: string): { files: string[]; templateDir?: string } {
+  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
   if (!runtimeComponent) {
     return { files: [] };
   }
@@ -181,8 +181,8 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string, ver
   // Find the config file path for this component
   const configPaths = handoff.getConfigFilePaths();
   for (const configPath of configPaths) {
-    // Check if this config path belongs to this component/version
-    if (configPath.includes(componentId) && configPath.includes(version)) {
+    // Check if this config path belongs to this component
+    if (configPath.includes(componentId)) {
       files.push(configPath);
       break;
     }
@@ -222,10 +222,9 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string, ver
  */
 export async function computeComponentFileStates(
   handoff: Handoff,
-  componentId: string,
-  version: string
+  componentId: string
 ): Promise<{ files: Record<string, FileState>; templateDirFiles?: Record<string, FileState> }> {
-  const { files: filePaths, templateDir } = getComponentFilePaths(handoff, componentId, version);
+  const { files: filePaths, templateDir } = getComponentFilePaths(handoff, componentId);
 
   const files: Record<string, FileState> = {};
 
@@ -290,8 +289,8 @@ export function hasComponentChanged(
 /**
  * Checks if the component output files exist
  */
-export async function checkOutputExists(handoff: Handoff, componentId: string, version: string): Promise<boolean> {
-  const outputPath = path.resolve(handoff.workingPath, 'public/api/component', componentId, `${version}.json`);
+export async function checkOutputExists(handoff: Handoff, componentId: string): Promise<boolean> {
+  const outputPath = path.resolve(handoff.workingPath, 'public/api/component', `${componentId}.json`);
   return fs.pathExists(outputPath);
 }
 
@@ -307,19 +306,14 @@ export function createEmptyCache(): BuildCache {
 }
 
 /**
- * Updates cache entry for a specific component version
+ * Updates cache entry for a specific component
  */
 export function updateComponentCacheEntry(
   cache: BuildCache,
   componentId: string,
-  version: string,
   fileStates: { files: Record<string, FileState>; templateDirFiles?: Record<string, FileState> }
 ): void {
-  if (!cache.components[componentId]) {
-    cache.components[componentId] = {};
-  }
-
-  cache.components[componentId][version] = {
+  cache.components[componentId] = {
     files: fileStates.files,
     templateDirFiles: fileStates.templateDirFiles,
     buildTimestamp: Date.now(),

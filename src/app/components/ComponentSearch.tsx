@@ -13,7 +13,7 @@ export const getComponentList = async (): Promise<ComponentListObject[]> => {
   return data as ComponentListObject[];
 };
 
-const ComponentSearch = ({}) => {
+const ComponentSearch = ({ }) => {
   const [search, setSearch] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [list, setList] = React.useState<ComponentListObject[]>([]);
@@ -80,9 +80,7 @@ export const DisplayComponent: React.FC<{ component: ComponentListObject }> = ({
         <div className="c-card c-card--component-preview">
           <div className="o-row">
             <div className="o-col-12@md">
-              <h4>
-                {component.title} <span className="component-version">(v.{component.version})</span>
-              </h4>
+              <h4>{component.title}</h4>
               <p>{component.description}</p>
             </div>
           </div>
