@@ -1,7 +1,6 @@
 import chokidar from 'chokidar';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
-import next from 'next';
 import path from 'path';
 import { WebSocket } from 'ws';
 import Handoff from '.';
@@ -658,21 +657,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   const dev = true;
   const hostname = 'localhost';
   const port = handoff.config.app.ports?.app ?? 3000;
-  // when using middleware `hostname` and `port` must be provided below
-  const app = next({
-    dev,
-    dir: appPath,
-    hostname,
-    port,
-    // conf: config,
-  });
 
   // purge out cache
   const moduleOutput = path.resolve(appPath, 'out');
   if (fs.existsSync(moduleOutput)) {
     await fs.remove(moduleOutput);
   }
-  const nextProcess = spawn('npx', ['next', 'dev', '--port', String(port)], {
+  const nextProcess = spawn('npx', ['next', 'dev', moduleOutput, '--port', String(port)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {
