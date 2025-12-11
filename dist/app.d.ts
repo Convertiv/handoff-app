@@ -4,7 +4,7 @@ import Handoff from '.';
  * @param handoff
  * @returns
  */
-declare const buildApp: (handoff: Handoff) => Promise<void>;
+declare const buildApp: (handoff: Handoff, skipComponents?: boolean) => Promise<void>;
 /**
  * Watch the next js application.
  * Starts a custom dev server with Handoff-specific watchers and hot-reloading.

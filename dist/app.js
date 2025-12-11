@@ -491,11 +491,14 @@ const watchRuntimeConfiguration = (handoff, state) => {
  * @param handoff
  * @returns
  */
-const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const buildApp = (handoff, skipComponents) => __awaiter(void 0, void 0, void 0, function* () {
+    skipComponents = skipComponents !== null && skipComponents !== void 0 ? skipComponents : false;
     // Perform cleanup
     yield cleanupAppDirectory(handoff);
     // Build components
-    yield (0, pipeline_1.buildComponents)(handoff);
+    if (!skipComponents) {
+        yield (0, pipeline_1.buildComponents)(handoff);
+    }
     // Prepare app
     const appPath = yield initializeProjectApp(handoff);
     yield persistClientConfig(handoff);

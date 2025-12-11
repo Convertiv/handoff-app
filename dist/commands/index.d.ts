@@ -1,1 +1,1 @@
-export declare const commands: import("yargs").CommandModule<{}, import("./scaffold").ScaffoldArgs>[];
+export declare const commands: import("yargs").CommandModule<{}, import("./dev").DevArgs>[];

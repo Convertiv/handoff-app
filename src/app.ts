@@ -584,12 +584,15 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
  * @param handoff
  * @returns
  */
-const buildApp = async (handoff: Handoff): Promise<void> => {
+const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<void> => {
+  skipComponents = skipComponents ?? false;
   // Perform cleanup
   await cleanupAppDirectory(handoff);
 
   // Build components
-  await buildComponents(handoff);
+  if (!skipComponents) {
+    await buildComponents(handoff);
+  }
 
   // Prepare app
   const appPath = await initializeProjectApp(handoff);

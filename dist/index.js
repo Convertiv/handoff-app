@@ -113,10 +113,10 @@ class Handoff {
             return this;
         });
     }
-    build() {
+    build(skipComponents) {
         return __awaiter(this, void 0, void 0, function* () {
             this.preRunner();
-            yield (0, app_1.default)(this);
+            yield (0, app_1.default)(this, skipComponents);
             return this;
         });
     }
