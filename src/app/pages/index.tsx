@@ -39,15 +39,19 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
           </HeadersType.H1>
-          <div className="prose mt-16">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-              {content}
-            </ReactMarkdown>
-          </div>
-          <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
-            A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
-            digital experiences.
-          </p>
+          {content && (
+            <div className="text-lg max-w-4xl empty:hidden [&>*]:mt-6 [&>p]:font-light [&>h2:first-child]:mt-0 [&>h2:first-child]:font-normal sm:text-xl">
+              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
+          {!content && (
+            <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
+              A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
+              digital experiences.
+            </p>
+          )}
           <hr className="mt-16" />
         </div>
       </div>
