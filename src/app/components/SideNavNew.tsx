@@ -1,11 +1,9 @@
 'use client';
 
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../components/ui/collapsible';
-import { Layers, ChevronRight, Blend, Type, Sun, LayoutGrid, Shapes, Image, Hexagon } from 'lucide-react';
+import { Blend, ChevronRight, Hexagon, Image, Layers, LayoutGrid, Shapes, Sun, Type } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 
 import {
-  SidebarProvider,
-  SidebarTrigger,
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -16,9 +14,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarSeparator,
-  SidebarInset,
-  SidebarMenuAction,
-  SidebarHeader,
 } from '../components/ui/sidebar';
 
 export function SideNav() {
@@ -60,7 +55,7 @@ export function SideNav() {
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
                             <a href="#">
-                              <span>Overview</span>
+                              <span>Overview test</span>
                             </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

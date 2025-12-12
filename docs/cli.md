@@ -53,19 +53,16 @@ Commands:
 
   build - Using the current tokens, build various outputs
     build:app [opts] - Builds the design system static application
-    build:integration [opts] - Builds current selected integration, styles and previews
 
   start [opts] - Starts the design system in development mode
 
   make
-    make:exportable <type> <name> [opts] - Creates a new schema
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page
 
   eject - Ejects the default entire configuration to the current directory
     eject:config [opts] - Ejects the default configuration to the current directory
     eject:integration [opts] - Ejects the default integration to the current directory
-    eject:exportables [opts] - Ejects the default exportables to the current directory
     eject:pages [opts] - Ejects the default pages to the current directory
 
 Options:

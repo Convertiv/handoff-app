@@ -10,7 +10,7 @@ import Layout from '../components/Layout/Main';
 import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import { ChangelogDocumentationProps, fetchDocPageMarkdown, getChangelog, getClientRuntimeConfig } from '../components/util';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../components/util';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -25,25 +25,33 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
       config: getClientRuntimeConfig(),
-      changelog: getChangelog(),
     },
   };
 };
 
-const Home = ({ content, menu, metadata, config, changelog, current }: ChangelogDocumentationProps) => {
+const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
   const router = useRouter();
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
-      <div className="w-full bg-gradient-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
+      <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
             {config?.app?.client} Design System
           </HeadersType.H1>
-          <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
-            A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
-            digital experiences.
-          </p>
+          {content && (
+            <div className="text-lg max-w-4xl empty:hidden [&>*]:mt-6 [&>p]:font-light [&>h2:first-child]:mt-0 [&>h2:first-child]:font-normal sm:text-xl">
+              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
+          {!content && (
+            <p className="mt-5 max-w-4xl text-lg font-light leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
+              A complete design system with components, guidelines, and resources to help teams build consistent, accessible, and beautiful
+              digital experiences.
+            </p>
+          )}
           <hr className="mt-16" />
         </div>
       </div>
@@ -58,14 +66,14 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
             <h3 className="text-2xl font-medium">Foundations that define the brand across every experience</h3>
             <p className="mb-4 leading-relaxed">A set of design principles and visual guidelines, like color and typography.</p>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Link href="/foundations/logo">
+              <Link href="/foundations/logo" className="group flex items-center gap-2">
                 <Hexagon className="size-3 stroke-[1.5]" />
                 Logo
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
             <Button variant="link" className="h-auto px-0 py-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
-              <Link href="/foundations/icons">
+              <Link href="/foundations/icons" className="group flex items-center gap-2">
                 <Shapes className="size-3 stroke-[1.5]" />
                 Icon Library
                 <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
@@ -154,7 +162,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <Image
-                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`}
+                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.svg`}
                   alt="Colors"
                   width={'327'}
                   height="220"
@@ -175,7 +183,7 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
             <div className="flex flex-col items-start gap-2">
               <div className="mb-3 flex max-h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-900">
                 <Image
-                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/colors.svg`}
+                  src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/blocks.svg`}
                   alt="Colors"
                   width={'327'}
                   height="220"
@@ -191,11 +199,6 @@ const Home = ({ content, menu, metadata, config, changelog, current }: Changelog
           </Link>
         </div>
         <hr />
-        <div className="prose mt-16 hidden">
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-            {content}
-          </ReactMarkdown>
-        </div>
       </div>
       <Footer config={config} />
     </Layout>

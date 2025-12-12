@@ -2,10 +2,9 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import Footer from '../../../components/Footer';
+import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import Header from '../../../components/old/Header';
-import CustomNav from '../../../components/SideNav/Custom';
+import HeadersType from '../../../components/Typography/Headers';
 import {
   buildL2StaticPaths,
   DocumentationProps,
@@ -62,39 +61,42 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export default function DocSubPage({ content, menu, metadata, current, config }: DocumentationProps) {
   if (content) {
     return (
-      <div className="c-page">
-        <Head>
-          <title>{metadata.metaTitle}</title>
-          <meta name="description" content={metadata.metaDescription} />
-        </Head>
-        <Header menu={menu} config={config} />
-        {current?.subSections?.length > 0 && <CustomNav menu={current} />}
-        <section className="c-content">
-          <div className="o-container-fluid">
-            <div className="c-hero">
-              <div>
-                <h1>{metadata.title}</h1>
-                <p>{metadata.description}</p>
-              </div>
-            </div>
-            <div className="prose">
-              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-                {content}
-              </ReactMarkdown>
-            </div>
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-2 pb-7">
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        </div>
+        <div>
+          <div className="prose mb-10">
+            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
           </div>
-        </section>
-        <Footer config={config} />
-      </div>
+        </div>
+      </Layout>
     );
   } else {
     return (
-      <div className="c-page">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
         <Head>
-          <title>Page Not Found</title>
-          <meta name="description" content="Page Not found" />
+          <title>404 - Page Not Found</title>
+          <meta name="description" content="Page Not Found" />
         </Head>
-        Page Not Found
+        <div className="flex flex-col items-center">
+          <div className="mb-2 text-7xl font-bold text-gray-800 dark:text-white">404</div>
+          <h1 className="mb-4 text-2xl font-semibold text-gray-700 dark:text-gray-300">Oops! Page not found.</h1>
+          <p className="mb-6 max-w-md text-center text-gray-500 dark:text-gray-400">
+            Sorry, the page you are looking for does not exist or has been moved.
+            <br />
+            Please check the URL or return to the homepage.
+          </p>
+          <a
+            href="/"
+            className="rounded-md bg-blue-600 px-6 py-2 font-medium text-white shadow-md transition-colors duration-200 hover:bg-blue-700"
+          >
+            Go Home
+          </a>
+        </div>
       </div>
     );
   }

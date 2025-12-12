@@ -7,11 +7,6 @@ export const getSharedOptions = (yargs: Argv) => {
       type: 'string',
       description: 'Path to config file',
     },
-    integration  : {
-      alias: 'i',
-      type: 'string',
-      description: 'Path to integration',
-    },
     force: {
       alias: 'f',
       type: 'boolean',

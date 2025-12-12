@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Types as CoreTypes, Handoff as HandoffRunner } from 'handoff-core';
-import { Config, IntegrationObject } from './types/config';
+import { Config, RuntimeConfig } from './types/config';
 declare class Handoff {
     config: Config | null;
     debug: boolean;
@@ -9,7 +9,7 @@ declare class Handoff {
     workingPath: string;
     exportsDirectory: string;
     sitesDirectory: string;
-    integrationObject?: IntegrationObject | null;
+    runtimeConfig?: RuntimeConfig | null;
     designMap: {
         colors: {};
         effects: {};
@@ -27,19 +27,16 @@ declare class Handoff {
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     component(name: string | null): Promise<Handoff>;
-    build(): Promise<Handoff>;
+    build(skipComponents?: boolean): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
-    ejectExportables(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
     ejectTheme(): Promise<Handoff>;
-    makeExportable(type: string, name: string): Promise<Handoff>;
     makeTemplate(component: string, state: string): Promise<Handoff>;
     makePage(name: string, parent: string): Promise<Handoff>;
     makeComponent(name: string): Promise<Handoff>;
-    makeIntegrationStyles(): Promise<Handoff>;
     start(): Promise<Handoff>;
     dev(): Promise<Handoff>;
-    validateComponents(): Promise<Handoff>;
+    validateComponents(skipBuild?: boolean): Promise<Handoff>;
     /**
      * Retrieves the documentation object, using cached version if available
      * @returns {Promise<CoreTypes.IDocumentationObject | undefined>} The documentation object or undefined if not found
@@ -52,10 +49,10 @@ declare class Handoff {
     getSharedStyles(): Promise<string | null>;
     getRunner(): Promise<ReturnType<typeof HandoffRunner>>;
     /**
-     * Returns configured legacy component definitions in array form.
-     * @deprecated Will be removed before 1.0.0 release.
+     * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+     * @returns {string} The project ID to use for path construction
      */
-    getLegacyDefinitions(): Promise<CoreTypes.ILegacyComponentDefinition[] | null>;
+    getProjectId(): string;
     /**
      * Gets the output path for the current project
      * @returns {string} The absolute path to the output directory
@@ -71,11 +68,6 @@ declare class Handoff {
      * @returns {string} The absolute path to the preview.json file
      */
     getPreviewFilePath(): string;
-    /**
-     * Gets the path to the changelog.json file
-     * @returns {string} The absolute path to the changelog.json file
-     */
-    getChangelogFilePath(): string;
     /**
      * Gets the path to the tokens directory
      * @returns {string} The absolute path to the tokens directory
@@ -108,8 +100,8 @@ declare class Handoff {
      */
     private readJsonFile;
 }
-export declare const initIntegrationObject: (handoff: Handoff) => [integrationObject: IntegrationObject, configs: string[]];
-export type { ComponentListObject as Component } from './transformers/preview/types';
+export declare const initRuntimeConfig: (handoff: Handoff) => [runtimeConfig: RuntimeConfig, configs: string[]];
+export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';
 export default Handoff;

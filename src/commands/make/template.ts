@@ -1,5 +1,6 @@
 import { CommandModule } from 'yargs';
 import Handoff from '../../';
+import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
@@ -28,14 +29,14 @@ const command: CommandModule<{}, MakeTemplateArgs> = {
     const templateComponent = args.component;
 
     if (!/^[a-z0-9]+$/i.test(templateComponent)) {
-      console.error(`Template component must be alphanumeric and may contain dashes or underscores`);
+      Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 
     let templateState = args.state;
 
     if (templateState && !/^[a-z0-9]+$/i.test(templateState)) {
-      console.error(`Template state must be alphanumeric and may contain dashes or underscores`);
+      Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 

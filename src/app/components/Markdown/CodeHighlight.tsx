@@ -1,31 +1,27 @@
 import { PreviewObject } from '@handoff/types';
-import oneDark from 'react-syntax-highlighter/dist/cjs/styles/prism/one-dark';
-import oneLight from 'react-syntax-highlighter/dist/cjs/styles/prism/one-light';
-import js from 'refractor/lang/javascript';
-import json from 'refractor/lang/json';
-import sass from 'refractor/lang/sass';
-import scss from 'refractor/lang/scss';
-import tsx from 'refractor/lang/tsx';
-import html from 'refractor/lang/xml-doc';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
 import Handlebars from 'handlebars';
 import { useEffect, useState } from 'react';
-import highlight from 'react-syntax-highlighter/src/highlight';
-import refractor from 'refractor/core';
+import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import sass from 'react-syntax-highlighter/dist/esm/languages/prism/scss';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { Collapsible } from '../ui/collapsible';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-const SyntaxHighlighter = highlight(refractor, {});
-SyntaxHighlighter.registerLanguage = (_: string, language: any) => refractor.register(language);
-SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('markdown', markdown);
 SyntaxHighlighter.registerLanguage('sass', sass);
-SyntaxHighlighter.registerLanguage('scss', scss);
 SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('html', html);
 /**
  * Highlight code for preview elements
  * @param param0
@@ -153,7 +149,7 @@ export const CodeHighlight: React.FC<{
   }, [currentValues, data]);
 
   return (
-    <Collapsible className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible id="code-samples" className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
       <div
         className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800"
         data-language={activeState === 'html' ? type : activeState}

@@ -1,5 +1,6 @@
 import { Types as CoreTypes } from 'handoff-core';
 import { SlotMetadata } from './transformers/preview/component';
+import { ComponentPageDefinition } from './transformers/preview/types';
 import { type Filter } from './utils/filter';
 
 export interface ValidationResult {
@@ -44,6 +45,7 @@ export interface PreviewObject {
   figma: string;
   should_do: string[];
   should_not_do: string[];
+  group?: string;
   categories?: string[];
   tags?: string[];
   preview: string;
@@ -70,6 +72,7 @@ export interface PreviewObject {
    * Each key represents a validation type and the value contains detailed validation results
    */
   validations?: Record<string, ValidationResult>;
+  page?: ComponentPageDefinition;
 }
 
 export type PreviewJson = {

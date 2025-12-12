@@ -115,8 +115,8 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
           </Drawer>
         </div>
       </div>
-      <div className="mt-10">
-        <div className="prose">
+      <div>
+        <div className="prose mb-10">
           <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>

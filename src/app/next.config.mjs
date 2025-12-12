@@ -1,47 +1,12 @@
-import mdx from '@next/mdx';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { visit } from 'unist-util-visit';
-
-const CodeTransform = () => {
-  return (tree, file) => {
-    visit(tree, 'code', (node, index, parent) => {
-      const metaString = `${node.lang ?? ''} ${node.meta ?? ''}`.trim();
-      const props = { col: '12', codetitle: '' };
-      if (!metaString) return;
-      const [col] = metaString.match(/(?<=col=("|'))(.*?)(?=("|'))/) ?? [''];
-      if (col) {
-        props.col = col;
-      }
-      const [title] = metaString.match(/(?<=title=("|'))(.*?)(?=("|'))/) ?? [''];
-      if (!title && metaString.includes('title=')) {
-        file.message('Invalid title', node, 'remark-code-title');
-        return;
-      }
-      if (!title) return;
-      props.codetitle = [title];
-      // @ts-ignore
-      //node.data = title;
-      node.data = { hProperties: props };
-      return index ? index + 2 : 0;
-    });
-  };
-};
-
-const withMDX = mdx({
-  options: {
-    remarkPlugins: [CodeTransform],
-    rehypePlugins: [],
-  },
-});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
   reactStrictMode: true,
-  // Configure `pageExtensions` to include MDX files
-  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
   experimental: {
     externalDir: true,
@@ -53,7 +18,7 @@ const nextConfig = {
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
-  distDir: 'out',
+  //distDir: 'out',
   basePath: '',
   env: {
     HANDOFF_PROJECT_ID: '',
@@ -153,5 +118,4 @@ const nextConfig = {
   },
 };
 
-// Wrap MDX and Next.js config with each other
-export default withMDX(nextConfig);
+export default nextConfig;

@@ -6,6 +6,70 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2025-12-15
+We consider this to be our 1.0.0 pre release candidate. We think that all three
+APIs (component construction, REST api, and library) are stable and mature.
+
+This release is largely focused on removing technical debt, fixing issues,
+and improving the frontend UI. 
+
+## Major Highlights
+- Removing old infrastructure and simplifying the codebase
+  - Removed component versions to simplify component architecture.
+    - Looking at ways to build a better way to handle component changes in the future
+  - Removing MDX page constructs to simplify page editing
+  - Removing old integration pattern to move to a less opinionated architecture
+  - Removes the exportables since those can all now be defined in Figma
+  - Removed the changelog. We intend to rethink how this is done to make it
+  more accurate and useful
+  - Removed many node dependencies and simplified the code.
+- Replaced WebPack with Vite for faster, more flexible builds
+
+
+### UI Improvements
+- Significant improvements to color data to show much more detail about color use
+- Added component search and filtering on system landing page
+- Added next previous navigation to component pages
+- Adding markdown content to the home page to allow customization
+- Reworked the logo page
+
+### Component API Changes
+- Components can now be explicitly linked to the figma component allowing ongoing
+property, description, and metadata sync. 
+
+### CLI Changes
+- Adds a command `handoff-app scaffold` that will look at your figma file for
+published components, and suggest components for handoff.
+  - Will launch a wizard that will scaffold simple components for each Figma 
+  component and link them to the figma reference
+- `make:page` will now only create `.md` pages
+- `handoff-app build:app` can now accept a switch `--skip-components` which
+will bypass component build. This is especially useful for speeding CI/CD builds
+- `eject:config` now ejexts a typed js config file instead of a JSON config
+- Removes the following commands related to legacy infrastructure
+  - `make:exportable`
+  - `make:integrationStyles`
+  - `eject:schema`
+  - `eject:exportables`
+  - `make:schema`
+
+### DX Changes
+- React component properties will automatically generate properties in the 
+REST api and the app UI, generated from the properties and types of the component
+- The handoff config will now be 
+- The logging has been rewritten to provide better clarity and eliminate noise
+- The prompting has been rewritten to provide cleaner interactions
+
+### Hook Changes
+- 
+
+### Security Fixes
+- Handoff is not affected by the React2Shell vulnerabilities because it uses
+no server side React components. Version 18 updates to the latest 15 release of 
+NextJS and React 19 to minimize false positives in dependency reporting.
+
+### Bug Fixes
+
 ## [0.17.1] - 2025-11-13
 
 This patch improves docs-site component loading and resolves a state-mutation issue.

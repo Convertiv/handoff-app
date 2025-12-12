@@ -38,10 +38,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getComponentOutputPath = exports.SlotType = void 0;
 exports.componentTransformer = componentTransformer;
 exports.processSharedStyles = processSharedStyles;
-const chalk_1 = __importDefault(require("chalk"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
 const sass_1 = __importDefault(require("sass"));
+const logger_1 = require("../../utils/logger");
 const api_1 = __importStar(require("./component/api"));
 const builder_1 = __importDefault(require("./component/builder"));
 const css_1 = require("./component/css");
@@ -55,6 +55,9 @@ var SlotType;
     SlotType["NUMBER"] = "number";
     SlotType["BOOLEAN"] = "boolean";
     SlotType["OBJECT"] = "object";
+    SlotType["FUNCTION"] = "function";
+    SlotType["ENUM"] = "enum";
+    SlotType["ANY"] = "any";
 })(SlotType || (exports.SlotType = SlotType = {}));
 const getComponentOutputPath = (handoff) => path_1.default.resolve((0, api_1.getAPIPath)(handoff), 'component');
 exports.getComponentOutputPath = getComponentOutputPath;
@@ -85,28 +88,27 @@ function processSharedStyles(handoff) {
         const scssPath = path_1.default.resolve(custom, 'shared.scss');
         const cssPath = path_1.default.resolve(custom, 'shared.css');
         if (fs_extra_1.default.existsSync(scssPath) && !fs_extra_1.default.existsSync(cssPath)) {
-            console.log(chalk_1.default.green(`Compiling shared styles`));
+            logger_1.Logger.success(`Compiling shared styles`);
             try {
                 const result = yield sass_1.default.compileAsync(scssPath, {
                     loadPaths: [
                         path_1.default.resolve(handoff.workingPath, 'integration/sass'),
                         path_1.default.resolve(handoff.workingPath, 'node_modules'),
                         path_1.default.resolve(handoff.workingPath),
-                        path_1.default.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+                        path_1.default.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
                     ],
                 });
                 if (result.css) {
                     // write the css to the public folder
                     const css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
                     const cssPath = path_1.default.resolve(publicPath, 'shared.css');
-                    console.log(chalk_1.default.green(`Writing shared styles to ${cssPath}`));
+                    logger_1.Logger.success(`Writing shared styles to ${cssPath}`);
                     yield fs_extra_1.default.writeFile(cssPath, result.css);
                     return css;
                 }
             }
             catch (e) {
-                console.log(chalk_1.default.red(`Error compiling shared styles`));
-                console.log(e);
+                logger_1.Logger.error(`Error compiling shared styles`, e);
             }
         }
         else if (fs_extra_1.default.existsSync(cssPath)) {
