@@ -43,5 +43,6 @@ yarn-error.log*
 /dist/templates
 /src/app/out
 /src/~app-*
+/src/app/.next
 /exported
 handoff.config.js
