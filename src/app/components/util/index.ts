@@ -1,15 +1,12 @@
-import { ChangelogRecord } from '@handoff/changelog';
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
-import { ClientConfig, IntegrationObject } from '@handoff/types/config';
-import { findFilesByExtension } from '@handoff/utils/fs';
+import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { Types as CoreTypes } from 'handoff-core';
-import { groupBy, merge, startCase, uniq } from 'lodash';
+import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
-import semver from 'semver';
 import { SubPageType } from '../../pages/[level1]/[level2]';
 
 // Get the parsed url string type
@@ -29,6 +26,7 @@ export interface Metadata {
 export interface SectionLink {
   title: string;
   weight: number;
+  external?: string | boolean;
   path: string;
   subSections: {
     title: string;
@@ -58,10 +56,6 @@ export interface DocumentationWithTokensProps extends DocumentationProps {
   types: string;
 }
 
-export interface ChangelogDocumentationProps extends DocumentationProps {
-  changelog: ChangelogRecord[];
-}
-
 export interface FontDocumentationProps extends DocumentationProps {
   customFonts: string[];
   design: CoreTypes.IDocumentationObject['localStyles'];
@@ -74,7 +68,6 @@ export interface AssetDocumentationProps extends DocumentationProps {
 export interface ComponentDocumentationProps extends DocumentationWithTokensProps {
   id: string;
   component: CoreTypes.IFileComponentObject;
-  legacyDefinition: CoreTypes.ILegacyComponentDefinition;
   // definitions: DocumentComponentDefinitions;
   previews: PreviewObject[];
   componentOptions: CoreTypes.IHandoffConfigurationComponentOptions;
@@ -93,12 +86,13 @@ export const knownPaths = [
   'assets/logos',
   'foundations',
   'foundations/colors',
+  'foundations/icons',
   'foundations/effects',
   'foundations/logos',
+  'foundations/logo',
   'foundations/typography',
   'system',
   'system/component',
-  'changelog',
 ];
 
 /**
@@ -186,13 +180,15 @@ export const buildL2StaticPaths = () => {
           .filter((subFile) => subFile.endsWith('.md'))
           .flatMap((subFile) => {
             const childPath = fileName.replace('.md', '');
-            if (knownPaths.indexOf(childPath) < 0) {
+            if (knownPaths.indexOf(fileName + '/' + subFile.replace('.md', '')) < 0) {
               return {
                 params: {
                   level1: fileName,
                   level2: subFile.replace('.md', ''),
                 },
               };
+            } else {
+              console.log('file path already exists', fileName + '/' + subFile.replace('.md', ''));
             }
           })
           .filter(filterOutUndefined);
@@ -221,7 +217,7 @@ export const staticBuildMenu = () => {
   const sections: SectionLink[] = [];
   // Build path tree
   const custom = uniq(list)
-    .map((fileName) => {
+    .map((fileName: string) => {
       let search = '';
       if (pages.includes(fileName)) {
         search = path.resolve(workingPages, fileName);
@@ -232,7 +228,7 @@ export const staticBuildMenu = () => {
         !fs.lstatSync(search).isDirectory() &&
         search !== path.resolve(docRoot, 'index.md') &&
         search !== path.resolve(workingPages, 'index.md') &&
-        (fileName.endsWith('md') || fileName.endsWith('mdx'))
+        fileName.endsWith('md')
       ) {
         const contents = fs.readFileSync(search, 'utf-8');
         const { data: metadata } = matter(contents);
@@ -240,7 +236,7 @@ export const staticBuildMenu = () => {
           return undefined;
         }
 
-        const filepath = `/${fileName.replace('.mdx', '').replace('.md', '')}`;
+        const filepath = `/${fileName.replace('.md', '')}`;
         let subSections = [];
 
         if (metadata.menu) {
@@ -252,7 +248,7 @@ export const staticBuildMenu = () => {
                 // The user wants to inject the component menu here
                 return {
                   title: sub.title,
-                  menu: staticBuildComponentMenu(),
+                  menu: staticBuildComponentMenu(sub.components),
                 };
               }
               if (sub.tokens) {
@@ -269,8 +265,17 @@ export const staticBuildMenu = () => {
             .filter(filterOutUndefined);
         }
 
+        let external: string | boolean = false;
+        if (
+          typeof metadata.external === 'string' &&
+          (metadata.external.startsWith('http://') || metadata.external.startsWith('https://') || metadata.external.startsWith('/'))
+        ) {
+          external = metadata.external;
+        }
+
         return {
           title: metadata.menuTitle ?? metadata.title,
+          external,
           weight: metadata.weight,
           path: filepath,
           subSections,
@@ -281,9 +286,12 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
-const staticBuildComponentMenu = () => {
+const staticBuildComponentMenu = (type?: boolean | string) => {
   let menu = [];
-  let components = fetchComponents();
+  let components = fetchComponents({ includeTokens: false });
+  if (typeof type === 'string' && type !== '') {
+    components = components.filter((component) => component.type == type);
+  }
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -331,7 +339,7 @@ const staticBuildTokensMenu = () => {
   ];
 
   const componentMenuItems = [];
-  const components = fetchComponents(false);
+  const components = fetchComponents({ includeApi: false });
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -385,9 +393,9 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string, integrationObject?: IntegrationObject) => {
+export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
   const menu = staticBuildMenu();
-  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, integrationObject);
+  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
   // Return props
   return {
     props: {
@@ -400,17 +408,6 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
   };
 };
 
-export const fetchMdxPageMarkdown = () => {
-  //const menu = staticBuildMenu();
-  // Return props
-  return {
-    props: {
-      menu: [],
-      current: [],
-    },
-  };
-};
-
 /**
  * Fetch Component Doc Page Markdown
  * @param path
@@ -418,10 +415,10 @@ export const fetchMdxPageMarkdown = () => {
  * @param id
  * @returns
  */
-export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string, integrationObject?: IntegrationObject) => {
+export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
   return {
     props: {
-      ...fetchDocPageMarkdown(path, slug, id, integrationObject).props,
+      ...fetchDocPageMarkdown(path, slug, id, runtimeConfig).props,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
       styleDictionary: slug ? fetchTokensString(slug, 'styleDictionary') : '',
@@ -430,47 +427,69 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   };
 };
 
+type FetchComponentsOptions = {
+  includeTokens?: boolean;
+  includeApi?: boolean;
+};
+
 /**
  * Fetch exportables id's from the JSON files in the exportables directory
- * @returns {string[]}
+ * @param options - Configuration object to specify which component sources to include
+ * @param options.includeTokens - Include components from tokens.json (default: true)
+ * @param options.includeApi - Include components from components.json API (default: true)
+ * @returns {string[]} Array of component objects with id, type, group, name, and description
  */
-export const fetchComponents = (fetchAll: boolean = true) => {
+export const fetchComponents = (options?: FetchComponentsOptions) => {
+  const includeTokens = options?.includeTokens ?? true;
+  const includeApi = options?.includeApi ?? true;
+
   let components: Record<
     string,
     Omit<CoreTypes.IFileComponentObject, 'instances'> & { type?: ComponentType; group?: string; description?: string; name?: string }
-  > = getTokens().components;
+  > = {};
 
-  if (fetchAll) {
-    const componentIds = Array.from(
-      new Set<string>(
-        (
-          JSON.parse(
-            fs.readFileSync(
-              path.resolve(
-                process.env.HANDOFF_MODULE_PATH ?? '',
-                '.handoff',
-                `${process.env.HANDOFF_PROJECT_ID}`,
-                'public',
-                'api',
-                'components.json'
-              ),
-              'utf-8'
-            )
-          ) as ComponentListObject[]
-        ).map((c) => c.id)
+  // Include components from tokens.json if requested
+  if (includeTokens) {
+    const tokens = getTokens();
+    components = tokens?.components ?? {};
+  }
+
+  // Include components from components.json API if requested
+  if (includeApi) {
+    const componentsFileExists = fs.existsSync(
+      path.resolve(
+        process.env.HANDOFF_MODULE_PATH ?? '',
+        '.handoff',
+        `${process.env.HANDOFF_PROJECT_ID}`,
+        'public',
+        'api',
+        'components.json'
       )
     );
 
-    for (const componentId of componentIds) {
-      const metadata = getLatestComponentMetadata(componentId);
-      if (metadata) {
-        components[componentId] = {
-          type: metadata.type as ComponentType,
-          group: metadata.group || '',
-          description: metadata.description || '',
-          name: metadata.title || '',
+    if (componentsFileExists) {
+      const componentList = JSON.parse(
+        fs.readFileSync(
+          path.resolve(
+            process.env.HANDOFF_MODULE_PATH ?? '',
+            '.handoff',
+            `${process.env.HANDOFF_PROJECT_ID}`,
+            'public',
+            'api',
+            'components.json'
+          ),
+          'utf-8'
+        )
+      ) as ComponentListObject[];
+
+      componentList.forEach((component) => {
+        components[component.id] = {
+          type: (component.type as ComponentType) || ComponentType.Element,
+          group: component.group || '',
+          description: component.description || '',
+          name: component.title || '',
         };
-      }
+      });
     }
   }
 
@@ -490,84 +509,41 @@ export const fetchComponents = (fetchAll: boolean = true) => {
   }
 };
 
-type RuntimeCache = IntegrationObject & { config: ClientConfig };
+type ClientConfigCache = { config: ClientConfig };
 
-let cachedRuntimeCache: RuntimeCache | null = null;
+let cachedClientConfig: ClientConfigCache | null = null;
 
-const loadRuntimeCache = (): RuntimeCache => {
-  if (cachedRuntimeCache) {
-    return cachedRuntimeCache;
+const getDefaultClientConfig = (): ClientConfigCache => {
+  return {
+    config: {} as ClientConfig,
+  };
+};
+
+const loadClientConfig = (): ClientConfigCache => {
+  if (cachedClientConfig) {
+    return cachedClientConfig;
   }
 
-  const runtimeCachePath = path.resolve(process.env.HANDOFF_EXPORT_PATH, 'runtime.cache.json');
+  const modulePath = process.env.HANDOFF_MODULE_PATH ?? '';
+  const projectId = process.env.HANDOFF_PROJECT_ID ?? '';
+  const clientConfigPath = path.resolve(modulePath, '.handoff', projectId, 'client.config.json');
 
-  if (!fs.existsSync(runtimeCachePath)) {
-    throw new Error(`Runtime cache not found at: ${runtimeCachePath}`);
+  if (!fs.existsSync(clientConfigPath)) {
+    // Return empty default instead of throwing to support running without fetch
+    return getDefaultClientConfig();
   }
 
   try {
-    const cacheContent = fs.readFileSync(runtimeCachePath, 'utf-8');
-    cachedRuntimeCache = JSON.parse(cacheContent) as RuntimeCache;
-    return cachedRuntimeCache;
+    const cacheContent = fs.readFileSync(clientConfigPath, 'utf-8');
+    cachedClientConfig = JSON.parse(cacheContent) as ClientConfigCache;
+    return cachedClientConfig;
   } catch (e) {
-    throw new Error(`Error reading runtime cache: ${runtimeCachePath}`);
+    // Return empty default on error instead of throwing
+    return getDefaultClientConfig();
   }
 };
 
-export const getLatestComponentMetadata = (id: string) => {
-  const runtimeCache = loadRuntimeCache();
 
-  const components = runtimeCache.entries?.components;
-
-  if (!components || !components[id]) {
-    return false;
-  }
-
-  const versions = Object.keys(components[id]);
-
-  if (!versions.length) {
-    return false;
-  }
-
-  // Use natural version sorting (optional improvement below!)
-  const latestVersion = semver.rsort(versions).shift();
-
-  if (!latestVersion) {
-    return false;
-  }
-
-  const latestComponent = components[id][latestVersion];
-
-  return latestComponent || false;
-};
-
-/**
- * Returns the legacy component definition for component with the given name.
- * @deprecated Will be removed before 1.0.0 release.
- */
-export const getLegacyDefinition = (name: string) => {
-  const config = getClientRuntimeConfig();
-
-  const sourcePath = path.resolve(process.env.HANDOFF_WORKING_PATH, 'exportables');
-
-  if (!fs.existsSync(sourcePath)) {
-    return null;
-  }
-
-  const definitionPaths = (findFilesByExtension(sourcePath, '.json') ?? []).filter((path) => path.split('/').pop() === name);
-
-  if (definitionPaths.length === 0) {
-    return null;
-  }
-
-  const data = fs.readFileSync(definitionPaths[0], 'utf-8');
-  const exportable = JSON.parse(data.toString()) as CoreTypes.ILegacyComponentDefinition;
-
-  const exportableOptions = {};
-  merge(exportableOptions, exportable.options);
-  exportable.options = exportableOptions as CoreTypes.ILegacyComponentDefinitionOptions;
-  return exportable;
-};
 
 /**
  * Fetch Component Doc Page Markdown
@@ -589,26 +565,31 @@ export const fetchFoundationDocPageMarkdown = (path: string, slug: string | unde
 };
 
 export const getClientRuntimeConfig = (): ClientConfig => {
-  const runtimeCache = loadRuntimeCache();
-  return runtimeCache.config;
+  const clientConfig = loadClientConfig();
+  return clientConfig.config;
 };
 
 export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')
     : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'tokens.json');
-  if (!fs.existsSync(exportedFilePath)) return {} as CoreTypes.IDocumentationObject;
+
+  if (!fs.existsSync(exportedFilePath)) {
+    // Return proper default structure to prevent Next.js serialization errors
+    // and ensure components can safely access design properties
+    return {
+      localStyles: {
+        color: [],
+        typography: [],
+        effect: [],
+      },
+      components: {},
+      assets: {},
+    } as CoreTypes.IDocumentationObject;
+  }
+
   const data = fs.readFileSync(exportedFilePath, 'utf-8');
   return JSON.parse(data.toString()) as CoreTypes.IDocumentationObject;
-};
-
-export const getChangelog = () => {
-  const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
-    ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'changelog.json')
-    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported', 'changelog.json');
-  if (!fs.existsSync(exportedFilePath)) return [];
-  const data = fs.readFileSync(exportedFilePath, 'utf-8');
-  return JSON.parse(data.toString()) as ChangelogRecord[];
 };
 
 /**
@@ -635,11 +616,7 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @param slug
  * @returns
  */
-export const fetchDocPageMetadataAndContent = (
-  localPath: string,
-  slug: string | string[] | undefined,
-  integrationObject?: IntegrationObject
-) => {
+export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined, runtimeConfig?: RuntimeConfig) => {
   const pagePath = localPath.replace('docs/', 'pages/');
   const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? '';
   const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? '';
@@ -660,8 +637,8 @@ export const fetchDocPageMetadataAndContent = (
 
   const { data: metadata, content } = matter(currentContents);
 
-  if (typeof slug === 'string' && integrationObject?.entries?.templates) {
-    const viewConfigFilePath = path.resolve(integrationObject.entries.templates, slug, 'view.config.json');
+  if (typeof slug === 'string' && runtimeConfig?.entries?.templates) {
+    const viewConfigFilePath = path.resolve(runtimeConfig.entries.templates, slug, 'view.config.json');
     if (fs.existsSync(viewConfigFilePath)) {
       options = JSON.parse(fs.readFileSync(viewConfigFilePath, 'utf-8').toString()) as ComponentDocumentationOptions;
     }

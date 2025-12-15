@@ -1,5 +1,5 @@
+import * as p from '@clack/prompts';
 import archiver from 'archiver';
-import chalk from 'chalk';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as HandoffTypes, Transformers } from 'handoff-core';
@@ -8,11 +8,10 @@ import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '.';
 import buildApp from './app';
-import generateChangelogRecord, { ChangelogRecord } from './changelog';
 import { createDocumentationObject } from './documentation-object';
 import { componentTransformer } from './transformers/preview/component';
 import { FontFamily } from './types/font';
-import { maskPrompt, prompt } from './utils/prompt';
+import { Logger } from './utils/logger';
 
 /**
  * Read Previous Json File
@@ -107,7 +106,7 @@ const buildCustomFonts = async (handoff: Handoff, documentationObject: HandoffTy
     if (fs.existsSync(fontDirName)) {
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zip(fontDirName, stream);
-      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.config.figma_project_id, 'fonts');
+      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId(), 'fonts');
       if (!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }
@@ -251,11 +250,9 @@ const validateHandoffRequirements = async (handoff: Handoff) => {
     // couldn't find the right version, but ...
   }
   if (!requirements) {
-    console.log(chalk.redBright('Handoff Installation failed'));
-    console.log(
-      chalk.yellow(
-        '- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'
-      )
+    Logger.error('Handoff installation failed.');
+    Logger.warn(
+      '- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'
     );
     throw new Error('Could not run handoff');
   }
@@ -277,38 +274,49 @@ const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
 
   if (!DEV_ACCESS_TOKEN) {
     missingEnvVars = true;
-    console.log(
-      chalk.yellow(`Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.
-Use these instructions to generate them ${chalk.blue(
-        `https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
-      )}\n`)
+    p.log.warn(
+      `Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\n` +
+      `Use these instructions to generate them: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
     );
-    DEV_ACCESS_TOKEN = await maskPrompt(chalk.green('Figma Developer Key: '));
+    const token = await p.password({
+      message: 'Figma Developer Key:',
+    });
+    if (p.isCancel(token)) {
+      p.cancel('Authentication cancelled.');
+      process.exit(0);
+    }
+    DEV_ACCESS_TOKEN = token as string;
   }
 
   if (!FIGMA_PROJECT_ID) {
     missingEnvVars = true;
-    console.log(
-      chalk.yellow(`\n\nFigma project id not found. You can supply it as an environment variable or .env file at HANDOFF_FIGMA_PROJECT_ID.
-You can find this by looking at the url of your Figma file. If the url is ${chalk.blue(
-        `https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D`
-      )}
-your id would be IGYfyraLDa0BpVXkxHY2tE\n`)
+    p.log.warn(
+      `Figma project ID not found. Provide HANDOFF_FIGMA_PROJECT_ID via environment variable or .env file.\n` +
+      `Find it in your Figma file URL (e.g., figma.com/file/{PROJECT_ID}/...).`
     );
-    FIGMA_PROJECT_ID = await maskPrompt(chalk.green('Figma Project Id: '));
+    const projectId = await p.text({
+      message: 'Figma Project Id:',
+      validate: (value) => {
+        if (!value.trim()) return 'Project ID is required';
+      },
+    });
+    if (p.isCancel(projectId)) {
+      p.cancel('Authentication cancelled.');
+      process.exit(0);
+    }
+    FIGMA_PROJECT_ID = projectId as string;
   }
 
   if (missingEnvVars) {
-    console.log(
-      chalk.yellow(
-        `\n\nYou supplied at least one required variable. We can write these variables to a local env file for you to make it easier to run the pipeline in the future.\n`
-      )
-    );
+    p.log.info(`To simplify future runs, we can save these variables to a local .env file.`);
 
-    const writeEnvFile = await prompt(chalk.green('Write environment variables to .env file? (y/n): '));
+    const writeEnvFile = await p.confirm({
+      message: 'Write environment variables to .env file?',
+      initialValue: true,
+    });
 
-    if (writeEnvFile !== 'y') {
-      console.log(chalk.green(`Skipping .env file creation. You will need to supply these variables in the future.\n`));
+    if (p.isCancel(writeEnvFile) || writeEnvFile === false) {
+      p.log.info(`Skipped .env file creation. Please provide these variables manually.`);
     } else {
       const envFilePath = path.resolve(handoff.workingPath, '.env');
       const envFileContent = `
@@ -324,21 +332,15 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 
         if (fileExists) {
           await fs.appendFile(envFilePath, envFileContent);
-          console.log(
-            chalk.green(
-              `\nThe .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.\n`
-            )
+          p.log.success(
+            `The .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.`
           );
         } else {
           await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
-          console.log(
-            chalk.green(
-              `\nAn .env file was created in the root of your project. Since these are sensitive variables, please do not commit this file.\n`
-            )
-          );
+          p.log.success(`Created .env file. Do not commit sensitive variables.`);
         }
       } catch (error) {
-        console.error(chalk.red('Error handling the .env file:', error));
+        Logger.error('Error handling the .env file:', error);
       }
     }
   }
@@ -348,23 +350,14 @@ HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
 };
 
 const figmaExtract = async (handoff: Handoff) => {
-  console.log(chalk.green(`Starting Figma data extraction.`));
-
-  let prevDocumentationObject = await handoff.getDocumentationObject();
-  let changelog: ChangelogRecord[] = (await readPrevJSONFile(handoff.getChangelogFilePath())) || [];
+  Logger.success(`Starting Figma data extraction.`);
 
   await fs.emptyDir(handoff.getOutputPath());
 
   const documentationObject = await createDocumentationObject(handoff);
-  const changelogRecord = generateChangelogRecord(prevDocumentationObject, documentationObject);
-
-  if (changelogRecord) {
-    changelog = [changelogRecord, ...changelog];
-  }
 
   await Promise.all([
     fs.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
-    fs.writeJSON(handoff.getChangelogFilePath(), changelog, { spaces: 2 }),
     ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
       ? [
           zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
@@ -378,7 +371,7 @@ const figmaExtract = async (handoff: Handoff) => {
   ]);
 
   // define the output folder
-  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public');
+  const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public');
 
   // ensure output folder exists
   if (!fs.existsSync(outputFolder)) {
@@ -388,12 +381,12 @@ const figmaExtract = async (handoff: Handoff) => {
   // copy assets to output folder
   fs.copyFileSync(
     handoff.getIconsZipFilePath(),
-    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'icons.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'icons.zip')
   );
 
   fs.copyFileSync(
     handoff.getLogosZipFilePath(),
-    path.join(handoff.modulePath, '.handoff', `${handoff.config.figma_project_id}`, 'public', 'logos.zip')
+    path.join(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public', 'logos.zip')
   );
 
   return documentationObject;
@@ -406,7 +399,7 @@ const pipeline = async (handoff: Handoff, build?: boolean) => {
   if (!handoff.config) {
     throw new Error('Handoff config not found');
   }
-  console.log(chalk.green(`Starting Handoff Figma data pipeline. Checking for environment and config.\n`));
+  Logger.success(`Starting Handoff Figma data pipeline. Checking for environment and config.`);
   await validateHandoffRequirements(handoff);
   await validateFigmaAuth(handoff);
   const documentationObject = await figmaExtract(handoff);

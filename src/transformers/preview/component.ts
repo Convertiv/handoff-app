@@ -1,8 +1,8 @@
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import sass from 'sass';
 import Handoff from '../../index';
+import { Logger } from '../../utils/logger';
 import writeComponentSummaryAPI, { getAPIPath } from './component/api';
 import processComponents from './component/builder';
 import { buildMainCss } from './component/css';
@@ -24,6 +24,9 @@ export enum SlotType {
   NUMBER = 'number',
   BOOLEAN = 'boolean',
   OBJECT = 'object',
+  FUNCTION = 'function',
+  ENUM = 'enum',
+  ANY = 'any',
 }
 
 export interface SlotMetadata {
@@ -99,14 +102,14 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
   const cssPath = path.resolve(custom, 'shared.css');
 
   if (fs.existsSync(scssPath) && !fs.existsSync(cssPath)) {
-    console.log(chalk.green(`Compiling shared styles`));
+    Logger.success(`Compiling shared styles`);
     try {
       const result = await sass.compileAsync(scssPath, {
         loadPaths: [
           path.resolve(handoff.workingPath, 'integration/sass'),
           path.resolve(handoff.workingPath, 'node_modules'),
           path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
         ],
       });
 
@@ -114,13 +117,12 @@ export async function processSharedStyles(handoff: Handoff): Promise<string | nu
         // write the css to the public folder
         const css = '/* These are the shared styles used in every component. */ \n\n' + result.css;
         const cssPath = path.resolve(publicPath, 'shared.css');
-        console.log(chalk.green(`Writing shared styles to ${cssPath}`));
+        Logger.success(`Writing shared styles to ${cssPath}`);
         await fs.writeFile(cssPath, result.css);
         return css;
       }
     } catch (e) {
-      console.log(chalk.red(`Error compiling shared styles`));
-      console.log(e);
+      Logger.error(`Error compiling shared styles`, e);
     }
   } else if (fs.existsSync(cssPath)) {
     const css = await fs.readFile(cssPath, 'utf8');

@@ -135,7 +135,7 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
               <p className="font-mono text-xs text-muted-foreground">{field.id}</p>
             </div>
           </div>
-          <Separator className="!mb-4 mt-6" />
+          <Separator className="mb-4! mt-6" />
           <SheetDescription className="leading-relaxed">{field.description}</SheetDescription>
           {/* <p className="font-mono text-xs">
             This is a {field.type} field. {humanReadableType(field.type)}

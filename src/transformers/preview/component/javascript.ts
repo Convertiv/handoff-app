@@ -1,8 +1,8 @@
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initIntegrationObject } from '../../../index';
+import Handoff, { initRuntimeConfig } from '../../../index';
+import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
@@ -54,7 +54,7 @@ const buildJsBundle = async (
 
     await viteBuild(viteConfig);
   } catch (e) {
-    console.error(chalk.red(`Error building ${outputFilename}`), e);
+    Logger.error(`Failed to build JS for "${outputFilename}":`, e);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
@@ -98,7 +98,7 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
     const compiled = await fs.readFile(path.resolve(outputPath, `${id}.js`), 'utf8');
     data['jsCompiled'] = compiled;
   } catch (e) {
-    console.error(`[Component JS Build Error] ${id}:`, e);
+    Logger.error(`JS build failed for component "${id}":`, e);
   }
 
   return data;
@@ -116,12 +116,12 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
  */
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff)[0];
+  const runtimeConfig = initRuntimeConfig(handoff)[0];
 
-  if (integration && integration.entries.bundle && fs.existsSync(path.resolve(integration.entries.bundle))) {
+  if (runtimeConfig && runtimeConfig.entries.js && fs.existsSync(path.resolve(runtimeConfig.entries.js))) {
     await buildJsBundle(
       {
-        entry: integration.entries.bundle,
+        entry: runtimeConfig.entries.js,
         outputPath,
         outputFilename: 'main.js',
       },

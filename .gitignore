@@ -44,3 +44,4 @@ yarn-error.log*
 /src/app/out
 /src/~app-*
 /exported
+handoff.config.js

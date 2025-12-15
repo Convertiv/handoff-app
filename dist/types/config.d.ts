@@ -11,10 +11,6 @@ export interface ImageStyle {
     width: number;
     description: string;
 }
-export interface Integration {
-    name: string;
-    version: string;
-}
 export interface TransformerConfig {
     /**
      * Reference to the transformer function from CoreTransformers
@@ -230,7 +226,7 @@ export interface Config {
     };
 }
 export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
-export interface IntegrationObjectComponentOptions {
+export interface RuntimeConfigComponentOptions {
     cssRootClass?: string;
     tokenNameSegments?: string[];
     defaults: {
@@ -242,19 +238,17 @@ export interface IntegrationObjectComponentOptions {
         };
     };
 }
-export interface IntegrationObject {
+export interface RuntimeConfig {
     entries?: {
-        integration?: string;
-        bundle?: string;
+        scss?: string;
+        js?: string;
         templates?: string;
         components: {
-            [id: string]: {
-                [version: string]: ComponentListObject;
-            };
+            [id: string]: ComponentListObject;
         };
     };
     options: {
-        [key: string]: IntegrationObjectComponentOptions;
+        [key: string]: RuntimeConfigComponentOptions;
     };
 }
 declare const config: Config;

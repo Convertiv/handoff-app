@@ -6,6 +6,94 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2025-12-15
+We consider this to be our 1.0.0 pre release candidate. We consider all Handoff
+APIs (component construction, REST api, and library) to be stable and mature.
+
+## Major Changes
+
+### Interactive Component Scaffolding
+- **New `scaffold` Command**: Quickly generate component stubs from your Figma tokens using our new interactive CLI tool.
+- **Smart Detection**: The tool automatically checks your `tokens.json` against local files to identify which Figma components are missing implementations and suggests stubs for them.
+- **Improved CLI Experience**: Smoother, more modern terminal interface with clearer prompts and guidance.
+
+### Faster Builds
+- **Incremental Builds**: We've introduced a new caching system that significantly speeds up build times by only processing components that have actually changed.
+- **Optimized Updates**: The build process now intelligently merges data, making updates faster and more efficient for large design systems.
+
+### Enhanced Stability & Diagnostics
+- **Clearer Logging**: We've completely overhauled application logging to provide cleaner, more consistent, and easier-to-read output in your terminal.
+- **Improved App Startup**: The application initialization and file watching processes have been hardened to be more stable and reliable during development.
+- **Better Error Reporting**: Removed confusing error messages to ensure that the logs you see are relevant and actionable.
+
+### Streamlined Configuration
+- **Unified Runtime Config**: We've simplified how integrations and configurations are handled, making the internal system more robust and easier to maintain.
+- **Legacy Cleanup**: We've removed deprecated "exportable" component commands and configurations to reduce clutter and focus on the modern integration workflow.
+- **Changelog Removal**: The internal design token changelog feature has been removed to streamline the pipeline
+
+### Additional Improvements
+**Component Discovery & Navigation**
+- **Enhanced Component List**: Added new filtering, sorting, and grouping options to the component list, making it easier to find what you need in large libraries.
+- **Seamless Navigation**: Added "Previous" and "Next" buttons to documentation pages for easier browsing between components.
+
+### CLI & Developer Experience**
+
+- **Config Ejection**: You can now easily eject the default configuration into a local JS file using the updated `eject` command.
+- **Documentation Engine Update**: Switched from MDX to a more robust Markdown implementation to improve stability.
+- **Syntax Highlighting**: Fixed issues with code block syntax highlighting in documentation.
+- **Security Updates**: Applied important security patches for Next.js and React 19 dependencies.
+
+
+### UI Improvements
+- **Tailwind 4**: The handoff application now runs tailwind 4 for improved customziation and modern UI features
+- **Color Page**: Significant improvements to color data to show much more detail about color use
+- **Component Search**: Added component search and filtering on system landing page
+- **Improved Stack Navigation**: Added next previous navigation to component pages
+- **More Markdown Customization**: Adding markdown content to the home page to allow customization
+- **Config Ejection**: 
+
+## Specific changes
+
+### Component API Changes
+- Components can now be explicitly linked to the figma component allowing ongoing
+property, description, and metadata sync via the `figma_component_id` property. 
+- Components no longer use semver versioning in the component structure. You will
+have to migrate to a flat directory structure where the component files are in the
+root of the component directory
+  - Instead of {component_id}/1.0.0/{data}, the structure should be {component_id}/{data}
+
+### CLI Changes
+- Adds a command `handoff-app scaffold` that will look at your figma file for
+published components, and suggest components for handoff.
+  - Will launch a wizard that will scaffold simple components for each Figma 
+  component and link them to the figma reference
+- `make:page` will now only create `.md` pages
+- `handoff-app build:app` can now accept a switch `--skip-components` which
+will bypass component build. This is especially useful for speeding CI/CD builds
+- `eject:config` now ejexts a typed js config file instead of a JSON config
+- Removes the following commands related to legacy infrastructure
+  - `make:exportable`
+  - `make:integrationStyles`
+  - `eject:schema`
+  - `eject:exportables`
+  - `make:schema`
+
+### DX Changes
+- React component properties will automatically generate properties in the 
+REST api and the app UI, generated from the properties and types of the component
+- The handoff config will now be 
+- The logging has been rewritten to provide better clarity and eliminate noise
+- The prompting has been rewritten to provide cleaner interactions
+
+### Security Fixes
+- Handoff is not affected by the React2Shell vulnerabilities because it uses
+no server side React components. Version 18 updates to the latest 15 release of 
+NextJS and React 19 to minimize false positives in dependency reporting.
+
+### Bug Fixes
+- Hooking into the vite css configuration would break typing if your local vite didn't
+match the vite bundled with handoff.
+
 ## [0.17.1] - 2025-11-13
 
 This patch improves docs-site component loading and resolves a state-mutation issue.

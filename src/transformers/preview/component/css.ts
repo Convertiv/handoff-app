@@ -1,8 +1,8 @@
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initIntegrationObject } from '../../../index';
+import Handoff, { initRuntimeConfig } from '../../../index';
+import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
@@ -68,7 +68,7 @@ const buildCssBundle = async ({
             //   },
             // ],
             // Use modern API settings
-            api: 'modern-compiler',
+            // api: 'modern-compiler',
             silenceDeprecations: ['import', 'legacy-js-api'],
           },
         },
@@ -82,7 +82,7 @@ const buildCssBundle = async ({
 
     await viteBuild(viteConfig);
   } catch (e) {
-    console.log(chalk.red(`Error building CSS for ${entry}`));
+    Logger.error(`Failed to build CSS for "${entry}"`);
     throw e;
   } finally {
     // Restore the original NODE_ENV value
@@ -96,7 +96,7 @@ const buildCssBundle = async ({
 
 const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => {
   const id = data.id;
-  console.log('buildComponentCss ------------------------------', id);
+  Logger.debug(`buildComponentCss`, id);
   const entry = data.entries?.scss;
   if (!entry) {
     return data;
@@ -121,12 +121,12 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       // Setup SASS load paths
       const loadPaths = [
         path.resolve(handoff.workingPath),
-        path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+        path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
         path.resolve(handoff.workingPath, 'node_modules'),
       ];
 
-      if (handoff.integrationObject?.entries?.integration) {
-        loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+      if (handoff.runtimeConfig?.entries?.scss) {
+        loadPaths.unshift(path.dirname(handoff.runtimeConfig.entries.scss));
       }
 
       await buildCssBundle({
@@ -158,7 +158,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       }
     }
   } catch (e) {
-    console.log(chalk.red(`Error building CSS for ${id}`));
+    Logger.error(`Failed to build CSS for "${id}"`);
     throw e;
   }
 
@@ -170,25 +170,25 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
  */
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
-  const integration = initIntegrationObject(handoff)[0];
+  const runtimeConfig = initRuntimeConfig(handoff)[0];
 
-  if (integration?.entries?.integration && fs.existsSync(integration.entries.integration)) {
-    const stat = await fs.stat(integration.entries.integration);
-    const entryPath = stat.isDirectory() ? path.resolve(integration.entries.integration, 'main.scss') : integration.entries.integration;
+  if (runtimeConfig?.entries?.scss && fs.existsSync(runtimeConfig.entries.scss)) {
+    const stat = await fs.stat(runtimeConfig.entries.scss);
+    const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
-    if (entryPath === integration.entries.integration || fs.existsSync(entryPath)) {
-      console.log(chalk.green(`Building main CSS file`));
+    if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
+      Logger.success(`Building main CSS file...`);
 
       try {
         // Setup SASS load paths
         const loadPaths = [
           path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, 'exported', handoff.config.figma_project_id),
+          path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
           path.resolve(handoff.workingPath, 'node_modules'),
         ];
 
-        if (handoff.integrationObject?.entries?.integration) {
-          loadPaths.unshift(path.dirname(handoff.integrationObject.entries.integration));
+        if (handoff.runtimeConfig?.entries?.scss) {
+          loadPaths.unshift(path.dirname(handoff.runtimeConfig.entries.scss));
         }
 
         await buildCssBundle({
@@ -199,8 +199,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           handoff,
         });
       } catch (e) {
-        console.log(chalk.red(`Error building main CSS`));
-        console.log(e);
+        Logger.error(`Failed to build main CSS:`, e);
       }
     }
   }

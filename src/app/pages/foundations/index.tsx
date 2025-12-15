@@ -1,4 +1,4 @@
-import { Grid, Hexagon, Palette, Shapes, Sun, TypeOutline } from 'lucide-react';
+import { Hexagon, LayoutPanelLeft, Palette, Shapes, Sun, TypeOutline } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -64,7 +64,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
             {
               title: 'Grid',
               description: 'How should pages be laid out, with spacing, breakpoints, and device sizes.',
-              icon: Grid,
+              icon: LayoutPanelLeft,
               link: '/foundations/grid',
               cta: 'Explore Grid',
             },

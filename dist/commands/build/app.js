@@ -18,11 +18,17 @@ const command = {
     command: 'build:app',
     describe: 'Build the documentation application',
     builder: (yargs) => {
+        return (0, utils_1.getSharedOptions)(yargs).option('skip-components', {
+            describe: 'Skip building components before building the app',
+            type: 'boolean',
+            default: false,
+        });
         return (0, utils_1.getSharedOptions)(yargs);
     },
     handler: (args) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         const handoff = new __1.default(args.debug, args.force);
-        yield handoff.build();
+        yield handoff.build((_a = args.skipComponents) !== null && _a !== void 0 ? _a : false);
     }),
 };
 exports.default = command;

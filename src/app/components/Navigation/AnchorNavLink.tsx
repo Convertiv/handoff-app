@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-scroll';
 
 export interface AnchorNavLinkProps {
@@ -19,12 +19,13 @@ export const AnchorNavLink: React.FC<AnchorNavLinkProps> = ({ to, className, chi
       {/* @ts-ignore */}
       <Link
         href="#"
-        className={className}
-        activeClass="text-sky-500 dark:text-sky-400"
+        className={`${className ?? ''} transition-all duration-200 ease-in-out`}
+        activeClass="text-sidebar-accent-foreground font-semibold "
         smooth
         spy
         to={to}
-        offset={offset * -1.5}
+        duration={300}
+        offset={-100}
         onClick={() => {
           history.pushState ? history.pushState(null, '', `#${to}`) : (location.hash = `#${to}`);
         }}

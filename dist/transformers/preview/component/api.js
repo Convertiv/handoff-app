@@ -12,13 +12,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateComponentSummaryApi = exports.writeComponentMetadataApi = exports.writeComponentApi = exports.getAPIPath = void 0;
+exports.readComponentMetadataApi = exports.readComponentApi = exports.updateComponentSummaryApi = exports.writeComponentApi = exports.getAPIPath = void 0;
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-function updateObject(target, source) {
-    return Object.entries(source).reduce((acc, [key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-            acc[key] = value;
+/**
+ * Merges values from a source object into a target object, returning a new object.
+ * For each key present in either object:
+ *   - If the key is listed in preserveKeys and the source value is undefined, null, or an empty string,
+ *     the target's value is preserved.
+ *   - Otherwise, the value from the source is used (even if undefined, null, or empty string).
+ * This is useful for partial updates where some properties should not be overwritten unless explicitly set.
+ *
+ * @param target - The original object to merge into
+ * @param source - The object containing new values
+ * @param preserveKeys - Keys for which the target's value should be preserved if the source value is undefined, null, or empty string
+ * @returns A new object with merged values
+ */
+function updateObject(target, source, preserveKeys = []) {
+    // Collect all unique keys from both target and source
+    const allKeys = Array.from(new Set([...Object.keys(target), ...Object.keys(source)]));
+    return allKeys.reduce((acc, key) => {
+        const sourceValue = source[key];
+        const targetValue = target[key];
+        // Preserve existing values for specified keys when source value is undefined
+        if (preserveKeys.includes(key) && (sourceValue === undefined || sourceValue === null || sourceValue === '')) {
+            acc[key] = targetValue;
+        }
+        else {
+            acc[key] = sourceValue;
         }
         return acc;
     }, Object.assign({}, target));
@@ -42,35 +63,32 @@ const writeComponentSummaryAPI = (handoff, componentData) => __awaiter(void 0, v
     componentData.sort((a, b) => a.title.localeCompare(b.title));
     yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
 });
-const writeComponentApi = (id_1, component_1, version_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, version_1, handoff_1, ...args_1], void 0, function* (id, component, version, handoff, isPartialUpdate = false) {
-    const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', id);
-    if (isPartialUpdate) {
-        const outputFilePath = path_1.default.resolve(outputDirPath, `${version}.json`);
-        if (fs_extra_1.default.existsSync(outputFilePath)) {
-            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
-            if (existingJson) {
-                try {
-                    const existingData = JSON.parse(existingJson);
-                    const mergedData = updateObject(existingData, component);
-                    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
-                    return;
-                }
-                catch (_) {
-                    // Unable to parse existing file
-                }
+const writeComponentApi = (id_1, component_1, handoff_1, ...args_1) => __awaiter(void 0, [id_1, component_1, handoff_1, ...args_1], void 0, function* (id, component, handoff, preserveKeys = []) {
+    const outputDirPath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component');
+    const outputFilePath = path_1.default.resolve(outputDirPath, `${id}.json`);
+    if (fs_extra_1.default.existsSync(outputFilePath)) {
+        const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+        if (existingJson) {
+            try {
+                const existingData = JSON.parse(existingJson);
+                // Special case: always allow page to be cleared when undefined
+                // This handles the case where page slices are removed
+                const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
+                const mergedData = updateObject(existingData, component, finalPreserveKeys);
+                yield fs_extra_1.default.writeFile(outputFilePath, JSON.stringify(mergedData, null, 2));
+                return;
+            }
+            catch (_) {
+                // Unable to parse existing file
             }
         }
     }
     if (!fs_extra_1.default.existsSync(outputDirPath)) {
         fs_extra_1.default.mkdirSync(outputDirPath, { recursive: true });
     }
-    yield fs_extra_1.default.writeFile(path_1.default.resolve(outputDirPath, `${version}.json`), JSON.stringify(component, null, 2));
+    yield fs_extra_1.default.writeFile(outputFilePath, JSON.stringify(component, null, 2));
 });
 exports.writeComponentApi = writeComponentApi;
-const writeComponentMetadataApi = (id, summary, handoff) => __awaiter(void 0, void 0, void 0, function* () {
-    yield fs_extra_1.default.writeFile(path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', `${id}.json`), JSON.stringify(summary, null, 2));
-});
-exports.writeComponentMetadataApi = writeComponentMetadataApi;
 /**
  * Update the main component summary API with the new component data
  * @param handoff
@@ -102,4 +120,54 @@ const updateComponentSummaryApi = (handoff_1, componentData_1, ...args_1) => __a
     yield writeComponentSummaryAPI(handoff, merged);
 });
 exports.updateComponentSummaryApi = updateComponentSummaryApi;
+/**
+ * Read the component API data
+ * @param handoff
+ * @param id
+ * @returns
+ */
+const readComponentApi = (handoff, id) => __awaiter(void 0, void 0, void 0, function* () {
+    const outputFilePath = path_1.default.resolve((0, exports.getAPIPath)(handoff), 'component', `${id}.json`);
+    if (fs_extra_1.default.existsSync(outputFilePath)) {
+        try {
+            const existingJson = yield fs_extra_1.default.readFile(outputFilePath, 'utf8');
+            if (existingJson) {
+                return JSON.parse(existingJson);
+            }
+        }
+        catch (_) {
+            // Unable to parse existing file
+        }
+    }
+    return null;
+});
+exports.readComponentApi = readComponentApi;
+/**
+ * Read the component metadata/summary from the component JSON file
+ * @param handoff
+ * @param id
+ * @returns The component summary or null if not found
+ */
+const readComponentMetadataApi = (handoff, id) => __awaiter(void 0, void 0, void 0, function* () {
+    const componentData = yield (0, exports.readComponentApi)(handoff, id);
+    if (!componentData) {
+        return null;
+    }
+    // Construct the summary from the full component data
+    return {
+        id,
+        title: componentData.title,
+        description: componentData.description,
+        type: componentData.type,
+        group: componentData.group,
+        image: componentData.image ? componentData.image : '',
+        figma: componentData.figma ? componentData.figma : '',
+        categories: componentData.categories ? componentData.categories : [],
+        tags: componentData.tags ? componentData.tags : [],
+        properties: componentData.properties,
+        previews: componentData.previews,
+        path: `/api/component/${id}.json`,
+    };
+});
+exports.readComponentMetadataApi = readComponentMetadataApi;
 exports.default = writeComponentSummaryAPI;

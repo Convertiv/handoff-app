@@ -29,33 +29,33 @@ interface FilterResult {
 export function evaluateFilter(obj: Record<string, any>, filter: Filter): FilterResult {
   // Handle array of field filters (implicit AND)
   if (Array.isArray(filter)) {
-    const results = filter.map(f => evaluateFieldFilter(obj, f));
+    const results = filter.map((f) => evaluateFieldFilter(obj, f));
     // If any filter doesn't match, return false
-    if (!results.every(r => r.matches)) {
+    if (!results.every((r) => r.matches)) {
       return { matches: false };
     }
     // If any filter has an order, use the first one (since we're using AND)
-    const order = results.find(r => r.order !== undefined)?.order;
+    const order = results.find((r) => r.order !== undefined)?.order;
     return { matches: true, order };
   }
 
   // Handle logical filter
   if ('and' in filter) {
-    const results = filter.and!.map(f => evaluateFilter(obj, f));
-    if (!results.every(r => r.matches)) {
+    const results = filter.and!.map((f) => evaluateFilter(obj, f));
+    if (!results.every((r) => r.matches)) {
       return { matches: false };
     }
-    const order = results.find(r => r.order !== undefined)?.order;
+    const order = results.find((r) => r.order !== undefined)?.order;
     return { matches: true, order };
   }
 
   if ('or' in filter) {
-    const results = filter.or!.map(f => evaluateFilter(obj, f));
-    if (!results.some(r => r.matches)) {
+    const results = filter.or!.map((f) => evaluateFilter(obj, f));
+    if (!results.some((r) => r.matches)) {
       return { matches: false };
     }
     // For OR, we use the first matching order
-    const order = results.find(r => r.matches && r.order !== undefined)?.order;
+    const order = results.find((r) => r.matches && r.order !== undefined)?.order;
     return { matches: true, order };
   }
 
@@ -78,12 +78,18 @@ function evaluateFieldFilter(obj: Record<string, any>, filter: FieldFilter): Fil
   const actual = obj[field];
 
   switch (op) {
-    case 'eq': return { matches: actual === value };
-    case 'neq': return { matches: actual !== value };
-    case 'gt': return { matches: actual > value };
-    case 'gte': return { matches: actual >= value };
-    case 'lt': return { matches: actual < value };
-    case 'lte': return { matches: actual <= value };
+    case 'eq':
+      return { matches: actual === value };
+    case 'neq':
+      return { matches: actual !== value };
+    case 'gt':
+      return { matches: actual > value };
+    case 'gte':
+      return { matches: actual >= value };
+    case 'lt':
+      return { matches: actual < value };
+    case 'lte':
+      return { matches: actual <= value };
     case 'contains':
       if (typeof actual === 'string') return { matches: actual.includes(value) };
       if (Array.isArray(actual)) return { matches: actual.includes(value) };
@@ -92,8 +98,10 @@ function evaluateFieldFilter(obj: Record<string, any>, filter: FieldFilter): Fil
       if (!Array.isArray(value)) return { matches: false };
       const index = value.indexOf(actual);
       return { matches: index !== -1, order: index };
-    case 'nin': return { matches: Array.isArray(value) && !value.includes(actual) };
-    default: return { matches: false };
+    case 'nin':
+      return { matches: Array.isArray(value) && !value.includes(actual) };
+    default:
+      return { matches: false };
   }
 }
 
@@ -104,9 +112,9 @@ function evaluateFieldFilter(obj: Record<string, any>, filter: FieldFilter): Fil
  * @returns Filtered and sorted array of objects
  */
 export function filterAndSort<T extends Record<string, any>>(items: T[], filter: Filter): T[] {
-  const results = items.map(item => ({
+  const results = items.map((item) => ({
     item,
-    result: evaluateFilter(item, filter)
+    result: evaluateFilter(item, filter),
   }));
 
   return results
@@ -123,4 +131,4 @@ export function filterAndSort<T extends Record<string, any>>(items: T[], filter:
       return 0;
     })
     .map(({ item }) => item);
-} 
+}

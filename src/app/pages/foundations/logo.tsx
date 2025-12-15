@@ -53,7 +53,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
           <Link
-            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:!size-3'}
+            className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
             href={config?.assets_zip_links?.logos ?? '/logos.zip'}
           >
             Download Logos <Download strokeWidth={1.5} />
@@ -66,7 +66,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="mb-8">There is one main {config?.app?.client} logo that supports two variations.</p>
       </div>
       <div className="mb-8 grid grid-cols-2 gap-6">
-        {assets.logos.map((logo) => (
+        {assets?.logos?.map((logo) => (
           <DisplayLogo logo={logo} content={config?.app?.client} key={logo.path} />
         ))}
       </div>

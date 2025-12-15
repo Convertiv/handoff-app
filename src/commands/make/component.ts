@@ -1,5 +1,6 @@
 import { CommandModule } from 'yargs';
 import Handoff from '../..';
+import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
@@ -8,7 +9,7 @@ export interface MakeComponentArgs extends SharedArgs {
 }
 
 const command: CommandModule<{}, MakeComponentArgs> = {
-  command: 'make:component <name> <version>',
+  command: 'make:component <name>',
   describe: 'Create a new html code component that you can embed in your documentation',
   builder: (yargs) => {
     return getSharedOptions(yargs).positional('name', {
@@ -19,12 +20,10 @@ const command: CommandModule<{}, MakeComponentArgs> = {
 
   handler: async (args: MakeComponentArgs) => {
     const handoff = new Handoff(args.debug, args.force);
-
     const componentName = args.name;
-    const version = args.version;
 
     if (!/^[a-z0-9_-]+$/i.test(componentName)) {
-      console.error(`Component name must be alphanumeric and may contain dashes or underscores`);
+      Logger.error(`Component name must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 
