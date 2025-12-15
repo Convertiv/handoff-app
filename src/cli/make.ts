@@ -104,7 +104,7 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
 };
 
 /**
- * Make a new docs page
+ * Make a new component
  * @param handoff
  */
 export const makeComponent = async (handoff: Handoff, name: string) => {
@@ -113,11 +113,9 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
     return;
   }
 
-  const version = '1.0.0';
-
   name = name.replace('.html', '');
 
-  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components/${name}/${version}`));
+  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components/${name}`));
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }
@@ -128,7 +126,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
       return;
     }
   }
-  const templatePath = path.join(handoff.modulePath, 'config', 'templates/integration/components/template/1.0.0');
+  const templatePath = path.join(handoff.modulePath, 'config', 'templates/integration/components/template');
   const htmlPath = path.resolve(templatePath, 'template.hbs');
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);

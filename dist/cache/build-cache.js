@@ -144,9 +144,9 @@ function haveGlobalDepsChanged(cached, current) {
 /**
  * Gets all file paths that should be tracked for a component
  */
-function getComponentFilePaths(handoff, componentId, version) {
-    var _a, _b, _c, _d;
-    const runtimeComponent = (_d = (_c = (_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.components) === null || _c === void 0 ? void 0 : _c[componentId]) === null || _d === void 0 ? void 0 : _d[version];
+function getComponentFilePaths(handoff, componentId) {
+    var _a, _b, _c;
+    const runtimeComponent = (_c = (_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.components) === null || _c === void 0 ? void 0 : _c[componentId];
     if (!runtimeComponent) {
         return { files: [] };
     }
@@ -155,8 +155,8 @@ function getComponentFilePaths(handoff, componentId, version) {
     // Find the config file path for this component
     const configPaths = handoff.getConfigFilePaths();
     for (const configPath of configPaths) {
-        // Check if this config path belongs to this component/version
-        if (configPath.includes(componentId) && configPath.includes(version)) {
+        // Check if this config path belongs to this component
+        if (configPath.includes(componentId)) {
             files.push(configPath);
             break;
         }
@@ -182,7 +182,7 @@ function getComponentFilePaths(handoff, componentId, version) {
                     files.push(templatePath);
                 }
             }
-            catch (_e) {
+            catch (_d) {
                 // File doesn't exist, still add to track
                 files.push(templatePath);
             }
@@ -193,9 +193,9 @@ function getComponentFilePaths(handoff, componentId, version) {
 /**
  * Computes current file states for a component
  */
-function computeComponentFileStates(handoff, componentId, version) {
+function computeComponentFileStates(handoff, componentId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { files: filePaths, templateDir } = getComponentFilePaths(handoff, componentId, version);
+        const { files: filePaths, templateDir } = getComponentFilePaths(handoff, componentId);
         const files = {};
         for (const filePath of filePaths) {
             const state = yield (0, file_state_1.computeFileState)(filePath);
@@ -246,9 +246,9 @@ function hasComponentChanged(cached, current) {
 /**
  * Checks if the component output files exist
  */
-function checkOutputExists(handoff, componentId, version) {
+function checkOutputExists(handoff, componentId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const outputPath = path_1.default.resolve(handoff.workingPath, 'public/api/component', componentId, `${version}.json`);
+        const outputPath = path_1.default.resolve(handoff.workingPath, 'public/api/component', `${componentId}.json`);
         return fs_extra_1.default.pathExists(outputPath);
     });
 }
@@ -263,13 +263,10 @@ function createEmptyCache() {
     };
 }
 /**
- * Updates cache entry for a specific component version
+ * Updates cache entry for a specific component
  */
-function updateComponentCacheEntry(cache, componentId, version, fileStates) {
-    if (!cache.components[componentId]) {
-        cache.components[componentId] = {};
-    }
-    cache.components[componentId][version] = {
+function updateComponentCacheEntry(cache, componentId, fileStates) {
+    cache.components[componentId] = {
         files: fileStates.files,
         templateDirFiles: fileStates.templateDirFiles,
         buildTimestamp: Date.now(),

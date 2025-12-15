@@ -10,7 +10,7 @@ export declare const makeTemplate: (handoff: Handoff, component: string, state: 
  */
 export declare const makePage: (handoff: Handoff, name: string, parent: string | undefined) => Promise<Handoff>;
 /**
- * Make a new docs page
+ * Make a new component
  * @param handoff
  */
 export declare const makeComponent: (handoff: Handoff, name: string) => Promise<Handoff>;

@@ -380,18 +380,16 @@ const getRuntimeComponentsPathsToWatch = (handoff) => {
     var _a, _b, _c;
     const result = new Map();
     for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
-        for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
-            const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
-            for (const [runtimeComponentEntryType, runtimeComponentEntryPath,] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
-                const normalizedComponentEntryPath = runtimeComponentEntryPath;
-                if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
-                    const entryType = runtimeComponentEntryType;
-                    if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
-                        result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
-                    }
-                    else {
-                        result.set(normalizedComponentEntryPath, entryType);
-                    }
+        const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId];
+        for (const [runtimeComponentEntryType, runtimeComponentEntryPath,] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
+            const normalizedComponentEntryPath = runtimeComponentEntryPath;
+            if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
+                const entryType = runtimeComponentEntryType;
+                if (fs_extra_1.default.statSync(normalizedComponentEntryPath).isFile()) {
+                    result.set(path_1.default.resolve(normalizedComponentEntryPath), entryType);
+                }
+                else {
+                    result.set(normalizedComponentEntryPath, entryType);
                 }
             }
         }
@@ -563,13 +561,13 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
         stdio: 'inherit',
         env: Object.assign(Object.assign({}, process.env), { NODE_ENV: 'development' }),
     });
-    console.log(`Ready on http://${hostname}:${port}`);
+    logger_1.Logger.success(`Ready on http://${hostname}:${port}`);
     nextProcess.on('error', (error) => {
-        console.error(`Next.js dev process error: ${error}`);
+        logger_1.Logger.error(`Next.js dev process error: ${error}`);
         process.exit(1);
     });
     nextProcess.on('close', (code) => {
-        console.log(`Next.js dev process closed with code ${code}`);
+        logger_1.Logger.success(`Next.js dev process closed with code ${code}`);
         process.exit(code);
     });
     const wss = yield createWebSocketServer((_d = (_c = handoff.config.app.ports) === null || _c === void 0 ? void 0 : _c.websocket) !== null && _d !== void 0 ? _d : 3001);
