@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "0.18.0-canary.8",
+  "version": "0.17.1",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
