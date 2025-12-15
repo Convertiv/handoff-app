@@ -101,7 +101,10 @@ const createWebSocketServer = (...args_1) => __awaiter(void 0, [...args_1], void
  * @returns The resolved path to the public directory if it exists, null otherwise
  */
 const getWorkingPublicPath = (handoff) => {
-    const paths = [path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`), path_1.default.resolve(handoff.workingPath, `public`)];
+    const paths = [
+        path_1.default.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`),
+        path_1.default.resolve(handoff.workingPath, `public`),
+    ];
     for (const path of paths) {
         if (fs_extra_1.default.existsSync(path)) {
             return path;
@@ -166,7 +169,9 @@ const generateTokensApi = (handoff) => __awaiter(void 0, void 0, void 0, functio
     if (tokens && typeof tokens === 'object') {
         const promises = [];
         for (const type in tokens) {
-            if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object')
+            if (type === 'timestamp' ||
+                !tokens[type] ||
+                typeof tokens[type] !== 'object')
                 continue;
             for (const group in tokens[type]) {
                 if (tokens[type][group]) {
@@ -193,13 +198,6 @@ const initializeProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, func
     yield fs_extra_1.default.ensureDir(appPath);
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
     yield syncPublicFiles(handoff);
-    // Copy custom theme CSS if it exists in the user's project
-    const customThemePath = path_1.default.resolve(handoff.workingPath, 'theme.css');
-    if (fs_extra_1.default.existsSync(customThemePath)) {
-        const destPath = path_1.default.resolve(appPath, 'css', 'theme.css');
-        yield fs_extra_1.default.copy(customThemePath, destPath, { overwrite: true });
-        logger_1.Logger.success(`Custom theme.css loaded`);
-    }
     // Prepare project app configuration
     // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
     const handoffProjectId = handoff.getProjectId();
@@ -244,7 +242,9 @@ const persistClientConfig = (handoff) => __awaiter(void 0, void 0, void 0, funct
  */
 const watchPublicDirectory = (handoff, wss, state, chokidarConfig) => {
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'public'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+        chokidar_1.default
+            .watch(path_1.default.resolve(handoff.workingPath, 'public'), chokidarConfig)
+            .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':
@@ -303,7 +303,9 @@ const watchAppSource = (handoff) => {
  */
 const watchPages = (handoff, chokidarConfig) => {
     if (fs_extra_1.default.existsSync(path_1.default.resolve(handoff.workingPath, 'pages'))) {
-        chokidar_1.default.watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
+        chokidar_1.default
+            .watch(path_1.default.resolve(handoff.workingPath, 'pages'), chokidarConfig)
+            .on('all', (event, path) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
                 case 'change':
@@ -329,10 +331,13 @@ const watchPages = (handoff, chokidarConfig) => {
  */
 const watchScss = (handoff, state, chokidarConfig) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    if (((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.scss) && fs_extra_1.default.existsSync((_d = (_c = handoff.runtimeConfig) === null || _c === void 0 ? void 0 : _c.entries) === null || _d === void 0 ? void 0 : _d.scss)) {
+    if (((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries) === null || _b === void 0 ? void 0 : _b.scss) &&
+        fs_extra_1.default.existsSync((_d = (_c = handoff.runtimeConfig) === null || _c === void 0 ? void 0 : _c.entries) === null || _d === void 0 ? void 0 : _d.scss)) {
         const stat = yield fs_extra_1.default.stat(handoff.runtimeConfig.entries.scss);
         chokidar_1.default
-            .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
+            .watch(stat.isDirectory()
+            ? handoff.runtimeConfig.entries.scss
+            : path_1.default.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
             .on('all', (event, file) => __awaiter(void 0, void 0, void 0, function* () {
             switch (event) {
                 case 'add':
@@ -377,7 +382,7 @@ const getRuntimeComponentsPathsToWatch = (handoff) => {
     for (const runtimeComponentId of Object.keys((_b = (_a = handoff.runtimeConfig) === null || _a === void 0 ? void 0 : _a.entries.components) !== null && _b !== void 0 ? _b : {})) {
         for (const runtimeComponentVersion of Object.keys(handoff.runtimeConfig.entries.components[runtimeComponentId])) {
             const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId][runtimeComponentVersion];
-            for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
+            for (const [runtimeComponentEntryType, runtimeComponentEntryPath,] of Object.entries((_c = runtimeComponent.entries) !== null && _c !== void 0 ? _c : {})) {
                 const normalizedComponentEntryPath = runtimeComponentEntryPath;
                 if (fs_extra_1.default.existsSync(normalizedComponentEntryPath)) {
                     const entryType = runtimeComponentEntryType;
@@ -421,7 +426,9 @@ const watchRuntimeComponents = (handoff, state, runtimeComponentPathsToWatch) =>
                         state.debounce = true;
                         try {
                             const entryType = runtimeComponentPathsToWatch.get(file);
-                            const segmentToUpdate = entryType ? mapEntryTypeToSegment(entryType) : undefined;
+                            const segmentToUpdate = entryType
+                                ? mapEntryTypeToSegment(entryType)
+                                : undefined;
                             const componentDir = path_1.default.basename(path_1.default.dirname(path_1.default.dirname(file)));
                             yield (0, builder_1.default)(handoff, componentDir, segmentToUpdate);
                         }
