@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2025-12-16
+This is a minor release with patches and cleanup as we prepare for a 1.0.0 release
+candidate.
+
+## UI Changes
+- Improvements to the custom theme handling for handoff sites
+
 ## [0.18.0] - 2025-12-15
 We consider this to be our 1.0.0 pre release candidate. We consider all Handoff
 APIs (component construction, REST api, and library) to be stable and mature.
