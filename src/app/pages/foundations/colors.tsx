@@ -79,7 +79,7 @@ const ColorsPage = ({
               key={group}
             />
           ))}
-        <PrevNextNav />
+          <PrevNextNav previous={null} next={{ title: 'Typography', href: '/foundations/typography' }} />
         </div>
 
         <AnchorNav

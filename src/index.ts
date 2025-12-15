@@ -92,9 +92,9 @@ class Handoff {
     return this;
   }
 
-  async build(): Promise<Handoff> {
+  async build(skipComponents?: boolean): Promise<Handoff> {
     this.preRunner();
-    await buildApp(this);
+    await buildApp(this, skipComponents);
     return this;
   }
 

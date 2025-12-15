@@ -39,7 +39,6 @@ exports.devApp = exports.watchApp = void 0;
 const chokidar_1 = __importDefault(require("chokidar"));
 const cross_spawn_1 = __importDefault(require("cross-spawn"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
-const next_1 = __importDefault(require("next"));
 const path_1 = __importDefault(require("path"));
 const ws_1 = require("ws");
 const config_1 = require("./config");
@@ -490,11 +489,14 @@ const watchRuntimeConfiguration = (handoff, state) => {
  * @param handoff
  * @returns
  */
-const buildApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
+const buildApp = (handoff, skipComponents) => __awaiter(void 0, void 0, void 0, function* () {
+    skipComponents = skipComponents !== null && skipComponents !== void 0 ? skipComponents : false;
     // Perform cleanup
     yield cleanupAppDirectory(handoff);
     // Build components
-    yield (0, pipeline_1.buildComponents)(handoff);
+    if (!skipComponents) {
+        yield (0, pipeline_1.buildComponents)(handoff);
+    }
     // Prepare app
     const appPath = yield initializeProjectApp(handoff);
     yield persistClientConfig(handoff);
@@ -547,18 +549,12 @@ const watchApp = (handoff) => __awaiter(void 0, void 0, void 0, function* () {
     const dev = true;
     const hostname = 'localhost';
     const port = (_b = (_a = handoff.config.app.ports) === null || _a === void 0 ? void 0 : _a.app) !== null && _b !== void 0 ? _b : 3000;
-    // when using middleware `hostname` and `port` must be provided below
-    const app = (0, next_1.default)({
-        dev,
-        dir: appPath,
-        hostname,
-        port,
-        // conf: config,
-    });
     // purge out cache
     const moduleOutput = path_1.default.resolve(appPath, 'out');
     if (fs_extra_1.default.existsSync(moduleOutput)) {
         yield fs_extra_1.default.remove(moduleOutput);
+        // create empty directory
+        yield fs_extra_1.default.ensureDir(moduleOutput);
     }
     const nextProcess = (0, cross_spawn_1.default)('npx', ['next', 'dev', '--port', String(port)], {
         cwd: appPath,

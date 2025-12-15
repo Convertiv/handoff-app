@@ -27,7 +27,7 @@ declare class Handoff {
     preRunner(validate?: boolean): Handoff;
     fetch(): Promise<Handoff>;
     component(name: string | null): Promise<Handoff>;
-    build(): Promise<Handoff>;
+    build(skipComponents?: boolean): Promise<Handoff>;
     ejectConfig(): Promise<Handoff>;
     ejectPages(): Promise<Handoff>;
     ejectTheme(): Promise<Handoff>;
