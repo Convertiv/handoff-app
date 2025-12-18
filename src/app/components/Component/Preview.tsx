@@ -144,10 +144,26 @@ export const ComponentDisplay: React.FC<{
     if (!!previewFilterResult && previewFilterResult.length > 0) {
       setPreviewUrl(previewFilterResult[0].url);
       !!onValuesChange && onValuesChange(previewFilterResult[0].values);
+    } else {
+      setPreviewUrl(null);
     }
   }, [context.variantFilter, component, onValuesChange]);
 
   const { reloadCounter } = useContext(HotReloadContext);
+
+  // Helper to check if an option is valid given other current selections
+  const isOptionValid = (property: string, value: string) => {
+    if (!component?.previews || !context.variantFilter) return true;
+
+    // Create a filter that includes the potential new value for this property
+    // AND keeps the current values for all OTHER properties
+    const testFilter = { ...context.variantFilter, [property]: value };
+
+    // Check if ANY preview matches this combination
+    return Object.values(component.previews).some((preview: any) =>
+      Object.entries(testFilter).every(([key, val]) => preview.values[key] === val)
+    );
+  };
 
   return (
     <div className="md:flex" id="preview">
@@ -155,33 +171,41 @@ export const ComponentDisplay: React.FC<{
         {component?.previews && (
           <>
             <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle @container dark:bg-gray-800">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-start gap-2">
                 {localVariants ? (
                   <>
                     {Object.keys(localVariants).length > 0 && (
                       <>
-                        <p className="font-monospace text-[11px] text-accent-foreground">{title ?? 'Variant'}</p>
-                        <Separator orientation="vertical" className="mx-2 h-3" />
-                        {Object.keys(localVariants)
-                          .filter((variantProperty) => localVariants[variantProperty].length > 1)
-                          .map((variantProperty) => (
-                            <Select
-                              key={variantProperty}
-                              defaultValue={context.variantFilter ? context.variantFilter[variantProperty] : undefined}
-                              onValueChange={(value) => context.updateVariantFilter(variantProperty, value)}
-                            >
-                              <SelectTrigger className="h-8 w-[180px] border-none text-xs shadow-none">
-                                <SelectValue placeholder={variantProperty} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {localVariants[variantProperty].map((variantPropertyValue) => (
-                                  <SelectItem key={variantPropertyValue} value={variantPropertyValue}>
-                                    {variantPropertyValue}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ))}
+                        <div className="flex h-8 shrink-0 items-center gap-2">
+                          <p className="font-monospace text-[11px] text-accent-foreground">{title ?? 'Variant'}</p>
+                          <Separator orientation="vertical" className="h-3" />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.keys(localVariants)
+                            .filter((variantProperty) => localVariants[variantProperty].length > 1)
+                            .map((variantProperty) => (
+                              <Select
+                                key={variantProperty}
+                                value={context.variantFilter ? context.variantFilter[variantProperty] : undefined}
+                                onValueChange={(value) => context.updateVariantFilter(variantProperty, value)}
+                              >
+                                <SelectTrigger className="h-8 w-[140px] border-none text-xs shadow-none">
+                                  <SelectValue placeholder={variantProperty} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {localVariants[variantProperty].map((variantPropertyValue) => (
+                                    <SelectItem
+                                      key={variantPropertyValue}
+                                      value={variantPropertyValue}
+                                      disabled={!isOptionValid(variantProperty, variantPropertyValue)}
+                                    >
+                                      {variantPropertyValue}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ))}
+                        </div>
                       </>
                     )}
                   </>
@@ -288,24 +312,30 @@ export const ComponentDisplay: React.FC<{
             </div>
 
             <div className="dotted-bg w-full p-8">
-              <div>
-                <iframe
-                  key={`${previewUrl}-${reloadCounter}`}
-                  onLoad={onLoad}
-                  ref={ref}
-                  height={height}
-                  style={{
-                    minWidth: width,
-                    height: height,
-                    transform: `scale(${scale})`,
-                    transformOrigin: 'left top',
-                    transition: 'all 0.2s ease-in-out',
-                    display: 'block',
-                    margin: '0 auto',
-                  }}
-                  src={`/api/component/` + previewUrl}
-                />
-              </div>
+              {previewUrl ? (
+                <div>
+                  <iframe
+                    key={`${previewUrl}-${reloadCounter}`}
+                    onLoad={onLoad}
+                    ref={ref}
+                    height={height}
+                    style={{
+                      minWidth: width,
+                      height: height,
+                      transform: `scale(${scale})`,
+                      transformOrigin: 'left top',
+                      transition: 'all 0.2s ease-in-out',
+                      display: 'block',
+                      margin: '0 auto',
+                    }}
+                    src={`/api/component/` + previewUrl}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center p-8 text-sm text-gray-500">
+                  No preview available for this selection.
+                </div>
+              )}
             </div>
           </>
         )}

@@ -47,13 +47,7 @@ const defaultComponent = {
     should_not_do: [],
     categories: [],
     tags: [],
-    previews: {
-        generic: {
-            title: 'Default',
-            values: {},
-            url: '',
-        },
-    },
+    previews: {},
     properties: {},
     code: '',
     html: '',
@@ -201,7 +195,20 @@ function processComponents(handoff, id, segmentToProcess, options) {
             // - Start from a deep clone of the defaultComponent (to avoid mutation bugs)
             // - Merge in metadata from the current runtime configuration (from config/docs)
             // - Explicitly set `type` (defaults to Element if not provided)
-            let data = Object.assign(Object.assign(Object.assign({}, (0, cloneDeep_1.default)(defaultComponent)), restMetadata), { type: type || types_1.ComponentType.Element });
+            const componentDefaults = (0, cloneDeep_1.default)(defaultComponent);
+            // If this is NOT a figma component, add the default generic preview.
+            // We add it here (before merge) so that if the user explicitly provided previews in 'restMetadata',
+            // those will override this default (standard "config overrides defaults" behavior).
+            if (!restMetadata.figmaComponentId) {
+                componentDefaults.previews = {
+                    generic: {
+                        title: 'Default',
+                        values: {},
+                        url: '',
+                    },
+                };
+            }
+            let data = Object.assign(Object.assign(Object.assign({}, componentDefaults), restMetadata), { type: type || types_1.ComponentType.Element });
             // buildPlan captures which segments need work for this run.
             const buildPlan = createComponentBuildPlan(segmentToProcess, existingData);
             /**
