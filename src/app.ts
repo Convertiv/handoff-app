@@ -548,7 +548,7 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
           if (!state.debounce) {
             state.debounce = true;
             try {
-              file = path.dirname(path.dirname(file));
+              file = path.dirname(file);
               // Reload the Handoff instance to pick up configuration changes
               handoff.reload();
               // After reloading, persist the updated client configuration
