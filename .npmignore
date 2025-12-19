@@ -41,7 +41,7 @@ yarn-error.log*
 
 # figma exported
 .handoff
-/dist/templates
+
 /src/app/out
 /src/~app-*
 /src/app/.next
