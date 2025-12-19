@@ -1,0 +1,14 @@
+/*
+ * Custom Theme Overrides
+ * 
+ * This file can be customized by creating a theme.css file in your project root.
+ * It will be automatically loaded after the base Tailwind styles.
+ * 
+ * Example:
+ * 
+ * @layer base {
+ *   :root {
+ *     --color-gray-800: red;
+ *   }
+ * }
+ */

@@ -210,6 +210,14 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   await fs.copy(srcPath, appPath, { overwrite: true });
   await syncPublicFiles(handoff);
 
+  // Copy custom theme CSS if it exists in the user's project
+  const customThemePath = path.resolve(handoff.workingPath, 'theme.css');
+  if (fs.existsSync(customThemePath)) {
+    const destPath = path.resolve(appPath, 'css', 'theme.css');
+    await fs.copy(customThemePath, destPath, { overwrite: true });
+    Logger.success(`Custom theme.css loaded`);
+  }
+
   // Prepare project app configuration
   // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
   const handoffProjectId = handoff.getProjectId();
@@ -548,7 +556,7 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
           if (!state.debounce) {
             state.debounce = true;
             try {
-              file = path.dirname(path.dirname(file));
+              file = path.dirname(file);
               // Reload the Handoff instance to pick up configuration changes
               handoff.reload();
               // After reloading, persist the updated client configuration
