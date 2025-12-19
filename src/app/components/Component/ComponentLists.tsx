@@ -1,6 +1,6 @@
 import { PreviewObject } from '@handoff/types';
 import { ToggleGroup, ToggleGroupItem } from '@radix-ui/react-toggle-group';
-import { Group, LayoutGrid, Rows } from 'lucide-react';
+import { AlignJustify, LayoutGrid, Rows, Search } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect } from 'react';
 import { cn } from '../../lib/utils';
@@ -17,7 +17,11 @@ interface ComponentMetadata extends Metadata {
 }
 
 export const APIComponentList = ({ components, title, description }: { components; title?; description?}) => {
-  if ((components ?? []).length === 0) return <p>No components found.</p>;
+  if ((components ?? []).length === 0) {
+    return (
+      <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">No components found.</p>
+    );
+  }
   return <ComponentList components={components} title={title} description={description} />;
 };
 
@@ -70,58 +74,80 @@ export const ComponentList = ({
   if (!title) title = 'Components';
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
-    <div className="mx-auto w-full">
-      <div className="mb-4 flex justify-between">
-        <div className="mr-auto flex items-center gap-3">
-          <Input
-            type="text"
-            placeholder="Search components..."
-            className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm shadow-sm focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-            onChange={e => setSearch(e.currentTarget.value)}
-            aria-label="Search components"
-            style={{ minWidth: 200 }}
-          />
-          <Select
-            value={category}
-            onValueChange={val => {
-              setCategory(val);
-            }}
-            aria-label="Filter by category"
-          >
-            <SelectTrigger className="rounded-md border border-gray-300 bg-white py-1 px-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="mx-auto w-full mb-4">
+      <div className="flex justify-between bg-accent rounded-xl">
+        <div className="mr-auto flex items-center gap-3 bg-accent p-2.5 rounded-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search components..."
+              className="rounded-md pl-9 pr-3 py-1 text-sm border-none shadow-none"
+              onChange={e => setSearch(e.currentTarget.value)}
+              aria-label="Search components"
+              style={{ minWidth: 200 }}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" className={cn(groupBy && 'border-blue-400')} onClick={() => setGroupBy(!groupBy)}>
-                <Group className="h-4 w-4" />
-                <span className="sr-only">Group</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Group components
-            </TooltipContent>
-          </Tooltip>
+            />
+          </div>
 
         </div>
-        <div className="mb-4 flex justify-end">
-          <ToggleGroup type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
-            <ToggleGroupItem value="grid" aria-label="Grid layout" >
-              <LayoutGrid className={cn(layout === 'grid' && 'text-blue-400', 'h-4 w-4')} strokeWidth={1.5} />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="single" aria-label="Single column layout" >
-              <Rows className={cn(layout === 'single' && 'text-blue-400', 'h-4 w-4')} strokeWidth={1.5} />
-            </ToggleGroupItem>
+        <div className="flex justify-end p-2.5 gap-2.5">
+          <div className="flex items-center gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md">
+            <Select
+              value={category}
+              onValueChange={val => {
+                setCategory(val);
+              }}
+              aria-label="Filter by category"
+            >
+              <SelectTrigger className="rounded-md [&_span]:text-xs [&_svg]:ml-2.5 [&_svg]:size-3 py-1 px-2 pl-3 text-sm border-none shadow-none bg-transparent focus:border-blue-400 focus:outline-none">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <hr className="h-7 w-px bg-input" />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" className={cn("w-9", groupBy && 'bg-accent text-accent-foreground')} onClick={() => setGroupBy(!groupBy)}>
+                  <Rows className="size-3.5" strokeWidth={1.5} />
+                  <span className="sr-only">Group by category</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Group by category
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <ToggleGroup className='flex gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md' type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'grid' && 'bg-accent text-accent-foreground')} value="grid" aria-label="Grid layout" >
+                  <LayoutGrid className="size-3.5" strokeWidth={1.5} />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>
+                Grid layout
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'single' && 'bg-accent text-accent-foreground')} value="single" aria-label="Single column layout" >
+                  <AlignJustify className="size-3.5" strokeWidth={1.5} />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>
+                Column layout
+              </TooltipContent>
+            </Tooltip>
           </ToggleGroup>
         </div>
       </div>

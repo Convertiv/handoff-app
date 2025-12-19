@@ -96,7 +96,7 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
   };
   return (
     <div id={`${group}-colors`} className="scroll-mt-24 scroll-smooth pb-10">
-      <h3 className="mb-2 text-lg font-medium">{title}</h3>
+      <h3 className="text-lg font-medium">{title}</h3>
       <p className="mb-8">{description}</p>
       {colors.length < 5 ? <LargeColorGrid colors={colors} setOpen={openSheet} /> : <SmallColorGrid colors={colors} setOpen={openSheet} />}
       <ColorSheet color={selectedColor} open={open} setOpen={setOpen} />
@@ -144,7 +144,7 @@ const ColorSheet: React.FC<{ color: CoreTypes.IColorObject; open: boolean; setOp
     setTimeout(() => setCopied(false), 2000);
   };
   if (!color) return null;
-  
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
