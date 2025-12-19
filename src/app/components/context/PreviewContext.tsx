@@ -51,8 +51,6 @@ export const PreviewContext = createContext<IPreviewContext | undefined>(undefin
 
 export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   children,
-  id,
-  isFigmaComponent,
   defaultMenu,
   defaultMetadata,
   defaultPreview,
@@ -68,46 +66,38 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   }, [defaultPreview]);
 
   useEffect(() => {
-    if (!variants) {
-      return;
-    }
-
-    const initialSelection: Record<string, string> = {};
-
-    for (const key in variants) {
-      if (variants[key].length > 0) {
-        initialSelection[key] = variants[key][0]; // Default to the first option
-      }
-    }
-
-    setVariantFilter(initialSelection);
-  }, [isFigmaComponent, variants]); // Re-run when items change
-
-  const updateVariantFilter = useCallback((key: string, value: string) => {
-    setVariantFilter((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  useEffect(() => {
     if (!preview) return;
-
-    if (!preview.options?.preview?.groupBy) return;
 
     let filteredPreviews = preview.previews;
     if (preview.options?.preview?.filterBy) {
       filteredPreviews = filterPreviews(preview.previews, preview.options.preview.filterBy);
     }
 
-    setVariants(
-      groupVariantProperties(
-        Object.values(filteredPreviews).map((p) => {
-          return Object.keys(p.values).reduce((acc, next) => {
-            acc[next] = p.values[next];
-            return acc;
-          }, {});
-        })
-      )
+    const calculatedVariants = groupVariantProperties(
+      Object.values(filteredPreviews).map((p) => {
+        return Object.keys(p.values).reduce((acc, next) => {
+          acc[next] = p.values[next];
+          return acc;
+        }, {});
+      })
     );
+
+    if (Object.keys(calculatedVariants).length > 0) {
+      setVariants(calculatedVariants);
+
+      // Initialize filter immediately
+      const firstPreviewKey = Object.keys(filteredPreviews)[0];
+      if (firstPreviewKey) {
+        setVariantFilter(filteredPreviews[firstPreviewKey].values);
+      }
+    } else {
+      setVariants(null);
+    }
   }, [preview]);
+
+  const updateVariantFilter = useCallback((key: string, value: string) => {
+    setVariantFilter((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const [metadata, setMetadata] = useState<Record<string, any>>(defaultMetadata);
   const [menu, setMenu] = useState<Record<string, any>>(defaultMenu);

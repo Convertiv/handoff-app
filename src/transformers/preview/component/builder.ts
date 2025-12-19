@@ -1,17 +1,17 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
 import {
-    BuildCache,
-    checkOutputExists,
-    computeComponentFileStates,
-    computeGlobalDepsState,
-    createEmptyCache,
-    hasComponentChanged,
-    haveGlobalDepsChanged,
-    loadBuildCache,
-    pruneRemovedComponents,
-    saveBuildCache,
-    updateComponentCacheEntry,
+  BuildCache,
+  checkOutputExists,
+  computeComponentFileStates,
+  computeGlobalDepsState,
+  createEmptyCache,
+  hasComponentChanged,
+  haveGlobalDepsChanged,
+  loadBuildCache,
+  pruneRemovedComponents,
+  saveBuildCache,
+  updateComponentCacheEntry,
 } from '../../../cache';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
@@ -35,13 +35,7 @@ const defaultComponent: TransformComponentTokensResult = {
   should_not_do: [],
   categories: [],
   tags: [],
-  previews: {
-    generic: {
-      title: 'Default',
-      values: {},
-      url: '',
-    },
-  },
+  previews: {},
   properties: {},
   code: '',
   html: '',
@@ -222,8 +216,24 @@ export async function processComponents(
     // - Start from a deep clone of the defaultComponent (to avoid mutation bugs)
     // - Merge in metadata from the current runtime configuration (from config/docs)
     // - Explicitly set `type` (defaults to Element if not provided)
+
+    const componentDefaults = cloneDeep(defaultComponent);
+
+    // If this is NOT a figma component, add the default generic preview.
+    // We add it here (before merge) so that if the user explicitly provided previews in 'restMetadata',
+    // those will override this default (standard "config overrides defaults" behavior).
+    if (!restMetadata.figmaComponentId) {
+      componentDefaults.previews = {
+        generic: {
+          title: 'Default',
+          values: {},
+          url: '',
+        },
+      };
+    }
+
     let data: TransformComponentTokensResult = {
-      ...cloneDeep(defaultComponent),
+      ...componentDefaults,
       ...restMetadata,
       type: (type as ComponentType) || ComponentType.Element,
     };
