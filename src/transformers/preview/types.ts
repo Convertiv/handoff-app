@@ -128,9 +128,7 @@ export type ComponentObject = {
 
 export type ComponentListObject = {
   id: string;
-  version: string;
-  versions: string[];
-  paths: string[];
+  path: string;
 } & ComponentObject;
 
 export type TransformComponentTokensResult = {

@@ -452,27 +452,21 @@ const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
   for (const runtimeComponentId of Object.keys(
     handoff.runtimeConfig?.entries.components ?? {}
   )) {
-    for (const runtimeComponentVersion of Object.keys(
-      handoff.runtimeConfig.entries.components[runtimeComponentId]
-    )) {
-      const runtimeComponent =
-        handoff.runtimeConfig.entries.components[runtimeComponentId][
-          runtimeComponentVersion
-        ];
-      for (const [
-        runtimeComponentEntryType,
-        runtimeComponentEntryPath,
-      ] of Object.entries(runtimeComponent.entries ?? {})) {
-        const normalizedComponentEntryPath =
-          runtimeComponentEntryPath as string;
-        if (fs.existsSync(normalizedComponentEntryPath)) {
-          const entryType =
-            runtimeComponentEntryType as keyof ComponentListObject['entries'];
-          if (fs.statSync(normalizedComponentEntryPath).isFile()) {
-            result.set(path.resolve(normalizedComponentEntryPath), entryType);
-          } else {
-            result.set(normalizedComponentEntryPath, entryType);
-          }
+    const runtimeComponent =
+      handoff.runtimeConfig.entries.components[runtimeComponentId];
+    for (const [
+      runtimeComponentEntryType,
+      runtimeComponentEntryPath,
+    ] of Object.entries(runtimeComponent.entries ?? {})) {
+      const normalizedComponentEntryPath =
+        runtimeComponentEntryPath as string;
+      if (fs.existsSync(normalizedComponentEntryPath)) {
+        const entryType =
+          runtimeComponentEntryType as keyof ComponentListObject['entries'];
+        if (fs.statSync(normalizedComponentEntryPath).isFile()) {
+          result.set(path.resolve(normalizedComponentEntryPath), entryType);
+        } else {
+          result.set(normalizedComponentEntryPath, entryType);
         }
       }
     }
@@ -562,7 +556,7 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
           if (!state.debounce) {
             state.debounce = true;
             try {
-              file = path.dirname(path.dirname(file));
+              file = path.dirname(file);
               // Reload the Handoff instance to pick up configuration changes
               handoff.reload();
               // After reloading, persist the updated client configuration
@@ -592,12 +586,15 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
  * @param handoff
  * @returns
  */
-const buildApp = async (handoff: Handoff): Promise<void> => {
+const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<void> => {
+  skipComponents = skipComponents ?? false;
   // Perform cleanup
   await cleanupAppDirectory(handoff);
 
   // Build components
-  await buildComponents(handoff);
+  if (!skipComponents) {
+    await buildComponents(handoff);
+  }
 
   // Prepare app
   const appPath = await initializeProjectApp(handoff);
@@ -681,15 +678,15 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
       NODE_ENV: 'development',
     },
   });
-  console.log(`Ready on http://${hostname}:${port}`);
+  Logger.success(`Ready on http://${hostname}:${port}`);
 
   nextProcess.on('error', (error) => {
-    console.error(`Next.js dev process error: ${error}`);
+    Logger.error(`Next.js dev process error: ${error}`);
     process.exit(1);
   });
 
   nextProcess.on('close', (code) => {
-    console.log(`Next.js dev process closed with code ${code}`);
+    Logger.success(`Next.js dev process closed with code ${code}`);
     process.exit(code);
   });
 

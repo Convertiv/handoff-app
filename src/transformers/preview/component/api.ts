@@ -61,12 +61,11 @@ const writeComponentSummaryAPI = async (handoff: Handoff, componentData: Compone
 export const writeComponentApi = async (
   id: string,
   component: TransformComponentTokensResult,
-  version: string,
   handoff: Handoff,
   preserveKeys: string[] = []
 ) => {
-  const outputDirPath = path.resolve(getAPIPath(handoff), 'component', id);
-  const outputFilePath = path.resolve(outputDirPath, `${version}.json`);
+  const outputDirPath = path.resolve(getAPIPath(handoff), 'component');
+  const outputFilePath = path.resolve(outputDirPath, `${id}.json`);
 
   if (fs.existsSync(outputFilePath)) {
     const existingJson = await fs.readFile(outputFilePath, 'utf8');
@@ -79,7 +78,7 @@ export const writeComponentApi = async (
         const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
 
         const mergedData = updateObject(existingData, component, finalPreserveKeys);
-        await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(mergedData, null, 2));
+        await fs.writeFile(outputFilePath, JSON.stringify(mergedData, null, 2));
         return;
       } catch (_) {
         // Unable to parse existing file
@@ -91,12 +90,9 @@ export const writeComponentApi = async (
     fs.mkdirSync(outputDirPath, { recursive: true });
   }
 
-  await fs.writeFile(path.resolve(outputDirPath, `${version}.json`), JSON.stringify(component, null, 2));
+  await fs.writeFile(outputFilePath, JSON.stringify(component, null, 2));
 };
 
-export const writeComponentMetadataApi = async (id: string, summary: ComponentListObject, handoff: Handoff) => {
-  await fs.writeFile(path.resolve(getAPIPath(handoff), 'component', `${id}.json`), JSON.stringify(summary, null, 2));
-};
 
 /**
  * Update the main component summary API with the new component data
@@ -133,15 +129,13 @@ export const updateComponentSummaryApi = async (handoff: Handoff, componentData:
 };
 
 /**
- * Read the component API data for a specific version
+ * Read the component API data
  * @param handoff
  * @param id
- * @param version
  * @returns
  */
-export const readComponentApi = async (handoff: Handoff, id: string, version: string): Promise<TransformComponentTokensResult | null> => {
-  const outputDirPath = path.resolve(getAPIPath(handoff), 'component', id);
-  const outputFilePath = path.resolve(outputDirPath, `${version}.json`);
+export const readComponentApi = async (handoff: Handoff, id: string): Promise<TransformComponentTokensResult | null> => {
+  const outputFilePath = path.resolve(getAPIPath(handoff), 'component', `${id}.json`);
 
   if (fs.existsSync(outputFilePath)) {
     try {
@@ -157,25 +151,32 @@ export const readComponentApi = async (handoff: Handoff, id: string, version: st
 };
 
 /**
- * Read the component metadata/summary (the {id}.json file)
+ * Read the component metadata/summary from the component JSON file
  * @param handoff
  * @param id
  * @returns The component summary or null if not found
  */
 export const readComponentMetadataApi = async (handoff: Handoff, id: string): Promise<ComponentListObject | null> => {
-  const outputFilePath = path.resolve(getAPIPath(handoff), 'component', `${id}.json`);
-
-  if (fs.existsSync(outputFilePath)) {
-    try {
-      const existingJson = await fs.readFile(outputFilePath, 'utf8');
-      if (existingJson) {
-        return JSON.parse(existingJson) as ComponentListObject;
-      }
-    } catch (_) {
-      // Unable to parse existing file
-    }
+  const componentData = await readComponentApi(handoff, id);
+  if (!componentData) {
+    return null;
   }
-  return null;
+
+  // Construct the summary from the full component data
+  return {
+    id,
+    title: componentData.title,
+    description: componentData.description,
+    type: componentData.type,
+    group: componentData.group,
+    image: componentData.image ? componentData.image : '',
+    figma: componentData.figma ? componentData.figma : '',
+    categories: componentData.categories ? componentData.categories : [],
+    tags: componentData.tags ? componentData.tags : [],
+    properties: componentData.properties,
+    previews: componentData.previews,
+    path: `/api/component/${id}.json`,
+  };
 };
 
 export default writeComponentSummaryAPI;
