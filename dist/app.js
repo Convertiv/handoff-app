@@ -198,6 +198,13 @@ const initializeProjectApp = (handoff) => __awaiter(void 0, void 0, void 0, func
     yield fs_extra_1.default.ensureDir(appPath);
     yield fs_extra_1.default.copy(srcPath, appPath, { overwrite: true });
     yield syncPublicFiles(handoff);
+    // Copy custom theme CSS if it exists in the user's project
+    const customThemePath = path_1.default.resolve(handoff.workingPath, 'theme.css');
+    if (fs_extra_1.default.existsSync(customThemePath)) {
+        const destPath = path_1.default.resolve(appPath, 'css', 'theme.css');
+        yield fs_extra_1.default.copy(customThemePath, destPath, { overwrite: true });
+        logger_1.Logger.success(`Custom theme.css loaded`);
+    }
     // Prepare project app configuration
     // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
     const handoffProjectId = handoff.getProjectId();
