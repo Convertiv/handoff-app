@@ -6,9 +6,7 @@ import { WebSocket } from 'ws';
 import Handoff from '.';
 import { getClientConfig } from './config';
 import { buildComponents } from './pipeline';
-import processComponents, {
-  ComponentSegment,
-} from './transformers/preview/component/builder';
+import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { ComponentListObject } from './transformers/preview/types';
 import { Logger } from './utils/logger';
 
@@ -85,10 +83,7 @@ const createWebSocketServer = async (port: number = 3001) => {
  * @returns The resolved path to the public directory if it exists, null otherwise
  */
 const getWorkingPublicPath = (handoff: Handoff): string | null => {
-  const paths = [
-    path.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`),
-    path.resolve(handoff.workingPath, `public`),
-  ];
+  const paths = [path.resolve(handoff.workingPath, `public-${handoff.getProjectId()}`), path.resolve(handoff.workingPath, `public`)];
 
   for (const path of paths) {
     if (fs.existsSync(path)) {
@@ -105,11 +100,7 @@ const getWorkingPublicPath = (handoff: Handoff): string | null => {
  * @returns The resolved path to the application directory
  */
 const getAppPath = (handoff: Handoff): string => {
-  return path.resolve(
-    handoff.modulePath,
-    '.handoff',
-    `${handoff.getProjectId()}`
-  );
+  return path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`);
 };
 
 /**
@@ -170,21 +161,10 @@ const generateTokensApi = async (handoff: Handoff) => {
   if (tokens && typeof tokens === 'object') {
     const promises: Promise<void>[] = [];
     for (const type in tokens) {
-      if (
-        type === 'timestamp' ||
-        !tokens[type] ||
-        typeof tokens[type] !== 'object'
-      )
-        continue;
+      if (type === 'timestamp' || !tokens[type] || typeof tokens[type] !== 'object') continue;
       for (const group in tokens[type]) {
         if (tokens[type][group]) {
-          promises.push(
-            fs.writeJson(
-              path.join(tokensDir, `${group}.json`),
-              tokens[type][group],
-              { spaces: 2 }
-            )
-          );
+          promises.push(fs.writeJson(path.join(tokensDir, `${group}.json`), tokens[type][group], { spaces: 2 }));
         }
       }
     }
@@ -224,40 +204,18 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
-  const handoffExportPath = path.resolve(
-    handoff.workingPath,
-    handoff.exportsDirectory,
-    handoff.getProjectId()
-  );
+  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
   const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
   const handoffUseReferences = handoff.config.useVariables ?? false;
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
     .replace(/basePath:\s+\'\'/g, `basePath: '${handoffAppBasePath}'`)
-    .replace(
-      /HANDOFF_PROJECT_ID:\s+\'\'/g,
-      `HANDOFF_PROJECT_ID: '${handoffProjectId}'`
-    )
-    .replace(
-      /HANDOFF_APP_BASE_PATH:\s+\'\'/g,
-      `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`
-    )
-    .replace(
-      /HANDOFF_WORKING_PATH:\s+\'\'/g,
-      `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`
-    )
-    .replace(
-      /HANDOFF_MODULE_PATH:\s+\'\'/g,
-      `HANDOFF_MODULE_PATH: '${handoffModulePath}'`
-    )
-    .replace(
-      /HANDOFF_EXPORT_PATH:\s+\'\'/g,
-      `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`
-    )
-    .replace(
-      /HANDOFF_WEBSOCKET_PORT:\s+\'\'/g,
-      `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`
-    )
+    .replace(/HANDOFF_PROJECT_ID:\s+\'\'/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
+    .replace(/HANDOFF_APP_BASE_PATH:\s+\'\'/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
+    .replace(/HANDOFF_WORKING_PATH:\s+\'\'/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
+    .replace(/HANDOFF_MODULE_PATH:\s+\'\'/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
+    .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
+    .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
   await fs.writeFile(nextConfigPath, nextConfigContent);
 
@@ -274,11 +232,7 @@ const persistClientConfig = async (handoff: Handoff) => {
   const destination = path.resolve(appPath, 'client.config.json');
   // Ensure directory exists
   await fs.ensureDir(appPath);
-  await fs.writeJson(
-    destination,
-    { config: getClientConfig(handoff) },
-    { spaces: 2 }
-  );
+  await fs.writeJson(destination, { config: getClientConfig(handoff) }, { spaces: 2 });
 };
 
 /**
@@ -289,37 +243,28 @@ const persistClientConfig = async (handoff: Handoff) => {
  * @param state - The shared watcher state
  * @param chokidarConfig - Configuration for chokidar
  */
-const watchPublicDirectory = (
-  handoff: Handoff,
-  wss: (msg: string) => void,
-  state: WatcherState,
-  chokidarConfig: chokidar.WatchOptions
-) => {
+const watchPublicDirectory = (handoff: Handoff, wss: (msg: string) => void, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
   if (fs.existsSync(path.resolve(handoff.workingPath, 'public'))) {
-    chokidar
-      .watch(path.resolve(handoff.workingPath, 'public'), chokidarConfig)
-      .on('all', async (event, path) => {
-        switch (event) {
-          case 'add':
-          case 'change':
-          case 'unlink':
-            if (!state.debounce) {
-              state.debounce = true;
-              try {
-                Logger.warn(
-                  'Public directory changed. Handoff will ingest the new data...'
-                );
-                await syncPublicFiles(handoff);
-                wss(JSON.stringify({ type: 'reload' }));
-              } catch (e) {
-                Logger.error('Error syncing public directory:', e);
-              } finally {
-                state.debounce = false;
-              }
+    chokidar.watch(path.resolve(handoff.workingPath, 'public'), chokidarConfig).on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          if (!state.debounce) {
+            state.debounce = true;
+            try {
+              Logger.warn('Public directory changed. Handoff will ingest the new data...');
+              await syncPublicFiles(handoff);
+              wss(JSON.stringify({ type: 'reload' }));
+            } catch (e) {
+              Logger.error('Error syncing public directory:', e);
+            } finally {
+              state.debounce = false;
             }
-            break;
-        }
-      });
+          }
+          break;
+      }
+    });
   }
 };
 
@@ -356,29 +301,22 @@ const watchAppSource = (handoff: Handoff) => {
  * @param handoff - The Handoff instance
  * @param chokidarConfig - Configuration for chokidar
  */
-const watchPages = (
-  handoff: Handoff,
-  chokidarConfig: chokidar.WatchOptions
-) => {
+const watchPages = (handoff: Handoff, chokidarConfig: chokidar.WatchOptions) => {
   if (fs.existsSync(path.resolve(handoff.workingPath, 'pages'))) {
-    chokidar
-      .watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig)
-      .on('all', async (event, path) => {
-        switch (event) {
-          case 'add':
-          case 'change':
-          case 'unlink':
-            try {
-              Logger.warn(
-                `Doc page ${event}ed. Please reload browser to see changes...`
-              );
-              Logger.debug(`Path: ${path}`);
-            } catch (e) {
-              Logger.error('Error watching pages:', e);
-            }
-            break;
-        }
-      });
+    chokidar.watch(path.resolve(handoff.workingPath, 'pages'), chokidarConfig).on('all', async (event, path) => {
+      switch (event) {
+        case 'add':
+        case 'change':
+        case 'unlink':
+          try {
+            Logger.warn(`Doc page ${event}ed. Please reload browser to see changes...`);
+            Logger.debug(`Path: ${path}`);
+          } catch (e) {
+            Logger.error('Error watching pages:', e);
+          }
+          break;
+      }
+    });
   }
 };
 
@@ -389,23 +327,11 @@ const watchPages = (
  * @param state - The shared watcher state
  * @param chokidarConfig - Configuration for chokidar
  */
-const watchScss = async (
-  handoff: Handoff,
-  state: WatcherState,
-  chokidarConfig: chokidar.WatchOptions
-) => {
-  if (
-    handoff.runtimeConfig?.entries?.scss &&
-    fs.existsSync(handoff.runtimeConfig?.entries?.scss)
-  ) {
+const watchScss = async (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+  if (handoff.runtimeConfig?.entries?.scss && fs.existsSync(handoff.runtimeConfig?.entries?.scss)) {
     const stat = await fs.stat(handoff.runtimeConfig.entries.scss);
     chokidar
-      .watch(
-        stat.isDirectory()
-          ? handoff.runtimeConfig.entries.scss
-          : path.dirname(handoff.runtimeConfig.entries.scss),
-        chokidarConfig
-      )
+      .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
       .on('all', async (event, file) => {
         switch (event) {
           case 'add':
@@ -429,9 +355,7 @@ const watchScss = async (
 /**
  * Maps configuration entry types to component segments.
  */
-const mapEntryTypeToSegment = (
-  type: keyof ComponentListObject['entries']
-): ComponentSegment | undefined => {
+const mapEntryTypeToSegment = (type: keyof ComponentListObject['entries']): ComponentSegment | undefined => {
   return {
     js: ComponentSegment.JavaScript,
     scss: ComponentSegment.Style,
@@ -449,20 +373,12 @@ const mapEntryTypeToSegment = (
 const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
   const result: Map<string, keyof ComponentListObject['entries']> = new Map();
 
-  for (const runtimeComponentId of Object.keys(
-    handoff.runtimeConfig?.entries.components ?? {}
-  )) {
-    const runtimeComponent =
-      handoff.runtimeConfig.entries.components[runtimeComponentId];
-    for (const [
-      runtimeComponentEntryType,
-      runtimeComponentEntryPath,
-    ] of Object.entries(runtimeComponent.entries ?? {})) {
-      const normalizedComponentEntryPath =
-        runtimeComponentEntryPath as string;
+  for (const runtimeComponentId of Object.keys(handoff.runtimeConfig?.entries.components ?? {})) {
+    const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId];
+    for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
+      const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
       if (fs.existsSync(normalizedComponentEntryPath)) {
-        const entryType =
-          runtimeComponentEntryType as keyof ComponentListObject['entries'];
+        const entryType = runtimeComponentEntryType as keyof ComponentListObject['entries'];
         if (fs.statSync(normalizedComponentEntryPath).isFile()) {
           result.set(path.resolve(normalizedComponentEntryPath), entryType);
         } else {
@@ -485,10 +401,7 @@ const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
 const watchRuntimeComponents = (
   handoff: Handoff,
   state: WatcherState,
-  runtimeComponentPathsToWatch: Map<
-    string,
-    keyof ComponentListObject['entries']
-  >
+  runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>
 ) => {
   if (state.runtimeComponentsWatcher) {
     state.runtimeComponentsWatcher.close();
@@ -512,13 +425,9 @@ const watchRuntimeComponents = (
             state.debounce = true;
             try {
               const entryType = runtimeComponentPathsToWatch.get(file);
-              const segmentToUpdate: ComponentSegment = entryType
-                ? mapEntryTypeToSegment(entryType)
-                : undefined;
+              const segmentToUpdate: ComponentSegment = entryType ? mapEntryTypeToSegment(entryType) : undefined;
 
-              const componentDir = path.basename(
-                path.dirname(path.dirname(file))
-              );
+              const componentDir = path.basename(path.dirname(file));
               await processComponents(handoff, componentDir, segmentToUpdate);
             } catch (e) {
               Logger.error('Error processing component:', e);
@@ -544,10 +453,7 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
   }
 
   if (handoff.getConfigFilePaths().length > 0) {
-    state.runtimeConfigurationWatcher = chokidar.watch(
-      handoff.getConfigFilePaths(),
-      { ignoreInitial: true }
-    );
+    state.runtimeConfigurationWatcher = chokidar.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
     state.runtimeConfigurationWatcher.on('all', async (event, file) => {
       switch (event) {
         case 'add':
@@ -562,11 +468,7 @@ const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
               // After reloading, persist the updated client configuration
               await persistClientConfig(handoff);
               // Restart the runtime components watcher to track potentially updated/added/removed components
-              watchRuntimeComponents(
-                handoff,
-                state,
-                getRuntimeComponentsPathsToWatch(handoff)
-              );
+              watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
               // Process components based on the updated configuration and file path
               await processComponents(handoff, path.basename(file));
             } catch (e) {
@@ -690,9 +592,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     process.exit(code);
   });
 
-  const wss = await createWebSocketServer(
-    handoff.config.app.ports?.websocket ?? 3001
-  );
+  const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -707,11 +607,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   };
 
   watchPublicDirectory(handoff, wss, state, chokidarConfig);
-  watchRuntimeComponents(
-    handoff,
-    state,
-    getRuntimeComponentsPathsToWatch(handoff)
-  );
+  watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
   watchRuntimeConfiguration(handoff, state);
   await watchScss(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
@@ -737,18 +633,14 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   await persistClientConfig(handoff);
 
   // Run
-  const devResult = spawn.sync(
-    'npx',
-    ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)],
-    {
-      cwd: appPath,
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        NODE_ENV: 'development',
-      },
-    }
-  );
+  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+    cwd: appPath,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+    },
+  });
 
   if (devResult.status !== 0) {
     let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
