@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-rc.0] - 2025-12-22
+## [1.0.0-rc.1] - 2025-12-22
 
-This is the first 1.0.0 release candidate. It patches several small bugs
-and smooths out the UX. It also removes the `dist` directory from this repo, so
-that compiled code is not stored with the repo.
+This is the first 1.0.0 release candidate. It is a patch level release from
+the 0.18.0 release.
+
+This release patches several small bugs and smooths several small issues in the
+UX. It also removes the `dist` directory from this repo, so that compiled code
+is not stored with the repo.
 
 ### Bugfixes
 
