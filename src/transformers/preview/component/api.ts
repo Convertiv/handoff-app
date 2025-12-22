@@ -171,6 +171,7 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     group: componentData.group,
     image: componentData.image ? componentData.image : '',
     figma: componentData.figma ? componentData.figma : '',
+    figmaComponentId: componentData.figmaComponentId,
     categories: componentData.categories ? componentData.categories : [],
     tags: componentData.tags ? componentData.tags : [],
     properties: componentData.properties,

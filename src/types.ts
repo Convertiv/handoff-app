@@ -43,6 +43,7 @@ export interface PreviewObject {
   image: string;
   description: string;
   figma: string;
+  figmaComponentId?: string;
   should_do: string[];
   should_not_do: string[];
   group?: string;
