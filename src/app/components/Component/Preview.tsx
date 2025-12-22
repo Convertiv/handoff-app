@@ -61,9 +61,9 @@ export const ComponentDisplay: React.FC<{
   const [inspect, setInspect] = React.useState(false);
   const [scale, setScale] = React.useState(0.8);
 
-  // Generate variants from component previews if they differ from context
+  // Generate variants from component previews only for Figma atomic components
   const localVariants = React.useMemo(() => {
-    if (!component?.previews) return null;
+    if (!component?.figmaComponentId || !component?.previews) return null;
 
     // Check if component previews are different from context previews
     const componentPreviewKeys = Object.keys(component.previews).sort();
@@ -85,7 +85,7 @@ export const ComponentDisplay: React.FC<{
     }
 
     return context.variants;
-  }, [component?.previews, context.preview, context.variants]);
+  }, [component?.figmaComponentId, component?.previews, context.preview, context.variants]);
 
   const onLoad = useCallback(() => {
     if (defaultHeight) {
