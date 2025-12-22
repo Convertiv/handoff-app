@@ -193,15 +193,18 @@ export const ComponentDisplay: React.FC<{
                                   <SelectValue placeholder={variantProperty} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {localVariants[variantProperty].map((variantPropertyValue) => (
-                                    <SelectItem
-                                      key={variantPropertyValue}
-                                      value={variantPropertyValue}
-                                      disabled={!isOptionValid(variantProperty, variantPropertyValue)}
-                                    >
-                                      {variantPropertyValue}
-                                    </SelectItem>
-                                  ))}
+                                  {localVariants[variantProperty].map((variantPropertyValue) => {
+                                    if (typeof variantPropertyValue !== 'string') return null;
+                                    return (
+                                      <SelectItem
+                                        key={variantPropertyValue}
+                                        value={variantPropertyValue}
+                                        disabled={!isOptionValid(variantProperty, variantPropertyValue)}
+                                      >
+                                        {variantPropertyValue}
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                             ))}
@@ -481,7 +484,7 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRows rows={fields} openSheet={openSheet} />
+
         </TableBody>
       </Table>
     </>
