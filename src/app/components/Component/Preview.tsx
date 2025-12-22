@@ -484,7 +484,7 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
           </TableRow>
         </TableHeader>
         <TableBody>
-
+          <TableRows rows={fields} openSheet={openSheet} />
         </TableBody>
       </Table>
     </>
