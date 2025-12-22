@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.18.1] - 2025-12-19
+## [1.0.0-rc.0] - 2025-12-22
 
-This is a minor release with patches and cleanup as we prepare for a 1.0.0
-release candidate.
+This is the first 1.0.0 release candidate. It patches several small bugs
+and smooths out the UX. It also removes the `dist` directory from this repo, so
+that compiled code is not stored with the repo.
 
 ### Bugfixes
 
@@ -17,16 +18,19 @@ release candidate.
   wasn't automatically firing. This was caused by removing versions but not
   adjusting the path tracking.
 
+### DX Changes
+
+- Components linked to Figma components (via figmaComponentId) will
+  automatically display properties pulled from figma, and allow users to see
+  all the variants by altering properties.
+- Improvements to the custom theme handling for handoff sites. The theme css in
+  the project will now be read in and can use tailwind and css structures to
+  extend the theme of the app.
+
 ### UI
 
 - The component search and filtering experience has been significantly improved
 - Fixed several UI issues with dark mode.
-
-### DX Changes
-
-- Improvements to the custom theme handling for handoff sites. The theme css in
-  the project will now be read in and can use tailwind and css structures to
-  extend the theme of the app.
 
 ### Chore
 
