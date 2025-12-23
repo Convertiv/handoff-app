@@ -6,10 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-rc.1] - 2025-12-22
+## [1.0.0] - 2025-12-23
 
-This is the first 1.0.0 release candidate. It is a patch level release from
-the 0.18.0 release.
+This is the Handoff 1.0 Release. Handoff has become a mature toolchain for 
+building robust design systems and design to dev pipelines. Handoff helps
+development teams quickly pull data from Figma, and scaffold effective
+design systems with minimal overhead.
+
+### Handoff Key 1.0.0 Features
+
+- Automatated Figma token and metadata extraction via REST API
+- Design system documentation app mixing automated and custom docs
+- Robust REST API for consuming tokens, components, and documentation in applications
+and pipelines
+- Flexible, hookable API for describing and building components agnostic to framework
+and infrastructure
+
+
+### Changes since 0.18.0
 
 This release patches several small bugs and smooths several small issues in the
 UX. It also removes the `dist` directory from this repo, so that compiled code
@@ -20,6 +34,8 @@ is not stored with the repo.
 - When running handoff locally in dev mode (`npm run start`) the component build
   wasn't automatically firing. This was caused by removing versions but not
   adjusting the path tracking.
+- Fixed an issue were custom components, lacking the figmaComponentId, were 
+creating dropdowns for varying the properties based on the previews.
 
 ### DX Changes
 
@@ -29,11 +45,13 @@ is not stored with the repo.
 - Improvements to the custom theme handling for handoff sites. The theme css in
   the project will now be read in and can use tailwind and css structures to
   extend the theme of the app.
+- Removed lorem ipsum from default pages
 
 ### UI
 
 - The component search and filtering experience has been significantly improved
 - Fixed several UI issues with dark mode.
+- Fixed foundation token anchor links
 
 ### Chore
 
