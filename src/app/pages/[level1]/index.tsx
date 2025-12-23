@@ -1,5 +1,6 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
+import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../components/Layout/Main';
@@ -81,12 +82,12 @@ export default function DocPage({ content, menu, metadata, current, config }: Do
             <br />
             Please check the URL or return to the homepage.
           </p>
-          <a
+          <Link
             href="/"
             className="rounded-md bg-blue-600 px-6 py-2 font-medium text-white shadow-md transition-colors duration-200 hover:bg-blue-700"
           >
             Go Home
-          </a>
+          </Link>
         </div>
       </div>
     );
