@@ -163,18 +163,6 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               {metadata.description}
             </ReactMarkdown>
           </div>
-          {/*<p className="">
-             {component.tags &&
-              Array.isArray(component.tags) &&
-              component.tags.map((tag) => (
-                <>
-                  &nbsp;
-                  <Badge variant={'default'} className="px-2 py-0 text-[11px]">
-                    {tag}
-                  </Badge>
-                </>
-              ))}
-          </p>*/}
           <div className="flex flex-row gap-3">
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
