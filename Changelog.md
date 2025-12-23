@@ -8,20 +8,19 @@ and this project adheres to
 
 ## [1.0.0] - 2025-12-23
 
-This is the Handoff 1.0 Release. Handoff has become a mature toolchain for 
-building robust design systems and design to dev pipelines. Handoff helps
-development teams quickly pull data from Figma, and scaffold effective
-API driven design systems with minimal overhead.
+This release marks Handoff 1.0, a stable and mature version of the Handoff
+toolchain. Handoff is designed to help teams build robust design systems and
+reliable design-to-development pipelines by making it easy to extract structured
+data from Figma and scaffold API-driven systems with minimal overhead.
 
 ### Handoff Key 1.0.0 Features
 
 - Automated Figma token and metadata extraction via REST API
 - Design system documentation app mixing automated and custom docs
 - Robust REST API for consuming tokens, components, and documentation in applications
-and pipelines
+  and pipelines
 - Flexible, hookable API for describing and building components agnostic to framework
-and infrastructure
-
+  and infrastructure
 
 ### Changes since 0.18.0
 
@@ -34,8 +33,8 @@ is not stored with the repo.
 - When running handoff locally in dev mode (`npm run start`) the component build
   wasn't automatically firing. This was caused by removing versions but not
   adjusting the path tracking.
-- Fixed an issue were custom components, lacking the figmaComponentId, were 
-creating dropdowns for varying the properties based on the previews.
+- Fixed an issue were custom components, lacking the figmaComponentId, were
+  creating dropdowns for varying the properties based on the previews.
 
 ### DX Changes
 
