@@ -155,6 +155,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
         <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
+        <a id="best-practices"></a>
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
