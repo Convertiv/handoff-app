@@ -11,11 +11,11 @@ and this project adheres to
 This is the Handoff 1.0 Release. Handoff has become a mature toolchain for 
 building robust design systems and design to dev pipelines. Handoff helps
 development teams quickly pull data from Figma, and scaffold effective
-design systems with minimal overhead.
+API driven design systems with minimal overhead.
 
 ### Handoff Key 1.0.0 Features
 
-- Automatated Figma token and metadata extraction via REST API
+- Automated Figma token and metadata extraction via REST API
 - Design system documentation app mixing automated and custom docs
 - Robust REST API for consuming tokens, components, and documentation in applications
 and pipelines
