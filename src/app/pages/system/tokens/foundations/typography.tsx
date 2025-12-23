@@ -74,6 +74,7 @@ const FontsTable = ({ types }: { types: CoreTypes.ITypographyObject[] }) => {
         const reference = type.reference.replace(/-+/g, '-');
         return (
           <React.Fragment key={`type-hier-${index}`}>
+            <a id={`${type.name}-typography`}></a>
             <h3 className="mb-4 text-lg font-medium">{upperFirst(type.name)}</h3>
             <Table className="mb-8 border-b-[0.5px] border-l-[0.5px] border-r-[0.5px] border-t-[0.5px]">
               <TableBody>

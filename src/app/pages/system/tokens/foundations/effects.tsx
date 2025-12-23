@@ -68,6 +68,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
 
           {Object.keys(effectGroups).map((group) => (
             <div key={group} className="mb-8">
+              <a id={`${group}-effects`}></a>
               <h3 className="mb-4 text-lg font-medium" id={`${group}-colors`}>
                 {upperFirst(group)}
               </h3>
