@@ -19,7 +19,7 @@ class HandoffCliError extends Error {
  * Show the help message
  */
 const showVersion = () => {
-  return 'Handoff App - 1.0.0';
+  return 'Handoff App - 1.0.1';
 };
 
 /**
