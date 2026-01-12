@@ -187,7 +187,7 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 
   // Prepare project app dir
   await fs.ensureDir(appPath);
-  await fs.copy(srcPath, appPath, { overwrite: true });
+  await fs.copy(srcPath, appPath, { overwrite: true, filter: (file) => !file.includes('next.config.mjs') });
   await syncPublicFiles(handoff);
 
   // Copy custom theme CSS if it exists in the user's project
@@ -202,10 +202,11 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
   const handoffProjectId = handoff.getProjectId();
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
-  const handoffWorkingPath = path.resolve(handoff.workingPath);
+  const handoffWorkingPath = path.resolve(handoff.workingPath); 
   const handoffModulePath = path.resolve(handoff.modulePath);
   const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
-  const nextConfigPath = path.resolve(appPath, 'next.config.mjs');
+  const nextConfigPath = path.resolve(srcPath, 'next.config.mjs');
+  const targetPath = path.resolve(appPath, 'next.config.mjs');
   const handoffUseReferences = handoff.config.useVariables ?? false;
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
   const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
@@ -217,8 +218,7 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
     .replace(/HANDOFF_EXPORT_PATH:\s+\'\'/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
     .replace(/HANDOFF_WEBSOCKET_PORT:\s+\'\'/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
     .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
-  await fs.writeFile(nextConfigPath, nextConfigContent);
-
+  await fs.writeFile(targetPath, nextConfigContent);
   return appPath;
 };
 
@@ -621,6 +621,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
   // Prepare app
+  console.log('Calling dev app');
   const appPath = await initializeProjectApp(handoff);
 
   // Purge app cache
