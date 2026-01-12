@@ -621,7 +621,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
  */
 export const devApp = async (handoff: Handoff): Promise<void> => {
   // Prepare app
-  console.log('Calling dev app');
   const appPath = await initializeProjectApp(handoff);
 
   // Purge app cache
