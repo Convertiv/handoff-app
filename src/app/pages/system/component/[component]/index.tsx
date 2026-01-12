@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { ComponentPreview } from '../../../../components/Component/Preview';
+import { ComponentVersionsDrawer } from '../../../../components/Component/ComponentVersionsDrawer';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -195,6 +196,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 </div>
               </DrawerContent>
             </Drawer>
+            <ComponentVersionsDrawer componentId={id} currentComponent={component} />
           </div>
         </div>
       </div>

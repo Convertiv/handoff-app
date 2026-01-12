@@ -131,6 +131,19 @@ export type ComponentListObject = {
   path: string;
 } & ComponentObject;
 
+export type ComponentVersionEntry = {
+  version: number;
+  hash: string;
+  timestamp: string;
+  filename: string;
+};
+
+export type ComponentVersions = {
+  id: string;
+  currentVersion: number;
+  versions: ComponentVersionEntry[];
+};
+
 export type TransformComponentTokensResult = {
   id: string;
   type?: ComponentType;
@@ -168,6 +181,12 @@ export type TransformComponentTokensResult = {
   };
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
+  /** Hash of the component content (excluding metadata) for change detection */
+  hash?: string;
+  /** ISO timestamp of the last modification */
+  lastModified?: string;
+  /** Current version number */
+  version?: number;
 } | null;
 
 export type OptionalPreviewRender = {

@@ -1,7 +1,8 @@
+import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../../../index';
-import { ComponentListObject, TransformComponentTokensResult } from '../types';
+import { ComponentListObject, ComponentVersions, TransformComponentTokensResult } from '../types';
 
 /**
  * Merges values from a source object into a target object, returning a new object.
@@ -49,6 +50,85 @@ export const getAPIPath = (handoff: Handoff) => {
 };
 
 /**
+ * Compute a hash of the component content (excluding metadata fields like hash, lastModified, version)
+ * @param component The component data to hash
+ * @returns SHA-256 hash of the component content
+ */
+const computeComponentHash = (component: TransformComponentTokensResult): string => {
+  if (!component) return '';
+
+  // Create a copy without metadata fields to ensure consistent hashing
+  const { hash: _hash, lastModified: _lastModified, version: _version, ...contentToHash } = component;
+
+  // Sort keys for consistent hashing
+  const sortedJson = JSON.stringify(contentToHash, Object.keys(contentToHash).sort());
+  return crypto.createHash('sha256').update(sortedJson).digest('hex');
+};
+
+/**
+ * Get the path to the versions directory for a component
+ */
+const getVersionsPath = (handoff: Handoff, id: string): string => {
+  return path.resolve(getAPIPath(handoff), 'component', id);
+};
+
+/**
+ * Read the versions file for a component
+ */
+const readVersionsFile = async (handoff: Handoff, id: string): Promise<ComponentVersions | null> => {
+  const versionsFilePath = path.resolve(getVersionsPath(handoff, id), 'versions.json');
+
+  if (fs.existsSync(versionsFilePath)) {
+    try {
+      const content = await fs.readFile(versionsFilePath, 'utf8');
+      return JSON.parse(content) as ComponentVersions;
+    } catch {
+      // Unable to parse versions file
+    }
+  }
+  return null;
+};
+
+/**
+ * Write the versions file for a component
+ */
+const writeVersionsFile = async (handoff: Handoff, id: string, versions: ComponentVersions): Promise<void> => {
+  const versionsDir = getVersionsPath(handoff, id);
+
+  if (!fs.existsSync(versionsDir)) {
+    fs.mkdirSync(versionsDir, { recursive: true });
+  }
+
+  const versionsFilePath = path.resolve(versionsDir, 'versions.json');
+  await fs.writeFile(versionsFilePath, JSON.stringify(versions, null, 2));
+};
+
+/**
+ * Archive the old component JSON with a timestamp
+ */
+const archiveComponentVersion = async (
+  handoff: Handoff,
+  id: string,
+  existingData: TransformComponentTokensResult,
+  timestamp: string
+): Promise<string> => {
+  const versionsDir = getVersionsPath(handoff, id);
+
+  if (!fs.existsSync(versionsDir)) {
+    fs.mkdirSync(versionsDir, { recursive: true });
+  }
+
+  // Create filename with timestamp (ISO format cleaned for filesystem)
+  const safeTimestamp = timestamp.replace(/[:.]/g, '-');
+  const archiveFilename = `${id}.${safeTimestamp}.json`;
+  const archiveFilePath = path.resolve(versionsDir, archiveFilename);
+
+  await fs.writeFile(archiveFilePath, JSON.stringify(existingData, null, 2));
+
+  return archiveFilename;
+};
+
+/**
  * Build the preview API from the component data
  * @param handoff
  * @param componentData
@@ -67,6 +147,14 @@ export const writeComponentApi = async (
   const outputDirPath = path.resolve(getAPIPath(handoff), 'component');
   const outputFilePath = path.resolve(outputDirPath, `${id}.json`);
 
+  if (!fs.existsSync(outputDirPath)) {
+    fs.mkdirSync(outputDirPath, { recursive: true });
+  }
+
+  // Compute hash of the incoming component (without metadata)
+  const newHash = computeComponentHash(component);
+  const now = new Date().toISOString();
+
   if (fs.existsSync(outputFilePath)) {
     const existingJson = await fs.readFile(outputFilePath, 'utf8');
     if (existingJson) {
@@ -78,19 +166,84 @@ export const writeComponentApi = async (
         const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
 
         const mergedData = updateObject(existingData, component, finalPreserveKeys);
+
+        // Compute hash of merged data (without metadata)
+        const mergedHash = computeComponentHash(mergedData);
+
+        // Check if content has changed by comparing hashes
+        const existingHash = existingData?.hash;
+        const hasChanged = existingHash !== mergedHash;
+
+        if (hasChanged && existingData) {
+          // Content changed - archive the old version
+          const existingVersion = existingData.version ?? 1;
+          const newVersion = existingVersion + 1;
+
+          // Archive the existing data
+          const archiveFilename = await archiveComponentVersion(handoff, id, existingData, now);
+
+          // Read or create versions file
+          let versions = await readVersionsFile(handoff, id);
+          if (!versions) {
+            versions = {
+              id,
+              currentVersion: 1,
+              versions: [],
+            };
+
+            // If this is the first versioning, add the original version
+            if (existingHash) {
+              versions.versions.push({
+                version: existingVersion,
+                hash: existingHash,
+                timestamp: existingData.lastModified ?? now,
+                filename: archiveFilename,
+              });
+            }
+          } else {
+            // Add the archived version to versions list
+            versions.versions.push({
+              version: existingVersion,
+              hash: existingHash ?? '',
+              timestamp: existingData.lastModified ?? now,
+              filename: archiveFilename,
+            });
+          }
+
+          // Update current version
+          versions.currentVersion = newVersion;
+
+          // Write versions file
+          await writeVersionsFile(handoff, id, versions);
+
+          // Update merged data with new metadata
+          mergedData.hash = mergedHash;
+          mergedData.lastModified = now;
+          mergedData.version = newVersion;
+        } else {
+          // No change - preserve existing metadata
+          mergedData.hash = existingData?.hash ?? mergedHash;
+          mergedData.lastModified = existingData?.lastModified ?? now;
+          mergedData.version = existingData?.version ?? 1;
+        }
+
         await fs.writeFile(outputFilePath, JSON.stringify(mergedData, null, 2));
         return;
       } catch (_) {
-        // Unable to parse existing file
+        // Unable to parse existing file - treat as new
       }
     }
   }
 
-  if (!fs.existsSync(outputDirPath)) {
-    fs.mkdirSync(outputDirPath, { recursive: true });
-  }
+  // New component - set initial metadata
+  const initialData: TransformComponentTokensResult = {
+    ...component,
+    hash: newHash,
+    lastModified: now,
+    version: 1,
+  };
 
-  await fs.writeFile(outputFilePath, JSON.stringify(component, null, 2));
+  await fs.writeFile(outputFilePath, JSON.stringify(initialData, null, 2));
 };
 
 
@@ -178,6 +331,41 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     previews: componentData.previews,
     path: `/api/component/${id}.json`,
   };
+};
+
+/**
+ * Read the version history for a component
+ * @param handoff
+ * @param id
+ * @returns The component versions or null if not found
+ */
+export const readComponentVersionsApi = async (handoff: Handoff, id: string): Promise<ComponentVersions | null> => {
+  return readVersionsFile(handoff, id);
+};
+
+/**
+ * Read a specific archived version of a component
+ * @param handoff
+ * @param id
+ * @param filename The archived version filename
+ * @returns The component data for that version or null if not found
+ */
+export const readArchivedComponentVersionApi = async (
+  handoff: Handoff,
+  id: string,
+  filename: string
+): Promise<TransformComponentTokensResult | null> => {
+  const archiveFilePath = path.resolve(getVersionsPath(handoff, id), filename);
+
+  if (fs.existsSync(archiveFilePath)) {
+    try {
+      const content = await fs.readFile(archiveFilePath, 'utf8');
+      return JSON.parse(content) as TransformComponentTokensResult;
+    } catch {
+      // Unable to parse archived file
+    }
+  }
+  return null;
 };
 
 export default writeComponentSummaryAPI;
