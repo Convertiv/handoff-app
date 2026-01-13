@@ -204,9 +204,7 @@ export const buildL2StaticPaths = () => {
  */
 export const staticBuildMenu = () => {
   // // Contents of docs
-  console.log(process.env);
   const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
-  console.log('docRoot', docRoot);
   // Get the file list
   const files = fs.readdirSync(docRoot);
   let list = files;
