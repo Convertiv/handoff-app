@@ -10,6 +10,7 @@ const nextConfig = {
   trailingSlash: true,
   experimental: {
     externalDir: true,
+    turbopack: true, // Enable Turbopack
   },
   eslint: {
     dirs: ['pages', 'utils'],
@@ -100,22 +101,62 @@ const nextConfig = {
       return content;
     },
   },
-  webpack: (config) => {
-    config.resolve.fallback = { fs: false };
-    config.resolve.alias['@handoff'] = path.resolve('%HANDOFF_MODULE_PATH%/src');
-    config.resolve.modules.push(path.resolve('dist/app'));
-    config.resolve.modules.push(path.resolve('node_modules'));
-    config.resolveLoader.modules.push(path.resolve('node_modules'));
-    config.module.rules.push({
-      test: /\.svg$/i,
-      type: 'asset',
-    });
-    config.module.rules.push({
-      test: /\.html$/i,
-      loader: 'html-loader',
-    });
-    return config;
-  },
+  turbopack: { 
+    resolveAlias: {
+      '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+    },
+    resolveModules: [
+      path.resolve('dist/app'),
+      path.resolve('node_modules'),
+    ],
+    resolveLoaders: [
+      path.resolve('node_modules'),
+    ],
+    resolveRules: [
+      {
+        test: /\.svg$/i,
+        type: 'asset',
+      },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
+      },
+    ],
+    resolveFallback: {
+      fs: false,
+    },
+    resolveExtensions: [
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+    ],
+    resolveLoaderExtensions: [
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+    ],
+    resolveLoaderRules: [
+      {
+        test: /\.svg$/i,
+        type: 'asset',
+      },
+      {
+        test: /\.html$/i,
+        loader: 'html-loader',
+      },
+    ],
+    resolveLoaderFallback: {
+      fs: false,
+    },
+    resolveLoaderExtensions: [
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+    ],
+  }
 };
 
 export default nextConfig;
