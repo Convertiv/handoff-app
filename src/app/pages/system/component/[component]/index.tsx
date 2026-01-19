@@ -5,8 +5,9 @@ import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { ComponentPreview } from '../../../../components/Component/Preview';
+import { ComponentVersionHistory } from '../../../../components/Component/ComponentVersionHistory';
 import { ComponentVersionsDrawer } from '../../../../components/Component/ComponentVersionsDrawer';
+import { ComponentPreview } from '../../../../components/Component/Preview';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -17,6 +18,7 @@ import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
@@ -200,69 +202,87 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
           </div>
         </div>
       </div>
-      <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="max-w-[900px]">
-          {Array.isArray(componentPreviews) ? (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
-              {componentPreviews.map(([title, cp], cpi) => (
-                <>
-                  <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
-                    <ComponentPreview
-                      title={title}
-                      bestPracticesCard={cpi === 0}
-                      properties={cpi === componentPreviews.length - 1}
-                      validations={cpi === componentPreviews.length - 1}
-                    >
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-6 w-full justify-start">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="max-w-[900px]">
+              {Array.isArray(componentPreviews) ? (
+                <HotReloadProvider connect={componentHotReloadIsAvailable}>
+                  {componentPreviews.map(([title, cp], cpi) => (
+                    <>
+                      <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
+                        <ComponentPreview
+                          title={title}
+                          bestPracticesCard={cpi === 0}
+                          properties={cpi === componentPreviews.length - 1}
+                          validations={cpi === componentPreviews.length - 1}
+                        >
+                          <p>Define a simple contact form</p>
+                        </ComponentPreview>
+                      </PreviewContextProvider>
+                    </>
+                  ))}
+                </HotReloadProvider>
+              ) : (
+                <HotReloadProvider connect={componentHotReloadIsAvailable}>
+                  <PreviewContextProvider
+                    id={id}
+                    defaultMetadata={metadata}
+                    defaultMenu={menu}
+                    defaultPreview={componentPreviews}
+                    defaultConfig={config}
+                  >
+                    <ComponentPreview title={metadata.title} properties={true} validations={true}>
                       <p>Define a simple contact form</p>
                     </ComponentPreview>
                   </PreviewContextProvider>
-                </>
-              ))}
-            </HotReloadProvider>
-          ) : (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
-              <PreviewContextProvider
-                id={id}
-                defaultMetadata={metadata}
-                defaultMenu={menu}
-                defaultPreview={componentPreviews}
-                defaultConfig={config}
-              >
-                <ComponentPreview title={metadata.title} properties={true} validations={true}>
-                  <p>Define a simple contact form</p>
-                </ComponentPreview>
-              </PreviewContextProvider>
-            </HotReloadProvider>
-          )}
-          <hr className="mt-8" />
-          <PrevNextNav previous={previousLink} next={nextLink} />
-        </div>
-        {Array.isArray(componentPreviews) ? (
-          <AnchorNav
-            groups={[
-              {
-                'best-practices': 'Best Practices',
-                ...componentPreviews.reduce((acc, [title, previewObject]) => ({ ...acc, [previewObject.id]: title }), {}),
-                'code-highlight': 'Code Samples',
-                properties: 'Properties',
-                validations: 'Validations',
-              },
-            ]}
-          />
-        ) : (
-          <AnchorNav
-            groups={[
-              {
-                'best-practices': 'Best Practices',
-                preview: 'Previews',
-                'code-highlight': 'Code Samples',
-                properties: 'Properties',
-                validations: 'Validations',
-              },
-            ]}
-          />
-        )}
-      </div>
+                </HotReloadProvider>
+              )}
+              <hr className="mt-8" />
+              <PrevNextNav previous={previousLink} next={nextLink} />
+            </div>
+            {Array.isArray(componentPreviews) ? (
+              <AnchorNav
+                groups={[
+                  {
+                    'best-practices': 'Best Practices',
+                    ...componentPreviews.reduce((acc, [title, previewObject]) => ({ ...acc, [previewObject.id]: title }), {}),
+                    'code-highlight': 'Code Samples',
+                    properties: 'Properties',
+                    validations: 'Validations',
+                  },
+                ]}
+              />
+            ) : (
+              <AnchorNav
+                groups={[
+                  {
+                    'best-practices': 'Best Practices',
+                    preview: 'Previews',
+                    'code-highlight': 'Code Samples',
+                    properties: 'Properties',
+                    validations: 'Validations',
+                  },
+                ]}
+              />
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value="history">
+          <div className="lg:pb-8">
+            <div className="max-w-[900px]">
+              <ComponentVersionHistory
+                componentId={id}
+                currentComponent={component}
+              />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </Layout>
   );
 };
