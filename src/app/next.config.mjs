@@ -10,7 +10,6 @@ const nextConfig = {
   trailingSlash: true,
   experimental: {
     externalDir: true,
-    turbopack: true, // Enable Turbopack
   },
   eslint: {
     dirs: ['pages', 'utils'],
@@ -105,52 +104,7 @@ const nextConfig = {
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
     },
-    resolveModules: [
-      path.resolve('dist/app'),
-      path.resolve('node_modules'),
-    ],
-    resolveLoaders: [
-      path.resolve('node_modules'),
-    ],
-    resolveRules: [
-      {
-        test: /\.svg$/i,
-        type: 'asset',
-      },
-      {
-        test: /\.html$/i,
-        loader: 'html-loader',
-      },
-    ],
-    resolveFallback: {
-      fs: false,
-    },
     resolveExtensions: [
-      '.js',
-      '.jsx',
-      '.ts',
-      '.tsx',
-    ],
-    resolveLoaderExtensions: [
-      '.js',
-      '.jsx',
-      '.ts',
-      '.tsx',
-    ],
-    resolveLoaderRules: [
-      {
-        test: /\.svg$/i,
-        type: 'asset',
-      },
-      {
-        test: /\.html$/i,
-        loader: 'html-loader',
-      },
-    ],
-    resolveLoaderFallback: {
-      fs: false,
-    },
-    resolveLoaderExtensions: [
       '.js',
       '.jsx',
       '.ts',
