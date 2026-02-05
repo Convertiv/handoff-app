@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import {
   BuildCache,
   checkOutputExists,
+  computeComponentContentHash,
   computeComponentFileStates,
   computeGlobalDepsState,
   createEmptyCache,
@@ -302,6 +303,22 @@ export async function processComponents(
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.
     data.properties = ensureIds(data.properties);
 
+    // Compute content hash from source files (config JSON + template + style + javascript)
+    const { hash: contentHash } = await computeComponentContentHash(handoff, runtimeComponentId);
+    data.contentHash = contentHash;
+
+    // Determine if we need to update lastModified
+    // Compare with the existing hash - if different, this component has been modified
+    const previousHash = existingData?.contentHash;
+    if (contentHash && contentHash !== previousHash) {
+      // Content has changed, update lastModified timestamp
+      data.lastModified = new Date().toISOString();
+      Logger.debug(`Component '${runtimeComponentId}': content hash changed, updating lastModified`);
+    } else if (existingData?.lastModified) {
+      // Content unchanged, preserve existing lastModified
+      data.lastModified = existingData.lastModified;
+    }
+
     // Write the updated component data to the API file for external access and caching.
     await writeComponentApi(runtimeComponentId, data, handoff, []);
 
@@ -359,6 +376,8 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     properties: data.properties,
     previews: data.previews,
     path: `/api/component/${id}.json`,
+    contentHash: data.contentHash,
+    lastModified: data.lastModified,
   };
 };
 

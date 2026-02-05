@@ -129,6 +129,10 @@ export type ComponentObject = {
 export type ComponentListObject = {
   id: string;
   path: string;
+  /** SHA256 hash of the component's source content for change detection */
+  contentHash?: string;
+  /** ISO timestamp of when the component was last modified */
+  lastModified?: string;
 } & ComponentObject;
 
 export type TransformComponentTokensResult = {
@@ -168,6 +172,10 @@ export type TransformComponentTokensResult = {
   };
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
+  /** SHA256 hash of the component's source content for change detection */
+  contentHash?: string;
+  /** ISO timestamp of when the component was last modified */
+  lastModified?: string;
 } | null;
 
 export type OptionalPreviewRender = {

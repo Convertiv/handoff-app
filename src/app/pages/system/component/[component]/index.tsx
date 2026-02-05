@@ -16,6 +16,7 @@ import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
@@ -62,6 +63,20 @@ const toTitleCase = (str: string): string => {
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+/**
+ * Formats an ISO date string to a human-readable format
+ */
+const formatLastModified = (isoString: string): string => {
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 export const getStaticProps = async (context) => {
@@ -157,13 +172,27 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
         <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
         <a id="best-practices"></a>
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        {component.lastModified && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help text-sm text-gray-400 dark:text-gray-400">
+                  {formatLastModified(component.lastModified)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-mono text-xs">Hash: {component.contentHash || 'N/A'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
             <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
               {metadata.description}
             </ReactMarkdown>
           </div>
-          <div className="flex flex-row gap-3">
+          <div className="flex flex-row items-center gap-3">
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
                 <a href={component.figma} target="_blank">
@@ -195,6 +224,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 </div>
               </DrawerContent>
             </Drawer>
+
           </div>
         </div>
       </div>

@@ -74,6 +74,14 @@ export interface PreviewObject {
    */
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
+  /**
+   * SHA256 hash of the component's source content for change detection
+   */
+  contentHash?: string;
+  /**
+   * ISO timestamp of when the component was last modified
+   */
+  lastModified?: string;
 }
 
 export type PreviewJson = {

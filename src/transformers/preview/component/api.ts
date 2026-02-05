@@ -177,6 +177,8 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     properties: componentData.properties,
     previews: componentData.previews,
     path: `/api/component/${id}.json`,
+    contentHash: componentData.contentHash,
+    lastModified: componentData.lastModified,
   };
 };
 

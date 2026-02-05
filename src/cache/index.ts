@@ -1,6 +1,9 @@
 // File state utilities
 export { computeDirectoryState, computeFileState, directoryStatesMatch, statesMatch, type FileState } from './file-state';
 
+// Content hash utilities
+export { computeComponentContentHash, type ComponentContentHash } from './content-hash';
+
 // Build cache utilities
 export {
   checkOutputExists,
