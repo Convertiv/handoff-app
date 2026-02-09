@@ -110,7 +110,15 @@ const nextConfig = {
       '.ts',
       '.tsx',
     ],
-  }
+  },
+  webpack: (config, { isServer }) => {
+    // Add @handoff alias for webpack (mirrors turbopack.resolveAlias)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
