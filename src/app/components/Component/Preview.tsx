@@ -4,6 +4,8 @@ import { PreviewObject } from '@handoff/types';
 import { Types as CoreTypes } from 'handoff-core';
 import { startCase } from 'lodash';
 import {
+  ChevronDown,
+  ChevronRight,
   Component,
   File,
   Monitor,
@@ -15,7 +17,7 @@ import {
   Tablet,
   Text,
 } from 'lucide-react';
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { HotReloadContext } from '../context/HotReloadProvider';
 import { usePreviewContext } from '../context/PreviewContext';
 import RulesSheet from '../Foundations/RulesSheet';
@@ -505,33 +507,63 @@ export const getVariantForType = (type: string) => {
   }
 };
 
-const TableRows: React.FC<{ rows: SlotMetadata[]; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
+/**
+ * Helper to get nested properties from a SlotMetadata
+ * Handles both array items and object properties
+ */
+const getNestedProperties = (row: SlotMetadata): SlotMetadata[] | null => {
+  // For arrays with item properties
+  if (row.type === 'array' && row.items?.properties) {
+    return Object.keys(row.items.properties).map((key) => ({
+      ...row.items.properties![key],
+      key,
+    }));
+  }
+  // For objects with properties
+  if (row.type === 'object' && row.properties) {
+    return Object.keys(row.properties).map((key) => ({
+      ...row.properties![key],
+      key,
+    }));
+  }
+  return null;
+};
+
+/**
+ * Check if a row has nested properties that can be expanded
+ */
+const hasNestedProperties = (row: SlotMetadata): boolean => {
+  return (
+    (row.type === 'array' && !!row.items?.properties && Object.keys(row.items.properties).length > 0) ||
+    (row.type === 'object' && !!row.properties && Object.keys(row.properties).length > 0)
+  );
+};
+
+const TableRows: React.FC<{ 
+  rows: SlotMetadata[]; 
+  openSheet: (field: SlotMetadata) => void; 
+  depth?: number;
+  parentPath?: string;
+}> = ({
   rows,
   openSheet,
-  hasParent,
+  depth = 0,
+  parentPath = '',
 }) => {
   return (
     <>
       {rows.map((row, i) => {
         if (!row) return null;
-        if (row.type === 'array') {
-          return (
-            <>
-              <TableRowInstance row={row} openSheet={openSheet} hasParent={hasParent} key={`row-${i}`} />
-              {row.items && row.items.properties && (
-                <TableRows
-                  rows={Object.keys(row.items.properties).map((key) => {
-                    return { ...row.items.properties[key], key };
-                  })}
-                  openSheet={openSheet}
-                  hasParent={true}
-                  key={`row-${i}-items`}
-                />
-              )}
-            </>
-          );
-        }
-        return <TableRowInstance row={row} openSheet={openSheet} hasParent={hasParent} key={`row-${i}`} />;
+        const currentPath = parentPath ? `${parentPath}.${row.key || row.name}` : (row.key || row.name);
+        return (
+          <ExpandableTableRow 
+            key={`row-${currentPath}-${i}`}
+            row={row} 
+            openSheet={openSheet} 
+            depth={depth}
+            path={currentPath}
+          />
+        );
       })}
     </>
   );
@@ -561,11 +593,25 @@ const humanReadableSizeRule = (rule: string, value: any) => {
   }
 };
 
-const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) => void; hasParent?: boolean | undefined }> = ({
+/**
+ * An expandable table row that can show nested properties
+ * Supports deep nesting with visual indentation and expand/collapse
+ */
+const ExpandableTableRow: React.FC<{ 
+  row: SlotMetadata; 
+  openSheet: (field: SlotMetadata) => void; 
+  depth: number;
+  path: string;
+}> = ({
   row,
   openSheet,
-  hasParent,
+  depth,
+  path,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const nested = getNestedProperties(row);
+  const canExpand = hasNestedProperties(row);
+  
   const getSizeDisplay = (row: SlotMetadata) => {
     if (!row.rules) return '-';
 
@@ -576,20 +622,90 @@ const TableRowInstance: React.FC<{ row: SlotMetadata; openSheet: (SlotMetadata) 
     return rule ? humanReadableSizeRule(rule, row.rules[rule]) : '-';
   };
 
+  // Calculate indent based on depth (each level adds 20px)
+  const indentPx = depth * 20;
+  
+  // Get background color based on depth for visual hierarchy
+  const getDepthBgClass = (depth: number) => {
+    if (depth === 0) return '';
+    if (depth === 1) return 'bg-gray-50/50 dark:bg-gray-800/30';
+    if (depth === 2) return 'bg-gray-100/50 dark:bg-gray-800/50';
+    return 'bg-gray-100/70 dark:bg-gray-800/70';
+  };
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    // If clicking on the expand button area, don't open the sheet
+    if ((e.target as HTMLElement).closest('.expand-toggle')) {
+      return;
+    }
+    openSheet(row);
+  };
+
+  const handleExpandToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={() => openSheet(row)}>
-      <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">{startCase(row.name)}</TableCell>
-      <TableCell className="border-r-[0.5px] px-3.5 py-1">
-        <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
-          {row.type}
-        </Badge>
-      </TableCell>
-      <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-        {getSizeDisplay(row)}
-      </TableCell>
-      <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-        <span className="slot-description line-clamp-1">{row.description}</span>
-      </TableCell>
-    </TableRow>
+    <>
+      <TableRow 
+        className={`h-10 cursor-pointer border-b-[0.5px] ${getDepthBgClass(depth)}`} 
+        onClick={handleRowClick}
+      >
+        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">
+          <div className="flex items-center" style={{ paddingLeft: `${indentPx}px` }}>
+            {canExpand ? (
+              <button 
+                className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                onClick={handleExpandToggle}
+                aria-label={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+            ) : (
+              <span className="mr-2 w-5" /> 
+            )}
+            <span className={depth > 0 ? 'text-gray-700 dark:text-gray-300' : ''}>
+              {startCase(row.name)}
+            </span>
+            {canExpand && (
+              <span className="ml-2 text-xs text-gray-400">
+                ({Object.keys(nested || {}).length} {row.type === 'array' ? 'item fields' : 'fields'})
+              </span>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="border-r-[0.5px] px-3.5 py-1">
+          <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
+            {row.type}
+          </Badge>
+          {row.type === 'array' && row.items?.type && (
+            <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
+              {row.items.type}[]
+            </Badge>
+          )}
+        </TableCell>
+        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+          {getSizeDisplay(row)}
+        </TableCell>
+        <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+          <span className="slot-description line-clamp-1">{row.description || row.generic || '-'}</span>
+        </TableCell>
+      </TableRow>
+      
+      {/* Render nested properties when expanded */}
+      {isExpanded && nested && nested.length > 0 && (
+        <TableRows 
+          rows={nested} 
+          openSheet={openSheet} 
+          depth={depth + 1}
+          parentPath={path}
+        />
+      )}
+    </>
   );
 };
