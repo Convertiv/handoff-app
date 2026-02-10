@@ -300,7 +300,9 @@ export async function processComponents(
 
     // Ensure that every property within the properties array/object contains an 'id' field.
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.
-    data.properties = ensureIds(data.properties);
+    if (!buildPlan.validationMode) {
+      data.properties = ensureIds(data.properties);
+    }
 
     // Write the updated component data to the API file for external access and caching.
     await writeComponentApi(runtimeComponentId, data, handoff, []);
