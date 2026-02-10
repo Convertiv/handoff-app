@@ -270,6 +270,9 @@ export async function processComponents(
        */
       if (!buildPlan.validationMode) {
         data.validations = existingData.validations;
+      }else{
+        // in validation mode, we want to keep the properties from the previous build
+        // so that we can see the changes to the properties in the validation results
         data.properties = existingData.properties;
       }
     }
