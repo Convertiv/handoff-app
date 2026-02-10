@@ -9,13 +9,13 @@ import { ComponentPreview } from '../../../../components/Component/Preview';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
-import { CodeHighlight } from '../../../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
+import { JsonTreeView } from '../../../../components/ui/json-tree-view';
 import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
@@ -178,19 +178,13 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
-                <div className="w-md mx-5">
+                <div className="mx-5 w-full max-w-lg">
                   <DrawerHeader>
                     <DrawerTitle>API Response</DrawerTitle>
+                    <p className="font-mono text-xs text-gray-500">{apiUrl}</p>
                   </DrawerHeader>
-                  <div className="w-full">
-                    <CodeHighlight
-                      title={apiUrl}
-                      language="json"
-                      type="json"
-                      data={JSON.stringify(component, null, 2)}
-                      dark={true}
-                      height="80vh"
-                    />
+                  <div className="max-h-[80vh] w-full overflow-auto">
+                    <JsonTreeView data={component} />
                   </div>
                 </div>
               </DrawerContent>

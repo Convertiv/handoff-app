@@ -7,11 +7,11 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { APIComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
-import { CodeHighlight } from '../../components/Markdown/CodeHighlight';
 import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
 import { Button } from '../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../components/ui/drawer';
+import { JsonTreeView } from '../../components/ui/json-tree-view';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import {
   DocumentationProps,
@@ -131,19 +131,13 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
               </TooltipProvider>
             </DrawerTrigger>
             <DrawerContent>
-              <div className="w-md mx-5">
+              <div className="mx-5 w-full max-w-lg">
                 <DrawerHeader>
                   <DrawerTitle>API Response</DrawerTitle>
+                  <p className="font-mono text-xs text-gray-500">{apiUrl}</p>
                 </DrawerHeader>
-                <div className="w-full">
-                  <CodeHighlight
-                    title={apiUrl}
-                    language="json"
-                    type="json"
-                    data={JSON.stringify(components, null, 2)}
-                    dark={true}
-                    height="80vh"
-                  />
+                <div className="max-h-[80vh] w-full overflow-auto">
+                  <JsonTreeView data={components} />
                 </div>
               </div>
             </DrawerContent>
