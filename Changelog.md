@@ -8,7 +8,37 @@ and this project adheres to
 
 ## \[1.0.3] - 2026-02-08
 
-A minor release to improve security, and small improvments in the component structure.
+Bugfixes, UX improvements to the component page, improvements to react docgen,
+a new quickstart command, and security fixes.
+
+## New Quickstart
+
+* Running `npx create-handoff-app` will scaffold up a new handoff project
+  in the current directory. The wizard will walk you through either creating
+  an empty project, or scaffolding a simple initial component and frontend
+  stack.
+
+## UX Features
+
+* Properties of a component are now nested, with indications of the number and
+  type of children properties. This makes it easier to understand how properties
+  are structured and related
+* The API response documentation is now a tree view, rather a formated JSON
+  object. This makes it much easier to see and reason about the JSON response.
+
+## Type Gen
+
+* When using TSX instead of handlebars, the properties can be automatically
+  generated from the exported type. This version improves the parsing of those
+  types, to descend into object and array subtypes and parse out the specific
+  subtypes included there.
+
+## API Additions
+
+* The pipeline now generates an icon sprite and an icon manifest file.  These
+  files are loaded into the root of the /api.
+  * You can fetch the sprite file at `/api/icons-sprite.svg`
+  * You can fetch the manifest at `/api/icons-sprite-manifest.json`
 
 ## Security
 

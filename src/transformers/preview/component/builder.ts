@@ -270,6 +270,7 @@ export async function processComponents(
        */
       if (!buildPlan.validationMode) {
         data.validations = existingData.validations;
+        data.properties = existingData.properties;
       }
     }
 
@@ -300,11 +301,10 @@ export async function processComponents(
 
     // Ensure that every property within the properties array/object contains an 'id' field.
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.
-    if (!buildPlan.validationMode) {
-      data.properties = ensureIds(data.properties);
-    }
+    data.properties = ensureIds(data.properties);
 
     // Write the updated component data to the API file for external access and caching.
+    //console.log('data', data);
     await writeComponentApi(runtimeComponentId, data, handoff, []);
 
     // Build the summary metadata for this component.
