@@ -103,6 +103,7 @@ const nextConfig = {
   turbopack: { 
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+      '@': path.resolve('.'),
     },
     resolveExtensions: [
       '.js',
@@ -112,10 +113,11 @@ const nextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Add @handoff alias for webpack (mirrors turbopack.resolveAlias)
+    // Add aliases for webpack (mirrors turbopack.resolveAlias)
     config.resolve.alias = {
       ...config.resolve.alias,
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+      '@': path.resolve('.'),
     };
     return config;
   },
