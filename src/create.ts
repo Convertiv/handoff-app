@@ -45,14 +45,29 @@ const createDirectory = (dirPath: string): void => {
 interface TemplateConfig {
   source: string;
   destination: string;
+  isExample?: boolean; // Flag to indicate if this is an example file
 }
 
-const templates: TemplateConfig[] = [
+/**
+ * Get mandatory templates based on whether examples are included
+ * Uses different handoff config templates for blank vs. with-examples projects
+ */
+const getMandatoryTemplates = (includeExamples: boolean): TemplateConfig[] => [
   { source: 'package.json.tpl', destination: 'package.json' },
-  { source: 'handoff.config.js.tpl', destination: 'handoff.config.js' },
+  { 
+    source: includeExamples ? 'handoff.config.with-examples.js.tpl' : 'handoff.config.js.tpl', 
+    destination: 'handoff.config.js' 
+  },
+  { source: 'tsconfig.json.tpl', destination: 'tsconfig.json' },
   { source: 'gitignore.tpl', destination: '.gitignore' },
   { source: 'env.tpl', destination: '.env' },
   { source: 'README.md.tpl', destination: 'README.md' },
+];
+
+// Example component files (only included when user opts for examples)
+const exampleTemplates: TemplateConfig[] = [
+  { source: 'components/button/Button.tsx.tpl', destination: 'components/button/Button.tsx', isExample: true },
+  { source: 'components/button/button.js.tpl', destination: 'components/button/button.js', isExample: true },
 ];
 
 /**
@@ -159,6 +174,24 @@ const create = async (): Promise<void> => {
     p.log.info('Creating project directory...');
     createDirectory(projectPath);
 
+    // Ask if user wants a blank project or one with examples
+    p.log.step(chalk.blue('Project Configuration'));
+    const projectType = await p.select({
+      message: 'What type of project would you like to create?',
+      options: [
+        { value: 'with-examples', label: 'Project with sample components', hint: 'Includes example components to get started' },
+        { value: 'blank', label: 'Blank project', hint: 'Only mandatory files, no examples' },
+      ],
+      initialValue: 'with-examples',
+    });
+
+    if (p.isCancel(projectType)) {
+      p.cancel('Project creation cancelled.');
+      process.exit(0);
+    }
+
+    const includeExamples = projectType === 'with-examples';
+
     // Get Figma project ID
     p.log.step(chalk.blue('Figma Configuration'));
     const figmaProjectId = await p.text({
@@ -201,6 +234,12 @@ const create = async (): Promise<void> => {
       throw new CreateError(`Template directory not found at ${templateDir}. This may indicate a packaging issue.`);
     }
 
+    // Combine mandatory templates with example templates based on user choice
+    const templates = [
+      ...getMandatoryTemplates(includeExamples),
+      ...(includeExamples ? exampleTemplates : []),
+    ];
+
     try {
       for (const template of templates) {
         const templatePath = path.join(templateDir, template.source);
@@ -233,7 +272,11 @@ const create = async (): Promise<void> => {
 
     p.note(nextSteps.join('\n'), 'Next steps');
 
-    p.outro(chalk.green('Project created successfully! First, fetch your Figma data, then start the documentation site.'));
+    const outroMessage = includeExamples
+      ? 'Project created successfully with sample components! First, fetch your Figma data (optional), then start the documentation site.'
+      : 'Blank project created successfully! First, fetch your Figma data, then start the documentation site.';
+
+    p.outro(chalk.green(outroMessage));
   } catch (error) {
     if (error instanceof CreateError) {
       p.cancel(chalk.red(`Error: ${error.message}`));

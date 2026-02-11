@@ -1,5 +1,6 @@
 
 
+
 /** @type {import('handoff-app').Config} */
 module.exports = {
   app: {
@@ -42,13 +43,13 @@ module.exports = {
     }
   },
 
-  // entries: {
-  //   /**
-  //    * Array of component paths to be included in the build
-  //    * Add your component directories here
-  //    */
-  //   components: ["components/button"]
-  // },
+  entries: {
+    /**
+     * Array of component paths to be included in the build
+     * Add your component directories here
+     */
+    components: ["components/button"]
+  },
 
   hooks: {
     /**
