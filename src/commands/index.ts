@@ -5,6 +5,7 @@ import ejectConfigCommand from './eject/config';
 import ejectPagesCommand from './eject/pages';
 import ejectThemeCommand from './eject/theme';
 import fetchCommand from './fetch';
+import initCommand from './init';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
 import makeTemplateCommand from './make/template';
@@ -20,6 +21,7 @@ export const commands = [
   ejectPagesCommand,
   ejectThemeCommand,
   fetchCommand,
+  initCommand,
   makePageCommand,
   makeComponentCommand,
   makeTemplateCommand,

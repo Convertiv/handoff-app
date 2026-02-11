@@ -24,8 +24,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "handoff-app": "./dist/cli.js",
-    "create-handoff-app": "./dist/create.js"
+    "handoff-app": "./dist/cli.js"
   },
   "engines": {
     "npm": ">=8.0.0",

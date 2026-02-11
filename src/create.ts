@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
@@ -300,10 +298,5 @@ const create = async (): Promise<void> => {
     process.exit(1);
   }
 };
-
-// Run the create function if this file is executed directly
-if (require.main === module) {
-  create();
-}
 
 export default create;
