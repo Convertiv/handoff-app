@@ -26,6 +26,12 @@ a new quickstart command, and security fixes.
 * The API response documentation is now a tree view, rather a formated JSON
   object. This makes it much easier to see and reason about the JSON response.
 
+## Bug Fixes
+
+* The API preview would through a 500 error under some conditions
+* Using TSX components would cause an error in the code preview if the tsx component
+  used some kinds of valid react formatting.
+
 ## Type Gen
 
 * When using TSX instead of handlebars, the properties can be automatically
@@ -46,10 +52,10 @@ a new quickstart command, and security fixes.
   Since Handoff does not use server side rendered components, handoff sites are not
   vulnerable to this risks.
 
-## Feature
+## QoL Improvements
 
-* Components now set a last mod time at build time so you can tell when a component
-  has changed.
+* Fixes a bug in webpack that made the include path lookups fail.  @handoff and @/util now
+  works properly.
 
 ## \[1.0.2] - 2026-01-12
 
