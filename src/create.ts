@@ -6,6 +6,19 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Get the current handoff-app version from package.json
+ */
+const getVersion = (): string => {
+  try {
+    const packageJsonPath = path.resolve(__dirname, '../package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    return packageJson.version || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
+
 interface CreateOptions {
   projectName: string;
   figmaProjectId: string;
@@ -131,7 +144,8 @@ const validateProjectName = (name: string): boolean => {
  * Main create function
  */
 const create = async (): Promise<void> => {
-  p.intro(chalk.bgCyan.black(' Handoff App Creator '));
+  const version = getVersion();
+  p.intro(chalk.bgCyan.black(` Handoff App Creator (v${version}) `));
 
   try {
     // Get project name
