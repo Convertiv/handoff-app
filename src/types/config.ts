@@ -113,6 +113,18 @@ export interface Config {
     logos?: string;
   };
   /**
+   * Platform project ID (UUID). Set by `platform:init` to link this
+   * local project with a remote handoff-service project.
+   */
+  platformProjectId?: string;
+
+  /**
+   * Platform base URL (e.g. "http://localhost:3000" or "https://handoff.example.com").
+   * Set by `platform:init` so subsequent sync commands know where to connect.
+   */
+  platformUrl?: string;
+
+  /**
    * Configuration hooks for extending functionality
    */
   hooks?: {

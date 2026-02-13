@@ -453,6 +453,11 @@ export const initRuntimeConfig = (handoff: Handoff): [runtimeConfig: RuntimeConf
  * @returns An array of string paths to component directories.
  */
 const getComponentsForPath = (searchPath: string): string[] => {
+  // If the directory doesn't exist yet (e.g. before an initial pull), skip it gracefully
+  if (!fs.existsSync(searchPath)) {
+    return [];
+  }
+
   const dirName = path.basename(searchPath);
   const possibleConfigFiles = [`${dirName}.json`, `${dirName}.js`, `${dirName}.cjs`];
 
