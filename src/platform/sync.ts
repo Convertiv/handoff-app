@@ -9,8 +9,7 @@ import {
   getManifest,
   ManifestFile,
   pushChanges,
-  PushResult,
-  SyncManifest,
+  PushResult
 } from './client';
 
 // ── Types ───────────────────────────────────────────────────────────────
@@ -43,7 +42,6 @@ const SYNC_STATE_FILE = 'sync-state.json';
 const EXCLUDED_PATTERNS = [
   '.env',
   'node_modules',
-  'exported',
   'out',
   '.handoff',
   '.git',
@@ -247,6 +245,16 @@ export async function pushProject(
     };
   }
 
+  // For any changed file inside a component directory, also include the
+  // component config file (e.g. button/button.js) so the server always
+  // has the config context even if only other files in the dir changed.
+  const configExtras = getComponentConfigsForChangedPaths(projectDir, changedPaths);
+  for (const extra of configExtras) {
+    if (!changedPaths.includes(extra)) {
+      changedPaths.push(extra);
+    }
+  }
+
   onProgress?.(`Preparing ${changedPaths.length} file(s) to upload, ${diff.deleted.length} to delete...`);
 
   // Read file contents into buffers
@@ -380,4 +388,41 @@ function computeEtag(filePath: string): string {
  */
 function normalizeEtag(etag: string): string {
   return etag.replace(/^"/, '').replace(/"$/, '');
+}
+
+/** Config file extensions to look for in component directories. */
+const COMPONENT_CONFIG_EXTENSIONS = ['.js', '.cjs', '.json'];
+
+/**
+ * For a list of changed file paths, find any component config files that
+ * live in the same directory so they are always uploaded alongside changes.
+ *
+ * A "component config" is a file whose basename (without extension) matches
+ * the containing directory name, e.g. `components/button/button.js`.
+ */
+function getComponentConfigsForChangedPaths(projectDir: string, changedPaths: string[]): string[] {
+  const extras = new Set<string>();
+  const checkedDirs = new Set<string>();
+
+  for (const relativePath of changedPaths) {
+    // Get the directory portion using forward-slash splitting (paths are
+    // normalized to forward slashes by walkDirectory)
+    const dirPart = relativePath.includes('/') ? relativePath.substring(0, relativePath.lastIndexOf('/')) : '';
+    if (!dirPart || checkedDirs.has(dirPart)) continue;
+    checkedDirs.add(dirPart);
+
+    // The component config file is named after the directory
+    const dirName = dirPart.includes('/') ? dirPart.substring(dirPart.lastIndexOf('/') + 1) : dirPart;
+
+    for (const ext of COMPONENT_CONFIG_EXTENSIONS) {
+      const configRelative = `${dirPart}/${dirName}${ext}`;
+      const configAbsolute = path.join(projectDir, configRelative);
+      if (fs.existsSync(configAbsolute)) {
+        extras.add(configRelative);
+        break; // only need the first matching config
+      }
+    }
+  }
+
+  return Array.from(extras);
 }
