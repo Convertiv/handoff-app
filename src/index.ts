@@ -55,6 +55,9 @@ class Handoff {
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.runtimeConfig, this._configFilePaths] = initRuntimeConfig(this);
+    if(this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
+      process.env.HANDOFF_APP_BASE_PATH = this.config.app.base_path ?? '';
+    }
     return this;
   }
 
