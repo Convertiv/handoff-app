@@ -9,7 +9,7 @@ import React from 'react';
  */
 export const getComponentList = async (): Promise<ComponentListObject[]> => {
   // Try to load the component from the public json
-  let data = await fetch(`/api/components.json`).then((res) => res.json());
+  let data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`).then((res) => res.json());
   return data as ComponentListObject[];
 };
 

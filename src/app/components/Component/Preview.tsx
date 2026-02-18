@@ -303,7 +303,7 @@ export const ComponentDisplay: React.FC<{
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
-                          window.open('/api/component/' + previewUrl, '_blank');
+                          window.open(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`, '_blank');
                         }}
                         variant="ghost"
                       >
@@ -333,7 +333,7 @@ export const ComponentDisplay: React.FC<{
                       display: 'block',
                       margin: '0 auto',
                     }}
-                    src={`/api/component/` + previewUrl}
+                    src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`}
                   />
                 </div>
               ) : (
@@ -539,9 +539,9 @@ const hasNestedProperties = (row: SlotMetadata): boolean => {
   );
 };
 
-const TableRows: React.FC<{ 
-  rows: SlotMetadata[]; 
-  openSheet: (field: SlotMetadata) => void; 
+const TableRows: React.FC<{
+  rows: SlotMetadata[];
+  openSheet: (field: SlotMetadata) => void;
   depth?: number;
   parentPath?: string;
 }> = ({
@@ -550,24 +550,24 @@ const TableRows: React.FC<{
   depth = 0,
   parentPath = '',
 }) => {
-  return (
-    <>
-      {rows.map((row, i) => {
-        if (!row) return null;
-        const currentPath = parentPath ? `${parentPath}.${row.key || row.name}` : (row.key || row.name);
-        return (
-          <ExpandableTableRow 
-            key={`row-${currentPath}-${i}`}
-            row={row} 
-            openSheet={openSheet} 
-            depth={depth}
-            path={currentPath}
-          />
-        );
-      })}
-    </>
-  );
-};
+    return (
+      <>
+        {rows.map((row, i) => {
+          if (!row) return null;
+          const currentPath = parentPath ? `${parentPath}.${row.key || row.name}` : (row.key || row.name);
+          return (
+            <ExpandableTableRow
+              key={`row-${currentPath}-${i}`}
+              row={row}
+              openSheet={openSheet}
+              depth={depth}
+              path={currentPath}
+            />
+          );
+        })}
+      </>
+    );
+  };
 
 const humanReadableSizeRule = (rule: string, value: any) => {
   switch (rule) {
@@ -597,9 +597,9 @@ const humanReadableSizeRule = (rule: string, value: any) => {
  * An expandable table row that can show nested properties
  * Supports deep nesting with visual indentation and expand/collapse
  */
-const ExpandableTableRow: React.FC<{ 
-  row: SlotMetadata; 
-  openSheet: (field: SlotMetadata) => void; 
+const ExpandableTableRow: React.FC<{
+  row: SlotMetadata;
+  openSheet: (field: SlotMetadata) => void;
   depth: number;
   path: string;
 }> = ({
@@ -608,104 +608,104 @@ const ExpandableTableRow: React.FC<{
   depth,
   path,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const nested = getNestedProperties(row);
-  const canExpand = hasNestedProperties(row);
-  
-  const getSizeDisplay = (row: SlotMetadata) => {
-    if (!row.rules) return '-';
+    const [isExpanded, setIsExpanded] = useState(false);
+    const nested = getNestedProperties(row);
+    const canExpand = hasNestedProperties(row);
 
-    // Find the first applicable size rule
-    const sizeRules = ['dimensions', 'content', 'maxSize'];
-    const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
+    const getSizeDisplay = (row: SlotMetadata) => {
+      if (!row.rules) return '-';
 
-    return rule ? humanReadableSizeRule(rule, row.rules[rule]) : '-';
-  };
+      // Find the first applicable size rule
+      const sizeRules = ['dimensions', 'content', 'maxSize'];
+      const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
 
-  // Calculate indent based on depth (each level adds 20px)
-  const indentPx = depth * 20;
-  
-  // Get background color based on depth for visual hierarchy
-  const getDepthBgClass = (depth: number) => {
-    if (depth === 0) return '';
-    if (depth === 1) return 'bg-gray-50/50 dark:bg-gray-800/30';
-    if (depth === 2) return 'bg-gray-100/50 dark:bg-gray-800/50';
-    return 'bg-gray-100/70 dark:bg-gray-800/70';
-  };
+      return rule ? humanReadableSizeRule(rule, row.rules[rule]) : '-';
+    };
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // If clicking on the expand button area, don't open the sheet
-    if ((e.target as HTMLElement).closest('.expand-toggle')) {
-      return;
-    }
-    openSheet(row);
-  };
+    // Calculate indent based on depth (each level adds 20px)
+    const indentPx = depth * 20;
 
-  const handleExpandToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
+    // Get background color based on depth for visual hierarchy
+    const getDepthBgClass = (depth: number) => {
+      if (depth === 0) return '';
+      if (depth === 1) return 'bg-gray-50/50 dark:bg-gray-800/30';
+      if (depth === 2) return 'bg-gray-100/50 dark:bg-gray-800/50';
+      return 'bg-gray-100/70 dark:bg-gray-800/70';
+    };
 
-  return (
-    <>
-      <TableRow 
-        className={`h-10 cursor-pointer border-b-[0.5px] ${getDepthBgClass(depth)}`} 
-        onClick={handleRowClick}
-      >
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">
-          <div className="flex items-center" style={{ paddingLeft: `${indentPx}px` }}>
-            {canExpand ? (
-              <button 
-                className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                onClick={handleExpandToggle}
-                aria-label={isExpanded ? 'Collapse' : 'Expand'}
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                )}
-              </button>
-            ) : (
-              <span className="mr-2 w-5" /> 
-            )}
-            <span className={depth > 0 ? 'text-gray-700 dark:text-gray-300' : ''}>
-              {startCase(row.name)}
-            </span>
-            {canExpand && (
-              <span className="ml-2 text-xs text-gray-400">
-                ({Object.keys(nested || {}).length} {row.type === 'array' ? 'item fields' : 'fields'})
+    const handleRowClick = (e: React.MouseEvent) => {
+      // If clicking on the expand button area, don't open the sheet
+      if ((e.target as HTMLElement).closest('.expand-toggle')) {
+        return;
+      }
+      openSheet(row);
+    };
+
+    const handleExpandToggle = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsExpanded(!isExpanded);
+    };
+
+    return (
+      <>
+        <TableRow
+          className={`h-10 cursor-pointer border-b-[0.5px] ${getDepthBgClass(depth)}`}
+          onClick={handleRowClick}
+        >
+          <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">
+            <div className="flex items-center" style={{ paddingLeft: `${indentPx}px` }}>
+              {canExpand ? (
+                <button
+                  className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                  onClick={handleExpandToggle}
+                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+              ) : (
+                <span className="mr-2 w-5" />
+              )}
+              <span className={depth > 0 ? 'text-gray-700 dark:text-gray-300' : ''}>
+                {startCase(row.name)}
               </span>
-            )}
-          </div>
-        </TableCell>
-        <TableCell className="border-r-[0.5px] px-3.5 py-1">
-          <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
-            {row.type}
-          </Badge>
-          {row.type === 'array' && row.items?.type && (
-            <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
-              {row.items.type}[]
+              {canExpand && (
+                <span className="ml-2 text-xs text-gray-400">
+                  ({Object.keys(nested || {}).length} {row.type === 'array' ? 'item fields' : 'fields'})
+                </span>
+              )}
+            </div>
+          </TableCell>
+          <TableCell className="border-r-[0.5px] px-3.5 py-1">
+            <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
+              {row.type}
             </Badge>
-          )}
-        </TableCell>
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          {getSizeDisplay(row)}
-        </TableCell>
-        <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          <span className="slot-description line-clamp-1">{row.description || row.generic || '-'}</span>
-        </TableCell>
-      </TableRow>
-      
-      {/* Render nested properties when expanded */}
-      {isExpanded && nested && nested.length > 0 && (
-        <TableRows 
-          rows={nested} 
-          openSheet={openSheet} 
-          depth={depth + 1}
-          parentPath={path}
-        />
-      )}
-    </>
-  );
-};
+            {row.type === 'array' && row.items?.type && (
+              <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
+                {row.items.type}[]
+              </Badge>
+            )}
+          </TableCell>
+          <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+            {getSizeDisplay(row)}
+          </TableCell>
+          <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+            <span className="slot-description line-clamp-1">{row.description || row.generic || '-'}</span>
+          </TableCell>
+        </TableRow>
+
+        {/* Render nested properties when expanded */}
+        {isExpanded && nested && nested.length > 0 && (
+          <TableRows
+            rows={nested}
+            openSheet={openSheet}
+            depth={depth + 1}
+            parentPath={path}
+          />
+        )}
+      </>
+    );
+  };

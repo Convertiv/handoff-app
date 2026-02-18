@@ -107,7 +107,7 @@ export const updateComponentSummaryApi = async (handoff: Handoff, componentData:
   }
 
   // Partial update: merge with existing data
-  const apiPath = path.resolve(handoff.workingPath, 'public/api/components.json');
+  const apiPath = path.resolve(handoff.workingPath, `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`);
   let existingData: ComponentListObject[] = [];
 
   if (fs.existsSync(apiPath)) {

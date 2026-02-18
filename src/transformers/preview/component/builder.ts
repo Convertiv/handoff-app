@@ -363,7 +363,7 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     tags: data.tags ? data.tags : [],
     properties: data.properties,
     previews: data.previews,
-    path: `/api/component/${id}.json`,
+    path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
   };
 };
 

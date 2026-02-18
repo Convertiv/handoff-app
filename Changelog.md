@@ -31,6 +31,11 @@ a new quickstart command, and security fixes.
 * The API preview would through a 500 error under some conditions
 * Using TSX components would cause an error in the code preview if the tsx component
   used some kinds of valid react formatting.
+* If you create pages without a declared weight, handoff would throw an error
+* There was an old structure in the way we used handlebars that surfaces a warning
+  on build.  We've updated that method.
+* We removed an old page template that was no longer needed.
+* The API calls to the component url were not working well in subpaths.
 
 ## Type Gen
 
@@ -67,10 +72,6 @@ Bugfixes focused on developer quality of life.
   resulting in a 404 error. This patch resolves a race condition in the HMR, by
   preventing double write of the next config.
 * Patch an issue where the example component doesn't load in a clean project
-* If you create pages without a declared weight, handoff would throw an error
-* There was an old structure in the way we used handlebars that surfaces a warning
-  on build.  We've updated that method.
-* We removed an old page template that was no longer needed.
 
 ## \[1.0.1] - 2025-12-28
 

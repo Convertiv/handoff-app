@@ -118,9 +118,9 @@ function generateHtmlDocument(componentId: string, previewTitle: string, rendere
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/api/component/main.css" />
-    <link rel="stylesheet" href="/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="/assets/css/preview.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/main.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
     <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>
     <script type="module">
       ${clientJs}

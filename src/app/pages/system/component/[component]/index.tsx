@@ -110,7 +110,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
 
   const fetchComponents = async () => {
-    let data = await fetch(`/api/component/${id}.json`).then((res) => res.json());
+    let data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 
