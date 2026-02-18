@@ -276,7 +276,7 @@ export const staticBuildMenu = () => {
         return {
           title: metadata.menuTitle ?? metadata.title,
           external,
-          weight: metadata.weight,
+          weight: metadata.weight ?? 0,
           path: filepath,
           subSections,
         };

@@ -67,6 +67,10 @@ Bugfixes focused on developer quality of life.
   resulting in a 404 error. This patch resolves a race condition in the HMR, by
   preventing double write of the next config.
 * Patch an issue where the example component doesn't load in a clean project
+* If you create pages without a declared weight, handoff would throw an error
+* There was an old structure in the way we used handlebars that surfaces a warning
+  on build.  We've updated that method.
+* We removed an old page template that was no longer needed.
 
 ## \[1.0.1] - 2025-12-28
 
