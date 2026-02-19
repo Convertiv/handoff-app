@@ -17,7 +17,6 @@ transform tokens into dev ready artifacts.
   - [Handoff is in Beta!](#handoff-is-in-beta)
 - [Requirements](#requirements)
 - [Get Started](#get-started)
-- [Table of Contents](#table-of-contents-1)
   - [Figma](#figma)
   - [Create a project](#create-a-project)
   - [Test fetch](#test-fetch)
@@ -111,16 +110,51 @@ You'll need a developer token if you don't have one already
 
 ## Create a project
 
-- Run `npm install -g handoff-app`
-- Create a new directory for your project `mkdir my-new-project`
-- In that folder (`cd my-new-project`), run `handoff-app fetch`
-- Handoff will prompt for your developer token, and the file id of your figma
-  file. The file id can be found in the url of the file -
-  https://www.figma.com/file/{file_id}/{slug}
-- Start the project `handoff-app start`
+The easiest way to get started is using the `create-handoff-app` command to scaffold a new project:
 
-This will fetch the latest from your Figma file and it will boot a demo site at
-http://localhost:3000
+```bash
+npx create-handoff-app
+```
+
+This interactive CLI will guide you through:
+
+1. **Project name** - Enter a name for your project directory
+2. **Project type** - Choose between:
+   - **Project with sample components** - Includes example components to help you get started
+   - **Blank project** - Only the essential configuration files
+3. **Figma configuration** - Optionally provide your Figma project ID and developer access token
+
+The scaffolding will:
+- Create a new directory with your project name
+- Generate all necessary configuration files
+- Install dependencies automatically
+
+### After scaffolding
+
+```bash
+cd my-handoff-project
+npm run fetch    # Fetch design tokens from Figma
+npm run start    # Start the documentation site
+```
+
+This will fetch the latest from your Figma file and boot a demo site at http://localhost:3000
+
+### Alternative: Global installation
+
+You can also install handoff-app globally:
+
+```bash
+npm install -g handoff-app
+create-handoff-app
+```
+
+Or manually set up a project:
+
+```bash
+mkdir my-new-project && cd my-new-project
+handoff-app fetch   # Will prompt for Figma credentials
+handoff-app start
+```
 
 ## Test Fetch
 
