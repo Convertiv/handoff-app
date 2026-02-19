@@ -110,15 +110,10 @@ You'll need a developer token if you don't have one already
 
 ## Create a project
 
-The easiest way to get started is using the `create-handoff-app` command to scaffold a new project:
+The easiest way to get started is using the `handoff-app init` command to scaffold a new project:
 
 ```bash
-npx create-handoff-app
-```
-
-Or
-
-```bash
+npm install -g handoff-app
 handoff-app init
 ```
 
