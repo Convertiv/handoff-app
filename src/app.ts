@@ -572,7 +572,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     // create empty directory
     await fs.ensureDir(moduleOutput);
   }
-  const nextProcess = spawn('npx', ['next', 'dev', '--port', String(port)], {
+  const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '--port', String(port)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {
@@ -633,7 +633,7 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   await persistClientConfig(handoff);
 
   // Run
-  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {

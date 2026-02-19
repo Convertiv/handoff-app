@@ -100,20 +100,25 @@ const nextConfig = {
       return content;
     },
   },
-  webpack: (config) => {
-    config.resolve.fallback = { fs: false };
-    config.resolve.alias['@handoff'] = path.resolve('%HANDOFF_MODULE_PATH%/src');
-    config.resolve.modules.push(path.resolve('dist/app'));
-    config.resolve.modules.push(path.resolve('node_modules'));
-    config.resolveLoader.modules.push(path.resolve('node_modules'));
-    config.module.rules.push({
-      test: /\.svg$/i,
-      type: 'asset',
-    });
-    config.module.rules.push({
-      test: /\.html$/i,
-      loader: 'html-loader',
-    });
+  turbopack: { 
+    resolveAlias: {
+      '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+      '@': path.resolve('.'),
+    },
+    resolveExtensions: [
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+    ],
+  },
+  webpack: (config, { isServer }) => {
+    // Add aliases for webpack (mirrors turbopack.resolveAlias)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
+      '@': path.resolve('.'),
+    };
     return config;
   },
 };

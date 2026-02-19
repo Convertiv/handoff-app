@@ -2,13 +2,15 @@ import { PreviewObject } from '@handoff/types';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
-import Handlebars from 'handlebars';
+import Handlebars from 'handlebars/dist/cjs/handlebars';
 import { useEffect, useState } from 'react';
 import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
 import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
 import sass from 'react-syntax-highlighter/dist/esm/languages/prism/scss';
-import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -16,12 +18,20 @@ import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { Collapsible } from '../ui/collapsible';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+// Register all supported languages
+SyntaxHighlighter.registerLanguage('javascript', js);
 SyntaxHighlighter.registerLanguage('js', js);
 SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('jsx', jsx);
 SyntaxHighlighter.registerLanguage('markdown', markdown);
 SyntaxHighlighter.registerLanguage('sass', sass);
+SyntaxHighlighter.registerLanguage('scss', sass);
 SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('ts', typescript);
 SyntaxHighlighter.registerLanguage('html', html);
+SyntaxHighlighter.registerLanguage('xml', html);
 /**
  * Highlight code for preview elements
  * @param param0
@@ -111,22 +121,91 @@ export const CodeHighlight: React.FC<{
     Handlebars.registerHelper('field', (_, options) => options.fn(this));
   });
 
-  const labels = {
+  const labels: Record<string, string> = {
     code: 'Code',
     html: 'HTML',
     css: 'CSS',
-    js: 'Javascript',
+    js: 'JavaScript',
+    javascript: 'JavaScript',
+    jsx: 'JSX',
+    tsx: 'TSX',
+    typescript: 'TypeScript',
+    ts: 'TypeScript',
     sass: 'SASS',
+    scss: 'SCSS',
     sharedStyles: 'Shared CSS',
-  };
-  const getLabel = (state: string) => {
-    if (state === 'code' && typeof data === 'object' && data.format === 'react') return 'React';
-    return labels[state] || state;
+    json: 'JSON',
+    markdown: 'Markdown',
   };
 
-  const language = (activeState: string) => {
-    if (typeof data === 'object' && 'code' in data && !!data.code && activeState === 'code' && data.format === 'react') return 'tsx';
-    return activeState === 'html' ? type : activeState;
+  const getLabel = (state: string): string => {
+    if (state === 'code' && typeof data === 'object') {
+      const format = data.format?.toLowerCase();
+      if (format === 'react' || format === 'tsx') return 'React (TSX)';
+      if (format === 'jsx') return 'React (JSX)';
+      if (format === 'typescript' || format === 'ts') return 'TypeScript';
+      if (format === 'javascript' || format === 'js') return 'JavaScript';
+    }
+    return labels[state] || state.charAt(0).toUpperCase() + state.slice(1);
+  };
+
+  /**
+   * Determines the appropriate syntax highlighting language based on the active state and data format
+   */
+  const language = (activeState: string): string => {
+    if (typeof data !== 'object') {
+      return activeState === 'html' ? type : activeState;
+    }
+
+    // Handle React/JSX/TSX code format
+    if ('code' in data && !!data.code && activeState === 'code') {
+      const format = data.format?.toLowerCase();
+      if (format === 'react' || format === 'tsx') return 'tsx';
+      if (format === 'jsx') return 'jsx';
+      if (format === 'typescript' || format === 'ts') return 'typescript';
+      if (format === 'javascript' || format === 'js') return 'javascript';
+    }
+
+    // Handle JavaScript state
+    if (activeState === 'js') {
+      // Check if the JS code contains JSX syntax (common patterns)
+      const jsCode = 'js' in data ? data.js : '';
+      if (typeof jsCode === 'string' && hasJsxSyntax(jsCode)) {
+        return 'jsx';
+      }
+      return 'javascript';
+    }
+
+    // Map common state names to language identifiers
+    const languageMap: Record<string, string> = {
+      html: type || 'html',
+      css: 'css',
+      sass: 'scss',
+      sharedStyles: 'css',
+      json: 'json',
+    };
+
+    return languageMap[activeState] || activeState;
+  };
+
+  /**
+   * Detects if code contains JSX syntax patterns
+   */
+  const hasJsxSyntax = (code: string): boolean => {
+    // Look for common JSX patterns:
+    // - Self-closing tags with attributes: <Component prop="value" />
+    // - Opening tags with attributes: <Component prop="value">
+    // - Fragment syntax: <> or </>
+    // - JSX expressions: {expression}
+    const jsxPatterns = [
+      /<[A-Z][a-zA-Z0-9]*\s*[^>]*\/>/,  // Self-closing component tags
+      /<[A-Z][a-zA-Z0-9]*\s*[^>]*>/,    // Opening component tags
+      /<\/[A-Z][a-zA-Z0-9]*>/,          // Closing component tags
+      /<>\s*|<\/>/,                      // Fragment syntax
+      /className\s*=/,                   // className attribute (React-specific)
+      /\{[^}]+\}/,                       // JSX expressions (basic check)
+    ];
+    return jsxPatterns.some(pattern => pattern.test(code));
   };
 
   useEffect(() => {
@@ -136,8 +215,11 @@ export const CodeHighlight: React.FC<{
       return;
     }
 
-    if ('code' in data && !!data.code) {
+    if ('code' in data && !!data.code && data.format === 'handlebars') {
       setCode(Handlebars.compile(data.code)({ properties: currentValues }));
+      return;
+    } else if ('code' in data && !!data.code && data.format === 'react') {
+      setCode(data.code);
       return;
     }
 

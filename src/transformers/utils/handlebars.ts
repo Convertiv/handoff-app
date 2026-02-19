@@ -60,8 +60,8 @@ export const createHandlebarsContext = (
   previewData: { values?: any }
 ): HandlebarsContext => {
   return {
-    style: `<link rel="stylesheet" href="/api/component/shared.css"><link rel="stylesheet" href="/api/component/${data.id}.css">\n<link rel="stylesheet" href="/assets/css/preview.css">`,
-    script: `<script src="/api/component/${data.id}.js"></script>\n<script src="/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
+    style: `<link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/shared.css"><link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${data.id}.css">\n<link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css">`,
+    script: `<script src="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${data.id}.js"></script>\n<script src="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,
     title: data.title,

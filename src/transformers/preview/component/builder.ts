@@ -270,6 +270,10 @@ export async function processComponents(
        */
       if (!buildPlan.validationMode) {
         data.validations = existingData.validations;
+      }else{
+        // in validation mode, we want to keep the properties from the previous build
+        // so that we can see the changes to the properties in the validation results
+        data.properties = existingData.properties;
       }
     }
 
@@ -303,6 +307,7 @@ export async function processComponents(
     data.properties = ensureIds(data.properties);
 
     // Write the updated component data to the API file for external access and caching.
+    //console.log('data', data);
     await writeComponentApi(runtimeComponentId, data, handoff, []);
 
     // Build the summary metadata for this component.
@@ -358,7 +363,7 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     tags: data.tags ? data.tags : [],
     properties: data.properties,
     previews: data.previews,
-    path: `/api/component/${id}.json`,
+    path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
   };
 };
 

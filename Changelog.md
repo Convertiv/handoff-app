@@ -6,7 +6,63 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.0.2] - 2027-01-12
+## \[1.0.3] - 2026-02-17
+
+Bugfixes, UX improvements to the component page, improvements to react docgen,
+a new quickstart command, and security fixes.
+
+## New Quickstart
+
+* Running `npx create-handoff-app` will scaffold up a new handoff project
+  in the current directory. The wizard will walk you through either creating
+  an empty project, or scaffolding a simple initial component and frontend
+  stack.
+
+## UX Features
+
+* Properties of a component are now nested, with indications of the number and
+  type of children properties. This makes it easier to understand how properties
+  are structured and related
+* The API response documentation is now a tree view, rather a formated JSON
+  object. This makes it much easier to see and reason about the JSON response.
+
+## Bug Fixes
+
+* The API preview would through a 500 error under some conditions
+* Using TSX components would cause an error in the code preview if the tsx component
+  used some kinds of valid react formatting.
+* If you create pages without a declared weight, handoff would throw an error
+* There was an old structure in the way we used handlebars that surfaces a warning
+  on build.  We've updated that method.
+* We removed an old page template that was no longer needed.
+* The API calls to the component url were not working well in subpaths.
+
+## Type Gen
+
+* When using TSX instead of handlebars, the properties can be automatically
+  generated from the exported type. This version improves the parsing of those
+  types, to descend into object and array subtypes and parse out the specific
+  subtypes included there.
+
+## API Additions
+
+* The pipeline now generates an icon sprite and an icon manifest file.  These
+  files are loaded into the root of the /api.
+  * You can fetch the sprite file at `/api/icons-sprite.svg`
+  * You can fetch the manifest at `/api/icons-sprite-manifest.json`
+
+## Security
+
+* Updating Next to 15.5.12 to close a security risk with server side rendered components.
+  Since Handoff does not use server side rendered components, handoff sites are not
+  vulnerable to this risks.
+
+## QoL Improvements
+
+* Fixes a bug in webpack that made the include path lookups fail.  @handoff and @/util now
+  works properly.
+
+## \[1.0.2] - 2026-01-12
 
 Bugfixes focused on developer quality of life.
 
