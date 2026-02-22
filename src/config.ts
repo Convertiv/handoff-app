@@ -15,6 +15,10 @@ export const defaultConfig = (): Config => ({
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
   useVariables: Boolean(process.env.HANDOFF_USE_VARIABLES) ?? false,
+  reactDocgen: {
+    maxDepth: 7,
+    excludeDirectories: ['dist', 'build', '.next'],
+  },
   app: {
     theme: 'default',
     title: 'Convertiv Design System',

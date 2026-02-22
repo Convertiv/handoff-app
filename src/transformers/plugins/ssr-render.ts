@@ -7,7 +7,12 @@ import ReactDOMServer from 'react-dom/server';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
-import { generatePropertiesFromDocgen } from '../docgen';
+import {
+  enrichPropertiesWithDocgen,
+  generateDocsArtifact,
+  generatePropertiesFromDocgen,
+  getPropertiesFromGeneratedDocs,
+} from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
 import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
@@ -64,7 +69,7 @@ async function loadComponentSchemaAndModule(
       // Try to load schema from component exports
       properties = await loadSchemaFromComponent(moduleExports.exports, handoff);
 
-      // If no schema found, use react-docgen-typescript
+      // If no schema found, use shared docgen fallback
       if (!properties) {
         properties = await generatePropertiesFromDocgen(componentPath, handoff);
       }
@@ -176,6 +181,7 @@ export function ssrRenderPlugin(
 
       // Load component schema and module
       const [schemaProperties, ReactComponent] = await loadComponentSchemaAndModule(componentData, componentPath, handoff);
+      const generatedDocs = await generateDocsArtifact(componentPath, handoff);
 
       if (!ReactComponent) {
         Logger.error(`Failed to load React component for ${componentId}`);
@@ -185,6 +191,12 @@ export function ssrRenderPlugin(
       // Apply schema properties if found
       if (schemaProperties) {
         componentData.properties = schemaProperties;
+      }
+
+      if (generatedDocs) {
+        const docgenProperties = getPropertiesFromGeneratedDocs(generatedDocs, componentPath, handoff);
+        componentData.properties = enrichPropertiesWithDocgen(componentData.properties, docgenProperties) || {};
+        componentData.docgen = generatedDocs;
       }
 
       // Ensure components object exists

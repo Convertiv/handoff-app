@@ -51,6 +51,12 @@ module.exports = {
     components: ["components/button"]
   },
 
+  // Optional handoff-docgen settings used by component docs generation
+  // reactDocgen: {
+  //   maxDepth: 7,
+  //   excludeDirectories: ["dist", "build", ".next"]
+  // },
+
   hooks: {
     /**
      * Optional validation callback for components
