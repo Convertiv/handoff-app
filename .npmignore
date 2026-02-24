@@ -27,7 +27,6 @@ yarn-error.log*
 
 # env files
 .env*
-!.env.example
 
 # templates
 !templates/
