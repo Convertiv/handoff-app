@@ -289,8 +289,15 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
+const buildBasePath = () => {
+  if(!process.env.HANDOFF_APP_BASE_PATH) {
+    return '';
+  }
+  return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '') + '/';
+};
+
 const staticBuildComponentMenu = (type?: boolean | string) => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+  const basePath = buildBasePath();
   let menu = [];
   let components = fetchComponents({ includeTokens: false });
   if (typeof type === 'string' && type !== '') {
@@ -321,7 +328,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
 };
 
 const staticBuildTokensMenu = () => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+  const basePath = buildBasePath();
 
   const menu = [
     {
@@ -374,7 +381,7 @@ const staticBuildTokensMenu = () => {
 };
 
 const staticBuildTokenMenu = () => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+    const basePath = buildBasePath();
 
   let subSections = {
     title: 'Tokens',
