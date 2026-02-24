@@ -9,7 +9,7 @@ export interface BuildComponentsArgs extends SharedArgs {
 
 const command: CommandModule<{}, BuildComponentsArgs> = {
   command: 'build:components [component]',
-  describe: 'Build the current integration components. Pass a name to build a specific component.',
+  describe: 'Build the current project components. Pass a name to build a specific component.',
   builder: (yargs) => {
     return getSharedOptions(yargs).positional('component', {
       describe: 'The name of the component',
