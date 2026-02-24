@@ -126,7 +126,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
       return;
     }
   }
-  const templatePath = path.join(handoff.modulePath, 'config', 'templates/integration/components/template');
+  const templatePath = path.join(handoff.modulePath, 'config', 'templates/component');
   const htmlPath = path.resolve(templatePath, 'template.hbs');
   const htmlTemplate = fs.readFileSync(htmlPath, 'utf8');
   fs.writeFileSync(targetHtml, htmlTemplate);
