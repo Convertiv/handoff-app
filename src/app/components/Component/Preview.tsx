@@ -496,12 +496,26 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
 export const getVariantForType = (type: string) => {
   switch (type.toLowerCase()) {
     case 'text':
+    case 'string':
+    case 'richtext':
       return 'green';
     case 'image':
       return 'info';
+    case 'link':
+    case 'button':
+      return 'purple';
+    case 'video':
     case 'video_file':
     case 'video_embed':
       return 'warning';
+    case 'select':
+    case 'enum':
+      return 'orange';
+    case 'color':
+      return 'pink';
+    case 'number':
+    case 'boolean':
+      return 'secondary';
     default:
       return 'default';
   }
@@ -519,8 +533,8 @@ const getNestedProperties = (row: SlotMetadata): SlotMetadata[] | null => {
       key,
     }));
   }
-  // For objects with properties
-  if (row.type === 'object' && row.properties) {
+  // For objects and semantic types with properties (image, link, button, video)
+  if (row.properties && Object.keys(row.properties).length > 0) {
     return Object.keys(row.properties).map((key) => ({
       ...row.properties![key],
       key,
@@ -529,13 +543,10 @@ const getNestedProperties = (row: SlotMetadata): SlotMetadata[] | null => {
   return null;
 };
 
-/**
- * Check if a row has nested properties that can be expanded
- */
 const hasNestedProperties = (row: SlotMetadata): boolean => {
   return (
     (row.type === 'array' && !!row.items?.properties && Object.keys(row.items.properties).length > 0) ||
-    (row.type === 'object' && !!row.properties && Object.keys(row.properties).length > 0)
+    (!!row.properties && Object.keys(row.properties).length > 0)
   );
 };
 
@@ -615,7 +626,12 @@ const ExpandableTableRow: React.FC<{
     const getSizeDisplay = (row: SlotMetadata) => {
       if (!row.rules) return '-';
 
-      // Find the first applicable size rule
+      if (row.rules.minItems !== undefined || row.rules.maxItems !== undefined) {
+        const min = row.rules.minItems ?? '-';
+        const max = row.rules.maxItems ?? '-';
+        return `${min} - ${max} items`;
+      }
+
       const sizeRules = ['dimensions', 'content', 'maxSize'];
       const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
 
@@ -686,6 +702,11 @@ const ExpandableTableRow: React.FC<{
             {row.type === 'array' && row.items?.type && (
               <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
                 {row.items.type}[]
+              </Badge>
+            )}
+            {(row.type === 'select' || row.type === 'enum') && (row as any).options && (
+              <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
+                {((row as any).options as any[]).length} options
               </Badge>
             )}
           </TableCell>

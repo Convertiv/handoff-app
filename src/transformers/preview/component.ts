@@ -17,31 +17,48 @@ export interface ComponentMetadata {
 }
 
 export enum SlotType {
+  // Primitives
   TEXT = 'text',
-  IMAGE = 'image',
-  BUTTON = 'button',
-  ARRAY = 'array',
+  STRING = 'string',
+  RICHTEXT = 'richtext',
   NUMBER = 'number',
   BOOLEAN = 'boolean',
-  OBJECT = 'object',
-  FUNCTION = 'function',
+  COLOR = 'color',
+
+  // Selection
+  SELECT = 'select',
   ENUM = 'enum',
+
+  // Semantic types with object value shapes
+  IMAGE = 'image',
+  LINK = 'link',
+  BUTTON = 'button',
+  VIDEO = 'video',
+
+  // Structural types
+  ARRAY = 'array',
+  OBJECT = 'object',
+
+  // Escape hatches
+  FUNCTION = 'function',
   ANY = 'any',
 }
+
+export type SelectOption = string | { value: string; label: string };
 
 export interface SlotMetadata {
   id?: string;
   name: string;
-  description: string;
-  generic: string;
-  default?: string;
+  description?: string;
+  generic?: string;
+  default?: any;
   type: SlotType;
-  // used if type is array
+  options?: SelectOption[];
   items?: {
     type: SlotType;
+    name?: string;
     properties?: { [key: string]: SlotMetadata };
   };
-  // Used if type is object
   properties?: { [key: string]: SlotMetadata };
   key?: string;
   rules?: RuleObject;
@@ -54,17 +71,17 @@ export type RuleObject = {
     max: number;
   };
   dimensions?: {
-    width: number;
-    height: number;
-    min: {
+    width?: number;
+    height?: number;
+    min?: {
       width: number;
       height: number;
     };
-    max: {
+    max?: {
       width: number;
       height: number;
     };
-    recommend: {
+    recommend?: {
       width: number;
       height: number;
     };
@@ -72,6 +89,8 @@ export type RuleObject = {
   filesize?: number;
   filetype?: string;
   pattern?: string;
+  minItems?: number;
+  maxItems?: number;
 };
 
 export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
