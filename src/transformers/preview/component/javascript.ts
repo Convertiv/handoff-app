@@ -1,9 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initRuntimeConfig } from '../../../index';
+import { initRuntimeConfig } from '../../../config';
+import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import viteBaseConfig from '../../config';
+import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 

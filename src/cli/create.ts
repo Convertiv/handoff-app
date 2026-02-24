@@ -9,7 +9,7 @@ import * as path from 'path';
  */
 const getVersion = (): string => {
   try {
-    const packageJsonPath = path.resolve(__dirname, '../package.json');
+    const packageJsonPath = path.resolve(__dirname, '../../package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     return packageJson.version || 'unknown';
   } catch {
@@ -240,7 +240,7 @@ const create = async (): Promise<void> => {
     const spinner = p.spinner();
     spinner.start('Creating project files...');
 
-    const templateDir = path.resolve(__dirname, '../templates/default');
+    const templateDir = path.resolve(__dirname, '../../templates/default');
 
     if (!fs.existsSync(templateDir)) {
       throw new CreateError(`Template directory not found at ${templateDir}. This may indicate a packaging issue.`);

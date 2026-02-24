@@ -1,5 +1,4 @@
-import Handoff from '.';
-import { ClientConfig, Config } from './types/config';
+import { ClientConfig, Config } from '../types/config';
 
 export interface ImageStyle {
   name: string;
@@ -14,7 +13,7 @@ export const defaultConfig = (): Config => ({
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
-  useVariables: Boolean(process.env.HANDOFF_USE_VARIABLES) ?? false,
+  useVariables: process.env.HANDOFF_USE_VARIABLES === 'true',
   reactDocgen: {
     maxDepth: 7,
     excludeDirectories: ['dist', 'build', '.next'],
@@ -57,12 +56,10 @@ export const defaultConfig = (): Config => ({
 /**
  * Retrieves the client configuration from the provided handoff configuration.
  *
- * @param handoff - The handoff object containing the configuration details.
+ * @param config - The full handoff Config object.
  * @returns The client configuration object.
  */
-export const getClientConfig = (handoff: Handoff): ClientConfig => {
-  const config = handoff.config;
-
+export const getClientConfig = (config: Config): ClientConfig => {
   const {
     app,
     exportsOutputDirectory,

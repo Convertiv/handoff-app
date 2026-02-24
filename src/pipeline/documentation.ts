@@ -1,10 +1,10 @@
 import fs from 'fs';
 import { Types as HandoffTypes } from 'handoff-core';
 import path from 'path';
-import Handoff from '.';
-import { getAPIPath } from './transformers/preview/component/api';
-import { generateSvgSprite, generateSpriteManifest } from './transformers/utils/svg-sprite';
-import { Logger } from './utils/logger';
+import Handoff from '..';
+import { getAPIPath } from '../transformers/preview/component/api';
+import { generateSpriteManifest, generateSvgSprite } from '../transformers/utils/svg-sprite';
+import { Logger } from '../utils/logger';
 
 export const createDocumentationObject = async (handoff: Handoff): Promise<HandoffTypes.IDocumentationObject> => {
   const runner = await handoff.getRunner();
@@ -13,7 +13,7 @@ export const createDocumentationObject = async (handoff: Handoff): Promise<Hando
 
   const icons = await runner.extractAssets('Icons');
   await writeAssets(handoff, icons, 'icons');
-  
+
   // Generate SVG sprite from icons
   await writeSvgSprite(handoff, icons);
 
@@ -57,7 +57,7 @@ const writeSvgSprite = async (handoff: Handoff, icons: HandoffTypes.IAssetObject
   }
 
   const apiPath = getAPIPath(handoff);
-  
+
   // Ensure the API path exists
   if (!fs.existsSync(apiPath)) {
     fs.mkdirSync(apiPath, { recursive: true });
