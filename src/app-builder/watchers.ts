@@ -2,6 +2,8 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { buildMainCss } from '../transformers/preview/component/css';
+import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
@@ -87,6 +89,58 @@ export const watchPages = (handoff: Handoff, chokidarConfig: chokidar.WatchOptio
       }
     });
   }
+};
+
+/**
+ * Watches global SCSS and JS entry points for changes.
+ * Rebuilds the main bundles and all components when a global entry changes,
+ * since per-component builds may depend on these shared entries.
+ */
+export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+  const scssEntry = handoff.runtimeConfig?.entries?.scss;
+  const jsEntry = handoff.runtimeConfig?.entries?.js;
+
+  const pathsToWatch: string[] = [];
+
+  if (scssEntry && fs.existsSync(scssEntry)) {
+    const stat = fs.statSync(scssEntry);
+    pathsToWatch.push(stat.isDirectory() ? scssEntry : path.dirname(scssEntry));
+  }
+
+  if (jsEntry && fs.existsSync(jsEntry)) {
+    pathsToWatch.push(path.dirname(jsEntry));
+  }
+
+  if (pathsToWatch.length === 0) return;
+
+  chokidar.watch(pathsToWatch, chokidarConfig).on('all', async (event, file) => {
+    switch (event) {
+      case 'add':
+      case 'change':
+      case 'unlink':
+        if (!state.debounce) {
+          state.debounce = true;
+          try {
+            Logger.warn('Global entry changed. Rebuilding bundles and components...');
+
+            if (scssEntry && file.endsWith('.scss')) {
+              await buildMainCss(handoff);
+            }
+
+            if (jsEntry && file.endsWith('.js')) {
+              await buildMainJS(handoff);
+            }
+
+            await processComponents(handoff);
+          } catch (e) {
+            Logger.error('Error rebuilding after global entry change:', e);
+          } finally {
+            state.debounce = false;
+          }
+        }
+        break;
+    }
+  });
 };
 
 /**
