@@ -13,7 +13,7 @@ src/transformers/
 ├── plugins.ts                    # Main entry point (re-exports)
 ├── types.ts                      # TypeScript interfaces and types
 ├── docgen/
-│   └── index.ts                  # React docgen typescript integration
+│   └── index.ts                  # handoff-docgen integration
 ├── plugins/
 │   ├── index.ts                 # Plugin exports
 │   ├── handlebars-previews.ts   # Handlebars previews plugin
@@ -50,7 +50,7 @@ The module supports multiple approaches for extracting component schemas:
 
 1. **Separate Schema Files**: Dedicated `.ts`/`.tsx` files exporting schema objects
 2. **Component-Embedded Schemas**: Schemas exported from component files
-3. **React Docgen Integration**: Automatic prop extraction using react-docgen-typescript
+3. **Docgen Integration**: Automatic prop extraction using handoff-docgen
 4. **Custom Schema Hooks**: User-defined schema processing via configuration hooks
 
 ## Configuration Hooks
@@ -74,5 +74,5 @@ handoff.config.hooks.getSchemaFromExports = (exports) => { /* custom logic */ };
 The schema processing follows a hierarchical approach:
 1. Check for separate schema file (`data.entries.schema`)
 2. Look for embedded schema in component exports
-3. Fall back to react-docgen-typescript analysis
+3. Fall back to handoff-docgen analysis
 4. Apply custom schema processing hooks if configured

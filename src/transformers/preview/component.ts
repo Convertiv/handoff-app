@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import type { DocAnnotation, TypeNode } from 'handoff-docgen';
 import path from 'path';
 import sass from 'sass';
 import Handoff from '../../index';
@@ -45,6 +46,11 @@ export interface SlotMetadata {
   properties?: { [key: string]: SlotMetadata };
   key?: string;
   rules?: RuleObject;
+  docgenType?: string;
+  deepType?: TypeNode;
+  typeRefs?: string[];
+  warnings?: string[];
+  annotations?: DocAnnotation[];
 }
 
 export type RuleObject = {
