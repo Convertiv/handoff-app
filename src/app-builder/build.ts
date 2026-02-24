@@ -3,6 +3,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
+import { buildMainCss } from '../transformers/preview/component/css';
+import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
@@ -128,6 +130,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   // Initial processing of the components with caching enabled
   // This will skip rebuilding components whose source files haven't changed
   await processComponents(handoff, undefined, undefined, { useCache: true });
+  await buildMainJS(handoff);
+  await buildMainCss(handoff);
 
   const appPath = await initializeProjectApp(handoff);
 
