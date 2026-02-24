@@ -309,7 +309,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
       if (component.name) {
         title = component.name;
       }
-      menuGroup.menu.push({ path: `${basePath}/system/component/${component.id}`, title });
+      menuGroup.menu.push({ path: `${basePath}system/component/${component.id}`, title });
     });
     // sort the menu group by name alphabetical
     menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
@@ -326,19 +326,19 @@ const staticBuildTokensMenu = () => {
   const menu = [
     {
       title: `Foundations`,
-      path: `${basePath}/system/tokens/foundations`,
+      path: `${basePath}system/tokens/foundations`,
       menu: [
         {
           title: `Colors`,
-          path: `${basePath}/system/tokens/foundations/colors`,
+          path: `${basePath}system/tokens/foundations/colors`,
         },
         {
           title: `Effects`,
-          path: `${basePath}/system/tokens/foundations/effects`,
+          path: `${basePath}system/tokens/foundations/effects`,
         },
         {
           title: `Typography`,
-          path: `${basePath}/system/tokens/foundations/typography`,
+          path: `${basePath}system/tokens/foundations/typography`,
         },
       ],
     },
@@ -358,14 +358,14 @@ const staticBuildTokensMenu = () => {
       if (component.name) {
         title = component.name;
       }
-      componentMenuItems.push({ path: `${basePath}/system/tokens/components/${component.id}`, title });
+      componentMenuItems.push({ path: `${basePath}system/tokens/components/${component.id}`, title });
     });
   });
 
   if (componentMenuItems.length > 0) {
     menu.push({
       title: `Components`,
-      path: `${basePath}/system/tokens/components`,
+      path: `${basePath}system/tokens/components`,
       menu: componentMenuItems,
     });
   }
@@ -378,7 +378,7 @@ const staticBuildTokenMenu = () => {
 
   let subSections = {
     title: 'Tokens',
-    path: `${basePath}/system/tokens`,
+    path: `${basePath}system/tokens`,
     menu: [],
   };
   const tokens = getTokens();

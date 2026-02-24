@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.0.6] - 2026-02-24
+
+Version 1.0.4 fixed an issue when running Handoff in subpaths (eg.
+https://mysite.com/folder/handoff). We discovered a minor bug in that fix that
+causes some menu constructs to work poorly. This release fixes that issue.
+
 ## \[1.0.5] - 2026-02-19
 
 This is a minor improvement release that extends the quickstart released in the
