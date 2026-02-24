@@ -90,34 +90,6 @@ export const watchPages = (handoff: Handoff, chokidarConfig: chokidar.WatchOptio
 };
 
 /**
- * Watches the SCSS entry point for changes.
- */
-export const watchScss = async (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
-  if (handoff.runtimeConfig?.entries?.scss && fs.existsSync(handoff.runtimeConfig?.entries?.scss)) {
-    const stat = await fs.stat(handoff.runtimeConfig.entries.scss);
-    chokidar
-      .watch(stat.isDirectory() ? handoff.runtimeConfig.entries.scss : path.dirname(handoff.runtimeConfig.entries.scss), chokidarConfig)
-      .on('all', async (event, file) => {
-        switch (event) {
-          case 'add':
-          case 'change':
-          case 'unlink':
-            if (!state.debounce) {
-              state.debounce = true;
-              try {
-                await handoff.getSharedStyles();
-              } catch (e) {
-                Logger.error('Error processing shared styles:', e);
-              } finally {
-                state.debounce = false;
-              }
-            }
-        }
-      });
-  }
-};
-
-/**
  * Maps configuration entry types to component segments.
  */
 export const mapEntryTypeToSegment = (type: keyof ComponentListObject['entries']): ComponentSegment | undefined => {

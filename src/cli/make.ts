@@ -107,6 +107,8 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
  * Make a new component
  * @param handoff
  */
+const DEFAULT_COMPONENTS_DIR = 'components';
+
 export const makeComponent = async (handoff: Handoff, name: string) => {
   if (!name) {
     Logger.error(`Component name must be set`);
@@ -115,7 +117,19 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
   name = name.replace('.html', '');
 
-  let workingPath = path.resolve(path.join(handoff.workingPath, `integration/components/${name}`));
+  let componentsRoot: string;
+  if (handoff.config?.entries?.components?.length) {
+    componentsRoot = path.resolve(handoff.workingPath, handoff.config.entries.components[0]);
+  } else {
+    componentsRoot = path.resolve(handoff.workingPath, DEFAULT_COMPONENTS_DIR);
+    Logger.warn(
+      `No entries.components configured in handoff.config.js. ` +
+      `Scaffolding into "${DEFAULT_COMPONENTS_DIR}/". ` +
+      `Add this path to entries.components in your config so the build picks it up.`
+    );
+  }
+
+  let workingPath = path.resolve(componentsRoot, name);
   if (!fs.existsSync(workingPath)) {
     fs.mkdirSync(workingPath, { recursive: true });
   }

@@ -7,7 +7,7 @@ import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration, watchScss } from './watchers';
+import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
 import { createWebSocketServer } from './websocket';
 
 /**
@@ -184,7 +184,6 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   watchPublicDirectory(handoff, wss, state, chokidarConfig);
   watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
   watchRuntimeConfiguration(handoff, state);
-  await watchScss(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
 };
 
