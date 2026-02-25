@@ -218,7 +218,7 @@ export const ComponentDisplay: React.FC<{
                   </>
                 ) : (
                   <>
-                    <Select defaultValue={previewUrl} onValueChange={setPreviewUrl}>
+                    <Select value={previewUrl ?? undefined} onValueChange={setPreviewUrl}>
                       <SelectTrigger className="h-8 w-[180px] border-none border-gray-200 bg-white text-xs shadow-none dark:border-gray-900">
                         <SelectValue placeholder="Preview" />
                       </SelectTrigger>
