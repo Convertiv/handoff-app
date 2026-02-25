@@ -109,24 +109,29 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
 
+  const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
+  const componentRoute = (componentId: string) => `${normalizedBasePath}/system/component/${componentId}`;
+
   const fetchComponents = async () => {
-    let data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`).then((res) => res.json());
+    let data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 
   const previousLink = previousComponent ? {
-    href: previousComponent ? `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${previousComponent.id}` : null,
+    href: previousComponent ? componentRoute(previousComponent.id) : null,
     title: previousComponent ? previousComponent.name : null,
   } : null;
   const nextLink = nextComponent ? {
-    href: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${nextComponent.id}`,
+    href: componentRoute(nextComponent.id),
     title: nextComponent.name,
   } : null;
 
   useEffect(() => {
+    setComponent(undefined);
     fetchComponents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!component) return;
@@ -195,11 +200,19 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
           {Array.isArray(componentPreviews) ? (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
+            <HotReloadProvider key={`hot-reload-${id}`} connect={componentHotReloadIsAvailable}>
               {componentPreviews.map(([title, cp], cpi) => (
-                <>
-                  <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
+                <React.Fragment key={`${id}-${cp.id}`}>
+                  <PreviewContextProvider
+                    key={`preview-context-${cp.id}`}
+                    id={id}
+                    defaultMetadata={metadata}
+                    defaultMenu={menu}
+                    defaultPreview={cp}
+                    defaultConfig={config}
+                  >
                     <ComponentPreview
+                      key={`component-preview-${cp.id}`}
                       title={title}
                       bestPracticesCard={cpi === 0}
                       properties={cpi === componentPreviews.length - 1}
@@ -208,19 +221,20 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                       <p>Define a simple contact form</p>
                     </ComponentPreview>
                   </PreviewContextProvider>
-                </>
+                </React.Fragment>
               ))}
             </HotReloadProvider>
           ) : (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
+            <HotReloadProvider key={`hot-reload-${id}`} connect={componentHotReloadIsAvailable}>
               <PreviewContextProvider
+                key={`preview-context-${id}`}
                 id={id}
                 defaultMetadata={metadata}
                 defaultMenu={menu}
                 defaultPreview={componentPreviews}
                 defaultConfig={config}
               >
-                <ComponentPreview title={metadata.title} properties={true} validations={true}>
+                <ComponentPreview key={`component-preview-${id}`} title={metadata.title} properties={true} validations={true}>
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
