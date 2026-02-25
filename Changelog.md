@@ -8,6 +8,13 @@ and this project adheres to
 
 ## \[1.1.0]
 
+
+## \[1.0.6] - 2026-02-24
+
+Version 1.0.4 fixed an issue when running Handoff in subpaths (eg.
+https://mysite.com/folder/handoff). We discovered a minor bug in that fix that
+causes some menu constructs to work poorly. This release fixes that issue.
+
 ## \[1.0.5] - 2026-02-19
 
 This is a minor improvement release that extends the quickstart released in the

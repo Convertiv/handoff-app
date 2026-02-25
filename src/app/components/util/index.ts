@@ -289,8 +289,15 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
+const buildBasePath = () => {
+  if(!process.env.HANDOFF_APP_BASE_PATH) {
+    return '';
+  }
+  return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '') + '/';
+};
+
 const staticBuildComponentMenu = (type?: boolean | string) => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+  const basePath = buildBasePath();
   let menu = [];
   let components = fetchComponents({ includeTokens: false });
   if (typeof type === 'string' && type !== '') {
@@ -309,7 +316,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
       if (component.name) {
         title = component.name;
       }
-      menuGroup.menu.push({ path: `${basePath}/system/component/${component.id}`, title });
+      menuGroup.menu.push({ path: `${basePath}system/component/${component.id}`, title });
     });
     // sort the menu group by name alphabetical
     menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
@@ -321,24 +328,24 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
 };
 
 const staticBuildTokensMenu = () => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+  const basePath = buildBasePath();
 
   const menu = [
     {
       title: `Foundations`,
-      path: `${basePath}/system/tokens/foundations`,
+      path: `${basePath}system/tokens/foundations`,
       menu: [
         {
           title: `Colors`,
-          path: `${basePath}/system/tokens/foundations/colors`,
+          path: `${basePath}system/tokens/foundations/colors`,
         },
         {
           title: `Effects`,
-          path: `${basePath}/system/tokens/foundations/effects`,
+          path: `${basePath}system/tokens/foundations/effects`,
         },
         {
           title: `Typography`,
-          path: `${basePath}/system/tokens/foundations/typography`,
+          path: `${basePath}system/tokens/foundations/typography`,
         },
       ],
     },
@@ -358,14 +365,14 @@ const staticBuildTokensMenu = () => {
       if (component.name) {
         title = component.name;
       }
-      componentMenuItems.push({ path: `${basePath}/system/tokens/components/${component.id}`, title });
+      componentMenuItems.push({ path: `${basePath}system/tokens/components/${component.id}`, title });
     });
   });
 
   if (componentMenuItems.length > 0) {
     menu.push({
       title: `Components`,
-      path: `${basePath}/system/tokens/components`,
+      path: `${basePath}system/tokens/components`,
       menu: componentMenuItems,
     });
   }
@@ -374,11 +381,11 @@ const staticBuildTokensMenu = () => {
 };
 
 const staticBuildTokenMenu = () => {
-  const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '');
+    const basePath = buildBasePath();
 
   let subSections = {
     title: 'Tokens',
-    path: `${basePath}/system/tokens`,
+    path: `${basePath}system/tokens`,
     menu: [],
   };
   const tokens = getTokens();
