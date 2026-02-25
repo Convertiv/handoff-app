@@ -491,6 +491,50 @@ export const getVariantForType = (type: string) => {
 
 const getTypeLabel = (field: SlotMetadata): string => field.deepType?.display || field.docgenType || field.generic || field.type || 'unknown';
 
+const formatInlineValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return 'null';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const formatDefaultValue = (value: unknown): string | null => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => formatInlineValue(item)).join(', ')}]`;
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) {
+      return '{}';
+    }
+    return entries.map(([key, val]) => `${key}: ${formatInlineValue(val)}`).join(', ');
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
 const TableRows: React.FC<{
   rows: SlotMetadata[];
   openSheet: (field: SlotMetadata) => void;
@@ -650,6 +694,7 @@ const ExpandableTableRow: React.FC<{
   const [isExpanded, setIsExpanded] = useState(false);
   const canExpand = !!row.deepType || !!row.typeRefs?.length || !!row.warnings?.length;
   const typeLabel = getTypeLabel(row);
+  const defaultValue = formatDefaultValue(row.default);
 
   const handleRowClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.expand-toggle')) {
@@ -710,8 +755,8 @@ const ExpandableTableRow: React.FC<{
           {row.rules?.required ? 'Required' : 'Optional'}
         </TableCell>
         <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          <span className={`slot-description line-clamp-1 ${row.default ? '' : 'text-[11px] text-muted-foreground/70'}`}>
-            {row.default || '(no default)'}
+          <span className={`slot-description line-clamp-1 ${defaultValue ? '' : 'text-[11px] text-muted-foreground/70'}`}>
+            {defaultValue || '(no default)'}
           </span>
           <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-xs text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
             {row.description || '(no description)'}
