@@ -1,5 +1,5 @@
-import { PreviewObject } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
+import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 

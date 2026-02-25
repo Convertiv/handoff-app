@@ -1,6 +1,6 @@
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
-import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { Types as CoreTypes } from 'handoff-core';

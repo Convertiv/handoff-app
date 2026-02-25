@@ -1,6 +1,6 @@
 'use client';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';

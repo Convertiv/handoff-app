@@ -1,6 +1,6 @@
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PageSlice } from '@handoff/transformers/preview/types';
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { Types as CoreTypes } from 'handoff-core';
 import type { TypeNode, TypeNodeProperty } from 'handoff-docgen';
 import { startCase } from 'lodash';
@@ -564,16 +564,16 @@ const TableRows: React.FC<{
   rows,
   openSheet,
 }) => {
-  return (
-    <>
-      {rows.map((row, i) => {
-        if (!row) return null;
-        const currentPath = row.key || row.name || String(i);
-        return <ExpandableTableRow key={`row-${currentPath}-${i}`} row={row} openSheet={openSheet} />;
-      })}
-    </>
-  );
-};
+    return (
+      <>
+        {rows.map((row, i) => {
+          if (!row) return null;
+          const currentPath = row.key || row.name || String(i);
+          return <ExpandableTableRow key={`row-${currentPath}-${i}`} row={row} openSheet={openSheet} />;
+        })}
+      </>
+    );
+  };
 
 const AnnotationList: React.FC<{ annotations?: { name: string; text?: string }[] }> = ({ annotations }) => {
   if (!annotations?.length) {
@@ -668,33 +668,33 @@ const TypeNodeTree: React.FC<{ node?: TypeNode; depth?: number }> = ({ node, dep
 
       {node.kind === 'record'
         ? (() => {
-            if (node.indexSignature) {
-              return (
-                <div className="mt-3 rounded border border-gray-200/80 bg-white/70 p-2 dark:border-gray-800 dark:bg-gray-900/20">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Index signature</p>
-                  <TypeNodeTree node={node.indexSignature.key} depth={depth + 1} />
-                  <TypeNodeTree node={node.indexSignature.value} depth={depth + 1} />
-                </div>
-              );
-            }
+          if (node.indexSignature) {
             return (
-              <>
-                {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
-                {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
-              </>
+              <div className="mt-3 rounded border border-gray-200/80 bg-white/70 p-2 dark:border-gray-800 dark:bg-gray-900/20">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Index signature</p>
+                <TypeNodeTree node={node.indexSignature.key} depth={depth + 1} />
+                <TypeNodeTree node={node.indexSignature.value} depth={depth + 1} />
+              </div>
             );
-          })()
+          }
+          return (
+            <>
+              {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
+              {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
+            </>
+          );
+        })()
         : null}
 
       {node.kind === 'set' && node.elementType ? <TypeNodeTree node={node.elementType} depth={depth + 1} /> : null}
 
       {node.kind === 'map'
         ? (
-            <>
-              {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
-              {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
-            </>
-          )
+          <>
+            {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
+            {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
+          </>
+        )
         : null}
 
       {node.kind === 'ref' && node.refName ? (
@@ -713,123 +713,123 @@ const ExpandableTableRow: React.FC<{
   row,
   openSheet,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const canExpand = !!row.deepType || !!row.typeRefs?.length || !!row.warnings?.length;
-  const typeLabel = getTypeLabel(row);
-  const defaultValue = formatDefaultValue(row.default);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const canExpand = !!row.deepType || !!row.typeRefs?.length || !!row.warnings?.length;
+    const typeLabel = getTypeLabel(row);
+    const defaultValue = formatDefaultValue(row.default);
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.expand-toggle')) {
-      return;
-    }
-    openSheet(row);
-  };
+    const handleRowClick = (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest('.expand-toggle')) {
+        return;
+      }
+      openSheet(row);
+    };
 
-  const handleExpandToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(!isExpanded);
-  };
+    const handleExpandToggle = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsExpanded(!isExpanded);
+    };
 
-  return (
-    <>
-      <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={handleRowClick}>
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-3 py-1">
-          <div className="flex items-center">
-            {canExpand ? (
-              <button
-                className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                onClick={handleExpandToggle}
-                aria-label={isExpanded ? 'Collapse' : 'Expand'}
-              >
-                {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
-              </button>
-            ) : null}
-            <span className="truncate text-[15px]">{startCase(row.name)}</span>
-          </div>
-        </TableCell>
-        <TableCell className="overflow-hidden border-r-[0.5px] px-3.5 py-1">
-          <Badge variant={getVariantForType(row.type)} className="inline-flex max-w-full overflow-hidden rounded-xl px-2.5 align-middle">
-            <span className="block w-full truncate font-mono text-[11px]">
-              {summarizeTypeLabel(typeLabel)}
-            </span>
-          </Badge>
-          {row.warnings?.length ? (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
-                    <AlertCircle className="mr-1 h-3 w-3" />
-                    {row.warnings.length}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs rounded-sm px-2 py-1 text-[11px]">
-                  <div className="space-y-1">
-                    {row.warnings.map((warning, idx) => (
-                      <p key={`warning-${idx}`}>{warning}</p>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null}
-        </TableCell>
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          {row.rules?.required ? 'Required' : 'Optional'}
-        </TableCell>
-        <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          <span
-            className={`slot-description block w-full overflow-hidden text-ellipsis whitespace-nowrap ${defaultValue ? 'font-mono text-[12px] text-gray-700 dark:text-gray-200' : 'text-[11px] text-muted-foreground/70'}`}
-          >
-            {defaultValue || '(no default)'}
-          </span>
-          <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-[13px] text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
-            {row.description || '(no description)'}
-          </span>
-        </TableCell>
-      </TableRow>
-
-      {isExpanded && canExpand ? (
-        <TableRow className="border-b-[0.5px] bg-gray-50/40 dark:bg-gray-800/30">
-          <TableCell colSpan={4} className="border-l-[0.5px] border-r-[0.5px] px-4 py-3">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2 border-b border-gray-200/80 pb-2 dark:border-gray-800">
-                <p className="text-xs font-medium">Type tree</p>
-                <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
-                  {typeLabel}
-                </Badge>
-                {row.deepType?.truncated ? (
-                  <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
-                    truncated
-                  </Badge>
-                ) : null}
-                {row.deepType?.cycleDetected ? (
-                  <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
-                    cycleDetected
-                  </Badge>
-                ) : null}
-              </div>
-              {row.typeRefs?.length ? (
-                <div>
-                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Type refs</p>
-                  <div className="flex flex-wrap gap-1">
-                  {row.typeRefs.map((refName) => (
-                    <Badge key={refName} variant="outline" className="rounded-xl px-2 text-[10px]">
-                      {refName}
-                    </Badge>
-                  ))}
-                  </div>
-                </div>
+    return (
+      <>
+        <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={handleRowClick}>
+          <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-3 py-1">
+            <div className="flex items-center">
+              {canExpand ? (
+                <button
+                  className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                  onClick={handleExpandToggle}
+                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                  {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+                </button>
               ) : null}
-              <AnnotationList annotations={row.annotations} />
-              {row.deepType ? (
-                <TypeNodeTree node={row.deepType} />
-              ) : (
-                <p className="mt-2 text-xs text-muted-foreground">No deep type available. Fallback: {row.docgenType || row.type}</p>
-              )}
+              <span className="truncate text-[15px]">{startCase(row.name)}</span>
             </div>
           </TableCell>
+          <TableCell className="overflow-hidden border-r-[0.5px] px-3.5 py-1">
+            <Badge variant={getVariantForType(row.type)} className="inline-flex max-w-full overflow-hidden rounded-xl px-2.5 align-middle">
+              <span className="block w-full truncate font-mono text-[11px]">
+                {summarizeTypeLabel(typeLabel)}
+              </span>
+            </Badge>
+            {row.warnings?.length ? (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
+                      <AlertCircle className="mr-1 h-3 w-3" />
+                      {row.warnings.length}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs rounded-sm px-2 py-1 text-[11px]">
+                    <div className="space-y-1">
+                      {row.warnings.map((warning, idx) => (
+                        <p key={`warning-${idx}`}>{warning}</p>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : null}
+          </TableCell>
+          <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+            {row.rules?.required ? 'Required' : 'Optional'}
+          </TableCell>
+          <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
+            <span
+              className={`slot-description block w-full overflow-hidden text-ellipsis whitespace-nowrap ${defaultValue ? 'font-mono text-[12px] text-gray-700 dark:text-gray-200' : 'text-[11px] text-muted-foreground/70'}`}
+            >
+              {defaultValue || '(no default)'}
+            </span>
+            <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-[13px] text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
+              {row.description || '(no description)'}
+            </span>
+          </TableCell>
         </TableRow>
-      ) : null}
-    </>
-  );
-};
+
+        {isExpanded && canExpand ? (
+          <TableRow className="border-b-[0.5px] bg-gray-50/40 dark:bg-gray-800/30">
+            <TableCell colSpan={4} className="border-l-[0.5px] border-r-[0.5px] px-4 py-3">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2 border-b border-gray-200/80 pb-2 dark:border-gray-800">
+                  <p className="text-xs font-medium">Type tree</p>
+                  <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                    {typeLabel}
+                  </Badge>
+                  {row.deepType?.truncated ? (
+                    <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                      truncated
+                    </Badge>
+                  ) : null}
+                  {row.deepType?.cycleDetected ? (
+                    <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                      cycleDetected
+                    </Badge>
+                  ) : null}
+                </div>
+                {row.typeRefs?.length ? (
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Type refs</p>
+                    <div className="flex flex-wrap gap-1">
+                      {row.typeRefs.map((refName) => (
+                        <Badge key={refName} variant="outline" className="rounded-xl px-2 text-[10px]">
+                          {refName}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <AnnotationList annotations={row.annotations} />
+                {row.deepType ? (
+                  <TypeNodeTree node={row.deepType} />
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">No deep type available. Fallback: {row.docgenType || row.type}</p>
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : null}
+      </>
+    );
+  };

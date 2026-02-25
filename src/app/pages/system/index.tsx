@@ -1,4 +1,4 @@
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { ArrowRight, Badge, Webhook } from 'lucide-react';
 import type { GetStaticProps } from 'next';
 import Image from 'next/image';

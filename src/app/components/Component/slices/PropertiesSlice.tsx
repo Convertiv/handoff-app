@@ -1,4 +1,4 @@
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import React from 'react';
 import HeadersType from '../../Typography/Headers';
 import { ComponentProperties } from '../Preview';
