@@ -12,6 +12,7 @@ import makeTemplateCommand from './make/template';
 import scaffoldCommand from './scaffold';
 import startCommand from './start';
 import validateComponentsCommand from './validate/components';
+import validatePropertiesCommand from './validate/properties';
 
 export const commands = [
   buildAppCommand,
@@ -28,4 +29,5 @@ export const commands = [
   scaffoldCommand,
   startCommand,
   validateComponentsCommand,
+  validatePropertiesCommand,
 ];

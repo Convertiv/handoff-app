@@ -98,7 +98,23 @@ const mapTypeNameToSlotType = (typeName: string): SlotType => {
     case 'number':
       return SlotType.NUMBER;
     case 'string':
+      return SlotType.STRING;
+    case 'text':
       return SlotType.TEXT;
+    case 'richtext':
+      return SlotType.RICHTEXT;
+    case 'color':
+      return SlotType.COLOR;
+    case 'select':
+      return SlotType.SELECT;
+    case 'image':
+      return SlotType.IMAGE;
+    case 'link':
+      return SlotType.LINK;
+    case 'button':
+      return SlotType.BUTTON;
+    case 'video':
+      return SlotType.VIDEO;
     case 'array':
       return SlotType.ARRAY;
     case 'object':
@@ -112,7 +128,6 @@ const mapTypeNameToSlotType = (typeName: string): SlotType => {
     case 'any':
       return SlotType.ANY;
     default:
-      // Check for function patterns
       if (normalizedType?.includes('=>')) {
         return SlotType.FUNCTION;
       }

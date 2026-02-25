@@ -18,7 +18,7 @@ const humanReadableRule = (rule: string, value: any) => {
       if (value.type) {
         type = value.type;
       }
-      return `Contents should at least ${value.min} and at most ${value.max} ${type} long`;
+      return `Contents should be at least ${value.min} and at most ${value.max} ${type} long`;
     case 'minValue':
       return 'This field must be at least ' + value;
     case 'maxValue':
@@ -26,9 +26,10 @@ const humanReadableRule = (rule: string, value: any) => {
     case 'pattern':
       return 'This field must match the pattern ' + value;
     case 'dimensions':
+      if (!value?.min || !value?.max) return 'Dimensions not fully specified';
       return `Use a minimum size of ${value.min.width}x${value.min.height} and a maximum size of ${value.max.width}x${value.max.height}`;
     case 'maxSize':
-      // translate to human readable byte size
+    case 'filesize':
       if (value < 1024) {
         return `This field must be at most ${value} bytes`;
       }
@@ -36,6 +37,12 @@ const humanReadableRule = (rule: string, value: any) => {
         return `This field must be at most ${Math.floor(value / 1024)} KB`;
       }
       return `This field must be at most ${Math.floor(value / (1024 * 1024))} MB`;
+    case 'filetype':
+      return `Accepted file type: ${value}`;
+    case 'minItems':
+      return `At least ${value} item(s) required`;
+    case 'maxItems':
+      return `At most ${value} item(s) allowed`;
     case 'enum':
       return 'Enumeration';
     default:
@@ -46,10 +53,31 @@ const humanReadableRule = (rule: string, value: any) => {
 const humanReadableType = (type: string) => {
   switch (type) {
     case 'text':
-      return 'Text fields are for adding simple text.  They can have length restrictions and validation rules.';
+    case 'string':
+      return 'Text fields are for adding simple text. They can have length restrictions and validation rules.';
+    case 'richtext':
+      return 'Rich text fields support formatted HTML content like bold, italic, links, and lists.';
+    case 'number':
+      return 'Number fields accept numeric values.';
+    case 'boolean':
+      return 'Boolean fields are toggles that can be true or false.';
+    case 'color':
+      return 'Color fields accept color values such as hex, RGB, or HSL strings.';
+    case 'select':
+    case 'enum':
+      return 'Select fields allow choosing from a predefined list of options.';
+    case 'image':
+      return 'Image fields store image data with a source URL and alt text. They can have dimension and file size restrictions.';
+    case 'link':
+      return 'Link fields store a label and URL. They represent navigational elements.';
+    case 'button':
+      return 'Button fields store a label, URL, and optional variant. They represent interactive call-to-action elements.';
+    case 'video':
+      return 'Video fields store a source URL and optional poster image. They can have file size and type restrictions.';
     case 'array':
-      return 'Arrays are for adding multiple items or groups of items. They could be a list of text fields, or a list of complex objects. They have restrictions on the minimum and maximum number of items.';
+      return 'Arrays contain multiple items or groups of items. They can have restrictions on the minimum and maximum number of items.';
     case 'object':
+      return 'Objects contain a set of named sub-properties, each with its own type and rules.';
     default:
       return type;
   }
@@ -58,12 +86,26 @@ const humanReadableType = (type: string) => {
 const getVariantForType = (type: string) => {
   switch (type.toLowerCase()) {
     case 'text':
+    case 'string':
+    case 'richtext':
       return 'green';
     case 'image':
       return 'info';
+    case 'link':
+    case 'button':
+      return 'purple';
+    case 'video':
     case 'video_file':
     case 'video_embed':
       return 'warning';
+    case 'select':
+    case 'enum':
+      return 'orange';
+    case 'color':
+      return 'pink';
+    case 'number':
+    case 'boolean':
+      return 'secondary';
     default:
       return 'default';
   }
@@ -159,17 +201,19 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
                 {typeLabel}
               </Badge>
             </li>
-            <li className="flex w-full justify-between py-1">
-              <div className="flex items-center gap-3">
-                <MoveHorizontal className="h-3.5 w-3.5 stroke-2 opacity-60" />
-                <p className="text-[13px]">Size</p>
-              </div>
-              <div>
-                <p className="font-mono text-xs text-gray-400">
-                  {field.rules?.content?.min || '-'} - {field.rules?.content?.max || '-'}
-                </p>
-              </div>
-            </li>
+            {(field.type === 'text' || field.type === 'string' || field.type === 'richtext') && (
+              <li className="flex w-full justify-between py-1">
+                <div className="flex items-center gap-3">
+                  <MoveHorizontal className="h-3.5 w-3.5 stroke-2 opacity-60" />
+                  <p className="text-[13px]">Size</p>
+                </div>
+                <div>
+                  <p className="font-mono text-xs text-gray-400">
+                    {field.rules?.content?.min || '-'} - {field.rules?.content?.max || '-'}
+                  </p>
+                </div>
+              </li>
+            )}
             <li className="flex w-full justify-between py-1">
               <div className="flex items-center gap-3">
                 <CircleCheck className="h-3.5 w-3.5 stroke-2 opacity-60" />
@@ -181,7 +225,41 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
             </li>
           </ul>
 
-          {field.rules && Object.keys(field.rules).map((rule) => <RuleDisplay key={rule} rule={rule} value={field.rules[rule]} />)}
+          {/* Select/enum options */}
+          {(field.type === 'select' || field.type === 'enum') && (field as any).options && (
+            <>
+              <Separator className="mb-4" />
+              <p className="mb-2 text-sm font-medium">Options</p>
+              <div className="mb-6 flex flex-wrap gap-1.5">
+                {((field as any).options as any[]).map((opt, i) => (
+                  <Badge key={i} variant="outline" className="rounded-md px-2 py-0.5 text-xs">
+                    {typeof opt === 'string' ? opt : opt.label}
+                  </Badge>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Array item count rules */}
+          {field.type === 'array' && (field.rules?.minItems !== undefined || field.rules?.maxItems !== undefined) && (
+            <>
+              <Separator className="mb-4" />
+              <p className="mb-2 text-sm font-medium">Item Count</p>
+              <p className="mb-6 text-xs text-muted-foreground">
+                {field.rules?.minItems !== undefined && `Min: ${field.rules.minItems}`}
+                {field.rules?.minItems !== undefined && field.rules?.maxItems !== undefined && ' / '}
+                {field.rules?.maxItems !== undefined && `Max: ${field.rules.maxItems}`}
+              </p>
+            </>
+          )}
+
+          {field.rules && (
+            <>
+              <Separator className="mb-4" />
+              <p className="mb-2 text-sm font-medium">Rules</p>
+              {Object.keys(field.rules).map((rule) => <RuleDisplay key={rule} rule={rule} value={field.rules[rule]} />)}
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>

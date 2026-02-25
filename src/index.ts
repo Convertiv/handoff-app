@@ -517,6 +517,35 @@ const toLowerCaseKeysAndValues = (obj: Record<string, any>): Record<string, any>
 
 export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config } from './types/config';
+export type { SlotType, SlotMetadata, RuleObject, SelectOption } from './transformers/preview/component';
+export type {
+  ComponentConfig,
+  PropertyDefinition,
+  ImageValue,
+  LinkValue,
+  ButtonValue,
+  VideoValue,
+  TextPropertyDef,
+  StringPropertyDef,
+  RichtextPropertyDef,
+  NumberPropertyDef,
+  BooleanPropertyDef,
+  ColorPropertyDef,
+  SelectPropertyDef,
+  EnumPropertyDef,
+  ImagePropertyDef,
+  LinkPropertyDef,
+  ButtonPropertyDef,
+  VideoPropertyDef,
+  ArrayPropertyDef,
+  ObjectPropertyDef,
+  DimensionRules,
+} from './transformers/preview/property-spec';
+export type {
+  PropertyValidationResult,
+  PropertyValidationIssue,
+  ValidationCode,
+} from './transformers/preview/property-validator';
 
 // Export transformers and types from handoff-core
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

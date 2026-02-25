@@ -16,6 +16,7 @@ import {
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
+import { validateComponent } from '../property-validator';
 import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
 import { readComponentApi, readComponentMetadataApi, updateComponentSummaryApi, writeComponentApi } from './api';
 import buildComponentCss from './css';
@@ -303,11 +304,19 @@ export async function processComponents(
     data.sharedStyles = sharedStyles;
 
     // Ensure that every property within the properties array/object contains an 'id' field.
-    // This guarantees unique identification for property entries, which is useful for updates and API consumers.
     data.properties = ensureIds(data.properties);
 
-    // Write the updated component data to the API file for external access and caching.
-    //console.log('data', data);
+    // Run property spec validation and log any issues
+    if (data.properties && Object.keys(data.properties).length > 0) {
+      const validationResult = validateComponent(runtimeComponentId, data.properties, data.previews);
+      for (const err of validationResult.errors) {
+        Logger.warn(`[${runtimeComponentId}] ${err.code}: ${err.message} (${err.path})`);
+      }
+      for (const warn of validationResult.warnings) {
+        Logger.debug(`[${runtimeComponentId}] ${warn.code}: ${warn.message} (${warn.path})`);
+      }
+    }
+
     await writeComponentApi(runtimeComponentId, data, handoff, []);
 
     // Build the summary metadata for this component.
