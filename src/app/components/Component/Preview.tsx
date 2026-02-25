@@ -8,11 +8,11 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
+  CircleCheck,
   Component,
   File,
   Monitor,
   MousePointerClick,
-  MoveHorizontal,
   RefreshCcw,
   Smartphone,
   SquareArrowOutUpRight,
@@ -446,22 +446,22 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     <>
       <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
       <p className="mb-5">These are the properties associated with the component.</p>
-      <Table>
+      <Table className="table-fixed">
         <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
           <TableRow className="border-b-[0.5px]!">
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="w-[22%] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <Component className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Name
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="w-[13rem] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <File className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Type
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
-              <MoveHorizontal className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+            <TableHead className="w-[10rem] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
+              <CircleCheck className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Required
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <Text className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Default / Description
             </TableHead>
@@ -490,6 +490,28 @@ export const getVariantForType = (type: string) => {
 };
 
 const getTypeLabel = (field: SlotMetadata): string => field.deepType?.display || field.docgenType || field.generic || field.type || 'unknown';
+
+const summarizeTypeLabel = (typeLabel: string): string => {
+  if (!typeLabel || typeLabel.length <= 46) {
+    return typeLabel;
+  }
+
+  const parts = typeLabel
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length > 2) {
+    const isNullable = parts.some((part) => part === 'undefined' || part === 'null');
+    const concreteParts = parts.filter((part) => part !== 'undefined' && part !== 'null');
+
+    if (concreteParts.length > 2) {
+      return `${concreteParts.slice(0, 2).join(' | ')} +${concreteParts.length - 2}${isNullable ? ' | undefined' : ''}`;
+    }
+  }
+
+  return `${typeLabel.slice(0, 43)}...`;
+};
 
 const formatInlineValue = (value: unknown): string => {
   if (value === null || value === undefined) {
@@ -711,7 +733,7 @@ const ExpandableTableRow: React.FC<{
   return (
     <>
       <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={handleRowClick}>
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">
+        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-3 py-1">
           <div className="flex items-center">
             {canExpand ? (
               <button
@@ -721,15 +743,15 @@ const ExpandableTableRow: React.FC<{
               >
                 {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
               </button>
-            ) : (
-              <span className="mr-2 w-5" />
-            )}
-            <span>{startCase(row.name)}</span>
+            ) : null}
+            <span className="truncate text-[15px]">{startCase(row.name)}</span>
           </div>
         </TableCell>
-        <TableCell className="border-r-[0.5px] px-3.5 py-1">
-          <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
-            {typeLabel}
+        <TableCell className="overflow-hidden border-r-[0.5px] px-3.5 py-1">
+          <Badge variant={getVariantForType(row.type)} className="inline-flex max-w-full overflow-hidden rounded-xl px-2.5 align-middle">
+            <span className="block w-full truncate font-mono text-[11px]">
+              {summarizeTypeLabel(typeLabel)}
+            </span>
           </Badge>
           {row.warnings?.length ? (
             <TooltipProvider delayDuration={0}>
@@ -755,10 +777,12 @@ const ExpandableTableRow: React.FC<{
           {row.rules?.required ? 'Required' : 'Optional'}
         </TableCell>
         <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          <span className={`slot-description line-clamp-1 ${defaultValue ? '' : 'text-[11px] text-muted-foreground/70'}`}>
+          <span
+            className={`slot-description block w-full overflow-hidden text-ellipsis whitespace-nowrap ${defaultValue ? 'font-mono text-[12px] text-gray-700 dark:text-gray-200' : 'text-[11px] text-muted-foreground/70'}`}
+          >
             {defaultValue || '(no default)'}
           </span>
-          <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-xs text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
+          <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-[13px] text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
             {row.description || '(no description)'}
           </span>
         </TableCell>
