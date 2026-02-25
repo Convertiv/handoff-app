@@ -81,7 +81,9 @@ async function renderHandlebarsTemplate(
     id: componentData.id, 
     properties: componentData.properties || {}, 
     title: componentData.title 
-  }, previewData);
+  }, previewData, {
+    includeSharedStyles: Boolean(componentData.sharedStyles),
+  });
   
   const compiled = Handlebars.compile(template)(context);
   return await formatHtmlWithWrapper(compiled);

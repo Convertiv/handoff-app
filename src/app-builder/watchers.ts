@@ -100,18 +100,26 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
   const scssEntry = handoff.runtimeConfig?.entries?.scss;
   const jsEntry = handoff.runtimeConfig?.entries?.js;
 
-  const pathsToWatch: string[] = [];
+  const scssPathsToWatch: string[] = [];
+  const jsPathsToWatch: string[] = [];
 
   if (scssEntry && fs.existsSync(scssEntry)) {
     const stat = fs.statSync(scssEntry);
-    pathsToWatch.push(stat.isDirectory() ? scssEntry : path.dirname(scssEntry));
+    scssPathsToWatch.push(stat.isDirectory() ? scssEntry : path.dirname(scssEntry));
   }
 
   if (jsEntry && fs.existsSync(jsEntry)) {
-    pathsToWatch.push(path.dirname(jsEntry));
+    jsPathsToWatch.push(path.dirname(jsEntry));
   }
 
+  const pathsToWatch = [...scssPathsToWatch, ...jsPathsToWatch];
   if (pathsToWatch.length === 0) return;
+
+  const isPathInside = (filePath: string, parentPath: string): boolean => {
+    const normalizedFilePath = path.resolve(filePath);
+    const normalizedParentPath = path.resolve(parentPath);
+    return normalizedFilePath === normalizedParentPath || normalizedFilePath.startsWith(`${normalizedParentPath}${path.sep}`);
+  };
 
   chokidar.watch(pathsToWatch, chokidarConfig).on('all', async (event, file) => {
     switch (event) {
@@ -123,11 +131,14 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
           try {
             Logger.warn('Global entry changed. Rebuilding bundles and components...');
 
-            if (scssEntry && file.endsWith('.scss')) {
+            const shouldRebuildMainCss = !!scssEntry && scssPathsToWatch.some((watchPath) => isPathInside(file, watchPath));
+            const shouldRebuildMainJs = !!jsEntry && jsPathsToWatch.some((watchPath) => isPathInside(file, watchPath));
+
+            if (shouldRebuildMainCss) {
               await buildMainCss(handoff);
             }
 
-            if (jsEntry && file.endsWith('.js')) {
+            if (shouldRebuildMainJs) {
               await buildMainJS(handoff);
             }
 
