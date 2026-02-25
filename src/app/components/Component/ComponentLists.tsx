@@ -234,7 +234,7 @@ export const AbstractComponentsPageCard = ({
   return (
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
       <Link href={available ? (absolute ? path : `/system/component/${id}`) : '#'} className="block bg-gray-50">
-        <img src={image} width={1528} height={1250} alt="Components" className="mb-5 rounded-lg" />
+        <img src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}${image}`} width={1528} height={1250} alt="Components" className="mb-5 rounded-lg" />
       </Link>
       <div>
         <h2 className="text-base font-medium">{title}</h2>

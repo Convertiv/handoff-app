@@ -115,11 +115,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   };
 
   const previousLink = previousComponent ? {
-    href: previousComponent ? '/system/component/' + previousComponent.id : null,
+    href: previousComponent ? `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${previousComponent.id}` : null,
     title: previousComponent ? previousComponent.name : null,
   } : null;
   const nextLink = nextComponent ? {
-    href: '/system/component/' + nextComponent.id,
+    href: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${nextComponent.id}`,
     title: nextComponent.name,
   } : null;
 
