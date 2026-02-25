@@ -45,6 +45,10 @@ export type ComponentPreview = {
   overrides?: { states?: string[] | undefined };
 };
 
+const getSizeDisplay = (size: string) => {
+  return size === 'small' ? 'Small' : size === 'medium' ? 'Medium' : size === 'large' ? 'Large' : size;
+};
+
 export type ComponentPreviews = ComponentPreview[];
 
 export const getComponentPreviewTitle = (previewableComponent: ComponentPreview): string => {
@@ -705,14 +709,26 @@ const ExpandableTableRow: React.FC<{
       e.stopPropagation();
       setIsExpanded(!isExpanded);
     };
-    if (row.rules.minItems !== undefined || row.rules.maxItems !== undefined) {
-      const min = row.rules.minItems ?? '-';
-      const max = row.rules.maxItems ?? '-';
-      return `${min} - ${max} items`;
+    if (row.type === 'array' && row.rules) {
+      if (row.rules.minItems !== undefined || row.rules.maxItems !== undefined) {
+        const min = row.rules.minItems ?? '-';
+        const max = row.rules.maxItems ?? '-';
+        return `${min} - ${max} items`;
+      }
     }
 
-    const sizeRules = ['dimensions', 'content', 'maxSize'];
-    const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
+    const getSizeDisplay = (slot: SlotMetadata) => {
+      const rules = slot.rules;
+      if (!rules) return null;
+
+      if (rules.dimensions) {
+        return `${rules.dimensions.min.width}x${rules.dimensions.min.height} - ${rules.dimensions.max.width}x${rules.dimensions.max.height}`;
+      }
+      if (rules.content) {
+        return `${rules.content.min} - ${rules.content.max}`;
+      }
+    };
+
 
     return (
       <>
