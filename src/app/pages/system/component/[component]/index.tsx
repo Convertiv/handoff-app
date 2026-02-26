@@ -71,13 +71,14 @@ export const getStaticProps = async (context) => {
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
   const components = fetchComponents()!;
-  const componentIndex = components.findIndex((c) => c.id === component);
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = components.filter((c) => c.id === component)[0];
+  const metadata = components.find((c) => c.id === component);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
-  const previousComponent = components[componentIndex - 1] ?? null;
-  const nextComponent = components[componentIndex + 1] ?? null;
+  const sameGroupComponents = components.filter((c) => c.group === metadata?.group);
+  const groupIndex = sameGroupComponents.findIndex((c) => c.id === component);
+  const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
+  const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
 
   return {
     props: {
