@@ -85,28 +85,14 @@ export const CodeHighlight: React.FC<{
   }
   if (!type) type = 'html';
 
+  const metadataKeys = [
+    'id', 'preview', 'image', 'categories', 'title', 'format',
+    'description', 'type', 'group', 'tags', 'previews', 'properties',
+    'should_do', 'should_not_do', 'figma',
+  ];
+
   const states = Object.keys(data)
-    .filter(
-      (key) =>
-        [
-          'id',
-          'preview',
-          'image',
-          'categories',
-          'title',
-          'format',
-          'description',
-          'type',
-          'group',
-          'tags',
-          'previews',
-          'properties',
-          'should_do',
-          'should_not_do',
-          'figma',
-        ].indexOf(key) === -1
-    )
-    .map((key) => key);
+    .filter((key) => !metadataKeys.includes(key) && !!(data as Record<string, any>)[key]);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
@@ -214,11 +200,6 @@ export const CodeHighlight: React.FC<{
 
     if (activeState in data && !!(data as Record<string, any>)[activeState]) {
       setCode((data as Record<string, any>)[activeState]);
-      return;
-    }
-
-    if ('html' in data && !!data.html) {
-      setCode(data.html);
     }
   }, [activeState, currentValues, data]);
 
