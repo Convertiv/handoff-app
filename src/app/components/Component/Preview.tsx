@@ -468,7 +468,15 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRows rows={fields} openSheet={openSheet} />
+          {fields.length > 0 ? (
+            <TableRows rows={fields} openSheet={openSheet} />
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                No properties have been documented for this component yet.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </>
