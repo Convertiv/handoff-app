@@ -5,11 +5,11 @@ import path from 'path';
 import { Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
-import { createViteLogger } from '../utils/vite-logger';
 import { TransformComponentTokensResult } from '../preview/types';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
+import { createViteLogger } from '../utils/vite-logger';
 
 /**
  * Preview data interface for Handlebars rendering
@@ -27,7 +27,7 @@ const PLUGIN_CONSTANTS = {
   SCRIPT_ID: 'script',
   DUMMY_EXPORT: 'export default {}',
   INSPECT_SUFFIX: '-inspect',
-  OUTPUT_FORMAT: 'html',
+  OUTPUT_FORMAT: 'handlebars',
 } as const;
 
 /**

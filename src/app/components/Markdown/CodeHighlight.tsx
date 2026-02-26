@@ -2,7 +2,6 @@ import { PreviewObject } from '@handoff/types/preview';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
-import Handlebars from 'handlebars/dist/cjs/handlebars';
 import { useEffect, useState } from 'react';
 import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
@@ -108,18 +107,12 @@ export const CodeHighlight: React.FC<{
         ].indexOf(key) === -1
     )
     .map((key) => key);
-  console.log(states);
   const [activeState, setActiveState] = useState<string>(states[0]);
   const [code, setCode] = useState<string>(data.html);
   const theme = dark ? oneDark : oneLight;
   theme['pre[class*="language-"]'].overflow = 'auto';
   theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
   theme['pre[class*="language-"]'].margin = '0';
-
-  useEffect(() => {
-    Handlebars.registerHelper('eq', (a, b) => a === b);
-    Handlebars.registerHelper('field', (_, options) => options.fn(this));
-  });
 
   const labels: Record<string, string> = {
     code: 'Code',
@@ -209,26 +202,25 @@ export const CodeHighlight: React.FC<{
   };
 
   useEffect(() => {
-    // check if data is a string
     if (typeof data === 'string') {
       setCode(data);
       return;
     }
 
-    if ('code' in data && !!data.code && data.format === 'handlebars') {
-      setCode(Handlebars.compile(data.code)({ properties: currentValues }));
-      return;
-    } else if ('code' in data && !!data.code && data.format === 'react') {
+    if (activeState === 'code' && 'code' in data && !!data.code) {
       setCode(data.code);
       return;
     }
 
-    // check if data is an object with an html key
-    if ('html' in data && !!data.html) {
-      setCode(data.html);
+    if (activeState in data && !!(data as Record<string, any>)[activeState]) {
+      setCode((data as Record<string, any>)[activeState]);
       return;
     }
-  }, [currentValues, data]);
+
+    if ('html' in data && !!data.html) {
+      setCode(data.html);
+    }
+  }, [activeState, currentValues, data]);
 
   return (
     <Collapsible id="code-samples" className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
