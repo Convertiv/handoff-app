@@ -84,6 +84,8 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
     setOpen(open);
   };
   if (!field) return null;
+  const typeLabel = field.deepType?.display || field.docgenType || field.type;
+  const hasDescription = !!field.description?.trim();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] overflow-auto sm:w-[540px] [&>button:hover]:opacity-0 [&>button]:opacity-0">
@@ -135,14 +137,18 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
               <p className="font-mono text-xs text-muted-foreground">{field.id}</p>
             </div>
           </div>
-          <Separator className="mb-4! mt-6" />
-          <SheetDescription className="leading-relaxed">{field.description}</SheetDescription>
+          {hasDescription ? (
+            <>
+              <Separator className="mb-4! mt-5" />
+              <SheetDescription className="leading-relaxed">{field.description}</SheetDescription>
+            </>
+          ) : null}
           {/* <p className="font-mono text-xs">
             This is a {field.type} field. {humanReadableType(field.type)}
           </p> */}
         </SheetHeader>
         <div className="px-2">
-          <Separator className="mb-4 mt-6" />
+          <Separator className={hasDescription ? 'mb-4 mt-5' : 'mb-4 mt-3'} />
           <ul className="mb-10 flex flex-col gap-2">
             <li className="flex w-full justify-between py-1">
               <div className="flex items-center gap-3">
@@ -150,7 +156,7 @@ const RulesSheet: React.FC<{ field: SlotMetadata; open: boolean; setOpen: (boole
                 <p className="text-[13px]">Type</p>
               </div>
               <Badge variant={getVariantForType(field.type)} className="rounded-xl px-2.5">
-                {field.type}
+                {typeLabel}
               </Badge>
             </li>
             <li className="flex w-full justify-between py-1">

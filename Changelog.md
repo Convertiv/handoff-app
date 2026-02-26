@@ -6,7 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.0.3] - 2026-02-17
+## \[1.1.0]
+
+## \[1.0.6] - 2026-02-24
+
+Version 1.0.4 fixed an issue when running Handoff in subpaths (eg.
+https://mysite.com/folder/handoff). We discovered a minor bug in that fix that
+causes some menu constructs to work poorly. This release fixes that issue.
+
+## \[1.0.5] - 2026-02-19
+
+This is a minor improvement release that extends the quickstart released in the
+1.0.4. It extends the quickstart to work from the Handoff-CLI when installed
+globally.  You can use `handoff-app init` to initialize a new project.
+
+## \[1.0.4] - 2026-02-19
 
 Bugfixes, UX improvements to the component page, improvements to react docgen,
 a new quickstart command, and security fixes.
@@ -31,6 +45,11 @@ a new quickstart command, and security fixes.
 * The API preview would through a 500 error under some conditions
 * Using TSX components would cause an error in the code preview if the tsx component
   used some kinds of valid react formatting.
+* If you create pages without a declared weight, handoff would throw an error
+* There was an old structure in the way we used handlebars that surfaces a warning
+  on build.  We've updated that method.
+* We removed an old page template that was no longer needed.
+* The API calls to the component url were not working well in subpaths.
 
 ## Type Gen
 
@@ -57,6 +76,10 @@ a new quickstart command, and security fixes.
 * Fixes a bug in webpack that made the include path lookups fail.  @handoff and @/util now
   works properly.
 
+## \[1.0.3]
+
+This this version was skipped.
+
 ## \[1.0.2] - 2026-01-12
 
 Bugfixes focused on developer quality of life.
@@ -67,10 +90,6 @@ Bugfixes focused on developer quality of life.
   resulting in a 404 error. This patch resolves a race condition in the HMR, by
   preventing double write of the next config.
 * Patch an issue where the example component doesn't load in a clean project
-* If you create pages without a declared weight, handoff would throw an error
-* There was an old structure in the way we used handlebars that surfaces a warning
-  on build.  We've updated that method.
-* We removed an old page template that was no longer needed.
 
 ## \[1.0.1] - 2025-12-28
 

@@ -1,4 +1,5 @@
 import { Card } from '../../app/components/Component/Cards';
+import type { GeneratedDocs } from 'handoff-docgen';
 import { ValidationResult } from '../../types';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -168,6 +169,7 @@ export type TransformComponentTokensResult = {
   };
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
+  docgen?: GeneratedDocs;
 } | null;
 
 export type OptionalPreviewRender = {

@@ -1,0 +1,2 @@
+HANDOFF_FIGMA_PROJECT_ID={{figmaProjectId}}
+HANDOFF_DEV_ACCESS_TOKEN={{figmaAccessToken}}

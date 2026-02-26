@@ -32,7 +32,7 @@ export const loadSchemaFromFile = async (schemaPath: string, handoff: any): Prom
       }
     } else if (schema) {
       // Schema exists but is not a valid schema object (e.g., type/interface)
-      // Use react-docgen-typescript to document the schema file
+      // Use handoff-docgen to document the schema file
       return await generatePropertiesFromDocgen(schemaPath, handoff);
     }
 
@@ -60,7 +60,7 @@ export const loadSchemaFromComponent = async (componentExports: any, handoff: an
     }
   } else if (schema) {
     // Schema exists but is not a valid schema object (e.g., type/interface)
-    // Use react-docgen-typescript to document the schema
+    // Use handoff-docgen to document the schema
     return await generatePropertiesFromDocgen(componentExports.__filename || '', handoff);
   }
 

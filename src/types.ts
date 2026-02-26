@@ -1,4 +1,5 @@
 import { Types as CoreTypes } from 'handoff-core';
+import type { GeneratedDocs } from 'handoff-docgen';
 import { SlotMetadata } from './transformers/preview/component';
 import { ComponentPageDefinition } from './transformers/preview/types';
 import { type Filter } from './utils/filter';
@@ -74,6 +75,7 @@ export interface PreviewObject {
    */
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
+  docgen?: GeneratedDocs;
 }
 
 export type PreviewJson = {

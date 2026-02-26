@@ -71,6 +71,21 @@ export interface Config {
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
   useVariables?: boolean;
+  /**
+   * Configuration for React component docs generation (handoff-docgen).
+   */
+  reactDocgen?: {
+    /**
+     * Maximum recursion depth for nested type traversal.
+     * @default 7
+     */
+    maxDepth?: number;
+    /**
+     * Directory names to exclude while scanning for components.
+     * @default ["dist", "build", ".next"]
+     */
+    excludeDirectories?: string[];
+  };
   app?: NextAppConfig;
   /**
    * Configuration for the build pipeline

@@ -2,15 +2,17 @@ import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PageSlice } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types';
 import { Types as CoreTypes } from 'handoff-core';
+import type { TypeNode, TypeNodeProperty } from 'handoff-docgen';
 import { startCase } from 'lodash';
 import {
+  AlertCircle,
   ChevronDown,
   ChevronRight,
+  CircleCheck,
   Component,
   File,
   Monitor,
   MousePointerClick,
-  MoveHorizontal,
   RefreshCcw,
   Smartphone,
   SquareArrowOutUpRight,
@@ -303,7 +305,7 @@ export const ComponentDisplay: React.FC<{
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
-                          window.open('/api/component/' + previewUrl, '_blank');
+                          window.open(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`, '_blank');
                         }}
                         variant="ghost"
                       >
@@ -333,7 +335,7 @@ export const ComponentDisplay: React.FC<{
                       display: 'block',
                       margin: '0 auto',
                     }}
-                    src={`/api/component/` + previewUrl}
+                    src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`}
                   />
                 </div>
               ) : (
@@ -429,26 +431,6 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
   };
   const openFromHash = () => {
     if (window.location.hash) {
-      const parts = window.location.hash.replace('#', '').split('.');
-      if (parts.length > 1) {
-        const field = fields.find((field) => field.key === parts[0]);
-        if (field && field.properties) {
-          const subField = field.properties[parts[1]];
-          if (subField) {
-            setSelectedField(subField);
-            setOpen(true);
-          }
-        } else if (field && field.items && field.items.properties) {
-          const subField = field.items.properties[parts[1]];
-          if (subField) {
-            setSelectedField(subField);
-            setOpen(true);
-          }
-        } else {
-          setSelectedField(field);
-          setOpen(true);
-        }
-      }
       const field = fields.find((field) => field.key === window.location.hash.replace('#', ''));
       if (field) {
         setSelectedField(field);
@@ -464,24 +446,24 @@ export const ComponentProperties: React.FC<{ fields: SlotMetadata[] }> = ({ fiel
     <>
       <RulesSheet open={open} setOpen={setOpen} field={selectedField} />
       <p className="mb-5">These are the properties associated with the component.</p>
-      <Table>
+      <Table className="table-fixed">
         <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
           <TableRow className="border-b-[0.5px]!">
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="w-[22%] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <Component className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Name
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="w-[13rem] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <File className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
               Type
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
-              <MoveHorizontal className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
-              Size
+            <TableHead className="w-[10rem] border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
+              <CircleCheck className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
+              Required
             </TableHead>
-            <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">
+            <TableHead className="border-r-[0.5px] px-4 text-xs font-medium text-gray-900 dark:text-gray-100">
               <Text className="float-left mr-2 mt-0.5 h-3 w-3 stroke-2 opacity-80" />
-              Description
+              Default / Description
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -507,134 +489,236 @@ export const getVariantForType = (type: string) => {
   }
 };
 
-/**
- * Helper to get nested properties from a SlotMetadata
- * Handles both array items and object properties
- */
-const getNestedProperties = (row: SlotMetadata): SlotMetadata[] | null => {
-  // For arrays with item properties
-  if (row.type === 'array' && row.items?.properties) {
-    return Object.keys(row.items.properties).map((key) => ({
-      ...row.items.properties![key],
-      key,
-    }));
+const getTypeLabel = (field: SlotMetadata): string => field.deepType?.display || field.docgenType || field.generic || field.type || 'unknown';
+
+const summarizeTypeLabel = (typeLabel: string): string => {
+  if (!typeLabel || typeLabel.length <= 46) {
+    return typeLabel;
   }
-  // For objects with properties
-  if (row.type === 'object' && row.properties) {
-    return Object.keys(row.properties).map((key) => ({
-      ...row.properties![key],
-      key,
-    }));
+
+  const parts = typeLabel
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length > 2) {
+    const isNullable = parts.some((part) => part === 'undefined' || part === 'null');
+    const concreteParts = parts.filter((part) => part !== 'undefined' && part !== 'null');
+
+    if (concreteParts.length > 2) {
+      return `${concreteParts.slice(0, 2).join(' | ')} +${concreteParts.length - 2}${isNullable ? ' | undefined' : ''}`;
+    }
   }
-  return null;
+
+  return `${typeLabel.slice(0, 43)}...`;
 };
 
-/**
- * Check if a row has nested properties that can be expanded
- */
-const hasNestedProperties = (row: SlotMetadata): boolean => {
-  return (
-    (row.type === 'array' && !!row.items?.properties && Object.keys(row.items.properties).length > 0) ||
-    (row.type === 'object' && !!row.properties && Object.keys(row.properties).length > 0)
-  );
+const formatInlineValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return 'null';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 };
 
-const TableRows: React.FC<{ 
-  rows: SlotMetadata[]; 
-  openSheet: (field: SlotMetadata) => void; 
-  depth?: number;
-  parentPath?: string;
+const formatDefaultValue = (value: unknown): string | null => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => formatInlineValue(item)).join(', ')}]`;
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) {
+      return '{}';
+    }
+    return entries.map(([key, val]) => `${key}: ${formatInlineValue(val)}`).join(', ');
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const TableRows: React.FC<{
+  rows: SlotMetadata[];
+  openSheet: (field: SlotMetadata) => void;
 }> = ({
   rows,
   openSheet,
-  depth = 0,
-  parentPath = '',
 }) => {
   return (
     <>
       {rows.map((row, i) => {
         if (!row) return null;
-        const currentPath = parentPath ? `${parentPath}.${row.key || row.name}` : (row.key || row.name);
-        return (
-          <ExpandableTableRow 
-            key={`row-${currentPath}-${i}`}
-            row={row} 
-            openSheet={openSheet} 
-            depth={depth}
-            path={currentPath}
-          />
-        );
+        const currentPath = row.key || row.name || String(i);
+        return <ExpandableTableRow key={`row-${currentPath}-${i}`} row={row} openSheet={openSheet} />;
       })}
     </>
   );
 };
 
-const humanReadableSizeRule = (rule: string, value: any) => {
-  switch (rule) {
-    case 'required':
-      return value ? 'Required' : 'Optional';
-    case 'content':
-      return `${value.min || '-'} - ${value.max || '-'} characters`;
-    case 'dimensions':
-      if (!value || !value.min || !value.max) {
-        return 'Not specified.';
-      }
-      return `${value.min.width}x${value.min.height} - ${value.max.width}x${value.max.height}`;
-    case 'maxSize':
-      if (value < 1024) {
-        return `${value} bytes`;
-      }
-      if (value < 1024 * 1024) {
-        return `${Math.floor(value / 1024)} KB`;
-      }
-      return `${Math.floor(value / (1024 * 1024))} MB`;
-    default:
-      return '-';
+const AnnotationList: React.FC<{ annotations?: { name: string; text?: string }[] }> = ({ annotations }) => {
+  if (!annotations?.length) {
+    return null;
   }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1">
+      {annotations.map((annotation, idx) => (
+        <Badge
+          key={`${annotation.name}-${idx}`}
+          variant="outline"
+          className="rounded-xl border-violet-300 bg-violet-50 px-2 text-[10px] text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
+        >
+          @{annotation.name}
+          {annotation.text ? `: ${annotation.text}` : ''}
+        </Badge>
+      ))}
+    </div>
+  );
 };
 
-/**
- * An expandable table row that can show nested properties
- * Supports deep nesting with visual indentation and expand/collapse
- */
-const ExpandableTableRow: React.FC<{ 
-  row: SlotMetadata; 
-  openSheet: (field: SlotMetadata) => void; 
-  depth: number;
-  path: string;
+const TypeNodePropertyView: React.FC<{ property: TypeNodeProperty; depth: number }> = ({ property, depth }) => {
+  return (
+    <div className="mt-3 rounded-md border border-gray-200/90 bg-white/80 p-3 dark:border-gray-800 dark:bg-gray-900/20">
+      <div className="flex items-center gap-2">
+        <p className="font-mono text-xs">
+          {property.name}
+          {property.optional ? '?' : ''}
+        </p>
+        {property.optional ? (
+          <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+            optional
+          </Badge>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{property.type.display}</p>
+      {property.description ? (
+        <p className="mt-1.5 text-[11px] leading-normal text-muted-foreground/90">{property.description}</p>
+      ) : null}
+      <AnnotationList annotations={property.annotations} />
+      <TypeNodeTree node={property.type} depth={depth + 1} />
+    </div>
+  );
+};
+
+const TypeNodeTree: React.FC<{ node?: TypeNode; depth?: number }> = ({ node, depth = 0 }) => {
+  if (!node) {
+    return null;
+  }
+
+  const indentClass = depth > 0 ? 'ml-4 border-l border-dashed border-gray-300 pl-3 dark:border-gray-700' : '';
+
+  return (
+    <div className={`mt-2 ${indentClass}`}>
+      <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-gray-200/80 bg-gray-50/60 px-2 py-1.5 text-xs dark:border-gray-800 dark:bg-gray-800/25">
+        <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+          {node.kind}
+        </Badge>
+        <span className="font-mono">{node.display}</span>
+        {node.truncated ? (
+          <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+            truncated
+          </Badge>
+        ) : null}
+        {node.cycleDetected ? (
+          <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+            cycleDetected
+          </Badge>
+        ) : null}
+      </div>
+
+      {node.kind === 'enum' && node.members?.length ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {node.members.map((member, idx) => (
+            <Badge key={`${member}-${idx}`} variant="outline" className="rounded-xl px-2 text-[10px]">
+              {member}
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      {node.kind === 'object' && node.properties?.length
+        ? node.properties.map((property, idx) => <TypeNodePropertyView key={`${property.name}-${idx}`} property={property} depth={depth} />)
+        : null}
+
+      {node.kind === 'array' && node.elementType ? <TypeNodeTree node={node.elementType} depth={depth + 1} /> : null}
+
+      {(node.kind === 'union' || node.kind === 'intersection' || node.kind === 'function') && node.children?.length
+        ? node.children.map((child, idx) => <TypeNodeTree key={`${node.kind}-child-${idx}`} node={child} depth={depth + 1} />)
+        : null}
+
+      {node.kind === 'record'
+        ? (() => {
+            if (node.indexSignature) {
+              return (
+                <div className="mt-3 rounded border border-gray-200/80 bg-white/70 p-2 dark:border-gray-800 dark:bg-gray-900/20">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Index signature</p>
+                  <TypeNodeTree node={node.indexSignature.key} depth={depth + 1} />
+                  <TypeNodeTree node={node.indexSignature.value} depth={depth + 1} />
+                </div>
+              );
+            }
+            return (
+              <>
+                {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
+                {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
+              </>
+            );
+          })()
+        : null}
+
+      {node.kind === 'set' && node.elementType ? <TypeNodeTree node={node.elementType} depth={depth + 1} /> : null}
+
+      {node.kind === 'map'
+        ? (
+            <>
+              {node.keyType ? <TypeNodeTree node={node.keyType} depth={depth + 1} /> : null}
+              {node.valueType ? <TypeNodeTree node={node.valueType} depth={depth + 1} /> : null}
+            </>
+          )
+        : null}
+
+      {node.kind === 'ref' && node.refName ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          <span className="font-medium">Reference:</span> {node.refName}
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+const ExpandableTableRow: React.FC<{
+  row: SlotMetadata;
+  openSheet: (field: SlotMetadata) => void;
 }> = ({
   row,
   openSheet,
-  depth,
-  path,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const nested = getNestedProperties(row);
-  const canExpand = hasNestedProperties(row);
-  
-  const getSizeDisplay = (row: SlotMetadata) => {
-    if (!row.rules) return '-';
-
-    // Find the first applicable size rule
-    const sizeRules = ['dimensions', 'content', 'maxSize'];
-    const rule = Object.keys(row.rules).find((r) => sizeRules.includes(r));
-
-    return rule ? humanReadableSizeRule(rule, row.rules[rule]) : '-';
-  };
-
-  // Calculate indent based on depth (each level adds 20px)
-  const indentPx = depth * 20;
-  
-  // Get background color based on depth for visual hierarchy
-  const getDepthBgClass = (depth: number) => {
-    if (depth === 0) return '';
-    if (depth === 1) return 'bg-gray-50/50 dark:bg-gray-800/30';
-    if (depth === 2) return 'bg-gray-100/50 dark:bg-gray-800/50';
-    return 'bg-gray-100/70 dark:bg-gray-800/70';
-  };
+  const canExpand = !!row.deepType || !!row.typeRefs?.length || !!row.warnings?.length;
+  const typeLabel = getTypeLabel(row);
+  const defaultValue = formatDefaultValue(row.default);
 
   const handleRowClick = (e: React.MouseEvent) => {
-    // If clicking on the expand button area, don't open the sheet
     if ((e.target as HTMLElement).closest('.expand-toggle')) {
       return;
     }
@@ -648,64 +732,104 @@ const ExpandableTableRow: React.FC<{
 
   return (
     <>
-      <TableRow 
-        className={`h-10 cursor-pointer border-b-[0.5px] ${getDepthBgClass(depth)}`} 
-        onClick={handleRowClick}
-      >
-        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1">
-          <div className="flex items-center" style={{ paddingLeft: `${indentPx}px` }}>
+      <TableRow className="h-10 cursor-pointer border-b-[0.5px]" onClick={handleRowClick}>
+        <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-3 py-1">
+          <div className="flex items-center">
             {canExpand ? (
-              <button 
+              <button
                 className="expand-toggle mr-2 flex h-5 w-5 items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
                 onClick={handleExpandToggle}
                 aria-label={isExpanded ? 'Collapse' : 'Expand'}
               >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                )}
+                {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
               </button>
-            ) : (
-              <span className="mr-2 w-5" /> 
-            )}
-            <span className={depth > 0 ? 'text-gray-700 dark:text-gray-300' : ''}>
-              {startCase(row.name)}
-            </span>
-            {canExpand && (
-              <span className="ml-2 text-xs text-gray-400">
-                ({Object.keys(nested || {}).length} {row.type === 'array' ? 'item fields' : 'fields'})
-              </span>
-            )}
+            ) : null}
+            <span className="truncate text-[15px]">{startCase(row.name)}</span>
           </div>
         </TableCell>
-        <TableCell className="border-r-[0.5px] px-3.5 py-1">
-          <Badge variant={getVariantForType(row.type)} className="rounded-xl px-2.5">
-            {row.type}
+        <TableCell className="overflow-hidden border-r-[0.5px] px-3.5 py-1">
+          <Badge variant={getVariantForType(row.type)} className="inline-flex max-w-full overflow-hidden rounded-xl px-2.5 align-middle">
+            <span className="block w-full truncate font-mono text-[11px]">
+              {summarizeTypeLabel(typeLabel)}
+            </span>
           </Badge>
-          {row.type === 'array' && row.items?.type && (
-            <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
-              {row.items.type}[]
-            </Badge>
-          )}
+          {row.warnings?.length ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="ml-1 rounded-xl px-2 text-[10px]">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {row.warnings.length}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs rounded-sm px-2 py-1 text-[11px]">
+                  <div className="space-y-1">
+                    {row.warnings.map((warning, idx) => (
+                      <p key={`warning-${idx}`}>{warning}</p>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </TableCell>
         <TableCell className="whitespace-nowrap border-l-[0.5px] border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          {getSizeDisplay(row)}
+          {row.rules?.required ? 'Required' : 'Optional'}
         </TableCell>
         <TableCell className="border-r-[0.5px] px-4 py-1 text-gray-600 dark:text-gray-300">
-          <span className="slot-description line-clamp-1">{row.description || row.generic || '-'}</span>
+          <span
+            className={`slot-description block w-full overflow-hidden text-ellipsis whitespace-nowrap ${defaultValue ? 'font-mono text-[12px] text-gray-700 dark:text-gray-200' : 'text-[11px] text-muted-foreground/70'}`}
+          >
+            {defaultValue || '(no default)'}
+          </span>
+          <span className={`mt-1 block line-clamp-1 ${row.description ? 'text-[13px] text-muted-foreground' : 'text-[11px] text-muted-foreground/70'}`}>
+            {row.description || '(no description)'}
+          </span>
         </TableCell>
       </TableRow>
-      
-      {/* Render nested properties when expanded */}
-      {isExpanded && nested && nested.length > 0 && (
-        <TableRows 
-          rows={nested} 
-          openSheet={openSheet} 
-          depth={depth + 1}
-          parentPath={path}
-        />
-      )}
+
+      {isExpanded && canExpand ? (
+        <TableRow className="border-b-[0.5px] bg-gray-50/40 dark:bg-gray-800/30">
+          <TableCell colSpan={4} className="border-l-[0.5px] border-r-[0.5px] px-4 py-3">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 border-b border-gray-200/80 pb-2 dark:border-gray-800">
+                <p className="text-xs font-medium">Type tree</p>
+                <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                  {typeLabel}
+                </Badge>
+                {row.deepType?.truncated ? (
+                  <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                    truncated
+                  </Badge>
+                ) : null}
+                {row.deepType?.cycleDetected ? (
+                  <Badge variant="outline" className="rounded-xl px-2 text-[10px]">
+                    cycleDetected
+                  </Badge>
+                ) : null}
+              </div>
+              {row.typeRefs?.length ? (
+                <div>
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Type refs</p>
+                  <div className="flex flex-wrap gap-1">
+                  {row.typeRefs.map((refName) => (
+                    <Badge key={refName} variant="outline" className="rounded-xl px-2 text-[10px]">
+                      {refName}
+                    </Badge>
+                  ))}
+                  </div>
+                </div>
+              ) : null}
+              <AnnotationList annotations={row.annotations} />
+              {row.deepType ? (
+                <TypeNodeTree node={row.deepType} />
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">No deep type available. Fallback: {row.docgenType || row.type}</p>
+              )}
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : null}
     </>
   );
 };

@@ -206,6 +206,9 @@ export const staticBuildMenu = () => {
   // // Contents of docs
   const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   // Get the file list
+  if(!fs.existsSync(docRoot)) {
+    return [];
+  }
   const files = fs.readdirSync(docRoot);
   let list = files;
   const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
@@ -277,7 +280,7 @@ export const staticBuildMenu = () => {
           title: metadata.menuTitle ?? metadata.title,
           external,
           weight: metadata.weight ?? 0,
-          path: filepath,
+          path: `${filepath}`,
           subSections,
         };
       }
@@ -286,7 +289,15 @@ export const staticBuildMenu = () => {
   return sections.concat(custom).sort((a: SectionLink, b: SectionLink) => a.weight - b.weight);
 };
 
+const buildBasePath = () => {
+  if(!process.env.HANDOFF_APP_BASE_PATH) {
+    return '';
+  }
+  return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '') + '/';
+};
+
 const staticBuildComponentMenu = (type?: boolean | string) => {
+  const basePath = buildBasePath();
   let menu = [];
   let components = fetchComponents({ includeTokens: false });
   if (typeof type === 'string' && type !== '') {
@@ -305,7 +316,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
       if (component.name) {
         title = component.name;
       }
-      menuGroup.menu.push({ path: `system/component/${component.id}`, title });
+      menuGroup.menu.push({ path: `${basePath}system/component/${component.id}`, title });
     });
     // sort the menu group by name alphabetical
     menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
@@ -317,22 +328,24 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
 };
 
 const staticBuildTokensMenu = () => {
+  const basePath = buildBasePath();
+
   const menu = [
     {
       title: `Foundations`,
-      path: `system/tokens/foundations`,
+      path: `${basePath}system/tokens/foundations`,
       menu: [
         {
           title: `Colors`,
-          path: `system/tokens/foundations/colors`,
+          path: `${basePath}system/tokens/foundations/colors`,
         },
         {
           title: `Effects`,
-          path: `system/tokens/foundations/effects`,
+          path: `${basePath}system/tokens/foundations/effects`,
         },
         {
           title: `Typography`,
-          path: `system/tokens/foundations/typography`,
+          path: `${basePath}system/tokens/foundations/typography`,
         },
       ],
     },
@@ -352,14 +365,14 @@ const staticBuildTokensMenu = () => {
       if (component.name) {
         title = component.name;
       }
-      componentMenuItems.push({ path: `system/tokens/components/${component.id}`, title });
+      componentMenuItems.push({ path: `${basePath}system/tokens/components/${component.id}`, title });
     });
   });
 
   if (componentMenuItems.length > 0) {
     menu.push({
       title: `Components`,
-      path: `system/tokens/components`,
+      path: `${basePath}system/tokens/components`,
       menu: componentMenuItems,
     });
   }
@@ -368,9 +381,11 @@ const staticBuildTokensMenu = () => {
 };
 
 const staticBuildTokenMenu = () => {
+    const basePath = buildBasePath();
+
   let subSections = {
     title: 'Tokens',
-    path: 'system/tokens',
+    path: `${basePath}system/tokens`,
     menu: [],
   };
   const tokens = getTokens();
