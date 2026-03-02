@@ -3,13 +3,22 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
+import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
+import {
+  WatcherState,
+  getRuntimeComponentsPathsToWatch,
+  watchAppSource,
+  watchGlobalEntries,
+  watchPages,
+  watchPublicDirectory,
+  watchRuntimeComponents,
+  watchRuntimeConfiguration,
+} from './watchers';
 import { createWebSocketServer } from './websocket';
 
 /**
@@ -90,7 +99,6 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
 
   await persistClientConfig(handoff);
 
-  // Build app
   const buildResult = spawn.sync('npx', ['next', 'build'], {
     cwd: appPath,
     stdio: 'inherit',
@@ -151,7 +159,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     // create empty directory
     await fs.ensureDir(moduleOutput);
   }
-  const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '--port', String(port)], {
+  const nextProcess = spawn('npx', ['next', 'dev', '--port', String(port)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {
@@ -210,7 +218,7 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   await persistClientConfig(handoff);
 
   // Run
-  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
     cwd: appPath,
     stdio: 'inherit',
     env: {

@@ -11,9 +11,6 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
-  eslint: {
-    dirs: ['pages', 'utils'],
-  },
   transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
@@ -97,17 +94,12 @@ const nextConfig = {
       return content;
     },
   },
-  turbopack: { 
+  turbopack: {
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
       '@': path.resolve('.'),
     },
-    resolveExtensions: [
-      '.js',
-      '.jsx',
-      '.ts',
-      '.tsx',
-    ],
+    resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
   },
   webpack: (config, { isServer }) => {
     // Add aliases for webpack (mirrors turbopack.resolveAlias)
