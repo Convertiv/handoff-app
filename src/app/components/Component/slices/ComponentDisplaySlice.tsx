@@ -1,4 +1,4 @@
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { Filter, evaluateFilter } from '@handoff/utils/filter';
 import React from 'react';
 import { CodeHighlight } from '../../Markdown/CodeHighlight';

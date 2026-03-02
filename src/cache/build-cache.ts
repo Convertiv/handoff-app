@@ -25,8 +25,6 @@ export interface ComponentCacheEntry {
 export interface GlobalDepsState {
   /** tokens.json file state */
   tokens?: FileState;
-  /** shared.scss or shared.css file state */
-  sharedStyles?: FileState;
   /** Global SCSS entry file state */
   globalScss?: FileState;
   /** Global JS entry file state */
@@ -115,14 +113,6 @@ export async function computeGlobalDepsState(handoff: Handoff): Promise<GlobalDe
   const tokensPath = handoff.getTokensFilePath();
   result.tokens = (await computeFileState(tokensPath)) ?? undefined;
 
-  // shared.scss or shared.css
-  const sharedScssPath = path.resolve(handoff.workingPath, 'integration/components/shared.scss');
-  const sharedCssPath = path.resolve(handoff.workingPath, 'integration/components/shared.css');
-
-  const sharedScssState = await computeFileState(sharedScssPath);
-  const sharedCssState = await computeFileState(sharedCssPath);
-  result.sharedStyles = sharedScssState ?? sharedCssState ?? undefined;
-
   // Global SCSS entry
   if (handoff.runtimeConfig?.entries?.scss) {
     result.globalScss = (await computeFileState(handoff.runtimeConfig.entries.scss)) ?? undefined;
@@ -145,11 +135,6 @@ export function haveGlobalDepsChanged(cached: GlobalDepsState | null | undefined
   // Check each global dependency
   if (!statesMatch(cached.tokens, current.tokens)) {
     Logger.debug('Global dependency changed: tokens.json');
-    return true;
-  }
-
-  if (!statesMatch(cached.sharedStyles, current.sharedStyles)) {
-    Logger.debug('Global dependency changed: shared styles');
     return true;
   }
 
@@ -237,7 +222,7 @@ export async function computeComponentFileStates(
 
   let templateDirFiles: Record<string, FileState> | undefined;
   if (templateDir) {
-    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html']);
+    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html', '.tsx', '.ts']);
   }
 
   return { files, templateDirFiles };

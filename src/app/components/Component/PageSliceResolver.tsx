@@ -1,5 +1,5 @@
 import { PageSlice } from '@handoff/transformers/preview/types';
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import React from 'react';
 import { BestPracticesSlice, CardsSlice, ComponentDisplaySlice, PropertiesSlice, TextSlice, ValidationResultsSlice } from './slices';
 

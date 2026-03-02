@@ -2,14 +2,12 @@ import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import path from 'path';
-import buildApp, { devApp, watchApp } from './app';
+import buildApp, { devApp, watchApp } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
-import { defaultConfig } from './config';
+import { initConfig, initRuntimeConfig, validateConfig } from './config';
 import pipeline, { buildComponents } from './pipeline';
-import { processSharedStyles } from './transformers/preview/component';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
-import { ComponentListObject } from './transformers/preview/types';
 import { Config, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
 import { generateFilesystemSafeId } from './utils/path';
@@ -32,7 +30,6 @@ class Handoff {
   private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
   private _configFilePaths: string[] = [];
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
-  private _sharedStylesCache?: string | null;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
   constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
@@ -55,7 +52,7 @@ class Handoff {
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.runtimeConfig, this._configFilePaths] = initRuntimeConfig(this);
-    if(this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
+    if (this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
       process.env.HANDOFF_APP_BASE_PATH = this.config.app.base_path ?? '';
     }
     return this;
@@ -168,19 +165,6 @@ class Handoff {
     const documentationObject = await this.readJsonFile(this.getTokensFilePath());
     this._documentationObjectCache = documentationObject;
     return documentationObject;
-  }
-
-  /**
-   * Retrieves shared styles, using cached version if available
-   * @returns {Promise<string | null>} The shared styles string or null if not found
-   */
-  async getSharedStyles(): Promise<string | null> {
-    if (this._sharedStylesCache !== undefined) {
-      return this._sharedStylesCache;
-    }
-    const sharedStyles = await processSharedStyles(this);
-    this._sharedStylesCache = sharedStyles;
-    return sharedStyles;
   }
 
   async getRunner(): Promise<ReturnType<typeof HandoffRunner>> {
@@ -296,7 +280,6 @@ class Handoff {
    */
   clearCaches(): void {
     this._documentationObjectCache = undefined;
-    this._sharedStylesCache = undefined;
   }
 
   /**

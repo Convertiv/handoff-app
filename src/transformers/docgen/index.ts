@@ -186,6 +186,31 @@ const toPropertiesMap = (generatedDocs: GeneratedDocs, entry: string, handoff: a
   return properties;
 };
 
+/**
+ * Get SlotMetadata map for a specific component by name from generated docs.
+ * Used when a file has multiple components (e.g. CSF with CardRow + Card) and we need
+ * the one that matches meta.component (e.g. CardRow).
+ */
+export const getPropertiesForComponentFromDocs = (
+  generatedDocs: GeneratedDocs,
+  componentName: string
+): { [key: string]: SlotMetadata } | null => {
+  if (!generatedDocs?.components?.length || !componentName) {
+    return null;
+  }
+  const componentDoc = generatedDocs.components.find(
+    (c) => c.name === componentName
+  );
+  if (!componentDoc || !componentDoc.props?.length) {
+    return null;
+  }
+  const properties: { [key: string]: SlotMetadata } = {};
+  for (const prop of componentDoc.props) {
+    properties[prop.name] = toSlotMetadata(prop);
+  }
+  return properties;
+};
+
 export const getPropertiesFromGeneratedDocs = (
   generatedDocs: GeneratedDocs,
   entry: string,

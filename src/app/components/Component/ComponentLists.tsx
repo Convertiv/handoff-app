@@ -1,4 +1,4 @@
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { ToggleGroup, ToggleGroupItem } from '@radix-ui/react-toggle-group';
 import { AlignJustify, LayoutGrid, Rows, Search } from 'lucide-react';
 import Link from 'next/link';

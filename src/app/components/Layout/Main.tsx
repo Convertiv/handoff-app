@@ -1,5 +1,5 @@
-import { ComponentDocumentationOptions } from '@handoff/types';
 import { ClientConfig } from '@handoff/types/config';
+import { ComponentDocumentationOptions } from '@handoff/types/preview';
 import Head from 'next/head';
 import { Header } from '../../components/Layout/Header';
 import { ThemeProvider } from '../../components/util/theme-provider';

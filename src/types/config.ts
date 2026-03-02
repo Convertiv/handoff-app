@@ -3,7 +3,7 @@ import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
-import { ValidationResult } from '../types';
+import { ValidationResult } from './preview';
 
 export interface ImageStyle {
   name: string;

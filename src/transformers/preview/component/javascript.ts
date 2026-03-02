@@ -1,9 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initRuntimeConfig } from '../../../index';
+import { initRuntimeConfig } from '../../../config';
+import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import viteBaseConfig from '../../config';
+import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
@@ -107,10 +108,10 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
 /**
  * Builds the main JavaScript bundle for the component preview.
  *
- * This function checks if there's a main JavaScript bundle defined in the integration,
+ * This function checks if there's a main JavaScript bundle defined in the runtime config,
  * and if the file exists, it builds the bundle and outputs it to the component's output path.
  *
- * @param handoff - The Handoff configuration object containing integration settings
+ * @param handoff - The Handoff configuration object containing build settings
  * @returns A Promise that resolves when the build process is complete
  * @throws May throw an error if the build process fails
  */

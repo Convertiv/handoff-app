@@ -1,4 +1,4 @@
-import { ComponentDocumentationOptions } from '@handoff/types';
+import { ComponentDocumentationOptions } from '@handoff/types/preview';
 import { Types as CoreTypes } from 'handoff-core';
 import { round, startCase } from 'lodash';
 import React from 'react';
@@ -212,8 +212,8 @@ export interface ComponentDesignTokensProps {
   useReferences: boolean;
 }
 
-interface DataTableRow extends Map<string, [string, string, CoreTypes.IToken | undefined][]> {}
-interface DataTable extends Map<string, DataTableRow> {}
+interface DataTableRow extends Map<string, [string, string, CoreTypes.IToken | undefined][]> { }
+interface DataTable extends Map<string, DataTableRow> { }
 
 export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
   title,
