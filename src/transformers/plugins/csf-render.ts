@@ -87,29 +87,48 @@ function getStoryEntries(moduleExports: Record<string, any>): Array<[string, Sto
   }) as Array<[string, StoryObject]>;
 }
 
+function toReactElement(
+  renderResult: any,
+  meta: CsfMeta,
+  args: Record<string, any>
+): React.ReactElement {
+  if (React.isValidElement(renderResult)) {
+    return renderResult;
+  }
+  if (typeof renderResult === 'string' || typeof renderResult === 'number') {
+    return React.createElement(React.Fragment, null, renderResult);
+  }
+  if (Array.isArray(renderResult)) {
+    return React.createElement(React.Fragment, null, ...renderResult);
+  }
+  if (meta.component) {
+    return React.createElement(meta.component, args);
+  }
+  return React.createElement('pre', null, JSON.stringify(args, null, 2));
+}
+
 function safeRenderToHtml(
   meta: CsfMeta,
   story: StoryObject | ((args: Record<string, any>) => any),
   args: Record<string, any>
 ): string {
-  const storyRender = typeof story === 'function' ? story : story.render;
-  const render = storyRender || meta.render;
+  try {
+    const storyRender = typeof story === 'function' ? story : story.render;
+    const render = storyRender || meta.render;
 
-  if (render) {
-    const renderResult = render(args);
-    const element = React.isValidElement(renderResult)
-      ? renderResult
-      : meta.component
-        ? React.createElement(meta.component, args)
-        : React.createElement('pre', null, JSON.stringify(args, null, 2));
-    return ReactDOMServer.renderToString(element);
+    if (render) {
+      return ReactDOMServer.renderToString(toReactElement(render(args), meta, args));
+    }
+
+    if (meta.component) {
+      return ReactDOMServer.renderToString(React.createElement(meta.component, args));
+    }
+
+    return ReactDOMServer.renderToString(React.createElement('pre', null, JSON.stringify(args, null, 2)));
+  } catch (error) {
+    Logger.warn(`SSR render failed for story, falling back to static placeholder: ${error}`);
+    return `<div style="padding:1rem;color:#b91c1c;font-family:monospace;font-size:13px">Render error: ${String(error)}</div>`;
   }
-
-  if (meta.component) {
-    return ReactDOMServer.renderToString(React.createElement(meta.component, args));
-  }
-
-  return ReactDOMServer.renderToString(React.createElement('pre', null, JSON.stringify(args, null, 2)));
 }
 
 function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string): string {

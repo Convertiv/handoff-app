@@ -198,7 +198,7 @@ export const ComponentDisplay: React.FC<{
                                 </SelectTrigger>
                                 <SelectContent>
                                   {localVariants[variantProperty].map((variantPropertyValue) => {
-                                    if (typeof variantPropertyValue !== 'string') return null;
+                                    if (typeof variantPropertyValue !== 'string' || variantPropertyValue === '') return null;
                                     return (
                                       <SelectItem
                                         key={variantPropertyValue}
@@ -223,11 +223,13 @@ export const ComponentDisplay: React.FC<{
                         <SelectValue placeholder="Preview" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.keys(component.previews).map((key) => (
-                          <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
-                            {component.previews[key].title}
-                          </SelectItem>
-                        ))}
+                        {Object.keys(component.previews)
+                          .filter((key) => component.previews[key].url)
+                          .map((key) => (
+                            <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
+                              {component.previews[key].title}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </>
