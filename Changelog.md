@@ -6,66 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.1.0] - 2026-03-05
-
-This release introduces two major new features. First, handoff now can do automatic
-type detection in typescript files. By using a new library we wrote to leverage the
-typescript engine, we can automatically extract types from your components and give
-you visiblity into the type architecture across your whole project.
-
-Second, we've long wanted to support the Storybook component story format, and this
-release provides robust support for stories expressed as tsx or js files.
-
-This release also does significant cleanup and quality of life improvements. We've
-fixed some longstanding annoyances, and continue to focus the application.
-
-### Automatic type documentation
-
-* Integrated **handoff-docgen** for component documentation: props and types are
-  inferred from React/TSX components and merged with story data where available.
-* Properties table shows inferred types, default values, and descriptions from
-  component source and story argTypes.
-* Empty state message when no properties are documented; improved layout and
-  formatting for inline and default values in the Preview component.
-
-### CSF support
-
-* Components can use Storybook-style Component Story Format (`.stories.tsx` / `.stories.js`).
-  Stories are parsed to generate variants, args, and argTypes for the component page.
-* CSF parsing supports deep type nesting and correctly shows nested items for both
-  Handlebars and CSF components.
-* New example component `example-csf` demonstrates CSF integration alongside the
-  existing Handlebars and React examples.
-
-### Component page and code display
-
-* **Handlebars formatting:** Code highlight now supports Handlebars (`.hbs`) templates—
-  syntax highlighting uses the correct language instead of plain HTML.
-* Handlebars components no longer show rendered HTML in the Code snippet dropdown;
-  the template source is shown correctly.
-* Empty code tabs are filtered from the dropdown; HTML fallback for inactive states
-  removed for clearer code view.
-* Preview dropdown shows the active variant instead of a placeholder; style loading
-  and incremental component summary updates fixed in watch mode.
-* Prev/next navigation respects component group boundaries and hides invalid links.
-
-### Cleanup and internal changes
-
-* Removed legacy integration directory and relocated component scaffolding templates
-  under `integration/components/` (e.g. `example`, `example-csf`, `example-react`).
-* Removed legacy shared styles pipeline; `makeComponent` and config now use
-  `config.entries.components` consistently.
-* Removed deprecated `serverRuntimeConfig` usage, outdated `.env.example` with
-  incorrect variable names, and the patch-package workaround where no longer needed.
-* Dependencies cleanup and package updates.
-* Internal reorg: new `app-builder` (build, watchers, client config, websocket),
-  pipeline split into `pipeline/` (archive, components, figma, styles, validation),
-  config split into `config/` (defaults, loader, runtime, validator), and READMEs
-  added for major modules.
-* Global CSS/JS bundles now build on startup in dev mode; watcher added to rebuild
-  main bundles and components when global entry files change.
-* Stale JSDoc and command descriptions updated.
-
 ## \[1.0.6] - 2026-02-24
 
 Version 1.0.4 fixed an issue when running Handoff in subpaths (eg.
