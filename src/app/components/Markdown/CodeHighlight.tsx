@@ -3,6 +3,7 @@ import { PreviewObject } from '@handoff/types/preview';
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
 import { useEffect, useState } from 'react';
+import handlebars from 'react-syntax-highlighter/dist/esm/languages/prism/handlebars';
 import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
 import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
@@ -31,6 +32,8 @@ SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('ts', typescript);
 SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('xml', html);
+SyntaxHighlighter.registerLanguage('handlebars', handlebars);
+SyntaxHighlighter.registerLanguage('hbs', handlebars);
 /**
  * Highlight code for preview elements
  * @param param0
@@ -102,6 +105,8 @@ export const CodeHighlight: React.FC<{
 
   const labels: Record<string, string> = {
     code: 'Code',
+    handlebars: 'Handlebars',
+    hbs: 'Handlebars',
     html: 'HTML',
     css: 'CSS',
     js: 'JavaScript',
@@ -143,6 +148,7 @@ export const CodeHighlight: React.FC<{
       if (format === 'jsx') return 'jsx';
       if (format === 'typescript' || format === 'ts') return 'typescript';
       if (format === 'javascript' || format === 'js') return 'javascript';
+      return 'handlebars';
     }
 
     // Handle JavaScript state
@@ -162,6 +168,8 @@ export const CodeHighlight: React.FC<{
       sass: 'scss',
       sharedStyles: 'css',
       json: 'json',
+      handlebars: 'handlebars',
+      hbs: 'handlebars',
     };
 
     return languageMap[activeState] || activeState;
