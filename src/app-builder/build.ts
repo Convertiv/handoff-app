@@ -83,9 +83,17 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 
 /**
  * Build the Next.js documentation application.
+ * @param copyOnlyPaths - If set, do not remove output dir; copy only these paths (relative to out/) into existing output (merge).
+ * @param deployDir - If set, copy output to this directory instead of default (workingPath/sitesDirectory/projectId).
  */
-const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<void> => {
+const buildApp = async (
+  handoff: Handoff,
+  skipComponents?: boolean,
+  options?: { copyOnlyPaths?: string[]; deployDir?: string }
+): Promise<void> => {
   skipComponents = skipComponents ?? false;
+  const copyOnlyPaths = options?.copyOnlyPaths;
+  const deployDir = options?.deployDir;
   // Perform cleanup
   await cleanupAppDirectory(handoff);
 
@@ -116,18 +124,35 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
     throw new Error(errorMsg);
   }
 
-  // Ensure output root directory exists
-  const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
-  await fs.ensureDir(outputRoot);
-
-  // Clean the project output directory (if exists)
-  const output = path.resolve(outputRoot, handoff.getProjectId());
-  if (fs.existsSync(output)) {
-    await fs.remove(output);
+  // Resolve output directory: explicit deployDir or default under working path
+  const outputRoot = deployDir
+    ? path.resolve(deployDir)
+    : path.resolve(handoff.workingPath, handoff.sitesDirectory);
+  const output = deployDir ? outputRoot : path.resolve(outputRoot, handoff.getProjectId());
+  if (!deployDir) {
+    await fs.ensureDir(path.resolve(handoff.workingPath, handoff.sitesDirectory));
   }
 
-  // Copy the build files into the project output directory
-  await fs.copy(path.resolve(appPath, 'out'), output);
+  if (copyOnlyPaths && copyOnlyPaths.length > 0) {
+    // Partial deploy: merge only the listed paths into existing output
+    await fs.ensureDir(output);
+    const outDir = path.resolve(appPath, 'out');
+    for (const relativePath of copyOnlyPaths) {
+      const src = path.join(outDir, relativePath);
+      const dest = path.join(output, relativePath);
+      if (fs.existsSync(src)) {
+        await fs.ensureDir(path.dirname(dest));
+        await fs.copy(src, dest, { overwrite: true });
+      }
+    }
+  } else {
+    // Full deploy: replace output with full out
+    if (fs.existsSync(output)) {
+      await fs.remove(output);
+    }
+    await fs.ensureDir(output);
+    await fs.copy(path.resolve(appPath, 'out'), output);
+  }
 };
 
 /**

@@ -1,72 +1,86 @@
-# Handoff CLI
+# CLI Reference
 
-The Handoff cli allows you to interact with your Figma file and Handoff app
-via the command line. It allows you to run handoff in any folder with
-no other configuration or setup.  
+The Handoff CLI is run as `handoff-app` (when installed globally) or `node ./dist/cli.js` from the project root. For full options for any command, run:
 
-## Interacting with Figma
-The CLI will allow you to fetch all data from Figma, build the documentation
-app and run a local dev site. For these use the build, fetch, and serve commands
-documented below.  
+```bash
+handoff-app <command> --help
+```
 
-## Configuring a handoff project
-The CLI will allow you to build the various kinds of configurations that you
-will need for interacting with Figma. Handoff has sane configuration defaults
-but the various kinds of configurations can be tailored or extended.
+## Shared options
 
-Handoff has 4 configuration files - 
+Most commands accept these options (from [getSharedOptions](src/commands/utils.ts)):
 
-`handoff.config.json` - Defines the general handoff configuration.
-`pages` - Markdown files that will create or customize pages in the documentation
-app
-`exportables` - JSON schemas for each component in your figma file that you
-want to pull into handoff.
-`integration` - scss mappings and html templates for making it easy to map
-handoff tokens to your frontend framework.
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--config` | `-c` | Path to config file |
+| `--force` | `-f` | Force action |
+| `--debug` | `-d` | Enable debug mode |
 
-The CLI exposes two ways to manage the config - `make` and `eject`. 
+## Commands
 
-__Eject__ commands will take the default configuration and eject them into
-the current working directory. If you customize these configurations, then run 
-handoff commands in that directory, these configs will be executed.
-__Make__ commands will generate a boilerplate configuration in the current
-working directory. This is useful for extending handoff for different components
-or integrations.
+### Build
 
-## Requirements
-Node 16+
+| Command | Description | Main options |
+|---------|-------------|--------------|
+| `build:app` | Build the documentation application | `--skip-components` — skip building components before building the app |
+| `build:components [component]` | Build project components | Optional positional: component name to build a specific component |
 
-## Install the CLI 
+### Development
 
-`npm install -g handoff-app`
+| Command | Description |
+|---------|-------------|
+| `dev` | Start the design system in development mode (custom dev server with watchers) |
+| `start` | Start the design system in development mode (same as dev) |
 
-## Run the CLI
+### Eject
 
-`handoff-app --help`
+| Command | Description |
+|---------|-------------|
+| `eject:config` | Eject the default configuration to the current working directory |
+| `eject:pages` | Eject the default pages to the current working directory |
+| `eject:theme` | Eject the currently selected theme |
 
-## Commands and Flags
+### Fetch / Init
 
-Usage: handoff-app <cmd> <opts>
+| Command | Description |
+|---------|-------------|
+| `fetch` | Fetch the design tokens |
+| `init` | Initialize a new Handoff project with interactive wizard |
 
-Commands:
-  fetch [opts] - Fetches the design tokens from the design system
+### Make
 
-  build - Using the current tokens, build various outputs
-    build:app [opts] - Builds the design system static application
+| Command | Description | Arguments |
+|---------|-------------|-----------|
+| `make:page <name> [parent]` | Create a new page | `name` — page name; optional `parent` |
+| `make:component <name>` | Create a new HTML code component for documentation | `name` — component name |
+| `make:template <component> [state]` | Create a new template | `component` — component; optional `state` |
 
-  start [opts] - Starts the design system in development mode
+### Platform
 
-  make
-    make:template <component> <state> [opts] - Creates a new template
-    make:page <component> <state> [opts] - Creates a new page
+| Command | Description | Main options |
+|---------|-------------|--------------|
+| `platform:login` | Log in to the Handoff platform | `--url` — platform URL (overrides config) |
+| `platform:init` | Link this directory to a Handoff platform project | `--url` — platform URL |
+| `platform:pull` | Pull project files from the Handoff platform | `--url`, `--force`, `--debug` |
+| `platform:push` | Push local changes to the Handoff platform | `--url`, `--force`, `--debug` |
+| `platform:logout` | Log out from the Handoff platform | `--url` — platform URL |
 
-  eject - Ejects the default entire configuration to the current directory
-    eject:config [opts] - Ejects the default configuration to the current directory
-    eject:integration [opts] - Ejects the default integration to the current directory
-    eject:pages [opts] - Ejects the default pages to the current directory
+### ISR (Incremental Static Regeneration)
 
-Options:
-  -c, --config [file]      Define the path to the config file
-  -d, --debug              Show debug logs
-  -h, --help               Show this help message
-  -v, --version            Show the handoff version number
+| Command | Description | Main options |
+|---------|-------------|--------------|
+| `isr:pages` | Rebuild app (skip components) and optionally deploy only affected routes | `--path`, `--paths`, `--menu-changed`, `--partial`, `--deploy-dir` |
+| `isr:component` | Rebuild one or more components, then rebuild app and optionally deploy only affected routes | `--id`, `--ids`, `--partial`, `--deploy-dir` |
+
+For detailed ISR behavior and options, see [ISR](./isr.md).
+
+### Other
+
+| Command | Description | Main options |
+|---------|-------------|--------------|
+| `scaffold` | Scaffold component stubs for fetched Figma components | |
+| `validate:components` | Validate components in the design system | `--skip-build` — skip build step before validating |
+
+## Config
+
+The CLI reads config from `handoff.config.js`, `handoff.config.cjs`, or `handoff.config.json` in the current working directory. Use `-c` or `--config` to point to a different file.

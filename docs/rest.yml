@@ -1,0 +1,469 @@
+openapi: 3.0.3
+info:
+  title: Handoff Platform CLI API
+  description: REST API for the Handoff platform used by the CLI for authentication, project listing, and file sync (push/pull).
+  version: 1.0.0
+
+servers:
+  - url: https://platform.handoff.com
+    description: Production (example)
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: Device-code flow and token management
+  - name: Projects
+    description: Project listing and metadata
+  - name: Sync
+    description: File manifest, download, and push
+
+paths:
+  /api/cli/auth/device:
+    post:
+      tags: [Authentication]
+      summary: Create device code
+      description: Initiates the device-code authentication flow. No auth required. Returns a device code and user code; the user authorizes at the verification URL, then the client polls POST /api/cli/auth/token until approved.
+      operationId: createDeviceCode
+      requestBody: {}
+      responses:
+        '200':
+          description: Device code created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCodeResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/auth/token:
+    post:
+      tags: [Authentication]
+      summary: Poll for token
+      description: Poll with the device code from create device. Returns status "pending" until the user has authorized; then returns status "approved" with token and user. Poll at the interval given in device response. 410 = device code expired; 404 = invalid device code.
+      operationId: pollForToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceCode]
+              properties:
+                deviceCode:
+                  type: string
+                  description: The device code from POST /api/cli/auth/device
+      responses:
+        '200':
+          description: Token poll result (pending or approved)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPollResponse'
+        '404':
+          description: Invalid device code
+        '410':
+          description: Device code expired
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Authentication]
+      summary: Revoke token
+      description: Revokes the current CLI token (logout). Requires Bearer token.
+      operationId: revokeToken
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token revoked (or already invalid)
+        '401':
+          description: Unauthorized
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      description: Returns all projects accessible to the authenticated user.
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CliProject'
+        '401':
+          description: Unauthorized
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/projects/{projectId}/sync/manifest:
+    get:
+      tags: [Sync]
+      summary: Get sync manifest
+      description: Returns the file manifest for the project (version and list of files with etag, size, lastModified). Used to determine what to download or whether local state is in sync.
+      operationId: getManifest
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sync manifest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncManifest'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/projects/{projectId}/sync/file:
+    get:
+      tags: [Sync]
+      summary: Download file
+      description: Downloads a single file from the project by relative path. Response is the raw file content (binary).
+      operationId: downloadFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: query
+          required: true
+          description: Relative path of the file within the project
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content (binary)
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+        '404':
+          description: File or project not found
+        default:
+          description: Error (may be JSON with error/message)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/projects/{projectId}/sync/push:
+    post:
+      tags: [Sync]
+      summary: Push changes
+      description: Pushes file changes to the project. Uses multipart/form-data. Include baseVersion (current version you are based on), optional deleted (JSON array of relative paths to delete), and each file as a part keyed by its relative path. On success returns new version and file list. 409 = version conflict (server version changed); pull and retry.
+      operationId: pushChanges
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [baseVersion]
+              properties:
+                baseVersion:
+                  type: string
+                  description: Current project version (from manifest or last push)
+                deleted:
+                  type: string
+                  description: JSON array of relative paths to delete, e.g. '["path/to/removed.js"]'
+                # Additional parts: each key is a relative file path, value is file content
+      responses:
+        '200':
+          description: Push result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushResult'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Project not found
+        '409':
+          description: Version conflict; pull and retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/cli/projects/create-push:
+    post:
+      tags: [Sync]
+      summary: Create project and push
+      description: Creates a new project in the given organization and pushes all provided files in one request. Used for onboarding an existing handoff-app project to the platform. Multipart form: orgId (required), optional name, optional figmaProjectId, and file parts keyed by relative path.
+      operationId: createPush
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [orgId]
+              properties:
+                orgId:
+                  type: string
+                name:
+                  type: string
+                  description: Optional project name
+                figmaProjectId:
+                  type: string
+                  description: Optional Figma file ID
+                # Additional parts: each key is a relative file path, value is file content
+      responses:
+        '200':
+          description: Create and push result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePushResult'
+        '401':
+          description: Unauthorized
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token from device-code flow (POST /api/cli/auth/token when approved)
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    DeviceCodeResponse:
+      type: object
+      required: [deviceCode, userCode, verificationUrl, expiresIn, interval]
+      properties:
+        deviceCode:
+          type: string
+        userCode:
+          type: string
+        verificationUrl:
+          type: string
+          format: uri
+        expiresIn:
+          type: integer
+          description: Seconds until device code expires
+        interval:
+          type: integer
+          description: Polling interval in seconds
+
+    TokenPollPending:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending]
+
+    TokenPollApproved:
+      type: object
+      required: [status, token, user]
+      properties:
+        status:
+          type: string
+          enum: [approved]
+        token:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+            image:
+              type: string
+              nullable: true
+
+    TokenPollResponse:
+      oneOf:
+        - $ref: '#/components/schemas/TokenPollPending'
+        - $ref: '#/components/schemas/TokenPollApproved'
+
+    CliProject:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        orgId:
+          type: string
+        orgName:
+          type: string
+        orgSlug:
+          type: string
+        role:
+          type: string
+        syncVersion:
+          type: integer
+
+    ManifestFile:
+      type: object
+      properties:
+        etag:
+          type: string
+        size:
+          type: integer
+        lastModified:
+          type: string
+          format: date-time
+
+    SyncManifest:
+      type: object
+      properties:
+        projectId:
+          type: string
+        version:
+          type: integer
+        prefix:
+          type: string
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ManifestFile'
+
+    PushResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        version:
+          type: integer
+        uploaded:
+          type: array
+          items:
+            type: string
+        deleted:
+          type: array
+          items:
+            type: string
+        errors:
+          type: array
+          items:
+            type: string
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ManifestFile'
+
+    ConflictResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: [conflict]
+        message:
+          type: string
+        currentVersion:
+          type: integer
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ManifestFile'
+
+    CreatePushResult:
+      type: object
+      properties:
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            slug:
+              type: string
+            orgId:
+              type: string
+        syncVersion:
+          type: integer
+        uploaded:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ManifestFile'
+
+security: []
