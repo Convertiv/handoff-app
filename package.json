@@ -35,7 +35,6 @@
     "dev": "node ./dist/cli.js dev",
     "nextdev": "cd src/app && next dev",
     "build": "tsc",
-    "build:integration": "node ./dist/cli.js build:integration",
     "build:static": "node ./dist/cli.js build:app",
     "fetch": "node ./dist/cli.js fetch",
     "lint": "cd src/app && npx next lint",

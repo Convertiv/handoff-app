@@ -55,8 +55,7 @@ module.exports = {
   entries: {
     scss: './sass/main.scss',
     js: './js/main.js',
-    bundle: './js/main.js',
-    components: ['./integration/components'],
+    components: ['./components'],
   },
   // These are the asset zip file download links
   assets_zip_links: {

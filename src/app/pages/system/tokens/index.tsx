@@ -1,4 +1,4 @@
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import type { GetStaticProps } from 'next';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';

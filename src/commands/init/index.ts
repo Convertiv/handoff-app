@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs';
-import create from '../../create';
+import create from '../../cli/create';
 
 export interface InitArgs {}
 

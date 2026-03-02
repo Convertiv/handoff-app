@@ -3,8 +3,8 @@ import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import viteBaseConfig from '../../config';
 import { handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
+import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
