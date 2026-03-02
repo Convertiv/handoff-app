@@ -1,15 +1,22 @@
 import React from 'react';
 
 type Image = {
+  /** The source of the image @required */
   src: string;
+  /** The alt text of the image @required */
   alt: string;
 };
 
 type CardItem = {
+  /** The image of the card @required */
   image: Image;
+  /** The title of the card @required */
   title: string;
+  /** The description of the card @required */
   description: string;
+  /** The link of the card @optional */
   link: { label: string; url: string };
+  /** Whether the card is featured @optional */
   featured: boolean;
 };
 
@@ -22,9 +29,11 @@ const Card = ({ image, title, description, link, featured }: CardItem) => (
     />
     <h2 className="example-csf-card__title">{title}</h2>
     <p className="example-csf-card__description">{description}</p>
-    <a href={link?.url} className="example-csf-card__link">
-      {link?.label}
-    </a>
+    {link && (
+      <a href={link.url} className="example-csf-card__link">
+        {link.label}
+      </a>
+    )}
   </article>
 );
 
@@ -64,7 +73,9 @@ export default {
     cards: defaultCards,
   },
   argTypes: {
-    cards: { control: false, description: 'Array of card objects' },
+    cards: {
+      control: false, description: 'Array of card objects'
+    },
   },
 };
 

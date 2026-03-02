@@ -6,11 +6,15 @@ type Image = {
 };
 
 type CardItem = {
-  /** The image of the card @default 'https://via.placeholder.com/150' @optional */
+  /** The image of the card @default 'https://via.placeholder.com/150' @required */
   image: Image;
+  /** The title of the card @default 'First card' @required */
   title: string;
+  /** The description of the card @default 'Short description for the first example card in the row.' @required */
   description: string;
+  /** The link of the card @default { label: 'Learn more', url: '#' } @optional */
   link: { label: string; url: string };
+  /** Whether the card is featured @default false @optional */
   featured: boolean;
 };
 
@@ -31,9 +35,11 @@ const ExampleReactTemplate: React.FC<Props> = ({ cards }) => {
           />
           <h2 className="example-react-card__title">{card.title}</h2>
           <p className="example-react-card__description">{card.description}</p>
-          <a href={card.link.url} className="example-react-card__link">
-            {card.link.label}
-          </a>
+          {card.link && (
+            <a href={card.link.url} className="example-react-card__link">
+              {card.link.label}
+            </a>
+          )}
         </article>
       ))}
     </div>
