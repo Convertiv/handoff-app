@@ -5,8 +5,16 @@
   </head>
   <body class='theme preview-body'>
 
-    <h1>This is a sample template</h1>
-    <p>This is a sample template. You can use this template to create your own templates.</p>
+    <div class='example-card{{#if featured}} is-featured{{/if}}'>
+      <h2>{{title}}</h2>
+      <p>{{paragraph}}</p>
+      {{#if image}}
+      <img src='{{image.src}}' alt='{{image.alt}}' class='example-card__image' />
+      {{/if}}
+      {{#if button}}
+      <a href='{{button.url}}' class='example-card__button'>{{button.label}}</a>
+      {{/if}}
+    </div>
 
   </body>
 </html>

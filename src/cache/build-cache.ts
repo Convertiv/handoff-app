@@ -237,7 +237,7 @@ export async function computeComponentFileStates(
 
   let templateDirFiles: Record<string, FileState> | undefined;
   if (templateDir) {
-    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html']);
+    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html', '.tsx', '.ts']);
   }
 
   return { files, templateDirFiles };

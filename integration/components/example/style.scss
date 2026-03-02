@@ -1,1 +1,35 @@
-// Your component styles go here
+.example-card {
+  border: 1px solid #d7dce3;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 360px;
+  background: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+.example-card__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
+}
+
+.example-card__button {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.example-card__button:hover {
+  background: #1d4ed8;
+}
+
+.example-card.is-featured {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}

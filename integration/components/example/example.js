@@ -66,5 +66,21 @@ module.exports = {
         },
       },
     },
+    featured: {
+      title: 'Featured',
+      values: {
+        title: 'Featured example',
+        paragraph: 'This is the featured variant with emphasis styling.',
+        image: {
+          src: '/images/content/example.svg',
+          alt: 'Example',
+        },
+        button: {
+          label: 'Get started',
+          url: '#',
+        },
+        featured: true,
+      },
+    },
   },
 };

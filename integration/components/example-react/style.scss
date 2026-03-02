@@ -1,0 +1,13 @@
+.example-react-template {
+  border: 1px solid #d7dce3;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 360px;
+  background: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+.example-react-template.is-featured {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}

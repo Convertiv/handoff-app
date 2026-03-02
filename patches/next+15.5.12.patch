@@ -1,0 +1,28 @@
+diff --git a/node_modules/next/dist/esm/server/dev/hot-reloader-turbopack.js b/node_modules/next/dist/esm/server/dev/hot-reloader-turbopack.js
+index 49dbdfa..be9276e 100644
+--- a/node_modules/next/dist/esm/server/dev/hot-reloader-turbopack.js
++++ b/node_modules/next/dist/esm/server/dev/hot-reloader-turbopack.js
+@@ -593,6 +593,9 @@ export async function createHotReloaderTurbopack(opts, serverFields, distDir, re
+                                 }
+                                 break;
+                             }
++                        case 'ping':
++                            // Ignore ping/heartbeat messages (e.g. from devtools or other clients)
++                            break;
+                         default:
+                             // Might be a Turbopack message...
+                             if (!parsedData.type) {
+diff --git a/node_modules/next/dist/server/dev/hot-reloader-turbopack.js b/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+index 345a26c..6d2105f 100644
+--- a/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
++++ b/node_modules/next/dist/server/dev/hot-reloader-turbopack.js
+@@ -649,6 +649,9 @@ async function createHotReloaderTurbopack(opts, serverFields, distDir, resetFetc
+                                 }
+                                 break;
+                             }
++                        case 'ping':
++                            // Ignore ping/heartbeat messages (e.g. from devtools or other clients)
++                            break;
+                         default:
+                             // Might be a Turbopack message...
+                             if (!parsedData.type) {
