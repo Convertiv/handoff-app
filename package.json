@@ -40,8 +40,7 @@
     "fetch": "node ./dist/cli.js fetch",
     "lint": "cd src/app && npx next lint",
     "release": "np --any-branch",
-    "test": "npm run lint",
-    "postinstall": "patch-package"
+    "test": "npm run lint"
   },
   "prettier": {
     "printWidth": 140,
@@ -140,7 +139,6 @@
     "@types/yargs": "^17.0.33",
     "eslint-config-prettier": "^10.0.2",
     "np": "^10.2.0",
-    "patch-package": "^8.0.0",
     "sass-embedded": "^1.89.0"
   }
 }

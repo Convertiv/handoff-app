@@ -1,9 +1,9 @@
 import React from 'react';
 
-const Card = ({ title, subtitle, featured }) => (
+const Card = ({ title, body, featured }) => (
   <div className={`example-csf-card ${featured ? 'is-featured' : ''}`}>
     <h2>{title}</h2>
-    <p>{subtitle}</p>
+    <p>{body}</p>
   </div>
 );
 
@@ -12,12 +12,12 @@ export default {
   component: Card,
   args: {
     title: 'CSF Card',
-    subtitle: 'Default subtitle',
+    body: 'Default body',
     featured: false,
   },
   argTypes: {
     title: { control: 'text', description: 'Card title' },
-    subtitle: { control: 'text', description: 'Card subtitle' },
+    body: { control: 'text', description: 'Card body' },
     featured: { control: 'boolean', description: 'Featured state' },
   },
 };
@@ -27,6 +27,6 @@ export const Default = {};
 export const Featured = {
   args: {
     featured: true,
-    subtitle: 'This is the featured story variant.',
+    body: 'This is the featured story variant.',
   },
 };
