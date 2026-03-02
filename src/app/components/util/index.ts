@@ -187,8 +187,6 @@ export const buildL2StaticPaths = () => {
                   level2: subFile.replace('.md', ''),
                 },
               };
-            } else {
-              console.log('file path already exists', fileName + '/' + subFile.replace('.md', ''));
             }
           })
           .filter(filterOutUndefined);
@@ -206,7 +204,7 @@ export const staticBuildMenu = () => {
   // // Contents of docs
   const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   // Get the file list
-  if(!fs.existsSync(docRoot)) {
+  if (!fs.existsSync(docRoot)) {
     return [];
   }
   const files = fs.readdirSync(docRoot);
@@ -290,7 +288,7 @@ export const staticBuildMenu = () => {
 };
 
 const buildBasePath = () => {
-  if(!process.env.HANDOFF_APP_BASE_PATH) {
+  if (!process.env.HANDOFF_APP_BASE_PATH) {
     return '';
   }
   return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '') + '/';
@@ -381,7 +379,7 @@ const staticBuildTokensMenu = () => {
 };
 
 const staticBuildTokenMenu = () => {
-    const basePath = buildBasePath();
+  const basePath = buildBasePath();
 
   let subSections = {
     title: 'Tokens',
@@ -557,8 +555,6 @@ const loadClientConfig = (): ClientConfigCache => {
     return getDefaultClientConfig();
   }
 };
-
-
 
 /**
  * Fetch Component Doc Page Markdown
