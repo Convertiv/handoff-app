@@ -11,6 +11,8 @@ import { SlotMetadata, SlotType } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
+import { ensureIds } from '../utils/schema';
+import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 
 type StoryObject = {
   name?: string;
@@ -201,7 +203,57 @@ export function csfRenderPlugin(
         }
       }
 
-      componentData.properties = generatedProperties;
+      // Enrich with docgen: descend into array/object types (e.g. cards[].image, title, link)
+      const generatedDocs = await generateDocsArtifact(templatePath, handoff);
+      const componentName =
+        (meta.component as any)?.displayName || (meta.component as any)?.name;
+      if (generatedDocs && componentName) {
+        const docgenProperties = getPropertiesForComponentFromDocs(
+          generatedDocs,
+          componentName
+        );
+        if (docgenProperties) {
+          for (const [propKey, docgenProp] of Object.entries(docgenProperties)) {
+            const hasNestedShape =
+              (docgenProp.items?.properties && Object.keys(docgenProp.items.properties).length > 0) ||
+              (docgenProp.properties && Object.keys(docgenProp.properties).length > 0);
+            if (hasNestedShape) {
+              const existing = generatedProperties[propKey];
+              generatedProperties[propKey] = existing
+                ? {
+                    ...existing,
+                    generic: docgenProp.generic || existing.generic,
+                    docgenType: docgenProp.docgenType,
+                    deepType: docgenProp.deepType,
+                    items: docgenProp.items,
+                    properties: docgenProp.properties,
+                  }
+                : docgenProp;
+            }
+          }
+        }
+      }
+
+      // Value-based fallback: infer array item shape from first story args when docgen didn't provide it
+      const firstPreviewValues = componentData.previews[Object.keys(componentData.previews)[0]]?.values || {};
+      for (const [argKey, prop] of Object.entries(generatedProperties)) {
+        if (prop.type !== SlotType.ARRAY) continue;
+        if (prop.items?.properties && Object.keys(prop.items.properties).length > 0) continue;
+        const val = firstPreviewValues[argKey];
+        if (!Array.isArray(val) || val.length === 0) continue;
+        const firstEl = val[0];
+        if (!firstEl || typeof firstEl !== 'object') continue;
+        const itemProperties: Record<string, SlotMetadata> = {};
+        for (const [itemKey, itemValue] of Object.entries(firstEl)) {
+          itemProperties[itemKey] = createSlotMetadata(itemKey, undefined, itemValue);
+        }
+        prop.items = {
+          type: SlotType.OBJECT,
+          properties: itemProperties,
+        };
+      }
+
+      componentData.properties = ensureIds(generatedProperties);
 
       let lastHtml = '';
       for (const [storyKey, storyValue] of stories) {

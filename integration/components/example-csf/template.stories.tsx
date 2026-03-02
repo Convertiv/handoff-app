@@ -1,32 +1,86 @@
 import React from 'react';
 
-const Card = ({ title, body, featured }) => (
-  <div className={`example-csf-card ${featured ? 'is-featured' : ''}`}>
-    <h2>{title}</h2>
-    <p>{body}</p>
+type Image = {
+  src: string;
+  alt: string;
+};
+
+type CardItem = {
+  image: Image;
+  title: string;
+  description: string;
+  link: { label: string; url: string };
+  featured: boolean;
+};
+
+const Card = ({ image, title, description, link, featured }: CardItem) => (
+  <article className={`example-csf-card ${featured ? 'is-featured' : ''}`}>
+    <img
+      src={image?.src}
+      alt={image?.alt ?? ''}
+      className="example-csf-card__image"
+    />
+    <h2 className="example-csf-card__title">{title}</h2>
+    <p className="example-csf-card__description">{description}</p>
+    <a href={link?.url} className="example-csf-card__link">
+      {link?.label}
+    </a>
+  </article>
+);
+
+const CardRow = ({ cards }: { cards: CardItem[] }) => (
+  <div className="example-csf-cards">
+    {cards.map((card, i) => (
+      <Card key={i} {...card} />
+    ))}
   </div>
 );
 
+const defaultCards = [
+  {
+    image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+1', alt: 'Card 1' },
+    title: 'First card',
+    description: 'Short description for the first example card in the row.',
+    link: { label: 'Learn more', url: '#' },
+  },
+  {
+    image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+2', alt: 'Card 2' },
+    title: 'Second card',
+    description: 'Short description for the second example card in the row.',
+    link: { label: 'Learn more', url: '#' },
+  },
+  {
+    image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+3', alt: 'Card 3' },
+    title: 'Third card',
+    description: 'Short description for the third example card in the row.',
+    link: { label: 'Learn more', url: '#' },
+  },
+];
+
 export default {
-  title: 'Examples/Example CSF Card',
-  component: Card,
+  title: 'Examples/Example CSF Cards',
+  component: CardRow,
   args: {
-    title: 'CSF Card',
-    body: 'Default body',
-    featured: false,
+    cards: defaultCards,
   },
   argTypes: {
-    title: { control: 'text', description: 'Card title' },
-    body: { control: 'text', description: 'Card body' },
-    featured: { control: 'boolean', description: 'Featured state' },
+    cards: { control: false, description: 'Array of card objects' },
   },
 };
 
 export const Default = {};
 
-export const Featured = {
+export const CustomCards = {
   args: {
-    featured: true,
-    body: 'This is the featured story variant.',
+    cards: [
+      {
+        image: { src: 'https://placehold.co/400x200/dbeafe/1e40af?text=Featured+1', alt: 'Featured 1' },
+        title: 'Featured card',
+        description: 'This story uses custom card content.',
+        link: { label: 'Read more', url: '#' },
+        featured: true,
+      },
+      ...defaultCards.slice(1),
+    ],
   },
 };

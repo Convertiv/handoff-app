@@ -1,19 +1,18 @@
 <html lang='en' dir='ltr'>
   <head>
     {{{style}}}
-    {{{script}}}
   </head>
   <body class='theme preview-body'>
 
-    <div class='example-card{{#if featured}} is-featured{{/if}}'>
-      <h2>{{title}}</h2>
-      <p>{{paragraph}}</p>
-      {{#if image}}
-      <img src='{{image.src}}' alt='{{image.alt}}' class='example-card__image' />
-      {{/if}}
-      {{#if button}}
-      <a href='{{button.url}}' class='example-card__button'>{{button.label}}</a>
-      {{/if}}
+    <div class='example-cards'>
+      {{#each properties.cards as |card|}}
+      <article class='example-card {{#if card.featured}}is-featured{{/if}}'>
+        <img src='{{card.image.src}}' alt='{{card.image.alt}}' class='example-card__image' />
+        <h2 class='example-card__title'>{{card.title}}</h2>
+        <p class='example-card__description'>{{card.description}}</p>
+        <a href='{{card.link.url}}' class='example-card__link'>{{card.link.label}}</a>
+      </article>
+      {{/each}}
     </div>
 
   </body>

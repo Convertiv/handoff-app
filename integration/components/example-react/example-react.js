@@ -7,7 +7,7 @@ module.exports = {
     template: './template.tsx',
   },
   title: 'Example React TSX',
-  description: 'Example TSX component preview.',
+  description: 'Example TSX component: a row of three cards with image, title, description and link.',
   type: 'element',
   group: 'Examples',
   tags: ['react', 'tsx'],
@@ -17,17 +17,52 @@ module.exports = {
     generic: {
       title: 'Generic',
       values: {
-        title: 'TSX Component',
-        body: 'This component is rendered from template.tsx',
-        featured: false,
+        cards: [
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+1', alt: 'Card 1' },
+            title: 'First card',
+            description: 'Short description for the first example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+          },
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+2', alt: 'Card 2' },
+            title: 'Second card',
+            description: 'Short description for the second example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+          },
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+3', alt: 'Card 3' },
+            title: 'Third card',
+            description: 'Short description for the third example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+          },
+        ],
       },
     },
     featured: {
       title: 'Featured',
       values: {
-        title: 'Featured example',
-        body: 'This is the featured variant with emphasis styling.',
-        featured: true,
+        cards: [
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+1', alt: 'Card 1' },
+            title: 'First card',
+            description: 'Short description for the first example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+            featured: true,
+          },
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+2', alt: 'Card 2' },
+            title: 'Second card',
+            description: 'Short description for the second example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+          },
+          {
+            image: { src: 'https://placehold.co/400x200/e5e7eb/6b7280?text=Card+3', alt: 'Card 3' },
+            title: 'Third card',
+            description: 'Short description for the third example card in the row.',
+            link: { label: 'Learn more', url: '#' },
+          },
+        ],
       },
     },
   },
