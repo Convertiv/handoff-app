@@ -18,19 +18,25 @@ const PrevNextNav = ({
     href: string;
   } | null;
 }) => {
+  const showPrevious = previous?.href && previous?.title;
+  const showNext = next?.href && next?.title;
+
+  if (!showPrevious && !showNext) return null;
+
   return (
-    <div className="mt-10 flex items-center justify-between gap-8">
-      {previous ? (
-        <Button asChild variant="outline" size="sm" className="flex h-full w-full flex-col items-start gap-0 px-6 py-4 [&_svg]:size-3!">
+    <div className={`mt-10 flex items-center gap-8 ${showPrevious && showNext ? 'justify-between' : showNext ? 'justify-end' : 'justify-start'}`}>
+      {showPrevious && (
+        <Button asChild variant="outline" size="sm" className="flex h-full w-1/2 flex-col items-start gap-0 px-6 py-4 [&_svg]:size-3!">
           <Link href={previous.href}>
             <span className="flex items-center gap-2 font-light text-gray-500">
               <ChevronLeft className="opacity-50" /> Previous
             </span>
-            <span className="text-base font-normal">{previous.title}</span></Link>
+            <span className="text-base font-normal">{previous.title}</span>
+          </Link>
         </Button>
-      ) : <div className="w-full h-full" />}
-      {next && (
-        <Button asChild variant="outline" size="sm" className="flex h-full w-full flex-col items-end gap-0 px-6 py-4 [&_svg]:size-3!">
+      )}
+      {showNext && (
+        <Button asChild variant="outline" size="sm" className="flex h-full w-1/2 flex-col items-end gap-0 px-6 py-4 [&_svg]:size-3!">
           <Link href={next.href}>
             <span className="flex items-center gap-2 font-light text-gray-500">
               Next <ChevronRight className="opacity-50" />

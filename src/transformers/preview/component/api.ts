@@ -93,7 +93,6 @@ export const writeComponentApi = async (
   await fs.writeFile(outputFilePath, JSON.stringify(component, null, 2));
 };
 
-
 /**
  * Update the main component summary API with the new component data
  * @param handoff
@@ -106,7 +105,7 @@ export const updateComponentSummaryApi = async (handoff: Handoff, componentData:
     return;
   }
 
-  // Partial update: merge with existing data. Read from the same path we write to (getAPIPath = workingPath/public/api).
+  // Partial update: merge with existing data
   const apiPath = path.resolve(getAPIPath(handoff), 'components.json');
   let existingData: ComponentListObject[] = [];
 

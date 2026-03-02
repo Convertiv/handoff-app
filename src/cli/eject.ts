@@ -22,7 +22,7 @@ export const ejectConfig = async (handoff: Handoff) => {
 };
 
 /**
- * Eject the integration to the working directory
+ * Eject pages to the working directory
  * @param handoff
  */
 export const ejectPages = async (handoff: Handoff) => {
@@ -41,7 +41,7 @@ export const ejectPages = async (handoff: Handoff) => {
 };
 
 /**
- * Eject the integration to the working directory
+ * Eject theme to the working directory
  * @param handoff
  */
 export const ejectTheme = async (handoff: Handoff) => {
