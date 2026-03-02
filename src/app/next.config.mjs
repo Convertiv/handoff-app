@@ -28,9 +28,6 @@ const nextConfig = {
     HANDOFF_EXPORT_PATH: '',
     HANDOFF_WEBSOCKET_PORT: '',
   },
-  serverRuntimeConfig: {
-    PROJECT_ROOT: path.resolve('public'),
-  },
   images: {
     unoptimized: true,
   },
