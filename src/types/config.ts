@@ -72,6 +72,16 @@ export interface Config {
   sitesOutputDirectory?: string;
   useVariables?: boolean;
   /**
+   * Configuration for the type catalog (Design System Types page).
+   */
+  typeCatalog?: {
+    /**
+     * Enable structural similarity detection (same shape across components).
+     * @default true
+     */
+    enableStructuralSimilarity?: boolean;
+  };
+  /**
    * Configuration for React component docs generation (handoff-docgen).
    */
   reactDocgen?: {

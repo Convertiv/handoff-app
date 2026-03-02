@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../../../index';
+import { buildTypeCatalog } from '../../type-catalog';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 
 /**
@@ -56,6 +57,14 @@ export const getAPIPath = (handoff: Handoff) => {
 const writeComponentSummaryAPI = async (handoff: Handoff, componentData: ComponentListObject[]) => {
   componentData.sort((a, b) => a.title.localeCompare(b.title));
   await fs.writeFile(path.resolve(getAPIPath(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
+
+  const typeCatalog = buildTypeCatalog(componentData, {
+    enableStructuralSimilarity: handoff.config?.typeCatalog?.enableStructuralSimilarity,
+  });
+  await fs.writeFile(
+    path.resolve(getAPIPath(handoff), 'types.json'),
+    JSON.stringify(typeCatalog, null, 2)
+  );
 };
 
 export const writeComponentApi = async (

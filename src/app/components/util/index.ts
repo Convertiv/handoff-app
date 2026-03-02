@@ -245,14 +245,18 @@ export const staticBuildMenu = () => {
         if (metadata.menu) {
           // Build the submenu
           subSections = Object.keys(metadata.menu)
-            .map((key) => {
+            .flatMap((key) => {
               const sub = metadata.menu[key];
               if (sub.components) {
-                // The user wants to inject the component menu here
-                return {
-                  title: sub.title,
-                  menu: staticBuildComponentMenu(sub.components),
-                };
+                // The user wants to inject the component menu here; add Types link as first subsection
+                const basePath = buildBasePath();
+                return [
+                  { title: 'Types', path: basePath + 'system/types', image: '' },
+                  {
+                    title: sub.title,
+                    menu: staticBuildComponentMenu(sub.components),
+                  },
+                ];
               }
               if (sub.tokens) {
                 // The user wants to inject the component menu here
