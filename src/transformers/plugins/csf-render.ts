@@ -12,6 +12,7 @@ import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
+import { createViteLogger } from '../utils/vite-logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 
 type StoryObject = {
@@ -135,6 +136,9 @@ export function csfRenderPlugin(
   return {
     name: PLUGIN_CONSTANTS.PLUGIN_NAME,
     apply: 'build',
+    config: () => ({
+      customLogger: createViteLogger(),
+    }),
     resolveId(resolveId) {
       if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
         return resolveId;
@@ -145,7 +149,13 @@ export function csfRenderPlugin(
         return PLUGIN_CONSTANTS.DUMMY_EXPORT;
       }
     },
-    async generateBundle() {
+    async generateBundle(_, bundle) {
+      for (const [fileName, chunkInfo] of Object.entries(bundle)) {
+        if (chunkInfo.type === 'chunk' && fileName.includes(PLUGIN_CONSTANTS.SCRIPT_ID)) {
+          delete bundle[fileName];
+        }
+      }
+
       const componentId = componentData.id;
       const templatePath = path.resolve(componentData.entries.template);
       const sourceCode = await fs.readFile(templatePath, 'utf8');
