@@ -8,8 +8,7 @@ and this project adheres to
 
 ## \[1.2.0]
 
-* Upgrade to Next16
-* Add pagination data structure to arrays
+* Placeholder for 1.2.0
 
 ## \[1.1.1] - 2026-03-12
 
@@ -18,6 +17,7 @@ This patch release focuses on Windows stabilization and consistency across envir
 It includes targeted fixes to reduce platform-specific issues in local development and documentation rendering, especially around path handling, routing/navigation behavior, and runtime update detection. These changes aim to make behavior on Windows align more closely with Mac and Linux, with no intended breaking changes.
 
 Also includes a fallback for components with empty previews definitions, preventing preview generation failures during builds.
+Placeholder for 1.2.0
 
 ## \[1.1.0] - 2026-03-05
 
