@@ -16,6 +16,7 @@ export interface PlaygroundComponent {
       url: string;
     };
   };
+  format: string;
   code: string;
   html: string;
   data?: Record<string, any>;

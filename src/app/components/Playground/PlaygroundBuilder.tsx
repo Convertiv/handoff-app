@@ -3,18 +3,20 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
-import { FileCodeIcon, SaveIcon } from 'lucide-react';
+import { FileCodeIcon, SaveIcon, SparklesIcon } from 'lucide-react';
 import { usePlayground } from './PlaygroundContext';
 import SortableItem from './SortableItem';
 import Preview from './Preview';
 import ComponentLibrary from './ComponentLibrary';
 import TemplateManager from './TemplateManager';
-import { constructComponentPreview } from './preview';
+import WizardDialog from './Wizard/WizardDialog';
+import { constructComponentPreview } from './Preview';
 
 export default function PlaygroundBuilder() {
   const { selectedComponents, loading, error, onDragEnd, removeComponent, templates, saveAsTemplate } = usePlayground();
   const [html, setHtml] = useState('');
   const [loadingHtml, setLoadingHtml] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
   const sensors = useSensors(
@@ -104,7 +106,16 @@ export default function PlaygroundBuilder() {
               </Tooltip>
             </>
           )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={() => setWizardOpen(true)}>
+                <SparklesIcon className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Generate with AI</TooltipContent>
+          </Tooltip>
           <ComponentLibrary />
+          <WizardDialog open={wizardOpen} onOpenChange={setWizardOpen} />
         </div>
       </nav>
 

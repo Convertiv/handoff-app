@@ -38,7 +38,13 @@ export function getL1StaticPathSegments(modulePath: string, workingPath: string)
   }
   let files: string[] = fs.readdirSync(docRoot);
   if (fs.existsSync(pageRoot)) {
-    files = [...new Set([...files, ...fs.readdirSync(pageRoot)])];
+    // ES5-compatible way to merge and deduplicate both arrays
+    var moreFiles = fs.readdirSync(pageRoot);
+    for (var i = 0; i < moreFiles.length; i++) {
+      if (files.indexOf(moreFiles[i]) === -1) {
+        files.push(moreFiles[i]);
+      }
+    }
   }
   return files
     .filter((fileName) => {
@@ -56,10 +62,7 @@ export function getL1StaticPathSegments(modulePath: string, workingPath: string)
 /**
  * Returns level-2 path segments { level1, level2 } for doc/pages.
  */
-export function getL2StaticPathSegments(
-  modulePath: string,
-  workingPath: string
-): Array<{ level1: string; level2: string }> {
+export function getL2StaticPathSegments(modulePath: string, workingPath: string): Array<{ level1: string; level2: string }> {
   const docRoot = path.resolve(modulePath, 'config/docs');
   const pageRoot = path.resolve(workingPath, 'pages');
   if (!fs.existsSync(docRoot)) {

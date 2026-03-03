@@ -4,18 +4,13 @@ import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { Plugin, normalizePath } from 'vite';
+import { normalizePath, Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
-import {
-  enrichPropertiesWithDocgen,
-  generateDocsArtifact,
-  generatePropertiesFromDocgen,
-  getPropertiesFromGeneratedDocs,
-} from '../docgen';
+import { enrichPropertiesWithDocgen, generateDocsArtifact, generatePropertiesFromDocgen, getPropertiesFromGeneratedDocs } from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
-import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
+import { buildClientModule, createReactResolvePlugin, DEFAULT_CLIENT_BUILD_CONFIG, generateClientComponentSource } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
@@ -296,6 +291,20 @@ export function ssrRenderPlugin(
 
         generatedPreviews[previewKey] = finalHtml;
         componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+      }
+
+      // Emit standalone client module for Playground live rendering
+      console.log('Emmiting Module componentPath', componentId, componentPath);
+      try {
+        const clientModuleSource = generateClientComponentSource(componentPath);
+        const clientModuleJs = await buildClientModule(clientModuleSource, handoff);
+        this.emitFile({
+          type: 'asset',
+          fileName: `${componentId}.module.js`,
+          source: clientModuleJs,
+        });
+      } catch (error) {
+        Logger.warn(`Failed to build client module for ${componentId}: ${error}`);
       }
 
       // Format final HTML and update component data

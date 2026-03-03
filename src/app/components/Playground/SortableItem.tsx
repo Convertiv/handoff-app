@@ -1,10 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { GripVertical, X } from 'lucide-react';
-import { SelectedPlaygroundComponent } from './types';
 import EditSheet from './EditSheet';
+import { SelectedPlaygroundComponent } from './types';
 
 interface SortableItemProps {
   component: SelectedPlaygroundComponent;
@@ -33,7 +33,7 @@ export default function SortableItem({ component, onRemove }: SortableItemProps)
             </div>
           </div>
           <div className="absolute -right-[30px] -top-[30px] flex items-center rounded-md bg-muted p-0 opacity-0 transition-opacity duration-100 group-hover:opacity-100">
-            <EditSheet component={component} onClose={() => {}} />
+            <EditSheet component={component} onClose={() => { }} />
             <Button variant="ghost" size="sm" onClick={() => onRemove(component.uniqueId)} className="cursor-pointer text-destructive hover:text-destructive">
               <X className="h-4 w-4" />
             </Button>

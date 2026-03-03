@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { SelectedPlaygroundComponent } from './types';
-import { renderPreview } from './preview';
+import { createContext, ReactNode, RefObject, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { usePlayground } from './PlaygroundContext';
+import { renderHandlebarsPreview, renderPreview, renderReactPreview } from './Preview';
+import { SelectedPlaygroundComponent } from './types';
 
 interface EditContextType {
   component: SelectedPlaygroundComponent | null;
@@ -9,6 +9,7 @@ interface EditContextType {
   setData: (data: any) => void;
   properties: any;
   previewHtml: string;
+  iframeRef: RefObject<HTMLIFrameElement | null>;
   mediaBrowserOpen: boolean;
   setMediaBrowserOpen: (open: boolean) => void;
   currentImagePath: string[];
@@ -23,29 +24,48 @@ const EditContext = createContext<EditContextType | undefined>(undefined);
 
 export function EditContextProvider({ component, children }: { component: SelectedPlaygroundComponent | null; children: ReactNode }) {
   const { updateComponent } = usePlayground();
-  const [data, setData] = useState<any>({});
+  const [data, setData] = useState<any>(null);
   const [properties, setProperties] = useState<any>({});
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [mediaBrowserOpen, setMediaBrowserOpen] = useState(false);
   const [currentImagePath, setCurrentImagePath] = useState<string[]>([]);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const initialRenderDone = useRef(false);
+
+  const basePath = typeof process !== 'undefined' ? process.env.HANDOFF_APP_BASE_PATH ?? '' : '';
+  const isReact = component?.format === 'react';
 
   useEffect(() => {
     if (component) {
       setData(component.data);
       setProperties(component.properties);
-      setPreviewHtml(component.html);
+      initialRenderDone.current = false;
+
+      if (isReact) {
+        setPreviewHtml(renderReactPreview(component, component.data, basePath));
+      } else {
+        setPreviewHtml(renderHandlebarsPreview(component, component.data, basePath));
+      }
     }
-  }, [component]);
+  }, [component, basePath, isReact]);
 
   useEffect(() => {
-    if (!component) return;
+    if (!component || data === null) return;
 
-    const reRender = async () => {
-      const html = await renderPreview(component, data);
+    if (isReact) {
+      if (!initialRenderDone.current) {
+        initialRenderDone.current = true;
+        return;
+      }
+      // For React: send props update via postMessage to avoid reloading the module
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage({ type: 'update-props', props: data }, '*');
+      }
+    } else {
+      const html = renderHandlebarsPreview(component, data, basePath);
       setPreviewHtml(html);
-    };
-    reRender();
-  }, [data, component]);
+    }
+  }, [data, component, basePath, isReact]);
 
   const handleInputChange = useCallback(
     (path: string[], value: any) => {
@@ -102,9 +122,9 @@ export function EditContextProvider({ component, children }: { component: Select
   const handleSave = useCallback(async () => {
     if (!component) return;
     const updatedComponent = { ...component, data };
-    updatedComponent.rendered = await renderPreview(updatedComponent);
+    updatedComponent.rendered = await renderPreview(updatedComponent, data, basePath);
     updateComponent(updatedComponent);
-  }, [component, data, updateComponent]);
+  }, [component, data, updateComponent, basePath]);
 
   return (
     <EditContext.Provider
@@ -114,6 +134,7 @@ export function EditContextProvider({ component, children }: { component: Select
         setData,
         properties,
         previewHtml,
+        iframeRef,
         mediaBrowserOpen,
         setMediaBrowserOpen,
         currentImagePath,

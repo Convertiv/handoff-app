@@ -1,5 +1,7 @@
 import esbuild from 'esbuild';
 import path from 'path';
+import Handoff from '../../index';
+import { Logger } from '../../utils/logger';
 
 /**
  * Default esbuild configuration for SSR builds
@@ -72,4 +74,114 @@ export function createReactResolvePlugin(workingPath: string, handoffModulePath:
       }));
     },
   };
+}
+
+function toForwardSlash(p: string): string {
+  return p.replace(/\\/g, '/');
+}
+
+/**
+ * Generates the entry source for a standalone client-side React component module.
+ * The resulting module exports `render(container, props)` and `update(props)`
+ * so the Playground can dynamically load and re-render it in an iframe.
+ */
+export function generateClientComponentSource(componentPath: string): string {
+  return `
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import Component from '${toForwardSlash(componentPath)}';
+
+    let root = null;
+
+    export function render(container, props) {
+      root = createRoot(container);
+      root.render(React.createElement(Component, props));
+      return root;
+    }
+
+    export function update(props) {
+      if (root) {
+        root.render(React.createElement(Component, props));
+      }
+    }
+  `;
+}
+
+/**
+ * Generates the entry source for a standalone CSF component module.
+ * Replicates the story rendering logic (meta.render / story.render / meta.component)
+ * so the Playground can render CSF components client-side.
+ */
+export function generateCsfClientComponentSource(
+  componentPath: string,
+  storyKey: string
+): string {
+  return `
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import * as stories from '${toForwardSlash(componentPath)}';
+
+    const meta = stories.default || {};
+    const story = stories['${storyKey}'];
+
+    let root = null;
+
+    function renderElement(props) {
+      const storyRender = typeof story === 'function' ? story : (story && story.render);
+      const renderFn = storyRender || meta.render;
+      if (renderFn) {
+        const result = renderFn(props);
+        return React.isValidElement(result) ? result : React.createElement(meta.component, props);
+      }
+      if (meta.component) {
+        return React.createElement(meta.component, props);
+      }
+      return React.createElement('pre', null, JSON.stringify(props, null, 2));
+    }
+
+    export function render(container, props) {
+      root = createRoot(container);
+      root.render(renderElement(props));
+      return root;
+    }
+
+    export function update(props) {
+      if (root) {
+        root.render(renderElement(props));
+      }
+    }
+  `;
+}
+
+/**
+ * Builds a self-contained browser ESM module from the given source code.
+ * React and ReactDOM are bundled into the output so the module works standalone.
+ */
+export async function buildClientModule(
+  sourceCode: string,
+  handoff: Handoff
+): Promise<string> {
+  const config: esbuild.BuildOptions = {
+    ...DEFAULT_CLIENT_BUILD_CONFIG,
+    logLevel: 'silent',
+    stdin: {
+      contents: sourceCode,
+      resolveDir: process.cwd(),
+      loader: 'tsx' as const,
+    },
+    plugins: [createReactResolvePlugin(handoff.workingPath, handoff.modulePath)],
+  };
+
+  const finalConfig = handoff.config?.hooks?.clientBuildConfig
+    ? handoff.config.hooks.clientBuildConfig(config)
+    : config;
+
+  const result = await esbuild.build(finalConfig);
+
+  if (result.warnings.length > 0) {
+    const messages = await esbuild.formatMessages(result.warnings, { kind: 'warning', color: true });
+    messages.forEach((msg) => Logger.warn(msg));
+  }
+
+  return result.outputFiles[0].text;
 }

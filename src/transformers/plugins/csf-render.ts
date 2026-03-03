@@ -9,6 +9,7 @@ import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata, SlotType } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
+import { buildClientModule, generateCsfClientComponentSource } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
@@ -275,6 +276,22 @@ export function csfRenderPlugin(
 
         preview.url = fileName;
         lastHtml = html;
+      }
+
+      // Emit standalone client module for Playground live rendering
+      const firstStoryKey = stories[0]?.[0];
+      if (firstStoryKey) {
+        try {
+          const clientModuleSource = generateCsfClientComponentSource(templatePath, firstStoryKey);
+          const clientModuleJs = await buildClientModule(clientModuleSource, handoff);
+          this.emitFile({
+            type: 'asset',
+            fileName: `${componentId}.module.js`,
+            source: clientModuleJs,
+          });
+        } catch (error) {
+          Logger.warn(`Failed to build client module for ${componentId}: ${error}`);
+        }
       }
 
       componentData.format = 'react';

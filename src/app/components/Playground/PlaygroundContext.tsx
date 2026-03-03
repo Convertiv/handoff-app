@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { renderPreview } from './Preview';
 import { PlaygroundComponent, SelectedPlaygroundComponent } from './types';
-import { renderPreview } from './preview';
 
 interface Template {
   name: string;
@@ -11,12 +11,18 @@ interface Template {
   updated_at: string;
 }
 
+export interface BulkComponentEntry {
+  componentId: string;
+  data: Record<string, any>;
+}
+
 interface PlaygroundContextType {
   components: PlaygroundComponent[];
   selectedComponents: SelectedPlaygroundComponent[];
   loading: boolean;
   error: string | null;
   addComponent: (component: PlaygroundComponent) => void;
+  bulkAddComponents: (entries: BulkComponentEntry[], replace?: boolean) => Promise<void>;
   removeComponent: (uniqueId: string) => void;
   updateComponent: (component: SelectedPlaygroundComponent) => void;
   onDragEnd: (event: DragEndEvent) => void;
@@ -47,7 +53,13 @@ async function fetchComponentDetail(id: string, basePath: string): Promise<Playg
   if (component.previews?.generic) {
     component.data = component.previews.generic.values;
   } else {
-    component.data = {};
+    // see if we can get the first preview even if it's not generic
+    const firstPreview = Object.values(component.previews)[0];
+    if (firstPreview) {
+      component.data = (firstPreview as { values: Record<string, any> }).values;
+    } else {
+      component.data = {};
+    }
   }
 
   delete component.jsCompiled;
@@ -112,7 +124,7 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const addComponent = useCallback(
     async (component: PlaygroundComponent) => {
       const detail = await fetchComponentDetail(component.id, basePath);
-      detail.rendered = await renderPreview(detail);
+      detail.rendered = await renderPreview(detail, null, basePath);
       setSelectedComponents((prev) => [
         ...prev,
         {
@@ -122,6 +134,37 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
           uniqueId: `${component.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         },
       ]);
+    },
+    [basePath]
+  );
+
+  const bulkAddComponents = useCallback(
+    async (entries: BulkComponentEntry[], replace = true) => {
+      const results: SelectedPlaygroundComponent[] = [];
+      for (let i = 0; i < entries.length; i++) {
+        const { componentId, data } = entries[i];
+        try {
+          const detail = await fetchComponentDetail(componentId, basePath);
+          detail.data = { ...detail.data, ...data };
+          detail.rendered = await renderPreview(detail, detail.data, basePath);
+          results.push({
+            ...detail,
+            order: i,
+            quantity: 1,
+            uniqueId: `${componentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          });
+        } catch (err) {
+          console.warn(`Wizard: skipping unknown component "${componentId}"`, err);
+        }
+      }
+      if (replace) {
+        setSelectedComponents(results);
+      } else {
+        setSelectedComponents((prev) => {
+          const merged = [...prev, ...results];
+          return merged.map((c, idx) => ({ ...c, order: idx }));
+        });
+      }
     },
     [basePath]
   );
@@ -185,6 +228,7 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
         loading,
         error,
         addComponent,
+        bulkAddComponents,
         removeComponent,
         updateComponent,
         onDragEnd,
