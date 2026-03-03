@@ -8,7 +8,8 @@ and this project adheres to
 
 ## \[1.2.0]
 
-Placeholder for 1.2.0
+* Upgrade to Next16
+* Add pagination data structure to arrays
 
 ## \[1.1.1] - 2026-03-12
 
