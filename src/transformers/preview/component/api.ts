@@ -93,7 +93,6 @@ export const writeComponentApi = async (
   await fs.writeFile(outputFilePath, JSON.stringify(component, null, 2));
 };
 
-
 /**
  * Update the main component summary API with the new component data
  * @param handoff
