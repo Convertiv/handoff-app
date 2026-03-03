@@ -24,6 +24,7 @@ const KNOWN_PATHS = [
   'foundations/typography',
   'system',
   'system/component',
+  'playground',
 ];
 
 /**

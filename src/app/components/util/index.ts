@@ -93,6 +93,7 @@ export const knownPaths = [
   'foundations/typography',
   'system',
   'system/component',
+  'playground',
 ];
 
 /**
