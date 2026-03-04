@@ -1,0 +1,73 @@
+{
+  "title": "Boilerplate Page",
+  "description": "A minimal page composed of a single Example Handlebars component row. Use as a starting point for new page definitions.",
+  "group": "Templates",
+  "should_do": [
+    "Add more components to the components array to build full pages",
+    "Add multiple previews to show different layouts or content variants"
+  ],
+  "should_not_do": ["Reference component IDs that are not in your entries.components paths"],
+  "components": ["example"],
+  "previews": {
+    "default": {
+      "title": "Default",
+      "values": [
+        {
+          "cards": [
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+1", "alt": "Card 1" },
+              "title": "First card",
+              "description": "Short description for the first example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": false
+            },
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+2", "alt": "Card 2" },
+              "title": "Second card",
+              "description": "Short description for the second example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": false
+            },
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+3", "alt": "Card 3" },
+              "title": "Third card",
+              "description": "Short description for the third example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": false
+            }
+          ]
+        }
+      ]
+    },
+    "featured": {
+      "title": "Featured middle card",
+      "values": [
+        {
+          "cards": [
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+1", "alt": "Card 1" },
+              "title": "First card",
+              "description": "Short description for the first example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": false
+            },
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+2", "alt": "Card 2" },
+              "title": "Second card",
+              "description": "Short description for the second example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": true
+            },
+            {
+              "image": { "src": "https://placehold.co/400x200/e5e7eb/6b7280?text=Card+3", "alt": "Card 3" },
+              "title": "Third card",
+              "description": "Short description for the third example card in the row.",
+              "link": { "label": "Learn more", "url": "#" },
+              "featured": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

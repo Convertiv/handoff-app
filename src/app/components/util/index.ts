@@ -1,3 +1,4 @@
+import { PageListObject } from '@handoff/transformers/preview/page/types';
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
@@ -93,6 +94,7 @@ export const knownPaths = [
   'foundations/typography',
   'system',
   'system/component',
+  'system/page',
   'playground',
 ];
 
@@ -254,10 +256,15 @@ export const staticBuildMenu = () => {
                 };
               }
               if (sub.tokens) {
-                // The user wants to inject the component menu here
                 return {
                   title: 'Tokens',
                   menu: staticBuildTokensMenu(),
+                };
+              }
+              if (sub.pages) {
+                return {
+                  title: sub.title,
+                  menu: staticBuildPageMenu(),
                 };
               }
               if (sub.enabled !== false) {
@@ -322,6 +329,55 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
     menu.push(menuGroup);
   });
   // sort the menu by name alphabetical
+  menu = menu.sort((a, b) => a.title.localeCompare(b.title));
+  return menu;
+};
+
+/**
+ * Fetch page definitions from pages.json API
+ */
+export const fetchPages = () => {
+  const pagesFilePath = path.resolve(
+    process.env.HANDOFF_MODULE_PATH ?? '',
+    '.handoff',
+    `${process.env.HANDOFF_PROJECT_ID}`,
+    'public',
+    'api',
+    'pages.json'
+  );
+
+  if (!fs.existsSync(pagesFilePath)) {
+    return [];
+  }
+
+  try {
+    const pageList = JSON.parse(fs.readFileSync(pagesFilePath, 'utf-8')) as PageListObject[];
+    return pageList.map((page) => ({
+      id: page.id,
+      title: page.title || '',
+      name: page.title || '',
+      description: page.description || '',
+      group: page.group || '',
+      components: page.components || [],
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const staticBuildPageMenu = () => {
+  const basePath = buildBasePath();
+  let menu = [];
+  const pages = fetchPages();
+  const groupedPages = groupBy(pages, (e) => e.group ?? '');
+  Object.keys(groupedPages).forEach((group) => {
+    const menuGroup = { title: group || 'Uncategorized', menu: [] };
+    groupedPages[group].forEach((page) => {
+      menuGroup.menu.push({ path: `${basePath}system/page/${page.id}`, title: page.title || startCase(page.id) });
+    });
+    menuGroup.menu = menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
+    menu.push(menuGroup);
+  });
   menu = menu.sort((a, b) => a.title.localeCompare(b.title));
   return menu;
 };

@@ -5,6 +5,7 @@ import Handoff from '..';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
+import { processPages } from '../transformers/preview/page/builder';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
 import { persistClientConfig } from './client-config';
@@ -236,6 +237,64 @@ export const watchRuntimeComponents = (
       }
     });
   }
+};
+
+/**
+ * Watches runtime page config files for changes and triggers page rebuilds.
+ */
+export const watchRuntimePages = (handoff: Handoff, state: WatcherState) => {
+  const runtimePages = handoff.runtimeConfig?.entries?.pages ?? {};
+  const pageConfigPaths = handoff.getConfigFilePaths().filter((configPath) => {
+    const dirName = path.basename(path.dirname(configPath));
+    return dirName in runtimePages;
+  });
+
+  // Also watch page directories directly
+  const pageIds = Object.keys(runtimePages);
+  if (pageIds.length === 0 && pageConfigPaths.length === 0) return;
+
+  const pathsToWatch = pageConfigPaths.length > 0 ? pageConfigPaths : [];
+
+  // Add page config entry paths from the config
+  for (const pageId of pageIds) {
+    const page = runtimePages[pageId];
+    if (page.path && fs.existsSync(page.path)) {
+      pathsToWatch.push(page.path);
+    }
+  }
+
+  // Watch the page entry directories from config
+  if (handoff.config.entries?.pages?.length) {
+    for (const pagePath of handoff.config.entries.pages) {
+      const resolvedPath = path.resolve(handoff.workingPath, pagePath);
+      if (fs.existsSync(resolvedPath)) {
+        pathsToWatch.push(resolvedPath);
+      }
+    }
+  }
+
+  if (pathsToWatch.length === 0) return;
+
+  chokidar.watch(pathsToWatch, { ignoreInitial: true }).on('all', async (event, file) => {
+    switch (event) {
+      case 'add':
+      case 'change':
+      case 'unlink':
+        if (!state.debounce) {
+          state.debounce = true;
+          try {
+            Logger.warn('Page config changed. Rebuilding pages...');
+            handoff.reload();
+            await processPages(handoff);
+          } catch (e) {
+            Logger.error('Error processing pages:', e);
+          } finally {
+            state.debounce = false;
+          }
+        }
+        break;
+    }
+  });
 };
 
 /**

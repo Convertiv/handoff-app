@@ -28,6 +28,16 @@ All routes below are relative to that base. They are **GET-only** (static JSON, 
 
 See **[components.md](./components.md)** for the exact shape of `components.json` and `component/{id}.json`.
 
+### Pages
+
+| Path | Description |
+|------|-------------|
+| `GET /api/pages.json` | List of all page summaries (id, title, path, components, previews). Used by the design system menu and page list. |
+| `GET /api/page/{id}.json` | Full data for one page (metadata, component list, previews with values and URLs). Used by page detail pages. |
+| `GET /api/page/{id}-{preview}.html` | Rendered HTML document for a page preview (e.g. for iframe). |
+
+See **[pages.md](./pages.md)** for the page document format, config, and API shapes.
+
 ### Tokens
 
 | Path | Description |

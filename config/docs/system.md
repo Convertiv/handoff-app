@@ -16,4 +16,6 @@ menu:
     tokens: true
   - title: Components
     components: true
+  - title: Pages
+    pages: true
 ---

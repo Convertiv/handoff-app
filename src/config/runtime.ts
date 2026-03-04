@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { PageListObject } from '../transformers/preview/page/types';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Config, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
@@ -28,6 +29,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
       scss: undefined,
       js: undefined,
       components: {},
+      pages: {},
     },
   };
 
@@ -111,6 +113,54 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     }
   }
 
+  if (handoff.config.entries?.pages?.length) {
+    const pagePaths = handoff.config.entries.pages.flatMap(getPagesForPath);
+    for (const pagePath of pagePaths) {
+      const resolvedPagePath = path.resolve(handoff.workingPath, pagePath);
+      const pageBaseName = path.basename(resolvedPagePath);
+      const possibleConfigFiles = [`${pageBaseName}.json`, `${pageBaseName}.js`, `${pageBaseName}.cjs`];
+
+      const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedPagePath, file)));
+
+      if (!configFileName) {
+        Logger.warn(`Missing page config: ${path.resolve(resolvedPagePath, possibleConfigFiles.join(' or '))}`);
+        continue;
+      }
+
+      const resolvedPageConfigPath = path.resolve(resolvedPagePath, configFileName);
+      configFiles.push(resolvedPageConfigPath);
+
+      let page: PageListObject;
+
+      try {
+        if (configFileName.endsWith('.json')) {
+          const pageJson = fs.readFileSync(resolvedPageConfigPath, 'utf8');
+          page = JSON.parse(pageJson) as PageListObject;
+        } else {
+          delete require.cache[require.resolve(resolvedPageConfigPath)];
+          const importedPage = require(resolvedPageConfigPath);
+          page = importedPage.default || importedPage;
+        }
+      } catch (err) {
+        Logger.error(`Failed to read or parse page config: ${resolvedPageConfigPath}`, err);
+        continue;
+      }
+
+      page.id = pageBaseName;
+
+      // Validate that referenced components exist
+      if (page.components) {
+        for (const componentId of page.components) {
+          if (!result.entries.components[componentId]) {
+            Logger.warn(`Page '${page.id}' references unknown component '${componentId}'`);
+          }
+        }
+      }
+
+      result.entries.pages[page.id] = page;
+    }
+  }
+
   return [result, Array.from(configFiles)];
 };
 
@@ -152,6 +202,32 @@ export const getComponentsForPath = (searchPath: string): string[] => {
 
   // Fallback: no config file and no subdirectories, return the path anyway
   // (will fail gracefully with "missing config" warning later)
+  return [searchPath];
+};
+
+/**
+ * Returns a list of page directories for a given path.
+ * Mirrors getComponentsForPath but for page definitions.
+ */
+export const getPagesForPath = (searchPath: string): string[] => {
+  const dirName = path.basename(searchPath);
+  const possibleConfigFiles = [`${dirName}.json`, `${dirName}.js`, `${dirName}.cjs`];
+
+  const hasOwnConfig = possibleConfigFiles.some((file) => fs.existsSync(path.resolve(searchPath, file)));
+
+  if (hasOwnConfig) {
+    return [searchPath];
+  }
+
+  const subdirectories = fs
+    .readdirSync(searchPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  if (subdirectories.length > 0) {
+    return subdirectories.map((subdir) => path.join(searchPath, subdir));
+  }
+
   return [searchPath];
 };
 
