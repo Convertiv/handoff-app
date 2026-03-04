@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Monitor, Smartphone, SquareArrowOutUpRight, Tablet } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -14,7 +15,9 @@ import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
+import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { fetchPages, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 export async function getStaticPaths() {
@@ -56,6 +59,7 @@ export const getStaticProps = async (context: { params: IParams }) => {
 const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nextPage }) => {
   const [page, setPage] = useState<PagePreviewObject>(undefined);
   const [selectedPreview, setSelectedPreview] = useState<string>('');
+  const [width, setWidth] = useState<string>('1100px');
   const ref = React.useRef<HTMLDivElement>(null);
 
   const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
@@ -154,31 +158,103 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
 
           <a id="preview"></a>
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <HeadersType.H2>Preview</HeadersType.H2>
-              {previewKeys.length > 1 && (
-                <Select value={selectedPreview} onValueChange={setSelectedPreview}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select preview" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {previewKeys.map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {page.previews[key].title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+            <div className="rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 dark:border-gray-900 dark:bg-gray-800">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <HeadersType.H2 className="mb-0 text-base">Preview</HeadersType.H2>
+                  {previewKeys.length > 0 && (
+                    <Select value={selectedPreview} onValueChange={setSelectedPreview}>
+                      <SelectTrigger className="h-8 w-[180px] border-none bg-white shadow-none dark:bg-gray-900">
+                        <SelectValue placeholder="Select preview" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {previewKeys.map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {page.previews[key].title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                <div className="flex items-center gap-0">
+                  <RadioGroup
+                    className="flex items-center gap-0"
+                    defaultValue="1100"
+                    onValueChange={(value) => setWidth(`${value}px`)}
+                  >
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl ring-inset transition-colors hover:bg-gray-300 has-data-[state=checked]:bg-blue-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3 dark:hover:bg-gray-600 dark:has-data-[state=checked]:bg-blue-950">
+                            <RadioGroupItem value="1100" className="sr-only after:absolute after:inset-0" />
+                            <Monitor />
+                          </label>
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Desktop (1100px)</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-[state=checked]:bg-blue-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3 dark:hover:bg-gray-600 dark:has-data-[state=checked]:bg-blue-950">
+                            <RadioGroupItem value="800" className="sr-only after:absolute after:inset-0" />
+                            <Tablet />
+                          </label>
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Tablet (800px)</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-[state=checked]:bg-blue-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-2.5 dark:hover:bg-gray-600 dark:has-data-[state=checked]:bg-blue-950">
+                            <RadioGroupItem value="400" className="sr-only after:absolute after:inset-0" />
+                            <Smartphone />
+                          </label>
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Mobile (400px)</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </RadioGroup>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3 dark:hover:bg-gray-600"
+                          variant="ghost"
+                          onClick={() => {
+                            if (currentPreview?.url && typeof window !== 'undefined') {
+                              const base = (normalizedBasePath || '').replace(/\/+$/, '');
+                              window.open(`${window.location.origin}${base}/api/page/${currentPreview.url}`, '_blank');
+                            }
+                          }}
+                        >
+                          <SquareArrowOutUpRight />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Open in New Tab</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
             </div>
             {previewUrl && (
-              <div className="border rounded-lg overflow-hidden bg-white">
-                <iframe
-                  src={previewUrl}
-                  className="w-full border-0"
-                  style={{ minHeight: '500px' }}
-                  title={`${page.title} - ${currentPreview?.title || 'Preview'}`}
-                />
+              <div className="dotted-bg border border-t-0 rounded-b-lg overflow-hidden bg-white dark:bg-gray-950">
+                <div className="p-4">
+                  <iframe
+                    src={previewUrl}
+                    className="border-0 bg-white dark:bg-gray-900"
+                    style={{
+                      width: '100%',
+                      maxWidth: width,
+                      minHeight: '750px',
+                      display: 'block',
+                      margin: '0 auto',
+                    }}
+                    title={`${page.title} - ${currentPreview?.title || 'Preview'}`}
+                  />
+                </div>
               </div>
             )}
           </div>
