@@ -32,8 +32,8 @@ export const buildPreviews = async (
   const plugins = [
     ...(viteBaseConfig.plugins || []),
     ...(data.entries.template.includes('.hbs') ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
-    ...(data.entries.template.includes('.stories.') ? [csfRenderPlugin(data, components, handoff)] : []),
-    ...(data.entries.template.includes('.tsx') && !data.entries.template.includes('.stories.')
+    ...(data.entries.template.match(/\.stories\.(jsx|tsx)$/) ? [csfRenderPlugin(data, components, handoff)] : []),
+    ...(data.entries.template.includes('.tsx') && !data.entries.template.match(/\.stories\.(jsx|tsx)$/)
       ? [react(), ssrRenderPlugin(data, components, handoff)]
       : []),
   ];
