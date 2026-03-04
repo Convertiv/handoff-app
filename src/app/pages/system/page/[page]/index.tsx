@@ -18,7 +18,7 @@ import { JsonTreeView } from '../../../../components/ui/json-tree-view';
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
-import { fetchPages, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchPages, getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '../../../../components/util';
 
 export async function getStaticPaths() {
   return {
@@ -27,8 +27,8 @@ export async function getStaticPaths() {
   };
 }
 
-export const getStaticProps = async (context: { params: IParams }) => {
-  const { page } = context.params as { page: string };
+export const getStaticProps = async (context: { params: { page: string } }) => {
+  const { page } = context.params;
   const pages = fetchPages()!;
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
