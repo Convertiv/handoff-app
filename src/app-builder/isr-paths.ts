@@ -70,7 +70,12 @@ export function getL2StaticPathSegments(modulePath: string, workingPath: string)
   }
   let list: string[] = fs.readdirSync(docRoot);
   if (fs.existsSync(pageRoot)) {
-    list = [...new Set([...list, ...fs.readdirSync(pageRoot)])];
+    var moreFiles = fs.readdirSync(pageRoot);
+    for (var i = 0; i < moreFiles.length; i++) {
+      if (list.indexOf(moreFiles[i]) === -1) {
+        list.push(moreFiles[i]);
+      }
+    }
   }
   const result: Array<{ level1: string; level2: string }> = [];
   for (const fileName of list) {
@@ -140,7 +145,14 @@ export function resolveAffectedOutputPaths(
       out.push(`${level1}/${level2}/index.html`);
     }
     out.push('system/index.html', 'system/component/index.html');
-    return [...new Set(out)];
+    // ES5-compatible alternative to [...new Set(out)]
+    var unique = [];
+    for (var i = 0; i < out.length; i++) {
+      if (unique.indexOf(out[i]) === -1) {
+        unique.push(out[i]);
+      }
+    }
+    return unique;
   }
 
   if (singlePath) {
@@ -152,7 +164,14 @@ export function resolveAffectedOutputPaths(
     for (const p of pathList) {
       out.push(...routePathToOutputPaths(p));
     }
-    return [...new Set(out)];
+    // ES5-compatible alternative to [...new Set(out)]
+    var unique = [];
+    for (var i = 0; i < out.length; i++) {
+      if (unique.indexOf(out[i]) === -1) {
+        unique.push(out[i]);
+      }
+    }
+    return unique;
   }
 
   return [];
@@ -179,5 +198,12 @@ export function resolveComponentAffectedOutputPathsBatch(componentIds: string[])
   for (const id of componentIds) {
     out.push(`system/component/${id}/index.html`, `api/component/${id}.json`);
   }
-  return [...new Set(out)];
+  // ES5-compatible alternative to [...new Set(out)]
+  var unique = [];
+  for (var i = 0; i < out.length; i++) {
+    if (unique.indexOf(out[i]) === -1) {
+      unique.push(out[i]);
+    }
+  }
+  return unique;
 }
