@@ -308,7 +308,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
   Object.keys(groupedComponents).forEach((group) => {
     const menuGroup = { title: group || 'Uncategorized', menu: [] };
     groupedComponents[group].forEach((component) => {
-      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      const docs = fetchDocPageMetadataAndContent('docs/system/', component.id);
       let title = startCase(component.id);
       if (docs.metadata.title) {
         title = docs.metadata.title;
@@ -357,7 +357,7 @@ const staticBuildTokensMenu = () => {
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
     groupedComponents[group].forEach((component) => {
-      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      const docs = fetchDocPageMetadataAndContent('docs/system/', component.id);
       let title = startCase(component.id);
       if (docs.metadata.title) {
         title = docs.metadata.title;
