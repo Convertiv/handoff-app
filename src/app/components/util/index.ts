@@ -677,7 +677,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
 export const titleString = (prefix: string | null): string => {
   const config = getClientRuntimeConfig();
   const prepend = prefix ? `${prefix} | ` : '';
-  return `${prefix}${config?.app?.client} Design System`;
+  return `${prepend}${config?.app?.client} Design System`;
 };
 
 /**

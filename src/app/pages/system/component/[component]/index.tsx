@@ -2,6 +2,7 @@
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
+import { startCase } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -90,8 +91,10 @@ export const getStaticProps = async (context) => {
       current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         ...metadata,
-        title: metadata.name,
+        title: metadata.name || startCase(component as string),
         description: metadata.description,
+        metaTitle: `${metadata.name || startCase(component as string)}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`,
+        metaDescription: metadata.description,
         image: 'hero-brand-assets',
       },
       componentHotReloadIsAvailable,

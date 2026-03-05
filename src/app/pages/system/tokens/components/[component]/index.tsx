@@ -38,6 +38,18 @@ export const getStaticProps = async (context) => {
   const componentSlug = reduceSlugToString(component);
   const tokens = getTokens();
   const componentObject = tokens?.components?.[componentSlug!] ?? null;
+  const markdownProps = fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props;
+
+  const componentName = startCase(componentSlug);
+  if (!markdownProps.metadata.title) {
+    markdownProps.metadata.title = componentName;
+  }
+  if (!markdownProps.metadata.metaTitle) {
+    markdownProps.metadata.metaTitle = `${componentName}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
+  }
+  if (!markdownProps.metadata.metaDescription) {
+    markdownProps.metadata.metaDescription = markdownProps.metadata.description || '';
+  }
 
   return {
     props: {
@@ -45,7 +57,7 @@ export const getStaticProps = async (context) => {
       component: componentObject ?? {},
       menu,
       config,
-      ...fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props,
+      ...markdownProps,
     },
   };
 };
