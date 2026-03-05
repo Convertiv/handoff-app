@@ -17,7 +17,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -74,12 +74,16 @@ export const getStaticProps = async (context) => {
   const components = fetchComponents()!;
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = components.find((c) => c.id === component);
+  const componentData = components.find((c) => c.id === component);
+  const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
-  const sameGroupComponents = components.filter((c) => c.group === metadata?.group);
+  const sameGroupComponents = components.filter((c) => c.group === componentData?.group);
   const groupIndex = sameGroupComponents.findIndex((c) => c.id === component);
   const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
   const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
+
+  const fallbackTitle = componentData.name || startCase(component as string);
+  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
 
   return {
     props: {
@@ -90,12 +94,12 @@ export const getStaticProps = async (context) => {
       config,
       current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
-        ...metadata,
-        title: metadata.name || startCase(component as string),
-        description: metadata.description,
-        metaTitle: `${metadata.name || startCase(component as string)}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`,
-        metaDescription: metadata.description,
-        image: 'hero-brand-assets',
+        ...componentData,
+        title: componentData.name || docs.metadata.title || startCase(component as string),
+        description: componentData.description,
+        metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
+        metaDescription: docs.metadata.metaDescription || componentData.description,
+        image: docs.metadata.image || 'hero-brand-assets',
       },
       componentHotReloadIsAvailable,
       previousComponent,
