@@ -2,8 +2,14 @@ import { useState, useEffect } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '../ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
-import { FileCodeIcon, SaveIcon, SparklesIcon } from 'lucide-react';
+import { ChevronDown, FileCodeIcon, SaveIcon, SparklesIcon } from 'lucide-react';
 import { usePlayground } from './PlaygroundContext';
 import SortableItem from './SortableItem';
 import Preview from './Preview';
@@ -11,6 +17,22 @@ import ComponentLibrary from './ComponentLibrary';
 import TemplateManager from './TemplateManager';
 import WizardDialog from './Wizard/WizardDialog';
 import { constructComponentPreview } from './Preview';
+import type { PlaygroundPageExport, SelectedPlaygroundComponent } from './types';
+
+function buildHandoffPageExport(selectedComponents: SelectedPlaygroundComponent[]): PlaygroundPageExport {
+  return {
+    title: 'Playground Page',
+    description: '',
+    group: 'Playground',
+    components: selectedComponents.map((c) => c.id),
+    previews: {
+      default: {
+        title: 'Default',
+        values: selectedComponents.map((c) => c.data ?? {}),
+      },
+    },
+  };
+}
 
 export default function PlaygroundBuilder() {
   const { selectedComponents, loading, error, onDragEnd, removeComponent, templates, saveAsTemplate } = usePlayground();
@@ -69,6 +91,17 @@ export default function PlaygroundBuilder() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadPage = () => {
+    const pageExport = buildHandoffPageExport(selectedComponents);
+    const blob = new Blob([JSON.stringify(pageExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'playground-page.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSaveTemplate = () => {
     const name = prompt('Enter a name for the template');
     if (name) {
@@ -98,11 +131,24 @@ export default function PlaygroundBuilder() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={handleDownload}>
-                    <FileCodeIcon className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <FileCodeIcon className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleDownload}>
+                        Download as HTML
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleDownloadPage}>
+                        Download as Handoff page
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TooltipTrigger>
-                <TooltipContent>Download HTML</TooltipContent>
+                <TooltipContent>Download page</TooltipContent>
               </Tooltip>
             </>
           )}

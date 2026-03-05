@@ -41,6 +41,8 @@ export interface SlotMetadata {
   };
   // Used if type is object
   properties?: { [key: string]: SlotMetadata };
+  // Used if type is enum/select — list of allowed values (plain strings or {value, label} objects)
+  options?: Array<string | { value: string; label: string }>;
   key?: string;
   rules?: RuleObject;
   docgenType?: string;

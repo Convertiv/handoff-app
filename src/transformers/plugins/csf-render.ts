@@ -66,7 +66,7 @@ function createSlotMetadata(
 ): SlotMetadata {
   const controlType = typeof argType?.control === 'string' ? argType.control : argType?.control?.type;
   const type = inferSlotType(controlType, value);
-  return {
+  const metadata: SlotMetadata = {
     id: key,
     name: argType?.name || startCase(key),
     description: argType?.description || '',
@@ -77,6 +77,11 @@ function createSlotMetadata(
       required: !!argType?.required,
     },
   };
+  // Capture select/radio options so the Playground can render a proper dropdown
+  if (Array.isArray(argType?.options) && argType.options.length > 0) {
+    metadata.options = argType.options;
+  }
+  return metadata;
 }
 
 function getStoryEntries(moduleExports: Record<string, any>): Array<[string, StoryObject]> {
@@ -132,14 +137,16 @@ function safeRenderToHtml(
   }
 }
 
-function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string): string {
+function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string, previewCss?: string): string {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const previewCssLink = previewCss ? `\n    <link rel="stylesheet" href="${previewCss}" />` : '';
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/main.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
+    <link rel="stylesheet" href="${basePath}/api/component/main.css" />
+    <link rel="stylesheet" href="${basePath}/api/component/${componentId}.css" />
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />${previewCssLink}
     <title>${previewTitle}</title>
   </head>
   <body>
@@ -289,7 +296,7 @@ export function csfRenderPlugin(
       for (const [storyKey, storyValue] of stories) {
         const preview = componentData.previews[storyKey];
         const rendered = safeRenderToHtml(meta, storyValue, preview.values || {});
-        const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered));
+        const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered, componentData.options?.preview?.css));
         const fileName = `${componentId}-${storyKey}.html`;
 
         this.emitFile({

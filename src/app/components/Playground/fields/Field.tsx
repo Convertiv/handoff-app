@@ -9,6 +9,7 @@ import { RichTextField } from './RichTextField';
 import { ImageField } from './ImageField';
 import { LinkField } from './LinkField';
 import { ButtonField } from './ButtonField';
+import { SelectField } from './SelectField';
 
 export function renderFormFields(obj: any, data: any, path: string[] = []) {
   return Object.entries(obj).map(([key, value]: [string, any]) => {
@@ -101,11 +102,25 @@ export function InputField({ fieldKey, value, data }: { fieldKey: string[]; valu
     case 'link':
       return <LinkField identifier={fieldKey} value={value} data={data} />;
     case 'text':
+    case 'string':
       return <TextField identifier={fieldKey} value={value} data={data} />;
     case 'richtext':
       return <RichTextField identifier={fieldKey} value={value} data={data} />;
     case 'number':
-      return <Input id={fieldKey[fieldKey.length - 1]} value={getData(fieldKey) || ''} onChange={(e) => handleInputChange([...fieldKey], e.target.value)} />;
+      return <Input id={fieldKey[fieldKey.length - 1]} value={getData(fieldKey) ?? ''} onChange={(e) => handleInputChange([...fieldKey], Number(e.target.value))} type="number" />;
+    case 'boolean':
+      return (
+        <input
+          id={fieldKey[fieldKey.length - 1]}
+          type="checkbox"
+          className="h-4 w-4 rounded border-input accent-primary"
+          checked={!!getData(fieldKey)}
+          onChange={(e) => handleInputChange([...fieldKey], e.target.checked)}
+        />
+      );
+    case 'select':
+    case 'enum':
+      return <SelectField identifier={fieldKey} value={value} data={data} />;
     default:
       return <span className="text-xs text-muted-foreground">{JSON.stringify(value)}</span>;
   }

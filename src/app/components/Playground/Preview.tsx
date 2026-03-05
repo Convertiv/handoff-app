@@ -29,11 +29,15 @@ function createPlaygroundHandlebarsContext(
   data: any,
   basePath: string
 ) {
+  const previewCssLink = component.options?.preview?.css
+    ? `\n<link rel="stylesheet" href="${component.options.preview.css}">`
+    : '';
   return {
     style:
       `<link rel="stylesheet" href="${basePath}/api/component/main.css">` +
       `<link rel="stylesheet" href="${basePath}/api/component/${component.id}.css">\n` +
-      `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
+      `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">` +
+      previewCssLink,
     script:
       `<script src="${basePath}/api/component/${component.id}.js"></script>\n` +
       `<script src="${basePath}/assets/js/preview.js"></script>` +
@@ -71,12 +75,15 @@ export function renderReactPreview(
   basePath: string = ''
 ): string {
   const props = JSON.stringify(data || component.data || {});
+  const previewCssLink = component.options?.preview?.css
+    ? `\n    <link rel="stylesheet" href="${component.options.preview.css}" />`
+    : '';
   return `<!DOCTYPE html>
 <html>
   <head>
     <link rel="stylesheet" href="${basePath}/api/component/main.css" />
     <link rel="stylesheet" href="${basePath}/api/component/${component.id}.css" />
-    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />${previewCssLink}
   </head>
   <body>
     <div id="root"></div>
@@ -126,7 +133,11 @@ export function previewRenderedHtml(html: string, basePath: string = ''): string
 
 export async function constructComponentPreview(components: PlaygroundComponent[], basePath: string = ''): Promise<string> {
   let html = '';
+  const cssOverrides = new Set<string>();
   for (const component of components) {
+    if (component.options?.preview?.css) {
+      cssOverrides.add(component.options.preview.css);
+    }
     if (component.format === 'react') {
       // React/CSF: always use the pre-built HTML fragment (SSR output).
       // component.rendered for React is a full document with module scripts
@@ -138,9 +149,10 @@ export async function constructComponentPreview(components: PlaygroundComponent[
       html += component.html;
     }
   }
+  const cssOverrideLinks = Array.from(cssOverrides).map((href) => `\n      <link rel="stylesheet" href="${href}" />`).join('');
   return `<html>
     <head>
-      <link rel="stylesheet" href="${basePath}/api/component/main.css" />
+      <link rel="stylesheet" href="${basePath}/api/component/main.css" />${cssOverrideLinks}
     </head>
     <body>
       ${html}

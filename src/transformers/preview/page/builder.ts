@@ -77,7 +77,7 @@ async function renderComponentFragment(
 /**
  * Builds a full page HTML document from component fragments.
  */
-function buildPageDocument(fragments: string[], componentIds: string[], handoff: Handoff): string {
+function buildPageDocument(fragments: string[], componentIds: string[], handoff: Handoff, previewCss?: string): string {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
   const cssLinks = [
@@ -86,6 +86,7 @@ function buildPageDocument(fragments: string[], componentIds: string[], handoff:
     ...componentIds
       .filter((id, i, arr) => arr.indexOf(id) === i)
       .map((id) => `<link rel="stylesheet" href="${basePath}/api/component/${id}.css">`),
+    ...(previewCss ? [`<link rel="stylesheet" href="${previewCss}">`] : []),
   ].join('\n    ');
 
   const jsScripts = componentIds
@@ -142,6 +143,7 @@ export async function processPages(handoff: Handoff, pageId?: string): Promise<P
       should_not_do: runtimePage.should_not_do || [],
       components: componentIds,
       previews: {},
+      options: runtimePage.options,
     };
 
     const previews = runtimePage.previews || {};
@@ -158,7 +160,7 @@ export async function processPages(handoff: Handoff, pageId?: string): Promise<P
         fragments.push(fragment);
       }
 
-      const html = buildPageDocument(fragments, componentIds, handoff);
+      const html = buildPageDocument(fragments, componentIds, handoff, runtimePage.options?.css);
 
       const fileName = `${runtimePageId}-${previewKey}.html`;
       await fs.writeFile(path.resolve(outputDir, fileName), html);

@@ -58,18 +58,22 @@ export const registerHandlebarsHelpers = (
 export const createHandlebarsContext = (
   data: { id: string; properties: { [key: string]: SlotMetadata }; title: string },
   previewData: { values?: any },
-  options?: { includeSharedStyles?: boolean }
+  options?: { includeSharedStyles?: boolean; previewCss?: string }
 ): HandlebarsContext => {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const sharedStylesLink = options?.includeSharedStyles
     ? `<link rel="stylesheet" href="${basePath}/api/component/shared.css">`
+    : '';
+  const previewCssLink = options?.previewCss
+    ? `\n<link rel="stylesheet" href="${options.previewCss}">`
     : '';
 
   return {
     style:
       `${sharedStylesLink}<link rel="stylesheet" href="${basePath}/api/component/main.css">` +
       `<link rel="stylesheet" href="${basePath}/api/component/${data.id}.css">\n` +
-      `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
+      `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">` +
+      previewCssLink,
     script: `<script src="${basePath}/api/component/${data.id}.js"></script>\n<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,

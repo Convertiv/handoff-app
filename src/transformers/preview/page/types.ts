@@ -16,6 +16,11 @@ export type PageObject = {
   components: string[];
   /** Preview variations keyed by preview ID */
   previews: { [key: string]: PagePreview };
+  /** Optional page-level configuration */
+  options?: {
+    /** Optional URL or path to a CSS file that overrides styles in all page previews */
+    css?: string;
+  };
 };
 
 export type PageListObject = {
@@ -34,4 +39,8 @@ export type TransformPageResult = {
   should_not_do?: string[];
   components: string[];
   previews: { [key: string]: PagePreview };
+  options?: {
+    /** Optional URL or path to a CSS file that overrides styles in all page previews */
+    css?: string;
+  };
 };

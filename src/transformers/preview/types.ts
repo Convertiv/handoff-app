@@ -75,6 +75,8 @@ export type ComponentOptions = {
   preview?: {
     groupBy?: string;
     filterBy?: Filter;
+    /** Optional URL or path to a CSS file that overrides styles in the component page preview */
+    css?: string;
   };
   transformer: {
     cssRootClass?: string;
@@ -165,6 +167,8 @@ export type TransformComponentTokensResult = {
   options?: {
     preview?: {
       groupBy?: string;
+      /** Optional URL or path to a CSS file that overrides styles in the component page preview */
+      css?: string;
     };
   };
   validations?: Record<string, ValidationResult>;

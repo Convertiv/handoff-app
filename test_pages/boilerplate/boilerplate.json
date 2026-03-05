@@ -2,6 +2,9 @@
   "title": "Boilerplate Page",
   "description": "A minimal page composed of a single Example Handlebars component row. Use as a starting point for new page definitions.",
   "group": "Templates",
+  "options": {
+    "css": "/assets/css/boilerplate-overrides.css"
+  },
   "should_do": [
     "Add more components to the components array to build full pages",
     "Add multiple previews to show different layouts or content variants"
