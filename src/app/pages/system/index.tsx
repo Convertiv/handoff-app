@@ -15,16 +15,11 @@ import { JsonTreeView } from '../../components/ui/json-tree-view';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import {
   DocumentationProps,
-  fetchComponents,
   fetchDocPageMarkdown,
-  fetchDocPageMetadataAndContent,
   getClientRuntimeConfig,
-  Metadata,
 } from '../../components/util';
 
-type ComponentPageDocumentationProps = DocumentationProps & {
-  components: { [id: string]: Metadata };
-};
+type ComponentPageDocumentationProps = DocumentationProps;
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -36,26 +31,12 @@ type ComponentPageDocumentationProps = DocumentationProps & {
  */
 export const getStaticProps: GetStaticProps = async (context) => {
   // Read current slug
-  const components = fetchComponents()?.map((c) => c.id);
   const config = getClientRuntimeConfig();
   return {
-    ...{
-      props: {
-        config,
-        ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
-        components: components
-          ? components.reduce(
-            (acc, component) => ({
-              ...acc,
-              ...{
-                [component]: fetchDocPageMetadataAndContent('docs/components/', component).metadata,
-              },
-            }),
-            {}
-          )
-          : null,
-      } as ComponentPageDocumentationProps,
-    },
+    props: {
+      config,
+      ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
+    } as ComponentPageDocumentationProps,
   };
 };
 /**
