@@ -1,10 +1,10 @@
-export type PagePreview = {
+export type PatternPreview = {
   title: string;
   values: Record<string, any>[];
   url?: string;
 };
 
-export type PageObject = {
+export type PatternObject = {
   title: string;
   description: string;
   group: string;
@@ -12,23 +12,23 @@ export type PageObject = {
   figma?: string;
   should_do?: string[];
   should_not_do?: string[];
-  /** Ordered array of component IDs that compose this page */
+  /** Ordered array of component IDs that compose this pattern */
   components: string[];
   /** Preview variations keyed by preview ID */
-  previews: { [key: string]: PagePreview };
-  /** Optional page-level configuration */
+  previews: { [key: string]: PatternPreview };
+  /** Optional pattern-level configuration */
   options?: {
-    /** Optional URL or path to a CSS file that overrides styles in all page previews */
+    /** Optional URL or path to a CSS file that overrides styles in all pattern previews */
     css?: string;
   };
 };
 
-export type PageListObject = {
+export type PatternListObject = {
   id: string;
   path: string;
-} & PageObject;
+} & PatternObject;
 
-export type TransformPageResult = {
+export type TransformPatternResult = {
   id: string;
   title: string;
   description: string;
@@ -38,9 +38,9 @@ export type TransformPageResult = {
   should_do?: string[];
   should_not_do?: string[];
   components: string[];
-  previews: { [key: string]: PagePreview };
+  previews: { [key: string]: PatternPreview };
   options?: {
-    /** Optional URL or path to a CSS file that overrides styles in all page previews */
+    /** Optional URL or path to a CSS file that overrides styles in all pattern previews */
     css?: string;
   };
 };

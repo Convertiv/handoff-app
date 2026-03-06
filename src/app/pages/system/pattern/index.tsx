@@ -6,8 +6,8 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import { APIPageList } from '../../../components/Page/PageLists';
-import { PagePreviewObject } from '../../../components/Page/types';
+import { APIPatternList } from '../../../components/Pattern/PatternLists';
+import { PatternPreviewObject } from '../../../components/Pattern/types';
 import HeadersType from '../../../components/Typography/Headers';
 import { Button } from '../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../components/ui/drawer';
@@ -15,7 +15,7 @@ import { JsonTreeView } from '../../../components/ui/json-tree-view';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/tooltip';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../../components/util';
 
-type PageListDocumentationProps = DocumentationProps;
+type PatternListDocumentationProps = DocumentationProps;
 
 export const getStaticProps: GetStaticProps = async () => {
   const config = getClientRuntimeConfig();
@@ -23,42 +23,42 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       config,
       ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
-    } as PageListDocumentationProps,
+    } as PatternListDocumentationProps,
   };
 };
 
-const PagesPage = ({ content, menu, metadata, current, config }: PageListDocumentationProps) => {
-  const [pages, setPages] = useState<PagePreviewObject[]>(undefined);
+const PatternsPage = ({ content, menu, metadata, current, config }: PatternListDocumentationProps) => {
+  const [patterns, setPatterns] = useState<PatternPreviewObject[]>(undefined);
 
-  const fetchPages = async () => {
+  const fetchPatterns = async () => {
     try {
-      const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/pages.json`).then((res) => res.json());
-      setPages(data as PagePreviewObject[]);
+      const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/patterns.json`).then((res) => res.json());
+      setPatterns(data as PatternPreviewObject[]);
     } catch {
-      setPages([]);
+      setPatterns([]);
     }
   };
 
   useEffect(() => {
-    fetchPages();
+    fetchPatterns();
   }, []);
 
-  if (!pages) return <p>Loading...</p>;
+  if (!patterns) return <p>Loading...</p>;
 
-  if (pages.length === 0) {
+  if (patterns.length === 0) {
     return (
       <Layout config={config} menu={menu} current={current} metadata={metadata}>
         <div className="flex items-center justify-center flex-col gap-2 lg:pr-8">
           <div className="mb-3 flex items-center justify-center overflow-hidden">
             <Image
               src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/components.svg`}
-              alt="Pages"
+              alt="Patterns"
               width={'327'}
               height="220"
             />
           </div>
-          <h3 className="text-base font-medium">No Pages</h3>
-          <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Start by adding page definitions to your pages folder.</p>
+          <h3 className="text-base font-medium">No Patterns</h3>
+          <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">Start by adding pattern definitions to your patterns folder.</p>
           <Button asChild variant="link" className="px-0 text-sm font-medium text-gray-900 hover:no-underline dark:text-gray-100">
             <a href="https://www.handoff.com/docs/" target="_blank" rel="noopener noreferrer">
               View Docs
@@ -70,12 +70,12 @@ const PagesPage = ({ content, menu, metadata, current, config }: PageListDocumen
     );
   }
 
-  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/pages.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/patterns.json`;
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
-        <HeadersType.H1>Pages</HeadersType.H1>
+        <HeadersType.H1>Patterns</HeadersType.H1>
         <div className="mt-3 flex flex-row justify-between gap-3">
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
             Composed page templates built from reusable components.
@@ -102,7 +102,7 @@ const PagesPage = ({ content, menu, metadata, current, config }: PageListDocumen
                   <p className="font-mono text-xs text-gray-500">{apiUrl}</p>
                 </DrawerHeader>
                 <div className="max-h-[80vh] w-full overflow-auto">
-                  <JsonTreeView data={pages} />
+                  <JsonTreeView data={patterns} />
                 </div>
               </div>
             </DrawerContent>
@@ -115,10 +115,10 @@ const PagesPage = ({ content, menu, metadata, current, config }: PageListDocumen
             {content}
           </ReactMarkdown>
         </div>
-        <APIPageList pages={pages} />
+        <APIPatternList patterns={patterns} />
       </div>
     </Layout>
   );
 };
 
-export default PagesPage;
+export default PatternsPage;

@@ -3,14 +3,14 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
-import { buildPages } from '../pipeline/pages';
+import { buildPatterns } from '../pipeline/patterns';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { processPages } from '../transformers/preview/page/builder';
+import { processPatterns } from '../transformers/preview/pattern/builder';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
@@ -20,7 +20,7 @@ import {
   watchPublicDirectory,
   watchRuntimeComponents,
   watchRuntimeConfiguration,
-  watchRuntimePages,
+  watchRuntimePatterns,
 } from './watchers';
 import { createWebSocketServer } from './websocket';
 
@@ -105,8 +105,8 @@ const buildApp = async (
     await buildComponents(handoff);
   }
 
-  // Build pages (must run after components so rendered outputs exist)
-  await buildPages(handoff);
+  // Build patterns (must run after components so rendered outputs exist)
+  await buildPatterns(handoff);
 
   // Prepare app
   const appPath = await initializeProjectApp(handoff);
@@ -172,8 +172,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   await buildMainJS(handoff);
   await buildMainCss(handoff);
 
-  // Build pages after components
-  await processPages(handoff);
+  // Build patterns after components
+  await processPatterns(handoff);
 
   const appPath = await initializeProjectApp(handoff);
 
@@ -232,7 +232,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   watchRuntimeConfiguration(handoff, state);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
-  watchRuntimePages(handoff, state);
+  watchRuntimePatterns(handoff, state);
 };
 
 /**

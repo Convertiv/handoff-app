@@ -8,63 +8,63 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { PagePreviewObject } from './types';
+import { PatternPreviewObject } from './types';
 
-export const APIPageList = ({ pages, title, description }: { pages: PagePreviewObject[]; title?: string; description?: string }) => {
-  if ((pages ?? []).length === 0) {
-    return <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">No pages found.</p>;
+export const APIPatternList = ({ patterns, title, description }: { patterns: PatternPreviewObject[]; title?: string; description?: string }) => {
+  if ((patterns ?? []).length === 0) {
+    return <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">No patterns found.</p>;
   }
-  return <PageList pages={pages} title={title} description={description} />;
+  return <PatternList patterns={patterns} title={title} description={description} />;
 };
 
-export const PageList = ({
-  pages,
+export const PatternList = ({
+  patterns,
   title,
   description,
 }: {
-  pages: PagePreviewObject[];
+  patterns: PatternPreviewObject[];
   title?: string;
   description?: string;
 }) => {
-  const [layout, setLayout] = React.useState<string>(window.localStorage.getItem('handoff-page-grid-layout') || 'grid');
+  const [layout, setLayout] = React.useState<string>(window.localStorage.getItem('handoff-pattern-grid-layout') || 'grid');
   const [groupBy, setGroupBy] = React.useState<boolean>(false);
   const [search, setSearch] = React.useState<string>('');
   const [category, setCategory] = React.useState<string>('');
-  const [list, setList] = React.useState<PagePreviewObject[]>(pages);
-  const [groupedList, setGroupedList] = React.useState<Record<string, PagePreviewObject[]>>({});
+  const [list, setList] = React.useState<PatternPreviewObject[]>(patterns);
+  const [groupedList, setGroupedList] = React.useState<Record<string, PatternPreviewObject[]>>({});
 
   const categories = React.useMemo(() => {
-    const cats = new Set(pages.map((p) => p.group).flat());
+    const cats = new Set(patterns.map((p) => p.group).flat());
     return Array.from(cats);
-  }, [pages]);
+  }, [patterns]);
 
   useEffect(() => {
     setGroupedList(
       list
         .sort((a, b) => a.group.localeCompare(b.group))
-        .reduce((acc, page) => {
-          acc[page.group] = [...(acc[page.group] || []), page];
+        .reduce((acc, pattern) => {
+          acc[pattern.group] = [...(acc[pattern.group] || []), pattern];
           return acc;
-        }, {} as Record<string, PagePreviewObject[]>)
+        }, {} as Record<string, PatternPreviewObject[]>)
     );
   }, [list]);
 
   useEffect(() => {
-    let filteredList = pages.filter((page) => {
-      return page.title.toLowerCase().includes(search) || page.description.toLowerCase().includes(search);
+    let filteredList = patterns.filter((pattern) => {
+      return pattern.title.toLowerCase().includes(search) || pattern.description.toLowerCase().includes(search);
     });
     if (category && category !== 'all') {
-      filteredList = filteredList.filter((page) => page.group === category);
+      filteredList = filteredList.filter((pattern) => pattern.group === category);
     }
     setList(filteredList);
   }, [search, category]);
 
   const storeLayout = (value: string) => {
     setLayout(value);
-    window.localStorage.setItem('handoff-page-grid-layout', value);
+    window.localStorage.setItem('handoff-pattern-grid-layout', value);
   };
 
-  if (!title) title = 'Pages';
+  if (!title) title = 'Patterns';
   if (!description) description = 'Composed page templates built from reusable components.';
 
   return (
@@ -75,10 +75,10 @@ export const PageList = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search pages..."
+              placeholder="Search patterns..."
               className="rounded-md pl-9 pr-3 py-1 text-sm border-none shadow-none"
               onChange={(e) => setSearch(e.currentTarget.value)}
-              aria-label="Search pages"
+              aria-label="Search patterns"
               style={{ minWidth: 200 }}
             />
           </div>
@@ -166,8 +166,8 @@ export const PageList = ({
                   layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
                 )}
               >
-                {groupedList[group].map((page) => (
-                  <PageCard key={`page-${page.id}`} page={page} layout={layout} />
+                {groupedList[group].map((pattern) => (
+                  <PatternCard key={`pattern-${pattern.id}`} pattern={pattern} layout={layout} />
                 ))}
               </div>
             </div>
@@ -180,8 +180,8 @@ export const PageList = ({
             layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
           )}
         >
-          {list.map((page) => (
-            <PageCard key={`page-${page.id}`} page={page} layout={layout} />
+          {list.map((pattern) => (
+            <PatternCard key={`pattern-${pattern.id}`} pattern={pattern} layout={layout} />
           ))}
         </div>
       )}
@@ -189,25 +189,25 @@ export const PageList = ({
   );
 };
 
-const PageCard = ({ page, layout }: { page: PagePreviewObject; layout: string }) => {
-  const image = page.image || `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`;
-  const short = page.description.length > 85 ? page.description.substring(0, page.description.lastIndexOf(' ', 85)) + '...' : page.description;
-  const long = page.description.length > 500 ? page.description.substring(0, page.description.lastIndexOf(' ', 500)) + '...' : page.description;
-  const componentCount = page.components?.length ?? 0;
+const PatternCard = ({ pattern, layout }: { pattern: PatternPreviewObject; layout: string }) => {
+  const image = pattern.image || `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/images/illustration-sample-bw-1.svg`;
+  const short = pattern.description.length > 85 ? pattern.description.substring(0, pattern.description.lastIndexOf(' ', 85)) + '...' : pattern.description;
+  const long = pattern.description.length > 500 ? pattern.description.substring(0, pattern.description.lastIndexOf(' ', 500)) + '...' : pattern.description;
+  const componentCount = pattern.components?.length ?? 0;
 
   return (
     <div className={cn(layout === 'single' && 'grid grid-cols-[130px_1fr] items-start gap-6')}>
-      <Link href={`/system/page/${page.id}`} className="block bg-gray-50">
+      <Link href={`/system/pattern/${pattern.id}`} className="block bg-gray-50">
         <img
           src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}${image}`}
           width={1528}
           height={1250}
-          alt={page.title}
+          alt={pattern.title}
           className="mb-5 rounded-lg"
         />
       </Link>
       <div>
-        <h2 className="text-base font-medium">{page.title}</h2>
+        <h2 className="text-base font-medium">{pattern.title}</h2>
         <small className="font-mono text-xs font-light text-gray-400">{componentCount} components</small>
         <p className={cn('text-sm leading-relaxed text-gray-600', layout === 'grid' ? 'mt-2' : 'mt-1')}>
           {layout === 'grid' ? short : long}

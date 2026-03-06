@@ -9,7 +9,7 @@ import Layout from '../../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
-import { PagePreviewObject } from '../../../../components/Page/types';
+import { PatternPreviewObject } from '../../../../components/Pattern/types';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
@@ -18,29 +18,29 @@ import { JsonTreeView } from '../../../../components/ui/json-tree-view';
 import { RadioGroup, RadioGroupItem } from '../../../../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
-import { fetchPages, getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '../../../../components/util';
+import { fetchPatterns, getClientRuntimeConfig, getCurrentSection, staticBuildMenu } from '../../../../components/util';
 
 export async function getStaticPaths() {
   return {
-    paths: fetchPages()?.map((p) => ({ params: { page: p.id } })) ?? [],
+    paths: fetchPatterns()?.map((p) => ({ params: { pattern: p.id } })) ?? [],
     fallback: false,
   };
 }
 
-export const getStaticProps = async (context: { params: { page: string } }) => {
-  const { page } = context.params;
-  const pages = fetchPages()!;
+export const getStaticProps = async (context: { params: { pattern: string } }) => {
+  const { pattern } = context.params;
+  const patterns = fetchPatterns()!;
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = pages.find((p) => p.id === page);
-  const sameGroupPages = pages.filter((p) => p.group === metadata?.group);
-  const groupIndex = sameGroupPages.findIndex((p) => p.id === page);
-  const previousPage = sameGroupPages[groupIndex - 1] ?? null;
-  const nextPage = sameGroupPages[groupIndex + 1] ?? null;
+  const metadata = patterns.find((p) => p.id === pattern);
+  const sameGroupPatterns = patterns.filter((p) => p.group === metadata?.group);
+  const groupIndex = sameGroupPatterns.findIndex((p) => p.id === pattern);
+  const previousPattern = sameGroupPatterns[groupIndex - 1] ?? null;
+  const nextPattern = sameGroupPatterns[groupIndex + 1] ?? null;
 
   return {
     props: {
-      id: page,
+      id: pattern,
       menu,
       config,
       current: getCurrentSection(menu, '/system') ?? [],
@@ -50,78 +50,78 @@ export const getStaticProps = async (context: { params: { page: string } }) => {
         description: metadata?.description,
         image: 'hero-brand-assets',
       },
-      previousPage,
-      nextPage,
+      previousPattern,
+      nextPattern,
     },
   };
 };
 
-const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nextPage }) => {
-  const [page, setPage] = useState<PagePreviewObject>(undefined);
+const PatternDetailPage = ({ menu, metadata, current, id, config, previousPattern, nextPattern }) => {
+  const [pattern, setPattern] = useState<PatternPreviewObject>(undefined);
   const [selectedPreview, setSelectedPreview] = useState<string>('');
   const [width, setWidth] = useState<string>('1100px');
   const ref = React.useRef<HTMLDivElement>(null);
 
   const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
-  const pageRoute = (pageId: string) => `${normalizedBasePath}/system/page/${pageId}`;
+  const patternRoute = (patternId: string) => `${normalizedBasePath}/system/pattern/${patternId}`;
 
-  const fetchPageData = async () => {
+  const fetchPatternData = async () => {
     try {
-      const data = await fetch(`${normalizedBasePath}/api/page/${id}.json`).then((res) => res.json());
-      setPage(data as PagePreviewObject);
+      const data = await fetch(`${normalizedBasePath}/api/pattern/${id}.json`).then((res) => res.json());
+      setPattern(data as PatternPreviewObject);
       const previewKeys = Object.keys(data.previews || {});
       if (previewKeys.length > 0) {
         setSelectedPreview(previewKeys[0]);
       }
     } catch {
-      setPage(null);
+      setPattern(null);
     }
   };
 
-  const previousLink = previousPage
-    ? { href: pageRoute(previousPage.id), title: previousPage.name || previousPage.title }
+  const previousLink = previousPattern
+    ? { href: patternRoute(previousPattern.id), title: previousPattern.name || previousPattern.title }
     : null;
-  const nextLink = nextPage
-    ? { href: pageRoute(nextPage.id), title: nextPage.name || nextPage.title }
+  const nextLink = nextPattern
+    ? { href: patternRoute(nextPattern.id), title: nextPattern.name || nextPattern.title }
     : null;
 
   useEffect(() => {
-    setPage(undefined);
-    fetchPageData();
+    setPattern(undefined);
+    fetchPatternData();
   }, [id]);
 
-  if (!page) return <p>Loading...</p>;
+  if (!pattern) return <p>Loading...</p>;
 
-  const apiUrl = (window.location.origin && window.location.origin) + `/api/page/${id}.json`;
-  const previewKeys = Object.keys(page.previews || {});
-  const currentPreview = page.previews?.[selectedPreview];
-  const previewUrl = currentPreview?.url ? `${normalizedBasePath}/api/page/${currentPreview.url}` : '';
+  const apiUrl = (window.location.origin && window.location.origin) + `/api/pattern/${id}.json`;
+  const previewKeys = Object.keys(pattern.previews || {});
+  const currentPreview = pattern.previews?.[selectedPreview];
+  const previewUrl = currentPreview?.url ? `${normalizedBasePath}/api/pattern/${currentPreview.url}` : '';
 
   const bestPracticesCards: Card[] = [];
-  if (page.should_do && page.should_do.length > 0) {
-    bestPracticesCards.push({ title: 'Best Practices', content: page.should_do.join('\n'), type: 'positive' });
+  if (pattern.should_do && pattern.should_do.length > 0) {
+    bestPracticesCards.push({ title: 'Best Practices', content: pattern.should_do.join('\n'), type: 'positive' });
   }
-  if (page.should_not_do && page.should_not_do.length > 0) {
-    bestPracticesCards.push({ title: 'Common Mistakes', content: page.should_not_do.join('\n'), type: 'negative' });
+  if (pattern.should_not_do && pattern.should_not_do.length > 0) {
+    bestPracticesCards.push({ title: 'Common Mistakes', content: pattern.should_not_do.join('\n'), type: 'negative' });
   }
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
-        <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Pages</small>
+        <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Patterns</small>
         <a id="best-practices"></a>
-        <HeadersType.H1>{metadata.title || page.title}</HeadersType.H1>
+        <HeadersType.H1>{metadata.title || pattern.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
             <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-              {metadata.description || page.description}
+              {metadata.description || pattern.description}
             </ReactMarkdown>
           </div>
           <div className="flex flex-row gap-3">
-            {page.figma && (
+            {pattern.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
-                <a href={page.figma} target="_blank">
+                <a href={pattern.figma} target="_blank">
                   Figma Reference
                 </a>
               </Button>
@@ -139,7 +139,7 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
                     <p className="font-mono text-xs text-gray-500">{apiUrl}</p>
                   </DrawerHeader>
                   <div className="max-h-[80vh] w-full overflow-auto">
-                    <JsonTreeView data={page} />
+                    <JsonTreeView data={pattern} />
                   </div>
                 </div>
               </DrawerContent>
@@ -170,7 +170,7 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
                       <SelectContent>
                         {previewKeys.map((key) => (
                           <SelectItem key={key} value={key}>
-                            {page.previews[key].title}
+                            {pattern.previews[key].title}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -226,7 +226,7 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
                           onClick={() => {
                             if (currentPreview?.url && typeof window !== 'undefined') {
                               const base = (normalizedBasePath || '').replace(/\/+$/, '');
-                              window.open(`${window.location.origin}${base}/api/page/${currentPreview.url}`, '_blank');
+                              window.open(`${window.location.origin}${base}/api/pattern/${currentPreview.url}`, '_blank');
                             }
                           }}
                         >
@@ -252,7 +252,7 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
                       display: 'block',
                       margin: '0 auto',
                     }}
-                    title={`${page.title} - ${currentPreview?.title || 'Preview'}`}
+                    title={`${pattern.title} - ${currentPreview?.title || 'Preview'}`}
                   />
                 </div>
               </div>
@@ -263,10 +263,10 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
           <div className="mb-8">
             <HeadersType.H2 className="mb-4">Components</HeadersType.H2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              This page is composed of the following components in order:
+              This pattern is composed of the following components in order:
             </p>
             <div className="flex flex-col gap-2">
-              {(page.components || []).map((componentId, index) => (
+              {(pattern.components || []).map((componentId, index) => (
                 <div key={`${componentId}-${index}`} className="flex items-center gap-3 p-3 border rounded-lg">
                   <Badge variant="outline" className="font-mono text-xs">
                     {index + 1}
@@ -297,4 +297,4 @@ const PageDetailPage = ({ menu, metadata, current, id, config, previousPage, nex
   );
 };
 
-export default PageDetailPage;
+export default PatternDetailPage;

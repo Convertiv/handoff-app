@@ -1,4 +1,4 @@
-export interface PagePreviewObject {
+export interface PatternPreviewObject {
   id: string;
   title: string;
   description: string;

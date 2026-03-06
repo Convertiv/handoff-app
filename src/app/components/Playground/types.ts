@@ -36,7 +36,7 @@ export interface SelectedPlaygroundComponent extends PlaygroundComponent {
   uniqueId: string;
 }
 
-/** Handoff page format exported from Playground (matches PageObject without id/path). */
+/** Handoff pattern format exported from Playground (matches PatternObject without id/path). */
 export interface PlaygroundPageExport {
   title: string;
   description: string;

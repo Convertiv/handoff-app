@@ -3,7 +3,7 @@ import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
 import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
-import { PageListObject } from '../transformers/preview/page/types';
+import { PatternListObject } from '../transformers/preview/pattern/types';
 import { ValidationResult } from './preview';
 
 export interface ImageStyle {
@@ -112,10 +112,10 @@ export interface Config {
      */
     components?: string[];
     /**
-     * Array of page paths to be included in the build
-     * @example ["pages/homepage", "pages/about"]
+     * Array of pattern paths to be included in the build
+     * @example ["patterns/homepage", "patterns/landing"]
      */
-    pages?: string[];
+    patterns?: string[];
   };
   /**
    * Configuration for asset zip file download links
@@ -280,8 +280,8 @@ export interface RuntimeConfig {
     components: {
       [id: string]: ComponentListObject;
     };
-    pages: {
-      [id: string]: PageListObject;
+    patterns: {
+      [id: string]: PatternListObject;
     };
   };
   options: {

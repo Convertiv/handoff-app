@@ -5,7 +5,7 @@ import Handoff from '..';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
-import { processPages } from '../transformers/preview/page/builder';
+import { processPatterns } from '../transformers/preview/pattern/builder';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
 import { persistClientConfig } from './client-config';
@@ -240,33 +240,33 @@ export const watchRuntimeComponents = (
 };
 
 /**
- * Watches runtime page config files for changes and triggers page rebuilds.
+ * Watches runtime pattern config files for changes and triggers pattern rebuilds.
  */
-export const watchRuntimePages = (handoff: Handoff, state: WatcherState) => {
-  const runtimePages = handoff.runtimeConfig?.entries?.pages ?? {};
-  const pageConfigPaths = handoff.getConfigFilePaths().filter((configPath) => {
+export const watchRuntimePatterns = (handoff: Handoff, state: WatcherState) => {
+  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  const patternConfigPaths = handoff.getConfigFilePaths().filter((configPath) => {
     const dirName = path.basename(path.dirname(configPath));
-    return dirName in runtimePages;
+    return dirName in runtimePatterns;
   });
 
-  // Also watch page directories directly
-  const pageIds = Object.keys(runtimePages);
-  if (pageIds.length === 0 && pageConfigPaths.length === 0) return;
+  // Also watch pattern directories directly
+  const patternIds = Object.keys(runtimePatterns);
+  if (patternIds.length === 0 && patternConfigPaths.length === 0) return;
 
-  const pathsToWatch = pageConfigPaths.length > 0 ? pageConfigPaths : [];
+  const pathsToWatch = patternConfigPaths.length > 0 ? patternConfigPaths : [];
 
-  // Add page config entry paths from the config
-  for (const pageId of pageIds) {
-    const page = runtimePages[pageId];
-    if (page.path && fs.existsSync(page.path)) {
-      pathsToWatch.push(page.path);
+  // Add pattern config entry paths from the config
+  for (const patternId of patternIds) {
+    const pattern = runtimePatterns[patternId];
+    if (pattern.path && fs.existsSync(pattern.path)) {
+      pathsToWatch.push(pattern.path);
     }
   }
 
-  // Watch the page entry directories from config
-  if (handoff.config.entries?.pages?.length) {
-    for (const pagePath of handoff.config.entries.pages) {
-      const resolvedPath = path.resolve(handoff.workingPath, pagePath);
+  // Watch the pattern entry directories from config
+  if (handoff.config.entries?.patterns?.length) {
+    for (const patternPath of handoff.config.entries.patterns) {
+      const resolvedPath = path.resolve(handoff.workingPath, patternPath);
       if (fs.existsSync(resolvedPath)) {
         pathsToWatch.push(resolvedPath);
       }
@@ -283,11 +283,11 @@ export const watchRuntimePages = (handoff: Handoff, state: WatcherState) => {
         if (!state.debounce) {
           state.debounce = true;
           try {
-            Logger.warn('Page config changed. Rebuilding pages...');
+            Logger.warn('Pattern config changed. Rebuilding patterns...');
             handoff.reload();
-            await processPages(handoff);
+            await processPatterns(handoff);
           } catch (e) {
-            Logger.error('Error processing pages:', e);
+            Logger.error('Error processing patterns:', e);
           } finally {
             state.debounce = false;
           }

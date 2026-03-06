@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { PageListObject } from '../transformers/preview/page/types';
+import { PatternListObject } from '../transformers/preview/pattern/types';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Config, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
@@ -29,7 +29,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
       scss: undefined,
       js: undefined,
       components: {},
-      pages: {},
+      patterns: {},
     },
   };
 
@@ -113,51 +113,51 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     }
   }
 
-  if (handoff.config.entries?.pages?.length) {
-    const pagePaths = handoff.config.entries.pages.flatMap(getPagesForPath);
-    for (const pagePath of pagePaths) {
-      const resolvedPagePath = path.resolve(handoff.workingPath, pagePath);
-      const pageBaseName = path.basename(resolvedPagePath);
-      const possibleConfigFiles = [`${pageBaseName}.json`, `${pageBaseName}.js`, `${pageBaseName}.cjs`];
+  if (handoff.config.entries?.patterns?.length) {
+    const patternPaths = handoff.config.entries.patterns.flatMap(getPatternsForPath);
+    for (const patternPath of patternPaths) {
+      const resolvedPatternPath = path.resolve(handoff.workingPath, patternPath);
+      const patternBaseName = path.basename(resolvedPatternPath);
+      const possibleConfigFiles = [`${patternBaseName}.json`, `${patternBaseName}.js`, `${patternBaseName}.cjs`];
 
-      const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedPagePath, file)));
+      const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedPatternPath, file)));
 
       if (!configFileName) {
-        Logger.warn(`Missing page config: ${path.resolve(resolvedPagePath, possibleConfigFiles.join(' or '))}`);
+        Logger.warn(`Missing pattern config: ${path.resolve(resolvedPatternPath, possibleConfigFiles.join(' or '))}`);
         continue;
       }
 
-      const resolvedPageConfigPath = path.resolve(resolvedPagePath, configFileName);
-      configFiles.push(resolvedPageConfigPath);
+      const resolvedPatternConfigPath = path.resolve(resolvedPatternPath, configFileName);
+      configFiles.push(resolvedPatternConfigPath);
 
-      let page: PageListObject;
+      let pattern: PatternListObject;
 
       try {
         if (configFileName.endsWith('.json')) {
-          const pageJson = fs.readFileSync(resolvedPageConfigPath, 'utf8');
-          page = JSON.parse(pageJson) as PageListObject;
+          const patternJson = fs.readFileSync(resolvedPatternConfigPath, 'utf8');
+          pattern = JSON.parse(patternJson) as PatternListObject;
         } else {
-          delete require.cache[require.resolve(resolvedPageConfigPath)];
-          const importedPage = require(resolvedPageConfigPath);
-          page = importedPage.default || importedPage;
+          delete require.cache[require.resolve(resolvedPatternConfigPath)];
+          const importedPattern = require(resolvedPatternConfigPath);
+          pattern = importedPattern.default || importedPattern;
         }
       } catch (err) {
-        Logger.error(`Failed to read or parse page config: ${resolvedPageConfigPath}`, err);
+        Logger.error(`Failed to read or parse pattern config: ${resolvedPatternConfigPath}`, err);
         continue;
       }
 
-      page.id = pageBaseName;
+      pattern.id = patternBaseName;
 
       // Validate that referenced components exist
-      if (page.components) {
-        for (const componentId of page.components) {
+      if (pattern.components) {
+        for (const componentId of pattern.components) {
           if (!result.entries.components[componentId]) {
-            Logger.warn(`Page '${page.id}' references unknown component '${componentId}'`);
+            Logger.warn(`Pattern '${pattern.id}' references unknown component '${componentId}'`);
           }
         }
       }
 
-      result.entries.pages[page.id] = page;
+      result.entries.patterns[pattern.id] = pattern;
     }
   }
 
@@ -206,10 +206,10 @@ export const getComponentsForPath = (searchPath: string): string[] => {
 };
 
 /**
- * Returns a list of page directories for a given path.
- * Mirrors getComponentsForPath but for page definitions.
+ * Returns a list of pattern directories for a given path.
+ * Mirrors getComponentsForPath but for pattern definitions.
  */
-export const getPagesForPath = (searchPath: string): string[] => {
+export const getPatternsForPath = (searchPath: string): string[] => {
   const dirName = path.basename(searchPath);
   const possibleConfigFiles = [`${dirName}.json`, `${dirName}.js`, `${dirName}.cjs`];
 

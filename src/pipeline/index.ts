@@ -9,7 +9,7 @@ import { validateHandoffRequirements } from './validation';
 // Re-exports used by other modules
 export { readPrevJSONFile, zip, zipAssets } from './archive';
 export { buildComponents } from './components';
-export { buildPages } from './pages';
+export { buildPatterns } from './patterns';
 
 /**
  * Run the entire Figma data pipeline:
