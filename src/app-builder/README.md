@@ -10,5 +10,5 @@ Handles building, watching, and serving the Next.js documentation application.
 | `websocket.ts` | `createWebSocketServer()` — WebSocket server for dev hot-reloading |
 | `paths.ts` | `getAppPath()`, `getWorkingPublicPath()`, `syncPublicFiles()` |
 | `client-config.ts` | `persistClientConfig()`, `generateTokensApi()` |
-| `watchers.ts` | File watchers for public dir, pages, SCSS, runtime components, and config |
+| `watchers.ts` | File watchers for public dir, pages, global entries (SCSS/JS), runtime components, and config |
 | `index.ts` | Barrel re-exports |
