@@ -1,6 +1,6 @@
 import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
-import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
+import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
 import matter from 'gray-matter';
 import { Types as CoreTypes } from 'handoff-core';
@@ -308,7 +308,7 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
   Object.keys(groupedComponents).forEach((group) => {
     const menuGroup = { title: group || 'Uncategorized', menu: [] };
     groupedComponents[group].forEach((component) => {
-      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      const docs = fetchDocPageMetadataAndContent('docs/system/', component.id);
       let title = startCase(component.id);
       if (docs.metadata.title) {
         title = docs.metadata.title;
@@ -357,7 +357,7 @@ const staticBuildTokensMenu = () => {
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
     groupedComponents[group].forEach((component) => {
-      const docs = fetchDocPageMetadataAndContent('docs/components/', component.id);
+      const docs = fetchDocPageMetadataAndContent('docs/system/', component.id);
       let title = startCase(component.id);
       if (docs.metadata.title) {
         title = docs.metadata.title;
@@ -677,7 +677,7 @@ export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => valu
 export const titleString = (prefix: string | null): string => {
   const config = getClientRuntimeConfig();
   const prepend = prefix ? `${prefix} | ` : '';
-  return `${prefix}${config?.app?.client} Design System`;
+  return `${prepend}${config?.app?.client} Design System`;
 };
 
 /**

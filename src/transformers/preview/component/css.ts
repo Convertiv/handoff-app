@@ -1,9 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import Handoff, { initRuntimeConfig } from '../../../index';
+import { initRuntimeConfig } from '../../../config';
+import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import viteBaseConfig from '../../config';
+import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 const { pathToFileURL } = require('url');
@@ -94,7 +95,7 @@ const buildCssBundle = async ({
   }
 };
 
-const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, sharedStyles: string) => {
+const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff) => {
   const id = data.id;
   Logger.debug(`buildComponentCss`, id);
   const entry = data.entries?.scss;
@@ -143,17 +144,13 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
         const builtCss = await fs.readFile(builtCssPath, 'utf8');
         data['css'] = builtCss;
 
-        // Handle shared styles
+        // Handle shared styles — if the component SCSS uses the split marker,
+        // extract shared styles from the portion above it
         const splitCSS = builtCss.split('/* COMPONENT STYLES*/');
         if (splitCSS && splitCSS.length > 1) {
           data['css'] = splitCSS[1];
           data['sharedStyles'] = splitCSS[0];
           await fs.writeFile(path.resolve(outputPath, 'shared.css'), data['sharedStyles']);
-        } else {
-          if (!sharedStyles) {
-            sharedStyles = '/* These are the shared styles used in every component. */ \n\n';
-          }
-          await fs.writeFile(path.resolve(outputPath, 'shared.css'), sharedStyles);
         }
       }
     }

@@ -116,7 +116,6 @@ export async function processComponents(
 
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
-  const sharedStyles = await handoff.getSharedStyles();
   const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
   const allComponentIds = Object.keys(runtimeComponents);
 
@@ -283,7 +282,7 @@ export async function processComponents(
     }
     // Build CSS if needed.
     if (buildPlan.css) {
-      data = await buildComponentCss(data, handoff, sharedStyles);
+      data = await buildComponentCss(data, handoff);
     }
     // Build previews (HTML, snapshots, etc) if needed.
     if (buildPlan.previews) {
@@ -298,9 +297,6 @@ export async function processComponents(
       const validationResults = await handoff.config.hooks.validateComponent(data);
       data.validations = validationResults;
     }
-
-    // Attach the resolved sharedStyles to the component data for persistence and downstream usage.
-    data.sharedStyles = sharedStyles;
 
     // Ensure that every property within the properties array/object contains an 'id' field.
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.

@@ -504,8 +504,8 @@ const ensureNestedParsing = (metadata: SlotMetadata): SlotMetadata => {
 };
 
 /**
- * Converts react-docgen-typescript props to our SlotMetadata format
- * @param docgenProps - Array of props from react-docgen-typescript
+ * Converts baseline docgen props to our SlotMetadata format
+ * @param docgenProps - Array of props from a docgen parser
  * @returns Converted properties object
  */
 export const convertDocgenToProperties = (docgenProps: any[]): { [key: string]: SlotMetadata } => {

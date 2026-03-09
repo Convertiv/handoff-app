@@ -57,11 +57,20 @@ export const registerHandlebarsHelpers = (
  */
 export const createHandlebarsContext = (
   data: { id: string; properties: { [key: string]: SlotMetadata }; title: string },
-  previewData: { values?: any }
+  previewData: { values?: any },
+  options?: { includeSharedStyles?: boolean }
 ): HandlebarsContext => {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const sharedStylesLink = options?.includeSharedStyles
+    ? `<link rel="stylesheet" href="${basePath}/api/component/shared.css">`
+    : '';
+
   return {
-    style: `<link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/shared.css"><link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${data.id}.css">\n<link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css">`,
-    script: `<script src="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${data.id}.js"></script>\n<script src="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
+    style:
+      `${sharedStylesLink}<link rel="stylesheet" href="${basePath}/api/component/main.css">` +
+      `<link rel="stylesheet" href="${basePath}/api/component/${data.id}.css">\n` +
+      `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
+    script: `<script src="${basePath}/api/component/${data.id}.js"></script>\n<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,
     title: data.title,

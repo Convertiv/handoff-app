@@ -13,4 +13,5 @@
 // Export the main plugins
 export { handlebarsPreviewsPlugin } from './plugins/handlebars-previews';
 export { ssrRenderPlugin } from './plugins/ssr-render';
+export { csfRenderPlugin } from './plugins/csf-render';
 

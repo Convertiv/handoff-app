@@ -4,24 +4,6 @@ import { SlotMetadata } from './preview/component';
 import { TransformComponentTokensResult } from './preview/types';
 
 /**
- * Configuration for react-docgen-typescript parser
- */
-export interface DocgenParserConfig {
-  savePropValueAsString: boolean;
-  shouldExtractLiteralValuesFromEnum: boolean;
-  shouldRemoveUndefinedFromOptional: boolean;
-  propFilter: (prop: any) => boolean;
-}
-
-/**
- * Result from react-docgen-typescript parsing
- */
-export interface DocgenResult {
-  props: { [key: string]: any };
-  [key: string]: any;
-}
-
-/**
  * Module evaluation result
  */
 export interface ModuleEvaluationResult {

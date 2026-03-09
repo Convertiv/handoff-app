@@ -1,7 +1,8 @@
 'use client';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
-import { PreviewObject } from '@handoff/types';
+import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
+import { startCase } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -16,7 +17,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -71,13 +72,18 @@ export const getStaticProps = async (context) => {
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
   const components = fetchComponents()!;
-  const componentIndex = components.findIndex((c) => c.id === component);
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = components.filter((c) => c.id === component)[0];
+  const componentData = components.find((c) => c.id === component);
+  const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
-  const previousComponent = components[componentIndex - 1] ?? null;
-  const nextComponent = components[componentIndex + 1] ?? null;
+  const sameGroupComponents = components.filter((c) => c.group === componentData?.group);
+  const groupIndex = sameGroupComponents.findIndex((c) => c.id === component);
+  const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
+  const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
+
+  const fallbackTitle = componentData.name || startCase(component as string);
+  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
 
   return {
     props: {
@@ -88,10 +94,12 @@ export const getStaticProps = async (context) => {
       config,
       current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
-        ...metadata,
-        title: metadata.name,
-        description: metadata.description,
-        image: 'hero-brand-assets',
+        ...componentData,
+        title: componentData.name || docs.metadata.title || startCase(component as string),
+        description: componentData.description,
+        metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
+        metaDescription: docs.metadata.metaDescription || componentData.description,
+        image: docs.metadata.image || 'hero-brand-assets',
       },
       componentHotReloadIsAvailable,
       previousComponent,
@@ -109,24 +117,29 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
 
+  const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
+  const componentRoute = (componentId: string) => `${normalizedBasePath}/system/component/${componentId}`;
+
   const fetchComponents = async () => {
-    let data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`).then((res) => res.json());
+    let data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 
   const previousLink = previousComponent ? {
-    href: previousComponent ? `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${previousComponent.id}` : null,
+    href: previousComponent ? componentRoute(previousComponent.id) : null,
     title: previousComponent ? previousComponent.name : null,
   } : null;
   const nextLink = nextComponent ? {
-    href: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}system/component/${nextComponent.id}`,
+    href: componentRoute(nextComponent.id),
     title: nextComponent.name,
   } : null;
 
   useEffect(() => {
+    setComponent(undefined);
     fetchComponents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!component) return;
@@ -195,11 +208,19 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
       <div ref={ref} className="lg:gap-10 lg:pb-8 xl:grid xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="max-w-[900px]">
           {Array.isArray(componentPreviews) ? (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
+            <HotReloadProvider key={`hot-reload-${id}`} connect={componentHotReloadIsAvailable}>
               {componentPreviews.map(([title, cp], cpi) => (
-                <>
-                  <PreviewContextProvider id={id} defaultMetadata={metadata} defaultMenu={menu} defaultPreview={cp} defaultConfig={config}>
+                <React.Fragment key={`${id}-${cp.id}`}>
+                  <PreviewContextProvider
+                    key={`preview-context-${cp.id}`}
+                    id={id}
+                    defaultMetadata={metadata}
+                    defaultMenu={menu}
+                    defaultPreview={cp}
+                    defaultConfig={config}
+                  >
                     <ComponentPreview
+                      key={`component-preview-${cp.id}`}
                       title={title}
                       bestPracticesCard={cpi === 0}
                       properties={cpi === componentPreviews.length - 1}
@@ -208,19 +229,20 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
                       <p>Define a simple contact form</p>
                     </ComponentPreview>
                   </PreviewContextProvider>
-                </>
+                </React.Fragment>
               ))}
             </HotReloadProvider>
           ) : (
-            <HotReloadProvider connect={componentHotReloadIsAvailable}>
+            <HotReloadProvider key={`hot-reload-${id}`} connect={componentHotReloadIsAvailable}>
               <PreviewContextProvider
+                key={`preview-context-${id}`}
                 id={id}
                 defaultMetadata={metadata}
                 defaultMenu={menu}
                 defaultPreview={componentPreviews}
                 defaultConfig={config}
               >
-                <ComponentPreview title={metadata.title} properties={true} validations={true}>
+                <ComponentPreview key={`component-preview-${id}`} title={metadata.title} properties={true} validations={true}>
                   <p>Define a simple contact form</p>
                 </ComponentPreview>
               </PreviewContextProvider>
