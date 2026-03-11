@@ -269,10 +269,11 @@ export async function processComponents(
         data.css = existingData.css;
         data.sass = existingData.sass;
       }
-      // If we're not building previews, preserve pre-existing HTML, code snippet, and previews.
+      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, and previews.
       if (!buildPlan.previews) {
         data.html = existingData.html;
         data.code = existingData.code;
+        data.usage = existingData.usage;
         data.previews = existingData.previews;
       }
       /**
