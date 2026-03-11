@@ -189,7 +189,7 @@ export function generateUsageSnippet(options: GenerateUsageSnippetOptions): stri
         ? childrenValue
         : typeof childrenValue === 'number' || typeof childrenValue === 'boolean'
           ? String(childrenValue)
-          : '{/* unsupported children preview */}';
+          : '{/* children */}';
 
     if (childStr.length <= 40 && !childStr.includes('\n')) {
       lines.push(`${openTag}${childStr}</${componentName}>`);
