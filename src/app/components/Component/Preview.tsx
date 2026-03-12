@@ -55,8 +55,8 @@ export const ComponentDisplay: React.FC<{
   component: PreviewObject | undefined;
   defaultHeight?: string | undefined;
   title?: string;
-  onValuesChange?: (values: Record<string, string>) => void;
-}> = ({ component, defaultHeight, title, onValuesChange }) => {
+  onPreviewChange?: (previewUrl: string) => void;
+}> = ({ component, defaultHeight, title, onPreviewChange }) => {
   const context = usePreviewContext();
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
@@ -131,11 +131,10 @@ export const ComponentDisplay: React.FC<{
       if (keys.length === 0) {
         return;
       }
-      // check the environment
-      setPreviewUrl(component.previews[keys[0]].url);
-      !!onValuesChange && onValuesChange(component.previews[keys[0]].values);
+      const firstPreview = component.previews[keys[0]];
+      setPreviewUrl(firstPreview.url);
     }
-  }, [component, onValuesChange]);
+  }, [component]);
 
   React.useEffect(() => {
     if (!component) return;
@@ -147,11 +146,17 @@ export const ComponentDisplay: React.FC<{
 
     if (!!previewFilterResult && previewFilterResult.length > 0) {
       setPreviewUrl(previewFilterResult[0].url);
-      !!onValuesChange && onValuesChange(previewFilterResult[0].values);
     } else {
       setPreviewUrl(null);
     }
-  }, [context.variantFilter, component, onValuesChange]);
+  }, [context.variantFilter, component]);
+
+  React.useEffect(() => {
+    if (!component?.previews || !previewUrl) return;
+    const selectedPreview = Object.values(component.previews).find((preview) => preview.url === previewUrl);
+    if (!selectedPreview) return;
+    !!onPreviewChange && onPreviewChange(selectedPreview.url);
+  }, [component?.previews, onPreviewChange, previewUrl]);
 
   const { reloadCounter } = useContext(HotReloadContext);
 
@@ -376,7 +381,7 @@ export const ComponentPreview: React.FC<{
     const context = usePreviewContext();
     const [loaded, setLoaded] = React.useState(false);
     const [preview, setPreview] = React.useState<PreviewObject | undefined>(defaultPreview);
-    const [currentValues, setCurrentValues] = React.useState<Record<string, string> | undefined>();
+    const [currentPreviewUrl, setCurrentPreviewUrl] = React.useState<string | undefined>();
     React.useEffect(() => {
       if (context.preview) {
         setPreview(context.preview);
@@ -409,9 +414,9 @@ export const ComponentPreview: React.FC<{
             preview={preview}
             title={title}
             height={height}
-            currentValues={currentValues}
-            onValuesChange={(vals) => {
-              setCurrentValues(vals);
+            currentPreviewUrl={currentPreviewUrl}
+            onPreviewChange={(previewUrl) => {
+              setCurrentPreviewUrl(previewUrl);
             }}
             bestPracticesCard={bestPracticesCard}
             codeHighlight={codeHighlight}
