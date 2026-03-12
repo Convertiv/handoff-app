@@ -2,6 +2,14 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 
+const resolveBasePath = (rawBasePath) => {
+  if (!rawBasePath || rawBasePath.startsWith('%HANDOFF_')) {
+    return '';
+  }
+  const trimmed = rawBasePath.replace(/^\/+|\/+$/g, '');
+  return trimmed ? `/${trimmed}` : '';
+};
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
@@ -19,7 +27,7 @@ const nextConfig = {
     tsconfigPath: 'tsconfig.json',
   },
   //distDir: 'out',
-  basePath: '%HANDOFF_APP_BASE_PATH%',
+  basePath: resolveBasePath('%HANDOFF_APP_BASE_PATH%'),
   env: {
     HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
     HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
