@@ -62,6 +62,19 @@ type ComponentBuildPlan = {
   validationMode: boolean;
 };
 
+const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
+  if (!data) return;
+  if (!data.previews || Object.keys(data.previews).length === 0) {
+    data.previews = {
+      default: {
+        title: 'Default',
+        values: {},
+        url: '',
+      },
+    };
+  }
+};
+
 /**
  * Returns a normalized build plan describing which component segments need rebuilding.
  *
@@ -223,7 +236,7 @@ export async function processComponents(
     // those will override this default (standard "config overrides defaults" behavior).
     if (!restMetadata.figmaComponentId) {
       componentDefaults.previews = {
-        generic: {
+        default: {
           title: 'Default',
           values: {},
           url: '',
@@ -275,6 +288,9 @@ export async function processComponents(
         data.properties = existingData.properties;
       }
     }
+
+    // Components should always have at least one preview variation.
+    ensureDefaultPreview(data);
 
     // Build JS if needed (new build, validation missing, or explicit segment request).
     if (buildPlan.js) {
