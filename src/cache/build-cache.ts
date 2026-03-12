@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
 import { Logger } from '../utils/logger';
+import { normalizePathForCompare } from '../utils/path';
 import { computeDirectoryState, computeFileState, directoryStatesMatch, FileState, statesMatch } from './file-state';
 
 /** Current cache format version - bump when structure changes */
@@ -162,25 +163,18 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
 
   const files: string[] = [];
   let templateDir: string | undefined;
+  const componentDirs = new Set<string>();
 
-  // Find the config file path for this component
-  const configPaths = handoff.getConfigFilePaths();
-  for (const configPath of configPaths) {
-    // Check if this config path belongs to this component
-    if (configPath.includes(componentId)) {
-      files.push(configPath);
-      break;
-    }
-  }
-
-  // Add entry files
+  // Add entry files and infer component directories from resolved entry paths
   const entries = runtimeComponent.entries as Record<string, string | undefined> | undefined;
   if (entries) {
     if (entries.js) {
       files.push(entries.js);
+      componentDirs.add(normalizePathForCompare(path.dirname(entries.js)));
     }
     if (entries.scss) {
       files.push(entries.scss);
+      componentDirs.add(normalizePathForCompare(path.dirname(entries.scss)));
     }
     // Handle both 'template' (singular) and 'templates' (plural) entry types
     const templatePath = entries.template || entries.templates;
@@ -189,14 +183,38 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
         const stat = fs.statSync(templatePath);
         if (stat.isDirectory()) {
           templateDir = templatePath;
+          componentDirs.add(normalizePathForCompare(templatePath));
         } else {
           files.push(templatePath);
+          componentDirs.add(normalizePathForCompare(path.dirname(templatePath)));
         }
       } catch {
         // File doesn't exist, still add to track
         files.push(templatePath);
+        componentDirs.add(normalizePathForCompare(path.dirname(templatePath)));
       }
     }
+  }
+
+  // Find the config file path for this component using exact config filename + directory matching.
+  const configPaths = handoff.getConfigFilePaths();
+  const expectedConfigFileNames = new Set([`${componentId}.json`, `${componentId}.js`, `${componentId}.cjs`]);
+  const matchingConfigPath = configPaths.find((configPath) => {
+    const configFileName = path.basename(configPath);
+    if (!expectedConfigFileNames.has(configFileName)) {
+      return false;
+    }
+
+    if (componentDirs.size === 0) {
+      return true;
+    }
+
+    const configDir = normalizePathForCompare(path.dirname(configPath));
+    return componentDirs.has(configDir);
+  });
+
+  if (matchingConfigPath) {
+    files.push(matchingConfigPath);
   }
 
   return { files, templateDir };

@@ -163,7 +163,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   }, [component, id]);
 
   if (!component) return <p>Loading...</p>;
-  const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `${normalizedBasePath}/api/component/${id}.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">

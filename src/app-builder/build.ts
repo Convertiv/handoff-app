@@ -12,6 +12,8 @@ import { getAppPath, syncPublicFiles } from './paths';
 import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
 import { createWebSocketServer } from './websocket';
 
+const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
  */
@@ -49,8 +51,7 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
     Logger.success(`Custom theme.css loaded`);
   }
 
-  // Prepare project app configuration
-  // Warning: Regex replacement is fragile and depends on exact formatting in next.config.mjs
+  // Prepare project app configuration using stable placeholder replacement.
   const handoffProjectId = handoff.getProjectId();
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
@@ -59,15 +60,24 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   const nextConfigPath = path.resolve(srcPath, 'next.config.mjs');
   const targetPath = path.resolve(appPath, 'next.config.mjs');
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
-  const nextConfigContent = (await fs.readFile(nextConfigPath, 'utf-8'))
-    .replace(/basePath:\s+''/g, `basePath: '${handoffAppBasePath}'`)
-    .replace(/HANDOFF_PROJECT_ID:\s+''/g, `HANDOFF_PROJECT_ID: '${handoffProjectId}'`)
-    .replace(/HANDOFF_APP_BASE_PATH:\s+''/g, `HANDOFF_APP_BASE_PATH: '${handoffAppBasePath}'`)
-    .replace(/HANDOFF_WORKING_PATH:\s+''/g, `HANDOFF_WORKING_PATH: '${handoffWorkingPath}'`)
-    .replace(/HANDOFF_MODULE_PATH:\s+''/g, `HANDOFF_MODULE_PATH: '${handoffModulePath}'`)
-    .replace(/HANDOFF_EXPORT_PATH:\s+''/g, `HANDOFF_EXPORT_PATH: '${handoffExportPath}'`)
-    .replace(/HANDOFF_WEBSOCKET_PORT:\s+''/g, `HANDOFF_WEBSOCKET_PORT: '${handoffWebsocketPort}'`)
-    .replace(/%HANDOFF_MODULE_PATH%/g, handoffModulePath);
+  const escapedAppBasePath = escapeForSingleQuotedJsString(handoffAppBasePath);
+  const escapedProjectId = escapeForSingleQuotedJsString(handoffProjectId);
+  const escapedWorkingPath = escapeForSingleQuotedJsString(handoffWorkingPath);
+  const escapedModulePath = escapeForSingleQuotedJsString(handoffModulePath);
+  const escapedExportPath = escapeForSingleQuotedJsString(handoffExportPath);
+  const escapedWebsocketPort = escapeForSingleQuotedJsString(String(handoffWebsocketPort));
+  const placeholderValues: Record<string, string> = {
+    '%HANDOFF_PROJECT_ID%': escapedProjectId,
+    '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
+    '%HANDOFF_WORKING_PATH%': escapedWorkingPath,
+    '%HANDOFF_MODULE_PATH%': escapedModulePath,
+    '%HANDOFF_EXPORT_PATH%': escapedExportPath,
+    '%HANDOFF_WEBSOCKET_PORT%': escapedWebsocketPort,
+  };
+  let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
+  for (const [placeholder, value] of Object.entries(placeholderValues)) {
+    nextConfigContent = nextConfigContent.split(placeholder).join(value);
+  }
   await fs.writeFile(targetPath, nextConfigContent);
   return appPath;
 };

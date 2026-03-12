@@ -290,10 +290,10 @@ export const staticBuildMenu = () => {
 };
 
 const buildBasePath = () => {
-  if(!process.env.HANDOFF_APP_BASE_PATH) {
+  if (!process.env.HANDOFF_APP_BASE_PATH) {
     return '';
   }
-  return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\//, '') + '/';
+  return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\/+|\/+$/g, '') + '/';
 };
 
 const staticBuildComponentMenu = (type?: boolean | string) => {
