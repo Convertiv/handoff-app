@@ -7,9 +7,22 @@ import prettier from 'prettier';
  * @returns Trimmed HTML content
  */
 export const trimPreview = (preview: string): string => {
-  const bodyEl = parse(preview).querySelector('body');
-  const code = bodyEl ? bodyEl.innerHTML.trim() : preview;
-  return code;
+  if (typeof preview !== 'string') {
+    return '';
+  }
+
+  const normalizedPreview = preview.trim();
+  if (!normalizedPreview) {
+    return '';
+  }
+
+  try {
+    const bodyEl = parse(normalizedPreview).querySelector('body');
+    return bodyEl ? bodyEl.innerHTML.trim() : normalizedPreview;
+  } catch {
+    // Keep build resilient if parser fails on malformed HTML.
+    return normalizedPreview;
+  }
 };
 
 /**

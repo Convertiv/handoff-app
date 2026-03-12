@@ -5,6 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const trimSlashes = (input: string): string => {
+  return input.replace(/^\/+|\/+$/g, '');
+};
+
+export const toAbsolutePath = (input: string): string => {
+  return `/${trimSlashes(input)}`;
+};
+
+export const normalizePathForMatch = (input: string): string => {
+  const [pathname] = input.split(/[?#]/);
+  return trimSlashes(pathname);
+};
+
 /**
  * Filters out null values
  * @param value

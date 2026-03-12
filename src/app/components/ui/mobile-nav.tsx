@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import { normalizePathForMatch, toAbsolutePath } from '../../lib/utils';
 import { SectionLink } from '../util';
 
 import { Button } from './button';
@@ -15,7 +16,7 @@ interface MobileNavProps {
 export function MobileNav({ menu }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
-  const router = useRouter();
+  const normalizedPathname = normalizePathForMatch(pathname ?? '');
 
   const onOpenChange = React.useCallback((open: boolean) => {
     setOpen(open);
@@ -52,24 +53,26 @@ export function MobileNav({ menu }: MobileNavProps) {
                   ) : (
                     <>
                       <Link
-                        href={`/${item.path}`}
+                        href={toAbsolutePath(item.path)}
                         className="text-[1.15rem]"
                         onClick={() => {
-                          router.push(`/${item.path}`);
                           setOpen(false);
                         }}
                       >
                         {item.title}
                       </Link>
                       {item.menu && (
-                        <ul className={`ml-4 mt-2 space-y-2${pathname.includes(item.path) ? ' is-active' : ''}`}>
+                        <ul
+                          className={`ml-4 mt-2 space-y-2${
+                            normalizedPathname.startsWith(normalizePathForMatch(item.path)) ? ' is-active' : ''
+                          }`}
+                        >
                           {item.menu.map((subItem) => (
                             <li key={subItem.path}>
                               <Link
-                                href={`/${subItem.path}`}
+                                href={toAbsolutePath(subItem.path)}
                                 className="text-[1rem] opacity-80"
                                 onClick={() => {
-                                  router.push(`/${subItem.path}`);
                                   setOpen(false);
                                 }}
                               >

@@ -8,7 +8,7 @@ import HeadersType from '../Typography/Headers';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Metadata } from '../util';
 
 interface ComponentMetadata extends Metadata {
@@ -74,7 +74,8 @@ export const ComponentList = ({
   if (!title) title = 'Components';
   if (!description) description = 'Self-contained reusable UI elements that can be used to build larger blocks or design patterns.';
   return (
-    <div className="mx-auto w-full mb-4">
+    <TooltipProvider delayDuration={0}>
+      <div className="mx-auto w-full mb-4">
       <div className="flex justify-between bg-accent rounded-xl mb-8">
         <div className="mr-auto flex items-center gap-3 bg-accent p-2.5 rounded-md">
           <div className="relative">
@@ -183,8 +184,8 @@ export const ComponentList = ({
         })}
         </div>
       )}
-    </div>
-
+      </div>
+    </TooltipProvider>
   );
 };
 

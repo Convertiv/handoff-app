@@ -1,3 +1,5 @@
+import path from 'path';
+
 /**
  * Generates a filesystem-safe directory name from an absolute path
  * @param workingPath - The absolute working path to transform
@@ -28,5 +30,32 @@ export function generateFilesystemSafeId(workingPath: string): string {
   }
   
   return safeId;
+}
+
+/**
+ * Normalize a filesystem path for cross-platform string comparison.
+ * - Resolves to absolute path
+ * - Normalizes separators to forward slashes
+ * - Lowercases on Windows where paths are case-insensitive
+ */
+export function normalizePathForCompare(inputPath: string): string {
+  const normalized = path.resolve(inputPath).replace(/\\/g, '/');
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+/**
+ * True when both paths resolve to the same normalized filesystem path.
+ */
+export function arePathsEqual(pathA: string, pathB: string): boolean {
+  return normalizePathForCompare(pathA) === normalizePathForCompare(pathB);
+}
+
+/**
+ * True when childPath is equal to or within parentPath.
+ */
+export function isPathInside(childPath: string, parentPath: string): boolean {
+  const normalizedChild = normalizePathForCompare(childPath);
+  const normalizedParent = normalizePathForCompare(parentPath);
+  return normalizedChild === normalizedParent || normalizedChild.startsWith(`${normalizedParent}/`);
 }
 
