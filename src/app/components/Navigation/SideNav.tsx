@@ -30,19 +30,16 @@ import {
   SidebarMenuSub,
   SidebarSeparator,
 } from '../../components/ui/sidebar';
+import { normalizePathForMatch, toAbsolutePath } from '../../lib/utils';
 import { SectionLink } from '../util';
-
-const trimSlashes = (input: string): string => {
-  return input.replace(/^\/+|\/+$/g, '');
-};
 
 const NormalMenuItem = ({ title, icon, path }) => {
   const router = useRouter();
-  const isActive = trimSlashes(path) === trimSlashes(router.asPath);
+  const isActive = normalizePathForMatch(path) === normalizePathForMatch(router.asPath);
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <a href={`/${path}`} className="gap-3">
+        <a href={toAbsolutePath(path)} className="gap-3">
           <MenuIcon icon={icon} isActive={isActive} />
           <span>{title}</span>
         </a>
@@ -54,7 +51,7 @@ const NormalMenuItem = ({ title, icon, path }) => {
 const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
   const router = useRouter();
   const isActive = menu.some(
-    (item) => trimSlashes(router.asPath).startsWith(trimSlashes(item.path)) || trimSlashes(item.path) === trimSlashes(router.asPath)
+    (item) => normalizePathForMatch(router.asPath).startsWith(normalizePathForMatch(item.path))
   );
   return (
     <Collapsible defaultOpen={isActive} className="group/collapsible">
