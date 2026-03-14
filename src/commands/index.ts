@@ -8,6 +8,7 @@ import fetchCommand from './fetch';
 import initCommand from './init';
 import isrComponentCommand from './isr/component';
 import isrPagesCommand from './isr/pages';
+import isrPatternCommand from './isr/pattern';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
 import makeTemplateCommand from './make/template';
@@ -31,6 +32,7 @@ export const commands = [
   initCommand,
   isrPagesCommand,
   isrComponentCommand,
+  isrPatternCommand,
   makePageCommand,
   makeComponentCommand,
   makeTemplateCommand,

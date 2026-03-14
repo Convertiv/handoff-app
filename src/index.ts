@@ -92,7 +92,7 @@ class Handoff {
     return this;
   }
 
-  async build(skipComponents?: boolean, options?: { copyOnlyPaths?: string[]; deployDir?: string }): Promise<Handoff> {
+  async build(skipComponents?: boolean, options?: { copyOnlyPaths?: string[]; deployDir?: string; skipPatterns?: boolean }): Promise<Handoff> {
     this.preRunner();
     await buildApp(this, skipComponents, options);
     return this;

@@ -88,13 +88,15 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
  * Build the Next.js documentation application.
  * @param copyOnlyPaths - If set, do not remove output dir; copy only these paths (relative to out/) into existing output (merge).
  * @param deployDir - If set, copy output to this directory instead of default (workingPath/sitesDirectory/projectId).
+ * @param skipPatterns - If true, skip the pattern build step (useful when patterns were pre-processed for ISR).
  */
 const buildApp = async (
   handoff: Handoff,
   skipComponents?: boolean,
-  options?: { copyOnlyPaths?: string[]; deployDir?: string }
+  options?: { copyOnlyPaths?: string[]; deployDir?: string; skipPatterns?: boolean }
 ): Promise<void> => {
   skipComponents = skipComponents ?? false;
+  const skipPatterns = options?.skipPatterns ?? false;
   const copyOnlyPaths = options?.copyOnlyPaths;
   const deployDir = options?.deployDir;
   // Perform cleanup
@@ -106,7 +108,9 @@ const buildApp = async (
   }
 
   // Build patterns (must run after components so rendered outputs exist)
-  await buildPatterns(handoff);
+  if (!skipPatterns) {
+    await buildPatterns(handoff);
+  }
 
   // Prepare app
   const appPath = await initializeProjectApp(handoff);

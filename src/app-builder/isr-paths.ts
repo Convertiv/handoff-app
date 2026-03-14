@@ -207,3 +207,32 @@ export function resolveComponentAffectedOutputPathsBatch(componentIds: string[])
   }
   return unique;
 }
+
+/**
+ * Resolve affected static output file paths for a pattern ISR update.
+ * Returns paths under out/ for the pattern API JSON and summary.
+ */
+export function resolvePatternAffectedOutputPaths(patternId: string): string[] {
+  return [
+    `api/pattern/${patternId}.json`,
+    'api/patterns.json',
+  ];
+}
+
+/**
+ * Resolve affected output paths for multiple patterns (union).
+ */
+export function resolvePatternAffectedOutputPathsBatch(patternIds: string[]): string[] {
+  const out: string[] = ['api/patterns.json'];
+  for (const id of patternIds) {
+    out.push(`api/pattern/${id}.json`);
+  }
+  // ES5-compatible alternative to [...new Set(out)]
+  var unique = [];
+  for (var i = 0; i < out.length; i++) {
+    if (unique.indexOf(out[i]) === -1) {
+      unique.push(out[i]);
+    }
+  }
+  return unique;
+}
