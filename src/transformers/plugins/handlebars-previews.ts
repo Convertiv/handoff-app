@@ -73,19 +73,27 @@ async function renderHandlebarsTemplate(
 ): Promise<string> {
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
-    { id: componentData.id, properties: componentData.properties || {} }, 
+    { 
+      ...(componentData.properties || {}), 
+      id: componentData.id,
+      properties: componentData.properties || {}
+    },
     injectFieldWrappers
   );
 
-  const context = createHandlebarsContext({ 
-    id: componentData.id, 
-    properties: componentData.properties || {}, 
-    title: componentData.title 
-  }, previewData, {
-    includeSharedStyles: Boolean(componentData.sharedStyles),
-    previewCss: componentData.options?.preview?.css,
-  });
-  
+  const context = createHandlebarsContext(
+    {
+      id: componentData.id,
+      properties: componentData.properties || {},
+      title: componentData.title,
+    },
+    previewData,
+    {
+      includeSharedStyles: Boolean(componentData.sharedStyles),
+      previewCss: componentData.options?.preview?.css,
+    }
+  );
+
   const compiled = Handlebars.compile(template)(context);
   return await formatHtmlWithWrapper(compiled);
 }
@@ -110,7 +118,7 @@ function emitPreviewFiles(
     fileName: `${componentId}-${previewKey}.html`,
     source: normalHtml,
   });
-  
+
   emitFile({
     type: 'asset',
     fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
@@ -178,32 +186,16 @@ export function handlebarsPreviewsPlugin(
           const previewData = componentData.previews[previewKey];
 
           // Render both normal and inspect modes
-          const normalModeHtml = await renderHandlebarsTemplate(
-            templateContent,
-            componentData,
-            previewData,
-            false
-          );
+          const normalModeHtml = await renderHandlebarsTemplate(templateContent, componentData, previewData, false);
 
-          const inspectModeHtml = await renderHandlebarsTemplate(
-            templateContent,
-            componentData,
-            previewData,
-            true
-          );
+          const inspectModeHtml = await renderHandlebarsTemplate(templateContent, componentData, previewData, true);
 
           // Emit preview files
-          emitPreviewFiles(
-            componentId,
-            previewKey,
-            normalModeHtml,
-            inspectModeHtml,
-            (file) => this.emitFile(file)
-          );
+          emitPreviewFiles(componentId, previewKey, normalModeHtml, inspectModeHtml, (file) => this.emitFile(file));
 
           generatedPreviews[previewKey] = normalModeHtml;
           componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
-          
+
           Logger.debug(`Generated Handlebars preview: ${componentId}-${previewKey}`);
         } catch (err) {
           Logger.error(`Failed to generate Handlebars preview for ${componentId}-${previewKey}`, err);
