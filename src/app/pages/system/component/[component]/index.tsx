@@ -2,6 +2,7 @@
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
+import { startCase } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -16,7 +17,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -73,12 +74,16 @@ export const getStaticProps = async (context) => {
   const components = fetchComponents()!;
   const menu = staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const metadata = components.find((c) => c.id === component);
+  const componentData = components.find((c) => c.id === component);
+  const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
-  const sameGroupComponents = components.filter((c) => c.group === metadata?.group);
+  const sameGroupComponents = components.filter((c) => c.group === componentData?.group);
   const groupIndex = sameGroupComponents.findIndex((c) => c.id === component);
   const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
   const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
+
+  const fallbackTitle = componentData.name || startCase(component as string);
+  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
 
   return {
     props: {
@@ -89,10 +94,12 @@ export const getStaticProps = async (context) => {
       config,
       current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
-        ...metadata,
-        title: metadata.name,
-        description: metadata.description,
-        image: 'hero-brand-assets',
+        ...componentData,
+        title: componentData.name || docs.metadata.title || startCase(component as string),
+        description: componentData.description,
+        metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
+        metaDescription: docs.metadata.metaDescription || componentData.description,
+        image: docs.metadata.image || 'hero-brand-assets',
       },
       componentHotReloadIsAvailable,
       previousComponent,
@@ -156,7 +163,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   }, [component, id]);
 
   if (!component) return <p>Loading...</p>;
-  const apiUrl = (window.location.origin && window.location.origin) + `/api/component/${id}.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `${normalizedBasePath}/api/component/${id}.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">

@@ -8,4 +8,5 @@ TypeScript type definitions and interfaces.
 |------|---------|
 | `config.ts` | `Config`, `RuntimeConfig`, `ClientConfig`, `NextAppConfig`, `PipelineConfig`, hook interfaces |
 | `font.ts` | `FontFamily` type |
-| `icon.ts` | Icon-related types |
+| `icon.ts` | `IconData` type |
+| `preview.ts` | `PreviewObject`, `PreviewJson`, `ValidationResult` — component preview and validation types |

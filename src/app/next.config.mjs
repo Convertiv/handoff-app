@@ -2,6 +2,14 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 
+const resolveBasePath = (rawBasePath) => {
+  if (!rawBasePath || rawBasePath.startsWith('%HANDOFF_')) {
+    return '';
+  }
+  const trimmed = rawBasePath.replace(/^\/+|\/+$/g, '');
+  return trimmed ? `/${trimmed}` : '';
+};
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
@@ -16,14 +24,14 @@ const nextConfig = {
     tsconfigPath: 'tsconfig.json',
   },
   //distDir: 'out',
-  basePath: '',
+  basePath: resolveBasePath('%HANDOFF_APP_BASE_PATH%'),
   env: {
-    HANDOFF_PROJECT_ID: '',
-    HANDOFF_APP_BASE_PATH: '',
-    HANDOFF_WORKING_PATH: '',
-    HANDOFF_MODULE_PATH: '',
-    HANDOFF_EXPORT_PATH: '',
-    HANDOFF_WEBSOCKET_PORT: '',
+    HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
+    HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
+    HANDOFF_WORKING_PATH: '%HANDOFF_WORKING_PATH%',
+    HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
+    HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',
+    HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
   },
   images: {
     unoptimized: true,
@@ -35,12 +43,12 @@ const nextConfig = {
 
       // Local environment
       const env = {
-        HANDOFF_PROJECT_ID: '',
-        HANDOFF_APP_BASE_PATH: '',
-        HANDOFF_WORKING_PATH: '',
-        HANDOFF_MODULE_PATH: '',
-        HANDOFF_EXPORT_PATH: '',
-        HANDOFF_WEBSOCKET_PORT: '',
+        HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
+        HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
+        HANDOFF_WORKING_PATH: '%HANDOFF_WORKING_PATH%',
+        HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
+        HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',
+        HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
       };
 
       // Check if client configuration exists

@@ -159,6 +159,17 @@ export function handlebarsPreviewsPlugin(
       // Process component instances from documentation
       processComponentInstances(componentData, documentationComponents);
 
+      if (!componentData.previews || Object.keys(componentData.previews).length === 0) {
+        Logger.warn(`No previews defined for ${componentId}; using default preview values.`);
+        componentData.previews = {
+          default: {
+            title: 'Default',
+            values: {},
+            url: '',
+          },
+        };
+      }
+
       const generatedPreviews: { [key: string]: string } = {};
 
       // Generate previews for each variation
@@ -203,7 +214,8 @@ export function handlebarsPreviewsPlugin(
       componentData.format = PLUGIN_CONSTANTS.OUTPUT_FORMAT;
       componentData.preview = '';
       componentData.code = trimPreview(templateContent);
-      componentData.html = trimPreview(generatedPreviews[Object.keys(generatedPreviews)[0]]);
+      const firstGeneratedPreview = Object.values(generatedPreviews)[0];
+      componentData.html = trimPreview(firstGeneratedPreview ?? templateContent);
     },
   };
 }

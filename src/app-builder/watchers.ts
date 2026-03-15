@@ -8,6 +8,7 @@ import processComponents, { ComponentSegment } from '../transformers/preview/com
 import { processPatterns } from '../transformers/preview/pattern/builder';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
+import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { persistClientConfig } from './client-config';
 import { syncPublicFiles } from './paths';
 
@@ -116,12 +117,6 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
   const pathsToWatch = [...scssPathsToWatch, ...jsPathsToWatch];
   if (pathsToWatch.length === 0) return;
 
-  const isPathInside = (filePath: string, parentPath: string): boolean => {
-    const normalizedFilePath = path.resolve(filePath);
-    const normalizedParentPath = path.resolve(parentPath);
-    return normalizedFilePath === normalizedParentPath || normalizedFilePath.startsWith(`${normalizedParentPath}${path.sep}`);
-  };
-
   chokidar.watch(pathsToWatch, chokidarConfig).on('all', async (event, file) => {
     switch (event) {
       case 'add':
@@ -207,11 +202,17 @@ export const watchRuntimeComponents = (
 
   if (runtimeComponentPathsToWatch.size > 0) {
     const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
+    const runtimeComponentEntryTypeByPath = new Map<string, keyof ComponentListObject['entries']>(
+      Array.from(runtimeComponentPathsToWatch.entries()).map(([watchPath, entryType]) => [normalizePathForCompare(watchPath), entryType])
+    );
+    const configFileSet = new Set(handoff.getConfigFilePaths().map((configPath) => normalizePathForCompare(configPath)));
+
     state.runtimeComponentsWatcher = chokidar.watch(pathsToWatch, {
       ignoreInitial: true,
     });
     state.runtimeComponentsWatcher.on('all', async (event, file) => {
-      if (handoff.getConfigFilePaths().includes(file)) {
+      const normalizedFile = normalizePathForCompare(file);
+      if (configFileSet.has(normalizedFile)) {
         return;
       }
 
@@ -222,7 +223,7 @@ export const watchRuntimeComponents = (
           if (!state.debounce) {
             state.debounce = true;
             try {
-              const entryType = runtimeComponentPathsToWatch.get(file);
+              const entryType = runtimeComponentEntryTypeByPath.get(normalizedFile);
               const segmentToUpdate: ComponentSegment = entryType ? mapEntryTypeToSegment(entryType) : undefined;
 
               const componentDir = path.basename(path.dirname(file));
