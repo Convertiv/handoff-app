@@ -74,7 +74,6 @@ async function renderHandlebarsTemplate(
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
     { 
-      ...(componentData.properties || {}), 
       id: componentData.id,
       properties: componentData.properties || {}
     },

@@ -57,19 +57,6 @@ const buildCssBundle = async ({
           scss: {
             loadPaths,
             quietDeps: true,
-            // TODO: Discuss this with Domagoj
-            // Maintain compatibility with older sass imports
-            // importers: [
-            //   {
-            //     findFileUrl(url) {
-            //       console.log('findFileUrl', url);
-            //       if (!url.startsWith('~')) return null;
-            //       return new URL(url.substring(1), pathToFileURL('node_modules'));
-            //     },
-            //   },
-            // ],
-            // Use modern API settings
-            // api: 'modern-compiler',
             silenceDeprecations: ['import', 'legacy-js-api'],
           },
         },

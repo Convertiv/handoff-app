@@ -69,6 +69,7 @@ export const createHandlebarsContext = (
     : '';
 
   return {
+    ...(previewData.values || {}),
     style:
       `${sharedStylesLink}<link rel="stylesheet" href="${basePath}/api/component/main.css">` +
       `<link rel="stylesheet" href="${basePath}/api/component/${data.id}.css">\n` +
