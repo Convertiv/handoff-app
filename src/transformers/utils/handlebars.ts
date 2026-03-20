@@ -20,27 +20,32 @@ export const registerHandlebarsHelpers = (
         // Logger.error(`Missing field declaration for ${data.id}`);
         return options.fn(this);
       }
-      
+
       let parts = field.split('.');
       let current: any = data.properties;
-      
+
       for (const part of parts) {
         if (current?.type === 'object') current = current.properties;
         else if (current?.type === 'array') current = current.items.properties;
         current = current?.[part];
       }
-      
+
       if (!current) {
         Logger.error(`Undefined field path for ${data.id}`);
         return options.fn(this);
       }
-      
+
       return new Handlebars.SafeString(
         `<span class="handoff-field handoff-field-${current?.type || 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">${options.fn(this)}</span>`
       );
     } else {
       return options.fn(this);
     }
+  });
+
+  // register json helper
+  Handlebars.registerHelper('json', function (value: any) {
+    return new Handlebars.SafeString(JSON.stringify(value, null, 2));
   });
 
   // Equality helper
@@ -61,9 +66,7 @@ export const createHandlebarsContext = (
   options?: { includeSharedStyles?: boolean }
 ): HandlebarsContext => {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
-  const sharedStylesLink = options?.includeSharedStyles
-    ? `<link rel="stylesheet" href="${basePath}/api/component/shared.css">`
-    : '';
+  const sharedStylesLink = options?.includeSharedStyles ? `<link rel="stylesheet" href="${basePath}/api/component/shared.css">` : '';
 
   return {
     style:
