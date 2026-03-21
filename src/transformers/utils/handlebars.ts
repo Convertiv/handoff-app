@@ -44,11 +44,17 @@ export const registerHandlebarsHelpers = (
   });
 
   // Register 'json' as a simple (non-block) helper
-  Handlebars.registerHelper('json', (value: any) => new Handlebars.SafeString(JSON.stringify(value, null, 2)));
+  Handlebars.registerHelper('json', (value: any, data: any) => {
+    return new Handlebars.SafeString(JSON.stringify(value, null, 2));
+  });
 
   // register header and footer helpers to inject html into the head and body of the document
-  Handlebars.registerHelper('header', (value: any) => new Handlebars.SafeString(value));
-  Handlebars.registerHelper('footer', (value: any) => new Handlebars.SafeString(value));
+  Handlebars.registerHelper('header', (options: any) => {
+    return options.fn(this);
+  });
+  Handlebars.registerHelper('footer', (options: any) => {
+    return options.fn(this);
+  });
 
   // Equality helper
   Handlebars.registerHelper('eq', function (a: any, b: any) {
