@@ -1,5 +1,8 @@
+import esbuild from 'esbuild';
 import fs from 'fs-extra';
+import { createRequire } from 'module';
 import path from 'path';
+import { normalizeComponentDeclaration } from './normalizers/declaration';
 import { ComponentListObject } from '../transformers/preview/types';
 import { Config, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
@@ -11,7 +14,112 @@ import { Logger } from '../utils/logger';
 interface HandoffContext {
   config: Config;
   workingPath: string;
+  modulePath: string;
 }
+
+type DeclarationResolution = {
+  fileName: string;
+};
+
+const MODERN_EXTENSIONS = ['ts', 'js', 'cjs', 'json'] as const;
+
+const getLegacyDeclarationFiles = (componentBaseName: string): string[] => [
+  `${componentBaseName}.json`,
+  `${componentBaseName}.js`,
+  `${componentBaseName}.cjs`,
+];
+
+const getModernDeclarationFiles = (componentBaseName: string): string[] =>
+  MODERN_EXTENSIONS.map((ext) => `${componentBaseName}.handoff.${ext}`);
+
+const findPreferredModernDeclaration = (componentDir: string, componentBaseName: string): string | undefined => {
+  const exactCandidates = getModernDeclarationFiles(componentBaseName);
+  const exactMatch = exactCandidates.find((candidate) => fs.existsSync(path.resolve(componentDir, candidate)));
+  if (exactMatch) return exactMatch;
+
+  const allFiles = fs.existsSync(componentDir) ? fs.readdirSync(componentDir) : [];
+  const modernFiles = allFiles
+    .filter((file) => /\.handoff\.(ts|js|cjs|json)$/.test(file))
+    .sort((a, b) => a.localeCompare(b));
+
+  if (!modernFiles.length) return undefined;
+
+  for (const ext of MODERN_EXTENSIONS) {
+    const extMatch = modernFiles.find((file) => file.endsWith(`.handoff.${ext}`));
+    if (extMatch) return extMatch;
+  }
+
+  return modernFiles[0];
+};
+
+const resolveComponentDeclaration = (componentDir: string, componentBaseName: string): DeclarationResolution | null => {
+  const modernMatch = findPreferredModernDeclaration(componentDir, componentBaseName);
+  const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
+  const legacyMatch = legacyFiles.find((candidate) => fs.existsSync(path.resolve(componentDir, candidate)));
+
+  if (modernMatch) {
+    if (legacyMatch) {
+      Logger.warn(
+        `[handoff] Both modern and legacy declarations found in "${componentDir}". Using "${modernMatch}" and ignoring "${legacyMatch}".`
+      );
+    }
+    return { fileName: modernMatch };
+  }
+
+  if (legacyMatch) {
+    return { fileName: legacyMatch };
+  }
+
+  return null;
+};
+
+const evaluateTypeScriptDeclaration = (filePath: string, handoffModulePath: string): any => {
+  const buildResult = esbuild.buildSync({
+    entryPoints: [filePath],
+    bundle: true,
+    write: false,
+    platform: 'node',
+    format: 'cjs',
+    target: 'node16',
+    logLevel: 'silent',
+    jsx: 'automatic',
+    external: ['react', 'react-dom', 'handoff-app'],
+  });
+
+  const code = buildResult.outputFiles?.[0]?.text;
+  if (!code) {
+    throw new Error(`Unable to compile declaration file "${filePath}"`);
+  }
+
+  const mod: any = { exports: {} };
+  const localRequire = createRequire(filePath);
+  const handoffRequire = createRequire(path.resolve(handoffModulePath, 'package.json'));
+  const runtimeRequire = (id: string) => {
+    try {
+      return localRequire(id);
+    } catch {
+      return handoffRequire(id);
+    }
+  };
+  const evaluator = new Function('require', 'module', 'exports', '__filename', '__dirname', code);
+  evaluator(runtimeRequire, mod, mod.exports, filePath, path.dirname(filePath));
+  return mod.exports;
+};
+
+const loadDeclarationFile = (filePath: string, handoffModulePath: string): any => {
+  if (filePath.endsWith('.json')) {
+    const componentJson = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(componentJson);
+  }
+
+  if (filePath.endsWith('.ts')) {
+    return evaluateTypeScriptDeclaration(filePath, handoffModulePath);
+  }
+
+  // Invalidate require cache to ensure fresh read
+  delete require.cache[require.resolve(filePath)];
+  return require(filePath);
+};
 
 /**
  * Initializes the runtime configuration by resolving component entries,
@@ -43,45 +151,36 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     for (const componentPath of componentPaths) {
       const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
       const componentBaseName = path.basename(resolvedComponentPath);
-      const possibleConfigFiles = [`${componentBaseName}.json`, `${componentBaseName}.js`, `${componentBaseName}.cjs`];
+      const declaration = resolveComponentDeclaration(resolvedComponentPath, componentBaseName);
 
-      const configFileName = possibleConfigFiles.find((file) => fs.existsSync(path.resolve(resolvedComponentPath, file)));
-
-      if (!configFileName) {
-        Logger.warn(`Missing config: ${path.resolve(resolvedComponentPath, possibleConfigFiles.join(' or '))}`);
+      if (!declaration) {
+        const modernFiles = getModernDeclarationFiles(componentBaseName);
+        const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
+        Logger.warn(
+          `Missing config: ${path.resolve(
+            resolvedComponentPath,
+            [...modernFiles, ...legacyFiles].join(' or ')
+          )}`
+        );
         continue;
       }
 
-      const resolvedComponentConfigPath = path.resolve(resolvedComponentPath, configFileName);
+      const resolvedComponentConfigPath = path.resolve(resolvedComponentPath, declaration.fileName);
       configFiles.push(resolvedComponentConfigPath);
 
       let component: ComponentListObject;
 
       try {
-        if (configFileName.endsWith('.json')) {
-          const componentJson = fs.readFileSync(resolvedComponentConfigPath, 'utf8');
-          component = JSON.parse(componentJson) as ComponentListObject;
-        } else {
-          // Invalidate require cache to ensure fresh read
-          delete require.cache[require.resolve(resolvedComponentConfigPath)];
-          const importedComponent = require(resolvedComponentConfigPath);
-          component = importedComponent.default || importedComponent;
-        }
+        const importedDeclaration = loadDeclarationFile(resolvedComponentConfigPath, handoff.modulePath);
+        const rawComponent = importedDeclaration.default || importedDeclaration;
+        component = normalizeComponentDeclaration(rawComponent, {
+          declarationPath: resolvedComponentConfigPath,
+          fallbackId: componentBaseName,
+          warn: (message) => Logger.warn(message),
+        });
       } catch (err) {
         Logger.error(`Failed to read or parse config: ${resolvedComponentConfigPath}`, err);
         continue;
-      }
-
-      // Use component basename as the id
-      component.id = componentBaseName;
-
-      // Resolve entry paths relative to component directory
-      if (component.entries) {
-        for (const entryType in component.entries) {
-          if (component.entries[entryType]) {
-            component.entries[entryType] = path.resolve(resolvedComponentPath, component.entries[entryType]);
-          }
-        }
       }
 
       // Initialize options with safe defaults
@@ -129,11 +228,9 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
  */
 export const getComponentsForPath = (searchPath: string): string[] => {
   const dirName = path.basename(searchPath);
-  const possibleConfigFiles = [`${dirName}.json`, `${dirName}.js`, `${dirName}.cjs`];
+  const hasOwnConfig = !!resolveComponentDeclaration(searchPath, dirName);
 
   // Check if searchPath itself is a component directory (has a config file named after the directory)
-  const hasOwnConfig = possibleConfigFiles.some((file) => fs.existsSync(path.resolve(searchPath, file)));
-
   if (hasOwnConfig) {
     // This directory is a single component
     return [searchPath];

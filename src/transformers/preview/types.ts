@@ -1,4 +1,5 @@
 import type { GeneratedDocs } from 'handoff-docgen';
+import type { RendererKind } from '../../declarations/types';
 import { Card } from '../../app/components/Component/Cards';
 import { ValidationResult } from '../../types/preview';
 import { Filter } from '../../utils/filter';
@@ -108,7 +109,17 @@ export type ComponentObject = {
     scss?: string;
     /** Optional path to component template file (if available) */
     template?: string;
+    /** Optional path to React component source for preview rendering */
+    component?: string;
+    /** Optional path to CSF story file */
+    story?: string;
+    /** Optional path to schema file (if available) */
+    schema?: string;
+    /** Optional path to templates directory */
+    templates?: string;
   };
+  /** Optional explicit renderer id */
+  renderer?: RendererKind;
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
@@ -117,6 +128,10 @@ export type ComponentObject = {
   categories?: string[];
   /** Optional array of tags for search/filtering (e.g. "primary", "interactive") */
   tags?: string[];
+  /** Optional markdown strings describing recommended usage patterns */
+  should_do?: string[];
+  /** Optional markdown strings describing anti-patterns to avoid */
+  should_not_do?: string[];
   /** Optional source Figma file or node URL for the component */
   figma?: string;
   /** Optional canonical Figma component name or ID (used for matching back to design tokens) */
@@ -160,8 +175,12 @@ export type TransformComponentTokensResult = {
     js?: string;
     scss?: string;
     template?: string;
+    component?: string;
+    story?: string;
     schema?: string;
+    templates?: string;
   };
+  renderer?: RendererKind;
   options?: {
     preview?: {
       groupBy?: string;

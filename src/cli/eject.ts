@@ -1,3 +1,4 @@
+import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
@@ -8,14 +9,35 @@ import { Logger } from '../utils/logger';
  * @param handoff
  */
 export const ejectConfig = async (handoff: Handoff) => {
-  const configPath = path.resolve(path.join(handoff.workingPath, 'handoff.config.js'));
-  if (fs.existsSync(configPath)) {
-    if (!handoff.force) {
-      Logger.error(`Config file already exists. Use "--force" to overwrite.`);
-    }
+  const existingConfigNames = ['handoff.config.ts', 'handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'];
+  const existingConfigPaths = existingConfigNames
+    .map((name) => path.resolve(path.join(handoff.workingPath, name)))
+    .filter((filePath) => fs.existsSync(filePath));
+  if (existingConfigPaths.length > 0 && !handoff.force) {
+    Logger.error(`Config file already exists. Use "--force" to overwrite.`);
+    return handoff;
   }
-  // load the template as a string
-  const template = fs.readFileSync(path.resolve(handoff.modulePath, 'config/config.template.js'), 'utf8');
+
+  const defaultFormat = fs.existsSync(path.resolve(handoff.workingPath, 'tsconfig.json')) ? 'typescript' : 'javascript';
+  const formatSelection = await p.select({
+    message: 'Which config format would you like to eject?',
+    options: [
+      { value: 'typescript', label: 'TypeScript', hint: 'Generates handoff.config.ts' },
+      { value: 'javascript', label: 'JavaScript', hint: 'Generates handoff.config.js' },
+    ],
+    initialValue: defaultFormat,
+  });
+
+  if (p.isCancel(formatSelection)) {
+    Logger.warn('Config eject cancelled.');
+    return handoff;
+  }
+
+  const useTypeScript = formatSelection === 'typescript';
+  const configPath = path.resolve(path.join(handoff.workingPath, useTypeScript ? 'handoff.config.ts' : 'handoff.config.js'));
+  const templatePath = path.resolve(handoff.modulePath, useTypeScript ? 'config/config.template.ts' : 'config/config.template.js');
+
+  const template = fs.readFileSync(templatePath, 'utf8');
   fs.writeFileSync(configPath, template);
   Logger.success(`Config ejected to ${configPath}`);
   return handoff;

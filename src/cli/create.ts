@@ -21,7 +21,9 @@ interface CreateOptions {
   projectName: string;
   figmaProjectId: string;
   figmaAccessToken: string;
-  [key: string]: string; // Allow dynamic access for template replacement
+  languagePreference: 'typescript' | 'javascript';
+  includeExamples: boolean;
+  [key: string]: string | boolean; // Allow dynamic access for template replacement
 }
 
 class CreateError extends Error {
@@ -63,23 +65,44 @@ interface TemplateConfig {
  * Get mandatory templates based on whether examples are included
  * Uses different handoff config templates for blank vs. with-examples projects
  */
-const getMandatoryTemplates = (includeExamples: boolean): TemplateConfig[] => [
-  { source: 'package.json.tpl', destination: 'package.json' },
-  { 
-    source: includeExamples ? 'handoff.config.with-examples.js.tpl' : 'handoff.config.js.tpl', 
-    destination: 'handoff.config.js' 
-  },
-  { source: 'tsconfig.json.tpl', destination: 'tsconfig.json' },
-  { source: 'gitignore.tpl', destination: '.gitignore' },
-  { source: 'env.tpl', destination: '.env' },
-  { source: 'README.md.tpl', destination: 'README.md' },
-];
+const getMandatoryTemplates = (
+  includeExamples: boolean,
+  languagePreference: 'typescript' | 'javascript'
+): TemplateConfig[] => {
+  const configFormat = languagePreference;
+  const configTemplateBaseName = includeExamples ? 'handoff.config.with-examples' : 'handoff.config';
+  const configTemplateSource = `${configTemplateBaseName}.${configFormat === 'typescript' ? 'ts' : 'js'}.tpl`;
+  const configDestination = `handoff.config.${configFormat === 'typescript' ? 'ts' : 'js'}`;
 
-// Example component files (only included when user opts for examples)
-const exampleTemplates: TemplateConfig[] = [
-  { source: 'components/button/Button.tsx.tpl', destination: 'components/button/Button.tsx', isExample: true },
-  { source: 'components/button/button.js.tpl', destination: 'components/button/button.js', isExample: true },
-];
+  const templates: TemplateConfig[] = [
+    { source: 'package.json.tpl', destination: 'package.json' },
+    {
+      source: configTemplateSource,
+      destination: configDestination,
+    },
+    { source: 'gitignore.tpl', destination: '.gitignore' },
+    { source: 'env.tpl', destination: '.env' },
+    { source: 'README.md.tpl', destination: 'README.md' },
+  ];
+
+  if (languagePreference === 'typescript') {
+    templates.push({ source: 'tsconfig.json.tpl', destination: 'tsconfig.json' });
+  }
+
+  return templates;
+};
+
+const getExampleTemplates = (languagePreference: 'typescript' | 'javascript'): TemplateConfig[] => {
+  const declarationSuffix = languagePreference === 'typescript' ? 'ts' : 'js';
+  const declarationFile = `components/button/button.react.handoff.${declarationSuffix}.tpl`;
+  const componentFile =
+    languagePreference === 'typescript' ? 'components/button/Button.tsx.tpl' : 'components/button/Button.jsx.tpl';
+
+  return [
+    { source: declarationFile, destination: `components/button/button.handoff.${languagePreference === 'typescript' ? 'ts' : 'js'}`, isExample: true },
+    { source: componentFile, destination: `components/button/Button.${languagePreference === 'typescript' ? 'tsx' : 'jsx'}`, isExample: true },
+  ];
+};
 
 /**
  * Render a template string by replacing placeholders with values
@@ -89,19 +112,39 @@ const renderTemplate = (content: string, data: CreateOptions): string => {
     if (!(key in data)) {
       console.warn(chalk.yellow(`Warning: Unknown template placeholder '{{${key}}}'`));
     }
-    return data[key] || '';
+    const value = data[key];
+    return typeof value === 'string' ? value : '';
   });
 };
 
+const getDependenciesToInstall = (options: CreateOptions): { dependencies: string[]; devDependencies: string[] } => {
+  const dependencies = ['handoff-app@latest'];
+  const devDependencies: string[] = [];
+
+  if (options.includeExamples) {
+    dependencies.push('react', 'react-dom');
+    if (options.languagePreference === 'typescript') {
+      devDependencies.push('@types/react', '@types/react-dom');
+    }
+  }
+
+  return { dependencies, devDependencies };
+};
+
 /**
- * Execute npm install
+ * Execute npm install for required dependencies.
  */
-const runNpmInstall = async (projectPath: string): Promise<void> => {
+const installDependencies = async (projectPath: string, options: CreateOptions): Promise<void> => {
+  const { dependencies, devDependencies } = getDependenciesToInstall(options);
   const spinner = p.spinner();
   spinner.start('Installing dependencies...');
 
   return new Promise((resolve, reject) => {
-    const npmProcess = spawn('npm', ['install'], {
+    const installCommand = devDependencies.length
+      ? `npm install --save-prefix="^" ${dependencies.join(' ')} && npm install --save-dev --save-prefix="^" ${devDependencies.join(' ')}`
+      : `npm install --save-prefix="^" ${dependencies.join(' ')}`;
+
+    const npmProcess = spawn(installCommand, {
       cwd: projectPath,
       stdio: 'pipe',
       shell: true,
@@ -204,6 +247,22 @@ const create = async (): Promise<void> => {
 
     const includeExamples = projectType === 'with-examples';
 
+    const languagePreferenceSelection = await p.select({
+      message: 'Preferred project language (declarations, examples, and handoff.config)?',
+      options: [
+        { value: 'typescript', label: 'TypeScript', hint: 'Uses .handoff.ts and handoff.config.ts' },
+        { value: 'javascript', label: 'JavaScript', hint: 'Uses .handoff.js and handoff.config.js' },
+      ],
+      initialValue: 'typescript',
+    });
+
+    if (p.isCancel(languagePreferenceSelection)) {
+      p.cancel('Project creation cancelled.');
+      process.exit(0);
+    }
+
+    const languagePreference = languagePreferenceSelection as 'typescript' | 'javascript';
+
     // Get Figma project ID
     p.log.step(chalk.blue('Figma Configuration'));
     const figmaProjectId = await p.text({
@@ -234,6 +293,8 @@ const create = async (): Promise<void> => {
       projectName: projectName as string,
       figmaProjectId: ((figmaProjectId as string) || '').trim(),
       figmaAccessToken: ((figmaAccessToken as string) || '').trim(),
+      languagePreference,
+      includeExamples,
     };
 
     // Create files
@@ -248,8 +309,8 @@ const create = async (): Promise<void> => {
 
     // Combine mandatory templates with example templates based on user choice
     const templates = [
-      ...getMandatoryTemplates(includeExamples),
-      ...(includeExamples ? exampleTemplates : []),
+      ...getMandatoryTemplates(includeExamples, languagePreference),
+      ...(includeExamples ? getExampleTemplates(languagePreference) : []),
     ];
 
     try {
@@ -273,7 +334,7 @@ const create = async (): Promise<void> => {
     }
 
     // Install dependencies
-    await runNpmInstall(projectPath);
+    await installDependencies(projectPath, options);
 
     // Success message
     const nextSteps = [`cd ${projectName}`];

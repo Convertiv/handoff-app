@@ -176,8 +176,8 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
       files.push(entries.scss);
       componentDirs.add(normalizePathForCompare(path.dirname(entries.scss)));
     }
-    // Handle both 'template' (singular) and 'templates' (plural) entry types
-    const templatePath = entries.template || entries.templates;
+    // Handle template-style entries across renderer families
+    const templatePath = entries.template || entries.templates || entries.component || entries.story;
     if (templatePath) {
       try {
         const stat = fs.statSync(templatePath);
@@ -198,10 +198,19 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
 
   // Find the config file path for this component using exact config filename + directory matching.
   const configPaths = handoff.getConfigFilePaths();
-  const expectedConfigFileNames = new Set([`${componentId}.json`, `${componentId}.js`, `${componentId}.cjs`]);
+  const expectedConfigFileNames = new Set([
+    `${componentId}.handoff.ts`,
+    `${componentId}.handoff.js`,
+    `${componentId}.handoff.cjs`,
+    `${componentId}.handoff.json`,
+    `${componentId}.json`,
+    `${componentId}.js`,
+    `${componentId}.cjs`,
+  ]);
   const matchingConfigPath = configPaths.find((configPath) => {
     const configFileName = path.basename(configPath);
-    if (!expectedConfigFileNames.has(configFileName)) {
+    const isModernDeclaration = /\.handoff\.(ts|js|cjs|json)$/.test(configFileName);
+    if (!expectedConfigFileNames.has(configFileName) && !isModernDeclaration) {
       return false;
     }
 
@@ -240,7 +249,7 @@ export async function computeComponentFileStates(
 
   let templateDirFiles: Record<string, FileState> | undefined;
   if (templateDir) {
-    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html', '.tsx', '.ts']);
+    templateDirFiles = await computeDirectoryState(templateDir, ['.hbs', '.html', '.tsx', '.ts', '.jsx', '.js']);
   }
 
   return { files, templateDirFiles };

@@ -1,8 +1,6 @@
-const { defineConfig } = require('handoff-app');
-/** @typedef {import('handoff-app').Config} HandoffConfig */
+import { defineConfig } from 'handoff-app';
 
-/** @type {HandoffConfig} */
-const config = {
+export default defineConfig({
   app: {
     theme: "default",
     title: "{{projectName}} Design System",
@@ -42,13 +40,13 @@ const config = {
     }
   },
 
-  // entries: {
-  //   /**
-  //    * Array of component paths to be included in the build
-  //    * Add your component directories here
-  //    */
-  //   components: ["components/button"]
-  // },
+  entries: {
+    /**
+     * Array of component paths to be included in the build
+     * Add your component directories here
+     */
+    components: ["components/button"]
+  },
 
   // Optional handoff-docgen settings used by component docs generation
   // reactDocgen: {
@@ -184,6 +182,4 @@ const config = {
     //   return config;
     // },
   },
-};
-
-module.exports = defineConfig(config);
+});

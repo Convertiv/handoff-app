@@ -1,8 +1,6 @@
-const { defineConfig } = require('handoff-app');
-/** @typedef {import('handoff-app').Config} HandoffConfig */
+import { defineConfig } from 'handoff-app';
 
-/** @type {HandoffConfig} */
-const config = {
+export default defineConfig({
   app: {
     theme: "default",
     title: "{{projectName}} Design System",
@@ -184,6 +182,4 @@ const config = {
     //   return config;
     // },
   },
-};
-
-module.exports = defineConfig(config);
+});
