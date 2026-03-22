@@ -1,8 +1,11 @@
-/** @type {import('handoff-app').Config} */
 const path = require('path');
-module.exports = {
+const { defineConfig } = require('handoff-app');
+/** @typedef {import('handoff-app').Config} HandoffConfig */
+
+/** @type {HandoffConfig} */
+const config = {
   // Set your Figma project ID here or in the environment variable HANDOFF_FIGMA_PROJECT_ID
-  figma_project_id: null,
+  figmaProjectId: null,
   // Set the output directory for the exported components
   exportsOutputDirectory: 'exported',
   // Set the output directory for the sites
@@ -16,13 +19,13 @@ module.exports = {
     // Set the client for the application, used in the footer
     client: 'Handoff Technologies',
     // Set the Google Tag Manager ID to add GTM scripts
-    google_tag_manager: null,
+    googleTagManager: null,
     // Set the attribution for the application
     attribution: true, // Should we remove this?
     // Set the type copy for the typeography page
-    type_copy: 'Almost before we knew it, we had left the ground.',
+    typeCopy: 'Almost before we knew it, we had left the ground.',
     // Set the type sort for the typeography page
-    type_sort: [
+    typeSort: [
       'Heading 1',
       'Heading 2',
       'Heading 3',
@@ -36,17 +39,16 @@ module.exports = {
       'Link',
     ],
     // Set the color sort for the color page
-    color_sort: ['primary', 'secondary', 'extra', 'system'],
+    colorSort: ['primary', 'secondary', 'extra', 'system'],
     // Set the component sort for the component page
-    component_sort: ['primary', 'secondary', 'transparent'],
+    componentSort: ['primary', 'secondary', 'transparent'],
     // Set the base path for the application
-    base_path: '',
+    basePath: '',
     // Set the breakpoints for the application
     breakpoints: {
-      sm: { size: 576, name: 'Small' },
-      md: { size: 768, name: 'Medium' },
-      lg: { size: 992, name: 'Large' },
-      xl: { size: 1200, name: 'Extra Large' },
+      mobile: { size: 400, name: 'Mobile' },
+      tablet: { size: 800, name: 'Medium' },
+      desktop: { size: 1100, name: 'Large' },
     },
     // Set the ports for the application
     ports: { app: 3000, websocket: 3001 },
@@ -58,7 +60,7 @@ module.exports = {
     components: ['./components'],
   },
   // These are the asset zip file download links
-  assets_zip_links: {
+  assetsZipLinks: {
     icons: null,
     logos: null,
   },
@@ -86,3 +88,5 @@ module.exports = {
     },
   },
 };
+
+module.exports = defineConfig(config);

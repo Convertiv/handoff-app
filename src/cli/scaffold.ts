@@ -5,9 +5,8 @@ import path from 'path';
 import Handoff from '../index';
 
 // Constants
-const CONFIG_FILES = ['handoff.config.json', 'handoff.config.js', 'handoff.config.cjs'] as const;
+const CONFIG_FILES = ['handoff.config.ts', 'handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'] as const;
 const COMPONENTS_DIR = 'components';
-const DEFAULT_VERSION = '1.0.0';
 const DEFAULT_GROUPS = [
   { value: 'Atomic Elements', label: 'Atomic Elements' },
   { value: 'Forms', label: 'Forms' },
@@ -47,27 +46,50 @@ const toTitleCase = (str: string): string => {
  * Generate the component JS stub content
  */
 const generateComponentStub = (config: ComponentConfig): string => {
-  // Build entries object with relative paths to generated files
   const entriesLines: string[] = [];
   if (config.generateTsx) {
-    entriesLines.push(`    template: './${config.name}.tsx',`);
+    entriesLines.push(`    component: './${config.name}.tsx',`);
+  } else {
+    entriesLines.push(`    template: './${config.name}.hbs',`);
   }
   if (config.generateScss) {
     entriesLines.push(`    scss: './${config.name}.scss',`);
   }
 
-  const entriesBlock = entriesLines.length > 0
-    ? `  entries: {\n${entriesLines.join('\n')}\n  },\n`
-    : '';
-
-  return `/** @type {import('handoff-app').Component} */
-module.exports = {
+  const commonMetadata = `  id: "${config.name}",
   title: "${config.title}",
   description: "${config.description}",
   group: "${config.group}",
   type: "element",
-  figmaComponentId: "${config.name}",
-${entriesBlock}};
+  figmaComponentId: "${config.name}",`;
+
+  if (config.generateTsx) {
+    return `const { defineReactComponent } = require('handoff-app');
+const ${toTitleCase(config.name).replace(/\s/g, '')} = require('./${config.name}').default;
+
+module.exports = defineReactComponent(${toTitleCase(config.name).replace(/\s/g, '')}, {
+${commonMetadata}
+  entries: {
+${entriesLines.join('\n')}
+  },
+  previews: {
+    default: { title: "Default", args: {} }
+  }
+});
+`;
+  }
+
+  return `const { defineHandlebarsComponent } = require('handoff-app');
+
+module.exports = defineHandlebarsComponent({
+${commonMetadata}
+  entries: {
+${entriesLines.join('\n')}
+  },
+  previews: {
+    default: { title: "Default", args: {} }
+  }
+});
 `;
 };
 
@@ -252,8 +274,8 @@ const updateConfigFile = async (
     return { success: true, isJsConfig: false, configPath, skipped: false };
   }
 
-  // For JS/CJS config files, try to update them programmatically
-  if (configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
+  // For code config files, try to update them programmatically
+  if (configFile.endsWith('.ts') || configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
     try {
       let content = await fs.readFile(configPath, 'utf8');
 
@@ -309,7 +331,7 @@ const updateConfigFile = async (
         return { success: true, isJsConfig: true, configPath, skipped: false };
       }
       
-      // No entries object, try to add it before the closing of module.exports
+      // No entries object, try to add it before the closing of exported object
       const formattedArray = formatComponentsArray(newComponentPaths);
       const entriesBlock = `  entries: {\n    components: ${formattedArray},\n  },\n`;
       
@@ -317,6 +339,26 @@ const updateConfigFile = async (
       if (content.includes('module.exports = {')) {
         content = content.replace(
           /(module\.exports\s*=\s*\{)/,
+          `$1\n${entriesBlock}`
+        );
+        await fs.writeFile(configPath, content, 'utf8');
+        return { success: true, isJsConfig: true, configPath, skipped: false };
+      }
+
+      // Try to insert after export default {
+      if (/export\s+default\s+\{/.test(content)) {
+        content = content.replace(
+          /(export\s+default\s+\{)/,
+          `$1\n${entriesBlock}`
+        );
+        await fs.writeFile(configPath, content, 'utf8');
+        return { success: true, isJsConfig: true, configPath, skipped: false };
+      }
+
+      // Try to insert into defineConfig({ ... })
+      if (/defineConfig\s*\(\s*\{/.test(content)) {
+        content = content.replace(
+          /(defineConfig\s*\(\s*\{)/,
           `$1\n${entriesBlock}`
         );
         await fs.writeFile(configPath, content, 'utf8');
@@ -344,15 +386,14 @@ const createComponentFiles = async (
   const componentDir = path.resolve(
     handoff.workingPath,
     COMPONENTS_DIR,
-    config.name,
-    DEFAULT_VERSION
+    config.name
   );
 
   // Ensure directory exists
   await fs.ensureDir(componentDir);
 
-  // Create the main component JS file
-  const jsPath = path.join(componentDir, `${config.name}.js`);
+  // Create the main component declaration file
+  const jsPath = path.join(componentDir, `${config.name}.handoff.js`);
   await fs.writeFile(jsPath, generateComponentStub(config));
   createdFiles.push(jsPath);
 
@@ -361,6 +402,12 @@ const createComponentFiles = async (
     const tsxPath = path.join(componentDir, `${config.name}.tsx`);
     await fs.writeFile(tsxPath, generateReactComponentStub(config.name, config.variantProps));
     createdFiles.push(tsxPath);
+  } else {
+    const hbsTemplatePath = path.resolve(handoff.modulePath, 'config/templates/component/template.hbs');
+    const hbsTemplate = await fs.readFile(hbsTemplatePath, 'utf8');
+    const hbsPath = path.join(componentDir, `${config.name}.hbs`);
+    await fs.writeFile(hbsPath, hbsTemplate);
+    createdFiles.push(hbsPath);
   }
 
   // Optionally create SCSS file
@@ -380,7 +427,7 @@ const displayComponentPreview = (config: ComponentConfig): void => {
   const stub = generateComponentStub(config);
   const lines = stub.split('\n');
   const preview = lines.slice(0, 12).join('\n') + '\n  ...\n};';
-  p.note(preview, `Preview: ${config.name}.js`);
+  p.note(preview, `Preview: ${config.name}.handoff.js`);
 };
 
 /**

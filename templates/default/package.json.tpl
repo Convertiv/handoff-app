@@ -9,9 +9,7 @@
     "build": "handoff-app build:app",
     "fetch": "handoff-app fetch"
   },
-  "dependencies": {
-    "handoff-app": "^1.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "engines": {
     "node": ">=16.0.0",
