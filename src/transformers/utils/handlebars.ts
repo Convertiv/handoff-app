@@ -1,16 +1,19 @@
 import Handlebars from 'handlebars';
+import { RegisterHandlebarsHelpersContext } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
 import { HandlebarsContext } from '../types';
 
 /**
- * Registers common Handlebars helpers
+ * Registers common Handlebars helpers, then runs optional `hooks.registerHandlebarsHelpers`.
  * @param data - Component data containing properties
  * @param injectFieldWrappers - Whether to inject field wrappers for inspection
+ * @param extend - Optional callback from config to register additional helpers
  */
 export const registerHandlebarsHelpers = (
   data: { properties: { [key: string]: SlotMetadata }; id: string },
-  injectFieldWrappers: boolean
+  injectFieldWrappers: boolean,
+  extend?: (context: RegisterHandlebarsHelpersContext) => void
 ): void => {
   // Field helper for property binding
   Handlebars.registerHelper('field', function (field: string, options: any) {
@@ -43,22 +46,16 @@ export const registerHandlebarsHelpers = (
     }
   });
 
-  // Register 'json' as a simple (non-block) helper
-  Handlebars.registerHelper('json', (value: any, data: any) => {
-    return new Handlebars.SafeString(JSON.stringify(value, null, 2));
-  });
-
-  // register header and footer helpers to inject html into the head and body of the document
-  Handlebars.registerHelper('header', (options: any) => {
-    return options.fn(this);
-  });
-  Handlebars.registerHelper('footer', (options: any) => {
-    return options.fn(this);
-  });
-
   // Equality helper
   Handlebars.registerHelper('eq', function (a: any, b: any) {
     return a === b;
+  });
+
+  extend?.({
+    handlebars: Handlebars,
+    componentId: data.id,
+    properties: data.properties,
+    injectFieldWrappers,
   });
 };
 

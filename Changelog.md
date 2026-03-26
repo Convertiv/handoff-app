@@ -8,53 +8,50 @@ and this project adheres to
 
 ## \[1.1.2] - 2026-03-26
 
-This is a small feature tweak to support better Handoff to hubspot.
+This release improves integration with downstream platforms (for example HubSpot) by letting
+projects register their own Handlebars helpers during preview generation, instead of relying
+only on Handoff’s built-in `field` and `eq` helpers.
 
-## Feature
+### Feature
 
-This release creates three new handlebars helpers to support downstream consumers. The
-schema now includes #header, #footer, and json helpers.  This allows handoff users to mark
-sections of a component that should be placed in the header, or footer of pages.
+**`hooks.registerHandlebarsHelpers`** — New optional hook in `handoff.config.js`. After Handoff
+registers its default preview helpers, your callback runs with the Handlebars runtime, the
+current `componentId`, the component `properties` (slot metadata), and a flag for inspect-mode
+renders (`injectFieldWrappers`). Use `handlebars.registerHelper` (and block helpers as needed)
+to add helpers that are only available while building component preview HTML—so templates can
+stay platform-specific without forking Handoff.
 
-The JSON handler allows an array string to be injected into the component as serialized JSON data.
+Typical uses: block helpers that wrap regions meant for a host page’s header or footer, or a
+helper that serializes a value as JSON for inline scripts. Those behaviors are **not** shipped
+as core helpers; you define them in config so each project controls naming and semantics.
 
-### JSON Example
+See `docs/api.md` (Hooks → `registerHandlebarsHelpers`) for the full signature and README
+“Configuration hooks” for a quick pointer.
 
-Handlebars
+### Example: JSON in templates
+
+If you register a `json` helper in `hooks.registerHandlebarsHelpers`, like this
 
 ```
-<script type="text/javascript">
-  window.barChartData = {{json properties.data}};
-</script>
-```
-
-Output
-
-<script type="text/javascript">
-  window.barChartData = [
-    {
-      key: value,
-      key2: value
+  hooks: {
+    registerHandlebarsHelpers: ({ handlebars, componentId }) => {
+      // Register 'json' as a simple (non-block) helper
+      handlebars.registerHelper('json', (value, data) => {
+        return new handlebars.SafeString(JSON.stringify(value, null, 2));
+      });
     }
-  ];
+  }
+```
+
+Then your templates can do:
+
+```
+<script type="text/javascript">
+  window.barChartData = {{{json properties.data}}};
 </script>
-
-### Header and Footer Example
-
-This allows you to mark sections as header and footer content to be added to downstream consumers
-header and footer handlers.
-
-Handlebars
-
 ```
-{{#header}}
-  <script type="text/javascript" src="/path/to/script.js" />
-{{/header}}
-<div> Main Content</div>
-{{#footer}}
-  <script type="text/javascript" src="/path/to/script.js" />
-{{/footer}}
-```
+
+with output shaped by your helper implementation (for example serialized JSON for chart data).
 
 ## \[1.1.1] - 2026-03-12
 

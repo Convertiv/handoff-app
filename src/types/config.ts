@@ -1,4 +1,5 @@
 import { BuildOptions } from 'esbuild';
+import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
@@ -46,6 +47,14 @@ export interface Breakpoints {
   tablet: { size: number; name: string };
   desktop: { size: number; name: string };
 }
+
+/** Context passed to the `registerHandlebarsHelpers` config hook after built-in helpers (`field`, `eq`) are registered for a preview render. */
+export type RegisterHandlebarsHelpersContext = {
+  handlebars: typeof Handlebars;
+  componentId: string;
+  properties: { [key: string]: SlotMetadata };
+  injectFieldWrappers: boolean;
+};
 
 export interface NextAppConfig {
   theme?: string;
@@ -240,6 +249,22 @@ export interface Config {
      * ```
      */
     htmlBuildConfig?: (config: InlineConfig) => InlineConfig;
+
+    /**
+     * Optional hook invoked after Handoff registers built-in Handlebars helpers for
+     * component preview HTML. Use `context.handlebars.registerHelper` to add or
+     * replace helpers. Called once per preview render (per variation and inspect mode).
+     *
+     * @param context - Handlebars runtime, component id/properties, and whether
+     *   inspect field wrappers are enabled for this render.
+     * @example
+     * ```typescript
+     * registerHandlebarsHelpers: ({ handlebars, componentId }) => {
+     *   handlebars.registerHelper('upperId', () => componentId.toUpperCase());
+     * }
+     * ```
+     */
+    registerHandlebarsHelpers?: (context: RegisterHandlebarsHelpersContext) => void;
   };
 }
 
