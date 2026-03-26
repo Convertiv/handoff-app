@@ -8,6 +8,54 @@ and this project adheres to
 
 ## \[1.1.2] - 2026-03-26
 
+This is a small feature tweak to support better Handoff to hubspot.
+
+## Feature
+
+This release creates three new handlebars helpers to support downstream consumers. The
+schema now includes #header, #footer, and json helpers.  This allows handoff users to mark
+sections of a component that should be placed in the header, or footer of pages.
+
+The JSON handler allows an array string to be injected into the component as serialized JSON data.
+
+### JSON Example
+
+Handlebars
+
+```
+<script type="text/javascript">
+  window.barChartData = {{json properties.data}};
+</script>
+```
+
+Output
+
+<script type="text/javascript">
+  window.barChartData = [
+    {
+      key: value,
+      key2: value
+    }
+  ];
+</script>
+
+### Header and Footer Example
+
+This allows you to mark sections as header and footer content to be added to downstream consumers
+header and footer handlers.
+
+Handlebars
+
+```
+{{#header}}
+  <script type="text/javascript" src="/path/to/script.js" />
+{{/header}}
+<div> Main Content</div>
+{{#footer}}
+  <script type="text/javascript" src="/path/to/script.js" />
+{{/footer}}
+```
+
 ## \[1.1.1] - 2026-03-12
 
 This patch release focuses on Windows stabilization and consistency across environments.
@@ -1829,6 +1877,9 @@ package version was set to ^0.1.0 rather than ^0.2.0. This release fixes that.
   * Component design tokens (buttons, alerts, modal, tooltips, inputs, radios, checkboxes, radio, switches)
   * Transformers for sass variables, css variables, previews and custom fonts
   * Static web application that can be published to any web host
+
+```
+```
 
 ```
 ```
