@@ -19,7 +19,7 @@ export const registerHandlebarsHelpers = (
   Handlebars.registerHelper('field', function (field: string, options: any) {
     if (injectFieldWrappers) {
       if (!field) {
-        // This deebuging isn't helpful in the context of the component library
+        // This debugging isn't helpful in the context of the component library
         // Logger.error(`Missing field declaration for ${data.id}`);
         return options.fn(this);
       }
@@ -51,12 +51,18 @@ export const registerHandlebarsHelpers = (
     return a === b;
   });
 
-  extend?.({
-    handlebars: Handlebars,
-    componentId: data.id,
-    properties: data.properties,
-    injectFieldWrappers,
-  });
+  if (extend) {
+    try {
+      extend({
+        handlebars: Handlebars,
+        componentId: data.id,
+        properties: data.properties,
+        injectFieldWrappers,
+      });
+    } catch (err) {
+      Logger.error(`registerHandlebarsHelpers hook failed for ${data.id}`, err);
+    }
+  }
 };
 
 /**
