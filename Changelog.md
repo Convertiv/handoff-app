@@ -6,6 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.1.2] - 2026-03-26
+
+This release improves integration with downstream platforms (for example HubSpot) by letting
+projects register their own Handlebars helpers during preview generation, instead of relying
+only on Handoff’s built-in `field` and `eq` helpers.
+
+### Feature
+
+**`hooks.registerHandlebarsHelpers`** — New optional hook in `handoff.config.js`. After Handoff
+registers its default preview helpers, your callback runs with the Handlebars runtime, the
+current `componentId`, the component `properties` (slot metadata), and a flag for inspect-mode
+renders (`injectFieldWrappers`). Use `handlebars.registerHelper` (and block helpers as needed)
+to add helpers that are only available while building component preview HTML—so templates can
+stay platform-specific without forking Handoff.
+
+Typical uses: block helpers that wrap regions meant for a host page’s header or footer, or a
+helper that serializes a value as JSON for inline scripts. Those behaviors are **not** shipped
+as core helpers; you define them in config so each project controls naming and semantics.
+
+See `docs/api.md` (Hooks → `registerHandlebarsHelpers`) for the full signature and README
+“Configuration hooks” for a quick pointer.
+
+### Example: JSON in templates
+
+If you register a `json` helper in `hooks.registerHandlebarsHelpers`, like this
+
+```
+  hooks: {
+    registerHandlebarsHelpers: ({ handlebars, componentId }) => {
+      // Register 'json' as a simple (non-block) helper
+      handlebars.registerHelper('json', (value, data) => {
+        return new handlebars.SafeString(JSON.stringify(value, null, 2));
+      });
+    }
+  }
+```
+
+Then your templates can do:
+
+```
+<script type="text/javascript">
+  window.barChartData = {{{json properties.data}}};
+</script>
+```
+
+with output shaped by your helper implementation (for example serialized JSON for chart data).
+
 ## \[1.1.1] - 2026-03-12
 
 This patch release focuses on Windows stabilization and consistency across environments.
@@ -1827,6 +1874,9 @@ package version was set to ^0.1.0 rather than ^0.2.0. This release fixes that.
   * Component design tokens (buttons, alerts, modal, tooltips, inputs, radios, checkboxes, radio, switches)
   * Transformers for sass variables, css variables, previews and custom fonts
   * Static web application that can be published to any web host
+
+```
+```
 
 ```
 ```
