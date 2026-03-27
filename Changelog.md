@@ -8,6 +8,48 @@ and this project adheres to
 
 ## \[1.1.3] - 2026-03-27
 
+This release reworks the markdown page rendering system with four improvements:
+n-level deep routing, automatic table-of-contents generation, standardized code
+block styling, and GitHub Flavored Markdown table support.
+
+### Features
+
+- **N-level deep markdown routing** — Replaced the fixed two-level routing
+  (`[level1]` / `[level1]/[level2]`) with a single `[...slug]` catch-all route
+  that supports markdown pages at any directory depth. A new recursive
+  `buildCatchAllStaticPaths` function walks `config/docs` and `pages`
+  directories to collect `.md` files at any nesting level. The sidebar menu now
+  also recursively scans directories to surface deeply nested pages.
+
+- **Automatic table of contents** — The existing but unused `PageTOC` component
+  is now wired into the catch-all markdown page. It scans rendered headings
+  (h1–h6) via a `MutationObserver` and populates the right-hand "On This Page"
+  anchor nav automatically. Fixed a timing bug where headings were scanned
+  before the markdown content was in the DOM, and fixed anchor IDs that were
+  incorrectly prefixed with `#` (producing `##id` in URLs).
+
+- **Standardized code block styling** — Markdown fenced code blocks now render
+  with a toolbar header matching the site's `CodeHighlight` component: a
+  language icon, filename or language label, and a copy-to-clipboard button. A
+  new `remarkCodeMeta` remark plugin preserves the fence info string so metadata
+  like `` ```bash filename="deploy.sh" `` is parsed and displayed. The Prism
+  theme respects dark mode via `next-themes`, and registered languages now
+  include bash, css, scss, jsx, tsx, typescript, yaml, handlebars, and more.
+
+- **Markdown table support** — Added `remark-gfm` to all `ReactMarkdown`
+  instances across the codebase (17 files). Pipe tables, strikethrough,
+  autolinks, and task lists now render correctly. Tables are styled via Tailwind
+  Typography's `.prose table` defaults.
+
+### Changed
+
+- Deleted `src/app/pages/[level1]/index.tsx` and
+  `src/app/pages/[level1]/[level2]/index.tsx` (replaced by `[...slug]`).
+- Removed `buildL1StaticPaths`, `buildL2StaticPaths`, and the `SubPageType`
+  interface from `src/app/components/util/index.ts`.
+- `ComponentGuidelines` now uses `MarkdownComponents` and the remark plugins
+  for consistent rendering.
+
 ## \[1.1.2] - 2026-03-26
 
 This release improves integration with downstream platforms (for example HubSpot) by letting

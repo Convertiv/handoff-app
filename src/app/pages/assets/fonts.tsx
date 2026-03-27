@@ -7,8 +7,9 @@ import path from 'path';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import Footer from '../../components/Footer';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
 import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
 
@@ -92,7 +93,7 @@ const FontsPage = ({ content, menu, metadata, current, customFonts, design, conf
           ))}
 
           <div className="prose">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
               {content}
             </ReactMarkdown>
           </div>

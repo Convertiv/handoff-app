@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import Footer from '../components/Footer';
 import Layout from '../components/Layout/Main';
-import { MarkdownComponents } from '../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../components/util';
@@ -41,7 +42,7 @@ const Home = ({ content, menu, metadata, config, current }: DocumentationProps) 
           </HeadersType.H1>
           {content && (
             <div className="text-lg max-w-4xl empty:hidden [&>*]:mt-6 [&>p]:font-light [&>h2:first-child]:mt-0 [&>h2:first-child]:font-normal sm:text-xl">
-              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
                 {content}
               </ReactMarkdown>
             </div>
