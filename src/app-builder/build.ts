@@ -9,7 +9,7 @@ import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
+import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchComponentDirectories, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
 import { createWebSocketServer } from './websocket';
 
 const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -193,11 +193,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     debounce: false,
     runtimeComponentsWatcher: null,
     runtimeConfigurationWatcher: null,
+    componentDirectoriesWatcher: null,
   };
 
   watchPublicDirectory(handoff, wss, state, chokidarConfig);
   watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
   watchRuntimeConfiguration(handoff, state);
+  watchComponentDirectories(handoff, state, chokidarConfig);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
 };

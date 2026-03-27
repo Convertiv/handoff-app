@@ -92,6 +92,12 @@ export const knownPaths = [
   'foundations/typography',
   'system',
   'system/component',
+  'system/tokens',
+  'system/tokens/foundations',
+  'system/tokens/foundations/colors',
+  'system/tokens/foundations/effects',
+  'system/tokens/foundations/typography',
+  'system/tokens/components',
 ];
 
 /**
