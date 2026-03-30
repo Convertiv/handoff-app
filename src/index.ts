@@ -297,7 +297,7 @@ class Handoff {
 }
 
 export type { ComponentObject as Component } from './transformers/preview/types';
-export type { Config } from './types/config';
+export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 
 // Export transformers and types from handoff-core
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

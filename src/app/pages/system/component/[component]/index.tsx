@@ -6,11 +6,12 @@ import { startCase } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { ComponentPreview } from '../../../../components/Component/Preview';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
-import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
@@ -172,7 +173,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <div className="flex flex-row justify-between gap-4 md:flex-col">
           <div className="prose max-w-[800px] text-xl  font-light leading-relaxed text-gray-600 dark:text-gray-300">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
               {metadata.description}
             </ReactMarkdown>
           </div>
