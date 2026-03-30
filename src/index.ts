@@ -6,10 +6,11 @@ import buildApp, { devApp, watchApp } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
-import pipeline, { buildComponents } from './pipeline';
+import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
-import { Config, RuntimeConfig } from './types/config';
+import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
+import { normalizePathForCompare } from './utils/path';
 import { generateFilesystemSafeId } from './utils/path';
 
 class Handoff {
@@ -29,6 +30,7 @@ class Handoff {
 
   private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
   private _configFilePaths: string[] = [];
+  private _configFileIndex: Map<string, ConfigFileEntry> = new Map();
   private _mainConfigFilePath?: string;
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
@@ -54,7 +56,7 @@ class Handoff {
     this._mainConfigFilePath = configResult.configPath;
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
-    [this.runtimeConfig, this._configFilePaths] = initRuntimeConfig(this);
+    [this.runtimeConfig, this._configFilePaths, this._configFileIndex] = initRuntimeConfig(this);
     if(this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
       process.env.HANDOFF_APP_BASE_PATH = this.config.app.base_path ?? '';
     }
@@ -92,6 +94,12 @@ class Handoff {
       await buildComponents(this);
     }
 
+    return this;
+  }
+
+  async pattern(): Promise<Handoff> {
+    this.preRunner();
+    await buildPatterns(this);
     return this;
   }
 
@@ -285,6 +293,10 @@ class Handoff {
     return this._mainConfigFilePath;
   }
 
+  getConfigFileEntry(configPath: string): ConfigFileEntry | undefined {
+    return this._configFileIndex.get(normalizePathForCompare(configPath));
+  }
+
   /**
    * Clears all cached data
    * @returns {void}
@@ -314,13 +326,16 @@ export {
   defineComponent,
   defineCsfComponent,
   defineHandlebarsComponent,
+  definePattern,
   defineReactComponent,
 } from './declarations';
 export type {
   CsfDeclarationConfig,
   DeclarationPreview,
   GenericDeclarationConfig,
+  GenericPatternDeclarationConfig,
   HandlebarsDeclarationConfig,
+  PatternComponentRef,
   ReactDeclarationConfig,
   RendererKind,
 } from './declarations';

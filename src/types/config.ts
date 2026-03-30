@@ -2,7 +2,7 @@ import { BuildOptions } from 'esbuild';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
-import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
+import { ComponentListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from './preview';
 
 export interface ImageStyle {
@@ -118,6 +118,12 @@ export interface Config {
      * @example ["components/button", "components/input"]
      */
     components?: string[];
+    /**
+     * Array of pattern paths to be included in the build.
+     * Patterns compose multiple component previews into single-page views.
+     * @example ["patterns/hero-section", "patterns"]
+     */
+    patterns?: string[];
   };
   /**
    * Configuration for asset zip file download links
@@ -266,6 +272,11 @@ export interface RuntimeConfigComponentOptions {
   replace: { [variantProperty: string]: { [source: string]: string } };
 }
 
+export interface ConfigFileEntry {
+  kind: string;
+  entityId: string;
+}
+
 export interface RuntimeConfig {
   entries?: {
     scss?: string;
@@ -273,6 +284,9 @@ export interface RuntimeConfig {
     templates?: string;
     components: {
       [id: string]: ComponentListObject;
+    };
+    patterns: {
+      [id: string]: PatternListObject;
     };
   };
   options: {

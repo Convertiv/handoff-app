@@ -1,6 +1,7 @@
 import {
   CsfDeclarationConfig,
   GenericDeclarationConfig,
+  GenericPatternDeclarationConfig,
   HandlebarsDeclarationConfig,
   ReactComponentType,
   ReactDeclarationConfig,
@@ -31,3 +32,5 @@ export const defineCsfComponent = (config: CsfDeclarationConfig): GenericDeclara
 };
 
 export const defineComponent = (config: GenericDeclarationConfig): GenericDeclarationConfig => config;
+
+export const definePattern = (config: GenericPatternDeclarationConfig): GenericPatternDeclarationConfig => config;

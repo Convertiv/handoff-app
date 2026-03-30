@@ -38,6 +38,7 @@ export default defineConfig({
     scss: './sass/main.scss',
     js: './js/main.js',
     components: ['./components'],
+    // patterns: ['./patterns'],
   },
   assetsZipLinks: {
     icons: null,

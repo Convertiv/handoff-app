@@ -42,10 +42,21 @@ export default defineConfig({
 
   // entries: {
   //   /**
-  //    * Array of component paths to be included in the build
-  //    * Add your component directories here
+  //    * Array of component paths to be included in the build.
+  //    * Each path should point to a directory containing a *.handoff.ts declaration.
   //    */
-  //   components: ["components/button"]
+  //   components: ["components/button"],
+  //
+  //   /**
+  //    * Array of pattern paths to be included in the build.
+  //    * Patterns compose multiple component previews into single-page views.
+  //    * Each path should point to a directory containing a *.handoff.ts declaration
+  //    * that uses definePattern().
+  //    *
+  //    * @example
+  //    * patterns: ["patterns/hero-section", "patterns"]
+  //    */
+  //   patterns: ["patterns"],
   // },
 
   // Optional handoff-docgen settings used by component docs generation

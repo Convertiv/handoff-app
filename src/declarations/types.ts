@@ -47,3 +47,24 @@ export type GenericDeclarationConfig = Omit<BaseDeclarationConfig, 'renderer'> &
 };
 
 export type ReactComponentType<TProps = any> = React.ComponentType<TProps>;
+
+// ---------------------------------------------------------------------------
+// Pattern declarations
+// ---------------------------------------------------------------------------
+
+export type PatternComponentRef = {
+  id: string;
+  preview?: string;
+  args?: Record<string, any>;
+};
+
+export type BasePatternDeclarationConfig = {
+  id?: string;
+  name: string;
+  description?: string;
+  group?: string;
+  tags?: string[];
+  components: PatternComponentRef[];
+};
+
+export type GenericPatternDeclarationConfig = BasePatternDeclarationConfig;

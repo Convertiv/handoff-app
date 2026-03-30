@@ -16,8 +16,9 @@ import {
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
-import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
+import { ComponentListObject, ComponentType, OptionalPreviewRender, TransformComponentTokensResult } from '../types';
 import { readComponentApi, readComponentMetadataApi, updateComponentSummaryApi, writeComponentApi } from './api';
+import { getDocumentedPreviews } from './previews';
 import buildComponentCss from './css';
 import buildPreviews from './html';
 import buildComponentJs from './javascript';
@@ -73,6 +74,13 @@ const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
       },
     };
   }
+};
+
+const getBuildPreviews = (data: TransformComponentTokensResult): { [key: string]: OptionalPreviewRender } => {
+  return {
+    ...(data?.previews || {}),
+    ...(data?.internalPatternPreviews || {}),
+  };
 };
 
 /**
@@ -302,7 +310,14 @@ export async function processComponents(
     }
     // Build previews (HTML, snapshots, etc) if needed.
     if (buildPlan.previews) {
-      data = await buildPreviews(data, handoff, components);
+      data = await buildPreviews(
+        {
+          ...data,
+          previews: getBuildPreviews(data),
+        },
+        handoff,
+        components
+      );
     }
 
     /**
@@ -317,6 +332,7 @@ export async function processComponents(
     // Ensure that every property within the properties array/object contains an 'id' field.
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.
     data.properties = ensureIds(data.properties);
+    data.previews = getDocumentedPreviews(data.previews);
 
     // Write the updated component data to the API file for external access and caching.
     //console.log('data', data);
@@ -374,7 +390,7 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     categories: data.categories ? data.categories : [],
     tags: data.tags ? data.tags : [],
     properties: data.properties,
-    previews: data.previews,
+    previews: getDocumentedPreviews(data.previews),
     path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
   };
 };

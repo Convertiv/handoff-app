@@ -1,6 +1,6 @@
 import type { GeneratedDocs } from 'handoff-docgen';
-import type { RendererKind } from '../../declarations/types';
 import { Card } from '../../app/components/Component/Cards';
+import type { RendererKind } from '../../declarations/types';
 import { ValidationResult } from '../../types/preview';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -124,6 +124,8 @@ export type ComponentObject = {
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
   previews: { [key: string]: OptionalPreviewRender };
+  /** Internal previews generated only for pattern composition, not public docs */
+  internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   /** Optional array of high-level categories for search/filtering */
   categories?: string[];
   /** Optional array of tags for search/filtering (e.g. "primary", "interactive") */
@@ -169,6 +171,7 @@ export type TransformComponentTokensResult = {
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
+  internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
   entries?: {
@@ -200,3 +203,32 @@ export type OptionalPreviewRender = {
 export interface TransformedPreviewComponents {
   [key: string]: TransformComponentTokensResult[];
 }
+
+// ---------------------------------------------------------------------------
+// Pattern types
+// ---------------------------------------------------------------------------
+
+export type PatternComponentEntry = {
+  /** Component id reference */
+  id: string;
+  /** Named preview variant to use (optional if args provided) */
+  preview?: string;
+  /** Arg overrides (optional if preview provided) */
+  args?: Record<string, any>;
+  /** Preview key resolved during injectPatternPreviews (set at build time) */
+  resolvedPreview?: string;
+};
+
+export type PatternObject = {
+  title: string;
+  description?: string;
+  group?: string;
+  tags?: string[];
+  components: PatternComponentEntry[];
+  url?: string;
+};
+
+export type PatternListObject = {
+  id: string;
+  path: string;
+} & PatternObject;

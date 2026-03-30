@@ -1,4 +1,4 @@
-import { ComponentListObject, ComponentType } from '@handoff/transformers/preview/types';
+import { ComponentListObject, ComponentType, PatternListObject } from '@handoff/transformers/preview/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
@@ -93,6 +93,7 @@ export const knownPaths = [
   'foundations/typography',
   'system',
   'system/component',
+  'system/pattern',
 ];
 
 /**
@@ -255,11 +256,20 @@ export const staticBuildMenu = () => {
                 };
               }
               if (sub.tokens) {
-                // The user wants to inject the component menu here
                 return {
                   title: 'Tokens',
                   menu: staticBuildTokensMenu(),
                 };
+              }
+              if (sub.patterns) {
+                const patternMenu = staticBuildPatternMenu();
+                if (patternMenu.length > 0) {
+                  return {
+                    title: sub.title || 'Patterns',
+                    menu: patternMenu,
+                  };
+                }
+                return undefined;
               }
               if (sub.enabled !== false) {
                 return sub;
@@ -391,6 +401,64 @@ const staticBuildTokenMenu = () => {
   const tokens = getTokens();
 
   return subSections;
+};
+
+/**
+ * Fetch patterns from the patterns.json API file
+ */
+export const fetchPatterns = (): { id: string; title: string; description: string; group: string }[] => {
+  const patternsFilePath = path.resolve(
+    process.env.HANDOFF_MODULE_PATH ?? '',
+    '.handoff',
+    `${process.env.HANDOFF_PROJECT_ID}`,
+    'public',
+    'api',
+    'patterns.json'
+  );
+
+  if (!fs.existsSync(patternsFilePath)) {
+    return [];
+  }
+
+  try {
+    const patternList = JSON.parse(
+      fs.readFileSync(patternsFilePath, 'utf-8')
+    ) as PatternListObject[];
+
+    return patternList.map((p) => ({
+      id: p.id,
+      title: p.title || '',
+      description: p.description || '',
+      group: p.group || '',
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const staticBuildPatternMenu = () => {
+  const basePath = buildBasePath();
+  const patterns = fetchPatterns();
+
+  if (patterns.length === 0) return [];
+
+  const grouped = groupBy(patterns, (p) => p.group ?? '');
+  let menu: { title: string; menu: { path: string; title: string }[] }[] = [];
+
+  Object.keys(grouped).forEach((group) => {
+    const menuGroup = { title: group || 'Uncategorized', menu: [] as { path: string; title: string }[] };
+    grouped[group].forEach((pattern) => {
+      menuGroup.menu.push({
+        path: `${basePath}system/pattern/${pattern.id}`,
+        title: pattern.title || startCase(pattern.id),
+      });
+    });
+    menuGroup.menu.sort((a, b) => a.title.localeCompare(b.title));
+    menu.push(menuGroup);
+  });
+
+  menu.sort((a, b) => a.title.localeCompare(b.title));
+  return menu;
 };
 
 /**
