@@ -142,7 +142,7 @@ export type ComponentObject = {
   page?: ComponentPageDefinition;
   /** Optional additional options for preview and transformer behaviors */
   options?: ComponentOptions;
-}
+};
 
 export type ComponentListObject = {
   id: string;
@@ -168,6 +168,7 @@ export type TransformComponentTokensResult = {
   css?: string;
   sass?: string;
   sharedStyles?: string;
+  usage?: string;
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
@@ -198,6 +199,7 @@ export type OptionalPreviewRender = {
   title: string;
   values: { [key: string]: string | string[] | any };
   url: string;
+  usage?: string;
   /** Optional source preview/story key used to derive this preview */
   sourcePreview?: string;
 };

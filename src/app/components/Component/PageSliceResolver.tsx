@@ -8,8 +8,8 @@ export interface PageSliceResolverProps {
   preview: PreviewObject;
   title: string;
   height?: string;
-  currentValues?: Record<string, string>;
-  onValuesChange?: (values: Record<string, string>) => void;
+  currentPreviewUrl?: string;
+  onPreviewChange?: (previewUrl: string) => void;
   bestPracticesCard?: boolean;
   codeHighlight?: boolean;
   properties?: boolean;
@@ -21,8 +21,8 @@ export const PageSliceResolver: React.FC<PageSliceResolverProps> = ({
   preview,
   title,
   height,
-  currentValues,
-  onValuesChange,
+  currentPreviewUrl,
+  onPreviewChange,
   bestPracticesCard = true,
   codeHighlight = true,
   properties = true,
@@ -39,8 +39,8 @@ export const PageSliceResolver: React.FC<PageSliceResolverProps> = ({
           preview={preview}
           title={title}
           height={height}
-          currentValues={currentValues}
-          onValuesChange={onValuesChange}
+          currentPreviewUrl={currentPreviewUrl}
+          onPreviewChange={onPreviewChange}
           showPreview={slice.showPreview}
           showCodeHighlight={slice.showCodeHighlight}
           defaultHeight={slice.defaultHeight}

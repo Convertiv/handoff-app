@@ -8,10 +8,10 @@ import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import {
-  enrichPropertiesWithDocgen,
-  generateDocsArtifact,
-  generatePropertiesFromDocgen,
-  getPropertiesFromGeneratedDocs,
+    enrichPropertiesWithDocgen,
+    generateDocsArtifact,
+    generatePropertiesFromDocgen,
+    getPropertiesFromGeneratedDocs,
 } from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import { TransformComponentTokensResult } from '../preview/types';
@@ -20,6 +20,7 @@ import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
 import { slugify } from '../utils/string';
+import { extractComponentName, generateUsageSnippet } from '../utils/usage';
 import { createViteLogger } from '../utils/vite-logger';
 
 /**
@@ -204,8 +205,6 @@ export function ssrRenderPlugin(
         documentationComponents = {};
       }
 
-      const generatedPreviews: { [key: string]: string } = {};
-
       // Process component instances from documentation
       // Use figmaComponentId if provided, otherwise skip implicit matching
       if (componentData.figmaComponentId) {
@@ -219,6 +218,7 @@ export function ssrRenderPlugin(
               title: variationId,
               url: '',
               values: instanceValues,
+              usage: '',
             };
           }
         }
@@ -294,8 +294,13 @@ export function ssrRenderPlugin(
           source: finalHtml,
         });
 
-        generatedPreviews[previewKey] = finalHtml;
         componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+        componentData.previews[previewKey].usage = generateUsageSnippet({
+          componentName: extractComponentName(componentPath),
+          properties: componentData.properties || {},
+          previewValues: previewProps || {},
+          templateFileName: path.basename(componentPath),
+        });
       }
 
       // Format final HTML and update component data
@@ -304,6 +309,17 @@ export function ssrRenderPlugin(
       componentData.preview = '';
       componentData.code = trimPreview(componentSourceCode);
       componentData.html = trimPreview(finalHtml);
+
+      // Generate usage snippet from the first preview's values
+      const previewKeys = Object.keys(componentData.previews);
+      const firstPreviewValues = previewKeys.length > 0 ? componentData.previews[previewKeys[0]].values : {};
+      const componentName = extractComponentName(componentPath);
+      componentData.usage = generateUsageSnippet({
+        componentName,
+        properties: componentData.properties || {},
+        previewValues: firstPreviewValues,
+        templateFileName: path.basename(componentPath),
+      });
     },
   };
 }

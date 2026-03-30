@@ -56,11 +56,13 @@ export interface PreviewObject {
       title: string;
       values: { [key: string]: string };
       url: string;
+      usage?: string;
     };
   };
   properties?: { [key: string]: SlotMetadata };
   code: string;
   html?: string;
+  usage?: string;
   format: string;
   variant?: Record<string, string>;
   options?: {
