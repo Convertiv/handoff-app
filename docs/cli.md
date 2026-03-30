@@ -14,9 +14,9 @@ The CLI will allow you to build the various kinds of configurations that you
 will need for interacting with Figma. Handoff has sane configuration defaults
 but the various kinds of configurations can be tailored or extended.
 
-Handoff has 4 configuration files - 
+Handoff has 4 configuration areas - 
 
-`handoff.config.json` - Defines the general handoff configuration.
+`handoff.config.*` - Defines the general handoff configuration. Supported files are `handoff.config.ts`, `handoff.config.js`, `handoff.config.cjs`, and `handoff.config.json` (resolved in that precedence order).
 `pages` - Markdown files that will create or customize pages in the documentation
 app
 `exportables` - JSON schemas for each component in your figma file that you
@@ -28,7 +28,7 @@ The CLI exposes two ways to manage the config - `make` and `eject`.
 
 __Eject__ commands will take the default configuration and eject them into
 the current working directory. If you customize these configurations, then run 
-handoff commands in that directory, these configs will be executed.
+handoff commands in that directory, these configs will be executed. `eject:config` now prompts for TypeScript or JavaScript config format.
 __Make__ commands will generate a boilerplate configuration in the current
 working directory. This is useful for extending handoff for different components
 or integrations.

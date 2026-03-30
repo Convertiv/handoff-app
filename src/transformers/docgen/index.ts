@@ -261,8 +261,19 @@ export const enrichPropertiesWithDocgen = (
 export const generateDocsArtifact = async (entry: string, handoff: any): Promise<GeneratedDocs | null> => {
   try {
     const tsconfigPath = path.resolve(handoff.workingPath, 'tsconfig.json');
-    if (!fs.existsSync(tsconfigPath)) {
-      Logger.warn(`TypeScript config not found at ${tsconfigPath}, using default resolution`);
+    const hasTsconfig = fs.existsSync(tsconfigPath);
+    const entryExtension = path.extname(entry).toLowerCase();
+    const isJavaScriptEntry = ['.js', '.jsx', '.cjs', '.mjs'].includes(entryExtension);
+
+    if (!hasTsconfig) {
+      // For JS-only projects, handoff-docgen currently expects a tsconfig and will fail noisily.
+      // Skip docgen gracefully in this case.
+      if (isJavaScriptEntry) {
+        Logger.debug(`Skipping handoff-docgen for ${entry}: no tsconfig.json found in ${handoff.workingPath}`);
+        return null;
+      }
+      Logger.warn(`TypeScript config not found at ${tsconfigPath}; skipping docs generation for ${entry}.`);
+      return null;
     }
 
     const componentDirectory = path.dirname(path.resolve(entry));

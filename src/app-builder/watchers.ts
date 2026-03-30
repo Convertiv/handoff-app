@@ -159,7 +159,28 @@ export const mapEntryTypeToSegment = (type: keyof ComponentListObject['entries']
     scss: ComponentSegment.Style,
     template: ComponentSegment.Previews,
     templates: ComponentSegment.Previews,
+    component: ComponentSegment.Previews,
+    story: ComponentSegment.Previews,
   }[type];
+};
+
+const resolveComponentIdForChangedFile = (handoff: Handoff, changedFilePath: string): string | undefined => {
+  const normalizedChangedPath = normalizePathForCompare(changedFilePath);
+  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+
+  for (const [componentId, componentDef] of Object.entries(runtimeComponents)) {
+    const entries = componentDef.entries ?? {};
+    for (const entryPath of Object.values(entries)) {
+      if (!entryPath) continue;
+      const normalizedEntryPath = normalizePathForCompare(entryPath as string);
+      if (normalizedEntryPath === normalizedChangedPath) {
+        return componentId;
+      }
+    }
+  }
+
+  // Fallback for legacy path conventions when exact match is unavailable.
+  return path.basename(path.dirname(changedFilePath));
 };
 
 /**
@@ -225,9 +246,8 @@ export const watchRuntimeComponents = (
             try {
               const entryType = runtimeComponentEntryTypeByPath.get(normalizedFile);
               const segmentToUpdate: ComponentSegment = entryType ? mapEntryTypeToSegment(entryType) : undefined;
-
-              const componentDir = path.basename(path.dirname(file));
-              await processComponents(handoff, componentDir, segmentToUpdate);
+              const componentId = resolveComponentIdForChangedFile(handoff, file);
+              await processComponents(handoff, componentId, segmentToUpdate);
             } catch (e) {
               Logger.error('Error processing component:', e);
             } finally {
@@ -258,11 +278,23 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
           if (!state.debounce) {
             state.debounce = true;
             try {
-              file = path.dirname(file);
+              const changedFile = file;
+              const changedDir = path.dirname(changedFile);
+
               handoff.reload();
               await persistClientConfig(handoff);
               watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
-              await processComponents(handoff, path.basename(file));
+
+              const normalizedChanged = normalizePathForCompare(changedFile);
+              const normalizedMainConfig = handoff.getMainConfigFilePath()
+                ? normalizePathForCompare(handoff.getMainConfigFilePath() as string)
+                : undefined;
+
+              if (normalizedMainConfig && normalizedChanged === normalizedMainConfig) {
+                await processComponents(handoff);
+              } else {
+                await processComponents(handoff, path.basename(changedDir));
+              }
             } catch (e) {
               Logger.error('Error reloading runtime configuration:', e);
             } finally {
