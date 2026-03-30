@@ -3,7 +3,7 @@ const { defineComponent } = require('handoff-app');
 module.exports = defineComponent({
   renderer: 'react',
   id: 'button',
-  title: 'Button',
+  name: 'Button',
   description: 'Interactive button used for primary and secondary actions.',
   group: 'Atomic Elements',
   type: 'element',

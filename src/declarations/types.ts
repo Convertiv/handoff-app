@@ -21,7 +21,7 @@ type OptionalComponentMetadata = Partial<Omit<ComponentObject, 'previews' | 'ent
 
 export type BaseDeclarationConfig = OptionalComponentMetadata & {
   id?: string;
-  title: string;
+  name: string;
   renderer?: RendererKind;
   entries?: BaseDeclarationEntries;
   previews: Record<string, DeclarationPreview>;

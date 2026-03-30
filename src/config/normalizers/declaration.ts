@@ -168,6 +168,7 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
   return {
     ...(normalizedRaw as ComponentListObject),
     id: explicitId || options.fallbackId,
+    title: normalizedRaw.name || normalizedRaw.title || '',
     renderer: resolvedRenderer,
     entries,
     previews: normalizedPreviews,

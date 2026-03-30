@@ -3,7 +3,7 @@ import Button from './Button';
 
 export default defineReactComponent(Button, {
   id: 'button',
-  title: 'Button',
+  name: 'Button',
   description: 'Interactive button used for primary and secondary actions.',
   group: 'Atomic Elements',
   type: 'element',
