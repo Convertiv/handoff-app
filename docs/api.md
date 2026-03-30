@@ -78,70 +78,65 @@ to generate only the integration code.
 
 ## Hooks
 
-Hooks allow a typescript or javascript app to interact with the pipeline.
-This is especially useful for modifying or extending the output of the pipeline.
-To use a hook in your project, once you've instantiated the handoff object, you
-can call one of the hook methods and pass a function to the method. The hook
-function will be called at the appropriate point in the pipeline.
-
-For example if you want to alter the integration output, you can do this -
+Hooks let you extend the build and preview pipeline. Configure them in
+`handoff.config.js` (or `.cjs`) under the top-level `hooks` object. Hook names
+use camelCase (for example `validateComponent`, `jsBuildConfig`,
+`registerHandlebarsHelpers`). The Handoff CLI and Node API load this config when
+the `Handoff` instance is created.
 
 ```js
-import Handoff from 'handoff-app';
-
-const handoff = new Handoff({
-  // You can customize the configuration here
-});
-
-handoff.postIntegration((documentationObject: DocumentationObject, data: HookReturn[]) => {
-  const colors = documentationObject.design.color.map((color) => {
-    return {
-      name: color.name,
-      value: color.value,
-    };
-  });
-  data.push({
-    filename: 'colors.json',
-    data: JSON.stringify(colors, null, 2),
-  });
-  return data;
-});
-
-handoff.fetch();
+// handoff.config.js
+module.exports = {
+  // …
+  hooks: {
+    registerHandlebarsHelpers: ({ handlebars, componentId }) => {
+      handlebars.registerHelper('upperId', () => componentId.toUpperCase());
+    },
+  },
+};
 ```
 
-### postIntegration
+### registerHandlebarsHelpers
 
-The Post integration hook will allow you to add a function that will be executed
-after the integration build is complete. The function accepts two arguments -
+Called immediately after Handoff registers built-in Handlebars helpers (`field`
+and `eq`) while rendering **Handlebars** component previews (static HTML per
+variation). Use it to call `handlebars.registerHelper` for custom helpers used
+in your `.hbs` templates.
 
-**arguments**
+**Arguments (single context object)**
 
-- `tokens: DocumentationObject` This is an instance of the exported
-  DocumentationObject containing all of the tokens.
-- `data: HookReturn[]` This an array of HookReturns, consisting of `filename`
-  and `data`. Each object in this array will be written out to
-  `exported/{integration}-tokens`
+* `handlebars` — The Handlebars runtime (same as importing `handlebars`); use
+  `registerHelper`, `SafeString`, etc.
+* `componentId` — The current component’s id string.
+* `properties` — The component’s slot metadata map from the schema (same shape
+  as used by the `field` helper).
+* `injectFieldWrappers` — `true` when generating inspect-mode previews (field
+  inspection markup), `false` for normal previews.
 
-**return**
-The hook must return an array of `HookReturn` objects, or an empty array
+**Return**
 
-#### Example
+* `void` — register helpers on `handlebars` directly.
+
+**Notes**
+
+* This hook runs once per preview render (each variation × normal vs inspect).
+* Registering the same helper name again replaces any previous registration for
+  subsequent renders in the same process.
+
+**Example**
 
 ```js
-handoff.postIntegration((documentationObject: DocumentationObject, data: HookReturn[]) => {
-  const colors = documentationObject.design.color.map((color) => {
-    return {
-      name: color.name,
-      value: color.value,
-    };
-  });
-  data.push({
-    filename: 'colors.json',
-    data: JSON.stringify(colors, null, 2),
-  });
-  return data;
-});
+// handoff.config.js
+module.exports = {
+  hooks: {
+    registerHandlebarsHelpers: ({ handlebars, componentId, injectFieldWrappers }) => {
+      handlebars.registerHelper('debugPreview', function () {
+        return injectFieldWrappers ? '[inspect]' : '[preview]';
+      });
+      handlebars.registerHelper('componentLabel', () => componentId);
+    },
+  },
+};
 ```
 
 ### postBuild
@@ -150,7 +145,7 @@ This function is called after the app build is complete.
 
 **arguments**
 
-- `tokens: DocumentationObject` This is an instance of the exported
+* `tokens: DocumentationObject` This is an instance of the exported
   DocumentationObject containing all of the tokens.
 
 **returns**
@@ -163,14 +158,14 @@ application to alter the css generation in transit
 
 **arguments**
 
-- `tokens: DocumentationObject` This is an instance of the exported
+* `tokens: DocumentationObject` This is an instance of the exported
   DocumentationObject containing all of the tokens.
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as CSS variables
 
 **returns**
 
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as CSS variables.
   Any changes you return here will be written to the css files
 
@@ -182,14 +177,14 @@ the transformed output prior to being written to disk.
 
 **arguments**
 
-- `tokens: DocumentationObject` This is an instance of the exported
+* `tokens: DocumentationObject` This is an instance of the exported
   DocumentationObject containing all of the tokens.
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as CSS variables
 
 **returns**
 
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as CSS variables.
   Any changes you return here will be written to the css files.
 
@@ -201,14 +196,14 @@ the transformed output prior to being written to disk.
 
 **arguments**
 
-- `tokens: DocumentationObject` This is an instance of the exported
+* `tokens: DocumentationObject` This is an instance of the exported
   DocumentationObject containing all of the tokens.
-- `scss: CssTransformerOutput` This is an object containing all of the
+* `scss: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as SCSS variables
 
 **returns**
 
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as SCSS variables.
   Any changes you return here will be written to the scss files.
 
@@ -224,14 +219,14 @@ the transformed output prior to being written to disk.
 
 **arguments**
 
-- `tokens: DocumentationObject` This is an instance of the exported
+* `tokens: DocumentationObject` This is an instance of the exported
   DocumentationObject containing all of the tokens.
-- `scss: CssTransformerOutput` This is an object containing all of the
+* `scss: CssTransformerOutput` This is an object containing all of the
   type arrays for components and foundations, formatted as SCSS variables
 
 **returns**
 
-- `css: CssTransformerOutput` This is an object containing all of the
+* `css: CssTransformerOutput` This is an object containing all of the
   tokens for components and foundations, formatted as type variables.
   Any changes you return here will be written to the scss type files.
 
@@ -244,11 +239,11 @@ and allows you to alter and return that configuration.
 
 **arguments**
 
-- `webpackConfig: webpack.Configuration` This is a full webpack configuration.
+* `webpackConfig: webpack.Configuration` This is a full webpack configuration.
 
 **returns**
 
-- `webpackConfig: webpack.Configuration` Return the webpack configuration that
+* `webpackConfig: webpack.Configuration` Return the webpack configuration that
   you have altered to fit your needs.
 
 **Example**
@@ -265,15 +260,14 @@ export const modifyWebpackConfigForTailwind = (webpackConfig: webpack.Configurat
 
 This hook allows you to alter the exportable list. You could do this by ejecting
 the handoff configuration and modifying the list, but this hook allows you to
-alter the exportable list with just a couple of lines of code rather than 
+alter the exportable list with just a couple of lines of code rather than
 exporting the whole list
 
 **arguments**
 
-- `exportables: string[]` The current list of exportables
+* `exportables: string[]` The current list of exportables
 
 **returns**
 
-- `exportables: string[]` Return the list with whatever additions and subtractions
-you need for your application.
-
+* `exportables: string[]` Return the list with whatever additions and subtractions
+  you need for your application.

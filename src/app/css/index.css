@@ -6,6 +6,10 @@
 @plugin '@tailwindcss/typography';
 @plugin '@tailwindcss/container-queries';
 
+.prose {
+	max-width: 100%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {

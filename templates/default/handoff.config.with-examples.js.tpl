@@ -183,6 +183,22 @@ const config = {
     //   // Add your custom HTML build configuration here
     //   return config;
     // },
+
+    /**
+     * Optional hook run after built-in Handlebars helpers (`field`, `eq`) for preview HTML.
+     * @param context.handlebars - Handlebars module (use registerHelper)
+     * @param context.componentId - Current component id
+     * @param context.properties - Slot metadata map from the schema
+     * @param context.injectFieldWrappers - True when generating inspect-mode previews
+     *
+     * @example
+     * registerHandlebarsHelpers: ({ handlebars, componentId }) => {
+     *   handlebars.registerHelper('upperId', () => componentId.toUpperCase());
+     * }
+     */
+    // registerHandlebarsHelpers: ({ handlebars, componentId, properties, injectFieldWrappers }) => {
+    //   // Add your custom Handlebars helpers here
+    // },
   },
 };
 

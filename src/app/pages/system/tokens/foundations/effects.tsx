@@ -3,8 +3,9 @@ import { groupBy, upperFirst } from 'lodash';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import Layout from '../../../../components/Layout/Main';
-import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
@@ -61,7 +62,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
       <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div>
           <div className="prose">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
               {content}
             </ReactMarkdown>
           </div>

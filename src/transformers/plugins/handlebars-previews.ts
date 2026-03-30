@@ -69,12 +69,14 @@ async function renderHandlebarsTemplate(
   template: string,
   componentData: TransformComponentTokensResult,
   previewData: PreviewRenderData,
-  injectFieldWrappers: boolean
+  injectFieldWrappers: boolean,
+  handoff: Handoff
 ): Promise<string> {
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
-    { id: componentData.id, properties: componentData.properties || {} }, 
-    injectFieldWrappers
+    { id: componentData.id, properties: componentData.properties || {} },
+    injectFieldWrappers,
+    handoff.config?.hooks?.registerHandlebarsHelpers
   );
 
   const context = createHandlebarsContext({ 
@@ -181,14 +183,16 @@ export function handlebarsPreviewsPlugin(
             templateContent,
             componentData,
             previewData,
-            false
+            false,
+            handoff
           );
 
           const inspectModeHtml = await renderHandlebarsTemplate(
             templateContent,
             componentData,
             previewData,
-            true
+            true,
+            handoff
           );
 
           // Emit preview files

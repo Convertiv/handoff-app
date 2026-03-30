@@ -308,7 +308,7 @@ class Handoff {
 }
 
 export type { ComponentObject as Component } from './transformers/preview/types';
-export type { Config } from './types/config';
+export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
 export {
   defineComponent,

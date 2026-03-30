@@ -5,9 +5,10 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { APIComponentList } from '../../components/Component/ComponentLists';
 import Layout from '../../components/Layout/Main';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
 import { Button } from '../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../components/ui/drawer';
@@ -127,7 +128,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
       </div>
       <div>
         <div className="prose mb-10">
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>
