@@ -14,20 +14,20 @@ export const normalizePatternDeclaration = (
 ): PatternListObject => {
   if (!raw.name || typeof raw.name !== 'string') {
     throw new Error(
-      `[handoff] Pattern "${options.fallbackId}" in "${options.declarationPath}" is missing a required "name" field.`
+      `Pattern "${options.fallbackId}" in "${options.declarationPath}" is missing a required "name" field.`
     );
   }
 
   if (!Array.isArray(raw.components) || raw.components.length === 0) {
     throw new Error(
-      `[handoff] Pattern "${options.fallbackId}" in "${options.declarationPath}" must define a non-empty "components" array.`
+      `Pattern "${options.fallbackId}" in "${options.declarationPath}" must define a non-empty "components" array.`
     );
   }
 
   const components = raw.components.map((ref: any, index: number) => {
     if (!ref || typeof ref.id !== 'string' || ref.id.trim().length === 0) {
       throw new Error(
-        `[handoff] Pattern "${options.fallbackId}" in "${options.declarationPath}" has an invalid component reference at index ${index}: missing "id".`
+        `Pattern "${options.fallbackId}" in "${options.declarationPath}" has an invalid component reference at index ${index}: missing "id".`
       );
     }
 
@@ -35,7 +35,7 @@ export const normalizePatternDeclaration = (
 
     if (!preview && !ref.args) {
       options.warn(
-        `[handoff] Pattern "${options.fallbackId}" component ref "${ref.id}" at index ${index} has neither "preview" nor "args". The component's default preview will be used.`
+        `Pattern "${options.fallbackId}" component ref "${ref.id}" at index ${index} has neither "preview" nor "args". The component's default preview will be used.`
       );
     }
 

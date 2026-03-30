@@ -64,7 +64,7 @@ const resolveComponentDeclaration = (componentDir: string, componentBaseName: st
   if (modernMatch) {
     if (legacyMatch) {
       Logger.warn(
-        `[handoff] Both modern and legacy declarations found in "${componentDir}". Using "${modernMatch}" and ignoring "${legacyMatch}".`
+        `Both modern and legacy declarations found in "${componentDir}". Using "${modernMatch}" and ignoring "${legacyMatch}".`
       );
     }
     return { fileName: modernMatch };
@@ -139,7 +139,7 @@ const discoverCsfPreviews = (
 
     if (Object.keys(discoveredPreviews).length === 0) {
       Logger.warn(
-        `[handoff] No named stories found in CSF file for "${component.id}": ${component.entries.template}`
+        `No named stories found in CSF file for "${component.id}": ${component.entries.template}`
       );
       return component.previews;
     }
@@ -147,7 +147,7 @@ const discoverCsfPreviews = (
     return discoveredPreviews;
   } catch (error) {
     Logger.warn(
-      `[handoff] Failed to discover CSF stories for "${component.id}" from "${component.entries.template}". Falling back to declared previews.`
+      `Failed to discover CSF stories for "${component.id}" from "${component.entries.template}". Falling back to declared previews.`
     );
     Logger.debug('CSF discovery error', error);
     return component.previews;
@@ -404,7 +404,7 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
           resolvedValues = { ...basePreview.values };
         } else {
           const error =
-            `[handoff] Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
+            `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
           Logger.warn(error);
           ref.resolved = false;
         }

@@ -65,7 +65,7 @@ const normalizePreviews = (
     if (preview.args !== undefined) {
       if (preview.values !== undefined) {
         warn(
-          `[handoff] Preview "${previewName}" in "${declarationPath}" defines both "args" and "values". Using "args".`
+          `Preview "${previewName}" in "${declarationPath}" defines both "args" and "values". Using "args".`
         );
       }
       preview.values = preview.args;
@@ -91,12 +91,12 @@ const normalizeBestPracticeFields = (
 
   if (hasCamelShouldDo && hasSnakeShouldDo) {
     warn(
-      `[handoff] "${declarationPath}" defines both "shouldDo" and "should_do". Using "shouldDo".`
+      `"${declarationPath}" defines both "shouldDo" and "should_do". Using "shouldDo".`
     );
   }
   if (hasCamelShouldNotDo && hasSnakeShouldNotDo) {
     warn(
-      `[handoff] "${declarationPath}" defines both "shouldNotDo" and "should_not_do". Using "shouldNotDo".`
+      `"${declarationPath}" defines both "shouldNotDo" and "should_not_do". Using "shouldNotDo".`
     );
   }
 
@@ -130,7 +130,7 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     const componentPath = entries.component || entries.template;
     if (!componentPath) {
       throw new Error(
-        `[handoff] Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "react" but is missing entries.component`
+        `Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "react" but is missing entries.component`
       );
     }
     entries.component = componentPath;
@@ -141,7 +141,7 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     const storyPath = entries.story || entries.template;
     if (!storyPath) {
       throw new Error(
-        `[handoff] Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "csf" but is missing entries.story`
+        `Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "csf" but is missing entries.story`
       );
     }
     entries.story = storyPath;
@@ -151,14 +151,14 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
   if (resolvedRenderer === 'handlebars') {
     if (!entries.template) {
       throw new Error(
-        `[handoff] Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "handlebars" but is missing entries.template`
+        `Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "handlebars" but is missing entries.template`
       );
     }
   }
 
   if (normalizedRaw.page && normalizedRaw.page.slices && !Array.isArray(normalizedRaw.page.slices)) {
     throw new Error(
-      `[handoff] Component "${options.fallbackId}" in "${options.declarationPath}" has invalid page.slices; expected an array.`
+      `Component "${options.fallbackId}" in "${options.declarationPath}" has invalid page.slices; expected an array.`
     );
   }
 

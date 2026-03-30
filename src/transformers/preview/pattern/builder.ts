@@ -46,7 +46,7 @@ export async function processPatterns(handoff: Handoff): Promise<PatternListObje
 
       if (!fs.existsSync(htmlFilePath)) {
         const error =
-          `[handoff] Pattern "${patternId}" component[${i}] ("${ref.id}") preview file not found: ${htmlFileName}. ` +
+          `Pattern "${patternId}" component[${i}] ("${ref.id}") preview file not found: ${htmlFileName}. ` +
           `Ensure the component has a preview named "${previewKey}".`;
         Logger.warn(error);
         ref.resolved = false;
@@ -60,12 +60,12 @@ export async function processPatterns(handoff: Handoff): Promise<PatternListObje
     }
 
     if (fragments.length === 0) {
-      Logger.warn(`[handoff] Pattern "${patternId}" produced no fragments. Skipping.`);
+      Logger.warn(`Pattern "${patternId}" produced no fragments. Skipping.`);
       continue;
     }
 
     if (hasErrors) {
-      Logger.warn(`[handoff] Pattern "${patternId}" has missing components but will be composed from available fragments.`);
+      Logger.warn(`Pattern "${patternId}" has missing components but will be composed from available fragments.`);
     }
 
     const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath);
