@@ -6,9 +6,10 @@ import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, 
 import { Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { DisplayLogo } from '../../components/Foundations/DisplayLogo';
 import Layout from '../../components/Layout/Main';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
 import { buttonVariants } from '../../components/ui/button';
 
@@ -73,7 +74,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
       <hr />
       <hr />
       <div className="prose">
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
       </div>

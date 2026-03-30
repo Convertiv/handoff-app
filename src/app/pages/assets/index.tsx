@@ -3,8 +3,9 @@ import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import Footer from '../../components/Footer';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import NavLink from '../../components/NavLink';
 import Header from '../../components/old/Header';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
@@ -77,7 +78,7 @@ const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationP
           </div>
 
           <div className="prose">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
               {content}
             </ReactMarkdown>
           </div>

@@ -3,10 +3,11 @@ import upperFirst from 'lodash/upperFirst';
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import ColorGrid from '../..//components/Foundations/ColorGrid';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import Layout from '../../components/Layout/Main';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import AnchorNav from '../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../components/Navigation/PrevNextNav';
 import HeadersType from '../../components/Typography/Headers';
@@ -89,7 +90,7 @@ const ColorsPage = ({
         />
 
         <div className="prose">
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>
