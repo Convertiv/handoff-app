@@ -6,6 +6,8 @@ import { normalizeComponentDeclaration } from './normalizers/declaration';
 import { normalizePatternDeclaration } from './normalizers/pattern';
 import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
+import { createCsfStoryPreviews } from '../transformers/utils/csf';
+import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
 import { Logger } from '../utils/logger';
 import { normalizePathForCompare } from '../utils/path';
 
@@ -123,6 +125,35 @@ const loadDeclarationFile = (filePath: string, handoffModulePath: string): any =
   return require(filePath);
 };
 
+const discoverCsfPreviews = (
+  component: ComponentListObject,
+  handoff: HandoffContext
+): Record<string, any> | undefined => {
+  if (component.renderer !== 'csf' || !component.entries?.template) {
+    return component.previews;
+  }
+
+  try {
+    const loaded = buildAndEvaluateModuleSync(component.entries.template, handoff);
+    const discoveredPreviews = createCsfStoryPreviews(loaded.exports as Record<string, any>);
+
+    if (Object.keys(discoveredPreviews).length === 0) {
+      Logger.warn(
+        `[handoff] No named stories found in CSF file for "${component.id}": ${component.entries.template}`
+      );
+      return component.previews;
+    }
+
+    return discoveredPreviews;
+  } catch (error) {
+    Logger.warn(
+      `[handoff] Failed to discover CSF stories for "${component.id}" from "${component.entries.template}". Falling back to declared previews.`
+    );
+    Logger.debug('CSF discovery error', error);
+    return component.previews;
+  }
+};
+
 /**
  * Initializes the runtime configuration by resolving component entries,
  * SCSS/JS paths, and transformer options from the handoff config.
@@ -208,6 +239,9 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
 
       // Save transformer config
       result.options[component.id] = transformer;
+
+      // Discover CSF stories early so patterns can resolve stories like normal previews.
+      component.previews = discoverCsfPreviews(component, handoff);
 
       // Save full component entry
       result.entries.components[component.id] = component;
@@ -375,6 +409,7 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         title: syntheticKey,
         values: resolvedValues,
         url: '',
+        sourcePreview: ref.preview,
       };
 
       ref.resolvedPreview = syntheticKey;

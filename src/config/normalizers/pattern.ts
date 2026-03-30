@@ -31,7 +31,9 @@ export const normalizePatternDeclaration = (
       );
     }
 
-    if (!ref.preview && !ref.args) {
+    const preview = typeof ref.preview === 'string' ? ref.preview.trim() : undefined;
+
+    if (!preview && !ref.args) {
       options.warn(
         `[handoff] Pattern "${options.fallbackId}" component ref "${ref.id}" at index ${index} has neither "preview" nor "args". The component's default preview will be used.`
       );
@@ -39,7 +41,7 @@ export const normalizePatternDeclaration = (
 
     return {
       id: ref.id.trim(),
-      preview: typeof ref.preview === 'string' ? ref.preview.trim() : undefined,
+      preview,
       args: ref.args && typeof ref.args === 'object' ? { ...ref.args } : undefined,
     };
   });

@@ -198,6 +198,8 @@ export type OptionalPreviewRender = {
   title: string;
   values: { [key: string]: string | string[] | any };
   url: string;
+  /** Optional source preview/story key used to derive this preview */
+  sourcePreview?: string;
 };
 
 export interface TransformedPreviewComponents {

@@ -24,7 +24,7 @@ export type BaseDeclarationConfig = OptionalComponentMetadata & {
   name: string;
   renderer?: RendererKind;
   entries?: BaseDeclarationEntries;
-  previews: Record<string, DeclarationPreview>;
+  previews?: Record<string, DeclarationPreview>;
   shouldDo?: string[];
   shouldNotDo?: string[];
 };
