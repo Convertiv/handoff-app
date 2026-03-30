@@ -180,7 +180,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
 module.exports = defineHandlebarsComponent({
   id: '${name}',
-  title: '',
+  name: '',
   description: '',
   group: '',
   type: 'element',

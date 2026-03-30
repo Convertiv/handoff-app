@@ -57,7 +57,7 @@ const generateComponentStub = (config: ComponentConfig): string => {
   }
 
   const commonMetadata = `  id: "${config.name}",
-  title: "${config.title}",
+  name: "${config.title}",
   description: "${config.description}",
   group: "${config.group}",
   type: "element",
