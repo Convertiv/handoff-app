@@ -5,9 +5,10 @@ import Link from 'next/link';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import Footer from '../../../components/Footer';
 import Layout from '../../../components/Layout/Main';
-import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../../components/Typography/Headers';
 import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -99,7 +100,7 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
       </div>
       <hr className="mb-10" />
       <div className="prose">
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
       </div>

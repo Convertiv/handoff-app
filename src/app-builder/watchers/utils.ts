@@ -6,6 +6,7 @@ export interface WatcherState {
   pendingHandlers: Map<string, () => Promise<void>>;
   runtimeComponentsWatcher: chokidar.FSWatcher | null;
   runtimeConfigurationWatcher: chokidar.FSWatcher | null;
+  componentDirectoriesWatcher: chokidar.FSWatcher | null;
 }
 
 /**

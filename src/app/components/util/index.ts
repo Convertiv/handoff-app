@@ -7,12 +7,11 @@ import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
-import { SubPageType } from '../../pages/[level1]/[level2]';
-
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
-  slug: string;
+  slug: string | string[];
 }
+
 
 // Type for the metadata from frontmatter
 export interface Metadata {
@@ -86,13 +85,19 @@ export const knownPaths = [
   'assets/logos',
   'foundations',
   'foundations/colors',
-  'foundations/icons',
+  'foundations/icons',  
   'foundations/effects',
   'foundations/logos',
   'foundations/logo',
   'foundations/typography',
   'system',
   'system/component',
+  'system/tokens',
+  'system/tokens/foundations',
+  'system/tokens/foundations/colors',
+  'system/tokens/foundations/effects',
+  'system/tokens/foundations/typography',
+  'system/tokens/components',
   'system/pattern',
 ];
 
@@ -119,95 +124,99 @@ export const pluralizeComponent = (singular: string): string => {
 };
 
 /**
- * Build level 1 static path parameters
- * @returns
+ * Recursively collect all .md files from a directory, returning their
+ * path segments relative to the root (without the .md extension).
  */
-export const buildL1StaticPaths = () => {
-  const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
-  const files = fs.readdirSync(docRoot);
-  const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
-  let list = files;
-  if (fs.existsSync(pageRoot)) {
-    const pages = fs.readdirSync(pageRoot);
-    list = files.concat(pages);
+const collectMarkdownPaths = (rootDir: string, relativeParts: string[] = []): string[][] => {
+  if (!fs.existsSync(rootDir)) return [];
+  const entries = fs.readdirSync(rootDir);
+  const results: string[][] = [];
+  for (const entry of entries) {
+    const fullPath = path.join(rootDir, entry);
+    if (fs.lstatSync(fullPath).isDirectory()) {
+      results.push(...collectMarkdownPaths(fullPath, [...relativeParts, entry]));
+    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+      results.push([...relativeParts, entry.replace('.md', '')]);
+    }
   }
-  const paths = list
-    .filter((fileName) => {
-      if (fs.existsSync(path.join(docRoot, fileName))) return !fs.lstatSync(path.join(docRoot, fileName)).isDirectory();
-      if (fs.existsSync(path.join(pageRoot, fileName))) return !fs.lstatSync(path.join(pageRoot, fileName)).isDirectory();
-      return false;
-    })
-    .filter((fileName) => fileName.endsWith('.md'))
-    .map((fileName) => {
-      const path = fileName.replace('.md', '');
-      if (knownPaths.indexOf(path) < 0) {
-        return {
-          params: {
-            level1: path,
-          },
-        };
-      }
-    })
-    .filter(filterOutUndefined);
-  return paths;
+  return results;
 };
 
 /**
- * Build static paths for level 2
- * @returns SubPathType[]
+ * Build catch-all static paths for all markdown pages at any depth.
+ * Excludes paths in knownPaths (those have dedicated route files).
  */
-export const buildL2StaticPaths = () => {
+export const buildCatchAllStaticPaths = () => {
   const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
-  const files = fs.readdirSync(docRoot);
   const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
-  let list = files;
-  if (fs.existsSync(pageRoot)) {
-    const pages = fs.readdirSync(pageRoot);
-    list = files.concat(pages);
+
+  const docPaths = collectMarkdownPaths(docRoot);
+  const pagePaths = collectMarkdownPaths(pageRoot);
+
+  const seen = new Set<string>();
+  const allPaths: string[][] = [];
+
+  // Pages override docs (working copy wins)
+  for (const segments of [...pagePaths, ...docPaths]) {
+    const key = segments.join('/');
+    if (!seen.has(key)) {
+      seen.add(key);
+      allPaths.push(segments);
+    }
   }
-  const paths: SubPageType[] = list
-    .flatMap((fileName) => {
-      let calculatePath;
-      if (fs.existsSync(path.join(pageRoot, fileName))) {
-        calculatePath = path.join(pageRoot, fileName);
-      } else if (fs.existsSync(path.join(docRoot, fileName))) {
-        calculatePath = path.join(docRoot, fileName);
-      } else {
-        return undefined;
-      }
-      if (fs.lstatSync(calculatePath).isDirectory()) {
-        const subFiles = fs.readdirSync(calculatePath);
-        return subFiles
-          .filter((subFile) => subFile.endsWith('.md'))
-          .flatMap((subFile) => {
-            const childPath = fileName.replace('.md', '');
-            if (knownPaths.indexOf(fileName + '/' + subFile.replace('.md', '')) < 0) {
-              return {
-                params: {
-                  level1: fileName,
-                  level2: subFile.replace('.md', ''),
-                },
-              };
-            } else {
-              console.log('file path already exists', fileName + '/' + subFile.replace('.md', ''));
-            }
-          })
-          .filter(filterOutUndefined);
-      }
-    })
-    .filter(filterOutUndefined);
-  return paths;
+
+  return allPaths
+    .filter((segments) => knownPaths.indexOf(segments.join('/')) < 0)
+    .map((segments) => ({ params: { slug: segments } }));
 };
 
 /**
- * Build the static menu for rendeirng pages
+ * Recursively build menu entries from .md files in a directory.
+ * Returns sub-section items with nested menu items for subdirectories.
+ */
+const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): any[] => {
+  if (!fs.existsSync(dirPath)) return [];
+  const entries = fs.readdirSync(dirPath);
+  const items: any[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry);
+    if (fs.lstatSync(fullPath).isDirectory()) {
+      const nestedItems = buildMenuFromDirectory(fullPath, `${urlPrefix}/${entry}`);
+      if (nestedItems.length > 0) {
+        items.push({
+          title: startCase(entry),
+          path: `${urlPrefix}/${entry}`,
+          menu: nestedItems,
+        });
+      }
+    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+      const slug = entry.replace('.md', '');
+      const fullSlugPath = `${urlPrefix}/${slug}`.replace(/^\/+/, '');
+      if (knownPaths.indexOf(fullSlugPath) >= 0) continue;
+
+      const contents = fs.readFileSync(fullPath, 'utf-8');
+      const { data: metadata } = matter(contents);
+      if (metadata.enabled === false) continue;
+
+      items.push({
+        title: metadata.menuTitle ?? metadata.title ?? startCase(slug),
+        path: `/${fullSlugPath}`,
+        weight: metadata.weight ?? 0,
+      });
+    }
+  }
+
+  return items.sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
+};
+
+/**
+ * Build the static menu for rendering pages
  * @returns SectionLink[]
  */
 export const staticBuildMenu = () => {
-  // // Contents of docs
   const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
-  // Get the file list
-  if(!fs.existsSync(docRoot)) {
+  if (!fs.existsSync(docRoot)) {
     return [];
   }
   const files = fs.readdirSync(docRoot);
@@ -219,7 +228,6 @@ export const staticBuildMenu = () => {
     list = list.concat(pages);
   }
   const sections: SectionLink[] = [];
-  // Build path tree
   const custom = uniq(list)
     .map((fileName: string) => {
       let search = '';
@@ -244,12 +252,10 @@ export const staticBuildMenu = () => {
         let subSections = [];
 
         if (metadata.menu) {
-          // Build the submenu
           subSections = Object.keys(metadata.menu)
             .map((key) => {
               const sub = metadata.menu[key];
               if (sub.components) {
-                // The user wants to inject the component menu here
                 return {
                   title: sub.title,
                   menu: staticBuildComponentMenu(sub.components),
@@ -276,6 +282,21 @@ export const staticBuildMenu = () => {
               }
             })
             .filter(filterOutUndefined);
+        } else {
+          // Only auto-scan directories when no frontmatter menu is defined
+          const dirName = fileName.replace('.md', '');
+          const docDir = path.resolve(docRoot, dirName);
+          const pagesDir = path.resolve(workingPages, dirName);
+          const nestedFromDocs = buildMenuFromDirectory(docDir, `/${dirName}`);
+          const nestedFromPages = buildMenuFromDirectory(pagesDir, `/${dirName}`);
+
+          const seenPaths = new Set<string>();
+          for (const item of [...nestedFromPages, ...nestedFromDocs]) {
+            if (item.path && !seenPaths.has(item.path)) {
+              seenPaths.add(item.path);
+              subSections.push(item);
+            }
+          }
         }
 
         let external: string | boolean = false;

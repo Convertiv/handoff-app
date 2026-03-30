@@ -3,10 +3,11 @@ import sortedUniq from 'lodash/sortedUniq';
 import type * as next from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { DownloadTokens } from '../../components/DownloadTokens';
 import TypographyExamples from '../../components/Foundations/TypographyExample';
 import Layout from '../../components/Layout/Main';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import AnchorNav, { anchorSlugify } from '../../components/Navigation/AnchorNav';
 import HeadersType from '../../components/Typography/Headers';
 import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
@@ -124,7 +125,7 @@ const Typography = ({
         />
 
         <div className="prose">
-          <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+          <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
             {content}
           </ReactMarkdown>
         </div>

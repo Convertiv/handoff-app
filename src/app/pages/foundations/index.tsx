@@ -2,9 +2,10 @@ import { Hexagon, LayoutPanelLeft, Palette, Shapes, Sun, TypeOutline } from 'luc
 import type { GetStaticProps } from 'next';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import CardsWithIcons from '../../components/cards/CardsWithIcons';
 import Layout from '../../components/Layout/Main';
-import { MarkdownComponents } from '../../components/Markdown/MarkdownComponents';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import HeadersType from '../../components/Typography/Headers';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
 
@@ -33,7 +34,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
       </div>
       <div className="prose">
-        <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
           {content}
         </ReactMarkdown>
       </div>

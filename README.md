@@ -16,6 +16,7 @@ transform tokens into dev ready artifacts.
 * [How does it work](#how-does-it-work)
   * [Handoff is in Beta!](#handoff-is-in-beta)
 * [Requirements](#requirements)
+* [Configuration hooks](#configuration-hooks)
 * [Get Started](#get-started)
   * [Figma](#figma)
   * [Create a project](#create-a-project)
@@ -167,6 +168,12 @@ handoff-app start
 * Back in your project, open a new terminal tab and type `npm run fetch`
 
 Once that runs, your browser should update with the new colors.
+
+## Configuration hooks
+
+Pipeline customization is done in `handoff.config.js` under `hooks` (camelCase names: `validateComponent`, `jsBuildConfig`, `registerHandlebarsHelpers`, etc.). For example, `registerHandlebarsHelpers` runs after Handoff registers the built-in `field` and `eq` helpers so you can call `handlebars.registerHelper` for your `.hbs` preview templates.
+
+See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 
 ## Further Reading
 
