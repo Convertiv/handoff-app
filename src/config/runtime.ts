@@ -2,14 +2,14 @@ import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
-import { normalizeComponentDeclaration } from './normalizers/declaration';
-import { normalizePatternDeclaration } from './normalizers/pattern';
 import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
-import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
+import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { normalizePathForCompare } from '../utils/path';
+import { normalizeComponentDeclaration } from './normalizers/declaration';
+import { normalizePatternDeclaration } from './normalizers/pattern';
 
 /**
  * Handoff instance shape needed by initRuntimeConfig.
@@ -367,14 +367,22 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
       const component = components[ref.id];
 
       if (!component) {
-        Logger.warn(
-          `[handoff] Pattern "${patternId}" references component "${ref.id}" which is not declared. Skipping.`
-        );
+        const error = `Pattern "${patternId}" references component "${ref.id}" which is not declared. This fragment will be skipped.`;
+        Logger.warn(error);
+        ref.resolved = false;
         continue;
       }
 
       // Case 1: only preview, no args -> use the existing preview as-is
       if (ref.preview && !ref.args) {
+        if (component.previews?.[ref.preview]) {
+          ref.resolved = true;
+        } else {
+          const error =
+            `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. This fragment may be skipped.`;
+          Logger.warn(error);
+          ref.resolved = false;
+        }
         ref.resolvedPreview = ref.preview;
         continue;
       }
@@ -383,6 +391,7 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
       if (!ref.preview && !ref.args) {
         const previewKeys = Object.keys(component.previews || {});
         ref.resolvedPreview = previewKeys[0] || 'default';
+        ref.resolved = true;
         continue;
       }
 
@@ -394,9 +403,10 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         if (basePreview) {
           resolvedValues = { ...basePreview.values };
         } else {
-          Logger.warn(
-            `[handoff] Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`
-          );
+          const error =
+            `[handoff] Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
+          Logger.warn(error);
+          ref.resolved = false;
         }
       }
 
@@ -413,6 +423,9 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
       };
 
       ref.resolvedPreview = syntheticKey;
+      if (ref.resolved === undefined) {
+        ref.resolved = true;
+      }
     }
   }
 };

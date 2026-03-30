@@ -80,6 +80,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
   const nextLink = nextPattern
     ? { href: patternRoute(nextPattern.id), title: nextPattern.title }
     : null;
+  const invalidComponents = pattern?.components?.filter((comp) => comp.resolved === false) ?? [];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -136,6 +137,12 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
           )}
         </div>
 
+        {invalidComponents.length > 0 && (
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            {invalidComponents.length} pattern component{invalidComponents.length > 1 ? 's could' : ' could'} not be resolved and {invalidComponents.length > 1 ? 'were' : 'was'} skipped.
+          </div>
+        )}
+
         {/* Full-page pattern preview */}
         <div className="rounded-lg border border-gray-200 dark:border-gray-900">
           <div className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 dark:bg-gray-800">
@@ -173,6 +180,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
                   <tr>
                     <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Component</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Preview</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Custom Args</th>
                   </tr>
                 </thead>
@@ -182,6 +190,17 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
                       <td className="px-4 py-2 font-mono text-xs">{comp.id}</td>
                       <td className="px-4 py-2 text-xs text-gray-500">
                         {comp.preview || comp.resolvedPreview || 'default'}
+                      </td>
+                      <td className="px-4 py-2 text-xs">
+                        {comp.resolved === false ? (
+                          <span className="inline-flex w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                            Unresolved
+                          </span>
+                        ) : (
+                          <span className="inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
+                            OK
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-xs text-gray-500">
                         {comp.args ? JSON.stringify(comp.args) : '-'}

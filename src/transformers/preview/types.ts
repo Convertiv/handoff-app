@@ -219,6 +219,8 @@ export type PatternComponentEntry = {
   args?: Record<string, any>;
   /** Preview key resolved during injectPatternPreviews (set at build time) */
   resolvedPreview?: string;
+  /** Whether the pattern entry resolved to a usable component preview */
+  resolved?: boolean;
 };
 
 export type PatternObject = {

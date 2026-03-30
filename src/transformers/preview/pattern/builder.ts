@@ -34,19 +34,27 @@ export async function processPatterns(handoff: Handoff): Promise<PatternListObje
 
     for (let i = 0; i < pattern.components.length; i++) {
       const ref = pattern.components[i];
+
+      if (ref.resolved === false && !ref.resolvedPreview) {
+        hasErrors = true;
+        continue;
+      }
+
       const previewKey = ref.resolvedPreview || ref.preview || 'default';
       const htmlFileName = `${ref.id}-${previewKey}.html`;
       const htmlFilePath = path.resolve(componentOutputDir, htmlFileName);
 
       if (!fs.existsSync(htmlFilePath)) {
-        Logger.warn(
+        const error =
           `[handoff] Pattern "${patternId}" component[${i}] ("${ref.id}") preview file not found: ${htmlFileName}. ` +
-            `Ensure the component has a preview named "${previewKey}".`
-        );
+          `Ensure the component has a preview named "${previewKey}".`;
+        Logger.warn(error);
+        ref.resolved = false;
         hasErrors = true;
         continue;
       }
 
+      ref.resolved = true;
       const html = await fs.readFile(htmlFilePath, 'utf8');
       fragments.push({ componentId: ref.id, html });
     }
