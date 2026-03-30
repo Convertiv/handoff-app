@@ -14,36 +14,36 @@ block styling, and GitHub Flavored Markdown table support.
 
 ### Features
 
-- **N-level deep markdown routing** — Replaced the fixed two-level routing
+* **N-level deep markdown routing** — Replaced the fixed two-level routing
   (`[level1]` / `[level1]/[level2]`) with a single `[...slug]` catch-all route
   that supports markdown pages at any directory depth. A new recursive
   `buildCatchAllStaticPaths` function walks `config/docs` and `pages`
   directories to collect `.md` files at any nesting level. The sidebar menu now
   also recursively scans directories to surface deeply nested pages.
 
-- **Automatic table of contents** — The existing but unused `PageTOC` component
+* **Automatic table of contents** — The existing but unused `PageTOC` component
   is now wired into the catch-all markdown page. It scans rendered headings
   (h1–h6) via a `MutationObserver` and populates the right-hand "On This Page"
   anchor nav automatically. Fixed a timing bug where headings were scanned
   before the markdown content was in the DOM, and fixed anchor IDs that were
   incorrectly prefixed with `#` (producing `##id` in URLs).
 
-- **Standardized code block styling** — Markdown fenced code blocks now render
+* **Standardized code block styling** — Markdown fenced code blocks now render
   with a toolbar header matching the site's `CodeHighlight` component: a
   language icon, filename or language label, and a copy-to-clipboard button. A
   new `remarkCodeMeta` remark plugin preserves the fence info string so metadata
-  like `` ```bash filename="deploy.sh" `` is parsed and displayed. The Prism
+  like ` ```bash filename="deploy.sh" ` is parsed and displayed. The Prism
   theme respects dark mode via `next-themes`, and registered languages now
   include bash, css, scss, jsx, tsx, typescript, yaml, handlebars, and more.
 
-- **Markdown table support** — Added `remark-gfm` to all `ReactMarkdown`
+* **Markdown table support** — Added `remark-gfm` to all `ReactMarkdown`
   instances across the codebase (17 files). Pipe tables, strikethrough,
   autolinks, and task lists now render correctly. Tables are styled via Tailwind
   Typography's `.prose table` defaults.
 
 ### Bug Fixes
 
-- **New components not detected in dev mode** — `npm run start` now watches
+* **New components not detected in dev mode** — `npm run start` now watches
   the parent component directories (from `config.entries.components`) for
   newly created components. Previously, only components known at startup had
   their files watched; adding a new component directory required restarting
@@ -52,40 +52,44 @@ block styling, and GitHub Flavored Markdown table support.
   reloads the runtime config, restarts the component and configuration
   watchers, and processes the new component automatically.
 
-- **Heading anchor IDs truncated** — The markdown heading anchor generator
+* **Heading anchor IDs truncated** — The markdown heading anchor generator
   was only reading the first child node (`children[0]`) instead of the full
   heading text, producing single-character or partial IDs (e.g. `id="u"`
   instead of `id="using-icons-in-templates"`). A new `extractText` helper
   recursively walks all children to build the complete anchor slug.
 
-- **Fenced code blocks without a language unstyled** — Bare ```` ``` ````
+* **Fenced code blocks without a language unstyled** — Bare ` ``` `
   blocks (no language identifier) now receive the same styled treatment as
   language-tagged blocks: toolbar, copy button, and themed background.
   Inline code is unaffected.
 
-- **Code blocks pushing page width** — Added `min-w-0` and `max-w-full` on
+* **Code blocks pushing page width** — Added `min-w-0` and `max-w-full` on
   the code block wrapper and the grid content column to prevent wide code
   from stretching the layout and pushing the TOC off-screen.
 
-- **Frontmatter menu duplicated by auto-scan** — When a markdown page
+* **Frontmatter menu duplicated by auto-scan** — When a markdown page
   defines its sidebar menu via frontmatter `menu`, the automatic directory
   scanner no longer appends duplicate entries. Auto-scanning now only runs
   as a fallback when no frontmatter menu is present.
 
-- **`.prose` max-width too narrow** — Overrode Tailwind Typography's default
+* **`.prose` max-width too narrow** — Overrode Tailwind Typography's default
   `max-width: 65ch` on `.prose` to `100%` so markdown content fills the
   available container width.
 
 ### Changed
 
-- Deleted `src/app/pages/[level1]/index.tsx` and
+* Deleted `src/app/pages/[level1]/index.tsx` and
   `src/app/pages/[level1]/[level2]/index.tsx` (replaced by `[...slug]`).
-- Removed `buildL1StaticPaths`, `buildL2StaticPaths`, and the `SubPageType`
+* Removed `buildL1StaticPaths`, `buildL2StaticPaths`, and the `SubPageType`
   interface from `src/app/components/util/index.ts`.
-- `ComponentGuidelines` now uses `MarkdownComponents` and the remark plugins
+* `ComponentGuidelines` now uses `MarkdownComponents` and the remark plugins
   for consistent rendering.
-- Added `system/tokens/**` paths to `knownPaths` to prevent catch-all route
+* Added `system/tokens/**` paths to `knownPaths` to prevent catch-all route
   conflicts with dedicated token pages.
+
+### Security Patch
+
+* Brace Expansion was updated to prevent a memory exhaustion issue.
 
 ## \[1.1.2] - 2026-03-26
 
