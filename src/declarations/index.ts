@@ -2,14 +2,18 @@ export {
   defineComponent,
   defineCsfComponent,
   defineHandlebarsComponent,
-  defineReactComponent,
+  definePattern,
+  defineReactComponent
 } from './helpers';
 
 export type {
   CsfDeclarationConfig,
   DeclarationPreview,
   GenericDeclarationConfig,
+  GenericPatternDeclarationConfig,
   HandlebarsDeclarationConfig,
+  PatternComponentRef,
   ReactDeclarationConfig,
-  RendererKind,
+  RendererKind
 } from './types';
+

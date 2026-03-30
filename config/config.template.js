@@ -58,6 +58,9 @@ const config = {
     scss: './sass/main.scss',
     js: './js/main.js',
     components: ['./components'],
+    // Uncomment to enable pattern documentation pages.
+    // Patterns compose component previews into single-page views.
+    // patterns: ['./patterns'],
   },
   // These are the asset zip file download links
   assetsZipLinks: {

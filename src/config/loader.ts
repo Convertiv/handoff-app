@@ -1,5 +1,5 @@
-import fs from 'fs-extra';
 import esbuild from 'esbuild';
+import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
 import { Config } from '../types/config';
@@ -90,7 +90,7 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>): Config
 
   if (ignored.length > 0 && configPath) {
     Logger.warn(
-      `[handoff] Multiple config files found. Using "${path.basename(configPath)}" and ignoring: ${ignored
+      `Multiple config files found. Using "${path.basename(configPath)}" and ignoring: ${ignored
         .map((filePath) => `"${path.basename(filePath)}"`)
         .join(', ')}.`
     );

@@ -12,23 +12,9 @@ import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
+import { createCsfStoryPreviews, CsfMeta, getCsfStoryEntries, StoryObject } from '../utils/csf';
 import { createViteLogger } from '../utils/vite-logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
-
-type StoryObject = {
-  name?: string;
-  args?: Record<string, any>;
-  argTypes?: Record<string, any>;
-  render?: (args: Record<string, any>) => any;
-};
-
-type CsfMeta = {
-  title?: string;
-  component?: React.ComponentType<any>;
-  args?: Record<string, any>;
-  argTypes?: Record<string, any>;
-  render?: (args: Record<string, any>) => any;
-};
 
 const PLUGIN_CONSTANTS = {
   PLUGIN_NAME: 'vite-plugin-csf-render',
@@ -78,15 +64,6 @@ function createSlotMetadata(
   };
 }
 
-function getStoryEntries(moduleExports: Record<string, any>): Array<[string, StoryObject]> {
-  return Object.entries(moduleExports).filter(([key, value]) => {
-    if (key === 'default' || key === '__esModule') return false;
-    if (typeof value === 'function') return true;
-    if (value && typeof value === 'object') return true;
-    return false;
-  }) as Array<[string, StoryObject]>;
-}
-
 function toReactElement(
   renderResult: any,
   meta: CsfMeta,
@@ -109,11 +86,11 @@ function toReactElement(
 
 function safeRenderToHtml(
   meta: CsfMeta,
-  story: StoryObject | ((args: Record<string, any>) => any),
+  story: StoryObject | ((args: Record<string, any>) => any) | undefined,
   args: Record<string, any>
 ): string {
   try {
-    const storyRender = typeof story === 'function' ? story : story.render;
+    const storyRender = typeof story === 'function' ? story : story?.render;
     const render = storyRender || meta.render;
 
     if (render) {
@@ -189,7 +166,8 @@ export function csfRenderPlugin(
       }
 
       const meta = (moduleExports.default || {}) as CsfMeta;
-      const stories = getStoryEntries(moduleExports);
+      const stories = getCsfStoryEntries(moduleExports);
+      const storyMap = Object.fromEntries(stories);
 
       if (stories.length === 0) {
         Logger.warn(`No named stories found in CSF file for ${componentId}: ${templatePath}`);
@@ -198,9 +176,16 @@ export function csfRenderPlugin(
 
       const explicitProperties = componentData.properties || {};
       const generatedProperties: Record<string, SlotMetadata> = { ...explicitProperties };
+      const incomingPreviews = { ...(componentData.previews || {}) };
+      const patternPreviews = Object.fromEntries(
+        Object.entries(incomingPreviews).filter(([key]) => key.startsWith('__pattern_'))
+      );
 
-      // Include all named stories as previews and infer properties from args/argTypes
-      componentData.previews = {};
+      // Include all named stories as previews and preserve injected pattern previews.
+      componentData.previews = {
+        ...createCsfStoryPreviews(moduleExports),
+        ...patternPreviews,
+      };
 
       for (const [storyKey, storyValue] of stories) {
         const storyObj = (typeof storyValue === 'function' ? {} : storyValue) as StoryObject;
@@ -211,12 +196,6 @@ export function csfRenderPlugin(
         const mergedArgTypes = {
           ...(meta.argTypes || {}),
           ...(storyObj.argTypes || {}),
-        };
-
-        componentData.previews[storyKey] = {
-          title: storyObj.name || startCase(storyKey),
-          values: mergedArgs,
-          url: '',
         };
 
         for (const [argKey, argValue] of Object.entries(mergedArgs)) {
@@ -285,11 +264,14 @@ export function csfRenderPlugin(
       componentData.properties = ensureIds(generatedProperties);
 
       let lastHtml = '';
-      for (const [storyKey, storyValue] of stories) {
-        const preview = componentData.previews[storyKey];
+      for (const [previewKey, preview] of Object.entries(componentData.previews)) {
+        const storyKey = preview.sourcePreview && storyMap[preview.sourcePreview]
+          ? preview.sourcePreview
+          : (storyMap[previewKey] ? previewKey : undefined);
+        const storyValue = storyKey ? storyMap[storyKey] : undefined;
         const rendered = safeRenderToHtml(meta, storyValue, preview.values || {});
         const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered));
-        const fileName = `${componentId}-${storyKey}.html`;
+        const fileName = `${componentId}-${previewKey}.html`;
 
         this.emitFile({
           type: 'asset',
@@ -298,7 +280,7 @@ export function csfRenderPlugin(
         });
         this.emitFile({
           type: 'asset',
-          fileName: `${componentId}-${storyKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
+          fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
           source: html,
         });
 

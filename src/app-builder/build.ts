@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
+import { buildPatterns } from '../pipeline/patterns';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents from '../transformers/preview/component/builder';
@@ -90,9 +91,10 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
   // Perform cleanup
   await cleanupAppDirectory(handoff);
 
-  // Build components
+  // Build components, then patterns (patterns depend on component output)
   if (!skipComponents) {
     await buildComponents(handoff);
+    await buildPatterns(handoff);
   }
 
   // Prepare app
@@ -143,6 +145,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   await buildMainJS(handoff);
   await buildMainCss(handoff);
 
+  // Build patterns after components are ready
+  await buildPatterns(handoff);
+
   const appPath = await initializeProjectApp(handoff);
 
   // Persist client configuration
@@ -190,7 +195,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   };
 
   const state: WatcherState = {
-    debounce: false,
+    busy: false,
+    pendingHandlers: new Map(),
     runtimeComponentsWatcher: null,
     runtimeConfigurationWatcher: null,
     componentDirectoriesWatcher: null,
