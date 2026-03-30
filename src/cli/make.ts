@@ -123,7 +123,7 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   } else {
     componentsRoot = path.resolve(handoff.workingPath, DEFAULT_COMPONENTS_DIR);
     Logger.warn(
-      `No entries.components configured in handoff.config.js. ` +
+      `No entries.components configured in handoff.config.*. ` +
       `Scaffolding into "${DEFAULT_COMPONENTS_DIR}/". ` +
       `Add this path to entries.components in your config so the build picks it up.`
     );
@@ -146,10 +146,6 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
   fs.writeFileSync(targetHtml, htmlTemplate);
   Logger.success(`New component ${name}.hbs was created in ${workingPath}`);
 
-  const jsonpath = path.resolve(templatePath, 'template.json');
-  const jsonTemplate = fs.readFileSync(jsonpath, 'utf8');
-  fs.writeFileSync(path.resolve(workingPath, `${name}.json`), jsonTemplate);
-
   const writeJSFile = await p.confirm({
     message: `Generate a supporting javascript file ${name}.js?`,
     initialValue: false,
@@ -171,6 +167,37 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
     const scssTemplate = fs.readFileSync(scssPath, 'utf8');
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }
+
+  const declarationEntries = [`template: './${name}.hbs'`];
+  if (writeJSFile === true) {
+    declarationEntries.push(`js: './${name}.js'`);
+  }
+  if (writeSassFile === true) {
+    declarationEntries.push(`scss: './${name}.scss'`);
+  }
+
+  const declarationContent = `const { defineHandlebarsComponent } = require('handoff-app');
+
+module.exports = defineHandlebarsComponent({
+  id: '${name}',
+  name: '',
+  description: '',
+  group: '',
+  type: 'element',
+  entries: {
+    ${declarationEntries.join(',\n    ')}
+  },
+  previews: {
+    default: {
+      title: 'Default',
+      args: {}
+    }
+  }
+});
+`;
+
+  fs.writeFileSync(path.resolve(workingPath, `${name}.handoff.js`), declarationContent);
+  Logger.success(`New component declaration ${name}.handoff.js was created in ${workingPath}`);
 
   return handoff;
 };
