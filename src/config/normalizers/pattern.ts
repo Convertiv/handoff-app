@@ -5,7 +5,6 @@ type RawPatternDeclaration = Record<string, any>;
 type NormalizePatternOptions = {
   declarationPath: string;
   fallbackId: string;
-  warn: (message: string) => void;
 };
 
 export const normalizePatternDeclaration = (
@@ -32,12 +31,6 @@ export const normalizePatternDeclaration = (
     }
 
     const preview = typeof ref.preview === 'string' ? ref.preview.trim() : undefined;
-
-    if (!preview && !ref.args) {
-      options.warn(
-        `Pattern "${options.fallbackId}" component ref "${ref.id}" at index ${index} has neither "preview" nor "args". The component's default preview will be used.`
-      );
-    }
 
     return {
       id: ref.id.trim(),

@@ -8,6 +8,9 @@ import Layout from '../../../../components/Layout/Main';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../../../components/ui/accordion';
+import { Badge } from '../../../../components/ui/badge';
+import { JsonTreeView } from '../../../../components/ui/json-tree-view';
 import {
   DocumentationProps,
   fetchPatterns,
@@ -24,6 +27,66 @@ interface PatternPageProps extends DocumentationProps {
   previousPattern: PatternNavItem | null;
   nextPattern: PatternNavItem | null;
 }
+
+const SYNTHETIC_PATTERN_PREVIEW_PREFIX = '__pattern_';
+
+const isSyntheticPatternPreview = (previewKey?: string) => Boolean(previewKey?.startsWith(SYNTHETIC_PATTERN_PREVIEW_PREFIX));
+
+const formatPreviewLabel = (component: PatternListObject['components'][number], index: number) => {
+  const previewKey = component.preview || component.resolvedPreview;
+
+  if (!previewKey) {
+    return {
+      title: 'Default preview',
+      subtitle: 'Uses the component default preview configuration.',
+      rawKey: null,
+    };
+  }
+
+  if (isSyntheticPatternPreview(previewKey)) {
+    return {
+      title: component.args ? 'Custom configuration' : `Generated preview ${index + 1}`,
+      subtitle: component.args ? 'Built from inline args for this pattern.' : 'Generated specifically for this pattern composition.',
+      rawKey: previewKey,
+    };
+  }
+
+  return {
+    title: startCase(previewKey),
+    subtitle: 'Named preview from the component docs.',
+    rawKey: previewKey,
+  };
+};
+
+const formatArgValue = (value: unknown) => {
+  if (typeof value === 'string') {
+    return value.length > 24 ? `${value.slice(0, 21)}...` : value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `${value.length} item${value.length === 1 ? '' : 's'}`;
+  }
+
+  if (value && typeof value === 'object') {
+    return `${Object.keys(value as Record<string, unknown>).length} fields`;
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  return 'set';
+};
+
+const getArgSummary = (args?: Record<string, unknown>) => {
+  if (!args) return [];
+
+  return Object.entries(args).slice(0, 3);
+};
 
 export async function getStaticPaths() {
   return {
@@ -74,12 +137,8 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
   const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
   const patternRoute = (patternId: string) => `${normalizedBasePath}/system/pattern/${patternId}`;
 
-  const previousLink = previousPattern
-    ? { href: patternRoute(previousPattern.id), title: previousPattern.title }
-    : null;
-  const nextLink = nextPattern
-    ? { href: patternRoute(nextPattern.id), title: nextPattern.title }
-    : null;
+  const previousLink = previousPattern ? { href: patternRoute(previousPattern.id), title: previousPattern.title } : null;
+  const nextLink = nextPattern ? { href: patternRoute(nextPattern.id), title: nextPattern.title } : null;
   const invalidComponents = pattern?.components?.filter((comp) => comp.resolved === false) ?? [];
 
   useEffect(() => {
@@ -115,7 +174,15 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
         <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Patterns</small>
-        <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        <div className="flex flex-wrap items-center gap-3">
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          <Badge
+            variant="outline"
+            className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-medium text-gray-600 dark:border-gray-700 dark:text-gray-300"
+          >
+            {pattern.components?.length ?? 0} component{(pattern.components?.length ?? 0) === 1 ? '' : 's'}
+          </Badge>
+        </div>
         {metadata.description && (
           <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
             <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
@@ -126,20 +193,10 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
       </div>
 
       <div className="max-w-[1100px]">
-        {/* Pattern composition info */}
-        <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-          <span>{pattern.components?.length ?? 0} component(s)</span>
-          {pattern.group && (
-            <>
-              <span className="text-gray-300">|</span>
-              <span>{pattern.group}</span>
-            </>
-          )}
-        </div>
-
         {invalidComponents.length > 0 && (
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-            {invalidComponents.length} pattern component{invalidComponents.length > 1 ? 's could' : ' could'} not be resolved and {invalidComponents.length > 1 ? 'were' : 'was'} skipped.
+            {invalidComponents.length} pattern component{invalidComponents.length > 1 ? 's could' : ' could'} not be resolved and{' '}
+            {invalidComponents.length > 1 ? 'were' : 'was'} skipped.
           </div>
         )}
 
@@ -163,9 +220,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
                 src={`${normalizedBasePath}/api/pattern/${pattern.url}`}
               />
             ) : (
-              <div className="flex items-center justify-center p-8 text-sm text-gray-500">
-                No preview available for this pattern.
-              </div>
+              <div className="flex items-center justify-center p-8 text-sm text-gray-500">No preview available for this pattern.</div>
             )}
           </div>
         </div>
@@ -173,42 +228,110 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
         {/* Component list */}
         {pattern.components && pattern.components.length > 0 && (
           <div className="mt-8">
-            <HeadersType.H3>Components in this pattern</HeadersType.H3>
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Component</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Preview</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Custom Args</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pattern.components.map((comp, i) => (
-                    <tr key={`${comp.id}-${i}`} className="border-b last:border-b-0 dark:border-gray-800">
-                      <td className="px-4 py-2 font-mono text-xs">{comp.id}</td>
-                      <td className="px-4 py-2 text-xs text-gray-500">
-                        {comp.preview || comp.resolvedPreview || 'default'}
-                      </td>
-                      <td className="px-4 py-2 text-xs">
-                        {comp.resolved === false ? (
-                          <span className="inline-flex w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <HeadersType.H3>Components in this pattern</HeadersType.H3>
+              </div>
+            </div>
+
+            <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+              {pattern.components.map((comp, i) => {
+                const previewMeta = formatPreviewLabel(comp, i);
+                const argSummary = getArgSummary(comp.args);
+                const hasArgs = Boolean(comp.args);
+
+                return (
+                  <div
+                    key={`${comp.id}-${i}`}
+                    className="border-b border-gray-200 bg-white last:border-b-0 dark:border-gray-800 dark:bg-transparent"
+                  >
+                    <div className="grid gap-4 px-5 py-4 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] md:px-6">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{String(i + 1).padStart(2, '0')}</span>
+                        <code className="font-mono text-[13px] text-gray-900 dark:text-gray-100">{comp.id}</code>
+                        {comp.resolved === false && (
+                          <Badge variant="warning" className="rounded-full px-2.5 py-0.5 text-[11px] font-medium">
                             Unresolved
-                          </span>
-                        ) : (
-                          <span className="inline-flex w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
-                            OK
-                          </span>
+                          </Badge>
                         )}
-                      </td>
-                      <td className="px-4 py-2 text-xs text-gray-500">
-                        {comp.args ? JSON.stringify(comp.args) : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+
+                      <div className="min-w-0">
+                        {comp.resolved === false ? (
+                          <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                            Could not resolve component preview.
+                          </div>
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-gray-400 dark:text-gray-500">
+                                  Preview
+                                </p>
+                                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{previewMeta.title}</p>
+                              </div>
+
+                              {previewMeta.rawKey && !hasArgs && (
+                                <div className="inline-flex max-w-full items-center gap-2 rounded-md bg-gray-50 px-2.5 py-1.5 dark:bg-gray-900">
+                                  <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+                                    Key
+                                  </span>
+                                  <code className="truncate font-mono text-xs text-gray-500 dark:text-gray-400">{previewMeta.rawKey}</code>
+                                </div>
+                              )}
+                            </div>
+
+                            {hasArgs ? (
+                              <div className="mt-2">
+                                <Accordion type="single" collapsible className="mt-1">
+                                  <AccordionItem value={`args-${i}`} className="border-none">
+                                    <div className="flex flex-wrap gap-2">
+                                      {argSummary.length > 0 && (
+                                        <dl className="flex flex-wrap gap-2">
+                                          {argSummary.map(([key, value]) => (
+                                            <div
+                                              key={key}
+                                              className="inline-flex max-w-full items-center gap-2 rounded-md bg-gray-50 px-2.5 py-1.5 dark:bg-gray-900"
+                                            >
+                                              <dt className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500">
+                                                {key}
+                                              </dt>
+                                              <dd className="truncate text-xs text-gray-900 dark:text-gray-100">{formatArgValue(value)}</dd>
+                                            </div>
+                                          ))}
+                                          {Object.keys(comp.args ?? {}).length > argSummary.length && (
+                                            <div className="inline-flex max-w-full items-center rounded-md bg-gray-50 px-2.5 py-1.5 text-xs text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+                                              +{Object.keys(comp.args ?? {}).length - argSummary.length} more
+                                            </div>
+                                          )}
+                                        </dl>
+                                      )}
+
+                                      <AccordionTrigger className="inline-flex w-auto flex-none items-center gap-1 rounded-md bg-gray-50 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400 no-underline hover:bg-gray-100 hover:text-gray-600 hover:no-underline dark:bg-gray-900 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 [&>svg]:h-3.5 [&>svg]:w-3.5">
+                                        All args
+                                      </AccordionTrigger>
+                                    </div>
+                                    <AccordionContent className="pt-2">
+                                      <JsonTreeView
+                                        data={comp.args}
+                                        defaultExpanded
+                                        maxInitialDepth={1}
+                                        className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900"
+                                      />
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
+                              </div>
+                            ) : (
+                              <></>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

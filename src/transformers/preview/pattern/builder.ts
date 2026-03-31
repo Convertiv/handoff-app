@@ -40,7 +40,15 @@ export async function processPatterns(handoff: Handoff): Promise<PatternListObje
         continue;
       }
 
-      const previewKey = ref.resolvedPreview || ref.preview || 'default';
+      const previewKey = ref.resolvedPreview || ref.preview;
+      if (!previewKey) {
+        const error =
+          `Pattern "${patternId}" component[${i}] ("${ref.id}") has no resolved preview key. Skipping.`;
+        Logger.warn(error);
+        ref.resolved = false;
+        hasErrors = true;
+        continue;
+      }
       const htmlFileName = `${ref.id}-${previewKey}.html`;
       const htmlFilePath = path.resolve(componentOutputDir, htmlFileName);
 

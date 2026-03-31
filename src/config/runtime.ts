@@ -282,7 +282,6 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
         pattern = normalizePatternDeclaration(rawPattern, {
           declarationPath: resolvedPatternConfigPath,
           fallbackId: patternBaseName,
-          warn: (message) => Logger.warn(message),
         });
       } catch (err) {
         Logger.error(`Failed to read or parse pattern config: ${resolvedPatternConfigPath}`, err);
@@ -387,11 +386,19 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         continue;
       }
 
-      // Case 2: no preview AND no args -> use the component's first existing preview
+      // Case 2: no preview AND no args -> use the component's first existing preview (never assume "default")
       if (!ref.preview && !ref.args) {
         const previewKeys = Object.keys(component.previews || {});
-        ref.resolvedPreview = previewKeys[0] || 'default';
-        ref.resolved = true;
+        const firstPreview = previewKeys[0];
+        if (firstPreview) {
+          ref.resolvedPreview = firstPreview;
+          ref.resolved = true;
+        } else {
+          Logger.warn(
+            `Pattern "${patternId}" component ref "${ref.id}" has neither "preview" nor "args", and the component has no previews. This fragment will be skipped.`
+          );
+          ref.resolved = false;
+        }
         continue;
       }
 
