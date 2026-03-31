@@ -1,6 +1,21 @@
 import Handoff from '../..';
 
 /**
+ * Optional hints for post-build finalizers (e.g. selective pattern rebuild).
+ */
+export type FinalizeContext = {
+  /**
+   * Only patterns that reference at least one of these component ids are rebuilt.
+   * When omitted, all patterns are rebuilt.
+   */
+  patternRebuildComponentIds?: string[];
+  /**
+   * When true, skip pattern artifact generation (no component preview HTML changed).
+   */
+  skipPatternFinalizer?: boolean;
+};
+
+/**
  * Handle returned by ConfigDiffStrategy.capture().
  *
  * Captures the pre-reload state in a closure so the snapshot type stays
@@ -17,5 +32,5 @@ export interface RebuildHandle {
 export interface ConfigDiffStrategy {
   readonly kind: string;
   capture(handoff: Handoff, entityId: string): RebuildHandle;
-  finalize(handoff: Handoff): Promise<void>;
+  finalize(handoff: Handoff, context?: FinalizeContext): Promise<void>;
 }

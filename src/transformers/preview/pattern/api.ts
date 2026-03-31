@@ -46,6 +46,23 @@ export const writePatternSummaryApi = async (
   );
 };
 
+/**
+ * Reads the pattern list summary when present (used for partial pattern rebuilds).
+ */
+export const readPatternSummaryApi = async (handoff: Handoff): Promise<PatternListObject[] | null> => {
+  const summaryPath = path.resolve(handoff.workingPath, 'public/api/patterns.json');
+  if (!fs.existsSync(summaryPath)) {
+    return null;
+  }
+  try {
+    const raw = await fs.readFile(summaryPath, 'utf8');
+    const parsed = JSON.parse(raw) as PatternListObject[];
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const syncPatternArtifacts = async (
   handoff: Handoff,
   validIds: Iterable<string>

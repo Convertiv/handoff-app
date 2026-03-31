@@ -1,9 +1,10 @@
 import Handoff from '../../..';
 import { buildPatterns } from '../../../pipeline/patterns';
 import processComponents, { ComponentSegment } from '../../../transformers/preview/component/builder';
+import { getPatternIdsReferencingComponents } from '../../../transformers/preview/pattern/builder';
 import { Logger } from '../../../utils/logger';
 import { diffMapSnapshots, MapSnapshot, stableStringify } from '../snapshot';
-import { ConfigDiffStrategy } from '../types';
+import { ConfigDiffStrategy, FinalizeContext } from '../types';
 
 /**
  * Snapshots every __pattern_{patternId}_* synthetic preview entry across all
@@ -59,7 +60,21 @@ export const patternDiffStrategy: ConfigDiffStrategy = {
     };
   },
 
-  async finalize(handoff) {
+  async finalize(handoff, context?: FinalizeContext) {
+    if (context?.skipPatternFinalizer) {
+      return;
+    }
+
+    const componentIds = context?.patternRebuildComponentIds;
+    if (componentIds?.length) {
+      const patternIds = getPatternIdsReferencingComponents(handoff, componentIds);
+      if (patternIds.length === 0) {
+        return;
+      }
+      await buildPatterns(handoff, { onlyPatternIds: new Set(patternIds) });
+      return;
+    }
+
     await buildPatterns(handoff);
   },
 };

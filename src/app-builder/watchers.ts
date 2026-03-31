@@ -8,7 +8,7 @@ import { buildMainJS } from '../transformers/preview/component/javascript';
 import { Logger } from '../utils/logger';
 import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { persistClientConfig } from './client-config';
-import { getStrategy, runAllFinalizers } from './config-diff';
+import { getStrategy, runAllFinalizers, type FinalizeContext } from './config-diff';
 import { syncPublicFiles } from './paths';
 import {
   getRuntimeComponentsPathsToWatch,
@@ -185,8 +185,20 @@ export const watchRuntimeComponents = (
               const entryType = runtimeComponentEntryTypeByPath.get(normalizedFile);
               const segmentToUpdate: ComponentSegment | undefined = entryType ? mapEntryTypeToSegment(entryType) : undefined;
               const componentId = resolveComponentIdForChangedFile(handoff, file);
+
+              const skipPatterns =
+                segmentToUpdate === ComponentSegment.JavaScript ||
+                segmentToUpdate === ComponentSegment.Style;
+
+              let finalizeContext: FinalizeContext | undefined;
+              if (skipPatterns) {
+                finalizeContext = { skipPatternFinalizer: true };
+              } else if (componentId) {
+                finalizeContext = { patternRebuildComponentIds: [componentId] };
+              }
+
               await processComponents(handoff, componentId, segmentToUpdate);
-              await runAllFinalizers(handoff);
+              await runAllFinalizers(handoff, finalizeContext);
             } catch (e) {
               Logger.error('Error processing component:', e);
             }
@@ -314,7 +326,7 @@ export const watchComponentDirectories = (handoff: Handoff, state: WatcherState,
         watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
         watchRuntimeConfiguration(handoff, state);
         await processComponents(handoff, dirName);
-        await runAllFinalizers(handoff);
+        await runAllFinalizers(handoff, { patternRebuildComponentIds: [dirName] });
       } catch (e) {
         Logger.error('Error processing new component:', e);
       }

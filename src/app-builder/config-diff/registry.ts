@@ -1,6 +1,6 @@
 import Handoff from '../..';
 import { patternDiffStrategy } from './strategies/pattern';
-import { ConfigDiffStrategy } from './types';
+import { ConfigDiffStrategy, FinalizeContext } from './types';
 
 const strategies = new Map<string, ConfigDiffStrategy>([
   [patternDiffStrategy.kind, patternDiffStrategy],
@@ -16,8 +16,8 @@ export const getAllStrategies = (): ConfigDiffStrategy[] =>
  * Runs every registered strategy finalizer.
  * Called after component rebuilds so derived artifacts stay up-to-date.
  */
-export const runAllFinalizers = async (handoff: Handoff): Promise<void> => {
+export const runAllFinalizers = async (handoff: Handoff, context?: FinalizeContext): Promise<void> => {
   for (const strategy of strategies.values()) {
-    await strategy.finalize(handoff);
+    await strategy.finalize(handoff, context);
   }
 };
