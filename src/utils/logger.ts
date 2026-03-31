@@ -1,3 +1,5 @@
+import readline from 'readline';
+
 import chalk from 'chalk';
 
 export class Logger {
@@ -43,6 +45,37 @@ export class Logger {
       if (data) {
         console.log(data);
       }
+    }
+  }
+
+  /**
+   * Log one line from a child process (e.g. Next.js) with the same timestamp prefix as other
+   * Handoff logs. Does not wrap the line in chalk so ANSI styling from the child is preserved.
+   */
+  static childProcessLine(line: string) {
+    console.log(`${this.getTimestamp()} ${line}`);
+  }
+
+  /**
+   * Pipe stdout/stderr from a spawned child through {@link childProcessLine} so output matches
+   * Handoff log formatting. Use with `stdio: ['inherit' | 'ignore', 'pipe', 'pipe']`.
+   */
+  static pipeChildStreams(stdout: NodeJS.ReadableStream | null, stderr: NodeJS.ReadableStream | null) {
+    for (const stream of [stdout, stderr]) {
+      if (!stream) continue;
+      const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+      rl.on('line', (line) => {
+        this.childProcessLine(line);
+      });
+    }
+  }
+
+  /** Forward a completed child-process buffer (e.g. from `spawn.sync` with stdio pipe) line-by-line. */
+  static childProcessBuffer(buffer: Buffer | null | undefined) {
+    if (!buffer?.length) return;
+    const text = buffer.toString('utf8');
+    for (const line of text.split(/\r?\n/)) {
+      this.childProcessLine(line);
     }
   }
 }

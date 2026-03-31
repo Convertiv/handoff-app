@@ -105,12 +105,15 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
   // Build app
   const buildResult = spawn.sync('npx', ['next', 'build'], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
     },
   });
+
+  Logger.childProcessBuffer(buildResult.stdout);
+  Logger.childProcessBuffer(buildResult.stderr);
 
   if (buildResult.status !== 0) {
     let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
@@ -168,12 +171,13 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   }
   const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '--port', String(port)], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'development',
     },
   });
+  Logger.pipeChildStreams(nextProcess.stdout, nextProcess.stderr);
   Logger.success(`Ready on http://${hostname}:${port}`);
 
   nextProcess.on('error', (error) => {
@@ -230,12 +234,15 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   // Run
   const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'development',
     },
   });
+
+  Logger.childProcessBuffer(devResult.stdout);
+  Logger.childProcessBuffer(devResult.stderr);
 
   if (devResult.status !== 0) {
     let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
