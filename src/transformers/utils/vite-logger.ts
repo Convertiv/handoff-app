@@ -7,20 +7,20 @@ export const createViteLogger = (): ViteLogger => {
   return {
     hasWarned: false,
     info(msg: string, options?: LogOptions) {
-      Logger.info(msg);
+      Logger.info(msg, 'vite');
     },
     warn(msg: string, options?: LogOptions) {
       this.hasWarned = true;
-      Logger.warn(msg);
+      Logger.warn(msg, 'vite');
     },
     warnOnce(msg: string, options?: LogOptions) {
       if (warnedMessages.has(msg)) return;
       warnedMessages.add(msg);
       this.hasWarned = true;
-      Logger.warn(msg);
+      Logger.warn(msg, 'vite');
     },
     error(msg: string, options?: LogOptions) {
-      Logger.error(msg);
+      Logger.error(msg, undefined, 'vite');
     },
     clearScreen(type: string) {
       // No-op to preserve terminal history
