@@ -14,6 +14,7 @@ import {
   updateComponentCacheEntry,
 } from '../../../cache';
 import Handoff from '../../../index';
+import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, OptionalPreviewRender, TransformComponentTokensResult } from '../types';
@@ -81,6 +82,44 @@ const getBuildPreviews = (data: TransformComponentTokensResult): { [key: string]
     ...(data?.previews || {}),
     ...(data?.internalPatternPreviews || {}),
   };
+};
+
+/** Vite-backed segments in execution order; extend here if new steps are added. */
+const VITE_BUILD_SEGMENTS: {
+  key: keyof Pick<ComponentBuildPlan, 'js' | 'css' | 'previews'>;
+  label: string;
+}[] = [
+  { key: 'js', label: 'script' },
+  { key: 'css', label: 'styles' },
+  { key: 'previews', label: 'previews' },
+];
+
+const isFullViteComponentBuild = (plan: ComponentBuildPlan): boolean => plan.js && plan.css && plan.previews;
+
+const getActiveViteBuildLabels = (plan: ComponentBuildPlan): string[] =>
+  VITE_BUILD_SEGMENTS.filter(({ key }) => plan[key]).map(({ label }) => label);
+
+/** e.g. "a", "a and b", "a, b, and c" — common CLI copy style. */
+const formatEnglishList = (items: string[]): string => {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+};
+
+const viteBuildStartMessage = (componentId: string, plan: ComponentBuildPlan): string => {
+  if (isFullViteComponentBuild(plan)) {
+    return `Building component "${componentId}"…`;
+  }
+  return `Building ${formatEnglishList(getActiveViteBuildLabels(plan))} for component "${componentId}"…`;
+};
+
+const viteBuildFinishMessage = (componentId: string, plan: ComponentBuildPlan, elapsedMs: number): string => {
+  const duration = formatDurationMs(elapsedMs);
+  if (isFullViteComponentBuild(plan)) {
+    return `Finished building component "${componentId}" in ${duration}`;
+  }
+  return `Finished building ${formatEnglishList(getActiveViteBuildLabels(plan))} for component "${componentId}" in ${duration}`;
 };
 
 /**
@@ -193,11 +232,16 @@ export async function processComponents(
       pruneRemovedComponents(cache, allComponentIds);
     }
 
-    const skippedCount = allComponentIds.length - componentsToBuild.size;
-    if (skippedCount > 0) {
-      Logger.info(`Building ${componentsToBuild.size} of ${allComponentIds.length} components (${skippedCount} unchanged)`);
-    } else if (componentsToBuild.size > 0) {
-      Logger.info(`Building all ${componentsToBuild.size} components`);
+    const total = allComponentIds.length;
+    const toBuildCount = componentsToBuild.size;
+    const skippedCount = total - toBuildCount;
+
+    if (total > 0 && toBuildCount === 0) {
+      Logger.info(`All ${total} components unchanged; skipping build`);
+    } else if (skippedCount > 0 && toBuildCount > 0) {
+      Logger.info(`Building ${toBuildCount} of ${total} components (${skippedCount} unchanged)`);
+    } else if (toBuildCount > 0) {
+      Logger.info(`Building all ${toBuildCount} components`);
     } else {
       Logger.info('All components up to date, nothing to build');
     }
@@ -301,6 +345,13 @@ export async function processComponents(
     // Components should always have at least one preview variation.
     ensureDefaultPreview(data);
 
+    const runsViteBuildSteps = buildPlan.js || buildPlan.css || buildPlan.previews;
+    let viteBuildStartedAtMs = 0;
+    if (runsViteBuildSteps) {
+      viteBuildStartedAtMs = Date.now();
+      Logger.info(viteBuildStartMessage(runtimeComponentId, buildPlan));
+    }
+
     // Build JS if needed (new build, validation missing, or explicit segment request).
     if (buildPlan.js) {
       data = await buildComponentJs(data, handoff);
@@ -319,6 +370,11 @@ export async function processComponents(
         handoff,
         components
       );
+    }
+
+    if (runsViteBuildSteps) {
+      const elapsedMs = Date.now() - viteBuildStartedAtMs;
+      Logger.info(viteBuildFinishMessage(runtimeComponentId, buildPlan, elapsedMs));
     }
 
     /**

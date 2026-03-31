@@ -169,6 +169,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     // create empty directory
     await fs.ensureDir(moduleOutput);
   }
+  Logger.info(`Starting Next.js dev server (Turbopack) at http://${hostname}:${port}…`);
+
   const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '--port', String(port)], {
     cwd: appPath,
     stdio: ['inherit', 'pipe', 'pipe'],
@@ -178,16 +180,21 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     },
   });
   Logger.pipeChildStreams(nextProcess.stdout, nextProcess.stderr);
-  Logger.success(`Ready on http://${hostname}:${port}`);
 
   nextProcess.on('error', (error) => {
-    Logger.error(`Next.js dev process error: ${error}`);
+    Logger.error(`Next.js dev process failed to start: ${error}`);
     process.exit(1);
   });
 
-  nextProcess.on('close', (code) => {
-    Logger.success(`Next.js dev process closed with code ${code}`);
-    process.exit(code);
+  nextProcess.on('close', (code, signal) => {
+    if (code === 0) {
+      Logger.success(`Next.js dev process exited normally`);
+    } else if (signal) {
+      Logger.warn(`Next.js dev process stopped (${signal})`);
+    } else {
+      Logger.error(`Next.js dev process exited with code ${code}`);
+    }
+    process.exit(code ?? 1);
   });
 
   const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
@@ -231,8 +238,10 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   // Persist client configuration
   await persistClientConfig(handoff);
 
-  // Run
-  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+  const devPort = handoff.config.app.ports?.app ?? 3000;
+  Logger.info(`Starting Next.js dev server (Turbopack) on port ${devPort}…`);
+
+  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(devPort)], {
     cwd: appPath,
     stdio: ['inherit', 'pipe', 'pipe'],
     env: {

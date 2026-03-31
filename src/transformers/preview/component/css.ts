@@ -3,6 +3,7 @@ import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
 import { initRuntimeConfig } from '../../../config';
 import Handoff from '../../../index';
+import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
@@ -174,10 +175,9 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
     if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
-      Logger.success(`Building main CSS file...`);
-
+      Logger.info(`Building styles for global entry (main.css)…`);
+      const startedAt = Date.now();
       try {
-        // Setup SASS load paths
         const loadPaths = [
           path.resolve(handoff.workingPath),
           path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
@@ -195,8 +195,9 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
           loadPaths,
           handoff,
         });
-      } catch (e) {
-        Logger.error(`Failed to build main CSS:`, e);
+        Logger.info(`Finished building styles for global entry (main.css) in ${formatDurationMs(Date.now() - startedAt)}`);
+      } catch {
+        // buildCssBundle already logs failure for the entry path
       }
     }
   }

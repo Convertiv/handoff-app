@@ -3,6 +3,7 @@ import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
 import { initRuntimeConfig } from '../../../config';
 import Handoff from '../../../index';
+import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
@@ -54,8 +55,6 @@ const buildJsBundle = async (
     }
 
     await viteBuild(viteConfig);
-  } catch (e) {
-    Logger.error(`Failed to build JS for "${outputFilename}":`, e);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
@@ -86,14 +85,19 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
 
   try {
     const js = await fs.readFile(path.resolve(entry), 'utf8');
-    await buildJsBundle(
-      {
-        entry,
-        outputPath,
-        outputFilename: `${id}.js`,
-      },
-      handoff
-    );
+    try {
+      await buildJsBundle(
+        {
+          entry,
+          outputPath,
+          outputFilename: `${id}.js`,
+        },
+        handoff
+      );
+    } catch (e) {
+      Logger.error(`Failed to bundle JS for component "${id}" (${id}.js):`, e);
+      return data;
+    }
 
     data.js = js;
     const compiled = await fs.readFile(path.resolve(outputPath, `${id}.js`), 'utf8');
@@ -113,21 +117,27 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
  *
  * @param handoff - The Handoff configuration object containing build settings
  * @returns A Promise that resolves when the build process is complete
- * @throws May throw an error if the build process fails
  */
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
   const runtimeConfig = initRuntimeConfig(handoff)[0];
 
   if (runtimeConfig && runtimeConfig.entries.js && fs.existsSync(path.resolve(runtimeConfig.entries.js))) {
-    await buildJsBundle(
-      {
-        entry: runtimeConfig.entries.js,
-        outputPath,
-        outputFilename: 'main.js',
-      },
-      handoff
-    );
+    Logger.info(`Building script for global entry (main.js)…`);
+    const startedAt = Date.now();
+    try {
+      await buildJsBundle(
+        {
+          entry: runtimeConfig.entries.js,
+          outputPath,
+          outputFilename: 'main.js',
+        },
+        handoff
+      );
+      Logger.info(`Finished building script for global entry (main.js) in ${formatDurationMs(Date.now() - startedAt)}`);
+    } catch (e) {
+      Logger.error(`Failed to build global script (main.js):`, e);
+    }
   }
 };
 
