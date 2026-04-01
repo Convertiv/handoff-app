@@ -99,6 +99,7 @@ export const knownPaths = [
   'system/tokens/foundations/typography',
   'system/tokens/components',
   'system/pattern',
+  'playground',
 ];
 
 /**
