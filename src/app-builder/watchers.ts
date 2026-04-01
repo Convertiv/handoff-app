@@ -16,6 +16,7 @@ export interface WatcherState {
   debounce: boolean;
   runtimeComponentsWatcher: chokidar.FSWatcher | null;
   runtimeConfigurationWatcher: chokidar.FSWatcher | null;
+  componentDirectoriesWatcher: chokidar.FSWatcher | null;
 }
 
 /**
@@ -317,13 +318,9 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
             state.debounce = true;
             try {
               file = path.dirname(file);
-              // Reload the Handoff instance to pick up configuration changes
               handoff.reload();
-              // After reloading, persist the updated client configuration
               await persistClientConfig(handoff);
-              // Restart the runtime components watcher to track potentially updated/added/removed components
               watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
-              // Process components based on the updated configuration and file path
               await processComponents(handoff, path.basename(file));
             } catch (e) {
               Logger.error('Error reloading runtime configuration:', e);
@@ -335,4 +332,69 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
       }
     });
   }
+};
+
+/**
+ * Watches the parent component directories from config.entries.components
+ * for new components being added. When a new config file (e.g. button.json)
+ * appears in a new subdirectory, reloads the runtime config and restarts
+ * the component/configuration watchers so the new component is picked up.
+ */
+export const watchComponentDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+  if (state.componentDirectoriesWatcher) {
+    state.componentDirectoriesWatcher.close();
+  }
+
+  const componentPaths = handoff.config.entries?.components ?? [];
+  if (componentPaths.length === 0) return;
+
+  const dirsToWatch: string[] = [];
+  for (const componentPath of componentPaths) {
+    const resolved = path.resolve(handoff.workingPath, componentPath);
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+      dirsToWatch.push(resolved);
+    }
+  }
+
+  if (dirsToWatch.length === 0) return;
+
+  const knownComponents = new Set(Object.keys(handoff.runtimeConfig?.entries?.components ?? {}));
+
+  state.componentDirectoriesWatcher = chokidar.watch(dirsToWatch, {
+    ...chokidarConfig,
+    depth: 1,
+  });
+
+  state.componentDirectoriesWatcher.on('add', async (file) => {
+    const basename = path.basename(file);
+    const dirName = path.basename(path.dirname(file));
+
+    const isConfigFile = basename.endsWith('.json') || basename.endsWith('.js') || basename.endsWith('.cjs');
+    const isNewComponent = isConfigFile && basename.startsWith(dirName) && !knownComponents.has(dirName);
+
+    if (!isNewComponent) return;
+
+    if (!state.debounce) {
+      state.debounce = true;
+      try {
+        Logger.warn(`New component detected: ${dirName}. Reloading configuration...`);
+        handoff.reload();
+        knownComponents.add(dirName);
+
+        // Update known set with all current components
+        for (const id of Object.keys(handoff.runtimeConfig?.entries?.components ?? {})) {
+          knownComponents.add(id);
+        }
+
+        await persistClientConfig(handoff);
+        watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+        watchRuntimeConfiguration(handoff, state);
+        await processComponents(handoff, dirName);
+      } catch (e) {
+        Logger.error('Error processing new component:', e);
+      } finally {
+        state.debounce = false;
+      }
+    }
+  });
 };

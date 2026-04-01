@@ -1,40 +1,43 @@
 import Handlebars from 'handlebars';
+import { RegisterHandlebarsHelpersContext } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
 import { HandlebarsContext } from '../types';
 
 /**
- * Registers common Handlebars helpers
+ * Registers common Handlebars helpers, then runs optional `hooks.registerHandlebarsHelpers`.
  * @param data - Component data containing properties
  * @param injectFieldWrappers - Whether to inject field wrappers for inspection
+ * @param extend - Optional callback from config to register additional helpers
  */
 export const registerHandlebarsHelpers = (
   data: { properties: { [key: string]: SlotMetadata }; id: string },
-  injectFieldWrappers: boolean
+  injectFieldWrappers: boolean,
+  extend?: (context: RegisterHandlebarsHelpersContext) => void
 ): void => {
   // Field helper for property binding
   Handlebars.registerHelper('field', function (field: string, options: any) {
     if (injectFieldWrappers) {
       if (!field) {
-        // This deebuging isn't helpful in the context of the component library
+        // This debugging isn't helpful in the context of the component library
         // Logger.error(`Missing field declaration for ${data.id}`);
         return options.fn(this);
       }
-      
+
       let parts = field.split('.');
       let current: any = data.properties;
-      
+
       for (const part of parts) {
         if (current?.type === 'object') current = current.properties;
         else if (current?.type === 'array') current = current.items.properties;
         current = current?.[part];
       }
-      
+
       if (!current) {
         Logger.error(`Undefined field path for ${data.id}`);
         return options.fn(this);
       }
-      
+
       return new Handlebars.SafeString(
         `<span class="handoff-field handoff-field-${current?.type || 'unknown'}" data-handoff-field="${field}" data-handoff="${encodeURIComponent(JSON.stringify(current))}">${options.fn(this)}</span>`
       );
@@ -47,6 +50,19 @@ export const registerHandlebarsHelpers = (
   Handlebars.registerHelper('eq', function (a: any, b: any) {
     return a === b;
   });
+
+  if (extend) {
+    try {
+      extend({
+        handlebars: Handlebars,
+        componentId: data.id,
+        properties: data.properties,
+        injectFieldWrappers,
+      });
+    } catch (err) {
+      Logger.error(`registerHandlebarsHelpers hook failed for ${data.id}`, err);
+    }
+  }
 };
 
 /**
@@ -56,7 +72,11 @@ export const registerHandlebarsHelpers = (
  * @returns Handlebars context object
  */
 export const createHandlebarsContext = (
-  data: { id: string; properties: { [key: string]: SlotMetadata }; title: string },
+  data: {
+    id: string;
+    properties: { [key: string]: SlotMetadata };
+    title: string;
+  },
   previewData: { values?: any },
   options?: { includeSharedStyles?: boolean; previewCss?: string }
 ): HandlebarsContext => {

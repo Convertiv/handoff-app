@@ -1,65 +1,46 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import Layout from '../../../components/Layout/Main';
-import { MarkdownComponents } from '../../../components/Markdown/MarkdownComponents';
-import HeadersType from '../../../components/Typography/Headers';
+import remarkGfm from 'remark-gfm';
+import Layout from '../../components/Layout/Main';
+import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
+import { PageTOC } from '../../components/Navigation/AnchorNav';
+import HeadersType from '../../components/Typography/Headers';
 import {
-  buildL2StaticPaths,
+  buildCatchAllStaticPaths,
   DocumentationProps,
   fetchDocPageMarkdown,
   getClientRuntimeConfig,
-  IParams,
-  reduceSlugToString,
-} from '../../../components/util';
+} from '../../components/util';
 
-export interface SubPageType {
-  params: {
-    level1: string;
-    level2: string;
-  };
-}
-/**
- * Render all index pages
- * @returns
- */
 export async function getStaticPaths() {
   return {
-    paths: buildL2StaticPaths(),
+    paths: buildCatchAllStaticPaths(),
     fallback: false,
   };
 }
-/**
- * Get all the markdown data, build a menu tree, and then fetch the contents
- * of the current page for rendering
- *
- * This is all done statically at build time
- * @param context GetStaticProps
- * @returns
- */
-export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
-  const { level1 } = context.params as IParams;
-  let { level2 } = context.params as IParams;
-  if (!level2) {
-    level2 = '404';
-  }
+
+export const getStaticProps: GetStaticProps = (context) => {
+  const { slug } = context.params as { slug: string[] };
+  const dirParts = slug.slice(0, -1);
+  const file = slug[slug.length - 1];
+  const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
+  const sectionId = `/${slug[0]}`;
+
   return {
     props: {
-      ...fetchDocPageMarkdown(`docs/${level1}/`, reduceSlugToString(level2), `/${level1}`).props,
+      ...fetchDocPageMarkdown(docPath, file, sectionId).props,
       config: getClientRuntimeConfig(),
     },
   };
 };
 
-/**
- * Render Docs page
- * @param param0
- * @returns
- */
-export default function DocSubPage({ content, menu, metadata, current, config }: DocumentationProps) {
+export default function DocCatchAllPage({ content, menu, metadata, current, config }: DocumentationProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+
   if (content) {
     return (
       <Layout config={config} menu={menu} current={current} metadata={metadata}>
@@ -67,12 +48,15 @@ export default function DocSubPage({ content, menu, metadata, current, config }:
           <HeadersType.H1>{metadata.title}</HeadersType.H1>
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         </div>
-        <div>
-          <div className="prose mb-10">
-            <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
-              {content}
-            </ReactMarkdown>
+        <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+          <div className="min-w-0">
+            <div className="prose mb-10" ref={bodyRef}>
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+                {content}
+              </ReactMarkdown>
+            </div>
           </div>
+          <PageTOC body={bodyRef} title="On This Page" />
         </div>
       </Layout>
     );

@@ -6,7 +6,10 @@ import { Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { TransformComponentTokensResult } from '../preview/types';
-import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
+import {
+  createHandlebarsContext,
+  registerHandlebarsHelpers,
+} from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
 import { createViteLogger } from '../utils/vite-logger';
@@ -43,7 +46,8 @@ function processComponentInstances(
   if (componentData.figmaComponentId) {
     const figmaComponentKey = slugify(componentData.figmaComponentId);
     if (documentationComponents[figmaComponentKey]) {
-      for (const instance of documentationComponents[figmaComponentKey].instances) {
+      for (const instance of documentationComponents[figmaComponentKey]
+        .instances) {
         const variationId = instance.id;
         const instanceValues = Object.fromEntries(instance.variantProperties);
 
@@ -69,15 +73,14 @@ async function renderHandlebarsTemplate(
   template: string,
   componentData: TransformComponentTokensResult,
   previewData: PreviewRenderData,
-  injectFieldWrappers: boolean
+  injectFieldWrappers: boolean,
+  handoff: Handoff
 ): Promise<string> {
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
-    { 
-      id: componentData.id,
-      properties: componentData.properties || {}
-    },
-    injectFieldWrappers
+    { id: componentData.id, properties: componentData.properties || {} },
+    injectFieldWrappers,
+    handoff.config?.hooks?.registerHandlebarsHelpers
   );
 
   const context = createHandlebarsContext(
@@ -166,8 +169,13 @@ export function handlebarsPreviewsPlugin(
       // Process component instances from documentation
       processComponentInstances(componentData, documentationComponents);
 
-      if (!componentData.previews || Object.keys(componentData.previews).length === 0) {
-        Logger.warn(`No previews defined for ${componentId}; using default preview values.`);
+      if (
+        !componentData.previews ||
+        Object.keys(componentData.previews).length === 0
+      ) {
+        Logger.warn(
+          `No previews defined for ${componentId}; using default preview values.`
+        );
         componentData.previews = {
           default: {
             title: 'Default',
@@ -185,19 +193,43 @@ export function handlebarsPreviewsPlugin(
           const previewData = componentData.previews[previewKey];
 
           // Render both normal and inspect modes
-          const normalModeHtml = await renderHandlebarsTemplate(templateContent, componentData, previewData, false);
+          const normalModeHtml = await renderHandlebarsTemplate(
+            templateContent,
+            componentData,
+            previewData,
+            false,
+            handoff
+          );
 
-          const inspectModeHtml = await renderHandlebarsTemplate(templateContent, componentData, previewData, true);
+          const inspectModeHtml = await renderHandlebarsTemplate(
+            templateContent,
+            componentData,
+            previewData,
+            true,
+            handoff
+          );
 
           // Emit preview files
-          emitPreviewFiles(componentId, previewKey, normalModeHtml, inspectModeHtml, (file) => this.emitFile(file));
+          emitPreviewFiles(
+            componentId,
+            previewKey,
+            normalModeHtml,
+            inspectModeHtml,
+            (file) => this.emitFile(file)
+          );
 
           generatedPreviews[previewKey] = normalModeHtml;
-          componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+          componentData.previews[previewKey].url =
+            `${componentId}-${previewKey}.html`;
 
-          Logger.debug(`Generated Handlebars preview: ${componentId}-${previewKey}`);
+          Logger.debug(
+            `Generated Handlebars preview: ${componentId}-${previewKey}`
+          );
         } catch (err) {
-          Logger.error(`Failed to generate Handlebars preview for ${componentId}-${previewKey}`, err);
+          Logger.error(
+            `Failed to generate Handlebars preview for ${componentId}-${previewKey}`,
+            err
+          );
         }
       }
 
@@ -206,7 +238,9 @@ export function handlebarsPreviewsPlugin(
       componentData.preview = '';
       componentData.code = trimPreview(templateContent);
       const firstGeneratedPreview = Object.values(generatedPreviews)[0];
-      componentData.html = trimPreview(firstGeneratedPreview ?? templateContent);
+      componentData.html = trimPreview(
+        firstGeneratedPreview ?? templateContent
+      );
     },
   };
 }

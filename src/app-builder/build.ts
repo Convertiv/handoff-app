@@ -7,14 +7,15 @@ import { buildPatterns } from '../pipeline/patterns';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
+import { processPatterns } from '../transformers/preview/pattern/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { processPatterns } from '../transformers/preview/pattern/builder';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
   watchAppSource,
+  watchComponentDirectories,
   watchGlobalEntries,
   watchPages,
   watchPublicDirectory,
@@ -24,7 +25,8 @@ import {
 } from './watchers';
 import { createWebSocketServer } from './websocket';
 
-const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+const escapeForSingleQuotedJsString = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
@@ -52,7 +54,10 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 
   // Prepare project app dir
   await fs.ensureDir(appPath);
-  await fs.copy(srcPath, appPath, { overwrite: true, filter: (file) => !file.includes('next.config.mjs') });
+  await fs.copy(srcPath, appPath, {
+    overwrite: true,
+    filter: (file) => !file.includes('next.config.mjs'),
+  });
   await syncPublicFiles(handoff);
 
   // Copy custom theme CSS if it exists in the user's project
@@ -68,7 +73,11 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
-  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
+  const handoffExportPath = path.resolve(
+    handoff.workingPath,
+    handoff.exportsDirectory,
+    handoff.getProjectId()
+  );
   const nextConfigPath = path.resolve(srcPath, 'next.config.mjs');
   const targetPath = path.resolve(appPath, 'next.config.mjs');
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
@@ -77,7 +86,9 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   const escapedWorkingPath = escapeForSingleQuotedJsString(handoffWorkingPath);
   const escapedModulePath = escapeForSingleQuotedJsString(handoffModulePath);
   const escapedExportPath = escapeForSingleQuotedJsString(handoffExportPath);
-  const escapedWebsocketPort = escapeForSingleQuotedJsString(String(handoffWebsocketPort));
+  const escapedWebsocketPort = escapeForSingleQuotedJsString(
+    String(handoffWebsocketPort)
+  );
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -103,7 +114,11 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 const buildApp = async (
   handoff: Handoff,
   skipComponents?: boolean,
-  options?: { copyOnlyPaths?: string[]; deployDir?: string; skipPatterns?: boolean }
+  options?: {
+    copyOnlyPaths?: string[];
+    deployDir?: string;
+    skipPatterns?: boolean;
+  }
 ): Promise<void> => {
   skipComponents = skipComponents ?? false;
   const skipPatterns = options?.skipPatterns ?? false;
@@ -148,9 +163,13 @@ const buildApp = async (
   const outputRoot = deployDir
     ? path.resolve(deployDir)
     : path.resolve(handoff.workingPath, handoff.sitesDirectory);
-  const output = deployDir ? outputRoot : path.resolve(outputRoot, handoff.getProjectId());
+  const output = deployDir
+    ? outputRoot
+    : path.resolve(outputRoot, handoff.getProjectId());
   if (!deployDir) {
-    await fs.ensureDir(path.resolve(handoff.workingPath, handoff.sitesDirectory));
+    await fs.ensureDir(
+      path.resolve(handoff.workingPath, handoff.sitesDirectory)
+    );
   }
 
   if (copyOnlyPaths && copyOnlyPaths.length > 0) {
@@ -227,7 +246,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     process.exit(code);
   });
 
-  const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
+  const wss = await createWebSocketServer(
+    handoff.config.app.ports?.websocket ?? 3001
+  );
 
   const chokidarConfig = {
     ignored: /(^|[\/\\])\../, // ignore dotfiles
@@ -239,11 +260,17 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     debounce: false,
     runtimeComponentsWatcher: null,
     runtimeConfigurationWatcher: null,
+    componentDirectoriesWatcher: null,
   };
 
   watchPublicDirectory(handoff, wss, state, chokidarConfig);
-  watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
+  watchRuntimeComponents(
+    handoff,
+    state,
+    getRuntimeComponentsPathsToWatch(handoff)
+  );
   watchRuntimeConfiguration(handoff, state);
+  watchComponentDirectories(handoff, state, chokidarConfig);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
   watchRuntimePatterns(handoff, state);
@@ -267,14 +294,18 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   await persistClientConfig(handoff);
 
   // Run
-  const devResult = spawn.sync('npx', ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
-    cwd: appPath,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      NODE_ENV: 'development',
-    },
-  });
+  const devResult = spawn.sync(
+    'npx',
+    ['next', 'dev', '--port', String(handoff.config.app.ports?.app ?? 3000)],
+    {
+      cwd: appPath,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        NODE_ENV: 'development',
+      },
+    }
+  );
 
   if (devResult.status !== 0) {
     let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
