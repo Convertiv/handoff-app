@@ -80,11 +80,17 @@ const buildJsBundle = async (
  */
 export const buildComponentJs = async (data: TransformComponentTokensResult, handoff: Handoff): Promise<TransformComponentTokensResult> => {
   const id = data.id;
-  const entry = data.entries?.js;
-  if (!entry) return data;
-
   const outputPath = getComponentOutputPath(handoff);
   const builtJsPath = path.resolve(outputPath, `${id}.js`);
+  const entry = data.entries?.js;
+
+  if (!entry) {
+    // Keep generated output aligned with the current component declaration.
+    await fs.remove(builtJsPath);
+    delete data.js;
+    delete data['jsCompiled'];
+    return data;
+  }
 
   try {
     // Remove the previous artifact before rebuilding so a no-output build

@@ -102,8 +102,16 @@ const buildCssBundle = async ({
 const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff) => {
   const id = data.id;
   Logger.debug(`buildComponentCss`, id);
+  const outputPath = getComponentOutputPath(handoff);
+  const builtCssPath = path.resolve(outputPath, `${id}.css`);
   const entry = data.entries?.scss;
+
   if (!entry) {
+    // Keep generated output aligned with the current component declaration.
+    await fs.remove(builtCssPath);
+    delete data['css'];
+    delete data['sass'];
+    delete data['sharedStyles'];
     return data;
   }
 
@@ -112,9 +120,6 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
   if (!extension) {
     return data;
   }
-
-  const outputPath = getComponentOutputPath(handoff);
-  const builtCssPath = path.resolve(outputPath, `${id}.css`);
 
   try {
     if (extension === '.scss' || extension === '.css') {
