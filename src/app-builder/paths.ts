@@ -30,6 +30,17 @@ export const getAppPath = (handoff: Handoff): string => {
   return path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`);
 };
 
+const mirrorDirectory = async (sourcePath: string, destinationPath: string): Promise<void> => {
+  if (!(await fs.pathExists(sourcePath))) {
+    await fs.remove(destinationPath);
+    return;
+  }
+
+  await fs.remove(destinationPath);
+  await fs.ensureDir(path.dirname(destinationPath));
+  await fs.copy(sourcePath, destinationPath, { overwrite: true });
+};
+
 /**
  * Copy the public dir from the working dir to the module dir.
  */
@@ -37,8 +48,18 @@ export const syncPublicFiles = async (handoff: Handoff): Promise<void> => {
   const appPath = getAppPath(handoff);
   const workingPublicPath = getWorkingPublicPath(handoff);
   if (workingPublicPath) {
-    await fs.copy(workingPublicPath, path.resolve(appPath, 'public'), {
+    const destinationPublicPath = path.resolve(appPath, 'public');
+    const sourceApiPath = path.resolve(workingPublicPath, 'api');
+    const destinationApiPath = path.resolve(destinationPublicPath, 'api');
+
+    await fs.copy(workingPublicPath, destinationPublicPath, {
       overwrite: true,
+      filter: (file) => {
+        const relativePath = path.relative(workingPublicPath, file);
+        return relativePath !== 'api' && !relativePath.startsWith(`api${path.sep}`);
+      },
     });
+
+    await mirrorDirectory(sourceApiPath, destinationApiPath);
   }
 };

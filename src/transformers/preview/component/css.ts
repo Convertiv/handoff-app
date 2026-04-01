@@ -10,6 +10,9 @@ import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 const { pathToFileURL } = require('url');
 
+export const MAIN_COMPONENT_CSS_FILE = 'main.css';
+export const SHARED_COMPONENT_CSS_FILE = 'shared.css';
+
 /**
  * Builds a CSS bundle using Vite
  *
@@ -111,9 +114,14 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
   }
 
   const outputPath = getComponentOutputPath(handoff);
+  const builtCssPath = path.resolve(outputPath, `${id}.css`);
 
   try {
     if (extension === '.scss' || extension === '.css') {
+      // Remove the previous artifact before rebuilding so "no emitted CSS"
+      // doesn't silently preserve stale output from an earlier build.
+      await fs.remove(builtCssPath);
+
       // Read the original source
       const sourceContent = await fs.readFile(entry, 'utf8');
       if (extension === '.scss') {
@@ -140,7 +148,6 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       });
 
       // Read the built CSS
-      const builtCssPath = path.resolve(outputPath, `${id}.css`);
       if (fs.existsSync(builtCssPath)) {
         const builtCss = await fs.readFile(builtCssPath, 'utf8');
         data['css'] = builtCss;
@@ -151,8 +158,11 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
         if (splitCSS && splitCSS.length > 1) {
           data['css'] = splitCSS[1];
           data['sharedStyles'] = splitCSS[0];
-          await fs.writeFile(path.resolve(outputPath, 'shared.css'), data['sharedStyles']);
+          await fs.writeFile(path.resolve(outputPath, SHARED_COMPONENT_CSS_FILE), data['sharedStyles']);
         }
+      } else {
+        delete data['css'];
+        delete data['sharedStyles'];
       }
     }
   } catch (e) {
@@ -175,7 +185,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
 
     if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
-      Logger.info(`Building styles for global entry (main.css)…`);
+      Logger.info(`Building styles for global entry (${MAIN_COMPONENT_CSS_FILE})…`);
       const startedAt = Date.now();
       try {
         const loadPaths = [
@@ -191,11 +201,11 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
         await buildCssBundle({
           entry: entryPath,
           outputPath,
-          outputFilename: 'main.css',
+          outputFilename: MAIN_COMPONENT_CSS_FILE,
           loadPaths,
           handoff,
         });
-        Logger.info(`Finished building styles for global entry (main.css) in ${formatDurationMs(Date.now() - startedAt)}`);
+        Logger.info(`Finished building styles for global entry (${MAIN_COMPONENT_CSS_FILE}) in ${formatDurationMs(Date.now() - startedAt)}`);
       } catch {
         // buildCssBundle already logs failure for the entry path
       }

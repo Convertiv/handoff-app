@@ -4,7 +4,7 @@ import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 import { getDocumentedPreviews } from './previews';
 
-const sanitizeComponentApiData = (
+export const sanitizeComponentApiData = (
   component: TransformComponentTokensResult
 ): TransformComponentTokensResult => {
   if (!component) return component;
@@ -64,16 +64,6 @@ export const getAPIPath = (handoff: Handoff) => {
   return apiPath;
 };
 
-/**
- * Build the preview API from the component data
- * @param handoff
- * @param componentData
- */
-const writeComponentSummaryAPI = async (handoff: Handoff, componentData: ComponentListObject[]) => {
-  componentData.sort((a, b) => a.title.localeCompare(b.title));
-  await fs.writeFile(path.resolve(getAPIPath(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
-};
-
 export const writeComponentApi = async (
   id: string,
   component: TransformComponentTokensResult,
@@ -108,43 +98,6 @@ export const writeComponentApi = async (
   }
 
   await fs.writeFile(outputFilePath, JSON.stringify(sanitizedComponent, null, 2));
-};
-
-/**
- * Update the main component summary API with the new component data
- * @param handoff
- * @param componentData
- */
-export const updateComponentSummaryApi = async (handoff: Handoff, componentData: ComponentListObject[], isFullRebuild: boolean = false) => {
-  if (isFullRebuild) {
-    // Full rebuild: replace the entire file
-    await writeComponentSummaryAPI(handoff, componentData);
-    return;
-  }
-
-  // Partial update: merge with existing data
-  const apiPath = path.resolve(getAPIPath(handoff), 'components.json');
-  let existingData: ComponentListObject[] = [];
-
-  if (fs.existsSync(apiPath)) {
-    try {
-      const existing = await fs.readFile(apiPath, 'utf8');
-      existingData = (JSON.parse(existing) as ComponentListObject[]).map((component) => ({
-        ...component,
-        previews: getDocumentedPreviews(component.previews),
-      }));
-    } catch {
-      // Corrupt or missing JSON — treat as empty
-      existingData = [];
-    }
-  }
-
-  // Replace existing entries with same ID
-  const incomingIds = new Set(componentData.map((c) => c.id));
-  const merged = [...componentData, ...existingData.filter((c) => !incomingIds.has(c.id))];
-
-  // Always write the file (even if merged is empty)
-  await writeComponentSummaryAPI(handoff, merged);
 };
 
 /**
@@ -198,5 +151,4 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     path: `/api/component/${id}.json`,
   };
 };
-
-export default writeComponentSummaryAPI;
+export default writeComponentApi;

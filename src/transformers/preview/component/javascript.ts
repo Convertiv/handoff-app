@@ -9,6 +9,8 @@ import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
+export const MAIN_COMPONENT_JS_FILE = 'main.js';
+
 /**
  * Builds a JavaScript bundle using Vite
  *
@@ -82,8 +84,13 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
   if (!entry) return data;
 
   const outputPath = getComponentOutputPath(handoff);
+  const builtJsPath = path.resolve(outputPath, `${id}.js`);
 
   try {
+    // Remove the previous artifact before rebuilding so a no-output build
+    // cannot accidentally preserve stale compiled JS.
+    await fs.remove(builtJsPath);
+
     const js = await fs.readFile(path.resolve(entry), 'utf8');
     try {
       await buildJsBundle(
@@ -100,8 +107,12 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
     }
 
     data.js = js;
-    const compiled = await fs.readFile(path.resolve(outputPath, `${id}.js`), 'utf8');
-    data['jsCompiled'] = compiled;
+    if (await fs.pathExists(builtJsPath)) {
+      const compiled = await fs.readFile(builtJsPath, 'utf8');
+      data['jsCompiled'] = compiled;
+    } else {
+      delete data['jsCompiled'];
+    }
   } catch (e) {
     Logger.error(`JS build failed for component "${id}":`, e);
   }
@@ -123,20 +134,20 @@ export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const runtimeConfig = initRuntimeConfig(handoff)[0];
 
   if (runtimeConfig && runtimeConfig.entries.js && fs.existsSync(path.resolve(runtimeConfig.entries.js))) {
-    Logger.info(`Building script for global entry (main.js)…`);
+    Logger.info(`Building script for global entry (${MAIN_COMPONENT_JS_FILE})…`);
     const startedAt = Date.now();
     try {
       await buildJsBundle(
         {
           entry: runtimeConfig.entries.js,
           outputPath,
-          outputFilename: 'main.js',
+          outputFilename: MAIN_COMPONENT_JS_FILE,
         },
         handoff
       );
-      Logger.info(`Finished building script for global entry (main.js) in ${formatDurationMs(Date.now() - startedAt)}`);
+      Logger.info(`Finished building script for global entry (${MAIN_COMPONENT_JS_FILE}) in ${formatDurationMs(Date.now() - startedAt)}`);
     } catch (e) {
-      Logger.error(`Failed to build global script (main.js):`, e);
+      Logger.error(`Failed to build global script (${MAIN_COMPONENT_JS_FILE}):`, e);
     }
   }
 };
