@@ -4,32 +4,25 @@ import { startCase } from 'lodash';
 import path from 'path';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
+import reactElementToJSXString from 'react-element-to-jsx-string';
 import { Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
+import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 import { SlotMetadata, SlotType } from '../preview/component';
+import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
 import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
+import { extractComponentName, generateUsageSnippet } from '../utils/usage';
+import { createCsfStoryPreviews, CsfMeta, getCsfStoryEntries, StoryObject } from '../utils/csf';
 import { createViteLogger } from '../utils/vite-logger';
-import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 
-type StoryObject = {
-  name?: string;
-  args?: Record<string, any>;
-  argTypes?: Record<string, any>;
-  render?: (args: Record<string, any>) => any;
+type ComponentImportInfo = {
+  componentName: string;
+  importStatement: string;
 };
-
-type CsfMeta = {
-  title?: string;
-  component?: React.ComponentType<any>;
-  args?: Record<string, any>;
-  argTypes?: Record<string, any>;
-  render?: (args: Record<string, any>) => any;
-};
-
 const PLUGIN_CONSTANTS = {
   PLUGIN_NAME: 'vite-plugin-csf-render',
   SCRIPT_ID: 'script',
@@ -78,15 +71,6 @@ function createSlotMetadata(
   };
 }
 
-function getStoryEntries(moduleExports: Record<string, any>): Array<[string, StoryObject]> {
-  return Object.entries(moduleExports).filter(([key, value]) => {
-    if (key === 'default' || key === '__esModule') return false;
-    if (typeof value === 'function') return true;
-    if (value && typeof value === 'object') return true;
-    return false;
-  }) as Array<[string, StoryObject]>;
-}
-
 function toReactElement(
   renderResult: any,
   meta: CsfMeta,
@@ -107,28 +91,179 @@ function toReactElement(
   return React.createElement('pre', null, JSON.stringify(args, null, 2));
 }
 
+/**
+ * Produces the React element for a story, mirroring Storybook's resolution order:
+ * story render > meta render > meta.component > JSON fallback.
+ */
+function getStoryElement(
+  meta: CsfMeta,
+  story: StoryObject | ((args: Record<string, any>) => any) | undefined,
+  args: Record<string, any>
+): React.ReactElement {
+  const storyRender = typeof story === 'function' ? story : story?.render;
+  const render = storyRender || meta.render;
+
+  if (render) {
+    return toReactElement(render(args), meta, args);
+  }
+
+  if (meta.component) {
+    return React.createElement(meta.component, args);
+  }
+
+  return React.createElement('pre', null, JSON.stringify(args, null, 2));
+}
+
 function safeRenderToHtml(
   meta: CsfMeta,
-  story: StoryObject | ((args: Record<string, any>) => any),
+  story: StoryObject | ((args: Record<string, any>) => any) | undefined,
   args: Record<string, any>
 ): string {
   try {
-    const storyRender = typeof story === 'function' ? story : story.render;
-    const render = storyRender || meta.render;
-
-    if (render) {
-      return ReactDOMServer.renderToString(toReactElement(render(args), meta, args));
-    }
-
-    if (meta.component) {
-      return ReactDOMServer.renderToString(React.createElement(meta.component, args));
-    }
-
-    return ReactDOMServer.renderToString(React.createElement('pre', null, JSON.stringify(args, null, 2)));
+    return ReactDOMServer.renderToString(getStoryElement(meta, story, args));
   } catch (error) {
     Logger.warn(`SSR render failed for story, falling back to static placeholder: ${error}`);
     return `<div style="padding:1rem;color:#b91c1c;font-family:monospace;font-size:13px">Render error: ${String(error)}</div>`;
   }
+}
+
+/**
+ * Converts a story's React element into a JSX source string using the same
+ * approach as Storybook's Docs addon.
+ */
+function reactElementToUsage(element: React.ReactElement): string | null {
+  try {
+    return reactElementToJSXString(element, {
+      sortProps: false,
+      useBooleanShorthandSyntax: true,
+      useFragmentShortSyntax: true,
+      maxInlineAttributesLineLength: 80,
+    });
+  } catch (error) {
+    Logger.warn(`Failed to convert React element to JSX string: ${error}`);
+    return null;
+  }
+}
+
+function findMatchingBrace(source: string, openIndex: number): number {
+  let depth = 0;
+
+  for (let i = openIndex; i < source.length; i += 1) {
+    const char = source[i];
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function extractMetaObjectBody(sourceCode: string): string | null {
+  // TODO: Regex-based CSF meta parsing can miss complex inline `satisfies` cases.
+  // Move this to a TS-AST resolver in handoff-docgen and consume the normalized import info here.
+  const inlineMetaMatch = sourceCode.match(/export\s+default\s+({[\s\S]*?})\s*(?:satisfies\s+[^{;\n]+|as\s+[^{;\n]+)?\s*;/m);
+  if (inlineMetaMatch?.[1]) {
+    return inlineMetaMatch[1];
+  }
+
+  const exportedMetaRef = sourceCode.match(/export\s+default\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*;/m);
+  if (!exportedMetaRef?.[1]) {
+    return null;
+  }
+
+  const metaVarName = exportedMetaRef[1];
+  const declarationPatterns = [
+    new RegExp(`(?:const|let|var)\\s+${metaVarName}\\s*=\\s*`, 'm'),
+    new RegExp(`(?:const|let|var)\\s+${metaVarName}\\s*=\\s*[^\\n;]*?\\b(?:satisfies|as)\\b[^\\n;]*?`, 'm'),
+  ];
+
+  for (const pattern of declarationPatterns) {
+    const match = pattern.exec(sourceCode);
+    if (!match) continue;
+    const openIndex = sourceCode.indexOf('{', match.index);
+    if (openIndex === -1) continue;
+    const closeIndex = findMatchingBrace(sourceCode, openIndex);
+    if (closeIndex === -1) continue;
+    return sourceCode.slice(openIndex, closeIndex + 1);
+  }
+
+  return null;
+}
+
+function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | null {
+  const metaBody = extractMetaObjectBody(sourceCode);
+  if (!metaBody) {
+    return null;
+  }
+
+  const componentMatch = metaBody.match(/\bcomponent\s*:\s*([A-Za-z_$][A-Za-z0-9_$]*)\b/m);
+  if (!componentMatch?.[1]) {
+    return null;
+  }
+
+  const localName = componentMatch[1];
+
+  const defaultImportMatch = sourceCode.match(
+    new RegExp(`import\\s+${localName}\\s+from\\s+['"]([^'"]+)['"]`, 'm')
+  );
+  if (defaultImportMatch?.[1]) {
+    return {
+      componentName: localName,
+      importStatement: `import ${localName} from '${defaultImportMatch[1]}';`,
+    };
+  }
+
+  const namedImportRegex = /import\s*{\s*([^}]+)\s*}\s*from\s*['"]([^'"]+)['"]/gm;
+  for (const match of sourceCode.matchAll(namedImportRegex)) {
+    const specifiers = match[1]
+      .split(',')
+      .map((specifier) => specifier.trim())
+      .filter(Boolean);
+    const moduleSpecifier = match[2];
+
+    for (const specifier of specifiers) {
+      const aliasMatch = specifier.match(/^([A-Za-z_$][A-Za-z0-9_$]*)\s+as\s+([A-Za-z_$][A-Za-z0-9_$]*)$/);
+      if (aliasMatch && aliasMatch[2] === localName) {
+        return {
+          componentName: localName,
+          importStatement: `import { ${aliasMatch[1]} as ${localName} } from '${moduleSpecifier}';`,
+        };
+      }
+
+      if (specifier === localName) {
+        return {
+          componentName: localName,
+          importStatement: `import { ${localName} } from '${moduleSpecifier}';`,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function buildUsageSnippet(
+  componentName: string,
+  importStatement: string,
+  element: React.ReactElement | null,
+  properties: Record<string, SlotMetadata>,
+  previewValues: Record<string, any>
+): string {
+  const usageBody = element ? reactElementToUsage(element) : null;
+  if (usageBody) {
+    return `${importStatement}\n\n${usageBody}`;
+  }
+
+  return generateUsageSnippet({
+    componentName,
+    properties,
+    previewValues,
+    importStatement,
+  });
 }
 
 function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string): string {
@@ -136,7 +271,7 @@ function createHtmlDocument(componentId: string, previewTitle: string, renderedH
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/main.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
     <title>${previewTitle}</title>
@@ -189,7 +324,8 @@ export function csfRenderPlugin(
       }
 
       const meta = (moduleExports.default || {}) as CsfMeta;
-      const stories = getStoryEntries(moduleExports);
+      const stories = getCsfStoryEntries(moduleExports);
+      const storyMap = Object.fromEntries(stories);
 
       if (stories.length === 0) {
         Logger.warn(`No named stories found in CSF file for ${componentId}: ${templatePath}`);
@@ -198,9 +334,16 @@ export function csfRenderPlugin(
 
       const explicitProperties = componentData.properties || {};
       const generatedProperties: Record<string, SlotMetadata> = { ...explicitProperties };
+      const incomingPreviews = { ...(componentData.previews || {}) };
+      const patternPreviews = Object.fromEntries(
+        Object.entries(incomingPreviews).filter(([key]) => key.startsWith('__pattern_'))
+      );
 
-      // Include all named stories as previews and infer properties from args/argTypes
-      componentData.previews = {};
+      // Include all named stories as previews and preserve injected pattern previews.
+      componentData.previews = {
+        ...createCsfStoryPreviews(moduleExports),
+        ...patternPreviews,
+      };
 
       for (const [storyKey, storyValue] of stories) {
         const storyObj = (typeof storyValue === 'function' ? {} : storyValue) as StoryObject;
@@ -211,12 +354,6 @@ export function csfRenderPlugin(
         const mergedArgTypes = {
           ...(meta.argTypes || {}),
           ...(storyObj.argTypes || {}),
-        };
-
-        componentData.previews[storyKey] = {
-          title: storyObj.name || startCase(storyKey),
-          values: mergedArgs,
-          url: '',
         };
 
         for (const [argKey, argValue] of Object.entries(mergedArgs)) {
@@ -236,6 +373,10 @@ export function csfRenderPlugin(
       const generatedDocs = await generateDocsArtifact(templatePath, handoff);
       const componentName =
         (meta.component as any)?.displayName || (meta.component as any)?.name;
+      const componentImportInfo = resolveComponentImportInfo(sourceCode);
+      const usageComponentName = componentImportInfo?.componentName || componentName || extractComponentName(templatePath);
+      const usageImportStatement =
+        componentImportInfo?.importStatement || `import ${usageComponentName} from './${usageComponentName}';`;
       if (generatedDocs && componentName) {
         const docgenProperties = getPropertiesForComponentFromDocs(
           generatedDocs,
@@ -285,11 +426,15 @@ export function csfRenderPlugin(
       componentData.properties = ensureIds(generatedProperties);
 
       let lastHtml = '';
-      for (const [storyKey, storyValue] of stories) {
-        const preview = componentData.previews[storyKey];
-        const rendered = safeRenderToHtml(meta, storyValue, preview.values || {});
+      for (const [previewKey, preview] of Object.entries(componentData.previews)) {
+        const storyKey = preview.sourcePreview && storyMap[preview.sourcePreview]
+          ? preview.sourcePreview
+          : (storyMap[previewKey] ? previewKey : undefined);
+        const storyValue = storyKey ? storyMap[storyKey] : undefined;
+        const storyArgs = preview.values || {};
+        const rendered = safeRenderToHtml(meta, storyValue, storyArgs);
         const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered));
-        const fileName = `${componentId}-${storyKey}.html`;
+        const fileName = `${componentId}-${previewKey}.html`;
 
         this.emitFile({
           type: 'asset',
@@ -298,9 +443,25 @@ export function csfRenderPlugin(
         });
         this.emitFile({
           type: 'asset',
-          fileName: `${componentId}-${storyKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
+          fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
           source: html,
         });
+
+        // Capture JSX usage for each story so docs can switch usage by selected preview.
+        let storyElement: React.ReactElement | null = null;
+        try {
+          storyElement = getStoryElement(meta, storyValue, storyArgs);
+        } catch {
+          // Fall back to schema-based generation below.
+        }
+
+        preview.usage = buildUsageSnippet(
+          usageComponentName,
+          usageImportStatement,
+          storyElement,
+          componentData.properties || {},
+          storyArgs
+        );
 
         preview.url = fileName;
         lastHtml = html;
@@ -310,6 +471,13 @@ export function csfRenderPlugin(
       componentData.preview = '';
       componentData.code = trimPreview(sourceCode);
       componentData.html = trimPreview(lastHtml);
+
+      // Keep top-level usage for backwards compatibility (first preview usage).
+      const storyKeys = Object.keys(componentData.previews);
+      const firstStoryKey = storyKeys[0];
+      if (firstStoryKey) {
+        componentData.usage = componentData.previews[firstStoryKey].usage || '';
+      }
     },
   };
 }

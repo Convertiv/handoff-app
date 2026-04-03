@@ -2,21 +2,24 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
-import { ComponentListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
 import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { persistClientConfig } from './client-config';
+import { getStrategy, runAllFinalizers, type FinalizeContext } from './config-diff';
 import { syncPublicFiles } from './paths';
+import {
+  getRuntimeComponentsPathsToWatch,
+  mapEntryTypeToSegment,
+  resolveComponentIdForChangedFile,
+  RuntimeComponentEntryType,
+} from './watchers/component';
+import { scheduleHandler, WatcherState } from './watchers/utils';
 
-export interface WatcherState {
-  debounce: boolean;
-  runtimeComponentsWatcher: chokidar.FSWatcher | null;
-  runtimeConfigurationWatcher: chokidar.FSWatcher | null;
-  componentDirectoriesWatcher: chokidar.FSWatcher | null;
-}
+export { getRuntimeComponentsPathsToWatch, mapEntryTypeToSegment } from './watchers/component';
+export type { WatcherState } from './watchers/utils';
 
 /**
  * Watches the working public directory for changes and updates the app.
@@ -28,18 +31,15 @@ export const watchPublicDirectory = (handoff: Handoff, wss: (msg: string) => voi
         case 'add':
         case 'change':
         case 'unlink':
-          if (!state.debounce) {
-            state.debounce = true;
+          await scheduleHandler(state, 'publicDirectory', async () => {
             try {
               Logger.warn('Public directory changed. Handoff will ingest the new data...');
               await syncPublicFiles(handoff);
               wss(JSON.stringify({ type: 'reload' }));
             } catch (e) {
               Logger.error('Error syncing public directory:', e);
-            } finally {
-              state.debounce = false;
             }
-          }
+          });
           break;
       }
     });
@@ -122,8 +122,7 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
       case 'add':
       case 'change':
       case 'unlink':
-        if (!state.debounce) {
-          state.debounce = true;
+        await scheduleHandler(state, 'globalEntries', async () => {
           try {
             Logger.warn('Global entry changed. Rebuilding bundles and components...');
 
@@ -139,53 +138,14 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
             }
 
             await processComponents(handoff);
+            await runAllFinalizers(handoff);
           } catch (e) {
             Logger.error('Error rebuilding after global entry change:', e);
-          } finally {
-            state.debounce = false;
           }
-        }
+        });
         break;
     }
   });
-};
-
-/**
- * Maps configuration entry types to component segments.
- */
-export const mapEntryTypeToSegment = (type: keyof ComponentListObject['entries']): ComponentSegment | undefined => {
-  return {
-    js: ComponentSegment.JavaScript,
-    scss: ComponentSegment.Style,
-    template: ComponentSegment.Previews,
-    templates: ComponentSegment.Previews,
-  }[type];
-};
-
-/**
- * Gets the paths of runtime components to watch.
- *
- * @returns A Map of paths to watch and their entry types
- */
-export const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
-  const result: Map<string, keyof ComponentListObject['entries']> = new Map();
-
-  for (const runtimeComponentId of Object.keys(handoff.runtimeConfig?.entries.components ?? {})) {
-    const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId];
-    for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
-      const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
-      if (fs.existsSync(normalizedComponentEntryPath)) {
-        const entryType = runtimeComponentEntryType as keyof ComponentListObject['entries'];
-        if (fs.statSync(normalizedComponentEntryPath).isFile()) {
-          result.set(path.resolve(normalizedComponentEntryPath), entryType);
-        } else {
-          result.set(normalizedComponentEntryPath, entryType);
-        }
-      }
-    }
-  }
-
-  return result;
 };
 
 /**
@@ -194,7 +154,7 @@ export const getRuntimeComponentsPathsToWatch = (handoff: Handoff) => {
 export const watchRuntimeComponents = (
   handoff: Handoff,
   state: WatcherState,
-  runtimeComponentPathsToWatch: Map<string, keyof ComponentListObject['entries']>
+  runtimeComponentPathsToWatch: Map<string, RuntimeComponentEntryType>
 ) => {
   if (state.runtimeComponentsWatcher) {
     state.runtimeComponentsWatcher.close();
@@ -202,7 +162,7 @@ export const watchRuntimeComponents = (
 
   if (runtimeComponentPathsToWatch.size > 0) {
     const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
-    const runtimeComponentEntryTypeByPath = new Map<string, keyof ComponentListObject['entries']>(
+    const runtimeComponentEntryTypeByPath = new Map<string, RuntimeComponentEntryType>(
       Array.from(runtimeComponentPathsToWatch.entries()).map(([watchPath, entryType]) => [normalizePathForCompare(watchPath), entryType])
     );
     const configFileSet = new Set(handoff.getConfigFilePaths().map((configPath) => normalizePathForCompare(configPath)));
@@ -220,20 +180,29 @@ export const watchRuntimeComponents = (
         case 'add':
         case 'change':
         case 'unlink':
-          if (!state.debounce) {
-            state.debounce = true;
+          await scheduleHandler(state, `runtimeComponent:${normalizedFile}`, async () => {
             try {
               const entryType = runtimeComponentEntryTypeByPath.get(normalizedFile);
-              const segmentToUpdate: ComponentSegment = entryType ? mapEntryTypeToSegment(entryType) : undefined;
+              const segmentToUpdate: ComponentSegment | undefined = entryType ? mapEntryTypeToSegment(entryType) : undefined;
+              const componentId = resolveComponentIdForChangedFile(handoff, file);
 
-              const componentDir = path.basename(path.dirname(file));
-              await processComponents(handoff, componentDir, segmentToUpdate);
+              const skipPatterns =
+                segmentToUpdate === ComponentSegment.JavaScript ||
+                segmentToUpdate === ComponentSegment.Style;
+
+              let finalizeContext: FinalizeContext | undefined;
+              if (skipPatterns) {
+                finalizeContext = { skipPatternFinalizer: true };
+              } else if (componentId) {
+                finalizeContext = { patternRebuildComponentIds: [componentId] };
+              }
+
+              await processComponents(handoff, componentId, segmentToUpdate);
+              await runAllFinalizers(handoff, finalizeContext);
             } catch (e) {
               Logger.error('Error processing component:', e);
-            } finally {
-              state.debounce = false;
             }
-          }
+          });
           break;
       }
     });
@@ -242,6 +211,11 @@ export const watchRuntimeComponents = (
 
 /**
  * Watches the runtime configuration for changes.
+ *
+ * Uses the generic {@link ConfigDiffStrategy} registry so that each entity
+ * kind (patterns today, potentially themes / slots later) supplies its own
+ * snapshot → diff → selective-rebuild logic without the watcher needing to
+ * know the details.
  */
 export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState) => {
   if (state.runtimeConfigurationWatcher) {
@@ -251,24 +225,47 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
   if (handoff.getConfigFilePaths().length > 0) {
     state.runtimeConfigurationWatcher = chokidar.watch(handoff.getConfigFilePaths(), { ignoreInitial: true });
     state.runtimeConfigurationWatcher.on('all', async (event, file) => {
+      const normalizedFile = normalizePathForCompare(file);
       switch (event) {
         case 'add':
         case 'change':
         case 'unlink':
-          if (!state.debounce) {
-            state.debounce = true;
+          await scheduleHandler(state, `runtimeConfig:${normalizedFile}`, async () => {
             try {
-              file = path.dirname(file);
+              const changedFile = file;
+
+              // Look up the entity this config file belongs to BEFORE reload.
+              const entryBefore = handoff.getConfigFileEntry(changedFile);
+              const strategy = entryBefore ? getStrategy(entryBefore.kind) : undefined;
+              const handle =
+                entryBefore && strategy ? strategy.capture(handoff, entryBefore.entityId) : undefined;
+
               handoff.reload();
               await persistClientConfig(handoff);
               watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
-              await processComponents(handoff, path.basename(file));
+              watchRuntimeConfiguration(handoff, state);
+
+              const entryAfter = handoff.getConfigFileEntry(changedFile);
+
+              const normalizedChanged = normalizePathForCompare(changedFile);
+              const normalizedMainConfig = handoff.getMainConfigFilePath()
+                ? normalizePathForCompare(handoff.getMainConfigFilePath() as string)
+                : undefined;
+
+              if (normalizedMainConfig && normalizedChanged === normalizedMainConfig) {
+                await processComponents(handoff);
+              } else if (handle) {
+                await handle.apply(handoff, entryAfter?.entityId);
+              } else {
+                const effectiveId = entryAfter?.entityId ?? path.basename(path.dirname(changedFile));
+                await processComponents(handoff, effectiveId);
+              }
+
+              await runAllFinalizers(handoff);
             } catch (e) {
               Logger.error('Error reloading runtime configuration:', e);
-            } finally {
-              state.debounce = false;
             }
-          }
+          });
           break;
       }
     });
@@ -315,14 +312,12 @@ export const watchComponentDirectories = (handoff: Handoff, state: WatcherState,
 
     if (!isNewComponent) return;
 
-    if (!state.debounce) {
-      state.debounce = true;
+    await scheduleHandler(state, `newComponent:${dirName}`, async () => {
       try {
         Logger.warn(`New component detected: ${dirName}. Reloading configuration...`);
         handoff.reload();
         knownComponents.add(dirName);
 
-        // Update known set with all current components
         for (const id of Object.keys(handoff.runtimeConfig?.entries?.components ?? {})) {
           knownComponents.add(id);
         }
@@ -331,11 +326,10 @@ export const watchComponentDirectories = (handoff: Handoff, state: WatcherState,
         watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
         watchRuntimeConfiguration(handoff, state);
         await processComponents(handoff, dirName);
+        await runAllFinalizers(handoff, { patternRebuildComponentIds: [dirName] });
       } catch (e) {
         Logger.error('Error processing new component:', e);
-      } finally {
-        state.debounce = false;
       }
-    }
+    });
   });
 };

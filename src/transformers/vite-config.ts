@@ -1,7 +1,9 @@
 // vite.config.ts
 import { defineConfig } from 'vite';
+import { createViteLogger } from './utils/vite-logger';
 
 export default defineConfig({
+  customLogger: createViteLogger(),
   publicDir: false,
   build: {
     lib: {

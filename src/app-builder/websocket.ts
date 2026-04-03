@@ -13,7 +13,20 @@ export interface HandoffWebSocket extends WebSocket {
  * @returns A function that accepts a message string and broadcasts it to all connected clients.
  */
 export const createWebSocketServer = async (port: number = 3001) => {
+  Logger.info(`Starting WebSocket server for live reload on port ${port}…`);
+
   const wss = new WebSocket.Server({ port });
+
+  wss.on('listening', () => {
+    Logger.info(`WebSocket server listening on ws://localhost:${port} (live reload)`);
+  });
+
+  wss.on('error', (err) => {
+    Logger.error(
+      `WebSocket server failed${err instanceof Error ? `: ${err.message}` : ''}`,
+      err instanceof Error ? err : undefined
+    );
+  });
 
   // Heartbeat function to mark a connection as alive.
   const heartbeat = function (this: HandoffWebSocket) {
@@ -25,7 +38,7 @@ export const createWebSocketServer = async (port: number = 3001) => {
     const extWs = ws as HandoffWebSocket;
     extWs.isAlive = true;
     extWs.send(JSON.stringify({ type: 'WELCOME' }));
-    extWs.on('error', (error) => Logger.error('WebSocket error:', error));
+    extWs.on('error', (error) => Logger.error('WebSocket client error:', error));
     extWs.on('pong', heartbeat);
   });
 
@@ -34,7 +47,7 @@ export const createWebSocketServer = async (port: number = 3001) => {
     wss.clients.forEach((client) => {
       const extWs = client as HandoffWebSocket;
       if (!extWs.isAlive) {
-        Logger.warn('Terminating inactive client');
+        Logger.debug('Terminating inactive WebSocket client');
         return client.terminate();
       }
       extWs.isAlive = false;
@@ -47,11 +60,9 @@ export const createWebSocketServer = async (port: number = 3001) => {
     clearInterval(pingInterval);
   });
 
-  Logger.success(`WebSocket server listening on ws://localhost:${port}`);
-
   // Return a function to broadcast a message to all connected clients
   return (message: string) => {
-    Logger.success(`Broadcasting message to ${wss.clients.size} client(s)`);
+    Logger.debug(`Broadcasting reload to ${wss.clients.size} WebSocket client(s)`);
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);

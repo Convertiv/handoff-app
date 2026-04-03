@@ -3,7 +3,7 @@ import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
-import { ComponentListObject, TransformComponentTokensResult } from '../transformers/preview/types';
+import { ComponentListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from './preview';
 
 export interface ImageStyle {
@@ -60,13 +60,19 @@ export interface NextAppConfig {
   theme?: string;
   title: string;
   client: string;
-  google_tag_manager: string | null | undefined;
-  type_copy: string;
-  type_sort: string[];
-  color_sort: string[];
+  google_tag_manager?: string | null | undefined;
+  googleTagManager?: string | null | undefined;
+  type_copy?: string;
+  typeCopy?: string;
+  type_sort?: string[];
+  typeSort?: string[];
+  color_sort?: string[];
+  colorSort?: string[];
   breakpoints: Breakpoints;
-  component_sort: string[];
-  base_path: string;
+  component_sort?: string[];
+  componentSort?: string[];
+  base_path?: string;
+  basePath?: string;
   attribution: boolean;
   ports?: {
     app: number;
@@ -76,7 +82,9 @@ export interface NextAppConfig {
 
 export interface Config {
   dev_access_token?: string | null | undefined;
+  devAccessToken?: string | null | undefined;
   figma_project_id?: string | null | undefined;
+  figmaProjectId?: string | null | undefined;
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
   useVariables?: boolean;
@@ -119,6 +127,12 @@ export interface Config {
      * @example ["components/button", "components/input"]
      */
     components?: string[];
+    /**
+     * Array of pattern paths to be included in the build.
+     * Patterns compose multiple component previews into single-page views.
+     * @example ["patterns/hero-section", "patterns"]
+     */
+    patterns?: string[];
   };
   /**
    * Configuration for asset zip file download links
@@ -134,6 +148,10 @@ export interface Config {
      * Path to the logos zip file
      * @default "/logos.zip"
      */
+    logos?: string;
+  };
+  assetsZipLinks?: {
+    icons?: string;
     logos?: string;
   };
   /**
@@ -279,6 +297,11 @@ export interface RuntimeConfigComponentOptions {
   replace: { [variantProperty: string]: { [source: string]: string } };
 }
 
+export interface ConfigFileEntry {
+  kind: string;
+  entityId: string;
+}
+
 export interface RuntimeConfig {
   entries?: {
     scss?: string;
@@ -286,6 +309,9 @@ export interface RuntimeConfig {
     templates?: string;
     components: {
       [id: string]: ComponentListObject;
+    };
+    patterns: {
+      [id: string]: PatternListObject;
     };
   };
   options: {

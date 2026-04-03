@@ -17,6 +17,9 @@ export * from './build';
 // Module utilities
 export * from './module';
 
+// CSF utilities
+export * from './csf';
+
 // Handlebars utilities
 export * from './handlebars';
 

@@ -3,7 +3,10 @@ export { defaultConfig, getClientConfig } from './defaults';
 export type { ImageStyle } from './defaults';
 
 // Config file loading
-export { initConfig } from './loader';
+export { initConfig, initConfigWithMetadata } from './loader';
+
+// Config helpers
+export { defineConfig } from './helpers';
 
 // Runtime config resolution
 export { initRuntimeConfig } from './runtime';

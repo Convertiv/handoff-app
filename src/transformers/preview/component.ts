@@ -1,7 +1,8 @@
 import type { DocAnnotation, TypeNode } from 'handoff-docgen';
 import path from 'path';
 import Handoff from '../../index';
-import writeComponentSummaryAPI, { getAPIPath } from './component/api';
+import { getAPIPath } from './component/api';
+import writeComponentSummaryAPI from './component/summary';
 import processComponents from './component/builder';
 import { buildMainCss } from './component/css';
 import { buildMainJS } from './component/javascript';

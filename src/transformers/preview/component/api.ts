@@ -2,6 +2,22 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
+import { getDocumentedPreviews } from './previews';
+
+export const sanitizeComponentApiData = (
+  component: TransformComponentTokensResult
+): TransformComponentTokensResult => {
+  if (!component) return component;
+
+  const sanitized = {
+    ...component,
+    previews: getDocumentedPreviews(component.previews),
+  };
+
+  delete sanitized.internalPatternPreviews;
+
+  return sanitized;
+};
 
 /**
  * Merges values from a source object into a target object, returning a new object.
@@ -48,16 +64,6 @@ export const getAPIPath = (handoff: Handoff) => {
   return apiPath;
 };
 
-/**
- * Build the preview API from the component data
- * @param handoff
- * @param componentData
- */
-const writeComponentSummaryAPI = async (handoff: Handoff, componentData: ComponentListObject[]) => {
-  componentData.sort((a, b) => a.title.localeCompare(b.title));
-  await fs.writeFile(path.resolve(getAPIPath(handoff), 'components.json'), JSON.stringify(componentData, null, 2));
-};
-
 export const writeComponentApi = async (
   id: string,
   component: TransformComponentTokensResult,
@@ -66,18 +72,19 @@ export const writeComponentApi = async (
 ) => {
   const outputDirPath = path.resolve(getAPIPath(handoff), 'component');
   const outputFilePath = path.resolve(outputDirPath, `${id}.json`);
+  const sanitizedComponent = sanitizeComponentApiData(component);
 
   if (fs.existsSync(outputFilePath)) {
     const existingJson = await fs.readFile(outputFilePath, 'utf8');
     if (existingJson) {
       try {
-        const existingData = JSON.parse(existingJson) as TransformComponentTokensResult;
+        const existingData = sanitizeComponentApiData(JSON.parse(existingJson) as TransformComponentTokensResult);
 
         // Special case: always allow page to be cleared when undefined
         // This handles the case where page slices are removed
-        const finalPreserveKeys = component.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
+        const finalPreserveKeys = sanitizedComponent.page === undefined ? preserveKeys.filter((key) => key !== 'page') : preserveKeys;
 
-        const mergedData = updateObject(existingData, component, finalPreserveKeys);
+        const mergedData = sanitizeComponentApiData(updateObject(existingData, sanitizedComponent, finalPreserveKeys));
         await fs.writeFile(outputFilePath, JSON.stringify(mergedData, null, 2));
         return;
       } catch (_) {
@@ -90,41 +97,7 @@ export const writeComponentApi = async (
     fs.mkdirSync(outputDirPath, { recursive: true });
   }
 
-  await fs.writeFile(outputFilePath, JSON.stringify(component, null, 2));
-};
-
-/**
- * Update the main component summary API with the new component data
- * @param handoff
- * @param componentData
- */
-export const updateComponentSummaryApi = async (handoff: Handoff, componentData: ComponentListObject[], isFullRebuild: boolean = false) => {
-  if (isFullRebuild) {
-    // Full rebuild: replace the entire file
-    await writeComponentSummaryAPI(handoff, componentData);
-    return;
-  }
-
-  // Partial update: merge with existing data
-  const apiPath = path.resolve(getAPIPath(handoff), 'components.json');
-  let existingData: ComponentListObject[] = [];
-
-  if (fs.existsSync(apiPath)) {
-    try {
-      const existing = await fs.readFile(apiPath, 'utf8');
-      existingData = JSON.parse(existing);
-    } catch {
-      // Corrupt or missing JSON — treat as empty
-      existingData = [];
-    }
-  }
-
-  // Replace existing entries with same ID
-  const incomingIds = new Set(componentData.map((c) => c.id));
-  const merged = [...componentData, ...existingData.filter((c) => !incomingIds.has(c.id))];
-
-  // Always write the file (even if merged is empty)
-  await writeComponentSummaryAPI(handoff, merged);
+  await fs.writeFile(outputFilePath, JSON.stringify(sanitizedComponent, null, 2));
 };
 
 /**
@@ -140,7 +113,7 @@ export const readComponentApi = async (handoff: Handoff, id: string): Promise<Tr
     try {
       const existingJson = await fs.readFile(outputFilePath, 'utf8');
       if (existingJson) {
-        return JSON.parse(existingJson) as TransformComponentTokensResult;
+        return sanitizeComponentApiData(JSON.parse(existingJson) as TransformComponentTokensResult);
       }
     } catch (_) {
       // Unable to parse existing file
@@ -174,9 +147,8 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     categories: componentData.categories ? componentData.categories : [],
     tags: componentData.tags ? componentData.tags : [],
     properties: componentData.properties,
-    previews: componentData.previews,
+    previews: getDocumentedPreviews(componentData.previews),
     path: `/api/component/${id}.json`,
   };
 };
-
-export default writeComponentSummaryAPI;
+export default writeComponentApi;

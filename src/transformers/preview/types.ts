@@ -1,5 +1,6 @@
 import type { GeneratedDocs } from 'handoff-docgen';
 import { Card } from '../../app/components/Component/Cards';
+import type { RendererKind } from '../../declarations/types';
 import { ValidationResult } from '../../types/preview';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -108,15 +109,31 @@ export type ComponentObject = {
     scss?: string;
     /** Optional path to component template file (if available) */
     template?: string;
+    /** Optional path to React component source for preview rendering */
+    component?: string;
+    /** Optional path to CSF story file */
+    story?: string;
+    /** Optional path to schema file (if available) */
+    schema?: string;
+    /** Optional path to templates directory */
+    templates?: string;
   };
+  /** Optional explicit renderer id */
+  renderer?: RendererKind;
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
   previews: { [key: string]: OptionalPreviewRender };
+  /** Internal previews generated only for pattern composition, not public docs */
+  internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   /** Optional array of high-level categories for search/filtering */
   categories?: string[];
   /** Optional array of tags for search/filtering (e.g. "primary", "interactive") */
   tags?: string[];
+  /** Optional markdown strings describing recommended usage patterns */
+  should_do?: string[];
+  /** Optional markdown strings describing anti-patterns to avoid */
+  should_not_do?: string[];
   /** Optional source Figma file or node URL for the component */
   figma?: string;
   /** Optional canonical Figma component name or ID (used for matching back to design tokens) */
@@ -125,7 +142,7 @@ export type ComponentObject = {
   page?: ComponentPageDefinition;
   /** Optional additional options for preview and transformer behaviors */
   options?: ComponentOptions;
-}
+};
 
 export type ComponentListObject = {
   id: string;
@@ -151,17 +168,23 @@ export type TransformComponentTokensResult = {
   css?: string;
   sass?: string;
   sharedStyles?: string;
+  usage?: string;
   title?: string;
   description?: string;
   previews?: { [key: string]: OptionalPreviewRender };
+  internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
   variant?: Record<string, string>;
   entries?: {
     js?: string;
     scss?: string;
     template?: string;
+    component?: string;
+    story?: string;
     schema?: string;
+    templates?: string;
   };
+  renderer?: RendererKind;
   options?: {
     preview?: {
       groupBy?: string;
@@ -176,8 +199,42 @@ export type OptionalPreviewRender = {
   title: string;
   values: { [key: string]: string | string[] | any };
   url: string;
+  usage?: string;
+  /** Optional source preview/story key used to derive this preview */
+  sourcePreview?: string;
 };
 
 export interface TransformedPreviewComponents {
   [key: string]: TransformComponentTokensResult[];
 }
+
+// ---------------------------------------------------------------------------
+// Pattern types
+// ---------------------------------------------------------------------------
+
+export type PatternComponentEntry = {
+  /** Component id reference */
+  id: string;
+  /** Named preview variant to use (optional if args provided) */
+  preview?: string;
+  /** Arg overrides (optional if preview provided) */
+  args?: Record<string, any>;
+  /** Preview key resolved during injectPatternPreviews (set at build time) */
+  resolvedPreview?: string;
+  /** Whether the pattern entry resolved to a usable component preview */
+  resolved?: boolean;
+};
+
+export type PatternObject = {
+  title: string;
+  description?: string;
+  group?: string;
+  tags?: string[];
+  components: PatternComponentEntry[];
+  url?: string;
+};
+
+export type PatternListObject = {
+  id: string;
+  path: string;
+} & PatternObject;

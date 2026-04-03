@@ -6,6 +6,71 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-03
+
+This release introduces support for patterns and significantly
+modernizes the configuration and declaration workflow. It expands Handoff from
+documenting individual components to documenting larger design-system
+compositions, while also improving TypeScript support, preview usability, and
+overall build and development reliability.
+
+### Patterns
+
+* Added support for design system patterns as a new documentation
+  layer above individual components.
+* Patterns support composing multiple component previews into a single page.
+* Pattern definitions can reference existing named component previews or
+  provide inline args for custom pattern-specific compositions.
+* Added support for `entries.patterns`, allowing projects to register composed
+  design-system patterns alongside components.
+* Added pattern summary and detail artifacts so patterns behave as first-class
+  generated output alongside components.
+
+### Typed Config and Declaration Workflow
+
+* Added support for typed TypeScript and JavaScript config and declaration
+  files across the project workflow.
+* Established TypeScript-based config and declaration files as the preferred
+  convention, while continuing to support JavaScript, CJS, and JSON where
+  applicable.
+* Added clear config resolution precedence when multiple root config files are
+  present.
+* Introduced the `.handoff.ts` and `.handoff.js` declaration convention for
+  components and patterns.
+* Introduced structured helper APIs including `defineConfig`,
+  `defineReactComponent`, `defineHandlebarsComponent`,
+  `defineCsfComponent`, and `definePattern`.
+* Updated runtime loading and normalization so typed declarations and modern
+  config shapes work consistently across the pipeline.
+* Updated scaffolding and CLI flows to support both TypeScript and JavaScript
+  project setup.
+* Updated generated examples and component scaffolds to follow the new
+  `.handoff.*` declaration convention.
+
+### Usage Snippets and Preview Improvements
+
+* Added usage snippets as a new documentation feature, with output that
+  reflects the currently selected preview variant.
+* Expanded CSF preview handling to produce more useful implementation examples
+  for React and Storybook-style components.
+* Improved story and preview resolution so generated documentation is more
+  actionable for engineers consuming the design system.
+* Enhanced code display behavior to better support usage-oriented
+  documentation rather than only static rendered output.
+
+### General Improvements
+
+* Improved incremental build and watch behavior so changes trigger more
+  selective and reliable rebuilds.
+* Added better cleanup of stale generated artifacts to keep component and
+  pattern output in sync as files change or are removed.
+* Improved summary artifact maintenance during rebuilds so generated API output
+  stays aligned with the current source of truth.
+* Enhanced logging with clearer scoped output across Handoff, Vite, and Next.js
+  processes.
+* Improved child-process logging and development server reporting to make local
+  debugging and build visibility better.
+
 ## \[1.1.3] - 2026-03-27
 
 This release reworks the markdown page rendering system with four improvements:

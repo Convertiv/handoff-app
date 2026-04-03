@@ -2,7 +2,7 @@ import { PreviewObject } from '@handoff/types/preview';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import handlebars from 'react-syntax-highlighter/dist/esm/languages/prism/handlebars';
 import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
@@ -47,8 +47,8 @@ export const CodeHighlight: React.FC<{
   title?: string;
   language?: string;
   height?: string;
-  currentValues?: Record<string, string>;
-}> = ({ data, collapsible, type, title, dark, height, currentValues }) => {
+  currentPreviewUrl?: string;
+}> = ({ data, collapsible, type, title, dark, height, currentPreviewUrl }) => {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   if (!data) {
@@ -69,7 +69,7 @@ export const CodeHighlight: React.FC<{
       format: 'html',
     };
   } else if (typeof data === 'string') {
-    data = data = {
+    data = {
       id: '',
       title: '',
       categories: [],
@@ -91,13 +91,26 @@ export const CodeHighlight: React.FC<{
   const metadataKeys = [
     'id', 'preview', 'image', 'categories', 'title', 'format',
     'description', 'type', 'group', 'tags', 'previews', 'properties',
-    'should_do', 'should_not_do', 'figma',
+    'should_do', 'should_not_do', 'figma', 'usage',
   ];
 
   const states = Object.keys(data)
     .filter((key) => !metadataKeys.includes(key) && !!(data as Record<string, any>)[key]);
-  const [activeState, setActiveState] = useState<string>(states[0]);
+  const hasPerPreviewUsage =
+    typeof data === 'object' &&
+    !!data.previews &&
+    Object.values(data.previews).some((preview) => !!preview?.usage);
+  const hasUsageState = (typeof data === 'object' && !!data.usage) || hasPerPreviewUsage;
+  const selectableStates = hasUsageState && !states.includes('usage') ? ['usage', ...states] : states;
+  const preferredState = selectableStates.includes('usage') ? 'usage' : selectableStates[0];
+  const [activeState, setActiveState] = useState<string>(preferredState);
   const [code, setCode] = useState<string>(data.html);
+  const stateResetKey = useMemo(() => {
+    if (typeof data === 'string') {
+      return `string:${type || 'html'}`;
+    }
+    return `${data.id || ''}|${data.title || ''}|${data.format || ''}|${Object.keys(data.previews || {}).join('|')}`;
+  }, [data, type]);
   const theme = dark ? oneDark : oneLight;
   theme['pre[class*="language-"]'].overflow = 'auto';
   theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
@@ -118,6 +131,7 @@ export const CodeHighlight: React.FC<{
     sass: 'SASS',
     scss: 'SCSS',
     sharedStyles: 'Shared CSS',
+    usage: 'Usage',
     json: 'JSON',
     markdown: 'Markdown',
   };
@@ -167,6 +181,7 @@ export const CodeHighlight: React.FC<{
       css: 'css',
       sass: 'scss',
       sharedStyles: 'css',
+      usage: 'tsx',
       json: 'json',
       handlebars: 'handlebars',
       hbs: 'handlebars',
@@ -195,9 +210,40 @@ export const CodeHighlight: React.FC<{
     return jsxPatterns.some(pattern => pattern.test(code));
   };
 
+  const resolveUsageCode = (): string => {
+    if (typeof data !== 'object') {
+      return '';
+    }
+
+    if (currentPreviewUrl && data.previews) {
+      const activePreview = Object.values(data.previews).find((preview) => preview.url === currentPreviewUrl);
+      if (activePreview?.usage) {
+        return activePreview.usage;
+      }
+    }
+
+    const firstPreviewWithUsage = data.previews ? Object.values(data.previews).find((preview) => !!preview.usage) : undefined;
+    if (firstPreviewWithUsage?.usage) {
+      return firstPreviewWithUsage.usage;
+    }
+
+    return data.usage || '';
+  };
+
+  // Always default to usage for newly viewed component/code payloads.
+  // Users can still manually switch tabs after this initial selection.
+  useEffect(() => {
+    setActiveState(preferredState);
+  }, [preferredState, stateResetKey]);
+
   useEffect(() => {
     if (typeof data === 'string') {
       setCode(data);
+      return;
+    }
+
+    if (activeState === 'usage') {
+      setCode(resolveUsageCode());
       return;
     }
 
@@ -209,7 +255,7 @@ export const CodeHighlight: React.FC<{
     if (activeState in data && !!(data as Record<string, any>)[activeState]) {
       setCode((data as Record<string, any>)[activeState]);
     }
-  }, [activeState, currentValues, data]);
+  }, [activeState, currentPreviewUrl, data]);
 
   return (
     <Collapsible id="code-samples" className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
@@ -219,13 +265,16 @@ export const CodeHighlight: React.FC<{
       >
         {title && <div>{title}</div>}
         <div className="flex items-center gap-2">
-          {states.length > 2 && (
+          {selectableStates.length > 1 && (
             <Select
-              defaultValue={activeState}
+              value={activeState}
               onValueChange={(key) => {
                 setActiveState(key);
                 if (typeof data === 'string') {
                   setCode(data);
+                  return;
+                } else if (key === 'usage') {
+                  setCode(resolveUsageCode());
                   return;
                 } else {
                   setCode(data[key]);
@@ -236,8 +285,8 @@ export const CodeHighlight: React.FC<{
                 <SelectValue placeholder="Code View" />
               </SelectTrigger>
               <SelectContent>
-                {states
-                  .filter((value) => ['code', 'html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
+                {selectableStates
+                  .filter((value) => ['usage', 'code', 'html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
                   .map((state) => {
                     return (
                       <SelectItem key={state} value={state}>

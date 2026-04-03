@@ -14,10 +14,14 @@ import {
   updateComponentCacheEntry,
 } from '../../../cache';
 import Handoff from '../../../index';
+import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
-import { ComponentListObject, ComponentType, TransformComponentTokensResult } from '../types';
-import { readComponentApi, readComponentMetadataApi, updateComponentSummaryApi, writeComponentApi } from './api';
+import { ComponentListObject, ComponentType, OptionalPreviewRender, TransformComponentTokensResult } from '../types';
+import { readComponentApi, readComponentMetadataApi, writeComponentApi } from './api';
+import { removeComponentApi, syncComponentArtifacts } from './artifacts';
+import { getDocumentedPreviews } from './previews';
+import { removeComponentFromSummaryApi, updateComponentSummaryApi } from './summary';
 import buildComponentCss from './css';
 import buildPreviews from './html';
 import buildComponentJs from './javascript';
@@ -73,6 +77,51 @@ const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
       },
     };
   }
+};
+
+const getBuildPreviews = (data: TransformComponentTokensResult): { [key: string]: OptionalPreviewRender } => {
+  return {
+    ...(data?.previews || {}),
+    ...(data?.internalPatternPreviews || {}),
+  };
+};
+
+/** Vite-backed segments in execution order; extend here if new steps are added. */
+const VITE_BUILD_SEGMENTS: {
+  key: keyof Pick<ComponentBuildPlan, 'js' | 'css' | 'previews'>;
+  label: string;
+}[] = [
+  { key: 'js', label: 'script' },
+  { key: 'css', label: 'styles' },
+  { key: 'previews', label: 'previews' },
+];
+
+const isFullViteComponentBuild = (plan: ComponentBuildPlan): boolean => plan.js && plan.css && plan.previews;
+
+const getActiveViteBuildLabels = (plan: ComponentBuildPlan): string[] =>
+  VITE_BUILD_SEGMENTS.filter(({ key }) => plan[key]).map(({ label }) => label);
+
+/** e.g. "a", "a and b", "a, b, and c" — common CLI copy style. */
+const formatEnglishList = (items: string[]): string => {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+};
+
+const viteBuildStartMessage = (componentId: string, plan: ComponentBuildPlan): string => {
+  if (isFullViteComponentBuild(plan)) {
+    return `Building component "${componentId}"…`;
+  }
+  return `Building ${formatEnglishList(getActiveViteBuildLabels(plan))} for component "${componentId}"…`;
+};
+
+const viteBuildFinishMessage = (componentId: string, plan: ComponentBuildPlan, elapsedMs: number): string => {
+  const duration = formatDurationMs(elapsedMs);
+  if (isFullViteComponentBuild(plan)) {
+    return `Finished building component "${componentId}" in ${duration}`;
+  }
+  return `Finished building ${formatEnglishList(getActiveViteBuildLabels(plan))} for component "${componentId}" in ${duration}`;
 };
 
 /**
@@ -132,6 +181,13 @@ export async function processComponents(
   const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
   const allComponentIds = Object.keys(runtimeComponents);
 
+  if (id && !runtimeComponents[id]) {
+    await removeComponentApi(handoff, id);
+    await removeComponentFromSummaryApi(handoff, id);
+    await syncComponentArtifacts(handoff);
+    return [];
+  }
+
   // Determine which components need building based on cache (when enabled)
   let componentsToBuild: Set<string>;
   let cache: BuildCache | null = null;
@@ -185,11 +241,16 @@ export async function processComponents(
       pruneRemovedComponents(cache, allComponentIds);
     }
 
-    const skippedCount = allComponentIds.length - componentsToBuild.size;
-    if (skippedCount > 0) {
-      Logger.info(`Building ${componentsToBuild.size} of ${allComponentIds.length} components (${skippedCount} unchanged)`);
-    } else if (componentsToBuild.size > 0) {
-      Logger.info(`Building all ${componentsToBuild.size} components`);
+    const total = allComponentIds.length;
+    const toBuildCount = componentsToBuild.size;
+    const skippedCount = total - toBuildCount;
+
+    if (total > 0 && toBuildCount === 0) {
+      Logger.info(`All ${total} components unchanged; skipping build`);
+    } else if (skippedCount > 0 && toBuildCount > 0) {
+      Logger.info(`Building ${toBuildCount} of ${total} components (${skippedCount} unchanged)`);
+    } else if (toBuildCount > 0) {
+      Logger.info(`Building all ${toBuildCount} components`);
     } else {
       Logger.info('All components up to date, nothing to build');
     }
@@ -269,10 +330,11 @@ export async function processComponents(
         data.css = existingData.css;
         data.sass = existingData.sass;
       }
-      // If we're not building previews, preserve pre-existing HTML, code snippet, and previews.
+      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, and previews.
       if (!buildPlan.previews) {
         data.html = existingData.html;
         data.code = existingData.code;
+        data.usage = existingData.usage;
         data.previews = existingData.previews;
       }
       /**
@@ -292,6 +354,13 @@ export async function processComponents(
     // Components should always have at least one preview variation.
     ensureDefaultPreview(data);
 
+    const runsViteBuildSteps = buildPlan.js || buildPlan.css || buildPlan.previews;
+    let viteBuildStartedAtMs = 0;
+    if (runsViteBuildSteps) {
+      viteBuildStartedAtMs = Date.now();
+      Logger.info(viteBuildStartMessage(runtimeComponentId, buildPlan));
+    }
+
     // Build JS if needed (new build, validation missing, or explicit segment request).
     if (buildPlan.js) {
       data = await buildComponentJs(data, handoff);
@@ -302,7 +371,19 @@ export async function processComponents(
     }
     // Build previews (HTML, snapshots, etc) if needed.
     if (buildPlan.previews) {
-      data = await buildPreviews(data, handoff, components);
+      data = await buildPreviews(
+        {
+          ...data,
+          previews: getBuildPreviews(data),
+        },
+        handoff,
+        components
+      );
+    }
+
+    if (runsViteBuildSteps) {
+      const elapsedMs = Date.now() - viteBuildStartedAtMs;
+      Logger.info(viteBuildFinishMessage(runtimeComponentId, buildPlan, elapsedMs));
     }
 
     /**
@@ -317,6 +398,7 @@ export async function processComponents(
     // Ensure that every property within the properties array/object contains an 'id' field.
     // This guarantees unique identification for property entries, which is useful for updates and API consumers.
     data.properties = ensureIds(data.properties);
+    data.previews = getDocumentedPreviews(data.previews);
 
     // Write the updated component data to the API file for external access and caching.
     //console.log('data', data);
@@ -352,6 +434,7 @@ export async function processComponents(
   // Always merge and write summary file, even if no components processed
   const isFullRebuild = !id;
   await updateComponentSummaryApi(handoff, result, isFullRebuild);
+  await syncComponentArtifacts(handoff);
 
   return result;
 }
@@ -374,7 +457,7 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     categories: data.categories ? data.categories : [],
     tags: data.tags ? data.tags : [],
     properties: data.properties,
-    previews: data.previews,
+    previews: getDocumentedPreviews(data.previews),
     path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
   };
 };

@@ -1,16 +1,16 @@
+const { defineConfig } = require('handoff-app');
+/** @typedef {import('handoff-app').Config} HandoffConfig */
 
-
-
-/** @type {import('handoff-app').Config} */
-module.exports = {
+/** @type {HandoffConfig} */
+const config = {
   app: {
     theme: "default",
     title: "{{projectName}} Design System",
     client: "{{projectName}}",
-    google_tag_manager: null,
+    googleTagManager: null,
     attribution: true,
-    type_copy: "Almost before we knew it, we had left the ground.",
-    type_sort: [
+    typeCopy: "Almost before we knew it, we had left the ground.",
+    typeSort: [
       "Heading 1",
       "Heading 2",
       "Heading 3",
@@ -23,32 +23,41 @@ module.exports = {
       "Input Labels",
       "Link"
     ],
-    color_sort: [
+    colorSort: [
       "primary",
       "secondary",
       "extra",
       "system"
     ],
-    component_sort: [
+    componentSort: [
       "primary",
       "secondary",
       "transparent"
     ],
-    base_path: "",
+    basePath: "",
     breakpoints: {
-      sm: { size: 576, name: "Small" },
-      md: { size: 768, name: "Medium" },
-      lg: { size: 992, name: "Large" },
-      xl: { size: 1200, name: "Extra Large" }
+      mobile: { size: 400, name: "Mobile" },
+      tablet: { size: 800, name: "Medium" },
+      desktop: { size: 1100, name: "Large" }
     }
   },
 
   entries: {
     /**
-     * Array of component paths to be included in the build
-     * Add your component directories here
+     * Array of component paths to be included in the build.
+     * Each path should point to a directory containing a *.handoff.ts declaration.
      */
-    components: ["components/button"]
+    components: ["components/button"],
+
+    /**
+     * Array of pattern paths to be included in the build.
+     * Patterns compose multiple component previews into single-page views.
+     * Each path should point to a directory containing a *.handoff.ts declaration
+     * that uses definePattern().
+     *
+     * @example patterns: ["patterns/hero-section", "patterns"]
+     */
+    // patterns: [],
   },
 
   // Optional handoff-docgen settings used by component docs generation
@@ -202,3 +211,5 @@ module.exports = {
     // },
   },
 };
+
+module.exports = defineConfig(config);

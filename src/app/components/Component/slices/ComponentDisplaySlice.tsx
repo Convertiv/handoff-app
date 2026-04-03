@@ -8,8 +8,8 @@ export interface ComponentDisplaySliceProps {
   preview: PreviewObject;
   title: string;
   height?: string;
-  currentValues?: Record<string, string>;
-  onValuesChange?: (values: Record<string, string>) => void;
+  currentPreviewUrl?: string;
+  onPreviewChange?: (previewUrl: string) => void;
   showPreview?: boolean;
   showCodeHighlight?: boolean;
   defaultHeight?: string;
@@ -33,8 +33,8 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
   preview,
   title,
   height,
-  currentValues,
-  onValuesChange,
+  currentPreviewUrl,
+  onPreviewChange,
   showPreview = true,
   showCodeHighlight,
   defaultHeight,
@@ -64,12 +64,22 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
   return (
     <div id={filteredPreview.id}>
       {showPreview && (
-        <ComponentDisplay title={title} component={filteredPreview} defaultHeight={finalDefaultHeight} onValuesChange={onValuesChange} />
+        <ComponentDisplay
+          title={title}
+          component={filteredPreview}
+          defaultHeight={finalDefaultHeight}
+          onPreviewChange={onPreviewChange}
+        />
       )}
       {finalShowCodeHighlight && (
         <>
           <a id="code-highlight" />
-          <CodeHighlight title={title} data={filteredPreview} collapsible={true} currentValues={currentValues} />
+          <CodeHighlight
+            title={title}
+            data={filteredPreview}
+            collapsible={true}
+            currentPreviewUrl={currentPreviewUrl}
+          />
         </>
       )}
     </div>

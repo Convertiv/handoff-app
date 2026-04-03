@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
+import { buildPatterns } from '../pipeline/patterns';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents from '../transformers/preview/component/builder';
@@ -90,9 +91,10 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
   // Perform cleanup
   await cleanupAppDirectory(handoff);
 
-  // Build components
+  // Build components, then patterns (patterns depend on component output)
   if (!skipComponents) {
     await buildComponents(handoff);
+    await buildPatterns(handoff);
   }
 
   // Prepare app
@@ -103,12 +105,15 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
   // Build app
   const buildResult = spawn.sync('npx', ['next', 'build'], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
     },
   });
+
+  Logger.childProcessBuffer(buildResult.stdout);
+  Logger.childProcessBuffer(buildResult.stderr);
 
   if (buildResult.status !== 0) {
     let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
@@ -143,6 +148,9 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   await buildMainJS(handoff);
   await buildMainCss(handoff);
 
+  // Build patterns after components are ready
+  await buildPatterns(handoff);
+
   const appPath = await initializeProjectApp(handoff);
 
   // Persist client configuration
@@ -161,24 +169,32 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     // create empty directory
     await fs.ensureDir(moduleOutput);
   }
+  Logger.info(`Starting Next.js dev server (Turbopack) at http://${hostname}:${port}…`);
+
   const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '--port', String(port)], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'development',
     },
   });
-  Logger.success(`Ready on http://${hostname}:${port}`);
+  Logger.pipeChildStreams(nextProcess.stdout, nextProcess.stderr);
 
   nextProcess.on('error', (error) => {
-    Logger.error(`Next.js dev process error: ${error}`);
+    Logger.error(`Next.js dev process failed to start: ${error}`);
     process.exit(1);
   });
 
-  nextProcess.on('close', (code) => {
-    Logger.success(`Next.js dev process closed with code ${code}`);
-    process.exit(code);
+  nextProcess.on('close', (code, signal) => {
+    if (code === 0) {
+      Logger.success(`Next.js dev process exited normally`);
+    } else if (signal) {
+      Logger.warn(`Next.js dev process stopped (${signal})`);
+    } else {
+      Logger.error(`Next.js dev process exited with code ${code}`);
+    }
+    process.exit(code ?? 1);
   });
 
   const wss = await createWebSocketServer(handoff.config.app.ports?.websocket ?? 3001);
@@ -190,7 +206,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   };
 
   const state: WatcherState = {
-    debounce: false,
+    busy: false,
+    pendingHandlers: new Map(),
     runtimeComponentsWatcher: null,
     runtimeConfigurationWatcher: null,
     componentDirectoriesWatcher: null,
@@ -221,15 +238,20 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
   // Persist client configuration
   await persistClientConfig(handoff);
 
-  // Run
-  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(handoff.config.app.ports?.app ?? 3000)], {
+  const devPort = handoff.config.app.ports?.app ?? 3000;
+  Logger.info(`Starting Next.js dev server (Turbopack) on port ${devPort}…`);
+
+  const devResult = spawn.sync('npx', ['next', 'dev', '--turbopack', '--port', String(devPort)], {
     cwd: appPath,
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'development',
     },
   });
+
+  Logger.childProcessBuffer(devResult.stdout);
+  Logger.childProcessBuffer(devResult.stderr);
 
   if (devResult.status !== 0) {
     let errorMsg = `Next.js dev failed with exit code ${devResult.status}`;
