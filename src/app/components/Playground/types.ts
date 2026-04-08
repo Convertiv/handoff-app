@@ -36,6 +36,18 @@ export interface SelectedPlaygroundComponent extends PlaygroundComponent {
   uniqueId: string;
 }
 
+export interface PlaygroundAsset {
+  id: string;
+  name: string;
+  src: string;
+  alt: string;
+  type: 'image' | 'video';
+  width?: number;
+  height?: number;
+  tags?: string[];
+  thumbnail?: string;
+}
+
 /** Handoff pattern format exported from Playground (matches PatternObject without id/path). */
 export interface PlaygroundPageExport {
   title: string;

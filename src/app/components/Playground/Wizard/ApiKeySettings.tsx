@@ -80,12 +80,16 @@ export default function ApiKeySettings({ onConfigured, compact }: ApiKeySettings
               </SelectContent>
             </Select>
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Your key is stored in your browser&apos;s <code className="rounded bg-muted px-1 py-0.5 text-[11px]">localStorage</code> and
+            is only sent directly to the OpenAI API. It is never transmitted to Handoff or any other server.
+            Clearing your browser data or switching browsers will remove it.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Enter your OpenAI API key to use the AI wizard. Your key is stored locally in your browser and only sent to
-            OpenAI.
+            Enter your OpenAI API key to use the AI wizard.
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="api-key-input">OpenAI API Key</Label>
@@ -117,6 +121,14 @@ export default function ApiKeySettings({ onConfigured, compact }: ApiKeySettings
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="rounded-md border border-border/50 bg-muted/50 px-3 py-2.5">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              <strong className="font-medium text-foreground/70">Where is my key stored?</strong> Your API key is saved
+              in your browser&apos;s <code className="rounded bg-background px-1 py-0.5 text-[11px]">localStorage</code>.
+              It is only sent directly to the OpenAI API and is never transmitted to Handoff or any other server.
+              The key persists between sessions but is specific to this browser. Clearing your browser data will remove it.
+            </p>
           </div>
         </div>
       )}

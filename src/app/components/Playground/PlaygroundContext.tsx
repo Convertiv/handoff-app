@@ -21,6 +21,8 @@ interface PlaygroundContextType {
   selectedComponents: SelectedPlaygroundComponent[];
   loading: boolean;
   error: string | null;
+  activeComponentId: string | null;
+  setActiveComponentId: (id: string | null) => void;
   addComponent: (component: PlaygroundComponent) => void;
   bulkAddComponents: (entries: BulkComponentEntry[], replace?: boolean) => Promise<void>;
   removeComponent: (uniqueId: string) => void;
@@ -79,6 +81,7 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [activeComponentId, setActiveComponentId] = useState<string | null>(null);
 
   const basePath = typeof process !== 'undefined' ? process.env.HANDOFF_APP_BASE_PATH ?? '' : '';
 
@@ -171,6 +174,7 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
 
   const removeComponent = useCallback((uniqueId: string) => {
     setSelectedComponents((prev) => prev.filter((c) => c.uniqueId !== uniqueId));
+    setActiveComponentId((prev) => (prev === uniqueId ? null : prev));
   }, []);
 
   const updateComponent = useCallback((component: SelectedPlaygroundComponent) => {
@@ -227,6 +231,8 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
         selectedComponents,
         loading,
         error,
+        activeComponentId,
+        setActiveComponentId,
         addComponent,
         bulkAddComponents,
         removeComponent,

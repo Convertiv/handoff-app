@@ -5,12 +5,13 @@ import { Textarea } from '../../ui/textarea';
 import { Label } from '../../ui/label';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Badge } from '../../ui/badge';
-import { AlertTriangleIcon, Loader2Icon, SparklesIcon, SettingsIcon, ArrowLeftIcon } from 'lucide-react';
+import { AlertTriangleIcon, GlobeIcon, Loader2Icon, SparklesIcon, SettingsIcon, ArrowLeftIcon } from 'lucide-react';
 import { usePlayground, BulkComponentEntry } from '../PlaygroundContext';
 import { callLLM, getApiKey } from './llm-client';
 import { buildSystemPrompt, buildUserPrompt } from './prompt-builder';
 import { parseWizardResponse, enrichWithTitles, ProposedComponent } from './response-parser';
 import ApiKeySettings from './ApiKeySettings';
+import PageImporter from './PageImporter';
 
 type WizardStep = 'settings' | 'describe' | 'loading' | 'review';
 
@@ -29,6 +30,7 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
   const [warnings, setWarnings] = useState<string[]>([]);
   const [proposed, setProposed] = useState<Array<BulkComponentEntry & { title: string; description: string }>>([]);
   const [applying, setApplying] = useState(false);
+  const [importerOpen, setImporterOpen] = useState(false);
 
   const reset = useCallback(() => {
     setStep(getApiKey() ? 'describe' : 'settings');
@@ -55,8 +57,8 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
     setStep('loading');
 
     try {
-      const systemPrompt = buildSystemPrompt(components);
-      const userPrompt = buildUserPrompt(description, content);
+      const systemPrompt = buildSystemPrompt(components, selectedComponents);
+      const userPrompt = buildUserPrompt(description, content, selectedComponents);
       const response = await callLLM({ systemPrompt, userPrompt });
       const { entries, warnings: parseWarnings } = parseWizardResponse(response.content, components);
 
@@ -91,7 +93,7 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] w-full max-w-[min(42rem,calc(100vw-2rem))] min-w-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SparklesIcon className="h-5 w-5" />
@@ -135,9 +137,15 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="wizard-content">
-                Content <span className="font-normal text-muted-foreground">(optional)</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="wizard-content">
+                  Content <span className="font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setImporterOpen(true)}>
+                  <GlobeIcon className="h-3.5 w-3.5" />
+                  Import from URL
+                </Button>
+              </div>
               <Textarea
                 id="wizard-content"
                 placeholder="Provide headings, body copy, image URLs, or any content you want used in the page..."
@@ -157,6 +165,12 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
                 Generate
               </Button>
             </DialogFooter>
+
+            <PageImporter
+              open={importerOpen}
+              onOpenChange={setImporterOpen}
+              onImport={(imported) => setContent((prev) => (prev ? `${prev}\n\n${imported}` : imported))}
+            />
           </div>
         )}
 
@@ -168,9 +182,9 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
         )}
 
         {step === 'review' && (
-          <div className="space-y-4 py-2">
+          <div className="flex min-h-0 w-full min-w-0 max-h-[min(60vh,calc(90vh-12rem))] flex-col gap-4 py-2">
             {warnings.length > 0 && (
-              <Alert variant="warning">
+              <Alert variant="warning" className="shrink-0">
                 <AlertTriangleIcon className="h-4 w-4" />
                 <AlertDescription>
                   {warnings.map((w, i) => (
@@ -180,46 +194,48 @@ export default function WizardDialog({ open, onOpenChange }: WizardDialogProps) 
               </Alert>
             )}
 
-            <div className="max-h-[300px] space-y-2 overflow-y-auto rounded-lg border p-3">
-              {proposed.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 rounded-md border p-3">
-                  <Badge variant="default" className="mt-0.5 shrink-0">
-                    {idx + 1}
-                  </Badge>
-                  <div className="min-w-0">
-                    <p className="font-medium">{item.title}</p>
-                    {item.description && (
-                      <p className="truncate text-sm text-muted-foreground">{item.description}</p>
-                    )}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {Object.keys(item.data).length} properties populated
-                    </p>
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden rounded-lg border p-3">
+              <div className="space-y-2">
+                {proposed.map((item, idx) => (
+                  <div key={idx} className="flex min-w-0 items-start gap-3 rounded-md border p-3">
+                    <Badge variant="default" className="mt-0.5 shrink-0">
+                      {idx + 1}
+                    </Badge>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words font-medium">{item.title}</p>
+                      {item.description && (
+                        <p className="break-words text-sm text-muted-foreground">{item.description}</p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {Object.keys(item.data).length} properties populated
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            <DialogFooter className="flex-row gap-2 sm:justify-between">
-              <Button variant="ghost" onClick={() => setStep('describe')}>
+            <div className="flex shrink-0 flex-col gap-3 border-t pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button variant="ghost" className="w-full shrink-0 sm:w-auto" onClick={() => setStep('describe')}>
                 <ArrowLeftIcon className="mr-1 h-4 w-4" />
                 Back
               </Button>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2 sm:flex-initial">
                 <Button variant="outline" onClick={handleGenerate} disabled={applying}>
                   Regenerate
                 </Button>
                 {selectedComponents.length > 0 && (
                   <Button variant="outline" onClick={() => handleApply(false)} disabled={applying}>
                     {applying ? <Loader2Icon className="mr-1 h-4 w-4 animate-spin" /> : null}
-                    Append
+                    Append to Page
                   </Button>
                 )}
                 <Button onClick={() => handleApply(true)} disabled={applying}>
-                  {applying ? <Loader2Icon className="mr-1 h-4 w-4 animate-spin" /> : null}
-                  {selectedComponents.length > 0 ? 'Replace All' : 'Apply'}
+                  {applying ? <Loader2Icon className="mr-1 h-4 w-4 animate-spin" /> : <SparklesIcon className="mr-1 h-4 w-4" />}
+                  Create This Page
                 </Button>
               </div>
-            </DialogFooter>
+            </div>
           </div>
         )}
       </DialogContent>

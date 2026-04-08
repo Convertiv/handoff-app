@@ -3,6 +3,12 @@ import { usePlayground } from './PlaygroundContext';
 import { renderHandlebarsPreview, renderPreview, renderReactPreview } from './Preview';
 import { SelectedPlaygroundComponent } from './types';
 
+interface ImageDimensionRules {
+  min?: { width: number; height: number };
+  max?: { width: number; height: number };
+  recommended?: { width: number; height: number };
+}
+
 interface EditContextType {
   component: SelectedPlaygroundComponent | null;
   data: any;
@@ -14,6 +20,8 @@ interface EditContextType {
   setMediaBrowserOpen: (open: boolean) => void;
   currentImagePath: string[];
   setCurrentImagePath: (path: string[]) => void;
+  currentImageRules: ImageDimensionRules | null;
+  setCurrentImageRules: (rules: ImageDimensionRules | null) => void;
   getData: (path: string[], localData?: any) => any;
   handleInputChange: (path: string[], value: any) => any;
   handleMediaSelect: (image: { src: string; srcset: string; alt: string }) => void;
@@ -29,6 +37,7 @@ export function EditContextProvider({ component, children }: { component: Select
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [mediaBrowserOpen, setMediaBrowserOpen] = useState(false);
   const [currentImagePath, setCurrentImagePath] = useState<string[]>([]);
+  const [currentImageRules, setCurrentImageRules] = useState<ImageDimensionRules | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialRenderDone = useRef(false);
 
@@ -139,6 +148,8 @@ export function EditContextProvider({ component, children }: { component: Select
         setMediaBrowserOpen,
         currentImagePath,
         setCurrentImagePath,
+        currentImageRules,
+        setCurrentImageRules,
         getData,
         handleInputChange,
         handleMediaSelect,

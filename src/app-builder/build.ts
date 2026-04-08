@@ -8,7 +8,7 @@ import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
-import { generateTokensApi, persistClientConfig } from './client-config';
+import { generatePlaygroundAssetsApi, generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
 import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchComponentDirectories, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
 import { createWebSocketServer } from './websocket';
@@ -36,8 +36,9 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
   const srcPath = path.resolve(handoff.modulePath, 'src', 'app');
   const appPath = getAppPath(handoff);
 
-  // Publish tokens API
+  // Publish tokens API and playground assets manifest
   await generateTokensApi(handoff);
+  await generatePlaygroundAssetsApi(handoff);
 
   // Prepare project app dir
   await fs.ensureDir(appPath);

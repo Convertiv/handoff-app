@@ -1,5 +1,5 @@
 import { Label } from '../../ui/label';
-import { TextIcon, Image, LinkIcon, GroupIcon, TextSelectIcon, MousePointerClickIcon } from 'lucide-react';
+import { TextIcon, Image, LinkIcon, GroupIcon, TextSelectIcon, MousePointerClickIcon, ToggleLeftIcon } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   text: TextIcon,
@@ -8,6 +8,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   button: MousePointerClickIcon,
   select: TextSelectIcon,
   array: GroupIcon,
+  boolean: ToggleLeftIcon,
 };
 
 export default function FieldLabel({ label, htmlFor, type }: { label: string; htmlFor: string; type: string }) {

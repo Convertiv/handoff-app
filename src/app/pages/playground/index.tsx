@@ -17,7 +17,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
 const PlaygroundPage = ({ menu, metadata, current, config }: DocumentationProps) => {
   return (
-    <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero>
+    <Layout config={config} menu={menu} current={current} metadata={metadata} fullBleed>
       <TooltipProvider>
         <PlaygroundProvider>
           <PlaygroundBuilder />

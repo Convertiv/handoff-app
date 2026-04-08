@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { Switch } from '../../ui/switch';
 import { ChevronDownIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useEditContext } from '../EditContext';
 import FieldLabel from './FieldLabel';
@@ -14,6 +15,16 @@ import { SelectField } from './SelectField';
 export function renderFormFields(obj: any, data: any, path: string[] = []) {
   return Object.entries(obj).map(([key, value]: [string, any]) => {
     const currentPath = [...path, key];
+
+    if (value.type === 'boolean') {
+      return (
+        <div key={key} className="flex items-center justify-between pb-4 pt-2">
+          <FieldLabel label={obj[key].name || key} htmlFor={currentPath.join('.')} type={value.type} />
+          <InputField fieldKey={currentPath} value={value} data={data} />
+        </div>
+      );
+    }
+
     return (
       <div key={key} className="space-y-2 pb-6 pt-2">
         <div className="flex items-center justify-between">
@@ -110,12 +121,10 @@ export function InputField({ fieldKey, value, data }: { fieldKey: string[]; valu
       return <Input id={fieldKey[fieldKey.length - 1]} value={getData(fieldKey) ?? ''} onChange={(e) => handleInputChange([...fieldKey], Number(e.target.value))} type="number" />;
     case 'boolean':
       return (
-        <input
+        <Switch
           id={fieldKey[fieldKey.length - 1]}
-          type="checkbox"
-          className="h-4 w-4 rounded border-input accent-primary"
           checked={!!getData(fieldKey)}
-          onChange={(e) => handleInputChange([...fieldKey], e.target.checked)}
+          onCheckedChange={(checked) => handleInputChange([...fieldKey], checked)}
         />
       );
     case 'select':
