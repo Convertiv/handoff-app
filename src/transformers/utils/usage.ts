@@ -65,9 +65,7 @@ function formatObjectLiteral(value: unknown): string {
   const entries = Object.entries(value as Record<string, unknown>);
   if (entries.length === 0) return '{}';
   if (entries.length <= 3) {
-    const inline = entries
-      .map(([k, v]) => `${isValidIdentifier(k) ? k : JSON.stringify(k)}: ${JSON.stringify(v)}`)
-      .join(', ');
+    const inline = entries.map(([k, v]) => `${isValidIdentifier(k) ? k : JSON.stringify(k)}: ${JSON.stringify(v)}`).join(', ');
     if (inline.length <= 60) return `{ ${inline} }`;
   }
   return JSON.stringify(value, null, 2);
@@ -135,7 +133,7 @@ export function generateUsageSnippet(options: GenerateUsageSnippetOptions): stri
   // any additional keys from the property schema that weren't in the preview.
   const allKeys = new Set([...Object.keys(previewValues), ...Object.keys(properties)]);
 
-  for (const key of allKeys) {
+  for (const key of Array.from(allKeys)) {
     const slot = properties[key];
     const inPreview = key in previewValues;
     const value = inPreview ? previewValues[key] : resolveSchemaValue(slot);
