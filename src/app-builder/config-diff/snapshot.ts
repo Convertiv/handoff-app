@@ -23,7 +23,7 @@ export const diffMapSnapshots = (
 ): string[] => {
   const affected = new Set<string>();
 
-  for (const [key, oldEntries] of oldSnapshot) {
+  for (const [key, oldEntries] of Array.from(oldSnapshot)) {
     const newEntries = newSnapshot.get(key);
     if (!newEntries) {
       affected.add(key);
@@ -33,7 +33,7 @@ export const diffMapSnapshots = (
       affected.add(key);
       continue;
     }
-    for (const [subKey, oldValue] of oldEntries) {
+    for (const [subKey, oldValue] of Array.from(oldEntries)) {
       if (newEntries.get(subKey) !== oldValue) {
         affected.add(key);
         break;
@@ -41,7 +41,7 @@ export const diffMapSnapshots = (
     }
   }
 
-  for (const key of newSnapshot.keys()) {
+  for (const key of Array.from(newSnapshot.keys())) {
     if (!oldSnapshot.has(key)) {
       affected.add(key);
     }
