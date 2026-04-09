@@ -17,7 +17,7 @@ export const getAllStrategies = (): ConfigDiffStrategy[] =>
  * Called after component rebuilds so derived artifacts stay up-to-date.
  */
 export const runAllFinalizers = async (handoff: Handoff, context?: FinalizeContext): Promise<void> => {
-  for (const strategy of strategies.values()) {
+  for (const strategy of Array.from(strategies.values())) {
     await strategy.finalize(handoff, context);
   }
 };

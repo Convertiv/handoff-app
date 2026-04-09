@@ -45,7 +45,7 @@ const getComponentPreviewKeys = async (handoff: Handoff, componentId: string): P
 const getArtifactComponentId = (fileName: string, componentIds: Iterable<string>): string | null => {
   let match: string | null = null;
 
-  for (const componentId of componentIds) {
+  for (const componentId of Array.from(componentIds)) {
     if (!fileName.startsWith(`${componentId}-`)) continue;
     if (!match || componentId.length > match.length) {
       match = componentId;
@@ -95,7 +95,7 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
     }
 
     const previewKeys = await getComponentPreviewKeys(handoff, componentId);
-    for (const previewKey of previewKeys) {
+    for (const previewKey of Array.from(previewKeys)) {
       validFiles.add(`${componentId}-${previewKey}.html`);
       validFiles.add(`${componentId}-${previewKey}-inspect.html`);
     }

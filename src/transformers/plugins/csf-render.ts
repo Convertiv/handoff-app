@@ -218,7 +218,7 @@ function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | n
   }
 
   const namedImportRegex = /import\s*{\s*([^}]+)\s*}\s*from\s*['"]([^'"]+)['"]/gm;
-  for (const match of sourceCode.matchAll(namedImportRegex)) {
+  for (const match of Array.from(sourceCode.matchAll(namedImportRegex))) {
     const specifiers = match[1]
       .split(',')
       .map((specifier) => specifier.trim())
