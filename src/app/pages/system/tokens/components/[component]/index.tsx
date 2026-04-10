@@ -67,7 +67,6 @@ const GenericComponentPage = ({
   menu,
   metadata,
   current,
-  id,
   config,
   component,
   options,
@@ -101,11 +100,11 @@ const GenericComponentPage = ({
   );
 };
 
-export const getComponentPreviews = (
+export function getComponentPreviews(
   tab: 'overview' | 'tokens',
   component: CoreTypes.IFileComponentObject,
   options: ComponentDocumentationOptions
-) => {
+): ComponentPreview[] {
   const instances = component.instances;
   const view = (options?.views ?? {})[tab] ?? {};
   const viewFilters = view.condition ?? {};
@@ -147,13 +146,10 @@ export const getComponentPreviews = (
               // Filter value object keys do not contain the value of the respective component property
               // Since component should not be displayed we return null value
               return null;
-            } else {
-              // Filter value object keys do contain the value of the respective component property
-              // We will store the property value of the filter value object for later use
-              overrides = filterValue[variantProps.get(filterProp)];
-              // Use as a default possibly distinctive name
-              name ??= variantProps.get(filterProp);
             }
+            // Filter value object keys do contain the value of the respective component property
+            overrides = filterValue[variantProps.get(filterProp)];
+            name ??= variantProps.get(filterProp);
           }
         } else if (typeof filterValue === 'string' && variantProps.get(filterProp) !== filterValue) {
           return null;
@@ -175,7 +171,7 @@ export const getComponentPreviews = (
   }
 
   return tabComponents;
-};
+}
 
 function multiPropSort(properties: string[], array: ComponentPreview[]) {
   return array.sort((l, r) => {
@@ -199,14 +195,10 @@ function multiPropSort(properties: string[], array: ComponentPreview[]) {
   });
 }
 
-const IsColorValue = (value: string) => {
-  return value.match(/^#[0-9A-F]{6}$/i) || value.match(/linear-gradient\(.*?\)|rgba\(.*?\)/);
-};
-
 const NormalizeValue = (value: string): string => {
   if (!Number.isNaN(Number(value))) {
     const numericValue = Number(value);
-    if (numericValue % 1 != 0) {
+    if (numericValue % 1 !== 0) {
       return round(numericValue, 2).toFixed(2);
     }
   }
@@ -220,7 +212,6 @@ export interface ComponentDesignTokensProps {
   previewObjectOptions?: CoreTypes.IHandoffConfigurationComponentOptions;
   componentInstances: CoreTypes.IComponentInstance[];
   overrides?: { [variantProp: string]: string[] };
-  children?: React.ReactNode;
   renderPreviews: boolean;
   useReferences: boolean;
 }
@@ -228,18 +219,17 @@ export interface ComponentDesignTokensProps {
 interface DataTableRow extends Map<string, [string, string, CoreTypes.IToken | undefined][]> { }
 interface DataTable extends Map<string, DataTableRow> { }
 
-export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
+export function ComponentDesignTokens({
   title,
   componentInstances,
   previewObject,
   previewObjectOptions,
   overrides,
-  children,
-  renderPreviews,
+  renderPreviews: _renderPreviews,
   useReferences,
-}) => {
+}: ComponentDesignTokensProps) {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
-  const [showReference, setShowReference] = React.useState(useReferences);
+  const [showReference] = React.useState(useReferences);
   const headings: Set<string> = new Set<string>();
   const dataTable = new Map() as DataTable;
 
@@ -310,8 +300,6 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
     return <></>;
   }
 
-  const layoutLeftColWidth = renderPreviews ? (numberOfColumns >= 7 ? 11 : 4 + numberOfColumns) : 12;
-  const layoutRightColWidth = 12 - layoutLeftColWidth;
   const headingsTotal = Array.from(headings).length + 1;
 
   return (
@@ -341,26 +329,19 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
 
               {Array.from(propertiesMap)
                 .sort(([lProp], [rProp]) => lProp.localeCompare(rProp))
-                .map(([prop, cells], i) => (
+                .map(([, cells], i) => (
                   <TableRow key={`${previewObject.id}_table_tokens_row_${rowIdx}_${i}`} className="h-12">
                     <TableCell>
-                      {/* <p>{prop}</p> */}
                       {cells[0][0]}
                     </TableCell>
 
-                    {cells.map(([_, tokenValue, tokenReference], i) => (
-                      <TableCell key={`${previewObject.id}_table_tokens_row_${rowIdx}_${i}_cell_${i}`}>
-                        {/* {IsColorValue(tokenValue) && (
-                          <div className="group relative inline-block h-7 w-7 rounded-lg" style={{ background: tokenValue }}></div>
-                        )} */}
-                        {/* <PropertyIcon name={property} /> */}
-                        {!showReference ? (
-                          NormalizeValue(tokenValue)
-                        ) : tokenReference ? (
-                          <>{tokenReferenceFormat(tokenReference, 'css')} </>
-                        ) : (
-                          NormalizeValue(tokenValue)
-                        )}
+                    {cells.map(([, tokenValue, tokenReference], cellIdx) => (
+                      <TableCell key={`${previewObject.id}_table_tokens_row_${rowIdx}_${i}_cell_${cellIdx}`}>
+                        {(() => {
+                          if (!showReference) return NormalizeValue(tokenValue);
+                          if (tokenReference) return <>{tokenReferenceFormat(tokenReference, 'css')} </>;
+                          return NormalizeValue(tokenValue);
+                        })()}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -371,6 +352,6 @@ export const ComponentDesignTokens: React.FC<ComponentDesignTokensProps> = ({
       </Table>
     </>
   );
-};
+}
 
 export default GenericComponentPage;

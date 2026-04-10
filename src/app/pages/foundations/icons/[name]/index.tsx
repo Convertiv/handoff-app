@@ -58,7 +58,7 @@ export async function getStaticPaths() {
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = (context) => {
+export const getStaticProps: GetStaticProps = () => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
@@ -68,10 +68,12 @@ export const getStaticProps: GetStaticProps = (context) => {
   };
 };
 
-export default function SingleIcon({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) {
+export default function SingleIcon({ menu, metadata, current, config, assets }: AssetDocumentationProps) {
   const router = useRouter();
-  let { name } = router.query;
-  const icon = assets?.icons.find((icon) => icon.icon === name);
+  const nameParam = router.query.name;
+  const name = typeof nameParam === 'string' ? nameParam : Array.isArray(nameParam) ? nameParam[0] : undefined;
+  const icon = assets?.icons.find((i) => i.icon === name);
+
   const copySvg = React.useCallback<React.MouseEventHandler>(
     (event) => {
       event.preventDefault();

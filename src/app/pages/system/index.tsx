@@ -30,7 +30,7 @@ type ComponentPageDocumentationProps = DocumentationProps;
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   // Read current slug
   const config = getClientRuntimeConfig();
   return {
@@ -49,7 +49,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
   // Fetch components from api
   const [components, setComponents] = useState<PreviewObject[]>(undefined);
   const fetchComponents = async () => {
-    let data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`).then((res) => res.json());
+    const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`).then((res) => res.json());
     setComponents(data as PreviewObject[]);
   };
   useEffect(() => {
