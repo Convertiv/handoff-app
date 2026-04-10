@@ -71,7 +71,8 @@ export const getStaticProps: GetStaticProps = () => {
 export default function SingleIcon({ menu, metadata, current, config, assets }: AssetDocumentationProps) {
   const router = useRouter();
   const nameParam = router.query.name;
-  const name = typeof nameParam === 'string' ? nameParam : Array.isArray(nameParam) ? nameParam[0] : undefined;
+  let name = undefined;
+  if (typeof nameParam === 'string') { name = nameParam } else if (Array.isArray(nameParam)) { name = nameParam[0] } else { name = undefined }
   const icon = assets?.icons.find((i) => i.icon === name);
 
   const copySvg = React.useCallback<React.MouseEventHandler>(

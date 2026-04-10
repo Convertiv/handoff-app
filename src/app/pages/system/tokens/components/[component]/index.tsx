@@ -225,15 +225,12 @@ export function ComponentDesignTokens({
   previewObject,
   previewObjectOptions,
   overrides,
-  renderPreviews: _renderPreviews,
   useReferences,
 }: ComponentDesignTokensProps) {
   const previewObjectVariantPropsMap = new Map(previewObject.variantProperties);
   const [showReference] = React.useState(useReferences);
   const headings: Set<string> = new Set<string>();
   const dataTable = new Map() as DataTable;
-
-  let numberOfColumns = 0;
 
   if (overrides) {
     const overrideVariantProps = Object.keys(overrides) ?? [];
@@ -268,9 +265,6 @@ export function ComponentDesignTokens({
           .push([token.name, token.value, token ?? undefined]);
       });
 
-      // Increase columns count
-      numberOfColumns++;
-
       // Append heading to the list of headings
       headings.add(componentVariantPropsMap.get(masterOverride));
     });
@@ -288,9 +282,6 @@ export function ComponentDesignTokens({
         .get(token.metadata.cssProperty)
         .push([token.name, token.value, token ?? undefined]);
     });
-
-    // Increase columns count
-    numberOfColumns++;
 
     // Append heading to the list of headings
     headings.add('Value');
