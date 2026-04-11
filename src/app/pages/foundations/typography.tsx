@@ -62,16 +62,6 @@ const Typography = ({
     };
   }, {} as FontFamily);
 
-  const type_copy = config?.app?.type_copy ?? 'Almost before we knew it, we had left the ground.';
-
-  const typographyCategories = typography.reduce((acc, type) => {
-    if (type.name.includes('/')) {
-      const category = type.name.split('/')[0].trim();
-      acc.add(category);
-    }
-    return acc;
-  }, new Set<string>());
-
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">

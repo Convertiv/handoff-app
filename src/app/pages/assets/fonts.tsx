@@ -21,7 +21,7 @@ import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, g
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   const fonts = fs.readdirSync(
     path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts')
   );
@@ -45,16 +45,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-const FontsPage = ({ content, menu, metadata, current, customFonts, design, config }: FontDocumentationProps) => {
+const FontsPage = ({ content, menu, metadata, customFonts, design, config }: FontDocumentationProps) => {
   const fontFamilies: string[] = uniq(design.typography.map((type) => type.values.fontFamily));
   const fontLinks: string[] = fontFamilies.map((fontFamily) => {
-    const machine_name = fontFamily.replace(/\s/g, '');
-    const custom = customFonts.find((font) => font === machine_name);
+    const machineName = fontFamily.replace(/\s/g, '');
+    const custom = customFonts.find((font) => font === machineName);
     if (custom) {
-      return `/fonts/${machine_name}.zip`;
-    } else {
-      return `https://fonts.google.com/specimen/${fontFamily}`;
+      return `/fonts/${machineName}.zip`;
     }
+    return `https://fonts.google.com/specimen/${fontFamily}`;
   });
   return (
     <div className="c-page">
