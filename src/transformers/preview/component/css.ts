@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { deprecations, type DeprecationOrId } from 'sass';
 import { InlineConfig, build as viteBuild } from 'vite';
 import { initRuntimeConfig } from '../../../config';
 import Handoff from '../../../index';
@@ -9,6 +10,18 @@ import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 const { pathToFileURL } = require('url');
+
+/**
+ * Deprecation IDs safe to pass to `silenceDeprecations` without Sass warnings:
+ * only **active** deprecations (not obsolete/future), and never `user-authored`.
+ */
+const SILENCE_ALL_SASS_DEPRECATIONS: DeprecationOrId[] = (
+  Object.keys(deprecations) as (keyof typeof deprecations)[]
+).filter((id) => {
+  if (id === 'user-authored') return false;
+  const dep = deprecations[id];
+  return dep.status === 'active';
+});
 
 export const MAIN_COMPONENT_CSS_FILE = 'main.css';
 export const SHARED_COMPONENT_CSS_FILE = 'shared.css';
@@ -60,7 +73,7 @@ const buildCssBundle = async ({
         preprocessorOptions: {
           scss: {
             loadPaths,
-            quietDeps: true,
+            quietDeps: !handoff.verbose,
             // TODO: Discuss this with Domagoj
             // Maintain compatibility with older sass imports
             // importers: [
@@ -74,7 +87,7 @@ const buildCssBundle = async ({
             // ],
             // Use modern API settings
             // api: 'modern-compiler',
-            silenceDeprecations: ['import', 'legacy-js-api'],
+            silenceDeprecations: handoff.verbose ? [] : SILENCE_ALL_SASS_DEPRECATIONS,
           },
         },
       },

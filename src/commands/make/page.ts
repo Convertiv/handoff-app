@@ -24,7 +24,7 @@ const command: CommandModule<{}, MakePageArgs> = {
       });
   },
   handler: async (args: MakePageArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
 
     const pageName = args.name;
 

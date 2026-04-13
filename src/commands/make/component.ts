@@ -19,7 +19,7 @@ const command: CommandModule<{}, MakeComponentArgs> = {
   },
 
   handler: async (args: MakeComponentArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     const componentName = args.name;
 
     if (!/^[a-z0-9_-]+$/i.test(componentName)) {

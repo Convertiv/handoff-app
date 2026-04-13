@@ -24,7 +24,7 @@ const command: CommandModule<{}, MakeTemplateArgs> = {
       });
   },
   handler: async (args: MakeTemplateArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
 
     const templateComponent = args.component;
 

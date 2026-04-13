@@ -17,7 +17,7 @@ const command: CommandModule<{}, BuildComponentsArgs> = {
     });
   },
   handler: async (args: BuildComponentsArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await handoff.component(args.component);
   },
 };

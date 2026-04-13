@@ -91,6 +91,15 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
     delete data['jsCompiled'];
     return data;
   }
+  const exists = fs.existsSync(path.resolve(entry));
+  if (!exists) {
+    Logger.error(`Entry path "${entry}" does not exist`);
+    // Keep generated output aligned with the current component declaration.
+    await fs.remove(builtJsPath);
+    delete data.js;
+    delete data['jsCompiled'];
+    return data;
+  }
 
   try {
     // Remove the previous artifact before rebuilding so a no-output build

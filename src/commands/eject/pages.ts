@@ -12,7 +12,7 @@ const command: CommandModule<{}, EjectPagesArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: EjectPagesArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await handoff.ejectPages();
   },
 };

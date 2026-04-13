@@ -19,7 +19,7 @@ const command: CommandModule<{}, BuildAppArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: BuildAppArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await handoff.build(args.skipComponents ?? false);
   },
 };

@@ -19,7 +19,7 @@ const command: CommandModule<{}, ValidateComponentsArgs> = {
       });
   },
   handler: async (args: ValidateComponentsArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await handoff.validateComponents(args.skipBuild ?? false);
   },
 };

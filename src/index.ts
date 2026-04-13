@@ -17,6 +17,8 @@ class Handoff {
   config: Config | null;
   debug: boolean = false;
   force: boolean = false;
+  /** When true, Sass/Vite emit deprecation warnings; when false, they are silenced for quieter builds. */
+  verbose: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = process.cwd();
   exportsDirectory: string = 'exported';
@@ -28,22 +30,23 @@ class Handoff {
     typography: {};
   };
 
-  private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  private _initialArgs: { debug?: boolean; force?: boolean; verbose?: boolean; config?: Partial<Config> } = {};
   private _configFilePaths: string[] = [];
   private _configFileIndex: Map<string, ConfigFileEntry> = new Map();
   private _mainConfigFilePath?: string;
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
-  constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
-    this._initialArgs = { debug, force, config };
-    this.construct(debug, force, config);
+  constructor(debug?: boolean, force?: boolean, config?: Partial<Config>, verbose?: boolean) {
+    this._initialArgs = { debug, force, config, verbose };
+    this.construct(debug, force, config, verbose);
   }
 
-  private construct(debug?: boolean, force?: boolean, config?: Partial<Config>) {
+  private construct(debug?: boolean, force?: boolean, config?: Partial<Config>, verbose?: boolean) {
     this.config = null;
     this.debug = debug ?? false;
     this.force = force ?? false;
+    this.verbose = verbose ?? false;
     Logger.init({ debug: this.debug });
     this.init(config);
     global.handoff = this;
@@ -64,7 +67,7 @@ class Handoff {
   }
 
   reload(): Handoff {
-    this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
+    this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config, this._initialArgs.verbose);
     return this;
   }
 

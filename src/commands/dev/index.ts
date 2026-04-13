@@ -12,7 +12,7 @@ const command: CommandModule<{}, DevArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: DevArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await handoff.dev();
   },
 };

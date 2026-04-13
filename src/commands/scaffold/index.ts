@@ -13,7 +13,7 @@ const command: CommandModule<{}, ScaffoldArgs> = {
     return getSharedOptions(yargs);
   },
   handler: async (args: ScaffoldArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = new Handoff(args.debug, args.force, undefined, args.verbose);
     await runScaffold(handoff);
   },
 };

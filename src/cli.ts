@@ -38,6 +38,14 @@ const run = () => {
   try {
     const yargsInstance = yargs(hideBin(process.argv));
 
+    yargsInstance.option('verbose', {
+      alias: 'v',
+      type: 'boolean',
+      default: false,
+      describe: 'Print Sass deprecation warnings and noisy dependency diagnostics (default: quiet)',
+      global: true,
+    });
+
     commands.forEach((command) => {
       yargsInstance.command(command);
     });
