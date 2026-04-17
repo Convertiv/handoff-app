@@ -226,6 +226,23 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
     files.push(matchingConfigPath);
   }
 
+  // Include every pattern config file whose declaration references this component.
+  // When a pattern is added or modified, injectPatternPreviews injects new
+  // __pattern_* synthetic preview keys onto the referenced component, changing
+  // what processComponents must render. Without tracking these files here, the
+  // cache would incorrectly consider the component unchanged and skip the preview
+  // rebuild, leaving buildPatterns unable to find the required HTML fragments.
+  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  for (const configPath of configPaths) {
+    const entry = handoff.getConfigFileEntry(configPath);
+    if (entry?.kind !== 'pattern') continue;
+    const pattern = runtimePatterns[entry.entityId];
+    if (!pattern) continue;
+    if (pattern.components?.some((ref) => ref.id === componentId)) {
+      files.push(configPath);
+    }
+  }
+
   return { files, templateDir };
 }
 
