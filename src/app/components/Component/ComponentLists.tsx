@@ -76,114 +76,114 @@ export const ComponentList = ({
   return (
     <TooltipProvider delayDuration={0}>
       <div className="mx-auto w-full mb-4">
-      <div className="flex justify-between bg-accent rounded-xl mb-8">
-        <div className="mr-auto flex items-center gap-3 bg-accent p-2.5 rounded-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search components..."
-              className="rounded-md pl-9 pr-3 py-1 text-sm border-none shadow-none"
-              onChange={e => setSearch(e.currentTarget.value)}
-              aria-label="Search components"
-              style={{ minWidth: 200 }}
+        <div className="flex justify-between bg-accent rounded-xl mb-8">
+          <div className="mr-auto flex items-center gap-3 bg-accent p-2.5 rounded-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search components..."
+                className="rounded-md pl-9 pr-3 py-1 text-sm border-none shadow-none"
+                onChange={e => setSearch(e.currentTarget.value)}
+                aria-label="Search components"
+                style={{ minWidth: 200 }}
 
-            />
+              />
+            </div>
+
           </div>
+          <div className="flex justify-end p-2.5 gap-2.5">
+            <div className="flex items-center gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md">
+              <Select
+                value={category}
+                onValueChange={val => {
+                  setCategory(val);
+                }}
+                aria-label="Filter by category"
+              >
+                <SelectTrigger className="rounded-md [&_span]:text-xs [&_svg]:ml-2.5 [&_svg]:size-3 py-1 px-2 pl-3 text-sm border-none shadow-none bg-transparent focus:border-blue-400 focus:outline-none">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.filter((category) => category !== '').map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        </div>
-        <div className="flex justify-end p-2.5 gap-2.5">
-          <div className="flex items-center gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md">
-            <Select
-              value={category}
-              onValueChange={val => {
-                setCategory(val);
-              }}
-              aria-label="Filter by category"
-            >
-              <SelectTrigger className="rounded-md [&_span]:text-xs [&_svg]:ml-2.5 [&_svg]:size-3 py-1 px-2 pl-3 text-sm border-none shadow-none bg-transparent focus:border-blue-400 focus:outline-none">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <hr className="h-7 w-px bg-input" />
 
-            <hr className="h-7 w-px bg-input" />
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" className={cn("w-9", groupBy && 'bg-accent text-accent-foreground')} onClick={() => setGroupBy(!groupBy)}>
-                  <Rows className="size-3.5" strokeWidth={1.5} />
-                  <span className="sr-only">Group by category</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Group by category
-              </TooltipContent>
-            </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" className={cn("w-9", groupBy && 'bg-accent text-accent-foreground')} onClick={() => setGroupBy(!groupBy)}>
+                    <Rows className="size-3.5" strokeWidth={1.5} />
+                    <span className="sr-only">Group by category</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Group by category
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <ToggleGroup className='flex gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md' type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'grid' && 'bg-accent text-accent-foreground')} value="grid" aria-label="Grid layout" >
+                    <LayoutGrid className="size-3.5" strokeWidth={1.5} />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Grid layout
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'single' && 'bg-accent text-accent-foreground')} value="single" aria-label="Single column layout" >
+                    <AlignJustify className="size-3.5" strokeWidth={1.5} />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Column layout
+                </TooltipContent>
+              </Tooltip>
+            </ToggleGroup>
           </div>
-          <ToggleGroup className='flex gap-0.5 border border-input bg-background shadow-xs hover:text-accent-foreground p-0.5 rounded-md' type="single" value={layout} onValueChange={(value) => storeLayout(value)}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'grid' && 'bg-accent text-accent-foreground')} value="grid" aria-label="Grid layout" >
-                  <LayoutGrid className="size-3.5" strokeWidth={1.5} />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>
-                Grid layout
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem className={cn("size-9 py-2 px-2 flex items-center justify-center hover:bg-accent rounded-md", layout === 'single' && 'bg-accent text-accent-foreground')} value="single" aria-label="Single column layout" >
-                  <AlignJustify className="size-3.5" strokeWidth={1.5} />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>
-                Column layout
-              </TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
         </div>
-      </div>
 
-      {groupBy ? (
-        <>
-          {Object.keys(groupedList).map((group) => {
-            return (
-              <div key={`group-${group}`} className="mb-8">
-                <HeadersType.H3 className="mb-4 text-lg font-medium border-b border-gray-200 pb-2">{group}</HeadersType.H3>
-                <div
-                  className={cn(
-                    'grid',
-                    layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
-                  )}
-                >
-                  {groupedList[group].map((component) => {
-                    return <ComponentsPageCard key={`component-${component.id}`} component={component} layout={layout} />;
-                  })}
+        {groupBy ? (
+          <>
+            {Object.keys(groupedList).map((group) => {
+              return (
+                <div key={`group-${group}`} className="mb-8">
+                  <HeadersType.H3 className="mb-4 text-lg font-medium border-b border-gray-200 pb-2">{group}</HeadersType.H3>
+                  <div
+                    className={cn(
+                      'grid',
+                      layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
+                    )}
+                  >
+                    {groupedList[group].map((component) => {
+                      return <ComponentsPageCard key={`component-${component.id}`} component={component} layout={layout} />;
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            })}
+          </>
+        ) : (
+          <div
+            className={cn(
+              'grid',
+              layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
+            )}
+          >            {list.map((component) => {
+            return <ComponentsPageCard key={`component-${component.id}`} component={component} layout={layout} />;
           })}
-        </>
-      ) : (
-        <div
-          className={cn(
-            'grid',
-            layout === 'grid' ? 'grid-cols-1 gap-10 min-[800px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1 gap-2'
-          )}
-        >            {list.map((component) => {
-          return <ComponentsPageCard key={`component-${component.id}`} component={component} layout={layout} />;
-        })}
-        </div>
-      )}
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
