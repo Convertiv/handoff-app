@@ -42,7 +42,7 @@ export const ComponentList = ({
   const [groupedList, setGroupedList] = React.useState<Record<string, PreviewObject[]>>({});
 
   const categories = React.useMemo(() => {
-    const categories = new Set(components.map((component) => component.group).flat());
+    const categories = new Set(components.map((component) => component.group).flat().filter((g): g is string => !!g));
     return Array.from(categories);
   }, [components]);
 
