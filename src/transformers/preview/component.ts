@@ -2,10 +2,10 @@ import type { DocAnnotation, TypeNode } from 'handoff-docgen';
 import path from 'path';
 import Handoff from '../../index';
 import { getAPIPath } from './component/api';
-import writeComponentSummaryAPI from './component/summary';
 import processComponents from './component/builder';
 import { buildMainCss } from './component/css';
 import { buildMainJS } from './component/javascript';
+import writeComponentSummaryAPI from './component/summary';
 
 export interface ComponentMetadata {
   title: string;
@@ -33,7 +33,7 @@ export interface SlotMetadata {
   name: string;
   description: string;
   generic: string;
-  default?: string;
+  default?: string | number | boolean | object | any[] | null;
   type: SlotType;
   // used if type is array
   items?: {

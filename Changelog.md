@@ -12,6 +12,11 @@ This patch release clears ESLint failures in the Next.js app pages and aligns
 several code paths with the compiler target so production builds succeed without
 enabling `--downlevelIteration`.
 
+### Change
+
+* Altered the avaliable types to the SlotMetadata so the default can handle
+  a wide variaty of types - `default?: string | number | boolean | object | any[] | null;`
+
 ### Lint and code quality
 
 * Resolved `no-else-return`, `no-unused-vars`, `camelcase`, `prefer-const`,
