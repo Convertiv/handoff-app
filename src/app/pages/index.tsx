@@ -2,7 +2,6 @@ import { ArrowRight, Component, Hexagon, Layers, Shapes } from 'lucide-react';
 import { GetStaticProps } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -21,7 +20,7 @@ import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
@@ -31,8 +30,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 };
 
 const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
-  const router = useRouter();
-
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
       <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">

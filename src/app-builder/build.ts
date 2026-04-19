@@ -4,13 +4,23 @@ import path from 'path';
 import Handoff from '..';
 import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
+import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import processComponents from '../transformers/preview/component/builder';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
-import { WatcherState, getRuntimeComponentsPathsToWatch, watchAppSource, watchComponentDirectories, watchGlobalEntries, watchPages, watchPublicDirectory, watchRuntimeComponents, watchRuntimeConfiguration } from './watchers';
+import {
+  WatcherState,
+  getRuntimeComponentsPathsToWatch,
+  watchAppSource,
+  watchComponentDirectories,
+  watchGlobalEntries,
+  watchPages,
+  watchPublicDirectory,
+  watchRuntimeComponents,
+  watchRuntimeConfiguration,
+} from './watchers';
 import { createWebSocketServer } from './websocket';
 
 const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -46,10 +56,13 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 
   // Copy custom theme CSS if it exists in the user's project
   const customThemePath = path.resolve(handoff.workingPath, 'theme.css');
+  const destPath = path.resolve(appPath, 'css', 'theme.css');
   if (fs.existsSync(customThemePath)) {
-    const destPath = path.resolve(appPath, 'css', 'theme.css');
     await fs.copy(customThemePath, destPath, { overwrite: true });
     Logger.success(`Custom theme.css loaded`);
+  } else {
+    // create a empty theme.css file
+    await fs.writeFile(destPath, '');
   }
 
   // Prepare project app configuration using stable placeholder replacement.
