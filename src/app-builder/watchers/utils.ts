@@ -7,6 +7,8 @@ export interface WatcherState {
   runtimeComponentsWatcher: chokidar.FSWatcher | null;
   runtimeConfigurationWatcher: chokidar.FSWatcher | null;
   componentDirectoriesWatcher: chokidar.FSWatcher | null;
+  /** Watches entries.patterns parent directories for newly created pattern subdirectories. */
+  patternDirectoriesWatcher: chokidar.FSWatcher | null;
 }
 
 /**

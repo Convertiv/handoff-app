@@ -2,6 +2,7 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { buildPatterns } from '../pipeline/patterns';
 import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
@@ -273,22 +274,49 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
 };
 
 /**
- * Watches the parent component directories from config.entries.components
- * for new components being added. When a new config file (e.g. button.json)
- * appears in a new subdirectory, reloads the runtime config and restarts
- * the component/configuration watchers so the new component is picked up.
+ * Shared factory for watching a parent directory for newly created entity
+ * subdirectories (components or patterns). Handles the common scaffolding so
+ * that callers only describe what differs for their entity kind:
+ *
+ *  - which config-entry paths to watch
+ *  - how to read the current known ids after a reload
+ *  - which WatcherState slot to use
+ *  - a log label for the entity kind
+ *  - the rebuild work to run once the runtime config is fresh
  */
-export const watchComponentDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
-  if (state.componentDirectoriesWatcher) {
-    state.componentDirectoriesWatcher.close();
+const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions, options: {
+  /** Config paths to watch, e.g. handoff.config.entries?.components */
+  getConfigPaths: (handoff: Handoff) => string[];
+  /** Current known entity ids from runtime config, called again after reload to refresh the set */
+  getKnownIds: (handoff: Handoff) => string[];
+  /** Read the active FSWatcher from state */
+  getWatcher: (state: WatcherState) => chokidar.FSWatcher | null;
+  /** Write the active FSWatcher back into state */
+  setWatcher: (state: WatcherState, watcher: chokidar.FSWatcher) => void;
+  /** Prefix for the scheduleHandler key, e.g. 'newComponent' or 'newPattern' */
+  scheduleKeyPrefix: string;
+  /** Human-readable label used in log messages, e.g. 'component' or 'pattern' */
+  entityLabel: string;
+  /**
+   * Entity-specific rebuild work, called after reload + persistClientConfig +
+   * watcher re-registration. Receives the handoff instance (with fresh runtime
+   * config) and the directory name of the new entity.
+   */
+  onDetected: (handoff: Handoff, dirName: string) => Promise<void>;
+}) => {
+  const { getConfigPaths, getKnownIds, getWatcher, setWatcher, scheduleKeyPrefix, entityLabel, onDetected } = options;
+
+  const existingWatcher = getWatcher(state);
+  if (existingWatcher) {
+    existingWatcher.close();
   }
 
-  const componentPaths = handoff.config.entries?.components ?? [];
-  if (componentPaths.length === 0) return;
+  const configPaths = getConfigPaths(handoff);
+  if (configPaths.length === 0) return;
 
   const dirsToWatch: string[] = [];
-  for (const componentPath of componentPaths) {
-    const resolved = path.resolve(handoff.workingPath, componentPath);
+  for (const configPath of configPaths) {
+    const resolved = path.resolve(handoff.workingPath, configPath);
     if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
       dirsToWatch.push(resolved);
     }
@@ -296,40 +324,127 @@ export const watchComponentDirectories = (handoff: Handoff, state: WatcherState,
 
   if (dirsToWatch.length === 0) return;
 
-  const knownComponents = new Set(Object.keys(handoff.runtimeConfig?.entries?.components ?? {}));
+  // Snapshot known ids at watch startup so we only react to genuinely new
+  // entities, not to file changes inside already-known directories.
+  const knownIds = new Set(getKnownIds(handoff));
 
-  state.componentDirectoriesWatcher = chokidar.watch(dirsToWatch, {
+  const watcher = chokidar.watch(dirsToWatch, {
     ...chokidarConfig,
     depth: 1,
   });
+  setWatcher(state, watcher);
 
-  state.componentDirectoriesWatcher.on('add', async (file) => {
+  watcher.on('add', async (file) => {
     const basename = path.basename(file);
     const dirName = path.basename(path.dirname(file));
 
-    const isConfigFile = basename.endsWith('.json') || basename.endsWith('.js') || basename.endsWith('.cjs');
-    const isNewComponent = isConfigFile && basename.startsWith(dirName) && !knownComponents.has(dirName);
+    // Only react to the primary declaration file for the directory (e.g.
+    // button.json, button.js, or button.handoff.ts inside a button/ subdir).
+    // The basename.startsWith(dirName) guard below ensures .ts here only
+    // ever matches files named after their parent directory, not arbitrary
+    // TypeScript source files.
+    const isConfigFile = basename.endsWith('.json') || basename.endsWith('.js') || basename.endsWith('.cjs') || basename.endsWith('.ts');
+    const isNewEntity = isConfigFile && basename.startsWith(dirName) && !knownIds.has(dirName);
 
-    if (!isNewComponent) return;
+    if (!isNewEntity) return;
 
-    await scheduleHandler(state, `newComponent:${dirName}`, async () => {
+    await scheduleHandler(state, `${scheduleKeyPrefix}:${dirName}`, async () => {
       try {
-        Logger.warn(`New component detected: ${dirName}. Reloading configuration...`);
-        handoff.reload();
-        knownComponents.add(dirName);
+        Logger.warn(`New ${entityLabel} detected: ${dirName}. Reloading configuration...`);
 
-        for (const id of Object.keys(handoff.runtimeConfig?.entries?.components ?? {})) {
-          knownComponents.add(id);
+        // Snapshot ids before reload so we can tell whether the new entity
+        // was successfully registered afterwards.
+        const idsBefore = new Set(getKnownIds(handoff));
+
+        handoff.reload();
+        knownIds.add(dirName);
+
+        // Refresh from the post-reload runtime config so any ids that were
+        // discovered alongside the new entity are also marked as known.
+        const idsAfter = getKnownIds(handoff);
+        for (const id of idsAfter) {
+          knownIds.add(id);
         }
 
         await persistClientConfig(handoff);
+
+        // Re-register file watchers so the new config file and any runtime
+        // files it introduces are covered going forward. This must happen even
+        // when the file failed to parse so that watchRuntimeConfiguration can
+        // trigger a retry the moment the file is saved with valid content.
         watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
         watchRuntimeConfiguration(handoff, state);
-        await processComponents(handoff, dirName);
-        await runAllFinalizers(handoff, { patternRebuildComponentIds: [dirName] });
+
+        // If no new ids appeared after reload the file was empty or invalid.
+        // Skip the build — watchRuntimeConfiguration will fire when it is saved.
+        const hasNewIds = idsAfter.some((id) => !idsBefore.has(id));
+        if (!hasNewIds) {
+          Logger.warn(`${entityLabel} "${dirName}" config is empty or incomplete — build will run automatically once the file is saved.`);
+          return;
+        }
+
+        await onDetected(handoff, dirName);
       } catch (e) {
-        Logger.error('Error processing new component:', e);
+        Logger.error(`Error processing new ${entityLabel}:`, e);
       }
     });
+  });
+};
+
+/**
+ * Watches the parent component directories from config.entries.components for
+ * new components being added. When a new config file appears in a new
+ * subdirectory, reloads the runtime config, restarts the component and
+ * configuration watchers, then builds the new component and any patterns that
+ * reference it.
+ */
+export const watchComponentDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+  watchEntityDirectories(handoff, state, chokidarConfig, {
+    getConfigPaths: (h) => h.config.entries?.components ?? [],
+    getKnownIds: (h) => Object.keys(h.runtimeConfig?.entries?.components ?? {}),
+    getWatcher: (s) => s.componentDirectoriesWatcher,
+    setWatcher: (s, w) => { s.componentDirectoriesWatcher = w; },
+    scheduleKeyPrefix: 'newComponent',
+    entityLabel: 'component',
+    onDetected: async (handoff, dirName) => {
+      await processComponents(handoff, dirName);
+      await runAllFinalizers(handoff, { patternRebuildComponentIds: [dirName] });
+    },
+  });
+};
+
+/**
+ * Watches the parent pattern directories from config.entries.patterns for new
+ * patterns being added. The rebuild sequence intentionally differs from
+ * watchComponentDirectories because the dependency arrow is reversed: a new
+ * pattern references existing components, so we rebuild only the preview
+ * segment of those components (to produce the __pattern_* HTML files that
+ * injectPatternPreviews registered) before composing the pattern itself.
+ */
+export const watchPatternDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+  watchEntityDirectories(handoff, state, chokidarConfig, {
+    getConfigPaths: (h) => h.config.entries?.patterns ?? [],
+    getKnownIds: (h) => Object.keys(h.runtimeConfig?.entries?.patterns ?? {}),
+    getWatcher: (s) => s.patternDirectoriesWatcher,
+    setWatcher: (s, w) => { s.patternDirectoriesWatcher = w; },
+    scheduleKeyPrefix: 'newPattern',
+    entityLabel: 'pattern',
+    onDetected: async (handoff, dirName) => {
+      // Rebuild only the previews segment for each component the new pattern
+      // references. Their JS/CSS/structure are unchanged — only the new
+      // synthetic preview HTML files need to be generated so that buildPatterns
+      // can assemble the pattern from them.
+      const newPattern = handoff.runtimeConfig?.entries?.patterns?.[dirName];
+      if (newPattern?.components?.length) {
+        for (const ref of newPattern.components) {
+          await processComponents(handoff, ref.id, ComponentSegment.Previews);
+        }
+      }
+
+      // Build only the new pattern directly rather than going through
+      // runAllFinalizers, which would rebuild all patterns unnecessarily.
+      const newPatternId = newPattern?.id ?? dirName;
+      await buildPatterns(handoff, { onlyPatternIds: new Set([newPatternId]) });
+    },
   });
 };

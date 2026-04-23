@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../../../components/Layout/Main';
+import NotFound from '../../../../components/NotFound';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
 import HeadersType from '../../../../components/Typography/Headers';
@@ -130,6 +131,7 @@ export const getStaticProps = async (context: { params: IParams }) => {
 const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nextPattern }: PatternPageProps) => {
   const [pattern, setPattern] = useState<PatternListObject | undefined>(undefined);
   const [fetchError, setFetchError] = useState<string | undefined>(undefined);
+  const [patternNotFound, setPatternNotFound] = useState(false);
   const [iframeHeight, setIframeHeight] = useState('400px');
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
@@ -145,13 +147,20 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     const controller = new AbortController();
     setPattern(undefined);
     setFetchError(undefined);
+    setPatternNotFound(false);
 
     fetch(`${normalizedBasePath}/api/pattern/${id}.json`, { signal: controller.signal })
       .then((res) => {
+        if (res.status === 404) {
+          setPatternNotFound(true);
+          return null;
+        }
         if (!res.ok) throw new Error(`Failed to load pattern: ${res.status} ${res.statusText}`);
         return res.json();
       })
-      .then((data) => setPattern(data as PatternListObject))
+      .then((data) => {
+        if (data) setPattern(data as PatternListObject);
+      })
       .catch((err) => {
         if (err.name !== 'AbortError') {
           setFetchError(err instanceof Error ? err.message : 'Failed to load pattern data.');
@@ -167,7 +176,27 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     }
   }, []);
 
-  if (fetchError) return <p className="p-4 text-red-500">{fetchError}</p>;
+  if (patternNotFound) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, title: '404 - Page Not Found', metaTitle: '404 - Page Not Found' }}>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <NotFound />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2">
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Something went wrong</p>
+          <p className="text-sm text-red-500">{fetchError}</p>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!pattern) return <p>Loading...</p>;
 
   return (
