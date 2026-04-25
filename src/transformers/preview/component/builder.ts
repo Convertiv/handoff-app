@@ -18,8 +18,10 @@ import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, OptionalPreviewRender, TransformComponentTokensResult } from '../types';
-import { readComponentApi, readComponentMetadataApi, updateComponentSummaryApi, writeComponentApi } from './api';
+import { readComponentApi, readComponentMetadataApi, writeComponentApi } from './api';
+import { removeComponentApi, syncComponentArtifacts } from './artifacts';
 import { getDocumentedPreviews } from './previews';
+import { removeComponentFromSummaryApi, updateComponentSummaryApi } from './summary';
 import buildComponentCss from './css';
 import buildPreviews from './html';
 import buildComponentJs from './javascript';
@@ -178,6 +180,13 @@ export async function processComponents(
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
   const allComponentIds = Object.keys(runtimeComponents);
+
+  if (id && !runtimeComponents[id]) {
+    await removeComponentApi(handoff, id);
+    await removeComponentFromSummaryApi(handoff, id);
+    await syncComponentArtifacts(handoff);
+    return [];
+  }
 
   // Determine which components need building based on cache (when enabled)
   let componentsToBuild: Set<string>;
@@ -425,6 +434,7 @@ export async function processComponents(
   // Always merge and write summary file, even if no components processed
   const isFullRebuild = !id;
   await updateComponentSummaryApi(handoff, result, isFullRebuild);
+  await syncComponentArtifacts(handoff);
 
   return result;
 }

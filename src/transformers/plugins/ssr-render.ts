@@ -14,6 +14,7 @@ import {
     getPropertiesFromGeneratedDocs,
 } from '../docgen';
 import { SlotMetadata } from '../preview/component';
+import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
 import { TransformComponentTokensResult } from '../preview/types';
 import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
@@ -124,7 +125,7 @@ function generateHtmlDocument(componentId: string, previewTitle: string, rendere
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/main.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
     <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>

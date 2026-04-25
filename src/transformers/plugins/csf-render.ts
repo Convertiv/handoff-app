@@ -10,6 +10,7 @@ import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 import { SlotMetadata, SlotType } from '../preview/component';
+import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
 import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
@@ -217,7 +218,7 @@ function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | n
   }
 
   const namedImportRegex = /import\s*{\s*([^}]+)\s*}\s*from\s*['"]([^'"]+)['"]/gm;
-  for (const match of sourceCode.matchAll(namedImportRegex)) {
+  for (const match of Array.from(sourceCode.matchAll(namedImportRegex))) {
     const specifiers = match[1]
       .split(',')
       .map((specifier) => specifier.trim())
@@ -270,7 +271,7 @@ function createHtmlDocument(componentId: string, previewTitle: string, renderedH
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/main.css" />
+    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
     <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
     <title>${previewTitle}</title>
