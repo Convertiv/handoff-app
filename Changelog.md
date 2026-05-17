@@ -6,19 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.2.2] - 2026-04-09
+## \[1.2.2] - TBD
 
-This patch release clears ESLint failures in the Next.js app pages and aligns
-several code paths with the compiler target so production builds succeed without
-enabling `--downlevelIteration`.
+This patch release improves watch-mode reliability for patterns, broadens slot
+default typing, clears downstream lint/build compatibility issues, and fixes a
+few release-branch UI and dependency issues.
 
-### Change
+### Added
 
-* Altered the avaliable types to the SlotMetadata so the default can handle
-  a wide variaty of types - `default?: string | number | boolean | object | any[] | null;`
+* Added `watchPatternDirectories` so newly created pattern subdirectories are
+  detected during `start` without restarting the dev server.
+* Added a shared `NotFound` component and reused it for stale pattern URLs and
+  missing markdown pages.
 
-### Lint and code quality
+### Changed
 
+* Broadened `SlotMetadata.default` so slot defaults can be strings, numbers,
+  booleans, objects, arrays, or `null`.
+* Refactored component and pattern directory watching through a shared
+  `watchEntityDirectories` helper.
+* Downgraded incomplete or mid-edit pattern declarations from hard parse errors
+  to warnings, allowing watch mode to retry automatically after the file is
+  saved with valid content.
+* Removed unneeded theme declarations.
+
+### Fixed
+
+* Fixed watch-mode rebuilds for newly added patterns by rebuilding referenced
+  component previews before composing the new pattern.
+* Fixed pattern watcher edge cases where declaration IDs differ from directory
+  names, and where an initially incomplete pattern config later becomes valid.
+* Fixed `.handoff.ts` declaration files not being detected by the new-entity
+  config-file gate.
+* Extended component build-cache inputs to include pattern config files that
+  reference the component, preventing stale preview output after pattern changes.
+* Fixed select/list handling when a component group or category value is empty.
+* Fixed CSS typing issues and app build issues found during the release branch.
 * Resolved `no-else-return`, `no-unused-vars`, `camelcase`, `prefer-const`,
   `eqeqeq`, `no-nested-ternary`, `no-lonely-if`, and `no-use-before-define`
   across static pages (catch-all docs, assets, foundations, home, system, and
@@ -26,17 +49,16 @@ enabling `--downlevelIteration`.
 * Removed or refactored unused `getStaticProps` context parameters, props, and
   locals; normalized naming (e.g. font machine keys); simplified icon detail
   routing query handling.
-* Reordered helper components (token color/effect/typography tables, component
-  token previews) ahead of page components where required for declaration order.
+* Reordered helper components ahead of page components where required for
+  declaration order.
 * Converted `getComponentPreviews` to a hoisted `function` declaration and
   refactored the component token table for clearer control flow.
+* Avoided iterating `Map`, `Set`, `Iterable`, and `matchAll` results directly in
+  `for...of` where the compile target requires `--downlevelIteration`.
 
-### Build / TypeScript compatibility
+### Security
 
-* Avoid iterating `Map` / `Set` / `Iterable` / `matchAll` results directly in
-  `for...of` where the compile target requires it: use `Array.from(...)` or
-  equivalent helpers in the config-diff registry, snapshot diff, CSF import
-  parsing, and component artifact sync.
+* Updated Vite to address a security issue.
 
 ## \[1.2.1] - 2026-04-08
 
