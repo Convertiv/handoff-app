@@ -17,6 +17,7 @@ import {
   watchComponentDirectories,
   watchGlobalEntries,
   watchPages,
+  watchPatternDirectories,
   watchPublicDirectory,
   watchRuntimeComponents,
   watchRuntimeConfiguration,
@@ -224,12 +225,14 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     runtimeComponentsWatcher: null,
     runtimeConfigurationWatcher: null,
     componentDirectoriesWatcher: null,
+    patternDirectoriesWatcher: null,
   };
 
   watchPublicDirectory(handoff, wss, state, chokidarConfig);
   watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
   watchRuntimeConfiguration(handoff, state);
   watchComponentDirectories(handoff, state, chokidarConfig);
+  watchPatternDirectories(handoff, state, chokidarConfig);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
 };

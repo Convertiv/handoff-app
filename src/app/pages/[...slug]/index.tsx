@@ -1,7 +1,7 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRef } from 'react';
+import NotFound from '../../components/NotFound';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -48,21 +48,7 @@ export default function DocCatchAllPage({ content, menu, metadata, current, conf
           <title>404 - Page Not Found</title>
           <meta name="description" content="Page Not Found" />
         </Head>
-        <div className="flex flex-col items-center">
-          <div className="mb-2 text-7xl font-bold text-gray-800 dark:text-white">404</div>
-          <h1 className="mb-4 text-2xl font-semibold text-gray-700 dark:text-gray-300">Oops! Page not found.</h1>
-          <p className="mb-6 max-w-md text-center text-gray-500 dark:text-gray-400">
-            Sorry, the page you are looking for does not exist or has been moved.
-            <br />
-            Please check the URL or return to the homepage.
-          </p>
-          <Link
-            href="/"
-            className="rounded-md bg-blue-600 px-6 py-2 font-medium text-white shadow-md transition-colors duration-200 hover:bg-blue-700"
-          >
-            Go Home
-          </Link>
-        </div>
+        <NotFound />
       </div>
     );
   }

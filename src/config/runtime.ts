@@ -284,7 +284,12 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
           fallbackId: patternBaseName,
         });
       } catch (err) {
-        Logger.error(`Failed to read or parse pattern config: ${resolvedPatternConfigPath}`, err);
+        // Treat as a warning rather than an error: the file may be empty or
+        // mid-edit. It is already tracked in configFiles above, so
+        // watchRuntimeConfiguration will pick it up once the file is saved
+        // with valid content.
+        Logger.warn(`Pattern config skipped (incomplete or invalid) — will retry on next save: ${resolvedPatternConfigPath}`);
+        Logger.debug(`Pattern parse detail:`, err);
         continue;
       }
 
