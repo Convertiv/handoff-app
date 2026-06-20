@@ -51,8 +51,8 @@ Usage: handoff-app <cmd> <opts>
 Commands:
   fetch [opts] - Fetches the design tokens from the design system
 
-  build - Using the current tokens, build various outputs
-    build:app [opts] - Builds the design system static application
+  build [--target static|registry] [opts] - Builds the design system for the target (default: static export)
+    build:app [opts] - Builds the design system static application (alias of `build --target static`)
 
   start [opts] - Starts the design system in development mode
 

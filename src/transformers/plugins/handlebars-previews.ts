@@ -6,7 +6,12 @@ import { Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { TransformComponentTokensResult } from '../preview/types';
-import { resolveSharedArtifactPresence, type SharedArtifactPresence } from '../preview/component/shared-artifacts';
+import {
+  resolveComponentArtifactPresence,
+  resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
+  type SharedArtifactPresence,
+} from '../preview/component/shared-artifacts';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
@@ -72,7 +77,8 @@ async function renderHandlebarsTemplate(
   previewData: PreviewRenderData,
   injectFieldWrappers: boolean,
   handoff: Handoff,
-  sharedArtifacts: SharedArtifactPresence
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: ComponentArtifactPresence
 ): Promise<string> {
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
@@ -88,6 +94,7 @@ async function renderHandlebarsTemplate(
   }, previewData, {
     includeSharedStyles: Boolean(componentData.sharedStyles),
     sharedArtifacts,
+    componentArtifacts,
   });
   
   const compiled = Handlebars.compile(template)(context);
@@ -176,9 +183,10 @@ export function handlebarsPreviewsPlugin(
 
       const generatedPreviews: { [key: string]: string } = {};
 
-      // Resolve which shared/global artifacts exist so generated HTML references them only when
-      // present. Global artifacts are built before component HTML, so this reflects the final state.
+      // Resolve which shared/global and component-owned artifacts exist so generated HTML references
+      // them only when present. These are built before component HTML, so this reflects final state.
       const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+      const componentArtifacts = resolveComponentArtifactPresence(handoff, componentId);
 
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
@@ -192,7 +200,8 @@ export function handlebarsPreviewsPlugin(
             previewData,
             false,
             handoff,
-            sharedArtifacts
+            sharedArtifacts,
+            componentArtifacts
           );
 
           const inspectModeHtml = await renderHandlebarsTemplate(
@@ -201,7 +210,8 @@ export function handlebarsPreviewsPlugin(
             previewData,
             true,
             handoff,
-            sharedArtifacts
+            sharedArtifacts,
+            componentArtifacts
           );
 
           // Emit preview files

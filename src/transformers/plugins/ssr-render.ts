@@ -16,9 +16,12 @@ import {
 } from '../docgen';
 import { SlotMetadata } from '../preview/component';
 import {
+  renderComponentStyleLink,
   renderGlobalScriptTag,
   renderSharedStyleLinks,
+  resolveComponentArtifactPresence,
   resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
@@ -171,7 +174,8 @@ function generateHtmlDocument(
   previewTitle: string,
   renderedHtml: string,
   props: any,
-  sharedArtifacts: SharedArtifactPresence
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: ComponentArtifactPresence
 ): string {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const clientArtifactUrl = buildArtifactUrl(clientArtifactPath(componentId), basePath);
@@ -184,17 +188,18 @@ function generateHtmlDocument(
   )});`
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
-  // Shared/global stylesheets (`component/main.css`) are emitted only when present so absent optional
-  // artifacts never produce a missing-file browser request.
+  // Shared/global stylesheets (`component/main.css`) and the component's own stylesheet
+  // (`component/<id>.css`) are emitted only when present so absent optional artifacts never produce a
+  // missing-file browser request.
   const sharedStyleLinks = renderSharedStyleLinks(sharedArtifacts, basePath);
+  const componentStyleLink = renderComponentStyleLink(componentArtifacts, componentId, basePath);
   // The global script (`component/main.js`) is a classic tag placed before the client module so it
   // runs before dependent component-specific scripts when present.
   const globalScriptTag = renderGlobalScriptTag(sharedArtifacts, basePath);
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}
-    <link rel="stylesheet" href="${buildArtifactUrl(`component/${componentId}.css`, basePath)}" />
+    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}${componentStyleLink ? `\n    ${componentStyleLink}` : ''}
     <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
     <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>${globalScriptTag ? `\n    ${globalScriptTag}` : ''}
     <script
@@ -343,9 +348,10 @@ export function ssrRenderPlugin(
 
       let finalHtml = '';
 
-      // Resolve which shared/global artifacts exist so generated HTML references them only when
-      // present. Global artifacts are built before component HTML, so this reflects the final state.
+      // Resolve which shared/global and component-owned artifacts exist so generated HTML references
+      // them only when present. These are built before component HTML, so this reflects final state.
       const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+      const componentArtifacts = resolveComponentArtifactPresence(handoff, componentId);
 
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
@@ -361,7 +367,8 @@ export function ssrRenderPlugin(
           componentData.previews[previewKey].title,
           formattedHtml,
           previewProps,
-          sharedArtifacts
+          sharedArtifacts,
+          componentArtifacts
         );
 
         // Emit preview files

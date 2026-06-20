@@ -20,7 +20,7 @@ const command: CommandModule<{}, BuildAppArgs> = {
   },
   handler: async (args: BuildAppArgs) => {
     const handoff = new Handoff(args.debug, args.force);
-    await handoff.build(args.skipComponents ?? false);
+    await handoff.build('static', args.skipComponents ?? false);
   },
 };
 

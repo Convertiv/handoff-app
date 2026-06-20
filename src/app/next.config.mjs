@@ -13,10 +13,11 @@ const resolveBasePath = (rawBasePath) => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Static export disables Next API routes, which the workspace-mode docs read API (`/api/docs/*`)
-  // depends on. Only export for production builds (`handoff-app build`); leave `next dev` as a real
-  // server so the docs API serves. TODO(#8/#11): replace this NODE_ENV heuristic with an explicit
-  // build-target/runtime-mode gate once the static and registry build targets land.
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  // depends on. Export is gated on the explicit static build target (set by `handoff-app build`),
+  // not on NODE_ENV — so `next dev` and any future non-static `next build` path (e.g. registry, #11)
+  // run as real servers while only the static target exports. The static build materializes the docs
+  // read model into route-shaped files since the live API routes cannot serve in an exported site.
+  output: process.env.HANDOFF_BUILD_TARGET === 'static' ? 'export' : undefined,
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,

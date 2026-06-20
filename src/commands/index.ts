@@ -1,3 +1,4 @@
+import buildCommand from './build';
 import buildAppCommand from './build/app';
 import buildComponentsCommand from './build/components';
 import devCommand from './dev';
@@ -14,6 +15,7 @@ import startCommand from './start';
 import validateComponentsCommand from './validate/components';
 
 export const commands = [
+  buildCommand,
   buildAppCommand,
   buildComponentsCommand,
   devCommand,

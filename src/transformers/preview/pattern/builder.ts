@@ -3,7 +3,12 @@ import path from 'path';
 import { buildPatternDetailUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import { resolveSharedArtifactPresence, type SharedArtifactPresence } from '../component/shared-artifacts';
+import {
+  resolveComponentArtifactPresence,
+  resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
+  type SharedArtifactPresence,
+} from '../component/shared-artifacts';
 import { PatternListObject, PatternObject } from '../types';
 import { readPatternSummaryApi, syncPatternArtifacts, writePatternApi, writePatternHtml, writePatternSummaryApi } from './api';
 import { composePatternHtml } from './html';
@@ -80,6 +85,15 @@ async function buildPattern(
     fragments.push({ componentId: ref.id, html });
   }
 
+  // Resolve component-owned artifact presence for each composed component so the pattern references
+  // only the stylesheets that actually exist (no dangling references for style-less components).
+  const componentArtifacts = new Map<string, ComponentArtifactPresence>();
+  for (const fragment of fragments) {
+    if (!componentArtifacts.has(fragment.componentId)) {
+      componentArtifacts.set(fragment.componentId, resolveComponentArtifactPresence(handoff, fragment.componentId));
+    }
+  }
+
   if (fragments.length === 0) {
     Logger.warn(`Pattern "${patternId}" produced no fragments. Skipping.`);
     return null;
@@ -89,7 +103,7 @@ async function buildPattern(
     Logger.warn(`Pattern "${patternId}" has missing components but will be composed from available fragments.`);
   }
 
-  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath, sharedArtifacts);
+  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath, sharedArtifacts, componentArtifacts);
   const patternUrl = `${patternId}.html`;
 
   const patternData: PatternListObject = {

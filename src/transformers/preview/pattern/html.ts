@@ -2,7 +2,7 @@ import escape from 'lodash/escape';
 import { parse } from 'node-html-parser';
 import { SHARED_MAIN_CSS_ARTIFACT_PATH, SHARED_MAIN_JS_ARTIFACT_PATH } from '../../../artifacts';
 import { buildArtifactUrl } from '../../../artifacts/url';
-import type { SharedArtifactPresence } from '../component/shared-artifacts';
+import type { ComponentArtifactPresence, SharedArtifactPresence } from '../component/shared-artifacts';
 
 /**
  * Composes multiple component preview HTML documents into a single-page HTML.
@@ -26,7 +26,8 @@ export const composePatternHtml = (
   patternTitle: string,
   fragments: { componentId: string; html: string }[],
   basePath: string,
-  sharedArtifacts: SharedArtifactPresence
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: Map<string, ComponentArtifactPresence>
 ): string => {
   const cssHrefs = new Set<string>();
   const bodyParts: string[] = [];
@@ -48,7 +49,11 @@ export const composePatternHtml = (
 
     if (!seenComponents.has(componentId)) {
       seenComponents.add(componentId);
-      cssHrefs.add(buildArtifactUrl(`component/${componentId}.css`, basePath));
+      // Reference a component's stylesheet only when it actually exists, so a pattern never requests
+      // an absent optional artifact for a component that declares no styles.
+      if (componentArtifacts.get(componentId)?.css) {
+        cssHrefs.add(buildArtifactUrl(`component/${componentId}.css`, basePath));
+      }
     }
 
     const doc = parse(html);

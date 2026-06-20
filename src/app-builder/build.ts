@@ -10,6 +10,7 @@ import { buildMainJS } from '../transformers/preview/component/javascript';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
+import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
@@ -24,7 +25,33 @@ import {
 } from './watchers';
 import { createWebSocketServer } from './websocket';
 
+/**
+ * Resolved build target (technical design §4). Bare `handoff-app build` resolves to `static`. The
+ * target — not `NODE_ENV` — drives whether Next runs a static export, so a future non-static
+ * `next build` path (registry, #11) does not get conflated with static export.
+ */
+export type BuildTarget = 'static' | 'registry';
+
+/** The default build target when none is supplied on the CLI. */
+export const DEFAULT_BUILD_TARGET: BuildTarget = 'static';
+
 const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+/**
+ * Guard the static build target against a registry-only runtime configuration. A static export
+ * builds and serves the local workspace; a `runtime.mode: 'registry'` project has no local workspace
+ * to export, so the build fails clearly rather than producing an empty or misleading site.
+ */
+const assertStaticBuildAllowed = (handoff: Handoff): void => {
+  const mode = handoff.config?.runtime?.mode ?? 'workspace';
+  if (mode === 'registry') {
+    throw new Error(
+      'Cannot run the static build target with a registry-only runtime (runtime.mode: "registry"). ' +
+        'The static target builds and exports the local workspace; switch runtime.mode to "workspace" ' +
+        'or package the registry app with `handoff-app build --target registry`.'
+    );
+  }
+};
 
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
@@ -99,8 +126,18 @@ const initializeProjectApp = async (handoff: Handoff): Promise<string> => {
 
 /**
  * Build the Next.js documentation application.
+ *
+ * @param target Resolved build target (defaults to `static`). Only the static target is built here;
+ *   the registry packaging target (#11) is resolved but not yet implemented.
  */
-const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<void> => {
+const buildApp = async (handoff: Handoff, target: BuildTarget = DEFAULT_BUILD_TARGET, skipComponents?: boolean): Promise<void> => {
+  if (target === 'registry') {
+    throw new Error('The `registry` build target is not yet supported. Use `handoff-app build` for a static export.');
+  }
+
+  // A registry-only runtime has no local workspace to export — fail clearly before any work.
+  assertStaticBuildAllowed(handoff);
+
   skipComponents = skipComponents ?? false;
   // Perform cleanup
   await cleanupAppDirectory(handoff);
@@ -116,13 +153,18 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
 
   await persistClientConfig(handoff);
 
-  // Build app
+  // Fail before export if generated HTML references a required artifact that cannot be materialized.
+  validateReferencedArtifacts(handoff);
+
+  // Build app. The static target drives Next's `output: 'export'` via HANDOFF_BUILD_TARGET so the
+  // export gate is tied to the resolved target, not to NODE_ENV.
   const buildResult = spawn.sync('npx', ['next', 'build'], {
     cwd: appPath,
     stdio: ['inherit', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
+      HANDOFF_BUILD_TARGET: target,
     },
   });
 
@@ -136,6 +178,10 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
     }
     throw new Error(errorMsg);
   }
+
+  // Reproduce the docs read API (`/api/docs/*`) as route-shaped static files in the export output,
+  // since `output: 'export'` disables the live API routes.
+  await materializeDocsReadModel(handoff, path.resolve(appPath, 'out'));
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -192,6 +238,8 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
     env: {
       ...process.env,
       NODE_ENV: 'development',
+      // Workspace dev is never a static export, even if a static target leaked into the environment.
+      HANDOFF_BUILD_TARGET: '',
     },
   });
   Logger.pipeChildStreams(nextProcess.stdout, nextProcess.stderr);
@@ -264,6 +312,8 @@ export const devApp = async (handoff: Handoff): Promise<void> => {
     env: {
       ...process.env,
       NODE_ENV: 'development',
+      // Workspace dev is never a static export, even if a static target leaked into the environment.
+      HANDOFF_BUILD_TARGET: '',
     },
   });
 

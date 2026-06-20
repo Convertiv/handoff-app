@@ -6,7 +6,7 @@
   "scripts": {
     "start": "handoff-app start",
     "dev": "handoff-app dev",
-    "build": "handoff-app build:app",
+    "build": "handoff-app build",
     "fetch": "handoff-app fetch"
   },
   "dependencies": {},

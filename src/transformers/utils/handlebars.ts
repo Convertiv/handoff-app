@@ -1,11 +1,13 @@
 import Handlebars from 'handlebars';
-import { buildArtifactUrl } from '../../artifacts/url';
 import { RegisterHandlebarsHelpersContext } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
 import {
+  renderComponentScriptTag,
+  renderComponentStyleLink,
   renderGlobalScriptTag,
   renderSharedStyleLinks,
+  type ComponentArtifactPresence,
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { HandlebarsContext } from '../types';
@@ -80,27 +82,34 @@ export const registerHandlebarsHelpers = (
 export const createHandlebarsContext = (
   data: { id: string; properties: { [key: string]: SlotMetadata }; title: string },
   previewData: { values?: any },
-  options?: { includeSharedStyles?: boolean; sharedArtifacts?: SharedArtifactPresence }
+  options?: {
+    includeSharedStyles?: boolean;
+    sharedArtifacts?: SharedArtifactPresence;
+    componentArtifacts?: ComponentArtifactPresence;
+  }
 ): HandlebarsContext => {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
-  // Shared/global artifacts (`component/shared.css`, `component/main.css`, `component/main.js`) are
-  // referenced only when present, so a failed/absent global build never produces a dangling
-  // reference. Absent presence info conservatively omits the shared artifacts.
+  // Shared/global artifacts (`component/shared.css`, `component/main.css`, `component/main.js`) and
+  // the component's own css/js are referenced only when present, so a failed/absent build never
+  // produces a dangling reference. Absent presence info conservatively omits the artifacts.
   const presence: SharedArtifactPresence = options?.sharedArtifacts ?? { mainJs: false, mainCss: false, sharedCss: false };
+  const componentPresence: ComponentArtifactPresence = options?.componentArtifacts ?? { css: false, js: false };
   const sharedStyleLinks = renderSharedStyleLinks(presence, basePath, {
     includeSharedStyles: options?.includeSharedStyles,
   });
+  const componentStyleLink = renderComponentStyleLink(componentPresence, data.id, basePath);
   // The global script loads before the component-specific script so global side effects run first.
   const globalScriptTag = renderGlobalScriptTag(presence, basePath);
+  const componentScriptTag = renderComponentScriptTag(componentPresence, data.id, basePath);
 
   return {
     style:
       `${sharedStyleLinks ? `${sharedStyleLinks}\n` : ''}` +
-      `<link rel="stylesheet" href="${buildArtifactUrl(`component/${data.id}.css`, basePath)}">\n` +
+      `${componentStyleLink ? `${componentStyleLink}\n` : ''}` +
       `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
     script:
       `${globalScriptTag ? `${globalScriptTag}\n` : ''}` +
-      `<script src="${buildArtifactUrl(`component/${data.id}.js`, basePath)}"></script>\n` +
+      `${componentScriptTag ? `${componentScriptTag}\n` : ''}` +
       `<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,

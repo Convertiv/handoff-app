@@ -106,3 +106,41 @@ export const renderSharedStyleLinks = (
  */
 export const renderGlobalScriptTag = (presence: SharedArtifactPresence, basePath: string): string =>
   presence.mainJs ? `<script src="${buildArtifactUrl(SHARED_MAIN_JS_ARTIFACT_PATH, basePath)}"></script>` : '';
+
+/** Which of a component's own optional artifacts exist in the component output directory. */
+export interface ComponentArtifactPresence {
+  /** `component/<id>.css` — built only when the component declares an SCSS/CSS entry. */
+  css: boolean;
+  /** `component/<id>.js` — built only when the component declares a JS entry. */
+  js: boolean;
+}
+
+/**
+ * Resolve which of a component's own css/js artifacts exist on disk. A component's styles and
+ * scripts are built (or removed when their entry is absent) before its preview HTML is generated, so
+ * an existence check here reflects whether the artifact can be referenced without producing a
+ * missing-file browser request. Like the shared artifacts, these references are optional.
+ */
+export const resolveComponentArtifactPresence = (handoff: Handoff, componentId: string): ComponentArtifactPresence => {
+  const outputPath = getComponentOutputPath(handoff);
+  return {
+    css: fs.existsSync(path.join(outputPath, `${componentId}.css`)),
+    js: fs.existsSync(path.join(outputPath, `${componentId}.js`)),
+  };
+};
+
+/**
+ * Render the `<link rel="stylesheet">` tag for a component's own stylesheet (`component/<id>.css`)
+ * when it exists, or an empty string when the component declares no styles — so generated HTML never
+ * references an absent optional artifact.
+ */
+export const renderComponentStyleLink = (presence: ComponentArtifactPresence, componentId: string, basePath: string): string =>
+  presence.css ? `<link rel="stylesheet" href="${buildArtifactUrl(`component/${componentId}.css`, basePath)}">` : '';
+
+/**
+ * Render the `<script>` tag for a component's own script (`component/<id>.js`) when it exists, or an
+ * empty string when the component declares no script. The component script is a classic tag loaded
+ * after the global script so global side effects run first.
+ */
+export const renderComponentScriptTag = (presence: ComponentArtifactPresence, componentId: string, basePath: string): string =>
+  presence.js ? `<script src="${buildArtifactUrl(`component/${componentId}.js`, basePath)}"></script>` : '';
