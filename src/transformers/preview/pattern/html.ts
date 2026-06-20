@@ -5,17 +5,15 @@ import { buildArtifactUrl } from '../../../artifacts/url';
 /**
  * Composes multiple component preview HTML documents into a single-page HTML.
  *
- * Each component preview may be a React SSR document (with hydration scripts
- * and a `#root` / `#__APP_PROPS__` pair) or a static Handlebars document.
+ * Each component preview may be a React SSR document (server-rendered markup plus a `#root` /
+ * `#__APP_PROPS__` pair) or a static Handlebars document.
  *
- * This function namespaces the element ids per-fragment so multiple React
- * components can coexist and hydrate independently on the same page.
- *
- * Each hydration bundle gets its own `<script type="module">` tag for full
- * module-level isolation. This is critical because esbuild bundles React
- * into each script using module-scoped `var` declarations, and `hydrateRoot`
- * is asynchronous — sharing a single module scope would cause later bundles
- * to overwrite earlier React instances before hydration completes.
+ * React client/hydration bundles are component-owned artifacts (`component/<id>.client.js`,
+ * technical design §7) rather than inline scripts. This composer therefore copies no per-fragment
+ * bundle: it namespaces each fragment's root/props so multiple instances coexist, marks each root
+ * with the `data-handoff-component`/`data-handoff-props` attributes the component bundle hydrates by,
+ * and references each unique component's client artifact exactly once. (Shared `component/main.js`
+ * dedup/once-execution ordering is handled separately by the global-artifact work.)
  */
 export const composePatternHtml = (
   _patternId: string,
@@ -25,7 +23,7 @@ export const composePatternHtml = (
 ): string => {
   const cssHrefs = new Set<string>();
   const bodyParts: string[] = [];
-  const scriptTags: string[] = [];
+  const clientArtifactHrefs = new Set<string>();
 
   cssHrefs.add(buildArtifactUrl('component/main.css', basePath));
   cssHrefs.add(`${basePath}/assets/css/preview.css`);
@@ -47,30 +45,30 @@ export const composePatternHtml = (
 
     // -- Extract props JSON (React SSR) ------------------------------------
     const propsScript = doc.querySelector('#__APP_PROPS__');
-    let propsContent = '{}';
+    let propsContent: string | null = null;
     if (propsScript) {
       propsContent = propsScript.textContent || '{}';
       propsScript.remove();
     }
 
-    // -- Extract and rewrite hydration scripts (React SSR) -----------------
-    // Each script becomes its own <script type="module"> for full isolation.
-    const moduleScripts = doc.querySelectorAll('script[type="module"]');
-    for (const script of moduleScripts) {
-      let code = script.textContent || '';
-      if (code.trim()) {
-        code = code
-          .replace(/__APP_PROPS__/g, namespacedPropsId)
-          .replace(/getElementById\(\s*["']root["']\s*\)/g, `getElementById("${namespacedRootId}")`);
-        scriptTags.push(`    <script type="module">\n${code}\n    </script>`);
-      }
+    // -- Drop the fragment's own client-artifact reference -----------------
+    // The bundle is referenced once per component for the whole page (below); a fragment must not
+    // carry its standalone-preview script tag into the composed document.
+    for (const script of doc.querySelectorAll('script[type="module"]')) {
       script.remove();
     }
 
     // -- Namespace the root element (React SSR) ----------------------------
+    // A React fragment exposes its mount point to the component bundle via stable data attributes.
     const rootEl = doc.querySelector('#root');
+    const isReactFragment = !!rootEl && propsContent !== null;
     if (rootEl) {
       rootEl.setAttribute('id', namespacedRootId);
+      if (isReactFragment) {
+        rootEl.setAttribute('data-handoff-component', componentId);
+        rootEl.setAttribute('data-handoff-props', namespacedPropsId);
+        clientArtifactHrefs.add(buildArtifactUrl(`component/${componentId}.client.js`, basePath));
+      }
     }
 
     // -- Extract body content ----------------------------------------------
@@ -81,9 +79,14 @@ export const composePatternHtml = (
         ? rootEl.outerHTML
         : doc.innerHTML || '';
 
+    const propsScriptTag =
+      propsContent !== null
+        ? `      <script id="${namespacedPropsId}" type="application/json">${propsContent}</script>\n`
+        : '';
+
     bodyParts.push(
       `    <div class="handoff-pattern-block" data-component="${componentId}" data-fragment="${i}">\n` +
-      `      <script id="${namespacedPropsId}" type="application/json">${propsContent}</script>\n` +
+      propsScriptTag +
       `      ${bodyContent}\n` +
       `    </div>`
     );
@@ -91,6 +94,10 @@ export const composePatternHtml = (
 
   const linkTags = Array.from(cssHrefs)
     .map((href) => `    <link rel="stylesheet" href="${href}" />`)
+    .join('\n');
+
+  const scriptTags = Array.from(clientArtifactHrefs)
+    .map((href) => `    <script type="module" src="${href}"></script>`)
     .join('\n');
 
   return `<!DOCTYPE html>
@@ -102,7 +109,7 @@ ${linkTags}
   </head>
   <body>
 ${bodyParts.join('\n')}
-${scriptTags.join('\n')}
+${scriptTags}
   </body>
 </html>`;
 };

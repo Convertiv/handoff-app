@@ -10,6 +10,9 @@ import { MAIN_COMPONENT_JS_FILE } from './javascript';
 const COMPONENT_JS_RESERVED_FILES = new Set([MAIN_COMPONENT_JS_FILE]);
 const COMPONENT_CSS_RESERVED_FILES = new Set([MAIN_COMPONENT_CSS_FILE, SHARED_COMPONENT_CSS_FILE]);
 
+/** Suffix of a component-owned client/hydration artifact (`<id>.client.js`), see ssr-render plugin. */
+const CLIENT_ARTIFACT_SUFFIX = '.client.js';
+
 export const getComponentApiPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 
 const getComponentPreviewKeys = async (handoff: Handoff, componentId: string): Promise<Set<string>> => {
@@ -77,7 +80,9 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
     const parsed = path.parse(entry);
     if (parsed.ext === '.json' || parsed.ext === '.js' || parsed.ext === '.css') {
       if (!COMPONENT_JS_RESERVED_FILES.has(entry) && !COMPONENT_CSS_RESERVED_FILES.has(entry)) {
-        discoveredArtifactIds.add(parsed.name);
+        // `<id>.client.js` is owned by `<id>`, not by a phantom `<id>.client` component — strip the
+        // compound suffix so the owner id matches the real component (path.parse would yield `<id>.client`).
+        discoveredArtifactIds.add(entry.endsWith(CLIENT_ARTIFACT_SUFFIX) ? entry.slice(0, -CLIENT_ARTIFACT_SUFFIX.length) : parsed.name);
       }
     }
   }
@@ -88,6 +93,10 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
 
     if (await fs.pathExists(path.resolve(componentPath, `${componentId}.js`))) {
       validFiles.add(`${componentId}.js`);
+    }
+
+    if (await fs.pathExists(path.resolve(componentPath, `${componentId}${CLIENT_ARTIFACT_SUFFIX}`))) {
+      validFiles.add(`${componentId}${CLIENT_ARTIFACT_SUFFIX}`);
     }
 
     if (await fs.pathExists(path.resolve(componentPath, `${componentId}.css`))) {
