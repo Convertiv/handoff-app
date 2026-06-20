@@ -178,7 +178,13 @@ export async function processComponents(
 
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
-  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  // Resolve the component set through the storage-agnostic store (v2). The filesystem store is a
+  // read view over `runtimeConfig.entries.components`, so these are the same records the build has
+  // always used — rebuilt into the id-keyed map the build logic below expects.
+  const runtimeComponents: Record<string, ComponentListObject> = {};
+  for (const component of await handoff.store.components.list()) {
+    if (component) runtimeComponents[component.id] = component;
+  }
   const allComponentIds = Object.keys(runtimeComponents);
 
   if (id && !runtimeComponents[id]) {

@@ -109,7 +109,13 @@ async function buildPattern(
  * so that all component preview HTML files already exist on disk.
  */
 export async function processPatterns(handoff: Handoff, options?: ProcessPatternsOptions): Promise<PatternListObject[]> {
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  // Resolve the pattern set through the storage-agnostic store (v2). The filesystem store is a read
+  // view over `runtimeConfig.entries.patterns`, so these are the same records the build has always
+  // used — rebuilt into the id-keyed map the build logic below expects.
+  const runtimePatterns: Record<string, PatternListObject> = {};
+  for (const pattern of await handoff.store.patterns.list()) {
+    runtimePatterns[pattern.id] = pattern;
+  }
   const patternIds = Object.keys(runtimePatterns);
   const onlyPatternIds = options?.onlyPatternIds;
   const isPartial = onlyPatternIds !== undefined;

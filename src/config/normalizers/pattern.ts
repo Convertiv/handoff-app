@@ -1,3 +1,4 @@
+import path from 'path';
 import { PatternListObject } from '../../transformers/preview/types';
 
 type RawPatternDeclaration = Record<string, any>;
@@ -51,6 +52,8 @@ export const normalizePatternDeclaration = (
     group: typeof raw.group === 'string' ? raw.group : undefined,
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t: any) => typeof t === 'string') : undefined,
     components,
-    path: '',
+    // Source location of the pattern (declaration directory), retained so the store can expose a
+    // stable source reference for checkout/publish (v2 store abstraction).
+    path: path.dirname(options.declarationPath),
   };
 };

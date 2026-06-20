@@ -56,7 +56,7 @@ const findPreferredModernDeclaration = (componentDir: string, componentBaseName:
   return modernFiles[0];
 };
 
-const resolveComponentDeclaration = (componentDir: string, componentBaseName: string): DeclarationResolution | null => {
+export const resolveComponentDeclaration = (componentDir: string, componentBaseName: string): DeclarationResolution | null => {
   const modernMatch = findPreferredModernDeclaration(componentDir, componentBaseName);
   const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
   const legacyMatch = legacyFiles.find((candidate) => fs.existsSync(path.resolve(componentDir, candidate)));

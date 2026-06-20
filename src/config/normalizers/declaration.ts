@@ -172,5 +172,8 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     renderer: resolvedRenderer,
     entries,
     previews: normalizedPreviews,
+    // Source location of the entity (declaration directory), retained so the store can expose a
+    // stable source reference for checkout/publish (v2 store abstraction).
+    path: path.dirname(options.declarationPath),
   };
 };

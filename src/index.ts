@@ -7,6 +7,7 @@ import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
+import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
@@ -27,6 +28,21 @@ class Handoff {
     effects: {};
     typography: {};
   };
+
+  private _store?: HandoffStore;
+
+  /**
+   * Normalized store over the current workspace (filesystem) runtime. Consumers read
+   * component/pattern records and related source files through this storage-agnostic interface
+   * (v2 store abstraction). Created lazily and reads live from `runtimeConfig`, so it stays
+   * correct across `reload()`.
+   */
+  get store(): HandoffStore {
+    if (!this._store) {
+      this._store = createFilesystemStore(this);
+    }
+    return this._store;
+  }
 
   private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
   private _configFilePaths: string[] = [];
