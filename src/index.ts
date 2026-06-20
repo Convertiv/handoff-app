@@ -125,6 +125,20 @@ class Handoff {
     return this;
   }
 
+  /**
+   * Runs the package-owned registry database migrations against the configured PostgreSQL/Neon
+   * database. Independent of {@link build} — it only reads config + DB env vars and applies the
+   * bundled migration set.
+   */
+  async dbMigrate(): Promise<Handoff> {
+    if (!this.config) {
+      throw Error('Handoff not initialized');
+    }
+    const { runRegistryMigrations } = await import('./registry/db/migrate');
+    await runRegistryMigrations(this);
+    return this;
+  }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);

@@ -1,6 +1,7 @@
 import buildCommand from './build';
 import buildAppCommand from './build/app';
 import buildComponentsCommand from './build/components';
+import dbMigrateCommand from './db/migrate';
 import devCommand from './dev';
 import ejectConfigCommand from './eject/config';
 import ejectPagesCommand from './eject/pages';
@@ -18,6 +19,7 @@ export const commands = [
   buildCommand,
   buildAppCommand,
   buildComponentsCommand,
+  dbMigrateCommand,
   devCommand,
   ejectConfigCommand,
   ejectPagesCommand,

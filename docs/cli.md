@@ -56,6 +56,8 @@ Commands:
 
   start [opts] - Starts the design system in development mode
 
+  db:migrate [opts] - Runs registry database migrations (Drizzle / PostgreSQL). Reads the project config and database env vars, applies the package-owned migration set, and runs independently of `build`.
+
   make
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page
