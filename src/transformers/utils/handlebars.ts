@@ -3,6 +3,11 @@ import { buildArtifactUrl } from '../../artifacts/url';
 import { RegisterHandlebarsHelpersContext } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
+import {
+  renderGlobalScriptTag,
+  renderSharedStyleLinks,
+  type SharedArtifactPresence,
+} from '../preview/component/shared-artifacts';
 import { HandlebarsContext } from '../types';
 
 /**
@@ -75,19 +80,28 @@ export const registerHandlebarsHelpers = (
 export const createHandlebarsContext = (
   data: { id: string; properties: { [key: string]: SlotMetadata }; title: string },
   previewData: { values?: any },
-  options?: { includeSharedStyles?: boolean }
+  options?: { includeSharedStyles?: boolean; sharedArtifacts?: SharedArtifactPresence }
 ): HandlebarsContext => {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
-  const sharedStylesLink = options?.includeSharedStyles
-    ? `<link rel="stylesheet" href="${buildArtifactUrl('component/shared.css', basePath)}">`
-    : '';
+  // Shared/global artifacts (`component/shared.css`, `component/main.css`, `component/main.js`) are
+  // referenced only when present, so a failed/absent global build never produces a dangling
+  // reference. Absent presence info conservatively omits the shared artifacts.
+  const presence: SharedArtifactPresence = options?.sharedArtifacts ?? { mainJs: false, mainCss: false, sharedCss: false };
+  const sharedStyleLinks = renderSharedStyleLinks(presence, basePath, {
+    includeSharedStyles: options?.includeSharedStyles,
+  });
+  // The global script loads before the component-specific script so global side effects run first.
+  const globalScriptTag = renderGlobalScriptTag(presence, basePath);
 
   return {
     style:
-      `${sharedStylesLink}<link rel="stylesheet" href="${buildArtifactUrl('component/main.css', basePath)}">` +
+      `${sharedStyleLinks ? `${sharedStyleLinks}\n` : ''}` +
       `<link rel="stylesheet" href="${buildArtifactUrl(`component/${data.id}.css`, basePath)}">\n` +
       `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
-    script: `<script src="${buildArtifactUrl(`component/${data.id}.js`, basePath)}"></script>\n<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
+    script:
+      `${globalScriptTag ? `${globalScriptTag}\n` : ''}` +
+      `<script src="${buildArtifactUrl(`component/${data.id}.js`, basePath)}"></script>\n` +
+      `<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,
     title: data.title,

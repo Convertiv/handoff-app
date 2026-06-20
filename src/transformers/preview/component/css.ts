@@ -183,6 +183,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
  */
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
+  const mainCssPath = path.resolve(outputPath, MAIN_COMPONENT_CSS_FILE);
   const runtimeConfig = initRuntimeConfig(handoff)[0];
 
   if (runtimeConfig?.entries?.scss && fs.existsSync(runtimeConfig.entries.scss)) {
@@ -192,6 +193,9 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
     if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
       Logger.info(`Building styles for global entry (${MAIN_COMPONENT_CSS_FILE})…`);
       const startedAt = Date.now();
+      // Drop the previous artifact so a failed/empty rebuild cannot preserve stale global CSS that
+      // would still be referenced as current.
+      await fs.remove(mainCssPath);
       try {
         const loadPaths = [
           path.resolve(handoff.workingPath),
@@ -212,10 +216,15 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
         });
         Logger.info(`Finished building styles for global entry (${MAIN_COMPONENT_CSS_FILE}) in ${formatDurationMs(Date.now() - startedAt)}`);
       } catch {
-        // buildCssBundle already logs failure for the entry path
+        // buildCssBundle already logs failure for the entry path; ensure no stale artifact remains.
+        await fs.remove(mainCssPath);
       }
     }
+    return;
   }
+
+  // No usable global SCSS entry: drop any stale artifact so it is not referenced as current.
+  await fs.remove(mainCssPath);
 };
 
 export default buildComponentCss;

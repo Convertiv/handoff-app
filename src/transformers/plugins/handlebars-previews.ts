@@ -6,6 +6,7 @@ import { Plugin } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { TransformComponentTokensResult } from '../preview/types';
+import { resolveSharedArtifactPresence, type SharedArtifactPresence } from '../preview/component/shared-artifacts';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
@@ -70,7 +71,8 @@ async function renderHandlebarsTemplate(
   componentData: TransformComponentTokensResult,
   previewData: PreviewRenderData,
   injectFieldWrappers: boolean,
-  handoff: Handoff
+  handoff: Handoff,
+  sharedArtifacts: SharedArtifactPresence
 ): Promise<string> {
   // Register Handlebars helpers with current injection state
   registerHandlebarsHelpers(
@@ -85,6 +87,7 @@ async function renderHandlebarsTemplate(
     title: componentData.title 
   }, previewData, {
     includeSharedStyles: Boolean(componentData.sharedStyles),
+    sharedArtifacts,
   });
   
   const compiled = Handlebars.compile(template)(context);
@@ -173,6 +176,10 @@ export function handlebarsPreviewsPlugin(
 
       const generatedPreviews: { [key: string]: string } = {};
 
+      // Resolve which shared/global artifacts exist so generated HTML references them only when
+      // present. Global artifacts are built before component HTML, so this reflects the final state.
+      const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
         try {
@@ -184,7 +191,8 @@ export function handlebarsPreviewsPlugin(
             componentData,
             previewData,
             false,
-            handoff
+            handoff,
+            sharedArtifacts
           );
 
           const inspectModeHtml = await renderHandlebarsTemplate(
@@ -192,7 +200,8 @@ export function handlebarsPreviewsPlugin(
             componentData,
             previewData,
             true,
-            handoff
+            handoff,
+            sharedArtifacts
           );
 
           // Emit preview files

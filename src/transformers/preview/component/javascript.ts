@@ -20,7 +20,12 @@ export const MAIN_COMPONENT_JS_FILE = 'main.js';
  * @param options.outputFilename - The name of the output file
  */
 const buildJsBundle = async (
-  { entry, outputPath, outputFilename }: { entry: string; outputPath: string; outputFilename: string },
+  {
+    entry,
+    outputPath,
+    outputFilename,
+    format = 'cjs',
+  }: { entry: string; outputPath: string; outputFilename: string; format?: 'cjs' | 'iife' },
   handoff: Handoff
 ) => {
   const absEntryPath = path.resolve(entry);
@@ -39,13 +44,15 @@ const buildJsBundle = async (
         lib: {
           entry: absEntryPath,
           name: path.basename(outputFilename, '.js'),
-          formats: ['cjs'],
+          formats: [format],
           fileName: () => outputFilename,
         },
         rollupOptions: {
           ...viteBaseConfig.build?.rollupOptions,
           output: {
-            exports: 'named',
+            // The global IIFE bundle is frequently side-effect-only; `auto` lets a bundle with no
+            // exports emit cleanly while `named` preserves the existing component-JS (cjs) behavior.
+            exports: format === 'iife' ? 'auto' : 'named',
           },
         },
         outDir: outputPath,
@@ -127,34 +134,62 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
 };
 
 /**
- * Builds the main JavaScript bundle for the component preview.
+ * Builds the global preview script artifact (`component/main.js`) from the configured workspace JS
+ * entry (shared/global artifact model, technical design §7).
  *
- * This function checks if there's a main JavaScript bundle defined in the runtime config,
- * and if the file exists, it builds the bundle and outputs it to the component's output path.
+ * The artifact is optional: when no global JS entry is configured, or the configured entry no longer
+ * exists, or the build fails/produces no output, any stale `main.js` is removed so a failed rebuild
+ * never leaves global JS that appears current. Generated HTML references `main.js` only when this
+ * function leaves a fresh artifact on disk, so an omitted artifact yields no dangling reference.
+ *
+ * Output uses the browser-compatible IIFE format so the artifact can load as a classic script ahead
+ * of dependent component scripts while preserving intentional top-level side effects.
  *
  * @param handoff - The Handoff configuration object containing build settings
  * @returns A Promise that resolves when the build process is complete
  */
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
+  const mainJsPath = path.resolve(outputPath, MAIN_COMPONENT_JS_FILE);
   const runtimeConfig = initRuntimeConfig(handoff)[0];
+  const entry = runtimeConfig?.entries?.js;
 
-  if (runtimeConfig && runtimeConfig.entries.js && fs.existsSync(path.resolve(runtimeConfig.entries.js))) {
-    Logger.info(`Building script for global entry (${MAIN_COMPONENT_JS_FILE})…`);
-    const startedAt = Date.now();
-    try {
-      await buildJsBundle(
-        {
-          entry: runtimeConfig.entries.js,
-          outputPath,
-          outputFilename: MAIN_COMPONENT_JS_FILE,
-        },
-        handoff
-      );
-      Logger.info(`Finished building script for global entry (${MAIN_COMPONENT_JS_FILE}) in ${formatDurationMs(Date.now() - startedAt)}`);
-    } catch (e) {
-      Logger.error(`Failed to build global script (${MAIN_COMPONENT_JS_FILE}):`, e);
+  // No usable global JS entry: drop any stale artifact and emit nothing to reference.
+  if (!entry || !fs.existsSync(path.resolve(entry))) {
+    if (entry) {
+      Logger.warn(`Global JS entry "${entry}" was not found; removing stale ${MAIN_COMPONENT_JS_FILE}.`);
     }
+    await fs.remove(mainJsPath);
+    return;
+  }
+
+  Logger.info(`Building script for global entry (${MAIN_COMPONENT_JS_FILE})…`);
+  const startedAt = Date.now();
+
+  // Remove the previous artifact before rebuilding so a failed or empty build cannot silently
+  // preserve stale global JS that would still be referenced as current.
+  await fs.remove(mainJsPath);
+
+  try {
+    await buildJsBundle(
+      {
+        entry,
+        outputPath,
+        outputFilename: MAIN_COMPONENT_JS_FILE,
+        format: 'iife',
+      },
+      handoff
+    );
+
+    if (await fs.pathExists(mainJsPath)) {
+      Logger.info(`Finished building script for global entry (${MAIN_COMPONENT_JS_FILE}) in ${formatDurationMs(Date.now() - startedAt)}`);
+    } else {
+      Logger.error(`Global script build produced no ${MAIN_COMPONENT_JS_FILE} from "${entry}".`);
+    }
+  } catch (e) {
+    Logger.error(`Failed to build global script (${MAIN_COMPONENT_JS_FILE}) from "${entry}":`, e);
+    // Ensure a partial/failed build leaves no stale or broken artifact behind.
+    await fs.remove(mainJsPath);
   }
 };
 

@@ -15,7 +15,12 @@ import {
     getPropertiesFromGeneratedDocs,
 } from '../docgen';
 import { SlotMetadata } from '../preview/component';
-import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
+import {
+  renderGlobalScriptTag,
+  renderSharedStyleLinks,
+  resolveSharedArtifactPresence,
+  type SharedArtifactPresence,
+} from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
 import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
@@ -161,7 +166,13 @@ function generateClientHydrationSource(componentId: string, componentPath: strin
  * @param props - Component props as JSON
  * @returns Complete HTML document
  */
-function generateHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string, props: any): string {
+function generateHtmlDocument(
+  componentId: string,
+  previewTitle: string,
+  renderedHtml: string,
+  props: any,
+  sharedArtifacts: SharedArtifactPresence
+): string {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const clientArtifactUrl = buildArtifactUrl(clientArtifactPath(componentId), basePath);
   const clientLoadErrorMessage = `Failed to load the React client artifact (${clientArtifactPath(componentId)}). This preview cannot hydrate.`;
@@ -173,14 +184,19 @@ function generateHtmlDocument(componentId: string, previewTitle: string, rendere
   )});`
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
+  // Shared/global stylesheets (`component/main.css`) are emitted only when present so absent optional
+  // artifacts never produce a missing-file browser request.
+  const sharedStyleLinks = renderSharedStyleLinks(sharedArtifacts, basePath);
+  // The global script (`component/main.js`) is a classic tag placed before the client module so it
+  // runs before dependent component-specific scripts when present.
+  const globalScriptTag = renderGlobalScriptTag(sharedArtifacts, basePath);
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${buildArtifactUrl(`component/${MAIN_COMPONENT_CSS_FILE}`, basePath)}" />
+    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}
     <link rel="stylesheet" href="${buildArtifactUrl(`component/${componentId}.css`, basePath)}" />
     <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
-    <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>
+    <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>${globalScriptTag ? `\n    ${globalScriptTag}` : ''}
     <script
       type="module"
       src="${clientArtifactUrl}"
@@ -327,6 +343,10 @@ export function ssrRenderPlugin(
 
       let finalHtml = '';
 
+      // Resolve which shared/global artifacts exist so generated HTML references them only when
+      // present. Global artifacts are built before component HTML, so this reflects the final state.
+      const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
         const previewProps = componentData.previews[previewKey].values;
@@ -340,7 +360,8 @@ export function ssrRenderPlugin(
           componentId,
           componentData.previews[previewKey].title,
           formattedHtml,
-          previewProps
+          previewProps,
+          sharedArtifacts
         );
 
         // Emit preview files

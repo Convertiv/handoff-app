@@ -156,11 +156,12 @@ const buildApp = async (handoff: Handoff, skipComponents?: boolean): Promise<voi
  * Starts a custom dev server with Handoff-specific watchers and hot-reloading.
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
-  // Initial processing of the components with caching enabled
-  // This will skip rebuilding components whose source files haven't changed
-  await processComponents(handoff, undefined, undefined, { useCache: true });
+  // Build the shared/global artifacts first so component/pattern preview HTML references them only
+  // when present (technical design §7), then process components with caching enabled (which skips
+  // rebuilding components whose source files haven't changed).
   await buildMainJS(handoff);
   await buildMainCss(handoff);
+  await processComponents(handoff, undefined, undefined, { useCache: true });
 
   // Build patterns after components are ready
   await buildPatterns(handoff);

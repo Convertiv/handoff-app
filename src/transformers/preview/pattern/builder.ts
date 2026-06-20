@@ -3,6 +3,7 @@ import path from 'path';
 import { buildPatternDetailUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
+import { resolveSharedArtifactPresence, type SharedArtifactPresence } from '../component/shared-artifacts';
 import { PatternListObject, PatternObject } from '../types';
 import { readPatternSummaryApi, syncPatternArtifacts, writePatternApi, writePatternHtml, writePatternSummaryApi } from './api';
 import { composePatternHtml } from './html';
@@ -38,7 +39,8 @@ async function buildPattern(
   patternId: string,
   pattern: PatternObject,
   componentOutputDir: string,
-  basePath: string
+  basePath: string,
+  sharedArtifacts: SharedArtifactPresence
 ): Promise<PatternListObject | null> {
   const fragments: { componentId: string; html: string }[] = [];
   let hasErrors = false;
@@ -87,7 +89,7 @@ async function buildPattern(
     Logger.warn(`Pattern "${patternId}" has missing components but will be composed from available fragments.`);
   }
 
-  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath);
+  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath, sharedArtifacts);
   const patternUrl = `${patternId}.html`;
 
   const patternData: PatternListObject = {
@@ -129,6 +131,9 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
 
   const componentOutputDir = path.resolve(handoff.workingPath, 'public/api/component');
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  // Resolve the shared/global artifacts once so composed patterns reference `component/main.css` and
+  // `component/main.js` only when present (deduplicated to a single global script per page).
+  const sharedArtifacts = resolveSharedArtifactPresence(handoff);
 
   if (!isPartial) {
     Logger.info(`Building ${patternIds.length} pattern(s)...`);
@@ -136,7 +141,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
 
     for (const patternId of patternIds) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         result.push(built);
       }
@@ -166,7 +171,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
   for (const patternId of patternIds) {
     if (onlyPatternIds.has(patternId)) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         existingById.set(patternId, built);
       } else {
@@ -174,7 +179,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
       }
     } else if (!existingById.has(patternId)) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         existingById.set(patternId, built);
       }
