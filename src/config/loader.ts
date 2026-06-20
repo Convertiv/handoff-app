@@ -1,5 +1,6 @@
 import esbuild from 'esbuild';
 import fs from 'fs-extra';
+import merge from 'lodash/merge';
 import { createRequire } from 'module';
 import path from 'path';
 import { Config } from '../types/config';
@@ -109,7 +110,15 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>): Config
     });
   }
 
-  const resolvedConfig = { ...defaultConfig(), ...config } as Config;
+  const defaults = defaultConfig();
+  // Top-level merge stays shallow to preserve 1.x semantics, except for the `runtime`
+  // block which is deep-merged so a partial user `runtime` (e.g. only `mode`) does not
+  // wipe the defaults supplied for the rest of the block.
+  const resolvedConfig = {
+    ...defaults,
+    ...config,
+    runtime: merge({}, defaults.runtime, config.runtime),
+  } as Config;
   return { config: resolvedConfig, configPath };
 };
 

@@ -80,6 +80,81 @@ export interface NextAppConfig {
   };
 }
 
+/**
+ * Configuration for entry points to assets and components that will be built.
+ */
+export interface ConfigEntries {
+  /**
+   * Path to the main SCSS entry file
+   * @example "styles/main.scss"
+   */
+  scss?: string;
+  /**
+   * Path to the main JavaScript entry file
+   * @example "scripts/main.js"
+   */
+  js?: string;
+  /**
+   * Array of component paths to be included in the build
+   * @example ["components/button", "components/input"]
+   */
+  components?: string[];
+  /**
+   * Array of pattern paths to be included in the build.
+   * Patterns compose multiple component previews into single-page views.
+   * @example ["patterns/hero-section", "patterns"]
+   */
+  patterns?: string[];
+}
+
+/** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
+export type RuntimeMode = 'workspace' | 'registry';
+
+/** Format used when synthesizing local workspace declarations. */
+export type DeclarationFormat = 'ts' | 'js' | 'cjs' | 'json';
+
+/**
+ * User-facing `runtime` configuration block. A single optional block that selects the runtime
+ * mode and carries mode-specific host/connection settings.
+ *
+ * Note: this is the authored shape. {@link RuntimeConfig} is the separate, resolved post-discovery
+ * shape used internally by the build/runtime.
+ */
+export interface HandoffRuntimeConfig {
+  /**
+   * The sole determinant of runtime mode. Defaults to `'workspace'` when omitted.
+   * Mode is never inferred from environment variables, database settings, or token presence.
+   */
+  mode?: RuntimeMode;
+  /** Workspace-mode settings. */
+  workspace?: {
+    entries?: ConfigEntries;
+    declarationFormat?: DeclarationFormat;
+  };
+  /** Registry-mode host settings. Env-var values are stored as names, never as secrets. */
+  registry?: {
+    /** Name of the env var holding the database URL. @default "DATABASE_URL" */
+    databaseUrlEnv?: string;
+    /** Name of the env var holding the registry API token. @default "HANDOFF_REGISTRY_API_TOKEN" */
+    apiTokenEnv?: string;
+    database?: {
+      /** @default "pg" */
+      adapter?: 'pg' | 'neon';
+    };
+  };
+  /**
+   * Connected-workspace settings pointing at a remote registry. A connected workspace is
+   * `mode: 'workspace'` plus this block — it is not a third runtime mode.
+   */
+  registryConnection?: {
+    url?: string;
+    /** @default "HANDOFF_REGISTRY_URL" */
+    urlEnv?: string;
+    /** @default "HANDOFF_REGISTRY_ACCESS_TOKEN" */
+    accessTokenEnv?: string;
+  };
+}
+
 export interface Config {
   dev_access_token?: string | null | undefined;
   devAccessToken?: string | null | undefined;
@@ -109,31 +184,14 @@ export interface Config {
    */
   pipeline?: PipelineConfig;
   /**
+   * Runtime configuration. `runtime.mode` is the sole determinant of runtime mode
+   * (`workspace` | `registry`), defaulting to `workspace` when omitted.
+   */
+  runtime?: HandoffRuntimeConfig;
+  /**
    * Configuration for entry points to assets and components that will be built
    */
-  entries?: {
-    /**
-     * Path to the main SCSS entry file
-     * @example "styles/main.scss"
-     */
-    scss?: string;
-    /**
-     * Path to the main JavaScript entry file
-     * @example "scripts/main.js"
-     */
-    js?: string;
-    /**
-     * Array of component paths to be included in the build
-     * @example ["components/button", "components/input"]
-     */
-    components?: string[];
-    /**
-     * Array of pattern paths to be included in the build.
-     * Patterns compose multiple component previews into single-page views.
-     * @example ["patterns/hero-section", "patterns"]
-     */
-    patterns?: string[];
-  };
+  entries?: ConfigEntries;
   /**
    * Configuration for asset zip file download links
    * @default { icons: "/icons.zip", logos: "/logos.zip" }
@@ -286,7 +344,17 @@ export interface Config {
   };
 }
 
-export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
+/**
+ * Non-secret runtime values projected to the browser. Only the resolved {@link RuntimeMode}
+ * crosses to the client; secrets and connection values never do.
+ */
+export interface ClientRuntimeConfig {
+  mode: RuntimeMode;
+}
+
+export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'> & {
+  runtime: ClientRuntimeConfig;
+};
 
 export interface RuntimeConfigComponentOptions {
   cssRootClass?: string;

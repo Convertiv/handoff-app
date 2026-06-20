@@ -11,6 +11,9 @@ export interface ImageStyle {
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
+  runtime: {
+    mode: 'workspace',
+  },
   exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
   sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
   useVariables: process.env.HANDOFF_USE_VARIABLES === 'true',
@@ -66,6 +69,7 @@ export const getClientConfig = (config: Config): ClientConfig => {
     sitesOutputDirectory,
     assets_zip_links = { icons: null, logos: null },
     useVariables,
+    runtime,
   } = { ...defaultConfig(), ...config };
 
   return {
@@ -74,5 +78,8 @@ export const getClientConfig = (config: Config): ClientConfig => {
     sitesOutputDirectory,
     assets_zip_links,
     useVariables,
+    runtime: {
+      mode: runtime?.mode ?? 'workspace',
+    },
   };
 };

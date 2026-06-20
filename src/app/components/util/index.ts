@@ -619,7 +619,7 @@ let cachedClientConfig: ClientConfigCache | null = null;
 
 const getDefaultClientConfig = (): ClientConfigCache => {
   return {
-    config: {} as ClientConfig,
+    config: { runtime: { mode: 'workspace' } } as ClientConfig,
   };
 };
 

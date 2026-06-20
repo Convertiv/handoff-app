@@ -4,11 +4,19 @@ import { ModeToggle } from '../../components/ModeSwitcher';
 import { MainNav } from '../../components/Navigation/MainNav';
 import { MobileNav } from '../../components/Navigation/MobileNav';
 import { cn } from '../../lib/utils';
+import { Badge } from '../ui/badge';
 import { useConfigContext } from '../context/ConfigContext';
+
+const RUNTIME_MODE_LABEL: Record<'workspace' | 'registry', string> = {
+  workspace: 'Workspace',
+  registry: 'Registry',
+};
 
 export function Header() {
   const context = useConfigContext();
   const [isScrolled, setIsScrolled] = useState(false);
+  const runtimeMode = context.config?.runtime?.mode ?? 'workspace';
+  const runtimeModeLabel = RUNTIME_MODE_LABEL[runtimeMode];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,9 +36,14 @@ export function Header() {
     >
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
         <div className="mx-auto flex items-center justify-between @container">
-          <Link href="/">
-            <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/">
+              <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
+            </Link>
+            <Badge variant={runtimeMode === 'registry' ? 'info' : 'default'} aria-label={`Runtime mode: ${runtimeModeLabel}`}>
+              {runtimeModeLabel}
+            </Badge>
+          </div>
           <div className="hidden items-center gap-4 @2xl:flex">
             <MainNav />
             <ModeToggle />
