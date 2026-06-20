@@ -1,5 +1,6 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
+import { buildComponentDetailUrl } from '../../../artifacts/url';
 import {
   BuildCache,
   checkOutputExists,
@@ -464,7 +465,7 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     tags: data.tags ? data.tags : [],
     properties: data.properties,
     previews: getDocumentedPreviews(data.previews),
-    path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
+    path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
   };
 };
 

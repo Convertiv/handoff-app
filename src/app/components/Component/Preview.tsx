@@ -1,3 +1,4 @@
+import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PageSlice } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
@@ -314,7 +315,7 @@ export const ComponentDisplay: React.FC<{
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
-                          window.open(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`, '_blank');
+                          window.open(buildArtifactUrl(`component/${previewUrl}`, process.env.HANDOFF_APP_BASE_PATH ?? ''), '_blank');
                         }}
                         variant="ghost"
                       >
@@ -344,7 +345,7 @@ export const ComponentDisplay: React.FC<{
                       display: 'block',
                       margin: '0 auto',
                     }}
-                    src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${previewUrl}`}
+                    src={buildArtifactUrl(`component/${previewUrl}`, process.env.HANDOFF_APP_BASE_PATH ?? '')}
                   />
                 </div>
               ) : (

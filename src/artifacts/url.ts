@@ -18,6 +18,9 @@
 /** Canonical route prefix all artifact URLs are served under. */
 export const ARTIFACTS_ROUTE_SEGMENT = 'api/docs/artifacts';
 
+/** Route prefix for docs read API metadata (`.json`) reads (technical design §5). */
+export const DOCS_ROUTE_SEGMENT = 'api/docs';
+
 /**
  * Normalize a configured basePath to either an empty string or a single-leading-slash,
  * no-trailing-slash form. Mirrors the Next app's `resolveBasePath` so builder output composes
@@ -60,3 +63,18 @@ export const buildArtifactUrl = (artifactPath: string, basePath?: string | null)
   const encoded = segments.map((segment) => encodeURIComponent(segment)).join('/');
   return `${normalizeBasePath(basePath)}/${ARTIFACTS_ROUTE_SEGMENT}/${encoded}`;
 };
+
+/**
+ * Build the canonical docs read API URL for a component's detail metadata
+ * (`{basePath}/api/docs/components/{id}.json`). The id is URL-encoded; `basePath` is preserved.
+ * This is the single source of the metadata-read URL that the build records as an entity's `path`.
+ */
+export const buildComponentDetailUrl = (id: string, basePath?: string | null): string =>
+  `${normalizeBasePath(basePath)}/${DOCS_ROUTE_SEGMENT}/components/${encodeURIComponent(id)}.json`;
+
+/**
+ * Build the canonical docs read API URL for a pattern's detail metadata
+ * (`{basePath}/api/docs/patterns/{id}.json`). The id is URL-encoded; `basePath` is preserved.
+ */
+export const buildPatternDetailUrl = (id: string, basePath?: string | null): string =>
+  `${normalizeBasePath(basePath)}/${DOCS_ROUTE_SEGMENT}/patterns/${encodeURIComponent(id)}.json`;

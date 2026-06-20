@@ -7,6 +7,7 @@ import ReactDOMServer from 'react-dom/server';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 import { Plugin } from 'vite';
 import Handoff from '../..';
+import { buildArtifactUrl } from '../../artifacts/url';
 import { Logger } from '../../utils/logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 import { SlotMetadata, SlotType } from '../preview/component';
@@ -267,13 +268,14 @@ function buildUsageSnippet(
 }
 
 function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string): string {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
+    <link rel="stylesheet" href="${buildArtifactUrl(`component/${MAIN_COMPONENT_CSS_FILE}`, basePath)}" />
+    <link rel="stylesheet" href="${buildArtifactUrl(`component/${componentId}.css`, basePath)}" />
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
     <title>${previewTitle}</title>
   </head>
   <body>

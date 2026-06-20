@@ -49,7 +49,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
   // Fetch components from api
   const [components, setComponents] = useState<PreviewObject[]>(undefined);
   const fetchComponents = async () => {
-    const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`).then((res) => res.json());
+    const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/components.json`).then((res) => res.json());
     setComponents(data as PreviewObject[]);
   };
   useEffect(() => {
@@ -90,7 +90,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
     );
   }
 
-  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/components.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">

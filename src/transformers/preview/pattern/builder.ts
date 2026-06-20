@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { buildPatternDetailUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { PatternListObject, PatternObject } from '../types';
@@ -93,7 +94,7 @@ async function buildPattern(
     ...pattern,
     id: patternId,
     url: patternUrl,
-    path: `${basePath}/api/pattern/${patternId}.json`,
+    path: buildPatternDetailUrl(patternId, basePath),
   };
 
   await writePatternHtml(patternId, composedHtml, handoff);

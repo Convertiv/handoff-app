@@ -1,5 +1,6 @@
 import escape from 'lodash/escape';
 import { parse } from 'node-html-parser';
+import { buildArtifactUrl } from '../../../artifacts/url';
 
 /**
  * Composes multiple component preview HTML documents into a single-page HTML.
@@ -26,7 +27,7 @@ export const composePatternHtml = (
   const bodyParts: string[] = [];
   const scriptTags: string[] = [];
 
-  cssHrefs.add(`${basePath}/api/component/main.css`);
+  cssHrefs.add(buildArtifactUrl('component/main.css', basePath));
   cssHrefs.add(`${basePath}/assets/css/preview.css`);
 
   const seenComponents = new Set<string>();
@@ -36,7 +37,7 @@ export const composePatternHtml = (
 
     if (!seenComponents.has(componentId)) {
       seenComponents.add(componentId);
-      cssHrefs.add(`${basePath}/api/component/${componentId}.css`);
+      cssHrefs.add(buildArtifactUrl(`component/${componentId}.css`, basePath));
     }
 
     const doc = parse(html);

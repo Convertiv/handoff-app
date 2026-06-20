@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars';
+import { buildArtifactUrl } from '../../artifacts/url';
 import { RegisterHandlebarsHelpersContext } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { SlotMetadata } from '../preview/component';
@@ -77,14 +78,16 @@ export const createHandlebarsContext = (
   options?: { includeSharedStyles?: boolean }
 ): HandlebarsContext => {
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
-  const sharedStylesLink = options?.includeSharedStyles ? `<link rel="stylesheet" href="${basePath}/api/component/shared.css">` : '';
+  const sharedStylesLink = options?.includeSharedStyles
+    ? `<link rel="stylesheet" href="${buildArtifactUrl('component/shared.css', basePath)}">`
+    : '';
 
   return {
     style:
-      `${sharedStylesLink}<link rel="stylesheet" href="${basePath}/api/component/main.css">` +
-      `<link rel="stylesheet" href="${basePath}/api/component/${data.id}.css">\n` +
+      `${sharedStylesLink}<link rel="stylesheet" href="${buildArtifactUrl('component/main.css', basePath)}">` +
+      `<link rel="stylesheet" href="${buildArtifactUrl(`component/${data.id}.css`, basePath)}">\n` +
       `<link rel="stylesheet" href="${basePath}/assets/css/preview.css">`,
-    script: `<script src="${basePath}/api/component/${data.id}.js"></script>\n<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
+    script: `<script src="${buildArtifactUrl(`component/${data.id}.js`, basePath)}"></script>\n<script src="${basePath}/assets/js/preview.js"></script><script>var fields = ${JSON.stringify(data.properties)};</script>`,
     properties: previewData.values || {},
     fields: data.properties,
     title: data.title,

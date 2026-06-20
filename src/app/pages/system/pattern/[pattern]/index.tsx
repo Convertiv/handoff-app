@@ -1,4 +1,5 @@
 'use client';
+import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { PatternListObject } from '@handoff/transformers/preview/types';
 import { startCase } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -149,7 +150,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     setFetchError(undefined);
     setPatternNotFound(false);
 
-    fetch(`${normalizedBasePath}/api/pattern/${id}.json`, { signal: controller.signal })
+    fetch(buildArtifactUrl(`pattern/${id}.json`, appBasePath), { signal: controller.signal })
       .then((res) => {
         if (res.status === 404) {
           setPatternNotFound(true);
@@ -168,7 +169,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
       });
 
     return () => controller.abort();
-  }, [id, normalizedBasePath]);
+  }, [id, appBasePath]);
 
   const onIframeLoad = useCallback(() => {
     if (iframeRef.current?.contentWindow?.document?.body) {
@@ -246,7 +247,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
                   display: 'block',
                   border: 'none',
                 }}
-                src={`${normalizedBasePath}/api/pattern/${pattern.url}`}
+                src={buildArtifactUrl(`pattern/${pattern.url}`, appBasePath)}
               />
             ) : (
               <div className="flex items-center justify-center p-8 text-sm text-gray-500">No preview available for this pattern.</div>

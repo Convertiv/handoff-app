@@ -6,6 +6,7 @@ import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
+import { buildArtifactUrl } from '../../artifacts/url';
 import { Logger } from '../../utils/logger';
 import {
     enrichPropertiesWithDocgen,
@@ -121,13 +122,14 @@ function generateClientHydrationSource(componentPath: string): string {
  * @returns Complete HTML document
  */
 function generateHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string, clientJs: string, props: any): string {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
+    <link rel="stylesheet" href="${buildArtifactUrl(`component/${MAIN_COMPONENT_CSS_FILE}`, basePath)}" />
+    <link rel="stylesheet" href="${buildArtifactUrl(`component/${componentId}.css`, basePath)}" />
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
     <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>
     <script type="module">
       ${clientJs}

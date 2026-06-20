@@ -1,4 +1,5 @@
 'use client';
+import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
@@ -122,8 +123,10 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
   const componentRoute = (componentId: string) => `${normalizedBasePath}/system/component/${componentId}`;
 
+  const componentDataUrl = buildArtifactUrl(`component/${id}.json`, appBasePath);
+
   const fetchComponents = async () => {
-    const data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
+    const data = await fetch(componentDataUrl).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 
@@ -164,7 +167,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   }, [component, id]);
 
   if (!component) return <p>Loading...</p>;
-  const apiUrl = (window.location.origin && window.location.origin) + `${normalizedBasePath}/api/component/${id}.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + componentDataUrl;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">

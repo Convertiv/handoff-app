@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { buildComponentDetailUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 import { getDocumentedPreviews } from './previews';
@@ -148,7 +149,7 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     tags: componentData.tags ? componentData.tags : [],
     properties: componentData.properties,
     previews: getDocumentedPreviews(componentData.previews),
-    path: `/api/component/${id}.json`,
+    path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
   };
 };
 export default writeComponentApi;
