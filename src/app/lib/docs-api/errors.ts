@@ -1,0 +1,58 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+/**
+ * Docs read API error contract (technical design §5/§12).
+ *
+ * Unlike the registry management API, docs read responses carry a bare `{ error: { code, message } }`
+ * envelope (no `meta`). Codes are deliberately narrow: a malformed/traversal/missing route param or
+ * record is `not_found`; a missing content artifact (or a missing required HTML reference) is
+ * `artifact_not_found`; everything else maps to `method_not_allowed` or `unexpected_error`.
+ */
+export type DocsErrorCode = 'not_found' | 'artifact_not_found' | 'method_not_allowed' | 'unexpected_error';
+
+const STATUS_BY_CODE: Record<DocsErrorCode, number> = {
+  not_found: 404,
+  artifact_not_found: 404,
+  method_not_allowed: 405,
+  unexpected_error: 500,
+};
+
+/** Write a docs read API error response with the status mapped from its code. */
+export const sendDocsError = (res: NextApiResponse, code: DocsErrorCode, message: string): void => {
+  res.status(STATUS_BY_CODE[code]).json({ error: { code, message } });
+};
+
+/**
+ * Guard a GET-only docs route. Returns `true` when the request is a GET and the handler should
+ * proceed; otherwise it writes a `405 method_not_allowed` response and returns `false`.
+ */
+export const ensureGet = (req: NextApiRequest, res: NextApiResponse): boolean => {
+  if (req.method === 'GET') {
+    return true;
+  }
+  res.setHeader('Allow', 'GET');
+  sendDocsError(res, 'method_not_allowed', `Method ${req.method ?? 'unknown'} not allowed; docs read API is GET-only.`);
+  return false;
+};
+
+/** Coerce a Next.js dynamic route query value (string | string[] | undefined) to a single string. */
+export const singleQueryValue = (value: string | string[] | undefined): string | undefined => {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+};
+
+/**
+ * Resolve an entity id from a dynamic route param that carries an explicit `.json` extension
+ * (metadata reads use explicit `.json` URLs, technical design §5). Returns the id without the
+ * extension, or `undefined` when the param is missing or not a `.json` request.
+ */
+export const idFromJsonParam = (value: string | string[] | undefined): string | undefined => {
+  const raw = singleQueryValue(value);
+  if (!raw || !raw.endsWith('.json')) {
+    return undefined;
+  }
+  const id = raw.slice(0, -'.json'.length);
+  return id.length > 0 ? id : undefined;
+};
