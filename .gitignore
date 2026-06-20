@@ -47,3 +47,10 @@ yarn-error.log*
 handoff.config.js
 
 test_components/
+
+# agent tooling and documentation
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/docs/agents/
