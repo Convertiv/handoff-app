@@ -8,6 +8,13 @@
       "when": 1781979217509,
       "tag": "0000_init_registry_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782045350977,
+      "tag": "0001_add_review_metadata",
+      "breakpoints": true
     }
   ]
 }

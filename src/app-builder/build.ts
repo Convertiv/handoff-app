@@ -8,7 +8,7 @@ import { buildPatterns } from '../pipeline/patterns';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import { resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
@@ -152,6 +152,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedRuntimeMode = escapeForSingleQuotedJsString(runtimeMode);
   const escapedRegistryAdapter = escapeForSingleQuotedJsString(resolveRegistryAdapter(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
+  const escapedApiTokenEnv = escapeForSingleQuotedJsString(resolveApiTokenEnv(handoff.config));
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -162,6 +163,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_RUNTIME_MODE%': escapedRuntimeMode,
     '%HANDOFF_REGISTRY_ADAPTER%': escapedRegistryAdapter,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
+    '%HANDOFF_REGISTRY_API_TOKEN_ENV%': escapedApiTokenEnv,
   };
   let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
   for (const [placeholder, value] of Object.entries(placeholderValues)) {

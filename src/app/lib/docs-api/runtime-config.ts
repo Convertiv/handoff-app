@@ -4,6 +4,7 @@ import type { RuntimeMode } from '@handoff/types/config';
 import {
   DEFAULT_DATABASE_URL_ENV,
   DEFAULT_REGISTRY_ADAPTER,
+  DEFAULT_REGISTRY_API_TOKEN_ENV,
   type RegistryDatabaseAdapter,
 } from '@handoff/registry/db/adapter';
 
@@ -27,6 +28,11 @@ export interface ServerRegistryRuntimeConfig {
   adapter: RegistryDatabaseAdapter;
   /** Name of the env var holding the database connection string (value resolved at request time). */
   databaseUrlEnv: string;
+  /**
+   * Name of the env var holding the registry management API bearer token. The token *value* is
+   * resolved from the environment at request time by the management API guard — never persisted.
+   */
+  apiTokenEnv: string;
 }
 
 /** Resolved server-side runtime configuration for the docs read API. */
@@ -40,7 +46,11 @@ let cached: ServerRuntimeConfig | null = null;
 /** Safe defaults: workspace mode with the default Postgres adapter + `DATABASE_URL` env var. */
 const defaults = (): ServerRuntimeConfig => ({
   mode: 'workspace',
-  registry: { adapter: DEFAULT_REGISTRY_ADAPTER, databaseUrlEnv: DEFAULT_DATABASE_URL_ENV },
+  registry: {
+    adapter: DEFAULT_REGISTRY_ADAPTER,
+    databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
+    apiTokenEnv: DEFAULT_REGISTRY_API_TOKEN_ENV,
+  },
 });
 
 /** Absolute path of the server-only runtime config persisted next to `client.config.json`. */
@@ -68,11 +78,13 @@ const fromEnv = (): ServerRuntimeConfig | null => {
     return null;
   }
   const databaseUrlEnv = process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV?.trim() || DEFAULT_DATABASE_URL_ENV;
+  const apiTokenEnv = process.env.HANDOFF_REGISTRY_API_TOKEN_ENV?.trim() || DEFAULT_REGISTRY_API_TOKEN_ENV;
   return {
     mode: mode === 'registry' ? 'registry' : 'workspace',
     registry: {
       adapter: process.env.HANDOFF_REGISTRY_ADAPTER?.trim() === 'neon' ? 'neon' : 'pg',
       databaseUrlEnv,
+      apiTokenEnv,
     },
   };
 };
@@ -102,11 +114,16 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
         typeof parsed?.registry?.databaseUrlEnv === 'string' && parsed.registry.databaseUrlEnv.trim()
           ? parsed.registry.databaseUrlEnv.trim()
           : DEFAULT_DATABASE_URL_ENV;
+      const apiTokenEnv =
+        typeof parsed?.registry?.apiTokenEnv === 'string' && parsed.registry.apiTokenEnv.trim()
+          ? parsed.registry.apiTokenEnv.trim()
+          : DEFAULT_REGISTRY_API_TOKEN_ENV;
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
         registry: {
           adapter: parsed?.registry?.adapter === 'neon' ? 'neon' : 'pg',
           databaseUrlEnv,
+          apiTokenEnv,
         },
       };
       return cached;

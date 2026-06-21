@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
-import { resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
 import type { Config, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
@@ -56,6 +56,7 @@ const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) =>
   registry: {
     adapter: resolveRegistryAdapter(config),
     databaseUrlEnv: resolveDatabaseUrlEnv(config),
+    apiTokenEnv: resolveApiTokenEnv(config),
   },
 });
 

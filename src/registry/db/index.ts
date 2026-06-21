@@ -12,6 +12,7 @@ export {
   type BuildMetadataEntityKind,
   type DocsArtifactEntityKind,
   type RegistryBuildStatus,
+  type RegistryReviewMetadata,
   type RegistryTextFileKind,
 } from './schema';
 
@@ -19,6 +20,8 @@ export {
 export {
   DEFAULT_DATABASE_URL_ENV,
   DEFAULT_REGISTRY_ADAPTER,
+  DEFAULT_REGISTRY_API_TOKEN_ENV,
+  resolveApiTokenEnv,
   resolveDatabaseUrlEnv,
   resolveRegistryAdapter,
   resolveRegistryDatabase,

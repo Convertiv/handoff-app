@@ -118,6 +118,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
+  const [previewsUnavailable, setPreviewsUnavailable] = useState(false);
 
   const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
@@ -126,7 +127,17 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const componentDataUrl = buildArtifactUrl(`component/${id}.json`, appBasePath);
 
   const fetchComponents = async () => {
-    const data = await fetch(componentDataUrl).then((res) => res.json());
+    const res = await fetch(componentDataUrl);
+    if (!res.ok) {
+      // Metadata-only records (e.g. created through the registry management API but not yet
+      // published) have no generated `component/<id>.json` artifact, so the docs read API correctly
+      // returns 404. Surface a clear "previews unavailable" state instead of parsing the error
+      // envelope as preview data and crashing on the absent fields.
+      setPreviewsUnavailable(true);
+      setComponent(undefined);
+      return;
+    }
+    const data = await res.json();
     setComponent(data as PreviewObject);
   };
 
@@ -141,6 +152,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
 
   useEffect(() => {
     setComponent(undefined);
+    setPreviewsUnavailable(false);
     fetchComponents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -166,6 +178,29 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
     }
   }, [component, id]);
 
+  if (previewsUnavailable) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+          <div className="mt-4 max-w-[800px] rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+            This component has no published artifacts yet, so previews and code samples are unavailable. Publish it to the
+            registry to populate its documentation.
+          </div>
+          <hr className="mt-8" />
+          <PrevNextNav previous={previousLink} next={nextLink} />
+        </div>
+      </Layout>
+    );
+  }
   if (!component) return <p>Loading...</p>;
   const apiUrl = (window.location.origin && window.location.origin) + componentDataUrl;
   return (

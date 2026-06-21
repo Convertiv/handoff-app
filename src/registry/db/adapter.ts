@@ -16,6 +16,9 @@ export type RegistryDatabaseAdapter = 'pg' | 'neon';
 /** Default env-var name holding the database connection string. */
 export const DEFAULT_DATABASE_URL_ENV = 'DATABASE_URL';
 
+/** Default env-var name holding the registry management API bearer token. */
+export const DEFAULT_REGISTRY_API_TOKEN_ENV = 'HANDOFF_REGISTRY_API_TOKEN';
+
 /** Default registry database adapter when none is configured. */
 export const DEFAULT_REGISTRY_ADAPTER: RegistryDatabaseAdapter = 'pg';
 
@@ -33,6 +36,16 @@ export interface ResolvedRegistryDatabase {
 export const resolveDatabaseUrlEnv = (config: Config | null | undefined): string => {
   const configured = config?.runtime?.registry?.databaseUrlEnv?.trim();
   return configured || DEFAULT_DATABASE_URL_ENV;
+};
+
+/**
+ * Resolve the env-var *name* holding the registry management API bearer token (defaults to
+ * `HANDOFF_REGISTRY_API_TOKEN`). Like the database URL, only the name is ever persisted — the token
+ * value is resolved from the environment at request time and never written to config.
+ */
+export const resolveApiTokenEnv = (config: Config | null | undefined): string => {
+  const configured = config?.runtime?.registry?.apiTokenEnv?.trim();
+  return configured || DEFAULT_REGISTRY_API_TOKEN_ENV;
 };
 
 /** Resolve the configured registry adapter (defaults to `pg`). */

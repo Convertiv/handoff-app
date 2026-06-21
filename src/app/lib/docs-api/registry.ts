@@ -1,15 +1,11 @@
 import { and, eq } from 'drizzle-orm';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
-import {
-  createRegistryDbConnection,
-  type RegistryDatabase,
-  type RegistryDbConnection,
-} from '@handoff/registry/db/client';
+import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
 import { createRegistryStore } from '@handoff/store/registry';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
-import { getServerRuntimeConfig } from './runtime-config';
+import { getRegistryConnection } from '../registry-connection';
 
 /**
  * Registry-mode backing for the docs read API (technical design §5/§6/§8, issue #10).
@@ -22,35 +18,6 @@ import { getServerRuntimeConfig } from './runtime-config';
  * Server-only: dynamically imported by {@link resolveDocsBackend} only when `runtime.mode` is
  * `registry`, so the Drizzle/Postgres driver code never loads in workspace dev/build.
  */
-
-let connectionPromise: Promise<RegistryDbConnection> | null = null;
-
-/**
- * Open (or reuse) the registry database connection. The connection string is resolved from the
- * configured env var *name* at request time — never persisted in config — so a missing value
- * surfaces as an actionable error rather than a deep driver failure. A failed connect is not
- * cached, so a later request can retry once the database/env is available.
- */
-const getConnection = (): Promise<RegistryDbConnection> => {
-  if (connectionPromise) {
-    return connectionPromise;
-  }
-  const { registry } = getServerRuntimeConfig();
-  const connectionString = process.env[registry.databaseUrlEnv]?.trim();
-  if (!connectionString) {
-    return Promise.reject(
-      new Error(
-        `Registry database URL is not configured. Set the "${registry.databaseUrlEnv}" environment ` +
-          `variable to a PostgreSQL connection string to serve the registry-mode docs read API.`
-      )
-    );
-  }
-  connectionPromise = createRegistryDbConnection({ adapter: registry.adapter, connectionString }).catch((error) => {
-    connectionPromise = null;
-    throw error;
-  });
-  return connectionPromise;
-};
 
 /** Whether an artifact exists in the registry by logical path (used for required-reference checks). */
 const artifactExists = async (db: RegistryDatabase, path: string): Promise<boolean> => {
@@ -101,7 +68,7 @@ const buildStatusFor = async (
 
 /** Construct the registry-mode docs backend over a live database connection. */
 export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
-  const connection = await getConnection();
+  const connection = await getRegistryConnection();
   const { db } = connection;
   const store = createRegistryStore({ db });
 

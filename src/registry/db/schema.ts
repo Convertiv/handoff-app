@@ -40,6 +40,23 @@ export type DocsArtifactEntityKind = 'component' | 'pattern' | 'summary' | 'asse
 /** Entity a build-metadata record is associated with. */
 export type BuildMetadataEntityKind = 'component' | 'pattern' | 'asset' | 'summary';
 
+/**
+ * Registry-only review/catalog metadata maintained through the management API (technical design §9).
+ *
+ * These fields are review state, not render/build inputs — the management API's metadata allowlist
+ * is the only writer, and updating them never touches `docs_artifacts` or `build_metadata`. Stored
+ * in a dedicated column rather than the normalized `record` jsonb so the served record stays
+ * identical in shape to what the filesystem store produces.
+ */
+export interface RegistryReviewMetadata {
+  /** Free-form review status (e.g. `draft`, `in-review`, `approved`). */
+  reviewStatus?: string;
+  /** Reviewer notes. */
+  notes?: string;
+  /** Owner identifier (name, handle, or email). */
+  owner?: string;
+}
+
 /** Build status mirrored from {@link import('../../artifacts/types').ArtifactBuildStatus}. */
 export type RegistryBuildStatus = 'current' | 'stale' | 'missing' | 'error';
 
@@ -64,6 +81,8 @@ export const components = pgTable(
     categories: jsonb('categories').$type<string[]>(),
     /** Full normalized component record. */
     record: jsonb('record').$type<ComponentListObject>().notNull(),
+    /** Registry-only review/catalog metadata (management-API allowlist; never a render input). */
+    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -115,6 +134,8 @@ export const patterns = pgTable(
     components: jsonb('components').$type<PatternComponentEntry[]>(),
     /** Full normalized pattern record. */
     record: jsonb('record').$type<PatternListObject>().notNull(),
+    /** Registry-only review/catalog metadata (management-API allowlist; never a render input). */
+    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
