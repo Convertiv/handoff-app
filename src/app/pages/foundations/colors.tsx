@@ -25,7 +25,7 @@ import { getTokens } from '../../components/util';
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
+      ...(await util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`)).props,
       config: util.getClientRuntimeConfig(),
       design: getTokens().localStyles,
     },

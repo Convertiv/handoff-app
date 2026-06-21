@@ -23,7 +23,7 @@ export async function getStaticPaths() {
   };
 }
 
-export const getStaticProps: GetStaticProps = (context) => {
+export const getStaticProps: GetStaticProps = async (context) => {
   const { slug } = context.params as { slug: string[] };
   const dirParts = slug.slice(0, -1);
   const file = slug[slug.length - 1];
@@ -32,7 +32,7 @@ export const getStaticProps: GetStaticProps = (context) => {
 
   return {
     props: {
-      ...fetchDocPageMarkdown(docPath, file, sectionId).props,
+      ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
       config: getClientRuntimeConfig(),
     },
   };

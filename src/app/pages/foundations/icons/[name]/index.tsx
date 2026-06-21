@@ -58,10 +58,10 @@ export async function getStaticPaths() {
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = () => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
+      ...(await fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`)).props,
       config: getClientRuntimeConfig(),
       assets: getTokens().assets,
     },

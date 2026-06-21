@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import {
   ComponentDocumentationProps,
   fetchCompDocPageMarkdown,
-  fetchComponents,
+  fetchLocalComponents,
   getClientRuntimeConfig,
   getTokens,
   IParams,
@@ -25,7 +25,7 @@ import { filterOutNull } from '../../../../../lib/utils';
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
+    paths: fetchLocalComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -33,13 +33,13 @@ export async function getStaticPaths() {
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   // get previews for components on this page
-  const menu = staticBuildMenu();
+  const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
   const componentSlug = reduceSlugToString(component);
   const tokens = getTokens();
   const componentObject = tokens?.components?.[componentSlug!] ?? null;
-  const markdownProps = fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`).props;
-  const componentData = fetchComponents()?.find((c) => c.id === componentSlug);
+  const markdownProps = (await fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`)).props;
+  const componentData = fetchLocalComponents()?.find((c) => c.id === componentSlug);
 
   const fallbackTitle = componentData?.name || startCase(componentSlug);
   const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;

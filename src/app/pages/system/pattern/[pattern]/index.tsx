@@ -92,15 +92,15 @@ const getArgSummary = (args?: Record<string, unknown>) => {
 
 export async function getStaticPaths() {
   return {
-    paths: fetchPatterns()?.map((p) => ({ params: { pattern: p.id } })) ?? [],
+    paths: (await fetchPatterns()).map((p) => ({ params: { pattern: p.id } })),
     fallback: false,
   };
 }
 
 export const getStaticProps = async (context: { params: IParams }) => {
   const { pattern: patternId } = context.params;
-  const patterns = fetchPatterns() ?? [];
-  const menu = staticBuildMenu();
+  const patterns = await fetchPatterns();
+  const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
   const patternData = patterns.find((p) => p.id === patternId);
 

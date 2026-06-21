@@ -39,7 +39,7 @@ import { buttonVariants } from '../../components/ui/button';
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`).props,
+      ...(await fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`)).props,
       config: getClientRuntimeConfig(),
       assets: getTokens().assets,
     },

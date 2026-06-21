@@ -27,7 +27,7 @@ export interface typographyTypes {
 export const getStaticProps: next.GetStaticProps = async () => {
   return {
     props: {
-      ...fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`).props,
+      ...(await fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`)).props,
       config: getClientRuntimeConfig(),
       design: getTokens().localStyles,
     },

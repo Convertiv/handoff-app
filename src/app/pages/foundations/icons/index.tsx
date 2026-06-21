@@ -55,7 +55,7 @@ export const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`).props,
+      ...(await fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`)).props,
       config: getClientRuntimeConfig(),
       assets: getTokens().assets,
     },

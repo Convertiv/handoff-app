@@ -36,7 +36,7 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       config,
-      ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
+      ...(await fetchDocPageMarkdown('docs/', 'system', `/system`)).props,
     } as ComponentPageDocumentationProps,
   };
 };

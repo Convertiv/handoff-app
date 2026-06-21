@@ -20,7 +20,7 @@ import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/assets/', 'logos', `/assets`).props,
+      ...(await fetchDocPageMarkdown('docs/assets/', 'logos', `/assets`)).props,
       config: getClientRuntimeConfig(),
     },
   };

@@ -41,7 +41,7 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       config: util.getClientRuntimeConfig(),
-      ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`).props,
+      ...(await util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`)).props,
       design: getTokens().localStyles,
     },
   };

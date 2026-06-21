@@ -27,7 +27,7 @@ import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig
  */
 export async function getStaticPaths() {
   return {
-    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
+    paths: (await fetchComponents()).map((exportable) => ({ params: { component: exportable.id } })),
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -73,8 +73,8 @@ export const getStaticProps = async (context) => {
 
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
-  const components = fetchComponents()!;
-  const menu = staticBuildMenu();
+  const components = await fetchComponents();
+  const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
   const componentData = components.find((c) => c.id === component);
   const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
@@ -84,7 +84,7 @@ export const getStaticProps = async (context) => {
   const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
   const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
 
-  const fallbackTitle = componentData.name || startCase(component as string);
+  const fallbackTitle = componentData.title || startCase(component as string);
   const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
 
   return {
@@ -97,7 +97,7 @@ export const getStaticProps = async (context) => {
       current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         ...componentData,
-        title: componentData.name || docs.metadata.title || startCase(component as string),
+        title: componentData.title || docs.metadata.title || startCase(component as string),
         description: componentData.description,
         metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
         metaDescription: docs.metadata.metaDescription || componentData.description,
@@ -132,11 +132,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
 
   const previousLink = previousComponent ? {
     href: previousComponent ? componentRoute(previousComponent.id) : null,
-    title: previousComponent ? previousComponent.name : null,
+    title: previousComponent ? previousComponent.title : null,
   } : null;
   const nextLink = nextComponent ? {
     href: componentRoute(nextComponent.id),
-    title: nextComponent.name,
+    title: nextComponent.title,
   } : null;
 
   useEffect(() => {

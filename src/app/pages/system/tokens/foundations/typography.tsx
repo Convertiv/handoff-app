@@ -26,7 +26,7 @@ export const getStaticProps: GetStaticProps = async () => {
     ...{
       props: {
         config,
-        ...fetchDocPageMarkdown('docs/', 'system/tokens/foundations/typography', `/system`).props,
+        ...(await fetchDocPageMarkdown('docs/', 'system/tokens/foundations/typography', `/system`)).props,
         design: getTokens().localStyles,
       } as FoundationDocumentationProps,
     },

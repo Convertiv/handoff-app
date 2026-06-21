@@ -7,6 +7,7 @@ import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { resolveDocsBackend } from '../../lib/docs-api/backend';
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
   slug: string | string[];
@@ -211,14 +212,25 @@ const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): any[] => {
 };
 
 /**
- * Build the static menu for rendering pages
+ * Build the static menu for rendering pages.
+ *
+ * Component and pattern submenus are sourced from the mode-aware docs read API
+ * ({@link fetchComponents}/{@link fetchPatterns}) so navigation always reflects the active
+ * `runtime.mode` — registry mode lists the registry's entities, workspace mode lists the local
+ * workspace, and never the other way around. Tokens are not yet on the registry read path (out of
+ * scope), so the tokens submenu retains its local, build-time behavior.
+ *
  * @returns SectionLink[]
  */
-export const staticBuildMenu = () => {
+export const staticBuildMenu = async (): Promise<SectionLink[]> => {
   const docRoot = path.join(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   if (!fs.existsSync(docRoot)) {
     return [];
   }
+  // Resolve the mode-aware entity lists once so every submenu agrees on the same set for the
+  // active runtime mode (the data source the rest of the docs UI already reads from).
+  const components = (await fetchComponents()) ?? [];
+  const patterns = (await fetchPatterns()) ?? [];
   const files = fs.readdirSync(docRoot);
   let list = files;
   const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
@@ -258,7 +270,7 @@ export const staticBuildMenu = () => {
               if (sub.components) {
                 return {
                   title: sub.title,
-                  menu: staticBuildComponentMenu(sub.components),
+                  menu: buildComponentMenu(components, sub.components),
                 };
               }
               if (sub.tokens) {
@@ -268,7 +280,7 @@ export const staticBuildMenu = () => {
                 };
               }
               if (sub.patterns) {
-                const patternMenu = staticBuildPatternMenu();
+                const patternMenu = buildPatternMenu(patterns);
                 if (patternMenu.length > 0) {
                   return {
                     title: sub.title || 'Patterns',
@@ -327,15 +339,20 @@ const buildBasePath = () => {
   return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\/+|\/+$/g, '') + '/';
 };
 
-const staticBuildComponentMenu = (type?: boolean | string) => {
+/**
+ * Build the component submenu from a mode-resolved component list. The list is supplied by the
+ * caller (sourced from the mode-aware docs read API), so this builder is pure and storage-agnostic:
+ * in registry mode it groups the registry's components, in workspace mode the local workspace's.
+ */
+const buildComponentMenu = (components: ComponentListObject[], type?: boolean | string) => {
   const basePath = buildBasePath();
   let menu = [];
-  let components = fetchComponents({ includeTokens: false });
+  let filtered = components ?? [];
   if (typeof type === 'string' && type !== '') {
-    components = components.filter((component) => component.type == type);
+    filtered = filtered.filter((component) => component.type == type);
   }
   // Build the submenu of exportables (components)
-  const groupedComponents = groupBy(components, (e) => e.group ?? '');
+  const groupedComponents = groupBy(filtered, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
     const menuGroup = { title: group || 'Uncategorized', menu: [] };
     groupedComponents[group].forEach((component) => {
@@ -344,8 +361,8 @@ const staticBuildComponentMenu = (type?: boolean | string) => {
       if (docs.metadata.title) {
         title = docs.metadata.title;
       }
-      if (component.name) {
-        title = component.name;
+      if (component.title) {
+        title = component.title;
       }
       menuGroup.menu.push({ path: `${basePath}system/component/${component.id}`, title });
     });
@@ -383,7 +400,9 @@ const staticBuildTokensMenu = () => {
   ];
 
   const componentMenuItems = [];
-  const components = fetchComponents({ includeApi: false });
+  // Tokens are not yet on the registry read path (out of scope), so the tokens submenu keeps its
+  // current local, build-time behavior regardless of runtime mode.
+  const components = fetchLocalComponents({ includeApi: false });
   // Build the submenu of exportables (components)
   const groupedComponents = groupBy(components, (e) => e.group ?? '');
   Object.keys(groupedComponents).forEach((group) => {
@@ -425,43 +444,30 @@ const staticBuildTokenMenu = () => {
 };
 
 /**
- * Fetch patterns from the patterns.json API file
+ * Fetch patterns from the mode-aware docs read API.
+ *
+ * Resolves through {@link resolveDocsBackend}, so the active `runtime.mode` decides the source:
+ * generated workspace artifacts in workspace mode, the registry database in registry mode. Replaces
+ * the previous direct read of the local `patterns.json` file, which always surfaced local workspace
+ * patterns regardless of mode.
  */
-export const fetchPatterns = (): { id: string; title: string; description: string; group: string }[] => {
-  const patternsFilePath = path.resolve(
-    process.env.HANDOFF_MODULE_PATH ?? '',
-    '.handoff',
-    `${process.env.HANDOFF_PROJECT_ID}`,
-    'public',
-    'api',
-    'patterns.json'
-  );
-
-  if (!fs.existsSync(patternsFilePath)) {
-    return [];
-  }
-
+export const fetchPatterns = async (): Promise<PatternListObject[]> => {
   try {
-    const patternList = JSON.parse(
-      fs.readFileSync(patternsFilePath, 'utf-8')
-    ) as PatternListObject[];
-
-    return patternList.map((p) => ({
-      id: p.id,
-      title: p.title || '',
-      description: p.description || '',
-      group: p.group || '',
-    }));
+    const backend = await resolveDocsBackend();
+    return (await backend.listPatterns()) ?? [];
   } catch {
     return [];
   }
 };
 
-const staticBuildPatternMenu = () => {
+/**
+ * Build the pattern submenu from a mode-resolved pattern list supplied by the caller. Pure and
+ * storage-agnostic: it reflects whichever set the active runtime mode produced.
+ */
+const buildPatternMenu = (patterns: PatternListObject[]) => {
   const basePath = buildBasePath();
-  const patterns = fetchPatterns();
 
-  if (patterns.length === 0) return [];
+  if (!patterns || patterns.length === 0) return [];
 
   const grouped = groupBy(patterns, (p) => p.group ?? '');
   let menu: { title: string; menu: { path: string; title: string }[] }[] = [];
@@ -497,8 +503,8 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
-  const menu = staticBuildMenu();
+export const fetchDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
+  const menu = await staticBuildMenu();
   const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
   // Return props
   return {
@@ -519,10 +525,10 @@ export const fetchDocPageMarkdown = (path: string, slug: string | undefined, id:
  * @param id
  * @returns
  */
-export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
+export const fetchCompDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
   return {
     props: {
-      ...fetchDocPageMarkdown(path, slug, id, runtimeConfig).props,
+      ...(await fetchDocPageMarkdown(path, slug, id, runtimeConfig)).props,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
       styleDictionary: slug ? fetchTokensString(slug, 'styleDictionary') : '',
@@ -531,19 +537,41 @@ export const fetchCompDocPageMarkdown = (path: string, slug: string | undefined,
   };
 };
 
-type FetchComponentsOptions = {
+/**
+ * Fetch components from the mode-aware docs read API.
+ *
+ * Resolves through {@link resolveDocsBackend}, so the active `runtime.mode` decides the source:
+ * generated workspace artifacts in workspace mode, the registry database in registry mode. This is
+ * the entity list the navigation, detail, and preview views all share, so they agree on the same
+ * set for the active mode. Replaces the previous direct read of the local component listings, which
+ * surfaced local workspace declarations regardless of mode.
+ */
+export const fetchComponents = async (): Promise<ComponentListObject[]> => {
+  try {
+    const backend = await resolveDocsBackend();
+    return (await backend.listComponents()) ?? [];
+  } catch {
+    return [];
+  }
+};
+
+type FetchLocalComponentsOptions = {
   includeTokens?: boolean;
   includeApi?: boolean;
 };
 
 /**
- * Fetch exportables id's from the JSON files in the exportables directory
+ * Fetch components from the local, build-time workspace artifacts (`tokens.json` and the generated
+ * `components.json`). This is the legacy, mode-independent local read used **only** by the tokens
+ * views, which are not yet covered by the registry read path (out of scope); it intentionally stays
+ * local so token behavior is preserved exactly until tokens are migrated.
+ *
  * @param options - Configuration object to specify which component sources to include
  * @param options.includeTokens - Include components from tokens.json (default: true)
  * @param options.includeApi - Include components from components.json API (default: true)
- * @returns {string[]} Array of component objects with id, type, group, name, and description
+ * @returns Array of component objects with id, type, group, name, and description
  */
-export const fetchComponents = (options?: FetchComponentsOptions) => {
+export const fetchLocalComponents = (options?: FetchLocalComponentsOptions) => {
   const includeTokens = options?.includeTokens ?? true;
   const includeApi = options?.includeApi ?? true;
 
@@ -656,10 +684,10 @@ const loadClientConfig = (): ClientConfigCache => {
  * @param id
  * @returns
  */
-export const fetchFoundationDocPageMarkdown = (path: string, slug: string | undefined, id: string) => {
+export const fetchFoundationDocPageMarkdown = async (path: string, slug: string | undefined, id: string) => {
   return {
     props: {
-      ...fetchDocPageMarkdown(path, slug, id).props,
+      ...(await fetchDocPageMarkdown(path, slug, id)).props,
       scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
       css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
       styleDictionary: slug ? fetchTokensString(pluralizeComponent(slug), 'styleDictionary') : '',
