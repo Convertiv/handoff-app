@@ -651,27 +651,56 @@ const getDefaultClientConfig = (): ClientConfigCache => {
   };
 };
 
+/**
+ * Resolve the persisted client config path. Workspace dev/static reads it from the build-machine
+ * `.handoff/<projectId>` staging dir; the packaged registry app (issue #11) reads it from the entry
+ * dir the build copies it into (the standalone server's cwd), since the build-machine path does not
+ * exist on the deploy host.
+ */
+const resolveClientConfigPath = (): string | null => {
+  const candidates = [
+    path.resolve(
+      process.env.HANDOFF_MODULE_PATH ?? '',
+      '.handoff',
+      process.env.HANDOFF_PROJECT_ID ?? '',
+      'client.config.json'
+    ),
+    path.resolve(process.cwd(), 'client.config.json'),
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+};
+
+/**
+ * Apply the build-time-baked runtime mode (issue #11) over a loaded client config. Mode is
+ * config-only and baked into the bundle, so the packaged registry app reports `registry` even when
+ * its client.config.json cannot be resolved on the deploy host.
+ */
+const applyRuntimeModeOverride = (cache: ClientConfigCache): ClientConfigCache => {
+  const bakedMode = process.env.HANDOFF_RUNTIME_MODE?.trim();
+  if (bakedMode === 'workspace' || bakedMode === 'registry') {
+    return { config: { ...cache.config, runtime: { ...cache.config.runtime, mode: bakedMode } } };
+  }
+  return cache;
+};
+
 const loadClientConfig = (): ClientConfigCache => {
   if (cachedClientConfig) {
     return cachedClientConfig;
   }
 
-  const modulePath = process.env.HANDOFF_MODULE_PATH ?? '';
-  const projectId = process.env.HANDOFF_PROJECT_ID ?? '';
-  const clientConfigPath = path.resolve(modulePath, '.handoff', projectId, 'client.config.json');
-
-  if (!fs.existsSync(clientConfigPath)) {
-    // Return empty default instead of throwing to support running without fetch
-    return getDefaultClientConfig();
+  const clientConfigPath = resolveClientConfigPath();
+  if (!clientConfigPath) {
+    // No persisted config: still honor a baked runtime mode so the packaged app reports correctly.
+    return applyRuntimeModeOverride(getDefaultClientConfig());
   }
 
   try {
     const cacheContent = fs.readFileSync(clientConfigPath, 'utf-8');
-    cachedClientConfig = JSON.parse(cacheContent) as ClientConfigCache;
+    cachedClientConfig = applyRuntimeModeOverride(JSON.parse(cacheContent) as ClientConfigCache);
     return cachedClientConfig;
   } catch (e) {
     // Return empty default on error instead of throwing
-    return getDefaultClientConfig();
+    return applyRuntimeModeOverride(getDefaultClientConfig());
   }
 };
 

@@ -53,12 +53,44 @@ const serverRuntimeConfigPath = (): string =>
   );
 
 /**
- * Resolve the server-side runtime config, reading `runtime.server.json` when present and falling
- * back to safe workspace defaults otherwise (so an app built before this file existed keeps
- * behaving as a workspace). The result is cached for the lifetime of the server process.
+ * Resolve the server-side runtime config from the values baked into the bundle at build time
+ * (`HANDOFF_RUNTIME_MODE` + registry connection inputs). Returns `null` when no mode was baked, so
+ * the file-based path can take over for apps built before env baking existed.
+ *
+ * This is the resolution path for the packaged registry app (issue #11): its deploy host has none of
+ * the build-machine paths `runtime.server.json` is keyed on, so mode + the DB env-var *name* are
+ * carried in the bundle instead. Mode stays config-only — these were derived from `runtime.*` at
+ * build, never inferred from the deploy environment.
+ */
+const fromEnv = (): ServerRuntimeConfig | null => {
+  const mode = process.env.HANDOFF_RUNTIME_MODE?.trim();
+  if (!mode) {
+    return null;
+  }
+  const databaseUrlEnv = process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV?.trim() || DEFAULT_DATABASE_URL_ENV;
+  return {
+    mode: mode === 'registry' ? 'registry' : 'workspace',
+    registry: {
+      adapter: process.env.HANDOFF_REGISTRY_ADAPTER?.trim() === 'neon' ? 'neon' : 'pg',
+      databaseUrlEnv,
+    },
+  };
+};
+
+/**
+ * Resolve the server-side runtime config, preferring the values baked into the bundle, then reading
+ * `runtime.server.json` when present, and falling back to safe workspace defaults otherwise (so an
+ * app built before either source existed keeps behaving as a workspace). The result is cached for
+ * the lifetime of the server process.
  */
 export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
   if (cached) {
+    return cached;
+  }
+
+  const envConfig = fromEnv();
+  if (envConfig) {
+    cached = envConfig;
     return cached;
   }
 

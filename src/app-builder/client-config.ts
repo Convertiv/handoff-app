@@ -3,7 +3,7 @@ import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
 import { resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
-import type { Config } from '../types/config';
+import type { Config, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
 /**
@@ -51,23 +51,44 @@ export const generateTokensApi = async (handoff: Handoff) => {
  * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
  * itself is never persisted, only resolved from the env var at request time.
  */
-const buildServerRuntimeConfig = (config: Config) => ({
-  mode: config?.runtime?.mode ?? 'workspace',
+const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) => ({
+  mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
   registry: {
     adapter: resolveRegistryAdapter(config),
     databaseUrlEnv: resolveDatabaseUrlEnv(config),
   },
 });
 
+/** Options for {@link persistClientConfig}. */
+export interface PersistClientConfigOptions {
+  /**
+   * Force the runtime mode persisted to both `client.config.json` and `runtime.server.json`,
+   * irrespective of the source project's `runtime.mode`. The registry build sets this to `registry`
+   * so the packaged artifact reports registry mode (badge + DB-backed reads) even when built from a
+   * workspace-mode project.
+   */
+  runtimeModeOverride?: RuntimeMode;
+}
+
 /**
  * Persists the app's resolved config to disk: the browser-facing `client.config.json` and the
  * server-only `runtime.server.json` the docs read API resolves the active mode + registry
  * connection inputs from. Both are always written together so they never drift.
  */
-export const persistClientConfig = async (handoff: Handoff) => {
+export const persistClientConfig = async (handoff: Handoff, options: PersistClientConfigOptions = {}) => {
   const appPath = getAppPath(handoff);
   // Ensure directory exists
   await fs.ensureDir(appPath);
-  await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: getClientConfig(handoff.config) }, { spaces: 2 });
-  await fs.writeJson(path.resolve(appPath, 'runtime.server.json'), buildServerRuntimeConfig(handoff.config), { spaces: 2 });
+
+  const clientConfig = getClientConfig(handoff.config);
+  if (options.runtimeModeOverride) {
+    clientConfig.runtime = { ...clientConfig.runtime, mode: options.runtimeModeOverride };
+  }
+
+  await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: clientConfig }, { spaces: 2 });
+  await fs.writeJson(
+    path.resolve(appPath, 'runtime.server.json'),
+    buildServerRuntimeConfig(handoff.config, options.runtimeModeOverride),
+    { spaces: 2 }
+  );
 };

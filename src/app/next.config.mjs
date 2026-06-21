@@ -10,14 +10,38 @@ const resolveBasePath = (rawBasePath) => {
   return trimmed ? `/${trimmed}` : '';
 };
 
+// Resolved build target drives Next's output mode (technical design §4). The target — not NODE_ENV
+// — decides static export vs. dynamic packaging, so workspace dev, the static snapshot, and the
+// registry app never get conflated:
+//   - `static`   → `output: 'export'` (a self-contained static snapshot).
+//   - `registry` → `output: 'standalone'` (a deployable dynamic Next.js app + traced node_modules).
+//   - otherwise  → a normal server (workspace `next dev`/`start`).
+const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
+const handoffModulePath = path.resolve('%HANDOFF_MODULE_PATH%');
+
+const resolveOutputMode = (target) => {
+  if (target === 'static') {
+    // Static export disables Next API routes, which the workspace docs read API (`/api/docs/*`)
+    // depends on, so the static build materializes that read model into route-shaped files instead.
+    return 'export';
+  }
+  if (target === 'registry') {
+    // The registry app is a deployable dynamic server (DB-backed docs/registry APIs). Standalone
+    // traces the runtime + selected DB driver into a self-contained bundle for Vercel/Node/containers
+    // and never runs a static export (issue #11).
+    return 'standalone';
+  }
+  return undefined;
+};
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Static export disables Next API routes, which the workspace-mode docs read API (`/api/docs/*`)
-  // depends on. Export is gated on the explicit static build target (set by `handoff-app build`),
-  // not on NODE_ENV — so `next dev` and any future non-static `next build` path (e.g. registry, #11)
-  // run as real servers while only the static target exports. The static build materializes the docs
-  // read model into route-shaped files since the live API routes cannot serve in an exported site.
-  output: process.env.HANDOFF_BUILD_TARGET === 'static' ? 'export' : undefined,
+  output: resolveOutputMode(handoffBuildTarget),
+  // The registry app is staged under the package's `.handoff/<projectId>` while its node_modules live
+  // at the package root; standalone tracing must root at the package so the traced bundle captures
+  // the runtime and the selected Postgres/Neon driver. Only set for the registry target so workspace
+  // dev/static tracing is unchanged.
+  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffModulePath : undefined,
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
@@ -40,6 +64,14 @@ const nextConfig = {
     HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
     HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',
     HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
+    // Resolved runtime mode + registry connection *inputs* (names only, never secrets), baked at
+    // build time so the deployed registry app resolves its mode and DB env-var name without any
+    // build-machine filesystem (the absolute paths above do not exist on the deploy host). Mode stays
+    // config-only — these are derived from `runtime.*`, not inferred from env at runtime. The DB
+    // connection string itself is read from the named env var at request time (deployment-supplied).
+    HANDOFF_RUNTIME_MODE: '%HANDOFF_RUNTIME_MODE%',
+    HANDOFF_REGISTRY_ADAPTER: '%HANDOFF_REGISTRY_ADAPTER%',
+    HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
   },
   images: {
     unoptimized: true,
