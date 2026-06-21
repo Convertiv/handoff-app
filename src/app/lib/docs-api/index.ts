@@ -14,6 +14,9 @@ export {
   type ResolvedArtifact,
 } from './artifacts';
 export { serveArtifactBySegments } from './serve';
+export { handleDocsRoute } from './handler';
+export { resolveDocsBackend, type DocsBackend, type ResolvedArtifactBody } from './backend';
+export { getServerRuntimeConfig, type ServerRuntimeConfig } from './runtime-config';
 export {
   getComponentDetail,
   getPatternDetail,

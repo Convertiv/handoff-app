@@ -1,13 +1,13 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRef } from 'react';
-import NotFound from '../../components/NotFound';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import { PageTOC } from '../../components/Navigation/AnchorNav';
+import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
 import {
   buildCatchAllStaticPaths,

@@ -2,6 +2,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
+import { resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import type { Config } from '../types/config';
 import { getAppPath } from './paths';
 
 /**
@@ -42,12 +44,30 @@ export const generateTokensApi = async (handoff: Handoff) => {
 };
 
 /**
- * Persists the client config to a JSON file.
+ * Build the server-only runtime config consumed by the docs read API (technical design §1/§5).
+ *
+ * The browser-facing `client.config.json` carries only the resolved mode; the server additionally
+ * needs the registry connection *inputs* (selected adapter + the *name* of the database-URL env
+ * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
+ * itself is never persisted, only resolved from the env var at request time.
+ */
+const buildServerRuntimeConfig = (config: Config) => ({
+  mode: config?.runtime?.mode ?? 'workspace',
+  registry: {
+    adapter: resolveRegistryAdapter(config),
+    databaseUrlEnv: resolveDatabaseUrlEnv(config),
+  },
+});
+
+/**
+ * Persists the app's resolved config to disk: the browser-facing `client.config.json` and the
+ * server-only `runtime.server.json` the docs read API resolves the active mode + registry
+ * connection inputs from. Both are always written together so they never drift.
  */
 export const persistClientConfig = async (handoff: Handoff) => {
   const appPath = getAppPath(handoff);
-  const destination = path.resolve(appPath, 'client.config.json');
   // Ensure directory exists
   await fs.ensureDir(appPath);
-  await fs.writeJson(destination, { config: getClientConfig(handoff.config) }, { spaces: 2 });
+  await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: getClientConfig(handoff.config) }, { spaces: 2 });
+  await fs.writeJson(path.resolve(appPath, 'runtime.server.json'), buildServerRuntimeConfig(handoff.config), { spaces: 2 });
 };

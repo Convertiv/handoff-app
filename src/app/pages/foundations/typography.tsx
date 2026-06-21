@@ -57,7 +57,7 @@ const Typography = ({
       ...result,
       [current.values.fontFamily]: result[current.values.fontFamily]
         ? // sorts and returns unique font weights
-          sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
+        sortedUniq([...result[current.values.fontFamily], current.values.fontWeight].sort((a, b) => a - b))
         : [current.values.fontWeight],
     };
   }, {} as FontFamily);

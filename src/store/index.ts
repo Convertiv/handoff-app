@@ -1,9 +1,11 @@
 /**
  * Normalized store abstraction (technical design §3).
  *
- * The workspace (filesystem) store ships now; the registry (database) store implements the same
- * interface in a later issue. Consumers depend only on the interfaces exported here so they remain
- * storage-agnostic.
+ * The workspace (filesystem) store is exported here. The registry (database) store implements the
+ * same interface in `./registry`, but is intentionally **not** re-exported from this barrel so the
+ * Drizzle/Postgres dependencies it pulls in stay out of the workspace/static path — registry
+ * consumers import `@handoff/store/registry` directly (and lazily). Consumers depend only on the
+ * interfaces exported here so they remain storage-agnostic.
  */
 
 export type {
