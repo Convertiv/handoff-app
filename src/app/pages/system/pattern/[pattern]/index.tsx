@@ -19,6 +19,7 @@ import {
   getClientRuntimeConfig,
   getCurrentSection,
   IParams,
+  isRegistryRuntime,
   staticBuildMenu,
 } from '../../../../components/util';
 
@@ -91,6 +92,12 @@ const getArgSummary = (args?: Record<string, unknown>) => {
 };
 
 export async function getStaticPaths() {
+  // Registry content is mutable at runtime and may be empty/unreachable at build time, so resolve
+  // pattern pages on demand against the live DB instead of freezing the path list to the build
+  // snapshot. The static-export target stays fully prerendered (`fallback: false`).
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
     paths: (await fetchPatterns()).map((p) => ({ params: { pattern: p.id } })),
     fallback: false,
@@ -100,9 +107,14 @@ export async function getStaticPaths() {
 export const getStaticProps = async (context: { params: IParams }) => {
   const { pattern: patternId } = context.params;
   const patterns = await fetchPatterns();
+  const patternData = patterns.find((p) => p.id === patternId);
+  // Under `fallback: 'blocking'` this runs on demand for arbitrary ids; surface a real 404 for ids
+  // that do not exist in the active mode.
+  if (!patternData) {
+    return { notFound: true };
+  }
   const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const patternData = patterns.find((p) => p.id === patternId);
 
   const sameGroupPatterns = patterns.filter((p) => p.group === patternData?.group);
   const groupIndex = sameGroupPatterns.findIndex((p) => p.id === patternId);

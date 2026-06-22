@@ -37,6 +37,12 @@ export interface SectionLink {
       path: string;
       image: string;
     }[];
+    /**
+     * Marks a submenu whose contents are mode-aware registry entities (components/patterns). In
+     * registry mode the client nav refreshes these slots at request time from the live docs read
+     * API; the build-time `menu` is the workspace/static-export snapshot.
+     */
+    dynamic?: { kind: 'components' | 'patterns'; type?: string };
   }[];
 }
 // Documentation Page Properties
@@ -268,9 +274,16 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
             .map((key) => {
               const sub = metadata.menu[key];
               if (sub.components) {
+                // Omit `type` entirely when there is no filter: `undefined` is not JSON-serializable
+                // and this menu is returned from `getStaticProps`.
+                const dynamic =
+                  typeof sub.components === 'string'
+                    ? { kind: 'components' as const, type: sub.components }
+                    : { kind: 'components' as const };
                 return {
                   title: sub.title,
                   menu: buildComponentMenu(components, sub.components),
+                  dynamic,
                 };
               }
               if (sub.tokens) {
@@ -281,10 +294,14 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
               }
               if (sub.patterns) {
                 const patternMenu = buildPatternMenu(patterns);
-                if (patternMenu.length > 0) {
+                // In registry mode the patterns submenu is filled at request time by the client nav,
+                // so keep the (possibly empty) slot and tag it; otherwise preserve the workspace
+                // behavior of omitting an empty patterns submenu.
+                if (patternMenu.length > 0 || isRegistryRuntime()) {
                   return {
                     title: sub.title || 'Patterns',
                     menu: patternMenu,
+                    dynamic: { kind: 'patterns' as const },
                   };
                 }
                 return undefined;
@@ -729,6 +746,13 @@ export const getClientRuntimeConfig = (): ClientConfig => {
   const clientConfig = loadClientConfig();
   return clientConfig.config;
 };
+
+/**
+ * Whether the docs app is running in registry mode. Drives the request-time behaviors (on-demand
+ * detail rendering and the live nav fetch) that must not affect the workspace dev or static-export
+ * builds. Resolves from the same baked/persisted runtime mode the docs read API uses.
+ */
+export const isRegistryRuntime = (): boolean => getClientRuntimeConfig().runtime?.mode === 'registry';
 
 export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH

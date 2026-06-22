@@ -19,13 +19,19 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, isRegistryRuntime, staticBuildMenu } from '../../../../components/util';
 
 /**
  * Render all index pages
  * @returns
  */
 export async function getStaticPaths() {
+  // Registry content is mutable at runtime and may be empty/unreachable at build time, so resolve
+  // component pages on demand against the live DB instead of freezing the path list to the build
+  // snapshot. The static-export target stays fully prerendered (`fallback: false`).
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
     paths: (await fetchComponents()).map((exportable) => ({ params: { component: exportable.id } })),
     fallback: false, // can also be true or 'blocking'
@@ -74,9 +80,14 @@ export const getStaticProps = async (context) => {
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
   const components = await fetchComponents();
+  const componentData = components.find((c) => c.id === component);
+  // Under `fallback: 'blocking'` this runs on demand for arbitrary ids; surface a real 404 for ids
+  // that do not exist in the active mode instead of dereferencing an undefined record below.
+  if (!componentData) {
+    return { notFound: true };
+  }
   const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
-  const componentData = components.find((c) => c.id === component);
   const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
   const sameGroupComponents = components.filter((c) => c.group === componentData?.group);

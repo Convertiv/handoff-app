@@ -15,6 +15,7 @@ import { sendRegistryError, type RegistryErrorDetails } from './errors';
 import { isSafeRelativePath, normalizeRelativePath, validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
+import { revalidateEntityPages } from './revalidate';
 
 /**
  * Publish ingestion for the registry transfer endpoint (technical design §10, issue #13).
@@ -393,6 +394,10 @@ export const handleTransferRoute = (
     await replaceEntityFiles(db, kind, id, pkg.files);
     await ingestArtifacts(db, kind, id, pkg.artifacts);
     await upsertBuildMetadata(db, kind, id, pkg.build);
+
+    // The publish persisted; regenerate the affected docs pages on demand so the published entity is
+    // reviewable with no rebuild or restart (correct server-rendered `<head>` title/metadata).
+    await revalidateEntityPages(res, kind, id);
 
     sendRegistryData(res, 200, { id, kind, published: true }, buildMeta(await resolveBuildMeta(db, kind, id)));
   });

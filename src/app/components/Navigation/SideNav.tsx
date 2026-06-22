@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
+import { groupBy, startCase } from 'lodash';
 import { useRouter } from 'next/router';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +32,7 @@ import {
   SidebarSeparator,
 } from '../../components/ui/sidebar';
 import { normalizePathForMatch, toAbsolutePath } from '../../lib/utils';
+import { useConfigContext } from '../context/ConfigContext';
 import { SectionLink } from '../util';
 
 const NormalMenuItem = ({ title, icon, path }) => {
@@ -118,13 +120,87 @@ const MenuIcon = ({ icon, isActive = false }) => {
   }
 };
 
+/** Minimal nav payload served by `GET /api/docs/nav.json` (id/title/group + component `type`). */
+type NavEntity = { id: string; title?: string; group?: string; type?: string };
+type NavData = { components: NavEntity[]; patterns: NavEntity[] };
+
+/** Mirror of `buildBasePath()` in components/util so client-built links match the baked menu paths. */
+const buildBasePath = (): string => {
+  if (!process.env.HANDOFF_APP_BASE_PATH) {
+    return '';
+  }
+  return process.env.HANDOFF_APP_BASE_PATH.replace(/^\/+|\/+$/g, '') + '/';
+};
+
+/**
+ * Build a grouped submenu from the minimal nav entities, mirroring the server-side
+ * `buildComponentMenu`/`buildPatternMenu` shape (group → sorted items, both sorted by title) so the
+ * client-resolved registry nav renders identically to the workspace/static baked menu.
+ */
+const buildEntitySubmenu = (entities: NavEntity[], segment: 'component' | 'pattern') => {
+  const basePath = buildBasePath();
+  const grouped = groupBy(entities, (entity) => entity.group ?? '');
+  return Object.keys(grouped)
+    .map((group) => ({
+      title: group || 'Uncategorized',
+      menu: grouped[group]
+        .map((entity) => ({
+          path: `${basePath}system/${segment}/${entity.id}`,
+          title: entity.title || startCase(entity.id),
+        }))
+        .sort((a, b) => a.title.localeCompare(b.title)),
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+};
+
 const SideNav = ({ menu }: { menu: SectionLink }) => {
+  const { config } = useConfigContext();
+  const isRegistry = config?.runtime?.mode === 'registry';
+  const [nav, setNav] = useState<NavData | null>(null);
+
+  // Registry entity lists are mutable at runtime, so resolve the component/pattern submenus at request
+  // time from the live (minimal) docs read API instead of the build-time snapshot. Workspace/static
+  // keep the baked menu and never fetch.
+  useEffect(() => {
+    if (!isRegistry) {
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/nav.json`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setNav(data as NavData);
+      })
+      .catch(() => {
+        // Keep the baked menu on failure; the nav stays usable rather than disappearing.
+      });
+    return () => controller.abort();
+  }, [isRegistry]);
+
+  // Replace the `menu` of any subsection tagged `dynamic` with the live, request-time list.
+  const sections = useMemo(() => {
+    const subSections = menu?.subSections ?? [];
+    if (!isRegistry || !nav) {
+      return subSections;
+    }
+    return subSections.map((section) => {
+      const dyn = section.dynamic;
+      if (dyn?.kind === 'components') {
+        const components = dyn.type ? (nav.components ?? []).filter((c) => c.type === dyn.type) : nav.components ?? [];
+        return { ...section, menu: buildEntitySubmenu(components, 'component') };
+      }
+      if (dyn?.kind === 'patterns') {
+        return { ...section, menu: buildEntitySubmenu(nav.patterns ?? [], 'pattern') };
+      }
+      return section;
+    });
+  }, [menu, isRegistry, nav]);
+
   return (
     <Sidebar className="sticky left-auto">
       <SidebarContent className="px-4 pt-5">
-        {menu.subSections &&
-          menu.subSections.length > 0 &&
-          menu.subSections.map((section, index) => (
+        {sections.length > 0 &&
+          sections.map((section, index) => (
             <React.Fragment key={index}>
               <SidebarGroup>
                 {!section.path && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
@@ -138,7 +214,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
                   </SidebarGroupContent>
                 )}
               </SidebarGroup>
-              {index < menu.subSections.length && <SidebarSeparator className="mx-4" />}
+              {index < sections.length && <SidebarSeparator className="mx-4" />}
             </React.Fragment>
           ))}
       </SidebarContent>

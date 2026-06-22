@@ -5,6 +5,7 @@ import { sendRegistryError } from './errors';
 import { isSafeRelativePath, normalizeRelativePath, validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta } from './meta';
+import { revalidateEntityPages } from './revalidate';
 import {
   createEntity,
   deleteEntity,
@@ -64,6 +65,8 @@ export const handleEntityCollection = (
       sendRegistryError(res, 'bad_request', `A ${kind} with id "${validation.value.id}" already exists.`);
       return;
     }
+    // A new entity appears in the system index; regenerate it on demand.
+    await revalidateEntityPages(res, kind, validation.value.id);
     sendRegistryData(res, 201, result.data, buildMeta(result.build));
   });
 
@@ -101,6 +104,8 @@ export const handleEntityItem = (
         sendRegistryError(res, 'not_found', `${label(kind)} "${id}" was not found.`);
         return;
       }
+      // A metadata edit (e.g. title/description) changes the server-rendered detail page; regenerate.
+      await revalidateEntityPages(res, kind, id);
       sendRegistryData(res, 200, result.data, buildMeta(result.build));
       return;
     }
@@ -110,6 +115,8 @@ export const handleEntityItem = (
       sendRegistryError(res, 'not_found', `${label(kind)} "${id}" was not found.`);
       return;
     }
+    // The entity is gone; regenerate so the detail page 404s and the index drops it.
+    await revalidateEntityPages(res, kind, id);
     sendRegistryData(res, 200, { id, deleted: true });
   });
 
