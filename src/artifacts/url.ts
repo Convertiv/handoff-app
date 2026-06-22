@@ -44,6 +44,14 @@ const toArtifactSegments = (artifactPath: string): string[] =>
     .filter((segment) => segment.length > 0);
 
 /**
+ * Whether a logical path segment is a relative-traversal marker (`.` or `..`). These survive
+ * `encodeURIComponent` (dots are unreserved) and so must be rejected explicitly to keep emitted
+ * URLs canonical and contained — mirrors the server resolver's segment validation as defense in
+ * depth.
+ */
+const isTraversalSegment = (segment: string): boolean => segment === '.' || segment === '..';
+
+/**
  * Build a canonical artifact URL for a logical artifact path.
  *
  * Each path segment is individually `encodeURIComponent`-encoded (so a slash separating logical
@@ -53,12 +61,15 @@ const toArtifactSegments = (artifactPath: string): string[] =>
  * @param artifactPath Logical artifact path, e.g. `component/badge-primary.html`.
  * @param basePath Optional configured base path; normalized like the Next app's basePath.
  * @returns A canonical `{basePath}/api/docs/artifacts/{encodedPath}` URL.
- * @throws If `artifactPath` has no usable segments.
+ * @throws If `artifactPath` has no usable segments, or contains a `.`/`..` traversal segment.
  */
 export const buildArtifactUrl = (artifactPath: string, basePath?: string | null): string => {
   const segments = toArtifactSegments(artifactPath);
   if (segments.length === 0) {
     throw new Error(`Cannot build artifact URL: empty artifact path "${artifactPath}".`);
+  }
+  if (segments.some(isTraversalSegment)) {
+    throw new Error(`Cannot build artifact URL: path traversal is not allowed in "${artifactPath}".`);
   }
   const encoded = segments.map((segment) => encodeURIComponent(segment)).join('/');
   return `${normalizeBasePath(basePath)}/${ARTIFACTS_ROUTE_SEGMENT}/${encoded}`;
