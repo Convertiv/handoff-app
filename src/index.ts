@@ -139,6 +139,20 @@ class Handoff {
     return this;
   }
 
+  /**
+   * Publish a single component or pattern from this connected workspace to the configured remote
+   * registry: a fresh targeted build of the selected entity, then an upload of only that entity's
+   * package (record, source files, rendered artifacts + required shared/global artifacts, build
+   * metadata). The publish module is loaded lazily so the registry client/build code never enters
+   * the docs app bundle.
+   */
+  async publish(kind: 'component' | 'pattern', id: string): Promise<Handoff> {
+    this.preRunner();
+    const { publishEntity } = await import('./registry/publish');
+    await publishEntity(this, kind, id);
+    return this;
+  }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);

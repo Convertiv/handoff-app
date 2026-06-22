@@ -25,6 +25,7 @@ export {
   type ValidatedMetadataWrite,
 } from './allowlist';
 export { isSafeRelativePath, normalizeRelativePath, validateFileBody, type ValidatedFile } from './files';
+export { handleTransferRoute } from './transfer';
 export { redactSecrets } from './redact';
 export {
   createEntity,

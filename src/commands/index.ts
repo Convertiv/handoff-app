@@ -11,6 +11,7 @@ import initCommand from './init';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
 import makeTemplateCommand from './make/template';
+import publishCommand from './publish';
 import scaffoldCommand from './scaffold';
 import startCommand from './start';
 import validateComponentsCommand from './validate/components';
@@ -29,6 +30,7 @@ export const commands = [
   makePageCommand,
   makeComponentCommand,
   makeTemplateCommand,
+  publishCommand,
   scaffoldCommand,
   startCommand,
   validateComponentsCommand,
