@@ -60,6 +60,10 @@ const nextConfig = {
   env: {
     HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
     HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
+    // Resolved build target, baked so the client can tell a self-contained static snapshot apart
+    // from a live workspace/registry app (e.g. the header hides the runtime-mode badge in the
+    // static export). Read straight from the build env — empty for workspace dev/start.
+    HANDOFF_BUILD_TARGET: handoffBuildTarget ?? '',
     HANDOFF_WORKING_PATH: '%HANDOFF_WORKING_PATH%',
     HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
     HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',

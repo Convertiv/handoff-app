@@ -17,6 +17,9 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const runtimeMode = context.config?.runtime?.mode ?? 'workspace';
   const runtimeModeLabel = RUNTIME_MODE_LABEL[runtimeMode];
+  // The static export is a self-contained snapshot of the workspace, not a live runtime, so the
+  // runtime-mode badge carries no meaning there and is omitted.
+  const isStaticSnapshot = process.env.HANDOFF_BUILD_TARGET === 'static';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,9 +43,11 @@ export function Header() {
             <Link href="/">
               <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
             </Link>
-            <Badge variant={runtimeMode === 'registry' ? 'info' : 'default'} aria-label={`Runtime mode: ${runtimeModeLabel}`}>
-              {runtimeModeLabel}
-            </Badge>
+            {!isStaticSnapshot && (
+              <Badge variant={runtimeMode === 'registry' ? 'info' : 'default'} aria-label={`Runtime mode: ${runtimeModeLabel}`}>
+                {runtimeModeLabel}
+              </Badge>
+            )}
           </div>
           <div className="hidden items-center gap-4 @2xl:flex">
             <MainNav />
