@@ -16,3 +16,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse): Prom
   }
   return handleTransferRoute(req, res, kind);
 }
+
+/**
+ * Publish packages (source files + rendered artifacts) are the largest registry payloads, so accept
+ * up to Vercel's 4.5 MB function body limit instead of Next's 1 MB default (anything larger would be
+ * rejected by the platform with `413 FUNCTION_PAYLOAD_TOO_LARGE` regardless of this setting).
+ */
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4.5mb',
+    },
+  },
+};
