@@ -664,7 +664,7 @@ let cachedClientConfig: ClientConfigCache | null = null;
 
 const getDefaultClientConfig = (): ClientConfigCache => {
   return {
-    config: { runtime: { mode: 'workspace' } } as ClientConfig,
+    config: { runtime: { mode: 'workspace', connected: false } } as ClientConfig,
   };
 };
 
@@ -695,7 +695,10 @@ const resolveClientConfigPath = (): string | null => {
 const applyRuntimeModeOverride = (cache: ClientConfigCache): ClientConfigCache => {
   const bakedMode = process.env.HANDOFF_RUNTIME_MODE?.trim();
   if (bakedMode === 'workspace' || bakedMode === 'registry') {
-    return { config: { ...cache.config, runtime: { ...cache.config.runtime, mode: bakedMode } } };
+    // A baked registry mode is never a connected workspace, so clear `connected` to keep the
+    // projected state internally consistent regardless of the source project's config.
+    const connected = bakedMode === 'registry' ? false : cache.config.runtime?.connected ?? false;
+    return { config: { ...cache.config, runtime: { ...cache.config.runtime, mode: bakedMode, connected } } };
   }
   return cache;
 };

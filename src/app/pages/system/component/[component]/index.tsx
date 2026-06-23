@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { ComponentPreview } from '../../../../components/Component/Preview';
+import { RegistryActions } from '../../../../components/Component/RegistryActions';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -227,6 +228,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             </ReactMarkdown>
           </div>
           <div className="flex flex-row gap-3">
+            <RegistryActions mode={config.runtime.mode} connected={config.runtime.connected} entityType="component" id={id} />
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
                 <a href={component.figma} target="_blank">

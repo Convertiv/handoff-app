@@ -83,7 +83,11 @@ export const persistClientConfig = async (handoff: Handoff, options: PersistClie
 
   const clientConfig = getClientConfig(handoff.config);
   if (options.runtimeModeOverride) {
-    clientConfig.runtime = { ...clientConfig.runtime, mode: options.runtimeModeOverride };
+    // A forced registry mode (the registry build target) is never a connected workspace, so the
+    // baked client config must report `connected: false` even when packaged from a connected
+    // workspace project.
+    const connected = options.runtimeModeOverride === 'registry' ? false : clientConfig.runtime.connected;
+    clientConfig.runtime = { ...clientConfig.runtime, mode: options.runtimeModeOverride, connected };
   }
 
   await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: clientConfig }, { spaces: 2 });

@@ -350,6 +350,12 @@ export interface Config {
  */
 export interface ClientRuntimeConfig {
   mode: RuntimeMode;
+  /**
+   * True when the runtime is a connected workspace (`mode: 'workspace'` plus a resolvable
+   * `registryConnection` URL). Non-secret: it never carries the URL or token value, only whether a
+   * connection is configured. Drives the workspace-only publish affordance in the docs UI.
+   */
+  connected: boolean;
 }
 
 export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'> & {

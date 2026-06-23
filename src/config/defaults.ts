@@ -1,3 +1,4 @@
+import { resolveRegistryConnection } from '../registry/connection';
 import { ClientConfig, Config } from '../types/config';
 
 export interface ImageStyle {
@@ -72,6 +73,12 @@ export const getClientConfig = (config: Config): ClientConfig => {
     runtime,
   } = { ...defaultConfig(), ...config };
 
+  const mode = runtime?.mode ?? 'workspace';
+  // Connected-workspace affordance: only a workspace with a resolvable registry URL is "connected".
+  // URL-only threshold (no token required) so the publish hint surfaces before the access token is
+  // set. Never project the URL/token value itself — only this boolean crosses to the browser.
+  const connected = mode === 'workspace' && Boolean(resolveRegistryConnection(config).url);
+
   return {
     app,
     exportsOutputDirectory,
@@ -79,7 +86,8 @@ export const getClientConfig = (config: Config): ClientConfig => {
     assets_zip_links,
     useVariables,
     runtime: {
-      mode: runtime?.mode ?? 'workspace',
+      mode,
+      connected,
     },
   };
 };
