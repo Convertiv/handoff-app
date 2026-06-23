@@ -1,4 +1,4 @@
-# Handoff - Design Token Automation
+# Handoff - Design System Runtime
 
 <a aria-label="NPM version" href="https://www.npmjs.com/package/handoff-app">
   <img alt="" src="https://img.shields.io/npm/v/handoff-app?style=for-the-badge&labelColor=000000">
@@ -7,197 +7,457 @@
   <img alt="" src="https://img.shields.io/npm/l/handoff-app?style=for-the-badge&labelColor=000000">
 </a>
 
-A design token pipeline to read figma files, extract tokens as JSON, and
-transform tokens into dev ready artifacts.
+Handoff is a design system runtime. It turns the source of truth for your design
+system, the tokens, components, and patterns, into dev-ready artifacts and living
+documentation, and serves both through one consistent runtime whether you are
+authoring locally or running a shared, deployed catalog.
 
-## Table of Contents
+## Table of contents
 
-* [What Is Handoff?](#what-is-handoff)
-* [How does it work](#how-does-it-work)
-  * [Handoff is in Beta!](#handoff-is-in-beta)
+* [What is Handoff?](#what-is-handoff)
+* [How it works](#how-it-works)
 * [Requirements](#requirements)
-* [Configuration hooks](#configuration-hooks)
-* [Get Started](#get-started)
-  * [Figma](#figma)
-  * [Create a project](#create-a-project)
-  * [Test fetch](#test-fetch)
-* [Further Reading](#further-reading)
+* [Quick start](#quick-start)
+* [Project layout](#project-layout)
+* [Authoring components and patterns](#authoring-components-and-patterns)
+* [Fetching design tokens](#fetching-design-tokens)
+* [Running locally](#running-locally)
+* [Building artifacts](#building-artifacts)
+  * [Static site (default)](#static-site-default)
+  * [Registry app](#registry-app)
+* [Publishing and checkout](#publishing-and-checkout)
+* [Configuration](#configuration)
+  * [The runtime block](#the-runtime-block)
+  * [Environment variables](#environment-variables)
+  * [Hooks](#hooks)
+* [CLI reference](#cli-reference)
+* [Further reading](#further-reading)
 * [Maintainers](#maintainers)
 * [Contributing](#contributing)
 * [License](#license)
 
-## What Is Handoff?
+## What is Handoff?
 
-Handoff is an open source tool for extracting design tokens from the Figma REST
-API and building frontend developer documentation from that Figma file. By
-automating the design token delivery, Handoff helps to eliminate bottlenecks
-between design and development.
+Handoff is an open source design system runtime that closes the gap between
+design and development. By automating the delivery of your design system, it
+helps eliminate the bottlenecks between the two.
 
-Handoff is a collection of 4 javascript tools:
+It brings a few pieces together:
 
-* **Figma Token Extraction** - A framework for extracting
-  standardized design foundations and components from Figma.
-* **Transformation Pipeline** - A set of transformers for producing SASS, CSS,
-  Style Dictionary, and preview snippets from that data.
-* **Documentation Web App** - A static, client side, Javascript web app that
-  renders live, working previews of your components, tokens and styles.
-* **Delivery Tools** - Easy build tooling and CI/CD wrapper that allows
-  automation to render and ship the various deliverables as needed.
+* **Token extraction.** Pull standardized foundations from your design source and
+  store them as JSON. Figma is supported out of the box through the Figma REST
+  API.
+* **Transformation pipeline.** Produce SCSS, CSS, Style Dictionary, and preview
+  snippets from that data.
+* **Documentation runtime.** Render live, working previews of your components,
+  tokens, and styles, served through a stable docs read API.
+* **Delivery tooling.** Build and ship the deliverables, either as a static site
+  or as a deployed, database-backed catalog.
 
-## How does it work?
+Out of the box Handoff ships SCSS and CSS maps for [Bootstrap 5](https://getbootstrap.com/).
+If you use another framework or custom CSS, you can write your own map files to
+connect the generated tokens to your project.
 
-Handoff works by extracting design foundations and component data from
-[well-formed Figma libraries](https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D?node-id=0%3A1\&t=iPYW37yDmNkJBt1t-0),
-storing them as JSON, and then transforming them into design tokens. Those
-design tokens are published as SASS and CSS variables.
+You install `handoff-app` as a project-local dependency and run its commands in
+your project's context, so every project pins its own toolchain version.
 
-Out of the box, Handoff has native SCSS and CSS maps to connect these tokens to
-any site using the [Bootstrap 5](https://getbootstrap.com/) frontend
-framework. If you use another framework, or custom CSS, you can easily write
-map files to connect the generated tokens with your site or application.
+## How it works
 
-* [Get Started](https://www.handoff.com/docs/quickstart)
-* [Requirements](https://www.handoff.com/docs/overview/requirements)
-* [Integrating Tokens](https://www.handoff.com/docs/tokens/integration)
-* [Customization](https://www.handoff.com/docs/customization)
+Handoff has two runtime modes. Mode is resolved solely from `runtime.mode` in
+your config and defaults to `workspace`. It is never inferred from environment
+variables or token presence, so setting `DATABASE_URL` can never silently flip
+your app into another mode. The app chrome shows a `Workspace` or `Registry`
+badge so the active mode is always clear.
 
-Once Handoff extracts design tokens and variables, it builds a statically
-generated NextJS application that can be published to the web. This asset
-can be hosted on a static webhost (NGINX, s3/Cloudfront, Cloudflare pages
-etc).
+* **Workspace mode (default).** Your local filesystem is the source of truth.
+  You author components, patterns, and tokens locally, preview them with a dev
+  server, and build a static documentation snapshot. Local authoring stays fast
+  and self-contained, with no database or registry required.
+* **Registry mode.** A deployed, dynamic Next.js app backed by PostgreSQL serves
+  a shared catalog. It only ever serves what a workspace published to it. The
+  registry never compiles or materializes workspace source.
 
-* [Tokens Overview](https://www.handoff.com/docs/tokens)
-* [Build Site](https://www.handoff.com/docs/tokens/publishing)
+A **connected workspace** is workspace mode plus a registry connection. It still
+renders only your local files and still reads as `Workspace`, but it gains two
+commands: `publish` to push a locally built component or pattern up to a
+registry, and `checkout` to pull one back down into your workspace.
 
-This pipeline from Figma to the Documentation Web app can be automated via CI/CD
-to provide automatic, up-to-date, easily readable developer documentation.
-
-* [CI/CD Integration](https://www.handoff.com/docs/guide/cicd)
-
-## Handoff is in Beta!
-
-Handoff is Awesome. Handoff is also really new. We're constantly building
-new features, and expanding what it can do. We'd love to chat if you have
-a use case that isn't quite met.
+Under the hood, documentation in every mode is consumed through one stable docs
+read API and one canonical artifact URL scheme (`/api/docs/artifacts/{path}`),
+so the same UI serves workspace, static, and registry backings without knowing
+which store is behind it.
 
 ## Requirements
 
-* A paid Figma account is required to publish the Figma file library
 * Node 18.17+
-* NPM 8+
+* npm 8+
+* A paid Figma account, if you fetch tokens from a Figma library
+* PostgreSQL (or a Postgres-compatible service such as Neon) for registry mode
 
-## Get Started
+## Quick start
 
-### Figma
-
-1. Open the [Handoff Figma starter](https://www.figma.com/file/IGYfyraLDa0BpVXkxHY2tE/Starter-%5BV2%5D?node-id=0%3A1\&t=iPYW37yDmNkJBt1t-0)
-   and duplicate this project to your account
-
-2. Publish components to the library
-
-* Click on the Figma logo at the top left
-* Click on `Libraries`
-* Click on the current file
-* Click publish changes
-
-You'll need a developer token if you don't have one already
-
-* Click on the Figma logo in the top left
-* Go to `Help and Account`
-* Click on `Account Settings`
-* Scroll to `Personal Access Token`
-* Enter a token name and hit enter
-* Note that token for the next steps
-
-## Create a project
-
-The easiest way to get started is using the `handoff-app init` command to scaffold a new project:
+Scaffold a new project with the interactive wizard:
 
 ```bash
-npm install -g handoff-app
-handoff-app init
+npx handoff-app init
 ```
 
-This interactive CLI will guide you through:
-
-1. **Project name** - Enter a name for your project directory
-2. **Project type** - Choose between:
-   * **Project with sample components** - Includes example components to help you get started
-   * **Blank project** - Only the essential configuration files
-3. **Figma configuration** - Optionally provide your Figma project ID and developer access token
-
-The scaffolding will:
-
-* Create a new directory with your project name
-* Generate all necessary configuration files
-* Install dependencies automatically
-
-### After scaffolding
+The wizard asks for a project name, whether to include sample components, your
+preferred language (TypeScript or JavaScript), and optionally your Figma project
+ID and access token. It then creates the project directory, writes the config
+and starter files, and installs dependencies.
 
 ```bash
 cd my-handoff-project
-npm run fetch    # Fetch design tokens from Figma
-npm run start    # Start the documentation site
+npm run fetch    # pull design tokens from Figma (optional if no Figma creds yet)
+npm run start    # author locally with live preview at http://localhost:3000
 ```
 
-This will fetch the latest from your Figma file and boot a demo site at http://localhost:3000
+The generated `package.json` wires up the common scripts:
 
-### Alternative: Global installation
+```json
+{
+  "scripts": {
+    "start": "handoff-app start",
+    "dev": "handoff-app dev",
+    "build": "handoff-app build",
+    "fetch": "handoff-app fetch"
+  }
+}
+```
 
-You can also install handoff-app globally:
+Any other command can be run with `npx handoff-app <command>` or added as a
+script of your own.
+
+## Project layout
+
+A typical workspace project looks like this:
+
+```
+my-handoff-project/
+├─ handoff.config.ts        # project + runtime configuration
+├─ .env                     # Figma credentials and other secrets
+├─ components/
+│  └─ button/
+│     ├─ Button.tsx         # component implementation
+│     └─ button.handoff.ts  # component declaration
+├─ patterns/                # multi-component compositions
+├─ sass/                    # optional global SCSS entry
+├─ js/                      # optional global JS entry
+├─ exported/                # generated tokens and artifacts (gitignored)
+└─ out/                     # build output (gitignored)
+```
+
+## Authoring components and patterns
+
+A component is a directory with an implementation file and a declaration. The
+declaration is discovered as `*.handoff.{ts,js,cjs,json}` (the legacy
+`{dirname}.{js,cjs,json}` form keeps working too). List the directories you want
+built under `entries.components` in your config.
+
+Declarations are written with the typed helpers exported from `handoff-app`:
+
+```ts
+import { defineReactComponent } from 'handoff-app';
+import Button from './Button';
+
+export default defineReactComponent(Button, {
+  id: 'button',
+  name: 'Button',
+  description: 'Interactive button used for primary and secondary actions.',
+  group: 'Atomic Elements',
+  entries: {
+    component: './Button.tsx',
+  },
+  previews: {
+    primary: {
+      title: 'Primary',
+      args: { type: 'primary', children: 'Click me!' },
+    },
+  },
+});
+```
+
+The available helpers are:
+
+* `defineReactComponent` for React components
+* `defineHandlebarsComponent` for Handlebars templates
+* `defineCsfComponent` for Component Story Format stories
+* `defineComponent` for a generic, renderer-agnostic declaration
+* `definePattern` for compositions that reference several components by `id`
+
+Every component and pattern has a stable `id` (explicit `id` field, otherwise the
+directory name). The display `name`/`title` is independent of the `id`, so you
+can rename freely without breaking references. Identity is matched by `id`
+during publish and checkout.
+
+## Fetching design tokens
+
+Handoff fetches tokens from Figma out of the box. Set your Figma credentials in
+`.env`:
 
 ```bash
-npm install -g handoff-app
-create-handoff-app
+HANDOFF_FIGMA_PROJECT_ID=your-figma-file-id
+HANDOFF_DEV_ACCESS_TOKEN=your-figma-personal-access-token
 ```
 
-Or manually set up a project:
+Then pull the latest foundations and component data:
 
 ```bash
-mkdir my-new-project && cd my-new-project
-handoff-app fetch   # Will prompt for Figma credentials
-handoff-app start
+npm run fetch
 ```
 
-## Test Fetch
+To get a personal access token in Figma, open the Figma menu, go to
+`Help and Account` then `Account Settings`, scroll to `Personal Access Token`,
+name a token, and copy it. Republish your Figma library after design changes and
+run `fetch` again to pick them up.
 
-* Now go back to your Figma file and change a button color
-* Republish the changes to the library. Click on the publish button from the main
-  dropdown. You'll see a list of changes that have been made. Clicking publish
-  will make those changes available to handoff.
-* Back in your project, open a new terminal tab and type `npm run fetch`
+## Running locally
 
-Once that runs, your browser should update with the new colors.
+Both commands run a workspace-first local server with live preview.
 
-## Configuration hooks
+```bash
+handoff-app dev     # development server with the live docs read API
+handoff-app start   # dev server plus file watchers that rebuild on change
+```
 
-Pipeline customization is done in `handoff.config.js` under `hooks` (camelCase names: `validateComponent`, `jsBuildConfig`, `registerHandlebarsHelpers`, etc.). For example, `registerHandlebarsHelpers` runs after Handoff registers the built-in `field` and `eq` helpers so you can call `handlebars.registerHelper` for your `.hbs` preview templates.
+`start` is the day-to-day authoring loop: edit a component, save, and the
+preview updates. The site boots at http://localhost:3000 by default.
+
+## Building artifacts
+
+`handoff-app build` accepts a `--target` flag. The target, not `NODE_ENV`,
+decides what gets produced.
+
+### Static site (default)
+
+```bash
+handoff-app build                  # static target (default)
+handoff-app build --target static  # explicit, identical output
+```
+
+The static target builds your workspace components, patterns, and tokens,
+materializes the docs read model into route-shaped static files, and runs a
+static export to `out/<projectId>` (respecting `sitesOutputDirectory`). The
+output is plain static files: it renders list, detail, preview, and inspect
+pages and loads previews through canonical artifact URLs with no live server. It
+works on a managed host like Vercel and on a plain static file server with no
+host-specific rewrites.
+
+The build fails clearly if a required artifact referenced by generated HTML
+cannot be materialized, and it fails if the runtime is registry-only (there is
+no local workspace to export).
+
+### Registry app
+
+```bash
+handoff-app build --target registry
+```
+
+The registry target packages a deployable, dynamic Next.js app to
+`<sitesOutputDirectory>/registry` (default `out/registry`) as a Next.js
+standalone bundle. It never builds or bundles workspace source and has no
+workspace-source runtime dependency. It serves the docs read API and the
+registry API from the database and published artifacts.
+
+The bundle is self-hostable on a Node server, VPS, or container. Start it with
+`node server.js` from the output directory and supply the database connection at
+deploy time:
+
+```bash
+DATABASE_URL="postgres://…" node out/registry/server.js
+```
+
+The artifact also ships a self-contained migration runner so you can migrate the
+database directly from the deployment, with no CLI or workspace present:
+
+```bash
+DATABASE_URL="postgres://…" node out/registry/migrate.cjs
+```
+
+A generated `README.md` next to the bundle documents the required env vars and
+Docker/Vercel specifics. Run migrations from your CLI instead with:
+
+```bash
+handoff-app db:migrate
+```
+
+`db:migrate` reads your project config and DB env vars, applies the
+package-owned migration set, and runs independently of `build`. The database
+adapter (`pg` or `neon`) is chosen with `runtime.registry.database.adapter`, and
+both adapters ship with the package.
+
+## Publishing and checkout
+
+Connect a workspace to a registry by adding a `registryConnection` block to your
+config and setting the access token env var:
+
+```ts
+runtime: {
+  mode: 'workspace',
+  registryConnection: {
+    url: 'https://registry.example.com',
+    accessTokenEnv: 'HANDOFF_REGISTRY_ACCESS_TOKEN',
+  },
+},
+```
+
+```bash
+# .env
+HANDOFF_REGISTRY_ACCESS_TOKEN=your-registry-token
+```
+
+Then push and pull entities by `id`:
+
+```bash
+handoff-app publish component button     # build locally, upload that entity's package
+handoff-app checkout pattern hero        # pull a registry entity into this workspace
+```
+
+`publish` runs a fresh targeted build of the selected entity and uploads only
+that entity's package: normalized metadata, source files referenced by its
+`entries`, rendered docs artifacts (including required shared artifacts like
+`component/main.css` and `component/main.js`), and build metadata. It fails
+before upload if required artifacts are missing, stale, or incompatible, and it
+never touches unrelated entities' artifacts. Declaration files are never
+uploaded.
+
+`checkout` reads the registry record and source files, writes them in standard
+authoring form, and synthesizes a local declaration in your configured
+`runtime.workspace.declarationFormat` (defaulting to `js`). Declarations are a
+workspace-only concern, so they are always synthesized locally and never read
+from the registry. Overwriting existing local files requires `--force` or an
+interactive confirmation.
+
+## Configuration
+
+Project configuration lives in `handoff.config.{ts,js,cjs,json}` (resolved in
+that precedence order). TypeScript and ESM configs use `defineConfig` for typed
+authoring; plain CommonJS configs that never call `defineConfig` keep working
+unchanged.
+
+```ts
+import { defineConfig } from 'handoff-app';
+
+export default defineConfig({
+  app: {
+    title: 'Acme Design System',
+    client: 'Acme Corp',
+    basePath: '',
+  },
+  entries: {
+    scss: './sass/main.scss',
+    js: './js/main.js',
+    components: ['components/button', 'components/badge'],
+    patterns: ['patterns'],
+  },
+});
+```
+
+### The runtime block
+
+The `runtime` block selects the mode and carries mode-specific settings. It is
+optional and deep-merged into the defaults, so a partial block never wipes them.
+
+```ts
+runtime: {
+  // Sole determinant of runtime mode. Defaults to 'workspace'.
+  mode: 'workspace', // 'workspace' | 'registry'
+
+  workspace: {
+    // Format for newly generated / checkout-synthesized declarations.
+    declarationFormat: 'ts', // 'ts' | 'js' | 'cjs' | 'json'
+  },
+
+  // Connect a workspace to a remote registry (publish/checkout).
+  registryConnection: {
+    url: 'https://registry.example.com',
+    accessTokenEnv: 'HANDOFF_REGISTRY_ACCESS_TOKEN',
+  },
+
+  // Registry deployment settings (build --target registry, db:migrate).
+  registry: {
+    databaseUrlEnv: 'DATABASE_URL',
+    apiTokenEnv: 'HANDOFF_REGISTRY_API_TOKEN',
+    database: { adapter: 'pg' }, // 'pg' | 'neon'
+  },
+},
+```
+
+Secrets are always referenced by environment-variable name, never written as
+values, and are redacted from API responses.
+
+### Environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
+| `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
+| `HANDOFF_REGISTRY_URL` | Default env var for a connected workspace's registry URL |
+| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Connected-workspace access token for publish/checkout |
+| `DATABASE_URL` | Registry database connection string (name is configurable) |
+| `HANDOFF_REGISTRY_API_TOKEN` | Bearer token guarding registry management mutations |
+
+### Hooks
+
+Pipeline customization is done in your config under `hooks` (camelCase names such
+as `validateComponent`, `jsBuildConfig`, `registerHandlebarsHelpers`). For
+example, `registerHandlebarsHelpers` runs after Handoff registers the built-in
+`field` and `eq` helpers, so you can register your own helpers for `.hbs`
+preview templates.
 
 See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 
-## Further Reading
+## CLI reference
+
+| Command | Description |
+| --- | --- |
+| `init` | Scaffold a new workspace project with the interactive wizard |
+| `fetch` | Fetch design tokens from Figma |
+| `dev` | Start the local dev server with the live docs read API |
+| `start` | Start the dev server with file watchers for live authoring |
+| `build [--target static\|registry]` | Build the static site (default) or package the registry app |
+| `build:components [component]` | Build components without building the full app |
+| `publish <component\|pattern> <id>` | Build and publish an entity to the connected registry |
+| `checkout <component\|pattern> <id>` | Pull an entity from the connected registry |
+| `db:migrate` | Run registry database migrations (Drizzle / PostgreSQL) |
+| `make:component <name>` | Scaffold a new component |
+| `make:page <name> [parent]` | Scaffold a documentation page |
+| `make:template <component> [state]` | Scaffold a preview template |
+| `eject:config` | Eject the default config to the project |
+| `eject:pages` | Eject the default documentation pages |
+| `eject:theme` | Eject the default theme |
+| `validate:components` | Run component validation |
+
+Global flags: `-c, --config <file>`, `-d, --debug`, `-f, --force`,
+`-h, --help`, `-v, --version`. See [docs/cli.md](docs/cli.md) for the full
+reference.
+
+## Further reading
 
 * [Configure your project](https://www.handoff.com/docs/customization)
 * [Customize the content](https://www.handoff.com/docs/customization/content)
 * [Integrate tokens with your project](https://www.handoff.com/docs/tokens/integration)
-* [Build to Static Assets](https://www.handoff.com/docs/tokens/publishing)
-* [Integrate with Github Actions CI/CD](https://www.handoff.com/docs/infrastructure/github/)
-* [Integrate with Bitbucket Pipelines CI/CD](https://www.handoff.com/docs/infrastructure/bitbucket/)
+* [Build to static assets](https://www.handoff.com/docs/tokens/publishing)
+* [GitHub Actions CI/CD](https://www.handoff.com/docs/infrastructure/github/)
+* [Bitbucket Pipelines CI/CD](https://www.handoff.com/docs/infrastructure/bitbucket/)
 
 ## Maintainers
 
 [@bradmering](https://github.com/bradmering)
 
-[@DomagojGojak](https://github.com/DomagojGojak).
+[@DomagojGojak](https://github.com/DomagojGojak)
 
-[@Natko](https://github.com/Natko).
+[@Natko](https://github.com/Natko)
 
 ## Contributing
 
-Feel free to dive in! [Open an issue](https://github.com/Convertiv/handoff-app/issues/new) or submit PRs.
+Feel free to dive in. [Open an issue](https://github.com/Convertiv/handoff-app/issues/new)
+or submit a PR.
 
-Handoff follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+Handoff follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/)
+Code of Conduct.
 
 ## License
 
-[MIT](LICENSE) ©Convertiv
+[MIT](License.md) ©Convertiv
