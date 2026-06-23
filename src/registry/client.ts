@@ -8,7 +8,7 @@
  * and the browser both provide it), so this module stays runtime-agnostic.
  */
 
-import type { TransferEntityKind, TransferPackage } from './transfer';
+import type { CheckoutPayload, TransferEntityKind, TransferPackage } from './transfer';
 
 /** Standard registry response envelope. */
 export interface RegistryEnvelope<T = unknown> {
@@ -95,6 +95,17 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
     /** Publish (`PUT`) an entity's package to the registry transfer endpoint. */
     publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope> {
       return request('PUT', `/api/registry/transfer/${kind}/${encodeURIComponent(id)}`, pkg);
+    },
+    /** Checkout (`GET`) an entity's normalized record + registry-safe source files. */
+    async checkout(kind: TransferEntityKind, id: string): Promise<CheckoutPayload> {
+      const envelope = await request<CheckoutPayload>(
+        'GET',
+        `/api/registry/transfer/${kind}/${encodeURIComponent(id)}`
+      );
+      if (!envelope.data) {
+        throw new RegistryClientError(`The registry returned no data for ${kind} "${id}".`);
+      }
+      return envelope.data;
     },
   };
 };

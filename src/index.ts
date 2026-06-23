@@ -153,6 +153,21 @@ class Handoff {
     return this;
   }
 
+  /**
+   * Checkout a single component or pattern from the connected remote registry into this workspace:
+   * read its normalized record + registry-safe source files, write them in standard authoring form,
+   * and synthesize the local declaration in the configured `runtime.workspace.declarationFormat`
+   * (declarations are workspace-only and never read from the registry). Identity is matched by
+   * stable `id`. The checkout module is loaded lazily so the registry client never enters the docs
+   * app bundle.
+   */
+  async checkout(kind: 'component' | 'pattern', id: string): Promise<Handoff> {
+    this.preRunner();
+    const { checkoutEntity } = await import('./registry/checkout');
+    await checkoutEntity(this, kind, id);
+    return this;
+  }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);

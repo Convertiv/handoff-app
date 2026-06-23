@@ -1,20 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleRegistryRoute, sendRegistryError } from '@/lib/registry-api';
-import { handleTransferRoute } from '@/lib/registry-api/transfer';
+import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/transfer';
 
 /**
- * `PUT /api/registry/transfer/{component|pattern}/:id` — publish ingestion (technical design §10,
- * issue #13). Registry-runtime only; requires the bearer token. This is the only path allowed to set
- * an entity's render/build-defining fields, source files, rendered artifacts, and build metadata.
+ * `/api/registry/transfer/{component|pattern}/:id` — the transfer endpoint (technical design §10).
+ *
+ * - `GET` is checkout (issue #14): returns the normalized record + registry-safe source files so a
+ *   connected workspace can reconstruct the entity locally. Unauthenticated read.
+ * - `PUT` is publish ingestion (issue #13): the only path allowed to set an entity's
+ *   render/build-defining fields, source files, rendered artifacts, and build metadata. Requires the
+ *   bearer token.
+ *
+ * Both are registry-runtime only (enforced by the guard stack).
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   const kind = Array.isArray(req.query.kind) ? req.query.kind[0] : req.query.kind;
   if (kind !== 'component' && kind !== 'pattern') {
-    return handleRegistryRoute(req, res, ['PUT'], async () => {
+    return handleRegistryRoute(req, res, ['GET', 'PUT'], async () => {
       sendRegistryError(res, 'not_found', `Unknown transfer entity kind "${kind ?? ''}".`);
     });
   }
-  return handleTransferRoute(req, res, kind);
+  const method = (req.method ?? 'GET').toUpperCase();
+  return method === 'GET' ? handleCheckoutRoute(req, res, kind) : handleTransferRoute(req, res, kind);
 }
 
 /**

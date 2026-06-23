@@ -16,6 +16,7 @@ import { isSafeRelativePath, normalizeRelativePath, validateFileBody } from './f
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
+import { getEntity, listEntityFiles } from './store';
 
 /**
  * Publish ingestion for the registry transfer endpoint (technical design §10, issue #13).
@@ -355,6 +356,38 @@ const upsertBuildMetadata = async (
     .values(values as any)
     .onConflictDoUpdate({ target: [buildMetadata.entityKind, buildMetadata.entityId], set: values as any });
 };
+
+/**
+ * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read (technical design
+ * §10, issue #14). Returns the normalized record plus its registry-safe source files so a connected
+ * workspace can reconstruct the entity locally. Declaration files are workspace-only: registry
+ * stores never hold them, but they are filtered defensively so checkout never receives one. The
+ * read is unauthenticated (§9), running behind the registry-runtime + method guards only.
+ */
+export const handleCheckoutRoute = (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  kind: TransferEntityKind
+): Promise<void> =>
+  handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
+    const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
+    if (!id) {
+      sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
+      return;
+    }
+
+    const entity = await getEntity(db, kind, id);
+    if (!entity) {
+      sendRegistryError(res, 'not_found', `No ${kind} "${id}" exists in the registry.`);
+      return;
+    }
+
+    // Declarations are workspace-only and are never persisted as registry file records (their kind
+    // is excluded from `RegistryTextFileKind`), so the stored files are already declaration-free.
+    const files = await listEntityFiles(db, kind, id);
+
+    sendRegistryData(res, 200, { kind, item: entity.data, files }, buildMeta(entity.build));
+  });
 
 /**
  * Handle `PUT /api/registry/transfer/{component|pattern}/:id` — validate and ingest a publish

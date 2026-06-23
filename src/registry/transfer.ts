@@ -70,3 +70,15 @@ export interface TransferPackage {
   artifacts: TransferArtifact[];
   build: TransferBuild;
 }
+
+/**
+ * The checkout payload returned by `GET /api/registry/transfer/{component|pattern}/:id` (issue #14):
+ * the normalized record and its registry-safe source files. Declarations are workspace-only and are
+ * never present — the consuming workspace synthesizes the declaration locally.
+ */
+export interface CheckoutPayload {
+  kind: TransferEntityKind;
+  /** Normalized record (a `ComponentListObject`/`PatternListObject`) the entity is reconstructed from. */
+  item: Record<string, unknown>;
+  files: TransferFile[];
+}
