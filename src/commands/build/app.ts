@@ -16,7 +16,6 @@ const command: CommandModule<{}, BuildAppArgs> = {
       type: 'boolean',
       default: false,
     });
-    return getSharedOptions(yargs);
   },
   handler: async (args: BuildAppArgs) => {
     const handoff = new Handoff(args.debug, args.force);
