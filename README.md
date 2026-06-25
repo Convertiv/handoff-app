@@ -268,15 +268,9 @@ deploy time:
 DATABASE_URL="postgres://…" node out/registry/server.js
 ```
 
-The artifact also ships a self-contained migration runner so you can migrate the
-database directly from the deployment, with no CLI or workspace present:
-
-```bash
-DATABASE_URL="postgres://…" node out/registry/migrate.cjs
-```
-
 A generated `README.md` next to the bundle documents the required env vars and
-Docker/Vercel specifics. Run migrations from your CLI instead with:
+Docker/Vercel specifics. Apply database migrations from the CLI as a controlled
+release step (e.g. in CI/CD) before deploying:
 
 ```bash
 handoff-app db:migrate

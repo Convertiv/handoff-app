@@ -1,5 +1,4 @@
 import spawn from 'cross-spawn';
-import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
@@ -367,19 +366,18 @@ and \`.next/static/\` already copied alongside so the server serves them.
 - \`${databaseUrlEnv}\` — PostgreSQL/Neon connection string, read at request time.
 - \`HANDOFF_REGISTRY_API_TOKEN\` — bearer token for registry management mutations (if used).
 
-## Database migrations (run from this artifact)
+## Database migrations
 
-This bundle ships a self-contained migration runner (\`migrate.mjs\`) and the package-owned
-migrations (\`drizzle/\`), so you can migrate the database directly from the deployed artifact —
-no \`handoff-app\` CLI or workspace required. Run it once against the target database before (or as
-part of) the deploy:
+Apply migrations from the \`handoff-app\` CLI as a controlled release step (e.g. in your CI/CD
+pipeline) before deploying new code:
 
 \`\`\`bash
-${databaseUrlEnv}="postgres://…" node migrate.mjs
+${databaseUrlEnv}="postgres://…" handoff-app db:migrate
 \`\`\`
 
-The runner uses the same database adapter and env-var name the app was built with. It is independent
-of starting the server, so run it as a release/one-shot job.
+\`db:migrate\` reads your project config + DB env vars, resolves the same database adapter the app was
+built with, and applies the package-owned migration set. It runs independently of \`build\` and of
+starting the server, so run it as a release/one-shot job.
 
 ## Run it (self-hosting)
 
@@ -420,59 +418,6 @@ supply the same environment variables above as project env vars. Use this standa
 containers, custom Node servers, and other non-Vercel hosts.
 `;
   await fs.writeFile(path.join(outputRoot, 'README.md'), readme);
-};
-
-/**
- * Bundle the self-contained registry migration runner into the packaged artifact and ship the
- * package-owned migrations beside it (issue #11). The deployed standalone app has no handoff-app CLI
- * or workspace, so `handoff-app db:migrate` cannot run there; instead the operator runs
- * `node migrate.mjs` from the artifact (with the DB connection string supplied via env at deploy
- * time). Mode/adapter and the DB env-var *name* are baked here via esbuild `define`, mirroring the
- * app bundle; the connection-string value is still read from the env var at runtime, never baked.
- *
- * npm deps are left external so the runner resolves the Drizzle client + driver from the standalone's
- * traced `node_modules` (the registry runtime already imports them, so they are present) rather than
- * re-bundling driver internals.
- */
-const packageRegistryMigrator = async (handoff: Handoff, entryDir: string): Promise<void> => {
-  const entryPoint = path.resolve(handoff.modulePath, 'src', 'registry', 'db', 'migrate-standalone.ts');
-  if (!fs.existsSync(entryPoint)) {
-    Logger.warn('Registry migration runner source was not found; skipping migrator packaging.');
-    return;
-  }
-
-  // Emit ESM, not CJS. The runner leaves npm deps external and resolves them from the standalone's
-  // *traced* node_modules — but Next traces the registry app's ESM imports, so only each dependency's
-  // ESM build (the `import` export condition) is present; the `require`/`.cjs` variants are not. A CJS
-  // runner would `require()` those absent `.cjs` files and fail (e.g. `drizzle-orm/pg-core/index.cjs`).
-  // Emitting `.mjs` makes the runner resolve the exact ESM module files the running app already proves
-  // are present. `__dirname` (used to locate `./drizzle`) is not defined in ESM, so shim it from
-  // `import.meta.url`.
-  await esbuild.build({
-    entryPoints: [entryPoint],
-    outfile: path.join(entryDir, 'migrate.mjs'),
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node18',
-    packages: 'external',
-    banner: {
-      js: "import { fileURLToPath as __handoffFileURLToPath } from 'node:url';\nimport { dirname as __handoffDirname } from 'node:path';\nconst __filename = __handoffFileURLToPath(import.meta.url);\nconst __dirname = __handoffDirname(__filename);",
-    },
-    define: {
-      'process.env.HANDOFF_REGISTRY_ADAPTER': JSON.stringify(resolveRegistryAdapter(handoff.config)),
-      'process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV': JSON.stringify(resolveDatabaseUrlEnv(handoff.config)),
-    },
-    logLevel: 'silent',
-  });
-
-  // The runner resolves migrations relative to itself (`./drizzle`); ship the package-owned set.
-  const migrationsSrc = path.resolve(handoff.modulePath, 'drizzle');
-  if (fs.existsSync(migrationsSrc)) {
-    await fs.copy(migrationsSrc, path.join(entryDir, 'drizzle'), { overwrite: true });
-  } else {
-    Logger.warn(`Packaged registry migrations were not found at "${migrationsSrc}"; the artifact will ship without them.`);
-  }
 };
 
 /**
@@ -706,16 +651,14 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   await fs.ensureDir(output);
   const serverEntry = await assembleRegistryStandalone(handoff, appPath, standaloneRoot, output);
 
-  // Ship a self-contained migration runner + the package-owned migrations so the deployed artifact
-  // can apply migrations without the handoff-app CLI or a workspace (issue #11). The runner is
-  // compiled from package source with npm deps left external — it resolves the Drizzle client and the
-  // selected Postgres/Neon driver from the standalone's traced `node_modules` at the package root.
-  await packageRegistryMigrator(handoff, output);
+  // Migrations are intentionally not bundled into the artifact: they are applied from the
+  // `handoff-app` source/CLI (`handoff-app db:migrate`) as a controlled release step (e.g. CI/CD),
+  // never from the deployed bundle. See the generated README for the migrate-then-deploy flow.
 
   const entryRelativePath = path.relative(output, serverEntry).split(path.sep).join('/');
   await writeRegistryDeploymentReadme(output, entryRelativePath, resolveDatabaseUrlEnv(handoff.config));
 
-  Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`node migrate.mjs\`).`);
+  Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`handoff-app db:migrate\`).`);
 };
 
 /**
