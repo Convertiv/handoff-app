@@ -14,7 +14,7 @@ import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
-import { writeStaticVercelOutput } from './vercel-output';
+import { writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
@@ -459,30 +459,94 @@ const packageRegistryMigrator = async (handoff: Handoff, entryDir: string): Prom
 };
 
 /**
- * Package the deployable dynamic registry app (technical design §4, issue #11).
+ * Lay the Next `standalone` build out as the documented standalone layout under `entryDir`: copy the
+ * traced bundle, flatten the package-rooted server entry up to `entryDir`, and copy the untraced
+ * static assets + public tree + resolved runtime config beside the server entry. Shared by both
+ * registry deliverables — the `standalone` package emits this as `out/registry`, and the `vercel`
+ * package emits it inside the Build Output API function directory.
+ *
+ * @returns the absolute path of the server entry (`<entryDir>/server.js`).
+ */
+const assembleRegistryStandalone = async (
+  handoff: Handoff,
+  appPath: string,
+  standaloneRoot: string,
+  entryDir: string
+): Promise<string> => {
+  await fs.copy(standaloneRoot, entryDir, { overwrite: true });
+
+  // Locate the server entry within the assembled package: deterministically from the tracing-root
+  // relative app dir, with a recursive fallback if Next's layout differs.
+  const relAppDir = path.relative(handoff.modulePath, appPath);
+  let serverDir = path.resolve(entryDir, relAppDir);
+  if (!fs.existsSync(path.join(serverDir, 'server.js'))) {
+    const located = findStandaloneServerDir(entryDir);
+    if (!located) {
+      throw new Error(
+        `Could not locate the standalone "server.js" in the packaged registry app at "${entryDir}". ` +
+          'The Next standalone layout may have changed.'
+      );
+    }
+    serverDir = located;
+  }
+
+  // Standalone tracing (rooted at the package) mirrors the staged app's path, so the server entry
+  // lands nested under `<entryDir>/<relAppDir>` (e.g. `.handoff/<projectId>/server.js`). The project
+  // id is irrelevant to the deployable artifact, so flatten the entry up to the package root — the
+  // traced `node_modules` already live there — and drop the now-empty nesting.
+  if (path.resolve(serverDir) !== path.resolve(entryDir)) {
+    for (const entry of fs.readdirSync(serverDir)) {
+      await fs.move(path.join(serverDir, entry), path.join(entryDir, entry), { overwrite: true });
+    }
+    const [nestingRoot] = path.relative(entryDir, serverDir).split(path.sep);
+    if (nestingRoot && nestingRoot !== '..') {
+      await fs.remove(path.join(entryDir, nestingRoot));
+    }
+  }
+
+  // Static assets and the app's public tree are not traced into standalone — copy them next to the
+  // server entry where the Next standalone server expects them.
+  const staticSrc = path.resolve(appPath, '.next', 'static');
+  if (fs.existsSync(staticSrc)) {
+    await fs.copy(staticSrc, path.join(entryDir, '.next', 'static'), { overwrite: true });
+  }
+  const publicSrc = path.resolve(appPath, 'public');
+  if (fs.existsSync(publicSrc)) {
+    await fs.copy(publicSrc, path.join(entryDir, 'public'), { overwrite: true });
+  }
+
+  // Ship the resolved runtime config beside the entry so the deployed server (cwd = entry dir) can
+  // read the full client config; runtime mode + DB env-var name are also baked into the bundle.
+  for (const configFile of ['client.config.json', 'runtime.server.json']) {
+    const src = path.resolve(appPath, configFile);
+    if (fs.existsSync(src)) {
+      await fs.copy(src, path.join(entryDir, configFile), { overwrite: true });
+    }
+  }
+
+  return path.join(entryDir, 'server.js');
+};
+
+/**
+ * Package the deployable dynamic registry app (technical design §4, issue #11; `vercel-deployment`
+ * issues #1/#2).
  *
  * Unlike the static target this never builds or bundles workspace component/pattern source and the
  * resulting artifact has no workspace-source runtime dependency — it ships the app/runtime needed to
  * serve the docs read API and registry API from the database and published docs read-model
- * artifacts. Next runs a `standalone` build (no static export); the traced bundle plus the static
- * assets, public files, and resolved runtime config are assembled (flattened) under the sites output
- * directory (`<project>/<sitesOutputDirectory>/registry`, default `out/registry`) as the documented
- * Next.js standalone layout — a self-hosting artifact for containers, custom Node servers, and VPS,
- * started with `node server.js`. (Vercel
- * ignores `output: 'standalone'` and builds via its own adapter, so it is deployed from source, not
- * from this bundle — see the generated README.)
+ * artifacts. Next always runs a `standalone` build (no static export); the divergence is the
+ * final-assembly step driven by `buildPackage`:
+ *   - `standalone` (default) → the documented Next.js standalone layout under the sites output
+ *     directory (`<project>/<sitesOutputDirectory>/registry`, default `out/registry`) — a
+ *     self-hosting artifact for containers, custom Node servers, and VPS, started with
+ *     `node server.js`.
+ *   - `vercel` → the Vercel Build Output API directory (`.vercel/output`) at the repo root: the
+ *     traced bundle wrapped as a Node function plus CDN static assets and a route table.
+ *
+ * Mode is forced to `registry`; the database adapter is honored from config (single-sourced so build
+ * and `db:migrate` never diverge). No connection-string value is ever baked — only env-var *names*.
  */
 const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = 'standalone'): Promise<void> => {
-  // The Vercel Build Output API packaging for the registry app (functions + route table) is the
-  // final-assembly branch introduced by issue #2; this function still emits only the standalone
-  // bundle. Reject `--package vercel` explicitly rather than silently producing standalone.
-  if (buildPackage === 'vercel') {
-    throw new HandoffBuildError(
-      'Registry Vercel packaging (`--target registry --package vercel`) is not available yet. ' +
-        'Use `--target registry` (standalone bundle) for now.'
-    );
-  }
-
   // The registry build target *defines* a registry deployment, so the packaged artifact always runs
   // in registry mode regardless of the source project's `runtime.mode`. Mode stays config-only at
   // runtime — it is fixed here by the build target, never inferred from the deploy environment — so
@@ -490,6 +554,20 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   const sourceMode = handoff.config?.runtime?.mode ?? 'workspace';
   if (sourceMode !== 'registry') {
     Logger.info(`Source runtime.mode is "${sourceMode}"; forcing "registry" mode in the packaged registry app.`);
+  }
+
+  // The adapter stays single-sourced from config (never flipped by the package flag), so build and
+  // `db:migrate` always resolve the same one. `pg` uses long-lived TCP connections that pool poorly on
+  // serverless; warn (non-fatally) so the operator points DATABASE_URL at a pooled endpoint or selects
+  // the Neon adapter. The connection-string value is not available at build time, so this cannot be
+  // validated — it is guidance only and never fails the build (`vercel-deployment` issue #2).
+  if (buildPackage === 'vercel' && resolveRegistryAdapter(handoff.config) === 'pg') {
+    Logger.warn(
+      'Registry Vercel build uses the "pg" adapter (standard TCP connections), which pools poorly on ' +
+        'serverless and can exhaust the database connection limit. Point DATABASE_URL at a pooled endpoint ' +
+        '(PgBouncer / transaction pooling), or set runtime.registry.database.adapter: "neon" for a ' +
+        'serverless-native HTTP/WebSocket driver. The build will continue.'
+    );
   }
 
   // Stage the app without any workspace-derived artifacts — the registry serves from the database.
@@ -537,68 +615,26 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
     );
   }
 
+  // Final assembly branches on the resolved package (`vercel-deployment` issues #1/#2). Both lay out
+  // the same traced standalone bundle; they differ only in where it lands and how it is wrapped.
+  if (buildPackage === 'vercel') {
+    await writeRegistryVercelOutput(handoff, { appPath, standaloneRoot, assembleStandalone: assembleRegistryStandalone });
+    return;
+  }
+
+  // Standalone bundle (default): the documented self-hosting layout under the sites output directory.
   const output = getRegistryBuildOutputPath(handoff);
   await fs.remove(output);
   await fs.ensureDir(output);
-  await fs.copy(standaloneRoot, output, { overwrite: true });
-
-  // Locate the server entry within the assembled package: deterministically from the tracing-root
-  // relative app dir, with a recursive fallback if Next's layout differs.
-  const relAppDir = path.relative(handoff.modulePath, appPath);
-  let serverDir = path.resolve(output, relAppDir);
-  if (!fs.existsSync(path.join(serverDir, 'server.js'))) {
-    const located = findStandaloneServerDir(output);
-    if (!located) {
-      throw new Error(
-        `Could not locate the standalone "server.js" in the packaged registry app at "${output}". ` +
-          'The Next standalone layout may have changed.'
-      );
-    }
-    serverDir = located;
-  }
-
-  // Standalone tracing (rooted at the package) mirrors the staged app's path, so the server entry
-  // lands nested under `<output>/<relAppDir>` (e.g. `.handoff/<projectId>/server.js`). The project id
-  // is irrelevant to the deployable artifact, so flatten the entry up to the package root — the
-  // traced `node_modules` already live there — and drop the now-empty nesting.
-  if (path.resolve(serverDir) !== path.resolve(output)) {
-    for (const entry of fs.readdirSync(serverDir)) {
-      await fs.move(path.join(serverDir, entry), path.join(output, entry), { overwrite: true });
-    }
-    const [nestingRoot] = path.relative(output, serverDir).split(path.sep);
-    if (nestingRoot && nestingRoot !== '..') {
-      await fs.remove(path.join(output, nestingRoot));
-    }
-  }
-  const entryDir = output;
-
-  // Static assets and the app's public tree are not traced into standalone — copy them next to the
-  // server entry where the Next standalone server expects them.
-  const staticSrc = path.resolve(appPath, '.next', 'static');
-  if (fs.existsSync(staticSrc)) {
-    await fs.copy(staticSrc, path.join(entryDir, '.next', 'static'), { overwrite: true });
-  }
-  const publicSrc = path.resolve(appPath, 'public');
-  if (fs.existsSync(publicSrc)) {
-    await fs.copy(publicSrc, path.join(entryDir, 'public'), { overwrite: true });
-  }
-
-  // Ship the resolved runtime config beside the entry so the deployed server (cwd = entry dir) can
-  // read the full client config; runtime mode + DB env-var name are also baked into the bundle.
-  for (const configFile of ['client.config.json', 'runtime.server.json']) {
-    const src = path.resolve(appPath, configFile);
-    if (fs.existsSync(src)) {
-      await fs.copy(src, path.join(entryDir, configFile), { overwrite: true });
-    }
-  }
+  const serverEntry = await assembleRegistryStandalone(handoff, appPath, standaloneRoot, output);
 
   // Ship a self-contained migration runner + the package-owned migrations so the deployed artifact
   // can apply migrations without the handoff-app CLI or a workspace (issue #11). The runner is
   // compiled from package source with npm deps left external — it resolves the Drizzle client and the
   // selected Postgres/Neon driver from the standalone's traced `node_modules` at the package root.
-  await packageRegistryMigrator(handoff, entryDir);
+  await packageRegistryMigrator(handoff, output);
 
-  const entryRelativePath = path.relative(output, path.join(entryDir, 'server.js')).split(path.sep).join('/');
+  const entryRelativePath = path.relative(output, serverEntry).split(path.sep).join('/');
   await writeRegistryDeploymentReadme(output, entryRelativePath, resolveDatabaseUrlEnv(handoff.config));
 
   Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`node migrate.cjs\`).`);
