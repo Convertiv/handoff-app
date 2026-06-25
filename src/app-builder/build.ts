@@ -12,6 +12,7 @@ import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } fro
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
+import { generateNavShell } from './nav-shell';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
 import { getVercelOutputPath, writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
@@ -217,6 +218,12 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     nextConfigContent = nextConfigContent.split(placeholder).join(value);
   }
   await fs.writeFile(targetPath, nextConfigContent);
+
+  // Bake the markdown-driven navigation shell before `next build` so the docs read API can import it
+  // statically (it is unreadable at runtime in the Vercel registry function). Generated for every
+  // target; only registry-mode clients fetch it.
+  await generateNavShell(handoff, appPath);
+
   return appPath;
 };
 

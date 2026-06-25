@@ -153,6 +153,60 @@ export interface RegistryVercelOutputOptions {
 }
 
 /**
+ * Copy the genuinely-static prerendered pages into the Edge CDN layer (`static/`) so their HTML and
+ * `_next/data` JSON are served directly by the CDN instead of invoking the single registry function.
+ *
+ * Only routes Next certified as fully static (no per-request data) appear in
+ * `prerender-manifest.json` `routes`; `fallback:'blocking'` dynamic routes (component/pattern detail
+ * pages, whose data is live DB content) are absent there and keep falling through the catch-all to
+ * the function. This is what stops the header's `<Link href="/">` prefetch of
+ * `/_next/data/<buildId>/index.json` from hitting (and faulting) the function.
+ *
+ * No-op when nothing is prerendered (empty `routes`). Paths are emitted base-path-less, matching the
+ * existing `_next/static` copy and the registry route table.
+ */
+const copyPrerenderedStaticPages = async (appPath: string, staticOutDir: string): Promise<void> => {
+  const nextDir = path.resolve(appPath, '.next');
+  const manifestPath = path.join(nextDir, 'prerender-manifest.json');
+  const buildIdPath = path.join(nextDir, 'BUILD_ID');
+  if (!fs.existsSync(manifestPath) || !fs.existsSync(buildIdPath)) {
+    return;
+  }
+
+  const manifest = (await fs.readJson(manifestPath)) as {
+    routes?: Record<string, { dataRoute?: string | null }>;
+  };
+  const routes = manifest.routes ?? {};
+  const serverPages = path.join(nextDir, 'server', 'pages');
+
+  let copied = 0;
+  for (const route of Object.keys(routes)) {
+    // `.next/server/pages/<rel>.{html,json}` — `/` maps to `index`, nested routes keep their path.
+    const rel = route === '/' ? 'index' : route.replace(/^\/+/, '');
+    const htmlSrc = path.join(serverPages, `${rel}.html`);
+    const jsonSrc = path.join(serverPages, `${rel}.json`);
+
+    if (fs.existsSync(htmlSrc)) {
+      // trailingSlash:true → serve as `<route>/index.html`; `/` → `static/index.html`.
+      const htmlDestDir = route === '/' ? staticOutDir : path.join(staticOutDir, rel);
+      await fs.ensureDir(htmlDestDir);
+      await fs.copy(htmlSrc, path.join(htmlDestDir, 'index.html'), { overwrite: true });
+    }
+
+    // The data URL (with the build's BUILD_ID baked in) comes from the manifest's `dataRoute`.
+    const dataRoute = routes[route]?.dataRoute;
+    if (dataRoute && fs.existsSync(jsonSrc)) {
+      const jsonDest = path.join(staticOutDir, dataRoute.replace(/^\/+/, ''));
+      await fs.ensureDir(path.dirname(jsonDest));
+      await fs.copy(jsonSrc, jsonDest, { overwrite: true });
+      copied += 1;
+    }
+  }
+
+  Logger.info(`Copied ${copied} prerendered static page data file(s) into the Edge CDN layer.`);
+};
+
+/**
  * Package the dynamic registry app as the Vercel Build Output API directory (`vercel-deployment`
  * issue #2). Lays the traced standalone bundle into a single Node function (`functions/index.func/`)
  * wrapping the Next standalone server, copies the immutable static assets + public tree under
@@ -199,6 +253,10 @@ export const writeRegistryVercelOutput = async (handoff: Handoff, options: Regis
   if (fs.existsSync(publicSrc)) {
     await fs.copy(publicSrc, staticOutDir, { overwrite: true });
   }
+
+  // Serve genuinely-static prerendered pages (HTML + `_next/data` JSON) from the CDN so they never
+  // invoke the single function — fixes the `/_next/data/<buildId>/index.json` FUNCTION_INVOCATION_FAILED.
+  await copyPrerenderedStaticPages(appPath, staticOutDir);
 
   // Route table: try static files first (`handle: filesystem` serves anything copied into static/),
   // then route every remaining request — SSR pages, /api/docs/*, /api/registry/* — to the single

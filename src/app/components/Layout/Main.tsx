@@ -21,6 +21,11 @@ interface LayoutComponentProps {
   fullWidthHero?: boolean;
 }
 export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current, fullWidthHero = false }) {
+  // In registry mode the per-page `current` is empty for lambda-rendered (fallback) pages, so render
+  // the sidebar regardless and let SideNav resolve its section from the cached shell. Workspace/static
+  // keep gating on `current` (an empty array is still truthy, matching prior behavior).
+  const isRegistry = config?.runtime?.mode === 'registry';
+  const showSidebar = current != null || isRegistry;
   return (
     <div>
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
@@ -48,7 +53,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
                   <div className="mx-auto w-full">{children}</div>
                 </div>
               </div>
-            ) : current ? (
+            ) : showSidebar ? (
               <SidebarProvider>
                 <div className="flex w-full">
                   <SideNav menu={current} />

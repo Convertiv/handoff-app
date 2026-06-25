@@ -17,6 +17,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
 import { groupBy, startCase } from 'lodash';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -31,9 +32,43 @@ import {
   SidebarMenuSub,
   SidebarSeparator,
 } from '../../components/ui/sidebar';
-import { normalizePathForMatch, toAbsolutePath } from '../../lib/utils';
+import { normalizePathForMatch } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
+import { NavEntity, useNavContext } from '../context/NavProvider';
 import { SectionLink } from '../util';
+
+/**
+ * `next/link` re-applies `basePath`, but the menu item paths already carry the base prefix (built by
+ * `buildBasePath()` / `buildEntitySubmenu`). Strip the leading base segment once so the link is not
+ * double-prefixed; with no base path this just returns a leading-slash route.
+ */
+const stripBasePath = (p: string): string => {
+  const base = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\/+|\/+$/g, '');
+  let rel = p.replace(/^\/+/, '');
+  if (base && (rel === base || rel.startsWith(`${base}/`))) {
+    rel = rel.slice(base.length).replace(/^\/+/, '');
+  }
+  return `/${rel}`;
+};
+
+/**
+ * Resolve which top-level section's submenu the side nav should render from the current route, by
+ * longest-prefix match against the shell section paths. Used in registry mode where the per-page
+ * `menu` prop is empty for lambda-rendered (fallback) pages.
+ */
+const findSectionForPath = (shell: SectionLink[], asPath: string): SectionLink | null => {
+  const normalized = normalizePathForMatch(asPath);
+  let best: SectionLink | null = null;
+  for (const section of shell) {
+    const sectionPath = normalizePathForMatch(section.path);
+    if (sectionPath && (normalized === sectionPath || normalized.startsWith(`${sectionPath}/`))) {
+      if (!best || sectionPath.length > normalizePathForMatch(best.path).length) {
+        best = section;
+      }
+    }
+  }
+  return best;
+};
 
 const NormalMenuItem = ({ title, icon, path }) => {
   const router = useRouter();
@@ -41,10 +76,13 @@ const NormalMenuItem = ({ title, icon, path }) => {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <a href={toAbsolutePath(path)} className="gap-3">
+        {/* Soft (client-side) navigation so moving between entity pages reuses the already-loaded
+            cached nav with no reload/flash. Prefetch is off: each prefetch would invoke the
+            fallback:'blocking' lambda data route, so fetch the target's data on click instead. */}
+        <Link href={stripBasePath(path)} prefetch={false} className="gap-3">
           <MenuIcon icon={icon} isActive={isActive} />
           <span>{title}</span>
-        </a>
+        </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -55,8 +93,15 @@ const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
   const isActive = menu.some(
     (item) => normalizePathForMatch(router.asPath).startsWith(normalizePathForMatch(item.path))
   );
+  // Controlled so the active group auto-opens on soft navigation (an uncontrolled `defaultOpen` is
+  // only read on mount and would not re-open the active group when the route changes client-side),
+  // while still letting the user collapse/expand groups manually.
+  const [open, setOpen] = useState(isActive);
+  useEffect(() => {
+    if (isActive) setOpen(true);
+  }, [isActive]);
   return (
-    <Collapsible defaultOpen={isActive} className="group/collapsible">
+    <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="h-9 gap-3">
@@ -120,10 +165,6 @@ const MenuIcon = ({ icon, isActive = false }) => {
   }
 };
 
-/** Minimal nav payload served by `GET /api/docs/nav.json` (id/title/group + component `type`). */
-type NavEntity = { id: string; title?: string; group?: string; type?: string };
-type NavData = { components: NavEntity[]; patterns: NavEntity[] };
-
 /** Mirror of `buildBasePath()` in components/util so client-built links match the baked menu paths. */
 const buildBasePath = (): string => {
   if (!process.env.HANDOFF_APP_BASE_PATH) {
@@ -155,38 +196,28 @@ const buildEntitySubmenu = (entities: NavEntity[], segment: 'component' | 'patte
 
 const SideNav = ({ menu }: { menu: SectionLink }) => {
   const { config } = useConfigContext();
+  const { nav } = useNavContext();
+  const router = useRouter();
   const isRegistry = config?.runtime?.mode === 'registry';
-  const [nav, setNav] = useState<NavData | null>(null);
 
-  // Registry entity lists are mutable at runtime, so resolve the component/pattern submenus at request
-  // time from the live (minimal) docs read API instead of the build-time snapshot. Workspace/static
-  // keep the baked menu and never fetch.
-  useEffect(() => {
-    if (!isRegistry) {
-      return;
-    }
-    const controller = new AbortController();
-    fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/nav.json`, { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setNav(data as NavData);
-      })
-      .catch(() => {
-        // Keep the baked menu on failure; the nav stays usable rather than disappearing.
-      });
-    return () => controller.abort();
-  }, [isRegistry]);
+  // Resolve which section's submenu to render. Workspace/static use the build-time baked `menu` prop.
+  // Registry resolves it from the cached shell by the current route, because the per-page prop is
+  // empty for lambda-rendered (fallback) pages (e.g. component detail). The shell is the same source
+  // the working `/system` page uses, so the nav renders identically everywhere.
+  const bakedSection = menu && (menu as SectionLink).path ? (menu as SectionLink) : null;
+  const shellSection = isRegistry && nav?.shell ? findSectionForPath(nav.shell, router.asPath) : null;
+  const activeSection = shellSection ?? bakedSection;
 
-  // Replace the `menu` of any subsection tagged `dynamic` with the live, request-time list.
+  // Fill the `menu` of any subsection tagged `dynamic` with the cached, request-time entity lists.
   const sections = useMemo(() => {
-    const subSections = menu?.subSections ?? [];
+    const subSections = activeSection?.subSections ?? [];
     if (!isRegistry || !nav) {
       return subSections;
     }
     return subSections.map((section) => {
       const dyn = section.dynamic;
       if (dyn?.kind === 'components') {
-        const components = dyn.type ? (nav.components ?? []).filter((c) => c.type === dyn.type) : nav.components ?? [];
+        const components: NavEntity[] = dyn.type ? (nav.components ?? []).filter((c) => c.type === dyn.type) : nav.components ?? [];
         return { ...section, menu: buildEntitySubmenu(components, 'component') };
       }
       if (dyn?.kind === 'patterns') {
@@ -194,7 +225,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
       }
       return section;
     });
-  }, [menu, isRegistry, nav]);
+  }, [activeSection, isRegistry, nav]);
 
   return (
     <Sidebar className="sticky left-auto">

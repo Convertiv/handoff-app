@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
+import { useNavContext } from '../context/NavProvider';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -14,8 +15,12 @@ const trimSlashes = (input: string): string => {
 
 export function MobileNav() {
   const context = useConfigContext();
+  const { nav } = useNavContext();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  // Registry: use the cached shell (baked per-page menu is empty for lambda pages). Workspace: baked.
+  const isRegistry = context.config?.runtime?.mode === 'registry';
+  const menu = isRegistry ? nav?.shell ?? context.menu : context.menu;
 
   const toggleTheme = () => {
     if (theme === 'light') {
@@ -48,8 +53,8 @@ export function MobileNav() {
           </SheetTrigger>
         </SheetHeader>
         <div className="mt-8 flex flex-col space-y-4">
-          {context.menu &&
-            context.menu.map((section) => {
+          {menu &&
+            menu.map((section) => {
               const isActive = trimSlashes(router.asPath).startsWith(trimSlashes(section.path));
               return (
                 <Link
