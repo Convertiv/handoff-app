@@ -14,7 +14,7 @@ import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
-import { writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
+import { getVercelOutputPath, writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
@@ -362,13 +362,13 @@ and \`.next/static/\` already copied alongside so the server serves them.
 
 ## Database migrations (run from this artifact)
 
-This bundle ships a self-contained migration runner (\`migrate.cjs\`) and the package-owned
+This bundle ships a self-contained migration runner (\`migrate.mjs\`) and the package-owned
 migrations (\`drizzle/\`), so you can migrate the database directly from the deployed artifact —
 no \`handoff-app\` CLI or workspace required. Run it once against the target database before (or as
 part of) the deploy:
 
 \`\`\`bash
-${databaseUrlEnv}="postgres://…" node migrate.cjs
+${databaseUrlEnv}="postgres://…" node migrate.mjs
 \`\`\`
 
 The runner uses the same database adapter and env-var name the app was built with. It is independent
@@ -419,7 +419,7 @@ containers, custom Node servers, and other non-Vercel hosts.
  * Bundle the self-contained registry migration runner into the packaged artifact and ship the
  * package-owned migrations beside it (issue #11). The deployed standalone app has no handoff-app CLI
  * or workspace, so `handoff-app db:migrate` cannot run there; instead the operator runs
- * `node migrate.cjs` from the artifact (with the DB connection string supplied via env at deploy
+ * `node migrate.mjs` from the artifact (with the DB connection string supplied via env at deploy
  * time). Mode/adapter and the DB env-var *name* are baked here via esbuild `define`, mirroring the
  * app bundle; the connection-string value is still read from the env var at runtime, never baked.
  *
@@ -434,14 +434,24 @@ const packageRegistryMigrator = async (handoff: Handoff, entryDir: string): Prom
     return;
   }
 
+  // Emit ESM, not CJS. The runner leaves npm deps external and resolves them from the standalone's
+  // *traced* node_modules — but Next traces the registry app's ESM imports, so only each dependency's
+  // ESM build (the `import` export condition) is present; the `require`/`.cjs` variants are not. A CJS
+  // runner would `require()` those absent `.cjs` files and fail (e.g. `drizzle-orm/pg-core/index.cjs`).
+  // Emitting `.mjs` makes the runner resolve the exact ESM module files the running app already proves
+  // are present. `__dirname` (used to locate `./drizzle`) is not defined in ESM, so shim it from
+  // `import.meta.url`.
   await esbuild.build({
     entryPoints: [entryPoint],
-    outfile: path.join(entryDir, 'migrate.cjs'),
+    outfile: path.join(entryDir, 'migrate.mjs'),
     bundle: true,
     platform: 'node',
-    format: 'cjs',
+    format: 'esm',
     target: 'node18',
     packages: 'external',
+    banner: {
+      js: "import { fileURLToPath as __handoffFileURLToPath } from 'node:url';\nimport { dirname as __handoffDirname } from 'node:path';\nconst __filename = __handoffFileURLToPath(import.meta.url);\nconst __dirname = __handoffDirname(__filename);",
+    },
     define: {
       'process.env.HANDOFF_REGISTRY_ADAPTER': JSON.stringify(resolveRegistryAdapter(handoff.config)),
       'process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV': JSON.stringify(resolveDatabaseUrlEnv(handoff.config)),
@@ -456,6 +466,47 @@ const packageRegistryMigrator = async (handoff: Handoff, entryDir: string): Prom
   } else {
     Logger.warn(`Packaged registry migrations were not found at "${migrationsSrc}"; the artifact will ship without them.`);
   }
+};
+
+/**
+ * Resolve the set of npm packages the packaged registry app must be able to `require`/`import` at
+ * runtime, given the configured database adapter. `next`/`react`/`react-dom` run the server and React
+ * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the driver
+ * is adapter-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
+ */
+const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
+  const base = ['next', 'react', 'react-dom', 'drizzle-orm'];
+  const adapter = resolveRegistryAdapter(handoff.config);
+  const driver = adapter === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
+  return [...base, ...driver];
+};
+
+/**
+ * Build-time guard against the empty-`node_modules` regression (the artifact would otherwise boot-fail
+ * with `Cannot find module 'next'` only on a real, isolated deploy). After assembly, assert every
+ * required runtime module resolves under `<entryDir>/node_modules`. `fs.existsSync` follows symlinks,
+ * so this also catches a dangling pnpm symlink (the hoisted link traced without its `.pnpm` target),
+ * not just an absent directory.
+ *
+ * `handoff-app` itself is intentionally not asserted: the app inlines it via the `@handoff` alias and
+ * `transpilePackages`, so it is not required by its bare specifier at runtime and may be absent.
+ */
+const assertRegistryRuntimeDepsTraced = (handoff: Handoff, entryDir: string): void => {
+  const required = getRequiredRegistryRuntimeModules(handoff);
+  const missing = required.filter((mod) => !fs.existsSync(path.join(entryDir, 'node_modules', ...mod.split('/'), 'package.json')));
+  if (missing.length === 0) {
+    return;
+  }
+  throw new HandoffBuildError(
+    `The packaged registry app is missing required runtime dependencies in its bundled node_modules: ` +
+      `${missing.join(', ')}. The Next file trace did not capture them, so the artifact would fail at ` +
+      `startup with "Cannot find module '${missing[0]}'".\n` +
+      `This usually means the runtime dependencies are installed *above* the build's tracing root ` +
+      `(\`outputFileTracingRoot\`, currently the project root "${handoff.workingPath}"). In a ` +
+      `workspace/monorepo the package manager may hoist them to the monorepo root; the tracing root ` +
+      `must be the nearest ancestor of *both* the staged app and the resolved node_modules. Ensure ` +
+      `${missing.join(', ')} are installed and resolvable from "${handoff.workingPath}".`
+  );
 };
 
 /**
@@ -475,9 +526,14 @@ const assembleRegistryStandalone = async (
 ): Promise<string> => {
   await fs.copy(standaloneRoot, entryDir, { overwrite: true });
 
-  // Locate the server entry within the assembled package: deterministically from the tracing-root
-  // relative app dir, with a recursive fallback if Next's layout differs.
-  const relAppDir = path.relative(handoff.modulePath, appPath);
+  // Locate the server entry within the assembled package. Standalone tracing is rooted at the
+  // consumer project root (`workingPath`, see next.config.mjs), so every traced file is laid out at
+  // its path *relative to `workingPath`*. The staged app lives at `<workingPath>/node_modules/
+  // handoff-app/.handoff/<projectId>`, so the server entry lands nested at that same relative path
+  // *underneath* the traced `node_modules`. Resolve it deterministically; the recursive fallback
+  // skips `node_modules` (so it cannot find this nested entry) and only covers a hypothetical
+  // non-nested layout.
+  const relAppDir = path.relative(handoff.workingPath, appPath);
   let serverDir = path.resolve(entryDir, relAppDir);
   if (!fs.existsSync(path.join(serverDir, 'server.js'))) {
     const located = findStandaloneServerDir(entryDir);
@@ -490,17 +546,19 @@ const assembleRegistryStandalone = async (
     serverDir = located;
   }
 
-  // Standalone tracing (rooted at the package) mirrors the staged app's path, so the server entry
-  // lands nested under `<entryDir>/<relAppDir>` (e.g. `.handoff/<projectId>/server.js`). The project
-  // id is irrelevant to the deployable artifact, so flatten the entry up to the package root — the
-  // traced `node_modules` already live there — and drop the now-empty nesting.
+  // The project id (and the `.handoff` staging nesting) are irrelevant to the deployable artifact, so
+  // flatten the server entry up to `entryDir` — the traced `node_modules` already live there.
   if (path.resolve(serverDir) !== path.resolve(entryDir)) {
     for (const entry of fs.readdirSync(serverDir)) {
       await fs.move(path.join(serverDir, entry), path.join(entryDir, entry), { overwrite: true });
     }
-    const [nestingRoot] = path.relative(entryDir, serverDir).split(path.sep);
-    if (nestingRoot && nestingRoot !== '..') {
-      await fs.remove(path.join(entryDir, nestingRoot));
+    // Drop the now-empty staging nesting. The entry nests under `node_modules/handoff-app/.handoff`,
+    // so we must NOT remove the first path segment (`node_modules`) — that would delete every traced
+    // dependency. Remove only the `.handoff` staging container (the parent of the staged app dir),
+    // leaving `node_modules/` and the real `node_modules/handoff-app/` package intact.
+    const stagingContainer = path.resolve(entryDir, path.relative(handoff.workingPath, path.dirname(appPath)));
+    if (path.basename(stagingContainer) === '.handoff' && fs.existsSync(stagingContainer)) {
+      await fs.remove(stagingContainer);
     }
   }
 
@@ -523,6 +581,11 @@ const assembleRegistryStandalone = async (
       await fs.copy(src, path.join(entryDir, configFile), { overwrite: true });
     }
   }
+
+  // Fail loudly at build time if the trace did not capture the runtime deps, rather than shipping a
+  // broken artifact that only crashes on an isolated deploy. Covers both deliverables (this is the
+  // shared assembly step for `standalone` and `vercel`).
+  assertRegistryRuntimeDepsTraced(handoff, entryDir);
 
   return path.join(entryDir, 'server.js');
 };
@@ -581,6 +644,14 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   // resolves its DB env-var name (the connection string itself is read from that env var at runtime).
   await persistClientConfig(handoff, { runtimeModeOverride: 'registry' });
 
+  // Remove prior registry outputs *before* tracing. Both deliverables (`out/registry` and
+  // `.vercel/output`) live inside the trace root (the project root), and after this fix each contains
+  // a full bundled `node_modules`. A stale prior output left in place could be swept into the new
+  // trace (bundle bloat / recursive nesting), so clear both up front. The per-deliverable cleanup in
+  // the assembly step remains.
+  await fs.remove(getRegistryBuildOutputPath(handoff));
+  await fs.remove(getVercelOutputPath(handoff));
+
   // Build the dynamic app. `output: 'standalone'` (driven by HANDOFF_BUILD_TARGET) traces the runtime
   // and the selected Postgres/Neon driver into a self-contained bundle — never a static export.
   const buildResult = spawn.sync('npx', ['next', 'build'], {
@@ -637,7 +708,7 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   const entryRelativePath = path.relative(output, serverEntry).split(path.sep).join('/');
   await writeRegistryDeploymentReadme(output, entryRelativePath, resolveDatabaseUrlEnv(handoff.config));
 
-  Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`node migrate.cjs\`).`);
+  Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`node migrate.mjs\`).`);
 };
 
 /**

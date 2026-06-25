@@ -17,7 +17,7 @@ const resolveBasePath = (rawBasePath) => {
 //   - `registry` → `output: 'standalone'` (a deployable dynamic Next.js app + traced node_modules).
 //   - otherwise  → a normal server (workspace `next dev`/`start`).
 const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
-const handoffModulePath = path.resolve('%HANDOFF_MODULE_PATH%');
+const handoffWorkingPath = path.resolve('%HANDOFF_WORKING_PATH%');
 
 const resolveOutputMode = (target) => {
   if (target === 'static') {
@@ -37,11 +37,24 @@ const resolveOutputMode = (target) => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: resolveOutputMode(handoffBuildTarget),
-  // The registry app is staged under the package's `.handoff/<projectId>` while its node_modules live
-  // at the package root; standalone tracing must root at the package so the traced bundle captures
-  // the runtime and the selected Postgres/Neon driver. Only set for the registry target so workspace
-  // dev/static tracing is unchanged.
-  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffModulePath : undefined,
+  // The registry app is staged under the installed package's `.handoff/<projectId>` (inside
+  // `<workingPath>/node_modules/handoff-app`), while the runtime deps (next/react/DB driver) are
+  // hoisted up to the consumer's top-level `<workingPath>/node_modules`. Next's file tracer copies
+  // only files *inside* this root, so it must be the consumer project root — the nearest common
+  // ancestor of both the staged app and the hoisted deps. Rooting it at the package dir (above which
+  // the hoisted deps live) would trace an empty `node_modules` and ship a non-bootable bundle. Only
+  // set for the registry target so workspace dev/static tracing is unchanged.
+  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffWorkingPath : undefined,
+  // With the trace rooted at the project, nft now fully traces the server and the app's own bundled
+  // code — which constructs build-time export paths (the static-export materializer's `export/<page>`
+  // targets) and references the `export-detail.json` constant. nft speculatively treats those strings
+  // as runtime file deps, but they are export-only artifacts that never exist in a `standalone` build
+  // and the SSR server never reads them. `copyTracedFiles` copies traced files with no existence
+  // guard, so leaving them in the trace fails the build with `ENOENT`. Drop them from the trace; the
+  // `**` key matches both the `next-server` trace and every per-page trace. Registry-only so workspace
+  // dev/static export (which legitimately produces these files) is untouched.
+  outputFileTracingExcludes:
+    handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
