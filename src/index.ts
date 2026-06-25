@@ -2,7 +2,7 @@ import 'dotenv/config';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import path from 'path';
-import buildApp, { devApp, watchApp, type BuildTarget } from './app-builder';
+import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
@@ -119,9 +119,9 @@ class Handoff {
     return this;
   }
 
-  async build(target: BuildTarget = 'static', skipComponents?: boolean): Promise<Handoff> {
+  async build(target: BuildTarget = 'static', skipComponents?: boolean, buildPackage?: BuildPackage): Promise<Handoff> {
     this.preRunner();
-    await buildApp(this, target, skipComponents);
+    await buildApp(this, target, skipComponents, buildPackage);
     return this;
   }
 

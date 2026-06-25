@@ -14,6 +14,7 @@ import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
+import { writeStaticVercelOutput } from './vercel-output';
 import {
   WatcherState,
   getRuntimeComponentsPathsToWatch,
@@ -38,6 +39,52 @@ export type BuildTarget = 'static' | 'registry';
 /** The default build target when none is supplied on the CLI. */
 export const DEFAULT_BUILD_TARGET: BuildTarget = 'static';
 
+/**
+ * Resolved packaging axis (`vercel-deployment` issue #1) — orthogonal to {@link BuildTarget}. It
+ * selects *how* the build is packaged, not *what* is built:
+ *   - `standalone` → the existing sites-directory deliverable (`out/<projectId>` for static, the
+ *     Node standalone bundle `out/registry` for registry).
+ *   - `vercel`     → the Vercel Build Output API directory (`.vercel/output`) at the repo root.
+ *
+ * `--package` never implies a {@link BuildTarget}; it is optional and additive. When omitted, the
+ * effective package is target-specific (`standalone` for both targets) so existing behavior is
+ * unchanged.
+ */
+export type BuildPackage = 'standalone' | 'vercel';
+
+/**
+ * An expected build configuration / flow failure surfaced to the CLI — an invalid `(target,
+ * package)` combination, an unsupported runtime mode for the target, or a not-yet-available
+ * deliverable. These are actionable user-facing conditions, not bugs, so the CLI prints the message
+ * on its own (no stack trace). Genuine/unexpected failures stay plain `Error`s and keep their stack.
+ */
+export class HandoffBuildError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'HandoffBuildError';
+  }
+}
+
+/**
+ * Resolve and validate the effective `(target, package)` pair (`vercel-deployment` issue #1).
+ *
+ * `--package` is optional and never implies a target. When omitted the effective package is
+ * `standalone` for both targets, preserving today's `out/<projectId>` / `out/registry` deliverables.
+ * The one rejected combination is `static + standalone`: a static snapshot has no server to package
+ * as a Node standalone bundle.
+ */
+const resolveBuildPackage = (target: BuildTarget, buildPackage?: BuildPackage): BuildPackage => {
+  const resolved: BuildPackage = buildPackage ?? 'standalone';
+  if (target === 'static' && buildPackage === 'standalone') {
+    throw new HandoffBuildError(
+      'Cannot package the static target as a Node standalone bundle (`--target static --package standalone`). ' +
+        'A static snapshot has no server to run; omit `--package` for the static export, or use ' +
+        '`--package vercel` for the Vercel Build Output API, or build `--target registry` for the standalone server bundle.'
+    );
+  }
+  return resolved;
+};
+
 const escapeForSingleQuotedJsString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 /**
@@ -48,7 +95,7 @@ const escapeForSingleQuotedJsString = (value: string): string => value.replace(/
 const assertStaticBuildAllowed = (handoff: Handoff): void => {
   const mode = handoff.config?.runtime?.mode ?? 'workspace';
   if (mode === 'registry') {
-    throw new Error(
+    throw new HandoffBuildError(
       'Cannot run the static build target with a registry-only runtime (runtime.mode: "registry"). ' +
         'The static target builds and exports the local workspace; switch runtime.mode to "workspace" ' +
         'or package the registry app with `handoff-app build --target registry`.'
@@ -178,9 +225,17 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
  * and exports the local workspace (default); the `registry` target packages the deployable dynamic
  * registry app via {@link buildRegistryApp} (issue #11).
  */
-const buildApp = async (handoff: Handoff, target: BuildTarget = DEFAULT_BUILD_TARGET, skipComponents?: boolean): Promise<void> => {
+const buildApp = async (
+  handoff: Handoff,
+  target: BuildTarget = DEFAULT_BUILD_TARGET,
+  skipComponents?: boolean,
+  buildPackage?: BuildPackage
+): Promise<void> => {
+  // Resolve + validate the (target, package) pair once, before any work (issue #1).
+  const resolvedPackage = resolveBuildPackage(target, buildPackage);
+
   if (target === 'registry') {
-    await buildRegistryApp(handoff);
+    await buildRegistryApp(handoff, resolvedPackage);
     return;
   }
 
@@ -230,7 +285,16 @@ const buildApp = async (handoff: Handoff, target: BuildTarget = DEFAULT_BUILD_TA
 
   // Reproduce the docs read API (`/api/docs/*`) as route-shaped static files in the export output,
   // since `output: 'export'` disables the live API routes.
-  await materializeDocsReadModel(handoff, path.resolve(appPath, 'out'));
+  const exportDir = path.resolve(appPath, 'out');
+  await materializeDocsReadModel(handoff, exportDir);
+
+  // Final assembly branches on the resolved package (issue #1). `vercel` lays the materialized export
+  // under `.vercel/output/static/` at the repo root (not the sites directory) — a hard Vercel
+  // constraint; `standalone` keeps writing the `out/<projectId>` export exactly as before.
+  if (resolvedPackage === 'vercel') {
+    await writeStaticVercelOutput(handoff, exportDir);
+    return;
+  }
 
   // Ensure output root directory exists
   const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
@@ -243,7 +307,7 @@ const buildApp = async (handoff: Handoff, target: BuildTarget = DEFAULT_BUILD_TA
   }
 
   // Copy the build files into the project output directory
-  await fs.copy(path.resolve(appPath, 'out'), output);
+  await fs.copy(exportDir, output);
 };
 
 /**
@@ -408,7 +472,17 @@ const packageRegistryMigrator = async (handoff: Handoff, entryDir: string): Prom
  * ignores `output: 'standalone'` and builds via its own adapter, so it is deployed from source, not
  * from this bundle — see the generated README.)
  */
-const buildRegistryApp = async (handoff: Handoff): Promise<void> => {
+const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = 'standalone'): Promise<void> => {
+  // The Vercel Build Output API packaging for the registry app (functions + route table) is the
+  // final-assembly branch introduced by issue #2; this function still emits only the standalone
+  // bundle. Reject `--package vercel` explicitly rather than silently producing standalone.
+  if (buildPackage === 'vercel') {
+    throw new HandoffBuildError(
+      'Registry Vercel packaging (`--target registry --package vercel`) is not available yet. ' +
+        'Use `--target registry` (standalone bundle) for now.'
+    );
+  }
+
   // The registry build target *defines* a registry deployment, so the packaged artifact always runs
   // in registry mode regardless of the source project's `runtime.mode`. Mode stays config-only at
   // runtime — it is fixed here by the build target, never inferred from the deploy environment — so
