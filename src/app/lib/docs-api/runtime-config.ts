@@ -9,7 +9,7 @@ import {
 } from '@handoff/registry/db/adapter';
 
 /**
- * Server-side runtime resolution for the docs read API (technical design §1/§5, issue #10).
+ * Server-side runtime resolution for the docs read API.
  *
  * The docs read API is mode-aware: workspace mode resolves artifacts from generated filesystem
  * files, registry mode resolves them from the database. The browser-facing `client.config.json`
@@ -67,7 +67,7 @@ const serverRuntimeConfigPath = (): string =>
  * (`HANDOFF_RUNTIME_MODE` + registry connection inputs). Returns `null` when no mode was baked, so
  * the file-based path can take over for apps built before env baking existed.
  *
- * This is the resolution path for the packaged registry app (issue #11): its deploy host has none of
+ * This is the resolution path for the packaged registry app: its deploy host has none of
  * the build-machine paths `runtime.server.json` is keyed on, so mode + the DB env-var *name* are
  * carried in the bundle instead. Mode stays config-only — these were derived from `runtime.*` at
  * build, never inferred from the deploy environment.

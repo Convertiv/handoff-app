@@ -5,12 +5,12 @@ import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import { getArtifactRoot } from './artifacts';
 
 /**
- * Workspace-mode metadata reads for the docs read API (technical design §5).
+ * Workspace-mode metadata reads for the docs read API.
  *
  * List/detail metadata is served from the generated `components.json`/`patterns.json` summaries and
  * the per-entity `component/{id}.json`/`pattern/{id}.json` artifacts — the same files the build
  * produces from the normalized store records. The shapes returned here (`ComponentListObject` /
- * `PatternListObject`) are exactly what the store exposes, so registry mode (#10) can serve the
+ * `PatternListObject`) are exactly what the store exposes, so registry mode can serve the
  * same shapes at the same URLs from the database. HTML/asset artifacts are served separately
  * through the canonical artifact route.
  */
@@ -37,10 +37,9 @@ const detailArtifactExists = (relativePath: string): boolean => {
 };
 
 /**
- * Build state for an entity in workspace mode. The structured build-metadata model (#2) is not yet
- * populated by the build, so state is derived from artifact presence: `current` when the entity's
- * detail artifact exists, otherwise `missing` (a metadata-only record that is still listable while
- * its preview/asset routes report missing-artifact state).
+ * Build state for an entity in workspace mode. State is derived from artifact presence: `current`
+ * when the entity's detail artifact exists, otherwise `missing` (a metadata-only record that is
+ * still listable while its preview/asset routes report missing-artifact state).
  */
 const deriveBuildStatus = (detailRelativePath: string): ArtifactBuildStatus =>
   detailArtifactExists(detailRelativePath) ? 'current' : 'missing';

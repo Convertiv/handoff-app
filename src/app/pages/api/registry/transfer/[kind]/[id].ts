@@ -3,11 +3,11 @@ import { handleRegistryRoute, sendRegistryError } from '@/lib/registry-api';
 import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/transfer';
 
 /**
- * `/api/registry/transfer/{component|pattern}/:id` — the transfer endpoint (technical design §10).
+ * `/api/registry/transfer/{component|pattern}/:id` — the transfer endpoint.
  *
- * - `GET` is checkout (issue #14): returns the normalized record + registry-safe source files so a
+ * - `GET` is checkout: returns the normalized record + registry-safe source files so a
  *   connected workspace can reconstruct the entity locally. Unauthenticated read.
- * - `PUT` is publish ingestion (issue #13): the only path allowed to set an entity's
+ * - `PUT` is publish ingestion: the only path allowed to set an entity's
  *   render/build-defining fields, source files, rendered artifacts, and build metadata. Requires the
  *   bearer token.
  *

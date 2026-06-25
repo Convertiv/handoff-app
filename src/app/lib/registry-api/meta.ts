@@ -5,7 +5,7 @@ import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 
 /**
- * Response-envelope `meta` for the registry management API (technical design §9).
+ * Response-envelope `meta` for the registry management API.
  *
  * Every registry API response — success or error — carries `{ data, meta }`, where `meta` describes
  * the serving runtime and (for single-entity reads) the entity's build/artifact state. The build

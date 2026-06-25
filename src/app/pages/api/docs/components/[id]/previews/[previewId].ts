@@ -3,7 +3,7 @@ import { handleDocsRoute, sendDocsError, serveArtifactBySegments, singleQueryVal
 
 /**
  * `GET /api/docs/components/{id}/previews/{previewId}` — serves the preview HTML artifact
- * `component/{id}-{previewId}.html` (technical design §5). A metadata-only record (no generated
+ * `component/{id}-{previewId}.html`. A metadata-only record (no generated
  * preview) yields `404 artifact_not_found`. In registry mode the artifact and its required
  * references resolve from the database.
  */

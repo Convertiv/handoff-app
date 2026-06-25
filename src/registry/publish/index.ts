@@ -1,5 +1,5 @@
 /**
- * Connected-workspace publish orchestration (technical design §10/§11, issue #13).
+ * Connected-workspace publish orchestration.
  *
  * `publish <component|pattern> <id>` runs a fresh **targeted** local build for the selected entity,
  * assembles only that entity's package (record, source files, rendered artifacts + required
@@ -63,7 +63,7 @@ const resolveConnectionOrThrow = (handoff: Handoff) => {
 /** Run the smallest build that guarantees the selected entity's artifacts are current. */
 const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   // Global artifacts first so generated HTML references `component/main.{css,js}` / `shared.css` only
-  // when they actually exist (technical design §7).
+  // when they actually exist.
   await buildMainJS(handoff);
   await buildMainCss(handoff);
 

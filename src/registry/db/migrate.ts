@@ -1,5 +1,5 @@
 /**
- * Registry migration runner (technical design §8/§11; PRD stories 43, 153-156).
+ * Registry migration runner.
  *
  * `handoff-app db:migrate` reads the consuming project's config + DB env vars, resolves the same
  * `runtime.registry.database.adapter` used at runtime/build, and applies the package-owned

@@ -5,7 +5,7 @@ type RevalidatableEntityKind = 'component' | 'pattern';
 
 /**
  * Best-effort on-demand revalidation of the statically-generated docs pages affected by a registry
- * mutation (technical design §10/§11).
+ * mutation.
  *
  * Every registry mutation — publish ingest, allowlisted metadata edit, create, delete — flows
  * through this running server, so the pages those mutations affect are regenerated the instant

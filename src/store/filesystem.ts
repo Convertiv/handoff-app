@@ -1,12 +1,12 @@
 /**
- * Filesystem-backed implementation of the normalized store abstraction (technical design §3).
+ * Filesystem-backed implementation of the normalized store abstraction.
  *
  * It is a thin read view over the already-resolved `runtimeConfig.entries`, so the records it
  * returns are the same normalized component/pattern records the build consumes today — discovery
  * and normalization (modern `*.handoff.*` + legacy `{dirname}.*`, react/handlebars/csf/plain-object
  * declarations, CSF story discovery, `entries` resolution) all happen upstream in
- * `initRuntimeConfig`. The store adds the source-location and related-source-files accessors v2
- * needs without changing how anything is discovered or built.
+ * `initRuntimeConfig`. The store adds the source-location and related-source-files accessors
+ * without changing how anything is discovered or built.
  */
 
 import fs from 'fs-extra';

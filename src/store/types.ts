@@ -1,9 +1,9 @@
 /**
- * Normalized store abstraction for handoff-app v2.
+ * Normalized store abstraction.
  *
  * Both the workspace (filesystem) store and the future registry (database) store implement one
- * read contract, so the docs read API and other consumers are storage-agnostic (technical design
- * §3). Read methods are typed `Awaitable` so the filesystem implementation can stay synchronous
+ * read contract, so the docs read API and other consumers are storage-agnostic.
+ * Read methods are typed `Awaitable` so the filesystem implementation can stay synchronous
  * while a database implementation is async behind the same interface.
  *
  * This module is types-only and provider-agnostic.
@@ -15,8 +15,8 @@ import type { ComponentListObject, PatternListObject } from '../transformers/pre
 export type Awaitable<T> = T | Promise<T>;
 
 /**
- * Kind of a text source file tracked by the store. Mirrors the registry text-file model
- * (technical design §3/§8). `declaration` is **workspace-only** — registry stores never return it
+ * Kind of a text source file tracked by the store. Mirrors the registry text-file model.
+ * `declaration` is **workspace-only** — registry stores never return it
  * and declarations are synthesized on checkout.
  */
 export type TextFileKind =

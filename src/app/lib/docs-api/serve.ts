@@ -4,8 +4,7 @@ import type { DocsBackend } from './backend';
 import { sendDocsError } from './errors';
 
 /**
- * Serve a logical artifact by its path segments, applying the docs read API contract end to end
- * (technical design §5/§6/§12):
+ * Serve a logical artifact by its path segments, applying the docs read API contract end to end:
  *
  * - traversal/malformed segments → `404 not_found`
  * - an artifact the backend cannot serve → `404 artifact_not_found`

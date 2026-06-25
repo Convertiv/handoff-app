@@ -51,9 +51,9 @@ const PLUGIN_CONSTANTS = {
 } as const;
 
 /**
- * Suffix of the component-owned client/hydration artifact (technical design §7).
+ * Suffix of the component-owned client/hydration artifact.
  * One artifact per component (`component/<id>.client.js`) drives hydration for every preview of
- * that component; it is referenced via the canonical artifact URL rather than inlined per preview.
+ * that component; it is referenced via the canonical artifact URL.
  */
 const CLIENT_ARTIFACT_SUFFIX = 'client.js';
 
@@ -159,10 +159,10 @@ function generateClientHydrationSource(componentId: string, componentPath: strin
 
 /**
  * Generates complete HTML document with SSR content and a reference to the component-owned client
- * artifact. The client/hydration bundle is no longer inlined (technical design §7): the preview HTML
- * carries only document structure, server-rendered markup, preview data, stylesheets, and standard
- * artifact references. Interactive React previews treat the client artifact as a required reference,
- * so the script tag surfaces a clear, visible failure if the artifact cannot be loaded.
+ * artifact. The preview HTML carries only document structure, server-rendered markup, preview data,
+ * stylesheets, and standard artifact references. Interactive React previews treat the client
+ * artifact as a required reference, so the script tag surfaces a clear, visible failure if the
+ * artifact cannot be loaded.
  * @param componentId - Component identifier
  * @param previewTitle - Title for the preview
  * @param renderedHtml - Server-rendered HTML content
@@ -301,9 +301,9 @@ export function ssrRenderPlugin(
       }
 
       // Build the component-owned client/hydration bundle once and emit it as a single
-      // `component/<id>.client.js` artifact (technical design §7). The hydration source only imports
-      // the component and reads props from the in-document `__APP_PROPS__` element, so it is identical
-      // across every preview of this component — there is no need to rebuild or inline it per preview.
+      // `component/<id>.client.js` artifact. The hydration source only imports the component and
+      // reads props from the in-document `__APP_PROPS__` element, so it is identical across every
+      // preview of this component.
       const clientHydrationSource = generateClientHydrationSource(componentId, componentPath);
       const clientBuildConfig = {
         ...DEFAULT_CLIENT_BUILD_CONFIG,
@@ -316,7 +316,6 @@ export function ssrRenderPlugin(
         plugins: [createReactResolvePlugin(handoff.workingPath, handoff.modulePath)],
       };
 
-      // Apply user's client build config hook if provided
       const finalClientBuildConfig = handoff.config?.hooks?.clientBuildConfig
         ? handoff.config.hooks.clientBuildConfig(clientBuildConfig)
         : clientBuildConfig;
@@ -361,7 +360,6 @@ export function ssrRenderPlugin(
         const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(ReactComponent, previewProps));
         const formattedHtml = await formatHtml(serverRenderedHtml);
 
-        // Generate complete HTML document referencing the shared client artifact
         finalHtml = generateHtmlDocument(
           componentId,
           componentData.previews[previewKey].title,

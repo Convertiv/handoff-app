@@ -1,5 +1,5 @@
 /**
- * Bundled Drizzle client + migrator for the registry database (technical design §8/§11).
+ * Bundled Drizzle client + migrator for the registry database.
  *
  * The package ships both built-in adapters (`pg` and `neon`) and the Drizzle client/migrator, so a
  * consuming project needs no global Drizzle install or separate CLI. Driver modules are loaded

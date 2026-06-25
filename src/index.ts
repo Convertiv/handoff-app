@@ -33,8 +33,8 @@ class Handoff {
 
   /**
    * Normalized store over the current workspace (filesystem) runtime. Consumers read
-   * component/pattern records and related source files through this storage-agnostic interface
-   * (v2 store abstraction). Created lazily and reads live from `runtimeConfig`, so it stays
+   * component/pattern records and related source files through this storage-agnostic interface.
+   * Created lazily and reads live from `runtimeConfig`, so it stays
    * correct across `reload()`.
    */
   get store(): HandoffStore {

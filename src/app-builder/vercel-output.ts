@@ -4,7 +4,7 @@ import Handoff from '..';
 import { Logger } from '../utils/logger';
 
 /**
- * Vercel Build Output API layout (`vercel-deployment` issue #1, static + vercel).
+ * Vercel Build Output API layout.
  *
  * `--package vercel` emits the Vercel Build Output API directory (`.vercel/output`) instead of the
  * sites-directory deliverable. This module is the single seam that produces that layout; it is
@@ -68,7 +68,7 @@ export const writeStaticVercelOutput = async (handoff: Handoff, exportDir: strin
 /**
  * Node.js runtime identifier baked into the registry function's `.vc-config.json`. The `pg` adapter
  * (and the Neon serverless driver in its Node fallback) need the Node.js runtime, not the edge
- * runtime — this is the required baseline (`vercel-deployment` issue #2). Vercel resolves the patch
+ * runtime — this is the required baseline. Vercel resolves the patch
  * version within this major; pinning the major keeps the artifact stable.
  */
 const VERCEL_NODE_RUNTIME = 'nodejs20.x';
@@ -207,8 +207,8 @@ const copyPrerenderedStaticPages = async (appPath: string, staticOutDir: string)
 };
 
 /**
- * Package the dynamic registry app as the Vercel Build Output API directory (`vercel-deployment`
- * issue #2). Lays the traced standalone bundle into a single Node function (`functions/index.func/`)
+ * Package the dynamic registry app as the Vercel Build Output API directory. Lays the traced
+ * standalone bundle into a single Node function (`functions/index.func/`)
  * wrapping the Next standalone server, copies the immutable static assets + public tree under
  * `static/` for the Edge CDN, and writes a route table that serves static files first and routes
  * everything else (SSR pages, the docs read API, the registry API) to the function.

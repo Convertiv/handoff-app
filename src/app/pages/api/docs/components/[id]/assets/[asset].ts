@@ -2,8 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleDocsRoute, sendDocsError, serveArtifactBySegments, singleQueryValue } from '@/lib/docs-api';
 
 /**
- * `GET /api/docs/components/{id}/assets/{asset}` — serves a component asset artifact
- * (technical design §5): `style`→`component/{id}.css`, `script`→`component/{id}.js`,
+ * `GET /api/docs/components/{id}/assets/{asset}` — serves a component asset artifact:
+ * `style`→`component/{id}.css`, `script`→`component/{id}.js`,
  * `client`→`component/{id}.client.js`. Unknown asset kinds are `404 not_found`; a known asset with
  * no generated/published artifact is `404 artifact_not_found`. In registry mode the artifact
  * resolves from the database.

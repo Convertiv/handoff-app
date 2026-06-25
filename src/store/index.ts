@@ -1,5 +1,5 @@
 /**
- * Normalized store abstraction (technical design §3).
+ * Normalized store abstraction.
  *
  * The workspace (filesystem) store is exported here. The registry (database) store implements the
  * same interface in `./registry`, but is intentionally **not** re-exported from this barrel so the

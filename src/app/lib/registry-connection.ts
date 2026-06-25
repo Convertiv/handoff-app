@@ -2,7 +2,7 @@ import { createRegistryDbConnection, type RegistryDbConnection } from '@handoff/
 import { getServerRuntimeConfig } from './docs-api/runtime-config';
 
 /**
- * Shared, process-lifetime registry database connection (technical design §8/§9, issues #10/#12).
+ * Shared, process-lifetime registry database connection.
  *
  * Both the registry-mode docs read API and the registry management API resolve their database
  * through this single helper so one connection pool backs the whole registry runtime rather than

@@ -1,6 +1,3 @@
-// Registry database storage (Drizzle / PostgreSQL)
-
-// Schema + record-group tables
 export {
   buildMetadata,
   componentFiles,
@@ -16,7 +13,6 @@ export {
   type RegistryTextFileKind,
 } from './schema';
 
-// Adapter resolution
 export {
   DEFAULT_DATABASE_URL_ENV,
   DEFAULT_REGISTRY_ADAPTER,
@@ -29,7 +25,6 @@ export {
   type ResolvedRegistryDatabase,
 } from './adapter';
 
-// Bundled Drizzle client + migrator
 export {
   createRegistryDbConnection,
   type CreateRegistryDbConnectionParams,
@@ -37,5 +32,4 @@ export {
   type RegistryDbConnection,
 } from './client';
 
-// Migration runner
 export { getMigrationsFolder, runRegistryMigrations } from './migrate';

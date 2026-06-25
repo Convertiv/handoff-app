@@ -1,5 +1,5 @@
 /**
- * Connected-workspace checkout orchestration (technical design §10/§11, issue #14).
+ * Connected-workspace checkout orchestration.
  *
  * `checkout <component|pattern> <id>` reads a normalized registry record and its registry-safe
  * source files from the connected registry through the shared registry client, then writes them

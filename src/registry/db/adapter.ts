@@ -1,5 +1,5 @@
 /**
- * Registry database adapter resolution (technical design §8/§11).
+ * Registry database adapter resolution.
  *
  * `runtime.registry.database.adapter` selects one of two built-in adapters shipped with the
  * `handoff-app` package — `pg` (default) and `neon` — both targeting the Postgres dialect.

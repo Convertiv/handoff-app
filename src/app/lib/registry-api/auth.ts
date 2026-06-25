@@ -2,7 +2,7 @@ import type { NextApiRequest } from 'next';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 
 /**
- * Bearer-token guard for registry management mutations (technical design §9).
+ * Bearer-token guard for registry management mutations.
  *
  * This is **proof-of-concept protection**, not production auth: a single static token, resolved
  * from the configured env-var *name* at request time (never persisted in config). GET reads are

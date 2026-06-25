@@ -10,7 +10,7 @@ const resolveBasePath = (rawBasePath) => {
   return trimmed ? `/${trimmed}` : '';
 };
 
-// Resolved build target drives Next's output mode (technical design §4). The target — not NODE_ENV
+// Resolved build target drives Next's output mode. The target — not NODE_ENV
 // — decides static export vs. dynamic packaging, so workspace dev, the static snapshot, and the
 // registry app never get conflated:
 //   - `static`   → `output: 'export'` (a self-contained static snapshot).
@@ -28,7 +28,7 @@ const resolveOutputMode = (target) => {
   if (target === 'registry') {
     // The registry app is a deployable dynamic server (DB-backed docs/registry APIs). Standalone
     // traces the runtime + selected DB driver into a self-contained bundle for Vercel/Node/containers
-    // and never runs a static export (issue #11).
+    // and never runs a static export.
     return 'standalone';
   }
   return undefined;
@@ -37,22 +37,16 @@ const resolveOutputMode = (target) => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: resolveOutputMode(handoffBuildTarget),
-  // The registry app is staged under the installed package's `.handoff/<projectId>` (inside
-  // `<workingPath>/node_modules/handoff-app`), while the runtime deps (next/react/DB driver) are
-  // hoisted up to the consumer's top-level `<workingPath>/node_modules`. Next's file tracer copies
-  // only files *inside* this root, so it must be the consumer project root — the nearest common
-  // ancestor of both the staged app and the hoisted deps. Rooting it at the package dir (above which
-  // the hoisted deps live) would trace an empty `node_modules` and ship a non-bootable bundle. Only
-  // set for the registry target so workspace dev/static tracing is unchanged.
+  // The tracer only copies files inside its root, so root it at the consumer project — the common
+  // ancestor of the staged app (`node_modules/handoff-app/.handoff/<projectId>`) and the runtime deps
+  // hoisted to the top-level `node_modules`. Rooting at the package dir would trace an empty
+  // `node_modules` and ship a non-bootable bundle. Registry-only; workspace dev/static is unchanged.
   outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffWorkingPath : undefined,
-  // With the trace rooted at the project, nft now fully traces the server and the app's own bundled
-  // code — which constructs build-time export paths (the static-export materializer's `export/<page>`
-  // targets) and references the `export-detail.json` constant. nft speculatively treats those strings
-  // as runtime file deps, but they are export-only artifacts that never exist in a `standalone` build
-  // and the SSR server never reads them. `copyTracedFiles` copies traced files with no existence
-  // guard, so leaving them in the trace fails the build with `ENOENT`. Drop them from the trace; the
-  // `**` key matches both the `next-server` trace and every per-page trace. Registry-only so workspace
-  // dev/static export (which legitimately produces these files) is untouched.
+  // nft speculatively traces the export-only paths the app references (`export-detail.json` and the
+  // materializer's `.next/export/**` targets) as runtime deps. They never exist in a `standalone`
+  // build, and `copyTracedFiles` copies traced files with no existence guard, so leaving them in
+  // fails the build with `ENOENT`. Exclude them (`**` matches the server + every per-page trace).
+  // Registry-only; static export, which legitimately produces these files, is untouched.
   outputFileTracingExcludes:
     handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
   reactStrictMode: true,
@@ -68,7 +62,6 @@ const nextConfig = {
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
-  //distDir: 'out',
   basePath: resolveBasePath('%HANDOFF_APP_BASE_PATH%'),
   env: {
     HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
@@ -96,10 +89,8 @@ const nextConfig = {
   },
   sassOptions: {
     additionalData: (content, _) => {
-      // Local state
       let foundTheme = false;
 
-      // Local environment
       const env = {
         HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
         HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
@@ -109,22 +100,16 @@ const nextConfig = {
         HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
       };
 
-      // Check if client configuration exists
       const clientConfigPath = path.resolve(env.HANDOFF_WORKING_PATH, 'handoff.config.json');
       if (fs.existsSync(clientConfigPath)) {
-        // Load client configuration
         const clientConfigRaw = fs.readFileSync(clientConfigPath);
         const clientConfig = JSON.parse(clientConfigRaw);
-        // Check if client configuration is a valid object
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
-          // Check if the client configuration specifies a theme
-          // If the theme is specified, check if the theme exists in the 'themes' folder
           if (
             clientConfig.hasOwnProperty('app') &&
             clientConfig['app'].hasOwnProperty('theme') &&
             fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `${clientConfig['app']['theme']}.scss`))
           ) {
-            // Use custom theme
             foundTheme = true;
             content = content + `\n@import '${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}';`;
             console.log(
@@ -139,9 +124,7 @@ const nextConfig = {
       }
 
       if (!foundTheme) {
-        // Check if there is a custom version of the default theme
         if (fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`))) {
-          // Use custom theme
           content = content + `\n@import 'theme/default';`;
           console.log(
             `- ${chalk.cyan('info')} Using default app theme override (path: ${path.resolve(
@@ -151,7 +134,6 @@ const nextConfig = {
             )})`
           );
         } else {
-          // Use default theme
           content = content + `\n@import 'themes/default';`;
           console.log(`- ${chalk.cyan('info')} Using default app theme`);
         }

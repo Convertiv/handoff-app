@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ensureRegistryMode, sendRegistryError } from '@/lib/registry-api';
 
 /**
- * `GET /api/registry/health` — registry liveness (technical design §9). Registry-runtime only
+ * `GET /api/registry/health` — registry liveness. Registry-runtime only
  * (`409 runtime_mode_conflict` in workspace mode); unauthenticated, like all registry GET reads. It
  * reports the runtime/source without touching the database so it can be used as a cheap probe, and
  * returns the documented bare `{ ok, runtime, source }` body rather than the data envelope.

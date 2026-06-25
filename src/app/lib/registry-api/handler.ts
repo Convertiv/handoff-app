@@ -8,7 +8,7 @@ import { buildMeta, type RegistryMeta } from './meta';
 import { redactSecrets } from './redact';
 
 /**
- * Shared orchestration for every `/api/registry/*` route (technical design §9/§12).
+ * Shared orchestration for every `/api/registry/*` route.
  *
  * Enforces, in order: the registry-runtime guard (management APIs exist only when
  * `runtime.mode: registry`, else `409 runtime_mode_conflict`); the per-route method allowlist

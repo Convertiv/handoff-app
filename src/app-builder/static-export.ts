@@ -8,7 +8,7 @@ import { Logger } from '../utils/logger';
 import { getAppPath } from './paths';
 
 /**
- * Static build target materialization (technical design §4/§5/§6, issue #8).
+ * Static build target materialization.
  *
  * Next's `output: 'export'` disables the workspace docs read API (`/api/docs/*`) — the live route
  * handlers cannot serve in an exported site. This module reproduces that read model as route-shaped
@@ -57,7 +57,7 @@ const deriveBuildStatus = (artifactRoot: string, detailRelativePath: string): Ar
 
 /**
  * Suffix of a component-owned React client/hydration bundle (`<id>.client.js`). Interactive React
- * previews treat this artifact as a *required* reference (technical design §7, issue #6): the
+ * previews treat this artifact as a *required* reference: the
  * preview cannot hydrate without it, so a missing one is a genuine build failure.
  */
 const CLIENT_ARTIFACT_SUFFIX = '.client.js';
@@ -184,7 +184,6 @@ export const materializeDocsReadModel = async (handoff: Handoff, outDir: string)
   await fs.ensureDir(artifactsOut);
   await fs.copy(artifactRoot, artifactsOut, { overwrite: true });
 
-  // List metadata reads.
   const components = readJsonArray<ComponentListObject>(path.resolve(artifactRoot, 'components.json'));
   const patterns = readJsonArray<PatternListObject>(path.resolve(artifactRoot, 'patterns.json'));
   await fs.ensureDir(docsRoot);

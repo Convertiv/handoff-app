@@ -1,5 +1,5 @@
 /**
- * Drizzle ORM schema for handoff-app v2 registry storage (technical design §8).
+ * Drizzle ORM schema for registry storage.
  *
  * The registry is database-backed (PostgreSQL, including PG-compatible managed services such as
  * Neon/Vercel). This schema declares the six record groups the registry persists:
@@ -10,7 +10,7 @@
  * - `build_metadata` (build/artifact metadata)
  *
  * Schema notes:
- * - Artifact and build-metadata columns mirror the structured artifact model from issue #2
+ * - Artifact and build-metadata columns mirror the structured artifact model
  *   (`ArtifactDescriptor`, `ArtifactBuildMetadata`, `ArtifactReference`) so the database can
  *   validate, serve, and debug an artifact without ever parsing HTML.
  * - Metadata-only records are supported: a component/pattern row may exist with no
@@ -41,7 +41,7 @@ export type DocsArtifactEntityKind = 'component' | 'pattern' | 'summary' | 'asse
 export type BuildMetadataEntityKind = 'component' | 'pattern' | 'asset' | 'summary';
 
 /**
- * Registry-only review/catalog metadata maintained through the management API (technical design §9).
+ * Registry-only review/catalog metadata maintained through the management API.
  *
  * These fields are review state, not render/build inputs — the management API's metadata allowlist
  * is the only writer, and updating them never touches `docs_artifacts` or `build_metadata`. Stored
@@ -169,7 +169,7 @@ export const patternFiles = pgTable(
 /**
  * Docs read-model artifacts. Path-keyed so shared/global artifacts (`component/main.css`,
  * `component/main.js`, `component/shared.css`) are upserted by stable logical path. Mirrors the
- * `ArtifactDescriptor` field set from issue #2.
+ * `ArtifactDescriptor` field set.
  */
 export const docsArtifacts = pgTable(
   'docs_artifacts',
@@ -204,7 +204,7 @@ export const docsArtifacts = pgTable(
 );
 
 /**
- * Build/artifact metadata per entity. Mirrors the `ArtifactBuildMetadata` field set from issue #2.
+ * Build/artifact metadata per entity. Mirrors the `ArtifactBuildMetadata` field set.
  * A successful publish records `status: 'current'` with `builtAt` + `builderVersion` +
  * `artifactHash`; metadata-only records report `status: 'missing'`.
  */

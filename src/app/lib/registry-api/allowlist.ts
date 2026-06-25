@@ -1,11 +1,11 @@
 import type { RegistryReviewMetadata } from '@handoff/registry/db/schema';
 
 /**
- * Metadata allowlist for registry create/update (technical design §9; PRD stories 130-132).
+ * Metadata allowlist for registry create/update.
  *
  * Normal metadata writes accept only review/catalog fields. Everything else — renderer, entries,
  * previews, properties/docgen, source/artifact content, build metadata, declaration files, etc. —
- * is render/build-defining and may only change through a fresh publish (transfer PUT, issue #13).
+ * is render/build-defining and may only change through a fresh publish (transfer PUT).
  * Any non-allowlisted field is rejected with `400 bad_request` and the offending field names, so a
  * note edit can never silently alter how an entity renders.
  */

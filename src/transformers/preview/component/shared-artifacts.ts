@@ -13,7 +13,7 @@ import { MAIN_COMPONENT_CSS_FILE, SHARED_COMPONENT_CSS_FILE } from './css';
 import { MAIN_COMPONENT_JS_FILE } from './javascript';
 
 /**
- * Centralized shared/global artifact model for generated preview HTML (technical design §7).
+ * Centralized shared/global artifact model for generated preview HTML.
  *
  * The shared artifacts (`component/main.css`, `component/main.js`, `component/shared.css`) are
  * optional: each is emitted only when a corresponding source entry is configured and builds

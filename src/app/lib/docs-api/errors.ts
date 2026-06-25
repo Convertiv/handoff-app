@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 /**
- * Docs read API error contract (technical design §5/§12).
+ * Docs read API error contract.
  *
  * Unlike the registry management API, docs read responses carry a bare `{ error: { code, message } }`
  * envelope (no `meta`). Codes are deliberately narrow: a malformed/traversal/missing route param or
@@ -45,7 +45,7 @@ export const singleQueryValue = (value: string | string[] | undefined): string |
 
 /**
  * Resolve an entity id from a dynamic route param that carries an explicit `.json` extension
- * (metadata reads use explicit `.json` URLs, technical design §5). Returns the id without the
+ * (metadata reads use explicit `.json` URLs). Returns the id without the
  * extension, or `undefined` when the param is missing or not a `.json` request.
  */
 export const idFromJsonParam = (value: string | string[] | undefined): string | undefined => {

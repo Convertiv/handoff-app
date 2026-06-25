@@ -135,7 +135,7 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
 
 /**
  * Builds the global preview script artifact (`component/main.js`) from the configured workspace JS
- * entry (shared/global artifact model, technical design §7).
+ * entry.
  *
  * The artifact is optional: when no global JS entry is configured, or the configured entry no longer
  * exists, or the build fails/produces no output, any stale `main.js` is removed so a failed rebuild

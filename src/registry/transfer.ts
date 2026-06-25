@@ -1,6 +1,6 @@
 /**
  * Transfer payload contract shared by the connected-workspace publish client and the registry-side
- * ingestion endpoint (technical design §10, issue #13).
+ * ingestion endpoint.
  *
  * Publish is the only path allowed to set render/build-defining fields, source files, rendered
  * artifacts, and build metadata. This module is the single shared description of that wire shape so
@@ -72,7 +72,7 @@ export interface TransferPackage {
 }
 
 /**
- * The checkout payload returned by `GET /api/registry/transfer/{component|pattern}/:id` (issue #14):
+ * The checkout payload returned by `GET /api/registry/transfer/{component|pattern}/:id`:
  * the normalized record and its registry-safe source files. Declarations are workspace-only and are
  * never present — the consuming workspace synthesizes the declaration locally.
  */

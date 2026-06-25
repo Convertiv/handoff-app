@@ -1,5 +1,5 @@
 /**
- * Connected-workspace registry connection resolution (technical design §1/§11, issue #13).
+ * Connected-workspace registry connection resolution.
  *
  * A connected workspace is `runtime.mode: 'workspace'` plus a `runtime.registryConnection` block
  * pointing at a remote registry — it is not a third runtime mode. The connection is resolved from

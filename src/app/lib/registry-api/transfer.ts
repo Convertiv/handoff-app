@@ -19,12 +19,12 @@ import { revalidateEntityPages } from './revalidate';
 import { getEntity, listEntityFiles } from './store';
 
 /**
- * Publish ingestion for the registry transfer endpoint (technical design §10, issue #13).
+ * Publish ingestion for the registry transfer endpoint.
  *
  * `PUT /api/registry/transfer/{component|pattern}/:id` is the **only** path allowed to set
  * render/build-defining fields, source files, rendered artifacts, and build metadata. It validates
  * the uploaded package against the transfer contract, then ingests it under the artifact ownership &
- * lifecycle rules (§8):
+ * lifecycle rules:
  *
  * - The published entity's own record/files/artifacts are **replaced**.
  * - Shared/global artifacts (`component/main.{css,js}`, `component/shared.css`) are **upserted when
@@ -64,7 +64,7 @@ interface PackageValidation {
 const invalid = (message: string, details?: RegistryErrorDetails): PackageValidation => ({ ok: false, message, details });
 
 /**
- * Validate a publish package body against the transfer contract (§10). Checks the normalized record,
+ * Validate a publish package body against the transfer contract. Checks the normalized record,
  * source-file kinds/paths (declarations rejected), artifact path-prefix/kind/owner rules, and the
  * `build.status: 'current'` provenance requirement. Required-reference presence is checked later
  * against the package + already-stored artifacts.
@@ -74,7 +74,6 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     return invalid('Request body must be a JSON object.');
   }
 
-  // --- item (normalized record) ---
   const item = body.item;
   if (!isPlainObject(item)) {
     return invalid('A normalized `item` record is required to publish.', { rejectedFields: ['item'] });
@@ -84,7 +83,6 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     return invalid(`Package item id "${itemId}" does not match the publish target "${id}".`, { rejectedFields: ['item.id'] });
   }
 
-  // --- files (declarations excluded; registry-safe paths) ---
   const rawFiles = body.files ?? [];
   if (!Array.isArray(rawFiles)) {
     return invalid('`files` must be an array.', { rejectedFields: ['files'] });
@@ -100,7 +98,6 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     files.push(validation.value);
   }
 
-  // --- artifacts (path-prefix, kind, owner) ---
   const rawArtifacts = body.artifacts ?? [];
   if (!Array.isArray(rawArtifacts)) {
     return invalid('`artifacts` must be an array.', { rejectedFields: ['artifacts'] });
@@ -164,7 +161,6 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     });
   }
 
-  // --- build provenance ---
   if (!isPlainObject(body.build)) {
     return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
   }
@@ -198,7 +194,7 @@ const artifactExists = async (db: RegistryDatabase, path: string): Promise<boole
 
 /**
  * Ensure every **required** structured reference is satisfied — present in the package or already
- * stored — so a published HTML artifact never depends on a missing required artifact (§10).
+ * stored — so a published HTML artifact never depends on a missing required artifact.
  */
 const findMissingRequiredReference = async (
   db: RegistryDatabase,
@@ -358,11 +354,11 @@ const upsertBuildMetadata = async (
 };
 
 /**
- * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read (technical design
- * §10, issue #14). Returns the normalized record plus its registry-safe source files so a connected
- * workspace can reconstruct the entity locally. Declaration files are workspace-only: registry
- * stores never hold them, but they are filtered defensively so checkout never receives one. The
- * read is unauthenticated (§9), running behind the registry-runtime + method guards only.
+ * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read. Returns the
+ * normalized record plus its registry-safe source files so a connected workspace can reconstruct
+ * the entity locally. Declaration files are workspace-only: registry stores never hold them, but
+ * they are filtered defensively so checkout never receives one. The read is unauthenticated,
+ * running behind the registry-runtime + method guards only.
  */
 export const handleCheckoutRoute = (
   req: NextApiRequest,

@@ -2,7 +2,7 @@ import type { NextApiResponse } from 'next';
 import { buildMeta, type RegistryMeta } from './meta';
 
 /**
- * Registry management API error contract (technical design §9/§12).
+ * Registry management API error contract.
  *
  * Every response — including errors — uses the `{ error, meta }` envelope (the docs read API, by
  * contrast, uses a bare `{ error }`). `details.rejectedFields` carries field-level rejection detail

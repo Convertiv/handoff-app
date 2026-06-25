@@ -1,4 +1,3 @@
-// Artifact-descriptor model + build metadata types
 export {
   ARTIFACT_METADATA_PATH,
   REACT_PREVIEW_FORMAT_VERSION,
@@ -15,5 +14,4 @@ export {
   type ArtifactSizeDiagnostics,
 } from './types';
 
-// Canonical artifact URL builder
 export { ARTIFACTS_ROUTE_SEGMENT, buildArtifactUrl, normalizeBasePath } from './url';

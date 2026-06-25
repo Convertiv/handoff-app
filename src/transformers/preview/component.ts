@@ -87,8 +87,8 @@ export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIP
  */
 export async function componentTransformer(handoff: Handoff) {
   // Build the shared/global artifacts first so component/pattern preview HTML can reference them
-  // only when they actually exist (technical design §7). A failed/absent global build therefore
-  // never produces a dangling reference in generated HTML.
+  // only when they actually exist. A failed/absent global build therefore never produces a dangling
+  // reference in generated HTML.
   await buildMainJS(handoff);
   await buildMainCss(handoff);
   const componentData = await processComponents(handoff);

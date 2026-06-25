@@ -1,5 +1,5 @@
 /**
- * Shared registry HTTP client (technical design §11, issue #13).
+ * Shared registry HTTP client.
  *
  * One client both the CLI and the app use to talk to a remote registry over its HTTP API. It owns
  * the transfer endpoint URL shape, bearer-token auth, and the `{ data | error, meta }` envelope

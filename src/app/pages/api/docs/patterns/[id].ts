@@ -3,7 +3,7 @@ import { handleDocsRoute, idFromJsonParam, sendDocsError } from '@/lib/docs-api'
 
 /**
  * `GET /api/docs/patterns/{id}.json` — a single `PatternListObject` including build state;
- * `404 not_found` when the pattern does not exist (technical design §5). The dynamic param carries
+ * `404 not_found` when the pattern does not exist. The dynamic param carries
  * the explicit `.json` extension, which is stripped to recover the id. The shape is identical
  * regardless of whether the filesystem or the database backs it.
  */

@@ -11,9 +11,8 @@
  */
 
 /**
- * Logical artifact kind. Mirrors the docs read-model artifact record's `artifactKind`
- * (technical design §8) — the broad class an artifact belongs to, independent of how it is
- * stored or served.
+ * Logical artifact kind. Mirrors the docs read-model artifact record's `artifactKind` — the
+ * broad class an artifact belongs to, independent of how it is stored or served.
  */
 export type ArtifactKind = 'json' | 'html' | 'css' | 'javascript' | 'other';
 
@@ -38,7 +37,7 @@ export type ArtifactBuildStatus = 'current' | 'stale' | 'missing' | 'error';
 /**
  * A structured reference from one artifact (typically preview/inspect HTML) to another
  * artifact it depends on. References are the single source of truth for dependency
- * resolution — HTML is never parsed for dependencies (technical design §7).
+ * resolution — HTML is never parsed for dependencies.
  */
 export interface ArtifactReference {
   /** Logical path of the referenced artifact (e.g. `component/main.css`). */
@@ -65,7 +64,7 @@ export interface ArtifactReference {
 
 /**
  * Build/provenance metadata for an artifact or entity. Captures enough to validate, serve,
- * and debug docs output (technical design §8; PRD field set, story 82).
+ * and debug docs output.
  */
 export interface ArtifactBuildMetadata {
   /** Current build state for the artifact/entity. */
@@ -97,11 +96,11 @@ export interface ArtifactSizeDiagnostics {
 /**
  * Structured description of a single docs read-model artifact. This is the shape the docs read
  * API serves, the static build materializes, and registry publish/ingest moves over the wire —
- * carrying enough to validate, serve, and debug an artifact per the PRD field set (story 82).
+ * carrying enough to validate, serve, and debug an artifact.
  *
  * `content` and `storageRef` are intentionally both optional so the model leaves room for
- * future object storage of large/binary assets (PRD story 67) rather than assuming inline
- * content for every kind.
+ * future object storage of large/binary assets rather than assuming inline content for every
+ * kind.
  */
 export interface ArtifactDescriptor {
   /** Logical artifact path (e.g. `component/badge-primary.html`). Stable key for serving. */
@@ -141,7 +140,7 @@ export const SHARED_MAIN_JS_ARTIFACT_PATH = 'component/main.js';
 /** Logical path of the shared component styles artifact. */
 export const SHARED_STYLES_CSS_ARTIFACT_PATH = 'component/shared.css';
 
-/** Logical path of the per-build artifact metadata manifest (technical design §8). */
+/** Logical path of the per-build artifact metadata manifest. */
 export const ARTIFACT_METADATA_PATH = 'artifact-metadata.json';
-/** Format version tag carried by generated React preview/inspect HTML (technical design §8). */
+/** Format version tag carried by generated React preview/inspect HTML. */
 export const REACT_PREVIEW_FORMAT_VERSION = 'handoff-react-preview-v1';

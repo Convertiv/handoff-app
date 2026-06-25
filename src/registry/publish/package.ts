@@ -1,5 +1,5 @@
 /**
- * Publish package assembly for the connected workspace (technical design §10, issue #13).
+ * Publish package assembly for the connected workspace.
  *
  * After a fresh targeted build, this gathers exactly one entity's package from the generated
  * `public/api` artifacts: the normalized record, its registry-safe source files (declarations

@@ -1,7 +1,7 @@
 import type { RegistryTextFileKind } from '@handoff/registry/db/schema';
 
 /**
- * Registry text-file record validation (technical design §9; PRD stories 65, 168).
+ * Registry text-file record validation.
  *
  * Text file records are checkout/inspection/management only and **exclude declaration files** —
  * declarations are a workspace-only concern (synthesized on checkout). File bodies must carry a

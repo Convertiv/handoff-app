@@ -14,8 +14,8 @@ export interface PublishArgs extends SharedArgs {
 
 /**
  * `handoff-app publish <component|pattern> <id>` — fresh targeted local build + upload of the
- * selected entity to the connected registry (technical design §10/§11, issue #13). Available only
- * from a connected workspace (`runtime.mode: workspace` + a configured `registryConnection`).
+ * selected entity to the connected registry. Available only from a connected workspace
+ * (`runtime.mode: workspace` + a configured `registryConnection`).
  */
 const command: CommandModule<{}, PublishArgs> = {
   command: 'publish <type> <id>',

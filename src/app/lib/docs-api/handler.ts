@@ -3,7 +3,7 @@ import { resolveDocsBackend, type DocsBackend } from './backend';
 import { ensureGet, sendDocsError } from './errors';
 
 /**
- * Shared entry point for every `/api/docs/*` route (technical design §5/§12).
+ * Shared entry point for every `/api/docs/*` route.
  *
  * Applies the GET-only guard, resolves the mode-aware {@link DocsBackend}, and runs the route's
  * logic against it — translating any thrown failure (e.g. a database that is unreachable in

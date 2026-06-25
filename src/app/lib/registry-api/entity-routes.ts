@@ -20,7 +20,7 @@ import {
 } from './store';
 
 /**
- * Entity-kind-parameterized route bodies for the registry management API (technical design §9).
+ * Entity-kind-parameterized route bodies for the registry management API.
  *
  * Components and patterns expose the identical CRUD + files surface, so the four `/api/registry/*`
  * route shapes are implemented once here and bound to a kind by the thin page route files. Each runs

@@ -14,10 +14,10 @@ export interface CheckoutArgs extends SharedArgs {
 
 /**
  * `handoff-app checkout <component|pattern> <id>` — pull an entity from the connected registry into
- * this workspace (technical design §10/§11, issue #14): writes its source files in standard
- * authoring form and synthesizes a local declaration. Available only from a connected workspace
- * (`runtime.mode: workspace` + a configured `registryConnection`). Overwriting existing local files
- * requires `--force` or an interactive confirmation.
+ * this workspace: writes its source files in standard authoring form and synthesizes a local
+ * declaration. Available only from a connected workspace (`runtime.mode: workspace` + a configured
+ * `registryConnection`). Overwriting existing local files requires `--force` or an interactive
+ * confirmation.
  */
 const command: CommandModule<{}, CheckoutArgs> = {
   command: 'checkout <type> <id>',

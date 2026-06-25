@@ -1,9 +1,9 @@
 /**
- * Database-backed implementation of the normalized store abstraction (technical design §3, issue #10).
+ * Database-backed implementation of the normalized store abstraction.
  *
  * Registry mode serves only what was published to it: this store reads normalized component and
  * pattern records — and their checkout/inspection source files — straight from the registry
- * database (issue #9 schema). It is the registry counterpart to {@link FilesystemComponentStore},
+ * database. It is the registry counterpart to {@link FilesystemComponentStore},
  * so the docs read API and other consumers stay storage-agnostic.
  *
  * Two invariants hold here that the filesystem store does not enforce:

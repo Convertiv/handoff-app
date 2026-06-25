@@ -3,7 +3,7 @@ import { handleDocsRoute, sendDocsError, serveArtifactBySegments, singleQueryVal
 
 /**
  * `GET /api/docs/patterns/{id}/preview` — serves the pattern preview HTML artifact
- * `pattern/{id}.html` (technical design §5). A metadata-only pattern yields `404 artifact_not_found`.
+ * `pattern/{id}.html`. A metadata-only pattern yields `404 artifact_not_found`.
  * In registry mode the artifact resolves from the database.
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {

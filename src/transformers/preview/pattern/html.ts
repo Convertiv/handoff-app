@@ -10,11 +10,11 @@ import type { ComponentArtifactPresence, SharedArtifactPresence } from '../compo
  * Each component preview may be a React SSR document (server-rendered markup plus a `#root` /
  * `#__APP_PROPS__` pair) or a static Handlebars document.
  *
- * React client/hydration bundles are component-owned artifacts (`component/<id>.client.js`,
- * technical design §7) rather than inline scripts. This composer therefore copies no per-fragment
- * bundle: it namespaces each fragment's root/props so multiple instances coexist, marks each root
- * with the `data-handoff-component`/`data-handoff-props` attributes the component bundle hydrates by,
- * and references each unique component's client artifact exactly once.
+ * React client/hydration bundles are component-owned artifacts (`component/<id>.client.js`). This
+ * composer copies no per-fragment bundle: it namespaces each fragment's root/props so multiple
+ * instances coexist, marks each root with the `data-handoff-component`/`data-handoff-props`
+ * attributes the component bundle hydrates by, and references each unique component's client artifact
+ * exactly once.
  *
  * Shared/global artifacts follow the shared-artifact model: `component/main.css` and
  * `component/main.js` are referenced only when present, and the global script is emitted exactly once

@@ -1,10 +1,9 @@
 /**
  * First-class "related source files for an entity" accessor for the workspace store.
  *
- * v1 only had the watcher-shaped, entries-only `getRuntimeComponentsPathsToWatch`; v2 needs a
- * single accessor that gathers an entity's declaration plus every `entries`-referenced source file
- * for checkout and publish (technical design §3, issue #3). This centralizes that logic so the
- * store, and later transfer, share one definition of "what travels with an entity".
+ * Gathers an entity's declaration plus every `entries`-referenced source file for checkout and
+ * publish. This centralizes that logic so the store, and later transfer, share one definition of
+ * "what travels with an entity".
  */
 
 import fs from 'fs-extra';

@@ -30,9 +30,9 @@ import {
 import { createWebSocketServer } from './websocket';
 
 /**
- * Resolved build target (technical design §4). Bare `handoff-app build` resolves to `static`. The
+ * Resolved build target. Bare `handoff-app build` resolves to `static`. The
  * target — not `NODE_ENV` — drives whether Next runs a static export, so a future non-static
- * `next build` path (registry, #11) does not get conflated with static export.
+ * `next build` path (registry) does not get conflated with static export.
  */
 export type BuildTarget = 'static' | 'registry';
 
@@ -40,7 +40,7 @@ export type BuildTarget = 'static' | 'registry';
 export const DEFAULT_BUILD_TARGET: BuildTarget = 'static';
 
 /**
- * Resolved packaging axis (`vercel-deployment` issue #1) — orthogonal to {@link BuildTarget}. It
+ * Resolved packaging axis — orthogonal to {@link BuildTarget}. It
  * selects *how* the build is packaged, not *what* is built:
  *   - `standalone` → the existing sites-directory deliverable (`out/<projectId>` for static, the
  *     Node standalone bundle `out/registry` for registry).
@@ -66,7 +66,7 @@ export class HandoffBuildError extends Error {
 }
 
 /**
- * Resolve and validate the effective `(target, package)` pair (`vercel-deployment` issue #1).
+ * Resolve and validate the effective `(target, package)` pair.
  *
  * `--package` is optional and never implies a target. When omitted the effective package is
  * `standalone` for both targets, preserving today's `out/<projectId>` / `out/registry` deliverables.
@@ -229,7 +229,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
 /**
  * Build the Next.js documentation application for the resolved target. The `static` target builds
  * and exports the local workspace (default); the `registry` target packages the deployable dynamic
- * registry app via {@link buildRegistryApp} (issue #11).
+ * registry app via {@link buildRegistryApp}.
  */
 const buildApp = async (
   handoff: Handoff,
@@ -237,7 +237,7 @@ const buildApp = async (
   skipComponents?: boolean,
   buildPackage?: BuildPackage
 ): Promise<void> => {
-  // Resolve + validate the (target, package) pair once, before any work (issue #1).
+  // Resolve + validate the (target, package) pair once, before any work.
   const resolvedPackage = resolveBuildPackage(target, buildPackage);
 
   if (target === 'registry') {
@@ -294,9 +294,9 @@ const buildApp = async (
   const exportDir = path.resolve(appPath, 'out');
   await materializeDocsReadModel(handoff, exportDir);
 
-  // Final assembly branches on the resolved package (issue #1). `vercel` lays the materialized export
+  // Final assembly branches on the resolved package. `vercel` lays the materialized export
   // under `.vercel/output/static/` at the repo root (not the sites directory) — a hard Vercel
-  // constraint; `standalone` keeps writing the `out/<projectId>` export exactly as before.
+  // constraint; `standalone` keeps writing the `out/<projectId>` export.
   if (resolvedPackage === 'vercel') {
     await writeStaticVercelOutput(handoff, exportDir);
     return;
@@ -543,8 +543,7 @@ const assembleRegistryStandalone = async (
 };
 
 /**
- * Package the deployable dynamic registry app (technical design §4, issue #11; `vercel-deployment`
- * issues #1/#2).
+ * Package the deployable dynamic registry app.
  *
  * Unlike the static target this never builds or bundles workspace component/pattern source and the
  * resulting artifact has no workspace-source runtime dependency — it ships the app/runtime needed to
@@ -575,7 +574,7 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   // `db:migrate` always resolve the same one. `pg` uses long-lived TCP connections that pool poorly on
   // serverless; warn (non-fatally) so the operator points DATABASE_URL at a pooled endpoint or selects
   // the Neon adapter. The connection-string value is not available at build time, so this cannot be
-  // validated — it is guidance only and never fails the build (`vercel-deployment` issue #2).
+  // validated — it is guidance only and never fails the build.
   if (buildPackage === 'vercel' && resolveRegistryAdapter(handoff.config) === 'pg') {
     Logger.warn(
       'Registry Vercel build uses the "pg" adapter (standard TCP connections), which pools poorly on ' +
@@ -638,7 +637,7 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
     );
   }
 
-  // Final assembly branches on the resolved package (`vercel-deployment` issues #1/#2). Both lay out
+  // Final assembly branches on the resolved package. Both lay out
   // the same traced standalone bundle; they differ only in where it lands and how it is wrapped.
   if (buildPackage === 'vercel') {
     await writeRegistryVercelOutput(handoff, { appPath, standaloneRoot, assembleStandalone: assembleRegistryStandalone });
@@ -667,7 +666,7 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
   // Build the shared/global artifacts first so component/pattern preview HTML references them only
-  // when present (technical design §7), then process components with caching enabled (which skips
+  // when present, then process components with caching enabled (which skips
   // rebuilding components whose source files haven't changed).
   await buildMainJS(handoff);
   await buildMainCss(handoff);

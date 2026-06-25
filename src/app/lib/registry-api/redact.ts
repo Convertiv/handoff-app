@@ -1,5 +1,5 @@
 /**
- * Defensive secret redaction for registry API responses (technical design §9; PRD story 162).
+ * Defensive secret redaction for registry API responses.
  *
  * Config stores only env-var *names*, never secret values, so well-formed records should never
  * carry a token or connection string. This is a belt-and-braces final pass over every response

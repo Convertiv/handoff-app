@@ -44,7 +44,7 @@ export const generateTokensApi = async (handoff: Handoff) => {
 };
 
 /**
- * Build the server-only runtime config consumed by the docs read API (technical design §1/§5).
+ * Build the server-only runtime config consumed by the docs read API.
  *
  * The browser-facing `client.config.json` carries only the resolved mode; the server additionally
  * needs the registry connection *inputs* (selected adapter + the *name* of the database-URL env

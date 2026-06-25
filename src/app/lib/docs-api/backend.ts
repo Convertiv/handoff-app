@@ -12,11 +12,11 @@ import {
 import { getServerRuntimeConfig } from './runtime-config';
 
 /**
- * Mode-aware data source for the docs read API (technical design §5, issue #10).
+ * Mode-aware data source for the docs read API.
  *
  * The `/api/docs/*` routes depend only on this interface, so they return the *same stable shapes at
  * the same URLs* regardless of which backing resolves them. Workspace mode reads generated
- * filesystem artifacts (issue #4); registry mode reads the DB-backed docs read-model artifacts
+ * filesystem artifacts; registry mode reads the DB-backed docs read-model artifacts
  * published to the registry. The registry backing is loaded lazily so its Drizzle/Postgres
  * dependencies never enter the workspace/static path.
  */

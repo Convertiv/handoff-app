@@ -8,10 +8,10 @@ import type { DocsBackend, ResolvedArtifactBody } from './backend';
 import { getRegistryConnection } from '../registry-connection';
 
 /**
- * Registry-mode backing for the docs read API (technical design §5/§6/§8, issue #10).
+ * Registry-mode backing for the docs read API.
  *
  * Everything here resolves from the registry database: normalized records through the DB-backed
- * store (the #3 interface), build state from the `build_metadata` table, and content artifacts from
+ * store, build state from the `build_metadata` table, and content artifacts from
  * the `docs_artifacts` table. No read path materializes source files or runs the build pipeline.
  * The database connection is created once per server process and reused across requests.
  *
@@ -29,8 +29,7 @@ const artifactExists = async (db: RegistryDatabase, path: string): Promise<boole
  * Resolve a content artifact from the registry by logical path. Returns `null` (→ `artifact_not_found`)
  * when the artifact is absent, when its content is stored externally (a future object-storage
  * reference with no inline content), or when a **required** structured reference it depends on is
- * not present — an HTML artifact must never be served with a missing required dependency
- * (technical design §5/§7).
+ * not present — an HTML artifact must never be served with a missing required dependency.
  */
 const resolveRegistryArtifact = async (db: RegistryDatabase, segments: string[]): Promise<ResolvedArtifactBody | null> => {
   const artifactPath = segments.join('/');

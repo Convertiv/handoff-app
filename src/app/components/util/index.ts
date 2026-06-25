@@ -464,9 +464,7 @@ const staticBuildTokenMenu = () => {
  * Fetch patterns from the mode-aware docs read API.
  *
  * Resolves through {@link resolveDocsBackend}, so the active `runtime.mode` decides the source:
- * generated workspace artifacts in workspace mode, the registry database in registry mode. Replaces
- * the previous direct read of the local `patterns.json` file, which always surfaced local workspace
- * patterns regardless of mode.
+ * generated workspace artifacts in workspace mode, the registry database in registry mode.
  */
 export const fetchPatterns = async (): Promise<PatternListObject[]> => {
   try {
@@ -560,8 +558,7 @@ export const fetchCompDocPageMarkdown = async (path: string, slug: string | unde
  * Resolves through {@link resolveDocsBackend}, so the active `runtime.mode` decides the source:
  * generated workspace artifacts in workspace mode, the registry database in registry mode. This is
  * the entity list the navigation, detail, and preview views all share, so they agree on the same
- * set for the active mode. Replaces the previous direct read of the local component listings, which
- * surfaced local workspace declarations regardless of mode.
+ * set for the active mode.
  */
 export const fetchComponents = async (): Promise<ComponentListObject[]> => {
   try {
@@ -670,7 +667,7 @@ const getDefaultClientConfig = (): ClientConfigCache => {
 
 /**
  * Resolve the persisted client config path. Workspace dev/static reads it from the build-machine
- * `.handoff/<projectId>` staging dir; the packaged registry app (issue #11) reads it from the entry
+ * `.handoff/<projectId>` staging dir; the packaged registry app reads it from the entry
  * dir the build copies it into (the standalone server's cwd), since the build-machine path does not
  * exist on the deploy host.
  */
@@ -688,7 +685,7 @@ const resolveClientConfigPath = (): string | null => {
 };
 
 /**
- * Apply the build-time-baked runtime mode (issue #11) over a loaded client config. Mode is
+ * Apply the build-time-baked runtime mode over a loaded client config. Mode is
  * config-only and baked into the bundle, so the packaged registry app reports `registry` even when
  * its client.config.json cannot be resolved on the deploy host.
  */

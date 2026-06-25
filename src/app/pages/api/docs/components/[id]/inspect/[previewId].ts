@@ -3,7 +3,7 @@ import { handleDocsRoute, sendDocsError, serveArtifactBySegments, singleQueryVal
 
 /**
  * `GET /api/docs/components/{id}/inspect/{previewId}` — serves the inspect HTML artifact
- * `component/{id}-{previewId}-inspect.html` (technical design §5). A metadata-only record yields
+ * `component/{id}-{previewId}-inspect.html`. A metadata-only record yields
  * `404 artifact_not_found`. In registry mode the artifact resolves from the database.
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {

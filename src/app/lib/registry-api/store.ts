@@ -15,12 +15,12 @@ import type { ValidatedFile } from './files';
 import { resolveBuildMeta, type RegistryBuildMeta } from './meta';
 
 /**
- * Database operations behind the registry management API (technical design §9).
+ * Database operations behind the registry management API.
  *
  * Reads return the normalized record merged with registry-only review metadata; writes are limited
  * to the metadata allowlist and the text-file record groups. Crucially, metadata create/update
  * never touches `docs_artifacts` or `build_metadata` — published artifacts and build state are only
- * changed by transfer/publish (issue #13). Entity deletion removes only that entity's owned
+ * changed by transfer/publish. Entity deletion removes only that entity's owned
  * artifacts; shared/global artifacts (owned by `asset`) are preserved.
  */
 

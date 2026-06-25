@@ -1,5 +1,5 @@
 /**
- * Registry management API (technical design §9, issue #12). Server-only helpers shared by the
+ * Registry management API. Server-only helpers shared by the
  * `/api/registry/*` route handlers: the runtime-mode + bearer-token + database guard stack and the
  * `{ data, meta }` envelope, the metadata allowlist and file-record validation, secret redaction,
  * and the database operations the management endpoints are expressed in terms of.
