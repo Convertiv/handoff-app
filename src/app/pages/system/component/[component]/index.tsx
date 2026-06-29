@@ -140,19 +140,21 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
 
   const componentDataUrl = buildArtifactUrl(`component/${id}.json`, appBasePath);
 
-  const fetchComponents = async () => {
-    const res = await fetch(componentDataUrl);
-    if (!res.ok) {
-      // Metadata-only records (e.g. created through the registry management API but not yet
-      // published) have no generated `component/<id>.json` artifact, so the docs read API correctly
-      // returns 404. Surface a clear "previews unavailable" state instead of parsing the error
-      // envelope as preview data and crashing on the absent fields.
-      setPreviewsUnavailable(true);
-      setComponent(undefined);
-      return;
+  const fetchComponents = async (signal: AbortSignal) => {
+    try {
+      const res = await fetch(componentDataUrl, { signal });
+      if (!res.ok) {
+        setPreviewsUnavailable(true);
+        setComponent(undefined);
+        return;
+      }
+      const data = await res.json();
+      setComponent(data as PreviewObject);
+    } catch (err) {
+      // A superseded fetch (the user navigated to another component before this one resolved) is
+      // aborted on effect cleanup; ignore it so a slow response can't overwrite the current one.
+      if ((err as Error)?.name !== 'AbortError') throw err;
     }
-    const data = await res.json();
-    setComponent(data as PreviewObject);
   };
 
   const previousLink = previousComponent ? {
@@ -165,9 +167,11 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   } : null;
 
   useEffect(() => {
+    const controller = new AbortController();
     setComponent(undefined);
     setPreviewsUnavailable(false);
-    fetchComponents();
+    fetchComponents(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -215,7 +219,23 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
       </Layout>
     );
   }
-  if (!component) return <p>Loading...</p>;
+  if (!component) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14" aria-busy="true" aria-live="polite">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
   const apiUrl = (window.location.origin && window.location.origin) + componentDataUrl;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>

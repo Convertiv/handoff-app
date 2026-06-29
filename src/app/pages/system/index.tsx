@@ -55,7 +55,16 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
   useEffect(() => {
     fetchComponents();
   }, []);
-  if (!components) return <p>Loading...</p>;
+  if (!components) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-2 pb-7" aria-busy="true" aria-live="polite">
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          <p className="mt-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if ((components ?? []).length === 0) {
     return (

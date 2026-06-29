@@ -213,7 +213,23 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     );
   }
 
-  if (!pattern) return <p>Loading...</p>;
+  if (!pattern) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14" aria-busy="true" aria-live="polite">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Patterns</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
