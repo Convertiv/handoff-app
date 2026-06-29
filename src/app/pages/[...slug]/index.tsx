@@ -1,5 +1,7 @@
+import fs from 'fs-extra';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
+import path from 'path';
 import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -9,7 +11,6 @@ import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/Ma
 import { PageTOC } from '../../components/Navigation/AnchorNav';
 import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
-import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import {
   buildCatchAllStaticPaths,
   DocumentationProps,
@@ -17,12 +18,14 @@ import {
   getClientRuntimeConfig,
   isRegistryRuntime,
 } from '../../components/util';
+import { resolveDocsBackend } from '../../lib/docs-api/backend';
 
 export async function getStaticPaths() {
-  // Registry pages live in the DB (mutable, possibly empty/unreachable at build), so resolve them on
-  // demand instead of freezing the path list. Workspace/static stays fully prerendered from markdown.
+  // Registry prerenders the package `config/docs` catch-all pages (workspace `pages/` excluded —
+  // those are DB-served), and resolves DB-published pages on demand via `fallback: 'blocking'`.
+  // Workspace/static stays fully prerendered from markdown (pages included).
   if (isRegistryRuntime()) {
-    return { paths: [], fallback: 'blocking' as const };
+    return { paths: buildCatchAllStaticPaths(false), fallback: 'blocking' as const };
   }
   return {
     paths: buildCatchAllStaticPaths(),
@@ -33,11 +36,26 @@ export async function getStaticPaths() {
 export const getStaticProps: GetStaticProps = async (context) => {
   const { slug } = context.params as { slug: string[] };
   const config = getClientRuntimeConfig();
+  const dirParts = slug.slice(0, -1);
+  const file = slug[slug.length - 1];
+  const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
+  const sectionId = `/${slug[0]}`;
 
-  // Registry mode: pages are served from the DB through the mode-aware docs backend. The nav (side +
-  // header) is filled client-side from `/api/docs/nav.json`, so the per-page menu prop stays empty.
+  // Registry mode: package `config/docs` pages are served from disk (prerendered at build); only
+  // DB-published custom pages are resolved from the registry database. Workspace markdown is never
+  // read. The nav is filled client-side from `/api/docs/nav.json`, so DB pages carry an empty menu.
   if (isRegistryRuntime()) {
     const id = slug.join('/');
+    const moduleDoc = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'docs', `${id}.md`);
+    if (fs.existsSync(moduleDoc)) {
+      return {
+        props: {
+          ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
+          config,
+        },
+      };
+    }
+
     const detail = await (await resolveDocsBackend()).getPageDetail(id);
     if (!detail) {
       return { notFound: true };
@@ -58,11 +76,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const dirParts = slug.slice(0, -1);
-  const file = slug[slug.length - 1];
-  const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
-  const sectionId = `/${slug[0]}`;
-
   return {
     props: {
       ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
@@ -74,7 +87,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export default function DocCatchAllPage({ content, menu, metadata, current, config }: DocumentationProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  if (!content) {
+  if (!content && !metadata?.title) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
         <Head>

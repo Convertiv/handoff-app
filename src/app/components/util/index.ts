@@ -153,12 +153,12 @@ const collectMarkdownPaths = (rootDir: string, relativeParts: string[] = []): st
  * Build catch-all static paths for all markdown pages at any depth.
  * Excludes paths in knownPaths (those have dedicated route files).
  */
-export const buildCatchAllStaticPaths = () => {
+export const buildCatchAllStaticPaths = (includeWorkspacePages = true) => {
   const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
 
   const docPaths = collectMarkdownPaths(docRoot);
-  const pagePaths = collectMarkdownPaths(pageRoot);
+  const pagePaths = includeWorkspacePages ? collectMarkdownPaths(pageRoot) : [];
 
   const seen = new Set<string>();
   const allPaths: string[][] = [];
@@ -239,9 +239,10 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
   const patterns = (await fetchPatterns()) ?? [];
   const files = fs.readdirSync(docRoot);
   let list = files;
+  const includeWorkspacePages = !isRegistryRuntime();
   const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let pages: string[] = [];
-  if (fs.existsSync(workingPages)) {
+  if (includeWorkspacePages && fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
     list = list.concat(pages);
   }
@@ -317,7 +318,7 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
           const docDir = path.resolve(docRoot, dirName);
           const pagesDir = path.resolve(workingPages, dirName);
           const nestedFromDocs = buildMenuFromDirectory(docDir, `/${dirName}`);
-          const nestedFromPages = buildMenuFromDirectory(pagesDir, `/${dirName}`);
+          const nestedFromPages = includeWorkspacePages ? buildMenuFromDirectory(pagesDir, `/${dirName}`) : [];
 
           const seenPaths = new Set<string>();
           const children: any[] = [];
@@ -912,7 +913,9 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
   const contentModuleFilePath = path.resolve(handoffModulePath, 'config', `${localPath}${slug}.md`);
   const contentWorkingFilePath = path.resolve(handoffWorkingPath, `${pagePath}${slug}.md`);
 
-  if (fs.existsSync(contentWorkingFilePath)) {
+  // Registry serves package `config/docs` only; workspace overrides are invisible to it (custom
+  // content comes from the DB), so the working-path read is skipped in registry mode.
+  if (!isRegistryRuntime() && fs.existsSync(contentWorkingFilePath)) {
     currentContents = fs.readFileSync(contentWorkingFilePath, 'utf-8');
   } else if (!fs.existsSync(contentModuleFilePath)) {
     return { metadata: {}, content: currentContents, options: {} };
