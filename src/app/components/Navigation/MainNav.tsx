@@ -10,7 +10,7 @@ import {
 } from '../../components/ui/navigation-menu';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
-import { useNavContext } from '../context/NavProvider';
+import { useResolvedMenu } from '../context/NavProvider';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -18,12 +18,9 @@ const trimSlashes = (input: string): string => {
 
 export function MainNav() {
   const context = useConfigContext();
-  const { nav } = useNavContext();
   const router = useRouter();
-  // In registry mode the per-page baked menu is empty for lambda-rendered pages, so use the cached
-  // shell (top-level sections need no entity enrichment). Workspace/static keep the baked menu.
-  const isRegistry = context.config?.runtime?.mode === 'registry';
-  const menu = isRegistry ? nav?.shell ?? context.menu : context.menu;
+  // Registry: cached shell (the per-page baked menu is empty for lambda pages); workspace/static: baked.
+  const menu = useResolvedMenu(context.menu);
   return (
     <NavigationMenu>
       <NavigationMenuList>

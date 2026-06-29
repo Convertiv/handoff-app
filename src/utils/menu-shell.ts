@@ -67,9 +67,9 @@ export interface BuildMenuShellOptions {
 
 /**
  * Paths that have dedicated route files and are therefore excluded from auto-scanned submenus.
- * Kept in sync with `knownPaths` in `src/app/components/util/index.ts`.
+ * Single source of truth — the docs app imports this (re-exported there as `knownPaths`).
  */
-const KNOWN_PATHS = [
+export const KNOWN_PATHS = [
   'assets',
   'assets/fonts',
   'assets/icons',
@@ -103,9 +103,10 @@ const normalizeBasePath = (basePath?: string): string => {
 /**
  * The static Tokens submenu (Foundations only). Token *components* are sourced from local
  * build-time workspace artifacts that the registry never carries, so the shell bakes only the
- * deterministic Foundations entries — matching the registry behavior of `staticBuildTokensMenu()`.
+ * deterministic Foundations entries. Shared with the app's `staticBuildTokensMenu()`, which appends
+ * the local component entries on top of these. `basePath` must already be `"prefix/"`-normalized.
  */
-const buildTokensFoundationsMenu = (basePath: string): MenuShellSubItem[] => [
+export const buildTokensFoundationsMenu = (basePath: string): MenuShellSubItem[] => [
   {
     title: 'Foundations',
     path: `${basePath}system/tokens/foundations`,
@@ -119,9 +120,9 @@ const buildTokensFoundationsMenu = (basePath: string): MenuShellSubItem[] => [
 
 /**
  * Recursively build menu entries from .md files in a directory (auto-scan for sections that do not
- * declare a `menu` in frontmatter). Mirrors `buildMenuFromDirectory()` in the app.
+ * declare a `menu` in frontmatter). Shared with the app — single source of truth for the auto-scan.
  */
-const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): MenuShellSubItem[] => {
+export const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): MenuShellSubItem[] => {
   if (!fs.existsSync(dirPath)) return [];
   const entries = fs.readdirSync(dirPath);
   const items: (MenuShellSubItem & { weight?: number })[] = [];

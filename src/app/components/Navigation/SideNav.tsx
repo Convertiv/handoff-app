@@ -33,8 +33,7 @@ import {
   SidebarSeparator,
 } from '../../components/ui/sidebar';
 import { normalizePathForMatch } from '../../lib/utils';
-import { useConfigContext } from '../context/ConfigContext';
-import { NavEntity, useNavContext } from '../context/NavProvider';
+import { isRegistryMode, NavEntity, useNavContext } from '../context/NavProvider';
 import { SectionLink } from '../util';
 
 /**
@@ -195,10 +194,9 @@ const buildEntitySubmenu = (entities: NavEntity[], segment: 'component' | 'patte
 };
 
 const SideNav = ({ menu }: { menu: SectionLink }) => {
-  const { config } = useConfigContext();
   const { nav } = useNavContext();
   const router = useRouter();
-  const isRegistry = config?.runtime?.mode === 'registry';
+  const isRegistry = isRegistryMode;
 
   // Resolve which section's submenu to render. Workspace/static use the build-time baked `menu` prop.
   // Registry resolves it from the cached shell by the current route, because the per-page prop is

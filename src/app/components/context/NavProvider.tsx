@@ -24,10 +24,7 @@ interface INavContext {
 
 const NavContext = createContext<INavContext>({ nav: null });
 
-// Registry mode is the only mode that resolves nav from the live read API; workspace/static keep the
-// build-time baked per-page menu props and this provider stays inert (no fetch). Read from the baked
-// env so it is available on the client without per-page props.
-const isRegistry = process.env.HANDOFF_RUNTIME_MODE === 'registry';
+export const isRegistryMode = process.env.HANDOFF_RUNTIME_MODE === 'registry';
 
 // Module-level cache + in-flight guard. Because `_app` is not remounted across client-side (soft)
 // navigations, the provider's state already survives them; the module cache additionally dedupes
@@ -64,7 +61,7 @@ export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [nav, setNav] = useState<NavData | null>(cachedNav);
 
   useEffect(() => {
-    if (!isRegistry || nav) {
+    if (!isRegistryMode || nav) {
       return;
     }
     let active = true;
@@ -81,3 +78,14 @@ export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 };
 
 export const useNavContext = (): INavContext => useContext(NavContext);
+
+/**
+ * Resolve the top-level menu (header/mobile nav) for the active runtime: in registry mode the
+ * cached shell (the per-page baked menu is empty for lambda-rendered pages), falling back to the
+ * baked menu until the shell loads; in workspace/static the build-time baked menu. Centralizes the
+ * `isRegistry ? shell : baked` choice the header nav components used to each repeat.
+ */
+export const useResolvedMenu = (fallbackMenu?: SectionLink[]): SectionLink[] | undefined => {
+  const { nav } = useNavContext();
+  return isRegistryMode ? nav?.shell ?? fallbackMenu : fallbackMenu;
+};

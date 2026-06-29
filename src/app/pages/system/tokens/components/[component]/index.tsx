@@ -14,7 +14,6 @@ import {
   getTokens,
   IParams,
   reduceSlugToString,
-  staticBuildMenu,
 } from '../../../../../components/util';
 import { getComponentInstanceScssTokens, tokenReferenceFormat } from '../../../../../components/util/token';
 import { filterOutNull } from '../../../../../lib/utils';
@@ -32,8 +31,6 @@ export async function getStaticPaths() {
 
 export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
-  // get previews for components on this page
-  const menu = await staticBuildMenu();
   const config = getClientRuntimeConfig();
   const componentSlug = reduceSlugToString(component);
   const tokens = getTokens();
@@ -56,7 +53,6 @@ export const getStaticProps = async (context) => {
     props: {
       id: component,
       component: componentObject ?? {},
-      menu,
       config,
       ...markdownProps,
     },

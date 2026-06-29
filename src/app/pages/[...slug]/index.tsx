@@ -17,6 +17,7 @@ import {
   fetchDocPageMarkdown,
   getClientRuntimeConfig,
   isRegistryRuntime,
+  registryShellMenu,
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 
@@ -60,6 +61,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
     if (!detail) {
       return { notFound: true };
     }
+    // First-paint nav from the baked shell (same source the client `NavProvider` loads), so the
+    // header renders its sections immediately instead of empty. `current` resolves against this
+    // page's own top-level section; a DB-only section is absent from the static shell (it is merged
+    // in at request time by `/api/docs/nav.json`), so `current` is null there — same as before.
+    const { menu, current } = registryShellMenu(sectionId);
     return {
       props: {
         metadata: {
@@ -69,8 +75,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
           metaDescription: detail.metaDescription ?? detail.description ?? '',
         },
         content: detail.content,
-        menu: [],
-        current: null,
+        menu,
+        current,
         config,
       },
     };

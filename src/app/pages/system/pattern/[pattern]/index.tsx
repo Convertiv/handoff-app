@@ -20,6 +20,7 @@ import {
   getCurrentSection,
   IParams,
   isRegistryRuntime,
+  registryShellMenu,
   staticBuildMenu,
 } from '../../../../components/util';
 
@@ -113,7 +114,9 @@ export const getStaticProps = async (context: { params: IParams }) => {
   if (!patternData) {
     return { notFound: true };
   }
-  const menu = await staticBuildMenu();
+  // Registry sources nav from the baked shell (no per-request DB build); workspace/static build it
+  // from the filesystem. Both resolve `current` against the `/system` section the same way.
+  const menu = isRegistryRuntime() ? registryShellMenu('/system').menu : await staticBuildMenu();
   const config = getClientRuntimeConfig();
 
   const sameGroupPatterns = patterns.filter((p) => p.group === patternData?.group);

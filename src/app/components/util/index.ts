@@ -7,7 +7,12 @@ import { Types as CoreTypes } from 'handoff-core';
 import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { buildMenuFromDirectory, buildTokensFoundationsMenu, KNOWN_PATHS } from '@handoff/utils/menu-shell';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
+// Build-time-baked navigation shell. Imported statically (same as `pages/api/docs/nav.json.ts`) so
+// it is bundled into the route chunk and readable at request time in the Vercel registry lambda,
+// where the markdown it is derived from is not traceable. See src/utils/menu-shell.ts.
+import navShell from '@/generated/nav-shell.json';
 // Get the parsed url string type
 export interface IParams extends ParsedUrlQuery {
   slug: string | string[];
@@ -83,30 +88,10 @@ export interface FoundationDocumentationProps extends DocumentationWithTokensPro
   design: CoreTypes.IDocumentationObject['localStyles'];
 }
 /**
- * List the default paths
+ * Default paths that have dedicated route files (excluded from auto-scanned submenus). Single source
+ * of truth lives in `@handoff/utils/menu-shell` (shared with the build-time shell builder).
  */
-export const knownPaths = [
-  'assets',
-  'assets/fonts',
-  'assets/icons',
-  'assets/logos',
-  'foundations',
-  'foundations/colors',
-  'foundations/icons',  
-  'foundations/effects',
-  'foundations/logos',
-  'foundations/logo',
-  'foundations/typography',
-  'system',
-  'system/component',
-  'system/tokens',
-  'system/tokens/foundations',
-  'system/tokens/foundations/colors',
-  'system/tokens/foundations/effects',
-  'system/tokens/foundations/typography',
-  'system/tokens/components',
-  'system/pattern',
-];
+export const knownPaths = KNOWN_PATHS;
 
 /**
  * Get the plural name of a component
@@ -178,53 +163,11 @@ export const buildCatchAllStaticPaths = (includeWorkspacePages = true) => {
 };
 
 /**
- * Recursively build menu entries from .md files in a directory.
- * Returns sub-section items with nested menu items for subdirectories.
- */
-const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): any[] => {
-  if (!fs.existsSync(dirPath)) return [];
-  const entries = fs.readdirSync(dirPath);
-  const items: any[] = [];
-
-  for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry);
-    if (fs.lstatSync(fullPath).isDirectory()) {
-      const nestedItems = buildMenuFromDirectory(fullPath, `${urlPrefix}/${entry}`);
-      if (nestedItems.length > 0) {
-        items.push({
-          title: startCase(entry),
-          path: `${urlPrefix}/${entry}`,
-          menu: nestedItems,
-        });
-      }
-    } else if (entry.endsWith('.md') && entry !== 'index.md') {
-      const slug = entry.replace('.md', '');
-      const fullSlugPath = `${urlPrefix}/${slug}`.replace(/^\/+/, '');
-      if (knownPaths.indexOf(fullSlugPath) >= 0) continue;
-
-      const contents = fs.readFileSync(fullPath, 'utf-8');
-      const { data: metadata } = matter(contents);
-      if (metadata.enabled === false) continue;
-
-      items.push({
-        title: metadata.menuTitle ?? metadata.title ?? startCase(slug),
-        path: `/${fullSlugPath}`,
-        weight: metadata.weight ?? 0,
-      });
-    }
-  }
-
-  return items.sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
-};
-
-/**
- * Build the static menu for rendering pages.
+ * Build the navigation menu from the filesystem for workspace dev and static export.
  *
- * Component and pattern submenus are sourced from the mode-aware docs read API
- * ({@link fetchComponents}/{@link fetchPatterns}) so navigation always reflects the active
- * `runtime.mode` — registry mode lists the registry's entities, workspace mode lists the local
- * workspace, and never the other way around. Tokens are not yet on the registry read path (out of
- * scope), so the tokens submenu retains its local, build-time behavior.
+ * Registry never calls this — it sources nav from the baked shell (`registryShellMenu`), so this
+ * builder is workspace/static only: it reads `config/docs` + workspace `pages/` markdown and fills
+ * the component/pattern submenus from the local workspace entities. Tokens stay local build-time.
  *
  * @returns SectionLink[]
  */
@@ -239,10 +182,11 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
   const patterns = (await fetchPatterns()) ?? [];
   const files = fs.readdirSync(docRoot);
   let list = files;
-  const includeWorkspacePages = !isRegistryRuntime();
+  // Workspace/static only: registry never reaches this builder (it sources nav from the baked shell),
+  // so workspace `pages/` are always merged here.
   const workingPages = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
   let pages: string[] = [];
-  if (includeWorkspacePages && fs.existsSync(workingPages)) {
+  if (fs.existsSync(workingPages)) {
     pages = fs.readdirSync(workingPages);
     list = list.concat(pages);
   }
@@ -295,10 +239,9 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
               }
               if (sub.patterns) {
                 const patternMenu = buildPatternMenu(patterns);
-                // In registry mode the patterns submenu is filled at request time by the client nav,
-                // so keep the (possibly empty) slot and tag it; otherwise preserve the workspace
-                // behavior of omitting an empty patterns submenu.
-                if (patternMenu.length > 0 || isRegistryRuntime()) {
+                // Omit an empty patterns submenu (workspace/static behavior). Registry never reaches
+                // this builder — it keeps the empty, client-filled patterns slot via the baked shell.
+                if (patternMenu.length > 0) {
                   return {
                     title: sub.title || 'Patterns',
                     menu: patternMenu,
@@ -318,7 +261,7 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
           const docDir = path.resolve(docRoot, dirName);
           const pagesDir = path.resolve(workingPages, dirName);
           const nestedFromDocs = buildMenuFromDirectory(docDir, `/${dirName}`);
-          const nestedFromPages = includeWorkspacePages ? buildMenuFromDirectory(pagesDir, `/${dirName}`) : [];
+          const nestedFromPages = buildMenuFromDirectory(pagesDir, `/${dirName}`);
 
           const seenPaths = new Set<string>();
           const children: any[] = [];
@@ -496,26 +439,9 @@ const buildComponentMenu = (components: ComponentListObject[], type?: boolean | 
 const staticBuildTokensMenu = () => {
   const basePath = buildBasePath();
 
-  const menu = [
-    {
-      title: `Foundations`,
-      path: `${basePath}system/tokens/foundations`,
-      menu: [
-        {
-          title: `Colors`,
-          path: `${basePath}system/tokens/foundations/colors`,
-        },
-        {
-          title: `Effects`,
-          path: `${basePath}system/tokens/foundations/effects`,
-        },
-        {
-          title: `Typography`,
-          path: `${basePath}system/tokens/foundations/typography`,
-        },
-      ],
-    },
-  ];
+  // Foundations entries are shared with the build-time shell builder (single source of truth);
+  // the local component entries below are appended on top, same as before.
+  const menu: any[] = buildTokensFoundationsMenu(basePath);
 
   const componentMenuItems = [];
   // Tokens are not yet on the registry read path (out of scope), so the tokens submenu keeps its
@@ -546,19 +472,6 @@ const staticBuildTokensMenu = () => {
   }
 
   return menu;
-};
-
-const staticBuildTokenMenu = () => {
-    const basePath = buildBasePath();
-
-  let subSections = {
-    title: 'Tokens',
-    path: `${basePath}system/tokens`,
-    menu: [],
-  };
-  const tokens = getTokens();
-
-  return subSections;
 };
 
 /**
@@ -614,13 +527,37 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
   menu.filter((section) => section.path === path)[0];
 
 /**
+ * Registry-mode nav props from the build-time-baked shell (NOT a per-request DB build).
+ *
+ * Registry pages source their first-paint `menu`/`current` from the same baked shell the client
+ * (`NavProvider` → `/api/docs/nav.json`) uses, so SSR matches post-load with no flash and no
+ * backend dependency. Component/pattern entity lists fill in client-side; their `dynamic` slots
+ * reserve space so there is no layout shift. `sectionPath` is the section these pages live under
+ * (`/system`). Returns the same shape `staticBuildMenu()` + `getCurrentSection()` produced.
+ */
+export const registryShellMenu = (sectionPath: string): { menu: SectionLink[]; current: SectionLink | null } => {
+  const menu = navShell as unknown as SectionLink[];
+  return { menu, current: getCurrentSection(menu, sectionPath) ?? null };
+};
+
+/**
  * Build a static object for rending markdown pages
  * @param path
  * @param slug
  * @returns
  */
 export const fetchDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
-  const menu = await staticBuildMenu();
+  // Content/metadata stay mode-aware (DB-backed in registry via `fetchDocPageMetadataAndContent`).
+  // Only the nav is decoupled: registry sources `menu`/`current` from the baked shell (the same
+  // source the client `NavProvider` loads — no per-request DB nav build); workspace/static build it
+  // from the filesystem. `current` resolves against the page's own top-level section the same way.
+  let nav: { menu: SectionLink[]; current: SectionLink | null };
+  if (isRegistryRuntime()) {
+    nav = registryShellMenu(`${id}`);
+  } else {
+    const menu = await staticBuildMenu();
+    nav = { menu, current: getCurrentSection(menu, `${id}`) ?? null };
+  }
   const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
   // Return props
   return {
@@ -628,8 +565,8 @@ export const fetchDocPageMarkdown = async (path: string, slug: string | undefine
       metadata,
       content,
       options,
-      menu,
-      current: getCurrentSection(menu, `${id}`) ?? null,
+      menu: nav.menu,
+      current: nav.current,
     },
   };
 };
