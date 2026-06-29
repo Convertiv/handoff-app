@@ -227,6 +227,14 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
     });
   }, [activeSection, isRegistry, nav]);
 
+  // Collapse the sidebar entirely (render nothing, reserve no gutter) when the resolved section has
+  // no renderable content, so the page content goes full width. A `dynamic` slot counts as
+  // renderable even before its entities load, to avoid a full-width → gutter flash in registry mode.
+  const hasContent = sections.some((section) => (section.menu && section.menu.length > 0) || !!section.dynamic);
+  if (!hasContent) {
+    return null;
+  }
+
   return (
     <Sidebar className="sticky left-auto">
       <SidebarContent className="px-4 pt-5">

@@ -320,11 +320,18 @@ export const staticBuildMenu = async (): Promise<SectionLink[]> => {
           const nestedFromPages = buildMenuFromDirectory(pagesDir, `/${dirName}`);
 
           const seenPaths = new Set<string>();
+          const children: any[] = [];
           for (const item of [...nestedFromPages, ...nestedFromDocs]) {
             if (item.path && !seenPaths.has(item.path)) {
               seenPaths.add(item.path);
-              subSections.push(item);
+              children.push(item);
             }
+          }
+          // Wrap the scanned children under one labeled group (no `path`) so the side nav renders them
+          // as links — a flat subsection carrying a `path` but no `menu` renders nothing. Mirrors the
+          // registry-mode `buildPagesMenu` shape so all modes produce identical nesting.
+          if (children.length > 0) {
+            subSections.push({ title: metadata.menuTitle ?? metadata.title, menu: children });
           }
         }
 

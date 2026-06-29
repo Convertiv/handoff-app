@@ -5,6 +5,7 @@ import { Header } from '../../components/Layout/Header';
 import { ThemeProvider } from '../../components/util/theme-provider';
 import SideNav from '../Navigation/SideNav';
 import { ConfigContextProvider } from '../context/ConfigContext';
+import { hasRenderableNav } from '../../lib/utils';
 import { SidebarInset, SidebarProvider } from '../ui/sidebar';
 import { SectionLink } from '../util';
 
@@ -21,11 +22,13 @@ interface LayoutComponentProps {
   fullWidthHero?: boolean;
 }
 export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current, fullWidthHero = false }) {
-  // In registry mode the per-page `current` is empty for lambda-rendered (fallback) pages, so render
-  // the sidebar regardless and let SideNav resolve its section from the cached shell. Workspace/static
-  // keep gating on `current` (an empty array is still truthy).
+  // In registry mode the per-page `current` is empty for lambda-rendered (fallback) pages, so mount
+  // the sidebar regardless and let SideNav resolve its section from the cached shell (and collapse
+  // itself to full width when that section has no renderable nav). Workspace/static know the section
+  // at render time, so drop the left column entirely for pages with no side-nav content (e.g. a
+  // standalone page with no children) and let the content go full width.
   const isRegistry = config?.runtime?.mode === 'registry';
-  const showSidebar = current != null || isRegistry;
+  const showSidebar = isRegistry || hasRenderableNav(current as SectionLink);
   return (
     <div>
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
@@ -64,7 +67,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
               </SidebarProvider>
             ) : (
               <div className="flex w-full">
-                <div className="relative bg-transparent px-16 py-8 lg:gap-10 lg:py-16 xl:grid">
+                <div className="relative w-full bg-transparent px-16 py-8 lg:gap-10 lg:py-16">
                   <div className="mx-auto w-full">{children}</div>
                 </div>
               </div>
