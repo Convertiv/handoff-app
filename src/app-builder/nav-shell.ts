@@ -19,9 +19,12 @@ export const NAV_SHELL_RELATIVE_PATH = path.join('generated', 'nav-shell.json');
  * for every build target (workspace dev/start, static export, registry) so the static import never
  * fails to resolve; only registry-mode clients actually fetch and use it.
  */
-export const generateNavShell = async (handoff: Handoff, appPath: string): Promise<void> => {
+export const generateNavShell = async (handoff: Handoff, appPath: string, includeWorkspacePages = true): Promise<void> => {
   const docRoot = path.join(handoff.modulePath, 'config', 'docs');
-  const workingPagesDir = path.resolve(handoff.workingPath, 'pages');
+  // A registry serves only what is in its database, so workspace `pages/` present at build time must
+  // NOT be frozen into the shell (same rule as components/patterns). Published pages are merged into
+  // the shell at request time by `/api/docs/nav.json`; the package's own `config/docs` stays baked.
+  const workingPagesDir = includeWorkspacePages ? path.resolve(handoff.workingPath, 'pages') : undefined;
   const basePath = handoff.config?.app?.base_path ?? '';
 
   const shell = buildMenuShell({ docRoot, workingPagesDir, basePath });

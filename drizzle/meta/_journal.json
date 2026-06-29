@@ -15,6 +15,13 @@
       "when": 1782045350977,
       "tag": "0001_add_review_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782713759115,
+      "tag": "0002_add_pages",
+      "breakpoints": true
     }
   ]
 }

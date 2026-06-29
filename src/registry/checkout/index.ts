@@ -39,6 +39,7 @@ const DEFAULT_DECLARATION_FORMAT: DeclarationFormat = 'ts';
 const DEFAULT_ENTITY_DIR: Record<TransferEntityKind, string> = {
   component: 'components',
   pattern: 'patterns',
+  page: 'pages',
 };
 
 /** Source-file extensions stripped to form a module specifier for a React component import. */
@@ -498,6 +499,28 @@ const writeSourceFile = async (targetDir: string, file: TransferFile): Promise<s
 };
 
 /**
+ * Checkout a page: write its single verbatim `.md` (transfer path `<id>.md`) back under
+ * `<workingPath>/pages/`. Unlike components/patterns there is no declaration to synthesize — the
+ * markdown file is itself the authored source — so the page round-trips byte-for-byte.
+ */
+const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPayload): Promise<void> => {
+  const pagesRoot = path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR.page);
+  const targets = payload.files.map((file) => path.join(pagesRoot, ...file.path.split('/')));
+  const conflicts = targets.filter((file) => fs.existsSync(file));
+  if (!(await confirmOverwrite(handoff, conflicts))) {
+    Logger.warn(`Checkout of page "${id}" cancelled; no files were written.`);
+    return;
+  }
+  for (const file of payload.files) {
+    await writeSourceFile(pagesRoot, file);
+  }
+  Logger.success(
+    `Checked out page "${id}" into ${path.relative(handoff.workingPath, pagesRoot) || '.'} ` +
+      `(${payload.files.length} markdown file(s)).`
+  );
+};
+
+/**
  * Checkout a single component or pattern from a connected workspace: precondition checks → fetch the
  * normalized record + source files → resolve the local target → explicit-overwrite guard → write
  * source files and synthesize the local declaration. Throws {@link CheckoutError} with actionable
@@ -516,6 +539,12 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
       throw new CheckoutError(describeFetchFailure(error, kind, id, connection.url));
     }
     throw error;
+  }
+
+  // Pages round-trip as a single verbatim `.md` with no declaration synthesis.
+  if (kind === 'page') {
+    await checkoutPage(handoff, id, payload);
+    return;
   }
 
   const targetDir = await resolveTargetDir(handoff, kind, id);

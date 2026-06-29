@@ -221,7 +221,8 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   // Bake the markdown-driven navigation shell before `next build` so the docs read API can import it
   // statically (it is unreadable at runtime in the Vercel registry function). Generated for every
   // target; only registry-mode clients fetch it.
-  await generateNavShell(handoff, appPath);
+  // Registry builds must not bake workspace pages into the shell — they come from the DB at runtime.
+  await generateNavShell(handoff, appPath, runtimeMode !== 'registry');
 
   return appPath;
 };

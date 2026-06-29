@@ -9,14 +9,21 @@ import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/Ma
 import { PageTOC } from '../../components/Navigation/AnchorNav';
 import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
+import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import {
   buildCatchAllStaticPaths,
   DocumentationProps,
   fetchDocPageMarkdown,
   getClientRuntimeConfig,
+  isRegistryRuntime,
 } from '../../components/util';
 
 export async function getStaticPaths() {
+  // Registry pages live in the DB (mutable, possibly empty/unreachable at build), so resolve them on
+  // demand instead of freezing the path list. Workspace/static stays fully prerendered from markdown.
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
     paths: buildCatchAllStaticPaths(),
     fallback: false,
@@ -25,6 +32,32 @@ export async function getStaticPaths() {
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const { slug } = context.params as { slug: string[] };
+  const config = getClientRuntimeConfig();
+
+  // Registry mode: pages are served from the DB through the mode-aware docs backend. The nav (side +
+  // header) is filled client-side from `/api/docs/nav.json`, so the per-page menu prop stays empty.
+  if (isRegistryRuntime()) {
+    const id = slug.join('/');
+    const detail = await (await resolveDocsBackend()).getPageDetail(id);
+    if (!detail) {
+      return { notFound: true };
+    }
+    return {
+      props: {
+        metadata: {
+          title: detail.title ?? '',
+          description: detail.description ?? '',
+          metaTitle: detail.metaTitle ?? detail.title ?? '',
+          metaDescription: detail.metaDescription ?? detail.description ?? '',
+        },
+        content: detail.content,
+        menu: [],
+        current: null,
+        config,
+      },
+    };
+  }
+
   const dirParts = slug.slice(0, -1);
   const file = slug[slug.length - 1];
   const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
@@ -33,7 +66,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
-      config: getClientRuntimeConfig(),
+      config,
     },
   };
 };

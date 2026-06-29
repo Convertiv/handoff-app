@@ -1,6 +1,8 @@
 import fs from 'fs-extra';
+import matter from 'gray-matter';
 import path from 'path';
-import type { ComponentListObject, PatternListObject } from '@handoff/transformers/preview/types';
+import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
+import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import { getArtifactRoot } from './artifacts';
 
@@ -18,6 +20,8 @@ import { getArtifactRoot } from './artifacts';
 /** Detail metadata carries the entity record plus a build state derived from artifact presence. */
 export type ComponentDetail = ComponentListObject & { build: { status: ArtifactBuildStatus } };
 export type PatternDetail = PatternListObject & { build: { status: ArtifactBuildStatus } };
+/** A page's normalized record plus its rendered markdown body. */
+export type PageDetail = PageListObject & { content: string };
 
 const readJsonFile = <T>(absolutePath: string): T | null => {
   try {
@@ -64,4 +68,50 @@ export const getPatternDetail = (id: string): PatternDetail | null => {
     return null;
   }
   return { ...record, build: { status: deriveBuildStatus(path.join('pattern', `${id}.json`)) } };
+};
+
+/**
+ * Workspace-mode page reads. These scan `<workingPath>/pages/` directly (there is no generated page
+ * summary). Vestigial in practice — workspace nav is baked and the catch-all reads markdown through
+ * `fetchDocPageMarkdown` — but implemented honestly so the {@link DocsBackend} contract holds.
+ */
+const workingPagesRoot = (): string => path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
+
+/** Recursively collect page slug segments under `root` (every `.md` except `index.md`). */
+const collectPageSlugs = (root: string, parts: string[] = []): string[][] => {
+  if (!fs.existsSync(root)) return [];
+  const out: string[][] = [];
+  for (const entry of fs.readdirSync(root)) {
+    const full = path.join(root, entry);
+    if (fs.statSync(full).isDirectory()) {
+      out.push(...collectPageSlugs(full, [...parts, entry]));
+    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+      out.push([...parts, entry.replace(/\.md$/, '')]);
+    }
+  }
+  return out;
+};
+
+export const listPages = (): PageListObject[] => {
+  const root = workingPagesRoot();
+  return collectPageSlugs(root).map((segments) => {
+    const slug = segments.join('/');
+    const sourcePath = path.resolve(root, `${slug}.md`);
+    const { data } = matter(fs.readFileSync(sourcePath, 'utf8'));
+    return normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath });
+  });
+};
+
+export const getPageDetail = (id: string): PageDetail | null => {
+  const root = workingPagesRoot();
+  for (const segments of collectPageSlugs(root)) {
+    const slug = segments.join('/');
+    const sourcePath = path.resolve(root, `${slug}.md`);
+    const { data, content } = matter(fs.readFileSync(sourcePath, 'utf8'));
+    const record = normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath });
+    if (record.id === id) {
+      return { ...record, content };
+    }
+  }
+  return null;
 };

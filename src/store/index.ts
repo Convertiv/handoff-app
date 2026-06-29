@@ -12,6 +12,7 @@ export type {
   Awaitable,
   ComponentStore,
   HandoffStore,
+  PageStore,
   PatternStore,
   SourceReference,
   TextFileKind,
@@ -20,20 +21,22 @@ export type {
 
 export {
   FilesystemComponentStore,
+  FilesystemPageStore,
   FilesystemPatternStore,
   type FilesystemStoreContext,
 } from './filesystem';
 
 export { getRelatedSourceFilesForRecord, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
 
-import { FilesystemComponentStore, FilesystemPatternStore, type FilesystemStoreContext } from './filesystem';
+import { FilesystemComponentStore, FilesystemPageStore, FilesystemPatternStore, type FilesystemStoreContext } from './filesystem';
 import type { HandoffStore } from './types';
 
 /**
- * Build the filesystem-backed store pair for a runtime context (a `Handoff` instance satisfies
+ * Build the filesystem-backed store set for a runtime context (a `Handoff` instance satisfies
  * {@link FilesystemStoreContext}).
  */
 export const createFilesystemStore = (context: FilesystemStoreContext): HandoffStore => ({
   components: new FilesystemComponentStore(context),
   patterns: new FilesystemPatternStore(context),
+  pages: new FilesystemPageStore(context),
 });

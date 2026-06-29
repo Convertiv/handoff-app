@@ -3,7 +3,7 @@ import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
-import { ComponentListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
+import { ComponentListObject, PageListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from './preview';
 
 export interface ImageStyle {
@@ -386,6 +386,9 @@ export interface RuntimeConfig {
     };
     patterns: {
       [id: string]: PatternListObject;
+    };
+    pages: {
+      [id: string]: PageListObject;
     };
   };
   options: {

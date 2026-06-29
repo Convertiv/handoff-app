@@ -16,7 +16,7 @@ import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 export interface RegistryBuildMeta {
   /** `not_built` when no build-metadata row exists yet; otherwise the stored status. */
   status: 'current' | 'stale' | 'missing' | 'error' | 'not_built';
-  entityKind: 'component' | 'pattern';
+  entityKind: 'component' | 'pattern' | 'page';
   entityId: string;
   builtAt: string | null;
   artifactHash: string | null;
@@ -54,7 +54,7 @@ const countWhere = async (db: RegistryDatabase, where: ReturnType<typeof eq>): P
  */
 export const resolveBuildMeta = async (
   db: RegistryDatabase,
-  entityKind: 'component' | 'pattern',
+  entityKind: 'component' | 'pattern' | 'page',
   entityId: string
 ): Promise<RegistryBuildMeta> => {
   const rows = await db

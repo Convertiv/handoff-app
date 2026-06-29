@@ -17,6 +17,7 @@ const ALLOWED_FILE_KINDS: readonly RegistryTextFileKind[] = [
   'script',
   'story',
   'docs',
+  'markdown',
   'schema',
   'other',
 ];

@@ -1,5 +1,6 @@
 import esbuild from 'esbuild';
 import fs from 'fs-extra';
+import matter from 'gray-matter';
 import { createRequire } from 'module';
 import path from 'path';
 import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
@@ -9,6 +10,7 @@ import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { normalizePathForCompare } from '../utils/path';
 import { normalizeComponentDeclaration } from './normalizers/declaration';
+import { normalizePageDeclaration } from './normalizers/page';
 import { normalizePatternDeclaration } from './normalizers/pattern';
 
 /**
@@ -171,6 +173,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
       js: undefined,
       components: {},
       patterns: {},
+      pages: {},
     },
   };
 
@@ -299,11 +302,49 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
   }
 
   // -------------------------------------------------------------------------
+  // Discover markdown pages
+  // -------------------------------------------------------------------------
+  // Working pages under `<workingPath>/pages/` are first-class registry entities (publish/checkout).
+  // Discovery mirrors the catch-all/static-path walk: every `.md` except `index.md` becomes a page
+  // keyed by its slug path. Package `config/docs` defaults are NOT entities (they ship with the tool).
+  const pagesRoot = path.resolve(handoff.workingPath, 'pages');
+  for (const segments of collectPageMarkdownPaths(pagesRoot)) {
+    const slug = segments.join('/');
+    const sourcePath = path.resolve(pagesRoot, `${slug}.md`);
+    try {
+      const { data: frontmatter } = matter(fs.readFileSync(sourcePath, 'utf-8'));
+      const page = normalizePageDeclaration(frontmatter, { id: slug, routePath: `/${slug}`, sourcePath });
+      result.entries.pages[page.id] = page;
+    } catch (err) {
+      Logger.warn(`Page skipped (unreadable or invalid frontmatter): ${sourcePath}`);
+      Logger.debug(`Page parse detail:`, err);
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Inject synthetic previews from patterns onto components
   // -------------------------------------------------------------------------
   injectPatternPreviews(result);
 
   return [result, Array.from(configFiles), configFileIndex];
+};
+
+/**
+ * Recursively collect `.md` files under a root, returning slug segments (relative path without the
+ * `.md`). `index.md` is excluded — section index content is served by dedicated/home routes.
+ */
+const collectPageMarkdownPaths = (rootDir: string, relativeParts: string[] = []): string[][] => {
+  if (!fs.existsSync(rootDir)) return [];
+  const results: string[][] = [];
+  for (const entry of fs.readdirSync(rootDir)) {
+    const fullPath = path.join(rootDir, entry);
+    if (fs.lstatSync(fullPath).isDirectory()) {
+      results.push(...collectPageMarkdownPaths(fullPath, [...relativeParts, entry]));
+    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+      results.push([...relativeParts, entry.replace(/\.md$/, '')]);
+    }
+  }
+  return results;
 };
 
 /**

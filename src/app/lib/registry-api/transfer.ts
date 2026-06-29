@@ -7,6 +7,8 @@ import {
   componentFiles,
   components,
   docsArtifacts,
+  pageFiles,
+  pages,
   patternFiles,
   patterns,
 } from '@handoff/registry/db/schema';
@@ -51,6 +53,7 @@ const asStringArray = (value: unknown): string[] | undefined =>
 const ENTITY = {
   component: { table: components, filesTable: componentFiles, fileFk: componentFiles.componentId, fileFkName: 'componentId' as const },
   pattern: { table: patterns, filesTable: patternFiles, fileFk: patternFiles.patternId, fileFkName: 'patternId' as const },
+  page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId, fileFkName: 'pageId' as const },
 };
 
 /** Result of validating a publish package. Flat shape (the app compiles with `strictNullChecks` off). */
@@ -177,10 +180,18 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     warnings: asStringArray(body.build.warnings),
     error: asString(body.build.error),
   };
-  if (build.status === 'current' && (!build.builtAt || !build.builderVersion || !build.artifactHash)) {
-    return invalid('A "current" build requires builtAt, builderVersion, and artifactHash.', {
-      rejectedFields: ['build.builtAt', 'build.builderVersion', 'build.artifactHash'],
-    });
+  if (build.status === 'current') {
+    // Pages carry no rendered artifacts, so their provenance is keyed by a source hash; component and
+    // pattern publishes prove a fresh render with an artifact hash.
+    const provenanceHash = kind === 'page' ? build.sourceHash : build.artifactHash;
+    if (!build.builtAt || !build.builderVersion || !provenanceHash) {
+      return invalid(
+        kind === 'page'
+          ? 'A "current" page build requires builtAt, builderVersion, and sourceHash.'
+          : 'A "current" build requires builtAt, builderVersion, and artifactHash.',
+        { rejectedFields: ['build.builtAt', 'build.builderVersion', kind === 'page' ? 'build.sourceHash' : 'build.artifactHash'] }
+      );
+    }
   }
 
   return { ok: true, value: { item, files, artifacts, build } };
@@ -228,12 +239,12 @@ const upsertEntityRecord = async (
   const record = { ...item, id };
   const existing = await db.select({ id: spec.table.id }).from(spec.table).where(eq(spec.table.id, id)).limit(1);
 
+  // `tags` is promoted on components/patterns only; the pages table has no such column.
   const base = {
     path: asString(item.path) || `${kind}/${id}`,
     title: asString(item.title),
     description: asString(item.description),
     group: asString(item.group),
-    tags: asStringArray(item.tags),
     record,
     updatedAt: new Date(),
   };
@@ -241,11 +252,14 @@ const upsertEntityRecord = async (
     kind === 'component'
       ? {
           ...base,
+          tags: asStringArray(item.tags),
           type: asString(item.type) ?? '',
           renderer: asString(item.renderer),
           categories: asStringArray(item.categories),
         }
-      : { ...base, components: Array.isArray(item.components) ? item.components : [] };
+      : kind === 'pattern'
+        ? { ...base, tags: asStringArray(item.tags), components: Array.isArray(item.components) ? item.components : [] }
+        : { ...base, weight: typeof item.weight === 'number' ? item.weight : null };
 
   if (existing[0]) {
     await db.update(spec.table).set(values as any).where(eq(spec.table.id, id));
@@ -424,8 +438,8 @@ export const handleTransferRoute = (
     await ingestArtifacts(db, kind, id, pkg.artifacts);
     await upsertBuildMetadata(db, kind, id, pkg.build);
 
-    // The publish persisted; regenerate the affected docs pages on demand so the published entity is
-    // reviewable with no rebuild or restart (correct server-rendered `<head>` title/metadata).
+    // The publish persisted; regenerate the affected docs pages on demand so the served pages reflect
+    // the new content immediately (correct server-rendered `<head>` title/metadata).
     await revalidateEntityPages(res, kind, id);
 
     sendRegistryData(res, 200, { id, kind, published: true }, buildMeta(await resolveBuildMeta(db, kind, id)));

@@ -16,9 +16,9 @@
 
 import { eq } from 'drizzle-orm';
 import type { RegistryDatabase } from '../registry/db/client';
-import { componentFiles, components, patternFiles, patterns } from '../registry/db/schema';
-import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
-import type { ComponentStore, HandoffStore, PatternStore, SourceReference, TextFileResource } from './types';
+import { componentFiles, components, pageFiles, pages, patternFiles, patterns } from '../registry/db/schema';
+import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
+import type { ComponentStore, HandoffStore, PageStore, PatternStore, SourceReference, TextFileResource } from './types';
 
 /** Minimal context needed to back a registry store: a live, typed Drizzle database. */
 export interface RegistryStoreContext {
@@ -127,8 +127,40 @@ export class RegistryPatternStore implements PatternStore {
   }
 }
 
-/** Build the database-backed store pair for a registry database connection. */
+export class RegistryPageStore implements PageStore {
+  constructor(private readonly context: RegistryStoreContext) {}
+
+  async list(): Promise<PageListObject[]> {
+    const rows = await this.context.db.select({ record: pages.record }).from(pages);
+    return rows.map((row) => row.record);
+  }
+
+  async get(id: string): Promise<PageListObject | null> {
+    const rows = await this.context.db.select({ record: pages.record }).from(pages).where(eq(pages.id, id)).limit(1);
+    return rows[0]?.record ?? null;
+  }
+
+  async getSource(_ref: SourceReference): Promise<TextFileResource | null> {
+    return null;
+  }
+
+  async getRelatedSourceFiles(id: string): Promise<TextFileResource[]> {
+    const rows = await this.context.db
+      .select({
+        path: pageFiles.path,
+        kind: pageFiles.kind,
+        content: pageFiles.content,
+        contentType: pageFiles.contentType,
+      })
+      .from(pageFiles)
+      .where(eq(pageFiles.pageId, id));
+    return rows.map(toTextFileResource).filter((file): file is TextFileResource => file !== null);
+  }
+}
+
+/** Build the database-backed store set for a registry database connection. */
 export const createRegistryStore = (context: RegistryStoreContext): HandoffStore => ({
   components: new RegistryComponentStore(context),
   patterns: new RegistryPatternStore(context),
+  pages: new RegistryPageStore(context),
 });

@@ -5,7 +5,7 @@ import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
 /** Entity kinds checkout-able from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern'] as const;
+const ENTITY_KINDS = ['component', 'pattern', 'page'] as const;
 
 export interface CheckoutArgs extends SharedArgs {
   type: (typeof ENTITY_KINDS)[number];
@@ -21,7 +21,7 @@ export interface CheckoutArgs extends SharedArgs {
  */
 const command: CommandModule<{}, CheckoutArgs> = {
   command: 'checkout <type> <id>',
-  describe: 'Pull a component or pattern from the connected registry into this workspace',
+  describe: 'Pull a component, pattern, or page from the connected registry into this workspace',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
@@ -30,7 +30,7 @@ const command: CommandModule<{}, CheckoutArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the component or pattern to checkout',
+        describe: 'The stable id of the component, pattern, or page to checkout',
         type: 'string',
       });
   },

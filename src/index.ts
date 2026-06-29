@@ -146,7 +146,7 @@ class Handoff {
    * metadata). The publish module is loaded lazily so the registry client/build code never enters
    * the docs app bundle.
    */
-  async publish(kind: 'component' | 'pattern', id: string): Promise<Handoff> {
+  async publish(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
     this.preRunner();
     const { publishEntity } = await import('./registry/publish');
     await publishEntity(this, kind, id);
@@ -161,7 +161,7 @@ class Handoff {
    * stable `id`. The checkout module is loaded lazily so the registry client never enters the docs
    * app bundle.
    */
-  async checkout(kind: 'component' | 'pattern', id: string): Promise<Handoff> {
+  async checkout(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
     this.preRunner();
     const { checkoutEntity } = await import('./registry/checkout');
     await checkoutEntity(this, kind, id);

@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import matter from 'gray-matter';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
@@ -78,6 +79,9 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
     async listPatterns() {
       return store.patterns.list();
     },
+    async listPages() {
+      return store.pages.list();
+    },
     async getComponentDetail(id: string) {
       const record = await store.components.get(id);
       if (!record) {
@@ -91,6 +95,16 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
         return null;
       }
       return { ...record, build: { status: await buildStatusFor(db, 'pattern', id) } };
+    },
+    async getPageDetail(id: string) {
+      const record = await store.pages.get(id);
+      if (!record) {
+        return null;
+      }
+      // The markdown body travels as the page's single source file; parse it to drop the frontmatter.
+      const files = await store.pages.getRelatedSourceFiles(id);
+      const { content } = matter(files[0]?.content ?? '');
+      return { ...record, content };
     },
     async resolveArtifact(segments: string[]) {
       return resolveRegistryArtifact(db, segments);

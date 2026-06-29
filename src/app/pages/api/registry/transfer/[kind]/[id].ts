@@ -3,7 +3,7 @@ import { handleRegistryRoute, sendRegistryError } from '@/lib/registry-api';
 import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/transfer';
 
 /**
- * `/api/registry/transfer/{component|pattern}/:id` — the transfer endpoint.
+ * `/api/registry/transfer/{component|pattern|page}/:id` — the transfer endpoint.
  *
  * - `GET` is checkout: returns the normalized record + registry-safe source files so a
  *   connected workspace can reconstruct the entity locally. Unauthenticated read.
@@ -15,7 +15,7 @@ import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/tra
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   const kind = Array.isArray(req.query.kind) ? req.query.kind[0] : req.query.kind;
-  if (kind !== 'component' && kind !== 'pattern') {
+  if (kind !== 'component' && kind !== 'pattern' && kind !== 'page') {
     return handleRegistryRoute(req, res, ['GET', 'PUT'], async () => {
       sendRegistryError(res, 'not_found', `Unknown transfer entity kind "${kind ?? ''}".`);
     });

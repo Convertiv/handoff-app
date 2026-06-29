@@ -238,3 +238,45 @@ export type PatternListObject = {
   id: string;
   path: string;
 } & PatternObject;
+
+// ---------------------------------------------------------------------------
+// Page types
+// ---------------------------------------------------------------------------
+
+/**
+ * A documentation page authored as markdown. The frontmatter is parsed into these fields and the
+ * markdown body is the rendered content. Pages are workspace-authored under `<workingPath>/pages/`
+ * and are first-class registry entities (publish/checkout) alongside components and patterns. Unlike
+ * components/patterns there is no rendered-artifact pipeline: the raw markdown is stored and rendered
+ * at runtime.
+ */
+export type PageObject = {
+  title: string;
+  description?: string;
+  group?: string;
+  /** Sort weight within the nav section (lower first). */
+  weight?: number;
+  /** Alternative title used in navigation. */
+  menuTitle?: string;
+  /** SEO overrides. */
+  metaTitle?: string;
+  metaDescription?: string;
+  /** When `false`, the page is hidden from navigation. */
+  enabled?: boolean;
+  /** External link target — a URL/path string, or `true` to flag the section as external. */
+  external?: string | boolean;
+  /** Optional declarative submenu structure (mirrors the markdown frontmatter `menu`). */
+  menu?: { [key: string]: any };
+};
+
+export type PageListObject = {
+  /** Stable page id — its slug path (e.g. `guides/setup`), derived from the file location (id ≡ route). */
+  id: string;
+  /** Logical route the page is served at (e.g. `/guides/setup`). */
+  path: string;
+  /**
+   * Absolute filesystem path of the source `.md` (workspace store only). Workspace-only and stripped
+   * from the published transfer item — never persisted to or served from the registry.
+   */
+  sourcePath?: string;
+} & PageObject;

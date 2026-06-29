@@ -5,11 +5,13 @@ import {
   componentFiles,
   components,
   docsArtifacts,
+  pageFiles,
+  pages,
   patternFiles,
   patterns,
   type RegistryReviewMetadata,
 } from '@handoff/registry/db/schema';
-import type { ComponentListObject, PatternListObject } from '@handoff/transformers/preview/types';
+import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import { mergeReviewMetadata, type ManagedEntityKind, type ValidatedMetadataWrite } from './allowlist';
 import type { ValidatedFile } from './files';
 import { resolveBuildMeta, type RegistryBuildMeta } from './meta';
@@ -35,10 +37,10 @@ export interface EntityReadResult {
 
 /** Binds an entity kind to its tables and the conventions used to build/store its records. */
 interface EntitySpec {
-  table: typeof components | typeof patterns;
-  filesTable: typeof componentFiles | typeof patternFiles;
+  table: typeof components | typeof patterns | typeof pages;
+  filesTable: typeof componentFiles | typeof patternFiles | typeof pageFiles;
   fileFkColumn: typeof componentFiles.componentId;
-  fileFkName: 'componentId' | 'patternId';
+  fileFkName: 'componentId' | 'patternId' | 'pageId';
   pathPrefix: string;
 }
 
@@ -56,6 +58,13 @@ const ENTITY: Record<ManagedEntityKind, EntitySpec> = {
     fileFkColumn: patternFiles.patternId as unknown as typeof componentFiles.componentId,
     fileFkName: 'patternId',
     pathPrefix: 'pattern',
+  },
+  page: {
+    table: pages,
+    filesTable: pageFiles as unknown as typeof componentFiles,
+    fileFkColumn: pageFiles.pageId as unknown as typeof componentFiles.componentId,
+    fileFkName: 'pageId',
+    pathPrefix: 'page',
   },
 };
 
@@ -92,6 +101,15 @@ const buildPatternRecord = (id: string, path: string, fields: Record<string, unk
   group: asString(fields.group) ?? '',
   components: [],
   ...(asStringArray(fields.tags) ? { tags: asStringArray(fields.tags) } : {}),
+});
+
+/** Build a minimal, valid metadata-only page record from allowlisted fields. */
+const buildPageRecord = (id: string, path: string, fields: Record<string, unknown>): PageListObject => ({
+  id,
+  path,
+  title: asString(fields.title) ?? id,
+  description: asString(fields.description) ?? '',
+  group: asString(fields.group) ?? '',
 });
 
 /** Whether an entity exists by id. */
@@ -142,22 +160,29 @@ export const createEntity = async (
   const path = `${spec.pathPrefix}/${id}`;
   const { fields } = write;
   const metadata = write.metadata ?? null;
-  const record = kind === 'component' ? buildComponentRecord(id, path, fields) : buildPatternRecord(id, path, fields);
+  const record =
+    kind === 'component'
+      ? buildComponentRecord(id, path, fields)
+      : kind === 'pattern'
+        ? buildPatternRecord(id, path, fields)
+        : buildPageRecord(id, path, fields);
 
+  // `tags` is promoted on components/patterns only; the pages table has no such column.
   const baseValues = {
     id,
     path,
     title: asString(fields.title),
     description: asString(fields.description),
     group: asString(fields.group),
-    tags: asStringArray(fields.tags),
     record,
     metadata,
   };
   const values =
     kind === 'component'
-      ? { ...baseValues, type: '', categories: asStringArray(fields.categories) }
-      : { ...baseValues, components: [] };
+      ? { ...baseValues, tags: asStringArray(fields.tags), type: '', categories: asStringArray(fields.categories) }
+      : kind === 'pattern'
+        ? { ...baseValues, tags: asStringArray(fields.tags), components: [] }
+        : baseValues;
 
   await db.insert(spec.table).values(values as any);
   return { data: withMetadata(record, metadata), build: await resolveBuildMeta(db, kind, id) };
@@ -228,7 +253,11 @@ export const deleteEntity = async (db: RegistryDatabase, kind: ManagedEntityKind
     return false;
   }
   await db.delete(docsArtifacts).where(and(eq(docsArtifacts.entityKind, kind), eq(docsArtifacts.entityId, id)));
-  await db.delete(docsArtifacts).where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id)));
+  // Pages own no artifacts (and `page` is not an artifact owner kind), so only components/patterns
+  // need their owned artifacts cleared.
+  if (kind !== 'page') {
+    await db.delete(docsArtifacts).where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id)));
+  }
   await db.delete(buildMetadata).where(and(eq(buildMetadata.entityKind, kind), eq(buildMetadata.entityId, id)));
   await db.delete(spec.table).where(eq(spec.table.id, id));
   return true;

@@ -1,4 +1,4 @@
-import { ComponentListObject, ComponentType, PatternListObject } from '@handoff/transformers/preview/types';
+import { ComponentListObject, ComponentType, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
@@ -354,6 +354,99 @@ const buildBasePath = () => {
     return '';
   }
   return (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\/+|\/+$/g, '') + '/';
+};
+
+/**
+ * Build the nested menu items for a section's child pages from the page records. Mirrors the
+ * filesystem auto-scan (`buildMenuFromDirectory`) but operates on records since the registry has no
+ * markdown to walk: each immediate slug segment under `parentId` becomes a leaf link, or a
+ * collapsible group when it has descendants of its own.
+ */
+const buildChildPageItems = (parentId: string, pages: PageListObject[]): any[] => {
+  const prefix = `${parentId}/`;
+  const descendants = pages.filter((page) => page.id.startsWith(prefix));
+  const segments = uniq(descendants.map((page) => page.id.slice(prefix.length).split('/')[0]));
+
+  return segments
+    .map((segment) => {
+      const id = `${parentId}/${segment}`;
+      const record = pages.find((page) => page.id === id);
+      const nested = buildChildPageItems(id, pages);
+      const item: any = {
+        title: record?.menuTitle ?? record?.title ?? startCase(segment),
+        path: record?.path ?? `/${id}`,
+        weight: record?.weight ?? 0,
+      };
+      if (nested.length > 0) {
+        item.menu = nested;
+      }
+      return item;
+    })
+    .sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0) || a.title.localeCompare(b.title));
+};
+
+/**
+ * Build navigation sections from published page records (registry mode). Mirrors the section shape
+ * {@link staticBuildMenu} produces from the filesystem, but sourced from records since the registry
+ * has no markdown to scan. Top-level pages (ids without `/`) become sections; a page's `menu`
+ * frontmatter declares submenus (including dynamic component/pattern/token slots), otherwise child
+ * pages (`<id>/…`) are nested by slug under a single labeled group. Disabled pages are dropped.
+ */
+export const buildPagesMenu = (
+  pages: PageListObject[],
+  components: ComponentListObject[],
+  patterns: PatternListObject[]
+): SectionLink[] => {
+  const enabled = (pages ?? []).filter((page) => page.enabled !== false);
+  const tops = enabled.filter((page) => !page.id.includes('/'));
+
+  return tops
+    .map((top): SectionLink | undefined => {
+      let subSections: any[] = [];
+
+      if (top.menu) {
+        subSections = Object.keys(top.menu)
+          .map((key) => {
+            const sub = top.menu[key];
+            if (sub.components) {
+              const dynamic =
+                typeof sub.components === 'string' ? { kind: 'components' as const, type: sub.components } : { kind: 'components' as const };
+              return { title: sub.title, menu: buildComponentMenu(components, sub.components), dynamic };
+            }
+            if (sub.tokens) {
+              return { title: 'Tokens', menu: staticBuildTokensMenu() };
+            }
+            if (sub.patterns) {
+              return { title: sub.title || 'Patterns', menu: buildPatternMenu(patterns), dynamic: { kind: 'patterns' as const } };
+            }
+            if (sub.enabled !== false) {
+              return sub;
+            }
+          })
+          .filter(filterOutUndefined);
+      } else {
+        const children = buildChildPageItems(top.id, enabled);
+        // A labeled group (no `path`) so the side nav renders the child links beneath the section.
+        subSections = children.length > 0 ? [{ title: top.menuTitle ?? top.title, menu: children }] : [];
+      }
+
+      let external: string | boolean = false;
+      if (
+        typeof top.external === 'string' &&
+        (top.external.startsWith('http://') || top.external.startsWith('https://') || top.external.startsWith('/'))
+      ) {
+        external = top.external;
+      }
+
+      return {
+        title: top.menuTitle ?? top.title,
+        external,
+        weight: top.weight ?? 0,
+        path: `/${top.id}`,
+        subSections,
+      };
+    })
+    .filter(filterOutUndefined);
 };
 
 /**

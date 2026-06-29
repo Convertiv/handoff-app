@@ -9,7 +9,7 @@
  * This module is types-only and provider-agnostic.
  */
 
-import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
+import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 
 /** A value that may be returned directly or as a promise. */
 export type Awaitable<T> = T | Promise<T>;
@@ -27,6 +27,7 @@ export type TextFileKind =
   | 'script'
   | 'story'
   | 'docs'
+  | 'markdown'
   | 'schema'
   | 'other';
 
@@ -92,8 +93,24 @@ export interface PatternStore {
   getRelatedSourceFiles(id: string): Awaitable<TextFileResource[]>;
 }
 
-/** Convenience pairing of the two stores backing one runtime. */
+/**
+ * Read contract implemented by every page store backing. Same shape as {@link PatternStore} over
+ * page records. A page's single related source file is its verbatim `.md` (kind `markdown`).
+ */
+export interface PageStore {
+  /** All normalized page records. */
+  list(): Awaitable<PageListObject[]>;
+  /** A single normalized page record by stable id, or `null` when absent. */
+  get(id: string): Awaitable<PageListObject | null>;
+  /** Read a source file by reference, or `null` when it cannot be resolved. */
+  getSource(ref: SourceReference): Awaitable<TextFileResource | null>;
+  /** The page's verbatim `.md` source file, for checkout/publish. Empty when the page is unknown. */
+  getRelatedSourceFiles(id: string): Awaitable<TextFileResource[]>;
+}
+
+/** Convenience pairing of the stores backing one runtime. */
 export interface HandoffStore {
   components: ComponentStore;
   patterns: PatternStore;
+  pages: PageStore;
 }

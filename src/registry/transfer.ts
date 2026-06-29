@@ -12,7 +12,7 @@ import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../arti
 import type { RegistryTextFileKind } from './db/schema';
 
 /** Entity kinds that can be transferred (published/checked out). */
-export type TransferEntityKind = 'component' | 'pattern';
+export type TransferEntityKind = 'component' | 'pattern' | 'page';
 
 /**
  * A registry-safe source file in a transfer package. Declarations are workspace-only (synthesized on

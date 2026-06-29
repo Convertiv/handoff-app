@@ -1,7 +1,7 @@
 import type { NextApiResponse } from 'next';
 
 /** Entity kinds whose docs pages are statically generated and can be regenerated on demand. */
-type RevalidatableEntityKind = 'component' | 'pattern';
+type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
 
 /**
  * Best-effort on-demand revalidation of the statically-generated docs pages affected by a registry
@@ -23,7 +23,8 @@ export const revalidateEntityPages = async (
   kind: RevalidatableEntityKind,
   id: string
 ): Promise<void> => {
-  const paths = [`/system/${kind}/${id}`, '/system'];
+  // Pages are served at their own route (`/<id>`); components/patterns live under `/system`.
+  const paths = kind === 'page' ? [`/${id}`] : [`/system/${kind}/${id}`, '/system'];
   for (const path of paths) {
     try {
       await res.revalidate(path);

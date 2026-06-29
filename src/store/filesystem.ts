@@ -10,10 +10,10 @@
  */
 
 import fs from 'fs-extra';
-import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
+import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 import type { RuntimeConfig } from '../types/config';
 import { getRelatedSourceFilesForRecord, sourceContentTypeForPath } from './source-files';
-import type { ComponentStore, PatternStore, SourceReference, TextFileResource } from './types';
+import type { ComponentStore, PageStore, PatternStore, SourceReference, TextFileResource } from './types';
 
 /** Minimal context needed to back the filesystem store. */
 export interface FilesystemStoreContext {
@@ -87,5 +87,54 @@ export class FilesystemPatternStore implements PatternStore {
     const record = this.records[id];
     if (!record) return [];
     return getRelatedSourceFilesForRecord(record);
+  }
+}
+
+/**
+ * Read a page's verbatim source `.md` as a registry-safe `markdown` resource. The registry-safe path
+ * is `${id}.md` (id may contain slashes for nested pages), which is also where checkout writes it.
+ */
+const readPageSource = (record: PageListObject): TextFileResource | null => {
+  const absolutePath = record.sourcePath;
+  try {
+    if (!absolutePath || !fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      return null;
+    }
+    return {
+      path: `${record.id}.md`,
+      absolutePath,
+      kind: 'markdown',
+      content: fs.readFileSync(absolutePath, 'utf8'),
+      contentType: 'text/markdown; charset=utf-8',
+    };
+  } catch {
+    return null;
+  }
+};
+
+export class FilesystemPageStore implements PageStore {
+  constructor(private readonly context: FilesystemStoreContext) {}
+
+  private get records(): Record<string, PageListObject> {
+    return this.context.runtimeConfig?.entries?.pages ?? {};
+  }
+
+  list(): PageListObject[] {
+    return Object.values(this.records);
+  }
+
+  get(id: string): PageListObject | null {
+    return this.records[id] ?? null;
+  }
+
+  getSource(ref: SourceReference): TextFileResource | null {
+    return readSourceByReference(ref);
+  }
+
+  getRelatedSourceFiles(id: string): TextFileResource[] {
+    const record = this.records[id];
+    if (!record) return [];
+    const resource = readPageSource(record);
+    return resource ? [resource] : [];
   }
 }

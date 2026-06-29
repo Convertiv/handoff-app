@@ -62,6 +62,15 @@ const resolveConnectionOrThrow = (handoff: Handoff) => {
 
 /** Run the smallest build that guarantees the selected entity's artifacts are current. */
 const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
+  // Pages carry no rendered artifacts (raw markdown is rendered at runtime), so there is nothing to
+  // build — the package is assembled directly from the discovered page record + its `.md`.
+  if (kind === 'page') {
+    if (!handoff.runtimeConfig?.entries?.pages?.[id]) {
+      throw new PublishPackageError(`Page "${id}" is not declared in this workspace.`);
+    }
+    return;
+  }
+
   // Global artifacts first so generated HTML references `component/main.{css,js}` / `shared.css` only
   // when they actually exist.
   await buildMainJS(handoff);
@@ -114,7 +123,7 @@ const describeUploadFailure = (error: RegistryClientError, registryUrl: string):
 export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   const connection = resolveConnectionOrThrow(handoff);
 
-  Logger.info(`Building ${kind} "${id}" for publish…`);
+  Logger.info(kind === 'page' ? `Preparing page "${id}" for publish…` : `Building ${kind} "${id}" for publish…`);
   await runTargetedBuild(handoff, kind, id);
 
   const pkg = await buildPublishPackage(handoff, kind, id);
@@ -133,5 +142,5 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
     throw error;
   }
 
-  Logger.success(`Published ${kind} "${id}" to the registry. It is now reviewable with no rebuild or restart.`);
+  Logger.success(`Published ${kind} "${id}" to the registry.`);
 };

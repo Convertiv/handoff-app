@@ -26,7 +26,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
 import type { TextFileKind } from '../../store/types';
-import type { ComponentListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
+import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
 /**
  * Text file kinds persisted by the registry. Declarations are a workspace-only concern
@@ -34,11 +34,15 @@ import type { ComponentListObject, PatternComponentEntry, PatternListObject } fr
  */
 export type RegistryTextFileKind = Exclude<TextFileKind, 'declaration'>;
 
-/** Entity a docs read-model artifact is associated with. */
-export type DocsArtifactEntityKind = 'component' | 'pattern' | 'summary' | 'asset';
+/**
+ * Entity a docs read-model artifact is associated with. `page` is included only for type-compat with
+ * the generic management delete path (which filters `docs_artifacts.entityKind` by kind); pages emit
+ * no artifacts, so no page-owned `docs_artifacts` rows ever exist.
+ */
+export type DocsArtifactEntityKind = 'component' | 'pattern' | 'page' | 'summary' | 'asset';
 
-/** Entity a build-metadata record is associated with. */
-export type BuildMetadataEntityKind = 'component' | 'pattern' | 'asset' | 'summary';
+/** Entity a build-metadata record is associated with. A page publish writes one `build_metadata` row. */
+export type BuildMetadataEntityKind = 'component' | 'pattern' | 'page' | 'asset' | 'summary';
 
 /**
  * Registry-only review/catalog metadata maintained through the management API.
@@ -167,6 +171,60 @@ export const patternFiles = pgTable(
 );
 
 /**
+ * Pages record group. `record` holds the full normalized {@link PageListObject} (frontmatter
+ * metadata) so the registry serves the same record shape the filesystem store produces; promoted
+ * columns exist for catalog querying/sorting. The markdown body travels as a `page_files` row, not in
+ * the record — see {@link pageFiles}.
+ */
+export const pages = pgTable(
+  'pages',
+  {
+    /** Stable page id (slug path, e.g. `guides/setup`). Join key across stores. */
+    id: text('id').primaryKey(),
+    /** Logical route the page is served at (e.g. `/guides/setup`). */
+    path: text('path').notNull(),
+    title: text('title'),
+    description: text('description'),
+    group: text('group'),
+    /** Sort weight within the nav section. */
+    weight: integer('weight'),
+    /** Full normalized page record. */
+    record: jsonb('record').$type<PageListObject>().notNull(),
+    /** Registry-only review/catalog metadata (management-API allowlist; never a render input). */
+    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('pages_group_idx').on(table.group)]
+);
+
+/**
+ * Page source files. A page has a single verbatim `.md` (kind `markdown`) stored for byte-exact
+ * checkout and for resolving the rendered body at request time. Declaration files are rejected at the
+ * schema level (consistent with the other file tables, though pages never carry declarations).
+ */
+export const pageFiles = pgTable(
+  'page_files',
+  {
+    pageId: text('page_id')
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    /** Registry-safe relative path within the entity (e.g. `guides/setup.md`). */
+    path: text('path').notNull(),
+    kind: text('kind').$type<RegistryTextFileKind>().notNull(),
+    content: text('content'),
+    storageRef: text('storage_ref'),
+    contentType: text('content_type').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.pageId, table.path] }),
+    check('page_files_kind_not_declaration', sql`${table.kind} <> 'declaration'`),
+  ]
+);
+
+/**
  * Docs read-model artifacts. Path-keyed so shared/global artifacts (`component/main.css`,
  * `component/main.js`, `component/shared.css`) are upserted by stable logical path. Mirrors the
  * `ArtifactDescriptor` field set.
@@ -232,6 +290,8 @@ export const registrySchema = {
   componentFiles,
   patterns,
   patternFiles,
+  pages,
+  pageFiles,
   docsArtifacts,
   buildMetadata,
 };

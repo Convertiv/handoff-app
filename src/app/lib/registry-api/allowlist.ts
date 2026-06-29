@@ -9,12 +9,16 @@ import type { RegistryReviewMetadata } from '@handoff/registry/db/schema';
  * Any non-allowlisted field is rejected with `400 bad_request` and the offending field names, so a
  * note edit can never silently alter how an entity renders.
  */
-export type ManagedEntityKind = 'component' | 'pattern';
+export type ManagedEntityKind = 'component' | 'pattern' | 'page';
 
-/** Top-level allowlisted fields per entity kind. Components additionally allow `categories`. */
+/**
+ * Top-level allowlisted fields per entity kind. Components additionally allow `categories`; pages
+ * have no promoted `tags` column, so their catalog fields stop at title/description/group.
+ */
 const TOP_LEVEL_FIELDS: Record<ManagedEntityKind, readonly string[]> = {
   component: ['title', 'description', 'group', 'tags', 'categories'],
   pattern: ['title', 'description', 'group', 'tags'],
+  page: ['title', 'description', 'group'],
 };
 
 /** Allowlisted nested review-metadata keys. */

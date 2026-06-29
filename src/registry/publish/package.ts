@@ -206,7 +206,7 @@ const enrichItem = async (
 
 /** Map an entity's related source files to transfer files, dropping workspace-only declarations. */
 const collectSourceFiles = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferFile[]> => {
-  const store = kind === 'component' ? handoff.store.components : handoff.store.patterns;
+  const store = kind === 'component' ? handoff.store.components : kind === 'pattern' ? handoff.store.patterns : handoff.store.pages;
   const related = await store.getRelatedSourceFiles(id);
   return related
     .filter((file) => !isWorkspaceOnlyFile(file))
@@ -373,6 +373,50 @@ const buildProvenance = (artifacts: TransferArtifact[]): TransferPackage['build'
   artifactHash: hashArtifacts(artifacts),
 });
 
+/** Deterministic content hash over the package source files (sorted by path) for build provenance. */
+const hashFiles = (files: TransferFile[]): string => {
+  const hash = crypto.createHash('sha256');
+  for (const file of [...files].sort((a, b) => a.path.localeCompare(b.path))) {
+    hash.update(file.path);
+    hash.update('\0');
+    hash.update(file.content);
+    hash.update('\0');
+  }
+  return hash.digest('hex');
+};
+
+/**
+ * Assemble a page's publish package: the normalized record (frontmatter) plus its single verbatim
+ * `.md` source file. Pages have no rendered-artifact pipeline (raw markdown is rendered at runtime),
+ * so `artifacts` is always empty and provenance is keyed by a source hash rather than an artifact hash.
+ */
+const buildPagePackage = async (handoff: Handoff, id: string): Promise<TransferPackage> => {
+  const record = await handoff.store.pages.get(id);
+  if (!record) {
+    throw new PublishPackageError(`Page "${id}" is not declared in this workspace.`);
+  }
+
+  const files = await collectSourceFiles(handoff, 'page', id);
+  if (files.length === 0) {
+    throw new PublishPackageError(`No source markdown was found for page "${id}". Ensure the page's .md file exists before publishing.`);
+  }
+
+  // `sourcePath` is a workspace-only absolute path; never persist it to the registry record.
+  const { sourcePath: _sourcePath, ...item } = record;
+
+  return {
+    item: item as unknown as Record<string, unknown>,
+    files,
+    artifacts: [],
+    build: {
+      status: 'current',
+      builtAt: new Date().toISOString(),
+      builderVersion: getBuilderVersion(),
+      sourceHash: hashFiles(files),
+    },
+  };
+};
+
 let cachedBuilderVersion: string | undefined;
 /** Resolve the handoff-app package version stamped into build provenance. */
 const getBuilderVersion = (): string => {
@@ -412,4 +456,4 @@ export const assertRequiredArtifactsPresent = (pkg: TransferPackage): void => {
 
 /** Assemble the publish package for an entity from the generated `public/api` artifacts. */
 export const buildPublishPackage = (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferPackage> =>
-  kind === 'component' ? buildComponentPackage(handoff, id) : buildPatternPackage(handoff, id);
+  kind === 'component' ? buildComponentPackage(handoff, id) : kind === 'pattern' ? buildPatternPackage(handoff, id) : buildPagePackage(handoff, id);

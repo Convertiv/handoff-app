@@ -5,7 +5,7 @@ import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
 /** Entity kinds publishable from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern'] as const;
+const ENTITY_KINDS = ['component', 'pattern', 'page'] as const;
 
 export interface PublishArgs extends SharedArgs {
   type: (typeof ENTITY_KINDS)[number];
@@ -19,7 +19,7 @@ export interface PublishArgs extends SharedArgs {
  */
 const command: CommandModule<{}, PublishArgs> = {
   command: 'publish <type> <id>',
-  describe: 'Build and publish a component or pattern to the connected registry',
+  describe: 'Build and publish a component, pattern, or page to the connected registry',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
@@ -28,7 +28,7 @@ const command: CommandModule<{}, PublishArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the component or pattern to publish',
+        describe: 'The stable id of the component, pattern, or page to publish',
         type: 'string',
       });
   },

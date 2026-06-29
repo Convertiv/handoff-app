@@ -1,12 +1,15 @@
 import fs from 'fs-extra';
-import type { ComponentListObject, PatternListObject } from '@handoff/transformers/preview/types';
+import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import { resolveArtifactFile } from './artifacts';
 import {
   getComponentDetail as getWorkspaceComponentDetail,
+  getPageDetail as getWorkspacePageDetail,
   getPatternDetail as getWorkspacePatternDetail,
   listComponents as listWorkspaceComponents,
+  listPages as listWorkspacePages,
   listPatterns as listWorkspacePatterns,
   type ComponentDetail,
+  type PageDetail,
   type PatternDetail,
 } from './records';
 import { getServerRuntimeConfig } from './runtime-config';
@@ -31,8 +34,15 @@ export interface ResolvedArtifactBody {
 export interface DocsBackend {
   listComponents(): Promise<ComponentListObject[]>;
   listPatterns(): Promise<PatternListObject[]>;
+  /**
+   * List published pages. The real consumer is registry-mode navigation; the workspace impl is
+   * vestigial (workspace nav is baked at build time and the catch-all reads markdown directly).
+   */
+  listPages(): Promise<PageListObject[]>;
   getComponentDetail(id: string): Promise<ComponentDetail | null>;
   getPatternDetail(id: string): Promise<PatternDetail | null>;
+  /** A page's record + rendered markdown body, or `null` when absent. Read by the catch-all route. */
+  getPageDetail(id: string): Promise<PageDetail | null>;
   /** Resolve an already-validated logical artifact path, or `null` when it cannot be served. */
   resolveArtifact(segments: string[]): Promise<ResolvedArtifactBody | null>;
 }
@@ -45,11 +55,17 @@ const workspaceBackend: DocsBackend = {
   async listPatterns() {
     return listWorkspacePatterns();
   },
+  async listPages() {
+    return listWorkspacePages();
+  },
   async getComponentDetail(id: string) {
     return getWorkspaceComponentDetail(id);
   },
   async getPatternDetail(id: string) {
     return getWorkspacePatternDetail(id);
+  },
+  async getPageDetail(id: string) {
+    return getWorkspacePageDetail(id);
   },
   async resolveArtifact(segments: string[]) {
     const resolved = resolveArtifactFile(segments);
