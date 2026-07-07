@@ -16,6 +16,8 @@ export interface NavData {
   shell: SectionLink[];
   components: NavEntity[];
   patterns: NavEntity[];
+  /** Published component token sets, filling the Tokens › Components slot in registry mode. */
+  tokenSets: NavEntity[];
 }
 
 interface INavContext {

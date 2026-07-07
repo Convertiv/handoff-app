@@ -8,11 +8,14 @@ import HeadersType from '../../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../components/ui/table';
 import {
   ComponentDocumentationProps,
+  fetchComponents,
+  fetchComponentTokens,
   fetchCompDocPageMarkdown,
   fetchLocalComponents,
   getClientRuntimeConfig,
   getTokens,
   IParams,
+  isRegistryRuntime,
   reduceSlugToString,
 } from '../../../../../components/util';
 import { getComponentInstanceScssTokens, tokenReferenceFormat } from '../../../../../components/util/token';
@@ -23,6 +26,11 @@ import { filterOutNull } from '../../../../../lib/utils';
  * @returns
  */
 export async function getStaticPaths() {
+  // In registry mode component token sets are published to the DB (possibly after this app was
+  // deployed), so paths cannot be frozen at build time — resolve them on demand.
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' };
+  }
   return {
     paths: fetchLocalComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
     fallback: false, // can also be true or 'blocking'
@@ -33,20 +41,44 @@ export const getStaticProps = async (context) => {
   const { component } = context.params as IParams;
   const config = getClientRuntimeConfig();
   const componentSlug = reduceSlugToString(component);
-  const tokens = getTokens();
-  const componentObject = tokens?.components?.[componentSlug!] ?? null;
   const markdownProps = (await fetchCompDocPageMarkdown('docs/', `/system/${componentSlug}`, `/system`)).props;
-  const componentData = fetchLocalComponents()?.find((c) => c.id === componentSlug);
 
-  const fallbackTitle = componentData?.name || startCase(componentSlug);
+  let componentObject: CoreTypes.IFileComponentObject | null = null;
+  let displayName: string | undefined;
+  let description: string | undefined;
+
+  if (isRegistryRuntime()) {
+    // Registry mode: source the token set and its generated download strings from the DB-backed docs
+    // read API (mutable, publishable after deploy). Unknown ids resolve to a clean not-found.
+    const detail = await fetchComponentTokens(componentSlug!);
+    if (!detail) {
+      return { notFound: true };
+    }
+    componentObject = detail.component;
+    markdownProps.scss = detail.scss;
+    markdownProps.css = detail.css;
+    markdownProps.styleDictionary = detail.styleDictionary;
+    markdownProps.types = detail.types;
+    const record = (await fetchComponents()).find((c) => c.id === componentSlug);
+    displayName = record?.title;
+    description = record?.description;
+  } else {
+    const tokens = getTokens();
+    componentObject = tokens?.components?.[componentSlug!] ?? null;
+    const componentData = fetchLocalComponents()?.find((c) => c.id === componentSlug);
+    displayName = componentData?.name;
+    description = componentData?.description;
+  }
+
+  const fallbackTitle = displayName || startCase(componentSlug);
   const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
 
   markdownProps.metadata = {
     ...markdownProps.metadata,
-    title: componentData?.name || markdownProps.metadata.title || startCase(componentSlug),
-    description: markdownProps.metadata.description || componentData?.description || '',
+    title: displayName || markdownProps.metadata.title || startCase(componentSlug),
+    description: markdownProps.metadata.description || description || '',
     metaTitle: markdownProps.metadata.metaTitle || fallbackMetaTitle,
-    metaDescription: markdownProps.metadata.metaDescription || componentData?.description || '',
+    metaDescription: markdownProps.metadata.metaDescription || description || '',
   };
 
   return {

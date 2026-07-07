@@ -12,7 +12,8 @@ import AnchorNav from '../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../components/Navigation/PrevNextNav';
 import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
-import { getTokens } from '../../components/util';
+import { buildTimeFoundationDesign, getTokens } from '../../components/util';
+import { useFoundationTokens } from '../../components/util/useFoundationTokens';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -27,7 +28,7 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       ...(await util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`)).props,
       config: util.getClientRuntimeConfig(),
-      design: getTokens().localStyles,
+      design: buildTimeFoundationDesign(),
     },
   };
 };
@@ -37,13 +38,22 @@ const ColorsPage = ({
   menu,
   metadata,
   current,
-  scss,
-  css,
-  styleDictionary,
-  types,
-  design,
+  scss: scssProp,
+  css: cssProp,
+  styleDictionary: styleDictionaryProp,
+  types: typesProp,
+  design: designProp,
   config,
 }: util.FoundationDocumentationProps) => {
+  // In registry mode the build-time token data/downloads are empty; hydrate from the docs read API.
+  const { design, css, scss, styleDictionary, types } = useFoundationTokens('colors', {
+    design: designProp,
+    css: cssProp,
+    scss: scssProp,
+    styleDictionary: styleDictionaryProp,
+    types: typesProp,
+  });
+
   const colorGroups = Object.fromEntries(
     Object.entries(groupBy(design.color, 'group'))
       .map(([groupKey, colors]) => {

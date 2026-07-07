@@ -13,7 +13,8 @@ import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/Ma
 import AnchorNav from '../../components/Navigation/AnchorNav';
 import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
-import { getTokens } from '../../components/util';
+import { buildTimeFoundationDesign, getTokens } from '../../components/util';
+import { useFoundationTokens } from '../../components/util/useFoundationTokens';
 
 type EffectParametersObject = CoreTypes.IEffectObject['effects'][number];
 
@@ -42,7 +43,7 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       config: util.getClientRuntimeConfig(),
       ...(await util.fetchFoundationDocPageMarkdown('docs/foundations/', 'effects', `/foundations`)).props,
-      design: getTokens().localStyles,
+      design: buildTimeFoundationDesign(),
     },
   };
 };
@@ -52,13 +53,22 @@ const EffectsPage = ({
   menu,
   metadata,
   current,
-  css,
-  scss,
-  styleDictionary,
-  types,
-  design,
+  css: cssProp,
+  scss: scssProp,
+  styleDictionary: styleDictionaryProp,
+  types: typesProp,
+  design: designProp,
   config,
 }: util.FoundationDocumentationProps) => {
+  // In registry mode the build-time token data/downloads are empty; hydrate from the docs read API.
+  const { design, css, scss, styleDictionary, types } = useFoundationTokens('effects', {
+    design: designProp,
+    css: cssProp,
+    scss: scssProp,
+    styleDictionary: styleDictionaryProp,
+    types: typesProp,
+  });
+
   const effectGroups = Object.fromEntries(
     Object.entries(groupBy(design.effect, 'group')).map(([groupKey, effects]) => {
       return [

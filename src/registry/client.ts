@@ -9,6 +9,14 @@
  */
 
 import type { CheckoutPayload, TransferEntityKind, TransferPackage } from './transfer';
+import type { TokenSetCheckoutPayload, TokenSetSummary, TokenSetTransferPackage } from './tokens/transfer';
+
+/** Encode a token set id for the catch-all transfer route, preserving `/` between segments. */
+const encodeSetIdPath = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
 
 /** Standard registry response envelope. */
 export interface RegistryEnvelope<T = unknown> {
@@ -104,6 +112,23 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
       );
       if (!envelope.data) {
         throw new RegistryClientError(`The registry returned no data for ${kind} "${id}".`);
+      }
+      return envelope.data;
+    },
+    /** List the registry's token sets (id + kind + source hash) for skip-unchanged / bulk checkout. */
+    async listTokenSets(): Promise<TokenSetSummary[]> {
+      const envelope = await request<{ sets: TokenSetSummary[] }>('GET', '/api/registry/transfer/tokens');
+      return envelope.data?.sets ?? [];
+    },
+    /** Publish (`PUT`) one token set's package (record + generated artifacts). */
+    publishTokens(pkg: TokenSetTransferPackage): Promise<RegistryEnvelope> {
+      return request('PUT', `/api/registry/transfer/tokens/${encodeSetIdPath(pkg.id)}`, pkg);
+    },
+    /** Checkout (`GET`) one token set's record + generated artifacts. */
+    async checkoutTokens(id: string): Promise<TokenSetCheckoutPayload> {
+      const envelope = await request<TokenSetCheckoutPayload>('GET', `/api/registry/transfer/tokens/${encodeSetIdPath(id)}`);
+      if (!envelope.data) {
+        throw new RegistryClientError(`The registry returned no data for token set "${id}".`);
       }
       return envelope.data;
     },

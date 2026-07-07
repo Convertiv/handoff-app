@@ -9,7 +9,8 @@ import { MarkdownComponents, remarkCodeMeta } from '../../../../components/Markd
 import AnchorNav from '../../../../components/Navigation/AnchorNav';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
-import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../../../components/util';
+import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens, buildTimeFoundationDesign } from '../../../../components/util';
+import { useFoundationTokens } from '../../../../components/util/useFoundationTokens';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -26,7 +27,7 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         config,
         ...(await fetchDocPageMarkdown('docs/', 'system/tokens/foundations/colors', `/system`)).props,
-        design: getTokens().localStyles,
+        design: buildTimeFoundationDesign(),
       } as FoundationDocumentationProps,
     },
   };
@@ -66,8 +67,9 @@ const ColorGroupTable = ({ colors }: { group: string; colors: CoreTypes.IColorOb
  * @param param0
  * @returns
  */
-const ComponentsPage = ({ content, menu, metadata, current, config, design }: FoundationDocumentationProps) => {
-  // Fetch components from api
+const ComponentsPage = ({ content, menu, metadata, current, config, design: designProp }: FoundationDocumentationProps) => {
+  // In registry mode the build-time `design` is empty; hydrate it from the docs read API on mount.
+  const { design } = useFoundationTokens('colors', { design: designProp });
 
   const colorGroups = Object.fromEntries(
     Object.entries(groupBy(design.color, 'group'))

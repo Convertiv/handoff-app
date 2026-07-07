@@ -109,5 +109,15 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
     async resolveArtifact(segments: string[]) {
       return resolveRegistryArtifact(db, segments);
     },
+    async listTokenSets() {
+      return (await store.tokens.listSets()).map(({ id, kind }) => ({ id, kind }));
+    },
+    async getTokenSetDetail(id: string) {
+      const set = await store.tokens.getSet(id);
+      if (!set) {
+        return null;
+      }
+      return { id: set.id, kind: set.kind, record: set.record, artifacts: await store.tokens.getArtifacts(id) };
+    },
   };
 };

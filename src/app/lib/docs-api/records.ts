@@ -1,10 +1,14 @@
 import fs from 'fs-extra';
 import matter from 'gray-matter';
 import path from 'path';
+import { Types as CoreTypes } from 'handoff-core';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
+import { deriveTokenSets, setNameForId } from '@handoff/registry/tokens/sets';
+import type { TokenArtifactResource } from '@handoff/store';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import { getArtifactRoot } from './artifacts';
+import type { TokenSetDetail, TokenSetListItem } from './backend';
 
 /**
  * Workspace-mode metadata reads for the docs read API.
@@ -114,4 +118,75 @@ export const getPageDetail = (id: string): PageDetail | null => {
     }
   }
   return null;
+};
+
+/**
+ * Workspace-mode token reads. The generated `tokens.json` and token style files are read straight
+ * from the export dir (`HANDOFF_EXPORT_PATH`, else `<cwd>/<HANDOFF_OUTPUT_DIR>`), mirroring the
+ * build-time `getTokens`/`fetchTokensString` readers so token behavior is identical to today's. The
+ * generated-file layout mirrors `fetchTokensString` (sass/types/sd/css) to preserve current
+ * semantics; custom transformer outputs are only surfaced through the registry backing.
+ */
+const tokensExportRoot = (): string =>
+  process.env.HANDOFF_EXPORT_PATH
+    ? path.resolve(process.env.HANDOFF_EXPORT_PATH)
+    : path.resolve(process.cwd(), process.env.HANDOFF_OUTPUT_DIR ?? 'exported');
+
+const readTokensDocument = (): CoreTypes.IDocumentationObject => {
+  const filePath = path.resolve(tokensExportRoot(), 'tokens.json');
+  if (!fs.existsSync(filePath)) {
+    return { localStyles: { color: [], typography: [], effect: [] }, components: {}, assets: {} } as CoreTypes.IDocumentationObject;
+  }
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as CoreTypes.IDocumentationObject;
+  } catch {
+    return { localStyles: { color: [], typography: [], effect: [] }, components: {}, assets: {} } as CoreTypes.IDocumentationObject;
+  }
+};
+
+const readTokenFile = (relativePath: string): string | null => {
+  const absolutePath = path.resolve(tokensExportRoot(), 'tokens', relativePath);
+  if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+    return null;
+  }
+  try {
+    return fs.readFileSync(absolutePath, 'utf8');
+  } catch {
+    return null;
+  }
+};
+
+/** Read the four core generated formats for a set name, mirroring `fetchTokensString`'s layout. */
+const readCoreTokenArtifacts = (name: string): TokenArtifactResource[] => {
+  const candidates: { path: string; format: string; contentType: string }[] = [
+    { path: `sass/${name}.scss`, format: 'scss', contentType: 'text/x-scss; charset=utf-8' },
+    { path: `types/${name}.scss`, format: 'types', contentType: 'text/x-scss; charset=utf-8' },
+    { path: `css/${name}.css`, format: 'css', contentType: 'text/css; charset=utf-8' },
+    { path: `sd/tokens/${name}.tokens.json`, format: 'styleDictionary', contentType: 'application/json; charset=utf-8' },
+    { path: `sd/tokens/${name}/${name}.tokens.json`, format: 'styleDictionary', contentType: 'application/json; charset=utf-8' },
+  ];
+  const artifacts: TokenArtifactResource[] = [];
+  const seenFormats = new Set<string>();
+  for (const candidate of candidates) {
+    if (seenFormats.has(candidate.format)) {
+      continue;
+    }
+    const content = readTokenFile(candidate.path);
+    if (content != null) {
+      artifacts.push({ path: candidate.path, format: candidate.format, content, contentType: candidate.contentType });
+      seenFormats.add(candidate.format);
+    }
+  }
+  return artifacts;
+};
+
+export const listTokenSets = (): TokenSetListItem[] =>
+  deriveTokenSets(readTokensDocument()).map(({ id, kind }) => ({ id, kind }));
+
+export const getTokenSetDetail = (id: string): TokenSetDetail | null => {
+  const set = deriveTokenSets(readTokensDocument()).find((candidate) => candidate.id === id);
+  if (!set) {
+    return null;
+  }
+  return { id: set.id, kind: set.kind, record: set.record, artifacts: readCoreTokenArtifacts(setNameForId(id)) };
 };

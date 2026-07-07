@@ -9,6 +9,7 @@
  * This module is types-only and provider-agnostic.
  */
 
+import type { TokenSetKind } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 
 /** A value that may be returned directly or as a promise. */
@@ -108,9 +109,48 @@ export interface PageStore {
   getRelatedSourceFiles(id: string): Awaitable<TextFileResource[]>;
 }
 
+/**
+ * A logical token set as the store exposes it: its stable id, kind, and the exact extracted token
+ * slice (a `record` of `IColorObject[]`/…/`IFileComponentObject`). Consumers read the whole set and
+ * group/sort/look up in memory, so there is no individual-token accessor.
+ */
+export interface TokenSetRecord {
+  id: string;
+  kind: TokenSetKind;
+  record: unknown;
+}
+
+/** A generated token artifact (CSS/SCSS/Style Dictionary/types/custom output) as the store returns it. */
+export interface TokenArtifactResource {
+  /** Registry-safe relative output path under the tokens dir (e.g. `css/colors.css`). */
+  path: string;
+  /** Logical format label (`css`|`scss`|`types`|`styleDictionary`|custom). */
+  format: string;
+  content: string;
+  contentType: string;
+}
+
+/**
+ * Read contract implemented by every token store backing. The filesystem backing derives sets from
+ * the local `tokens.json` + generated files; the registry backing reads the `token_sets` /
+ * `token_artifacts` tables. Consumers depend only on this so token behavior is consistent across
+ * modes even though the storage differs.
+ */
+export interface TokenStore {
+  /** All logical token sets (three foundation sets + one per component). */
+  listSets(): Awaitable<TokenSetRecord[]>;
+  /** A single set by stable id, or `null` when absent. */
+  getSet(id: string): Awaitable<TokenSetRecord | null>;
+  /** Every generated artifact owned by a set. Empty when the set is unknown or has no output. */
+  getArtifacts(id: string): Awaitable<TokenArtifactResource[]>;
+  /** One generated artifact for a set by logical format, or `null` when absent. */
+  getArtifact(id: string, format: string): Awaitable<TokenArtifactResource | null>;
+}
+
 /** Convenience pairing of the stores backing one runtime. */
 export interface HandoffStore {
   components: ComponentStore;
   patterns: PatternStore;
   pages: PageStore;
+  tokens: TokenStore;
 }

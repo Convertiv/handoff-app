@@ -419,7 +419,7 @@ const buildPagePackage = async (handoff: Handoff, id: string): Promise<TransferP
 
 let cachedBuilderVersion: string | undefined;
 /** Resolve the handoff-app package version stamped into build provenance. */
-const getBuilderVersion = (): string => {
+export const getBuilderVersion = (): string => {
   if (cachedBuilderVersion) {
     return cachedBuilderVersion;
   }

@@ -17,18 +17,22 @@ export type {
   SourceReference,
   TextFileKind,
   TextFileResource,
+  TokenArtifactResource,
+  TokenSetRecord,
+  TokenStore,
 } from './types';
 
 export {
   FilesystemComponentStore,
   FilesystemPageStore,
   FilesystemPatternStore,
+  FilesystemTokenStore,
   type FilesystemStoreContext,
 } from './filesystem';
 
 export { getRelatedSourceFilesForRecord, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
 
-import { FilesystemComponentStore, FilesystemPageStore, FilesystemPatternStore, type FilesystemStoreContext } from './filesystem';
+import { FilesystemComponentStore, FilesystemPageStore, FilesystemPatternStore, FilesystemTokenStore, type FilesystemStoreContext } from './filesystem';
 import type { HandoffStore } from './types';
 
 /**
@@ -39,4 +43,5 @@ export const createFilesystemStore = (context: FilesystemStoreContext): HandoffS
   components: new FilesystemComponentStore(context),
   patterns: new FilesystemPatternStore(context),
   pages: new FilesystemPageStore(context),
+  tokens: new FilesystemTokenStore(context),
 });

@@ -10,7 +10,8 @@ import Layout from '../../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import AnchorNav, { anchorSlugify } from '../../components/Navigation/AnchorNav';
 import HeadersType from '../../components/Typography/Headers';
-import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
+import { fetchFoundationDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeConfig, getTokens, buildTimeFoundationDesign } from '../../components/util';
+import { useFoundationTokens } from '../../components/util/useFoundationTokens';
 
 export interface typographyTypes {
   [key: string]: any;
@@ -29,7 +30,7 @@ export const getStaticProps: next.GetStaticProps = async () => {
     props: {
       ...(await fetchFoundationDocPageMarkdown('docs/foundations/', 'typography', `/foundations`)).props,
       config: getClientRuntimeConfig(),
-      design: getTokens().localStyles,
+      design: buildTimeFoundationDesign(),
     },
   };
 };
@@ -39,13 +40,22 @@ const Typography = ({
   menu,
   metadata,
   current,
-  scss,
-  css,
-  styleDictionary,
-  types,
+  scss: scssProp,
+  css: cssProp,
+  styleDictionary: styleDictionaryProp,
+  types: typesProp,
   config,
-  design,
+  design: designProp,
 }: FoundationDocumentationProps) => {
+  // In registry mode the build-time token data/downloads are empty; hydrate from the docs read API.
+  const { design, css, scss, styleDictionary, types } = useFoundationTokens('typography', {
+    design: designProp,
+    css: cssProp,
+    scss: scssProp,
+    styleDictionary: styleDictionaryProp,
+    types: typesProp,
+  });
+
   const typography = design.typography.slice().sort((a, b) => {
     const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
     const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;

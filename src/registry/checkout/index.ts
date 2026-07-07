@@ -50,7 +50,7 @@ const COMPONENT_EXTENSION = /\.(tsx|jsx|ts|js|cjs|mjs)$/i;
  * host has no local workspace to write into) and a resolved registry URL + access token. Throws an
  * actionable {@link CheckoutError} naming the exact misconfiguration.
  */
-const resolveConnectionOrThrow = (handoff: Handoff) => {
+export const resolveConnectionOrThrow = (handoff: Handoff) => {
   const mode = handoff.config?.runtime?.mode ?? 'workspace';
   if (mode !== 'workspace') {
     throw new CheckoutError(

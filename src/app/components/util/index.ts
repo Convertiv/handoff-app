@@ -9,6 +9,7 @@ import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 import { buildMenuFromDirectory, buildTokensFoundationsMenu, KNOWN_PATHS } from '@handoff/utils/menu-shell';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
+import { tokenFormatStrings } from '../../lib/docs-api/token-detail';
 // Build-time-baked navigation shell. Imported statically (same as `pages/api/docs/nav.json.ts`) so
 // it is bundled into the route chunk and readable at request time in the Vercel registry lambda,
 // where the markdown it is derived from is not traceable. See src/utils/menu-shell.ts.
@@ -47,7 +48,7 @@ export interface SectionLink {
      * registry mode the client nav refreshes these slots at request time from the live docs read
      * API; the build-time `menu` is the workspace/static-export snapshot.
      */
-    dynamic?: { kind: 'components' | 'patterns'; type?: string };
+    dynamic?: { kind: 'components' | 'patterns' | 'token-components'; type?: string };
   }[];
 }
 // Documentation Page Properties
@@ -607,6 +608,44 @@ export const fetchComponents = async (): Promise<ComponentListObject[]> => {
   }
 };
 
+/** A component token set resolved for a docs page: the token object + the four download strings. */
+export interface ComponentTokensResult {
+  component: CoreTypes.IFileComponentObject;
+  css: string;
+  scss: string;
+  styleDictionary: string;
+  types: string;
+}
+
+/**
+ * Fetch a component's token set through the mode-aware docs read API. Resolves through
+ * {@link resolveDocsBackend}, so registry mode reads the DB-backed `component/<id>` set (mutable,
+ * publishable after deploy) while workspace mode reads the generated files. Returns `null` when the
+ * set does not exist.
+ */
+export const fetchComponentTokens = async (componentId: string): Promise<ComponentTokensResult | null> => {
+  try {
+    const backend = await resolveDocsBackend();
+    const detail = await backend.getTokenSetDetail(`component/${componentId}`);
+    if (!detail) {
+      return null;
+    }
+    return { component: detail.record as CoreTypes.IFileComponentObject, ...tokenFormatStrings(detail.artifacts) };
+  } catch {
+    return null;
+  }
+};
+
+/** List the registry's logical token sets (id + kind) through the docs read API; `[]` on failure. */
+export const fetchTokenSets = async (): Promise<{ id: string; kind: string }[]> => {
+  try {
+    const backend = await resolveDocsBackend();
+    return (await backend.listTokenSets()) ?? [];
+  } catch {
+    return [];
+  }
+};
+
 type FetchLocalComponentsOptions = {
   includeTokens?: boolean;
   includeApi?: boolean;
@@ -769,13 +808,16 @@ const loadClientConfig = (): ClientConfigCache => {
  * @returns
  */
 export const fetchFoundationDocPageMarkdown = async (path: string, slug: string | undefined, id: string) => {
+  // In a registry build the download strings must not be frozen from the build machine's generated
+  // files; they hydrate at request time from the DB-backed docs read API (`useFoundationTokens`).
+  const readTokens = !isRegistryRuntime() && slug;
   return {
     props: {
       ...(await fetchDocPageMarkdown(path, slug, id)).props,
-      scss: slug ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
-      css: slug ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
-      styleDictionary: slug ? fetchTokensString(pluralizeComponent(slug), 'styleDictionary') : '',
-      types: slug ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
+      scss: readTokens ? fetchTokensString(pluralizeComponent(slug), 'scss') : '',
+      css: readTokens ? fetchTokensString(pluralizeComponent(slug), 'css') : '',
+      styleDictionary: readTokens ? fetchTokensString(pluralizeComponent(slug), 'styleDictionary') : '',
+      types: readTokens ? fetchTokensString(pluralizeComponent(slug), 'types') : '',
     },
   };
 };
@@ -791,6 +833,19 @@ export const getClientRuntimeConfig = (): ClientConfig => {
  * builds. Resolves from the same baked/persisted runtime mode the docs read API uses.
  */
 export const isRegistryRuntime = (): boolean => getClientRuntimeConfig().runtime?.mode === 'registry';
+
+/**
+ * Build-time foundation `localStyles` for a foundation page's `getStaticProps`. In workspace/static
+ * this is the local `tokens.json` snapshot (correct: static exports are immutable). In a **registry**
+ * build it is empty — foundation token data must not be frozen into build-time page props from the
+ * build machine's `tokens.json`; the page hydrates it at request time from the DB-backed docs read
+ * API (`useFoundationTokens`). Without this gate a registry build bakes the builder's local tokens,
+ * so foundations would appear before anything is published.
+ */
+export const buildTimeFoundationDesign = (): CoreTypes.IDocumentationObject['localStyles'] =>
+  isRegistryRuntime()
+    ? ({ color: [], typography: [], effect: [] } as CoreTypes.IDocumentationObject['localStyles'])
+    : getTokens().localStyles;
 
 export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH

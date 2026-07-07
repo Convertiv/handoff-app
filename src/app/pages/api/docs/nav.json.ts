@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ensureGet, getServerRuntimeConfig, resolveDocsBackend, sendDocsError } from '@/lib/docs-api';
 import { buildPagesMenu, type SectionLink } from '@/components/util';
+import { setNameForId } from '@handoff/registry/tokens/sets';
+import type { TokenSetListItem } from '@/lib/docs-api/backend';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 // Build-time-baked navigation shell (section structure + which slots are dynamic). Imported
 // statically so it is bundled into this route chunk and readable at runtime in the Vercel registry
@@ -30,12 +32,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let components: ComponentListObject[] = [];
   let patterns: PatternListObject[] = [];
   let pages: PageListObject[] = [];
+  let tokenSets: TokenSetListItem[] = [];
   try {
     const backend = await resolveDocsBackend();
-    [components, patterns, pages] = await Promise.all([backend.listComponents(), backend.listPatterns(), backend.listPages()]);
+    [components, patterns, pages, tokenSets] = await Promise.all([
+      backend.listComponents(),
+      backend.listPatterns(),
+      backend.listPages(),
+      backend.listTokenSets(),
+    ]);
   } catch {
     // Keep the baked shell; entities fill in on the next successful load (e.g. hard refresh).
   }
+
+  // The Tokens › Components nav slot is limited to published component token sets. Reuse the
+  // component records for titles/groups so the labels match the component catalog.
+  const componentById = new Map(components.map((component) => [component.id, component]));
+  const componentTokenSets = tokenSets
+    .filter((set) => set.kind === 'component')
+    .map((set) => {
+      const componentId = setNameForId(set.id);
+      const record = componentById.get(componentId);
+      return { id: componentId, title: record?.title, group: record?.group };
+    });
 
   // The baked shell already contains workspace pages in workspace/static builds. In a registry
   // deployment the shell is baked from the package's own docs only, so merge the DB-published pages in
@@ -56,6 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       shell,
       components: components.map(({ id, title, group, type }) => ({ id, title, group, type })),
       patterns: patterns.map(({ id, title, group }) => ({ id, title, group })),
+      tokenSets: componentTokenSets,
     });
   } catch (error) {
     sendDocsError(res, 'unexpected_error', error instanceof Error ? error.message : 'Unexpected docs read API error.');

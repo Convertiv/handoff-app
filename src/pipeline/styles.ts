@@ -5,6 +5,7 @@ import path from 'path';
 import Handoff from '..';
 import { FontFamily } from '../types/font';
 import { zip } from './archive';
+import { resolveTokenTransformers } from './token-transformers';
 
 /**
  * Build just the custom fonts — zips font directories and copies them to the export folder.
@@ -41,41 +42,9 @@ export const buildCustomFonts = async (handoff: Handoff, documentationObject: Ha
  * Builds design token style files using core and user-configured transformers.
  */
 export const buildStyles = async (handoff: Handoff, documentationObject: HandoffTypes.IDocumentationObject) => {
-  // Core transformers that should always be included
-  const coreTransformers = [
-    {
-      transformer: Transformers.ScssTransformer,
-      outDir: 'sass',
-      format: 'scss',
-    },
-    {
-      transformer: Transformers.ScssTypesTransformer,
-      outDir: 'types',
-      format: 'scss',
-    },
-    {
-      transformer: Transformers.CssTransformer,
-      outDir: 'css',
-      format: 'css',
-    },
-  ];
-
-  // Get user-configured transformers
-  const userTransformers = handoff.config?.pipeline?.transformers || [];
-
-  // Merge core transformers with user transformers
-  // If a user transformer matches a core transformer, use user's outDir and format
-  const transformers = coreTransformers.map((coreTransformer) => {
-    const userTransformer = userTransformers.find((t) => t.transformer === coreTransformer.transformer);
-    return userTransformer ? { ...coreTransformer, outDir: userTransformer.outDir, format: userTransformer.format } : coreTransformer;
-  });
-
-  // Add any additional user transformers that aren't core transformers
-  userTransformers.forEach((userTransformer) => {
-    if (!coreTransformers.some((core) => core.transformer === userTransformer.transformer)) {
-      transformers.push(userTransformer);
-    }
-  });
+  // Resolve the merged core + user-configured transformer list (single source of truth, shared with
+  // the registry publish packaging so the on-disk layout never drifts).
+  const transformers = resolveTokenTransformers(handoff);
 
   const baseDir = handoff.getVariablesFilePath();
   const runner = await handoff.getRunner();

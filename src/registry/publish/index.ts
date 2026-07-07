@@ -35,7 +35,7 @@ export class PublishError extends Error {
  * hosts do not publish) and a resolved registry URL + access token. Throws an actionable
  * {@link PublishError} naming the exact misconfiguration.
  */
-const resolveConnectionOrThrow = (handoff: Handoff) => {
+export const resolveConnectionOrThrow = (handoff: Handoff) => {
   const mode = handoff.config?.runtime?.mode ?? 'workspace';
   if (mode !== 'workspace') {
     throw new PublishError(

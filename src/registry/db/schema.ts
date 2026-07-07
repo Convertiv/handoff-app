@@ -26,6 +26,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
 import type { TextFileKind } from '../../store/types';
+import type { TokenSetKind } from '../tokens/sets';
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
 /**
@@ -284,6 +285,63 @@ export const buildMetadata = pgTable(
   (table) => [primaryKey({ columns: [table.entityKind, table.entityId] })]
 );
 
+/**
+ * Token sets record group. One row per logical token set (`foundation/colors`, `component/<id>`).
+ * `record` holds the exact extracted token slice as JSONB so no token property is lost and new ones
+ * flow through without a migration. Build/publish metadata (status/source_hash/built_at) lives on
+ * this row — tokens are self-contained and do not use the shared `build_metadata` table.
+ */
+export const tokenSets = pgTable(
+  'token_sets',
+  {
+    /** Stable logical set id (`foundation/colors` | `component/button`). Join key across stores. */
+    id: text('id').primaryKey(),
+    /** Set kind (`foundation` | `component`). */
+    kind: text('kind').$type<TokenSetKind>().notNull(),
+    /** Full extracted token slice (`IColorObject[]`/…/`IFileComponentObject`). */
+    record: jsonb('record').notNull(),
+    /** Deterministic content hash over the record + generated artifacts (drives skip-unchanged). */
+    sourceHash: text('source_hash'),
+    /** Build/publish status for the set. */
+    status: text('status').$type<RegistryBuildStatus>(),
+    builtAt: timestamp('built_at', { withTimezone: true }),
+    builderVersion: text('builder_version'),
+    /** Registry-only review/catalog metadata (parity with other entities; management-API only). */
+    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('token_sets_kind_idx').on(table.kind)]
+);
+
+/**
+ * Generated token artifacts owned by a token set (CSS/SCSS/Style Dictionary/types/custom transformer
+ * output). Served byte-for-byte; the registry never re-runs transformers. Keyed by `(token_set_id,
+ * path)` where `path` is the registry-safe output path relative to `getVariablesFilePath()`.
+ */
+export const tokenArtifacts = pgTable(
+  'token_artifacts',
+  {
+    tokenSetId: text('token_set_id')
+      .notNull()
+      .references(() => tokenSets.id, { onDelete: 'cascade' }),
+    /** Registry-safe relative output path (e.g. `css/colors.css`, `sd/button/button.tokens.json`). */
+    path: text('path').notNull(),
+    /** Logical format label (`css`|`scss`|`types`|`styleDictionary`|custom outDir). */
+    format: text('format').notNull(),
+    /** Inline content; null when stored externally via `storageRef`. */
+    content: text('content'),
+    /** Reference to externally stored content (future object storage). */
+    storageRef: text('storage_ref'),
+    contentType: text('content_type').notNull(),
+    hash: text('hash'),
+    size: integer('size'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.tokenSetId, table.path] })]
+);
+
 /** All registry tables, for typed Drizzle clients and migration tooling. */
 export const registrySchema = {
   components,
@@ -294,4 +352,6 @@ export const registrySchema = {
   pageFiles,
   docsArtifacts,
   buildMetadata,
+  tokenSets,
+  tokenArtifacts,
 };

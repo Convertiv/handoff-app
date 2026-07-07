@@ -193,6 +193,27 @@ const buildEntitySubmenu = (entities: NavEntity[], segment: 'component' | 'patte
     .sort((a, b) => a.title.localeCompare(b.title));
 };
 
+/**
+ * Build the Tokens › Components group from the published component token sets, mirroring the
+ * workspace/static `staticBuildTokensMenu` component group. Returns `null` when none are published.
+ */
+const buildTokenComponentsGroup = (tokenSets: NavEntity[]) => {
+  if (!tokenSets || tokenSets.length === 0) {
+    return null;
+  }
+  const basePath = buildBasePath();
+  return {
+    title: 'Components',
+    path: `${basePath}system/tokens/components`,
+    menu: tokenSets
+      .map((entity) => ({
+        path: `${basePath}system/tokens/components/${entity.id}`,
+        title: entity.title || startCase(entity.id),
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+  };
+};
+
 const SideNav = ({ menu }: { menu: SectionLink }) => {
   const { nav } = useNavContext();
   const router = useRouter();
@@ -220,6 +241,11 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
       }
       if (dyn?.kind === 'patterns') {
         return { ...section, menu: buildEntitySubmenu(nav.patterns ?? [], 'pattern') };
+      }
+      if (dyn?.kind === 'token-components') {
+        // Append the published component token sets to the baked Foundations menu (keep both).
+        const componentsGroup = buildTokenComponentsGroup(nav.tokenSets ?? []);
+        return componentsGroup ? { ...section, menu: [...(section.menu ?? []), componentsGroup] } : section;
       }
       return section;
     });

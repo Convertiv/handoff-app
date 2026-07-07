@@ -168,6 +168,33 @@ class Handoff {
     return this;
   }
 
+  /**
+   * Publish design token sets from this connected workspace to the configured remote registry. Runs a
+   * fresh token build (Figma extract + style transformers), discovers the logical sets, and uploads
+   * each changed set (its extracted record + generated artifacts). Publishes every set when `setId` is
+   * omitted, or only the named set (`foundation/colors`, `component/<id>`). Loaded lazily so the
+   * registry client/build code never enters the docs app bundle.
+   */
+  async publishTokens(setId?: string): Promise<Handoff> {
+    this.preRunner();
+    const { publishTokens } = await import('./registry/publish/tokens');
+    await publishTokens(this, setId);
+    return this;
+  }
+
+  /**
+   * Checkout design token sets from the connected remote registry into this workspace: reconstruct
+   * the canonical local `tokens.json` and restore the generated token files to their configured output
+   * paths. Checks out every published set when `setId` is omitted, or only the named set. Loaded lazily
+   * so the registry client never enters the docs app bundle.
+   */
+  async checkoutTokens(setId?: string): Promise<Handoff> {
+    this.preRunner();
+    const { checkoutTokens } = await import('./registry/checkout/tokens');
+    await checkoutTokens(this, setId);
+    return this;
+  }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);

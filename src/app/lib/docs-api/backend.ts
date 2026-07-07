@@ -1,13 +1,17 @@
 import fs from 'fs-extra';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
+import type { TokenSetKind } from '@handoff/registry/tokens/sets';
+import type { TokenArtifactResource } from '@handoff/store';
 import { resolveArtifactFile } from './artifacts';
 import {
   getComponentDetail as getWorkspaceComponentDetail,
   getPageDetail as getWorkspacePageDetail,
   getPatternDetail as getWorkspacePatternDetail,
+  getTokenSetDetail as getWorkspaceTokenSetDetail,
   listComponents as listWorkspaceComponents,
   listPages as listWorkspacePages,
   listPatterns as listWorkspacePatterns,
+  listTokenSets as listWorkspaceTokenSets,
   type ComponentDetail,
   type PageDetail,
   type PatternDetail,
@@ -30,6 +34,21 @@ export interface ResolvedArtifactBody {
   body: Buffer | string;
 }
 
+/** A minimal token-set listing item (id + kind) for navigation. */
+export interface TokenSetListItem {
+  id: string;
+  kind: TokenSetKind;
+}
+
+/** A token set's detail: its extracted record slice + every generated artifact, served byte-for-byte. */
+export interface TokenSetDetail {
+  id: string;
+  kind: TokenSetKind;
+  /** `IColorObject[]`/…/`IFileComponentObject` — interpreted by the route per `kind`. */
+  record: unknown;
+  artifacts: TokenArtifactResource[];
+}
+
 /** The data operations every docs read API route is expressed in terms of. */
 export interface DocsBackend {
   listComponents(): Promise<ComponentListObject[]>;
@@ -45,6 +64,10 @@ export interface DocsBackend {
   getPageDetail(id: string): Promise<PageDetail | null>;
   /** Resolve an already-validated logical artifact path, or `null` when it cannot be served. */
   resolveArtifact(segments: string[]): Promise<ResolvedArtifactBody | null>;
+  /** List logical token sets (id + kind). The real consumer is registry-mode token navigation. */
+  listTokenSets(): Promise<TokenSetListItem[]>;
+  /** A token set's record + generated artifacts by stable id, or `null` when absent. */
+  getTokenSetDetail(id: string): Promise<TokenSetDetail | null>;
 }
 
 /** Workspace backing: generated filesystem artifacts under the app's mirrored `public/api` root. */
@@ -73,6 +96,12 @@ const workspaceBackend: DocsBackend = {
       return null;
     }
     return { contentType: resolved.contentType, body: fs.readFileSync(resolved.absolutePath) };
+  },
+  async listTokenSets() {
+    return listWorkspaceTokenSets();
+  },
+  async getTokenSetDetail(id: string) {
+    return getWorkspaceTokenSetDetail(id);
   },
 };
 

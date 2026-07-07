@@ -42,9 +42,11 @@ export interface MenuShellSubSection {
   menu?: MenuShellSubItem[];
   /**
    * Marks a slot whose contents are mode-aware registry entities. In registry mode the client nav
-   * refreshes these slots at request time from `/api/docs/nav.json`; the baked `menu` is empty.
+   * refreshes these slots at request time from `/api/docs/nav.json`. For `components`/`patterns` the
+   * baked `menu` is empty; for `token-components` the client *appends* a Components group to the baked
+   * Foundations `menu`, so both survive.
    */
-  dynamic?: { kind: 'components' | 'patterns'; type?: string };
+  dynamic?: { kind: 'components' | 'patterns' | 'token-components'; type?: string };
 }
 
 /** A top-level navigation section (mirrors `SectionLink` in the docs app). */
@@ -211,7 +213,9 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
               : { kind: 'components' as const };
           subSections.push({ title: sub.title, menu: [], dynamic });
         } else if (sub.tokens) {
-          subSections.push({ title: 'Tokens', menu: buildTokensFoundationsMenu(basePath) });
+          // Foundations are baked (deterministic); the client appends published component token sets
+          // into this slot at request time in registry mode (see SideNav `token-components`).
+          subSections.push({ title: 'Tokens', menu: buildTokensFoundationsMenu(basePath), dynamic: { kind: 'token-components' } });
         } else if (sub.patterns) {
           // Always keep the (empty) patterns slot in the shell — the client fills it at request time.
           subSections.push({ title: sub.title || 'Patterns', menu: [], dynamic: { kind: 'patterns' } });

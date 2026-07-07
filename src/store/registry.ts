@@ -16,9 +16,20 @@
 
 import { eq } from 'drizzle-orm';
 import type { RegistryDatabase } from '../registry/db/client';
-import { componentFiles, components, pageFiles, pages, patternFiles, patterns } from '../registry/db/schema';
+import { componentFiles, components, pageFiles, pages, patternFiles, patterns, tokenArtifacts, tokenSets } from '../registry/db/schema';
+import type { TokenSetKind } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
-import type { ComponentStore, HandoffStore, PageStore, PatternStore, SourceReference, TextFileResource } from './types';
+import type {
+  ComponentStore,
+  HandoffStore,
+  PageStore,
+  PatternStore,
+  SourceReference,
+  TextFileResource,
+  TokenArtifactResource,
+  TokenSetRecord,
+  TokenStore,
+} from './types';
 
 /** Minimal context needed to back a registry store: a live, typed Drizzle database. */
 export interface RegistryStoreContext {
@@ -158,9 +169,43 @@ export class RegistryPageStore implements PageStore {
   }
 }
 
+export class RegistryTokenStore implements TokenStore {
+  constructor(private readonly context: RegistryStoreContext) {}
+
+  async listSets(): Promise<TokenSetRecord[]> {
+    const rows = await this.context.db.select({ id: tokenSets.id, kind: tokenSets.kind, record: tokenSets.record }).from(tokenSets);
+    return rows.map((row) => ({ id: row.id, kind: row.kind as TokenSetKind, record: row.record }));
+  }
+
+  async getSet(id: string): Promise<TokenSetRecord | null> {
+    const rows = await this.context.db
+      .select({ id: tokenSets.id, kind: tokenSets.kind, record: tokenSets.record })
+      .from(tokenSets)
+      .where(eq(tokenSets.id, id))
+      .limit(1);
+    const row = rows[0];
+    return row ? { id: row.id, kind: row.kind as TokenSetKind, record: row.record } : null;
+  }
+
+  async getArtifacts(id: string): Promise<TokenArtifactResource[]> {
+    const rows = await this.context.db
+      .select({ path: tokenArtifacts.path, format: tokenArtifacts.format, content: tokenArtifacts.content, contentType: tokenArtifacts.contentType })
+      .from(tokenArtifacts)
+      .where(eq(tokenArtifacts.tokenSetId, id));
+    return rows
+      .filter((row) => row.content != null)
+      .map((row) => ({ path: row.path, format: row.format, content: row.content as string, contentType: row.contentType }));
+  }
+
+  async getArtifact(id: string, format: string): Promise<TokenArtifactResource | null> {
+    return (await this.getArtifacts(id)).find((artifact) => artifact.format === format) ?? null;
+  }
+}
+
 /** Build the database-backed store set for a registry database connection. */
 export const createRegistryStore = (context: RegistryStoreContext): HandoffStore => ({
   components: new RegistryComponentStore(context),
   patterns: new RegistryPatternStore(context),
   pages: new RegistryPageStore(context),
+  tokens: new RegistryTokenStore(context),
 });
