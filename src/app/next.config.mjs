@@ -19,6 +19,18 @@ const resolveBasePath = (rawBasePath) => {
 const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
 const handoffWorkingPath = path.resolve('%HANDOFF_WORKING_PATH%');
 
+// A configured custom asset-storage adapter module (relative to the consumer project). It is loaded
+// by a variable dynamic import at runtime, which nft cannot statically trace, so force it (and its
+// resolvable deps) into the registry bundle. Empty/unset for the built-in database/Vercel adapters.
+const handoffAssetStorageModule = '%HANDOFF_ASSET_STORAGE_MODULE%';
+const resolveAssetStorageInclude = () => {
+  if (handoffBuildTarget !== 'registry' || !handoffAssetStorageModule || handoffAssetStorageModule.startsWith('%HANDOFF_')) {
+    return undefined;
+  }
+  const abs = path.isAbsolute(handoffAssetStorageModule) ? handoffAssetStorageModule : path.resolve(handoffWorkingPath, handoffAssetStorageModule);
+  return { '/api/**': [abs] };
+};
+
 const resolveOutputMode = (target) => {
   if (target === 'static') {
     // Static export disables Next API routes, which the workspace docs read API (`/api/docs/*`)
@@ -49,6 +61,9 @@ const nextConfig = {
   // Registry-only; static export, which legitimately produces these files, is untouched.
   outputFileTracingExcludes:
     handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
+  // Force a configured custom asset-storage module into the registry trace (dynamic import is opaque
+  // to nft). Its SDK deps are additionally asserted via `getRequiredRegistryRuntimeModules`.
+  outputFileTracingIncludes: resolveAssetStorageInclude(),
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
@@ -83,6 +98,13 @@ const nextConfig = {
     HANDOFF_REGISTRY_ADAPTER: '%HANDOFF_REGISTRY_ADAPTER%',
     HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
     HANDOFF_REGISTRY_API_TOKEN_ENV: '%HANDOFF_REGISTRY_API_TOKEN_ENV%',
+    // Asset storage selection (provider + non-secret options + env-var names). Secret values (Blob
+    // token, custom credentials) are read from their named env var at request time, never baked.
+    HANDOFF_ASSET_STORAGE_ADAPTER: '%HANDOFF_ASSET_STORAGE_ADAPTER%',
+    HANDOFF_ASSET_STORAGE_MODULE: '%HANDOFF_ASSET_STORAGE_MODULE%',
+    HANDOFF_ASSET_STORAGE_TOKEN_ENV: '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%',
+    HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES: '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%',
+    HANDOFF_ASSET_STORAGE_OPTIONS: '%HANDOFF_ASSET_STORAGE_OPTIONS%',
   },
   images: {
     unoptimized: true,

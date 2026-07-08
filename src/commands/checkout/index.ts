@@ -5,7 +5,7 @@ import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
 /** Entity kinds checkout-able from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens'] as const;
+const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens', 'assets'] as const;
 
 export interface CheckoutArgs extends SharedArgs {
   type: (typeof ENTITY_KINDS)[number];
@@ -18,13 +18,17 @@ export interface CheckoutArgs extends SharedArgs {
  * declaration.
  *
  * `handoff-app checkout tokens [setId]` — pull every published token set (or only the named set) into
- * this workspace: reconstruct `tokens.json` and restore the generated token files. Available only
- * from a connected workspace (`runtime.mode: workspace` + a configured `registryConnection`).
- * Overwriting existing local files requires `--force` or an interactive confirmation.
+ * this workspace: reconstruct `tokens.json` and restore the generated token files.
+ *
+ * `handoff-app checkout assets [collection]` pulls every published asset collection (or only the
+ * named one) into this workspace, recreating the standard asset files, sprite/manifest, and archives.
+ * Available only from a connected workspace (`runtime.mode: workspace` + a configured
+ * `registryConnection`). Overwriting existing local files requires `--force` or an interactive
+ * confirmation.
  */
 const command: CommandModule<{}, CheckoutArgs> = {
   command: 'checkout <type> [id]',
-  describe: 'Pull a component, pattern, page, or design tokens from the connected registry into this workspace',
+  describe: 'Pull a component, pattern, page, design tokens, or assets from the connected registry into this workspace',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
@@ -33,7 +37,7 @@ const command: CommandModule<{}, CheckoutArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the entity (component/pattern/page id, or a token set id); optional for tokens',
+        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); optional for tokens/assets',
         type: 'string',
       });
   },
@@ -42,6 +46,10 @@ const command: CommandModule<{}, CheckoutArgs> = {
     try {
       if (args.type === 'tokens') {
         await handoff.checkoutTokens(args.id);
+        return;
+      }
+      if (args.type === 'assets') {
+        await handoff.checkoutAssets(args.id);
         return;
       }
       if (!args.id) {

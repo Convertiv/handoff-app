@@ -14,12 +14,29 @@
  *   returned exactly as it was published.
  */
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
-import { componentFiles, components, pageFiles, pages, patternFiles, patterns, tokenArtifacts, tokenSets } from '../registry/db/schema';
+import {
+  assetBlobs,
+  assetCollections,
+  assets,
+  componentFiles,
+  components,
+  pageFiles,
+  pages,
+  patternFiles,
+  patterns,
+  tokenArtifacts,
+  tokenSets,
+  type AssetStorageProvider,
+} from '../registry/db/schema';
 import type { TokenSetKind } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 import type {
+  AssetContentResource,
+  AssetMetadata,
+  AssetStore,
   ComponentStore,
   HandoffStore,
   PageStore,
@@ -34,6 +51,12 @@ import type {
 /** Minimal context needed to back a registry store: a live, typed Drizzle database. */
 export interface RegistryStoreContext {
   db: RegistryDatabase;
+  /**
+   * Resolve the {@link AssetStorage} adapter for a blob's recorded provider (or `null` for the inline
+   * `database` provider). Injected by the app runtime so `src/store` stays free of app-side imports;
+   * when omitted, only inline DB-backed asset content is resolvable.
+   */
+  resolveAssetAdapter?: (provider: AssetStorageProvider) => Promise<AssetStorage | null>;
 }
 
 /** A persisted text-file row, as selected from `component_files`/`pattern_files`. */
@@ -202,10 +225,110 @@ export class RegistryTokenStore implements TokenStore {
   }
 }
 
+const readableToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk as unknown as Uint8Array));
+  }
+  return Buffer.concat(chunks);
+};
+
+export class RegistryAssetStore implements AssetStore {
+  constructor(private readonly context: RegistryStoreContext) {}
+
+  async listCollections(): Promise<string[]> {
+    const rows = await this.context.db.select({ collection: assetCollections.collection }).from(assetCollections);
+    return rows.map((row) => row.collection);
+  }
+
+  async listAssets(collection: string): Promise<AssetMetadata[]> {
+    const rows = await this.context.db
+      .select({
+        collection: assets.collection,
+        path: assets.path,
+        name: assets.name,
+        contentType: assets.contentType,
+        size: assets.size,
+        contentHash: assets.contentHash,
+        metadata: assets.metadata,
+      })
+      .from(assets)
+      .where(eq(assets.collection, collection));
+    return rows.map((row) => ({
+      collection: row.collection,
+      path: row.path,
+      name: row.name,
+      contentType: row.contentType,
+      size: row.size ?? 0,
+      contentHash: row.contentHash,
+      metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+    }));
+  }
+
+  async getAsset(collection: string, assetPath: string): Promise<AssetMetadata | null> {
+    return (await this.listAssets(collection)).find((asset) => asset.path === assetPath) ?? null;
+  }
+
+  async getAssetContent(collection: string, assetPath: string): Promise<AssetContentResource | null> {
+    const rows = await this.context.db
+      .select({
+        name: assets.name,
+        contentType: assets.contentType,
+        size: assets.size,
+        contentHash: assets.contentHash,
+        metadata: assets.metadata,
+        blobContent: assetBlobs.content,
+        storageRef: assetBlobs.storageRef,
+        storageProvider: assetBlobs.storageProvider,
+      })
+      .from(assets)
+      .innerJoin(assetBlobs, eq(assets.blobHash, assetBlobs.hash))
+      .where(and(eq(assets.collection, collection), eq(assets.path, assetPath)))
+      .limit(1);
+    const row = rows[0];
+    if (!row) {
+      return null;
+    }
+
+    const base: AssetMetadata = {
+      collection,
+      path: assetPath,
+      name: row.name,
+      contentType: row.contentType,
+      size: row.size ?? 0,
+      contentHash: row.contentHash,
+      metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+    };
+
+    // Inline (bytea, `database` provider) - return bytes directly.
+    if (row.blobContent != null) {
+      return { ...base, body: Buffer.from(row.blobContent as unknown as Uint8Array) };
+    }
+
+    // Object-backed - resolve through the provider that stored it.
+    if (!row.storageRef || !this.context.resolveAssetAdapter) {
+      return null;
+    }
+    const adapter = await this.context.resolveAssetAdapter(row.storageProvider);
+    if (!adapter) {
+      return null;
+    }
+    const result: AssetStorageReadResult = await adapter.get(row.storageRef);
+    if (result.kind === 'redirect') {
+      return { ...base, redirectUrl: result.url };
+    }
+    if (result.kind === 'bytes') {
+      return { ...base, body: result.bytes };
+    }
+    return { ...base, body: await readableToBuffer(result.stream) };
+  }
+}
+
 /** Build the database-backed store set for a registry database connection. */
 export const createRegistryStore = (context: RegistryStoreContext): HandoffStore => ({
   components: new RegistryComponentStore(context),
   patterns: new RegistryPatternStore(context),
   pages: new RegistryPageStore(context),
   tokens: new RegistryTokenStore(context),
+  assets: new RegistryAssetStore(context),
 });

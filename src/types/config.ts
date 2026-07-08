@@ -141,6 +141,27 @@ export interface HandoffRuntimeConfig {
       /** @default "pg" */
       adapter?: 'pg' | 'neon';
     };
+    /**
+     * Where published asset blobs (icons/logos/fonts/sprites/archives) are stored. Defaults to the
+     * built-in PostgreSQL `bytea` store when omitted. Secrets are never persisted here - only the
+     * *names* of the env vars their values are read from at request time.
+     */
+    assetStorage?: {
+      /**
+       * Active storage provider for new uploads. `database` keeps bytes inline in Postgres; use the
+       * pre-packaged `vercel-blob` adapter or a `custom` module for object storage.
+       * @default "database"
+       */
+      adapter?: 'database' | 'vercel-blob' | 'custom';
+      /** For `adapter: "custom"` - server-only module path default-exporting a `defineAssetStorage` adapter. */
+      module?: string;
+      /** For `adapter: "vercel-blob"` - env var name holding the Blob read/write token. @default "BLOB_READ_WRITE_TOKEN" */
+      tokenEnv?: string;
+      /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
+      maxInlineBytes?: number;
+      /** Non-secret adapter options (bucket env-var names, region, a custom `providerId`, …). */
+      options?: Record<string, unknown>;
+    };
   };
   /**
    * Connected-workspace settings pointing at a remote registry. A connected workspace is

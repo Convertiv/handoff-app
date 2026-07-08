@@ -7,6 +7,7 @@ import {
   DEFAULT_REGISTRY_API_TOKEN_ENV,
   type RegistryDatabaseAdapter,
 } from '@handoff/registry/db/adapter';
+import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 
 /**
  * Server-side runtime resolution for the docs read API.
@@ -39,6 +40,11 @@ export interface ServerRegistryRuntimeConfig {
 export interface ServerRuntimeConfig {
   mode: RuntimeMode;
   registry: ServerRegistryRuntimeConfig;
+  /**
+   * Asset storage selection for registry mode (provider + non-secret options + env-var names). Secret
+   * values are resolved from `process.env` at request time, never persisted here.
+   */
+  assetStorage: AssetStorageSettings;
 }
 
 let cached: ServerRuntimeConfig | null = null;
@@ -51,7 +57,31 @@ const defaults = (): ServerRuntimeConfig => ({
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
     apiTokenEnv: DEFAULT_REGISTRY_API_TOKEN_ENV,
   },
+  assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
 });
+
+/** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */
+const assetStorageFromEnv = (): AssetStorageSettings => {
+  const adapter = process.env.HANDOFF_ASSET_STORAGE_ADAPTER?.trim();
+  let options: Record<string, unknown> | undefined;
+  const rawOptions = process.env.HANDOFF_ASSET_STORAGE_OPTIONS?.trim();
+  if (rawOptions) {
+    try {
+      const parsed = JSON.parse(rawOptions);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) options = parsed as Record<string, unknown>;
+    } catch {
+      // Ignore malformed baked options rather than crash the server.
+    }
+  }
+  const maxInline = Number(process.env.HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES);
+  return {
+    adapter: adapter === 'vercel-blob' || adapter === 'custom' ? adapter : DEFAULT_ASSET_STORAGE_ADAPTER,
+    module: process.env.HANDOFF_ASSET_STORAGE_MODULE?.trim() || undefined,
+    tokenEnv: process.env.HANDOFF_ASSET_STORAGE_TOKEN_ENV?.trim() || undefined,
+    maxInlineBytes: Number.isFinite(maxInline) && maxInline > 0 ? maxInline : undefined,
+    options,
+  };
+};
 
 /** Absolute path of the server-only runtime config persisted next to `client.config.json`. */
 const serverRuntimeConfigPath = (): string =>
@@ -86,6 +116,7 @@ const fromEnv = (): ServerRuntimeConfig | null => {
       databaseUrlEnv,
       apiTokenEnv,
     },
+    assetStorage: assetStorageFromEnv(),
   };
 };
 
@@ -118,6 +149,10 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
         typeof parsed?.registry?.apiTokenEnv === 'string' && parsed.registry.apiTokenEnv.trim()
           ? parsed.registry.apiTokenEnv.trim()
           : DEFAULT_REGISTRY_API_TOKEN_ENV;
+      const assetStorage: AssetStorageSettings =
+        parsed?.assetStorage && typeof parsed.assetStorage === 'object'
+          ? parsed.assetStorage
+          : { adapter: DEFAULT_ASSET_STORAGE_ADAPTER };
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
         registry: {
@@ -125,6 +160,7 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           databaseUrlEnv,
           apiTokenEnv,
         },
+        assetStorage,
       };
       return cached;
     }

@@ -1,8 +1,9 @@
 import fs from 'fs-extra';
+import path from 'path';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { TokenSetKind } from '@handoff/registry/tokens/sets';
-import type { TokenArtifactResource } from '@handoff/store';
-import { resolveArtifactFile } from './artifacts';
+import { FilesystemAssetStore, type AssetContentResource, type AssetMetadata, type TokenArtifactResource } from '@handoff/store';
+import { getArtifactRoot, resolveArtifactFile } from './artifacts';
 import {
   getComponentDetail as getWorkspaceComponentDetail,
   getPageDetail as getWorkspacePageDetail,
@@ -68,7 +69,32 @@ export interface DocsBackend {
   listTokenSets(): Promise<TokenSetListItem[]>;
   /** A token set's record + generated artifacts by stable id, or `null` when absent. */
   getTokenSetDetail(id: string): Promise<TokenSetDetail | null>;
+  /** Lightweight metadata for every asset in a collection (never binary bodies). */
+  listAssets(collection: string): Promise<AssetMetadata[]>;
+  /** One asset's resolved content (bytes or a provider redirect), or `null` when absent. */
+  getAssetContent(collection: string, assetPath: string): Promise<AssetContentResource | null>;
 }
+
+/**
+ * Workspace asset store over the app's mirrored `public/api` tree + copied archives. Registry mode
+ * serves assets from the database; this best-effort filesystem view keeps the {@link DocsBackend}
+ * contract honest (workspace pages themselves read assets directly, not through this API).
+ */
+const appPublicRoot = (): string =>
+  path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', process.env.HANDOFF_PROJECT_ID ?? '', 'public');
+
+let workspaceAssetStore: FilesystemAssetStore | null = null;
+const getWorkspaceAssetStore = (): FilesystemAssetStore => {
+  if (!workspaceAssetStore) {
+    workspaceAssetStore = new FilesystemAssetStore({
+      workingPath: appPublicRoot(),
+      getAssetsApiPath: () => getArtifactRoot(),
+      getIconsZipFilePath: () => path.join(appPublicRoot(), 'icons.zip'),
+      getLogosZipFilePath: () => path.join(appPublicRoot(), 'logos.zip'),
+    });
+  }
+  return workspaceAssetStore;
+};
 
 /** Workspace backing: generated filesystem artifacts under the app's mirrored `public/api` root. */
 const workspaceBackend: DocsBackend = {
@@ -102,6 +128,12 @@ const workspaceBackend: DocsBackend = {
   },
   async getTokenSetDetail(id: string) {
     return getWorkspaceTokenSetDetail(id);
+  },
+  async listAssets(collection: string) {
+    return getWorkspaceAssetStore().listAssets(collection);
+  },
+  async getAssetContent(collection: string, assetPath: string) {
+    return getWorkspaceAssetStore().getAssetContent(collection, assetPath);
   },
 };
 

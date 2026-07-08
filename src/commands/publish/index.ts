@@ -5,9 +5,9 @@ import { SharedArgs } from '../types';
 import { getSharedOptions } from '../utils';
 
 /** Entity kinds publishable from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens'] as const;
+const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens', 'assets'] as const;
 
-/** Entity kinds that require an explicit id (tokens support a bulk publish, so `id` is optional there). */
+/** Entity kinds that require an explicit id (tokens/assets support a bulk publish, so id is optional there). */
 const ID_REQUIRED_KINDS = ['component', 'pattern', 'page'] as const;
 
 export interface PublishArgs extends SharedArgs {
@@ -20,12 +20,15 @@ export interface PublishArgs extends SharedArgs {
  * selected entity to the connected registry.
  *
  * `handoff-app publish tokens [setId]` — fresh token build + upload of every logical token set, or
- * only the named set (`foundation/colors`, `component/button`). Available only from a connected
- * workspace (`runtime.mode: workspace` + a configured `registryConnection`).
+ * only the named set (`foundation/colors`, `component/button`).
+ *
+ * `handoff-app publish assets [collection]` runs a fresh build and uploads every asset collection, or
+ * only the named one (`icons`, `logos`, `fonts`). Available only from a connected workspace
+ * (`runtime.mode: workspace` + a configured `registryConnection`).
  */
 const command: CommandModule<{}, PublishArgs> = {
   command: 'publish <type> [id]',
-  describe: 'Build and publish a component, pattern, page, or design tokens to the connected registry',
+  describe: 'Build and publish a component, pattern, page, design tokens, or assets to the connected registry',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
@@ -34,7 +37,7 @@ const command: CommandModule<{}, PublishArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the entity (component/pattern/page id, or a token set id); optional for tokens',
+        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); optional for tokens/assets',
         type: 'string',
       });
   },
@@ -43,6 +46,10 @@ const command: CommandModule<{}, PublishArgs> = {
     try {
       if (args.type === 'tokens') {
         await handoff.publishTokens(args.id);
+        return;
+      }
+      if (args.type === 'assets') {
+        await handoff.publishAssets(args.id);
         return;
       }
       if (!args.id) {

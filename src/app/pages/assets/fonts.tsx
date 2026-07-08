@@ -11,7 +11,11 @@ import remarkGfm from 'remark-gfm';
 import Footer from '../../components/Footer';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import Header from '../../components/old/Header';
-import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, getTokens } from '../../components/util';
+import { buildTimeFoundationDesign, fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig } from '../../components/util';
+import { useFoundationTokens } from '../../components/util/useFoundationTokens';
+
+const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+const isRegistry = process.env.HANDOFF_RUNTIME_MODE === 'registry';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -22,23 +26,21 @@ import { fetchDocPageMarkdown, FontDocumentationProps, getClientRuntimeConfig, g
  * @returns
  */
 export const getStaticProps: GetStaticProps = async () => {
-  const fonts = fs.readdirSync(
-    path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts')
-  );
+  // Workspace/static reads the mirrored font archives; a registry build has none (hydrated at runtime).
   const customFonts: string[] = [];
-
-  fonts.map((font) => {
-    if (font.endsWith('.zip')) {
-      // We have a custom font
-      const name = font.replace('.zip', '');
-      customFonts.push(name);
+  try {
+    const fontDir = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', `${process.env.HANDOFF_PROJECT_ID}`, 'public', 'fonts');
+    for (const font of fs.readdirSync(fontDir)) {
+      if (font.endsWith('.zip')) customFonts.push(font.replace('.zip', ''));
     }
-  });
+  } catch {
+    // No local font archives (e.g. a registry build), so customFonts stays empty.
+  }
 
   return {
     props: {
       ...(await fetchDocPageMarkdown('docs/assets/', 'fonts', `/assets`)).props,
-      design: getTokens().localStyles,
+      design: buildTimeFoundationDesign(),
       config: getClientRuntimeConfig(),
       customFonts,
     },
@@ -46,12 +48,34 @@ export const getStaticProps: GetStaticProps = async () => {
 };
 
 const FontsPage = ({ content, menu, metadata, customFonts, design, config }: FontDocumentationProps) => {
-  const fontFamilies: string[] = uniq(design.typography.map((type) => type.values.fontFamily));
+  // Registry hydrates typography tokens (for the family list) + the published font archives at runtime.
+  const tokens = useFoundationTokens('typography', { design });
+  const [hydratedFonts, setHydratedFonts] = React.useState<string[]>(customFonts);
+  React.useEffect(() => {
+    if (!isRegistry) return;
+    let active = true;
+    fetch(`${basePath}/api/docs/assets/fonts`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.assets) return;
+        const names = (data.assets as { path: string }[])
+          .filter((a) => typeof a.path === 'string' && /^fonts\/.+\.zip$/i.test(a.path))
+          .map((a) => a.path.slice('fonts/'.length).replace(/\.zip$/i, ''));
+        setHydratedFonts(names);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const typography = tokens.design?.typography ?? [];
+  const fontFamilies: string[] = uniq(typography.map((type) => type.values.fontFamily));
   const fontLinks: string[] = fontFamilies.map((fontFamily) => {
     const machineName = fontFamily.replace(/\s/g, '');
-    const custom = customFonts.find((font) => font === machineName);
+    const custom = hydratedFonts.find((font) => font === machineName);
     if (custom) {
-      return `/fonts/${machineName}.zip`;
+      return isRegistry ? `${basePath}/api/docs/assets/fonts/fonts/${machineName}.zip` : `/fonts/${machineName}.zip`;
     }
     return `https://fonts.google.com/specimen/${fontFamily}`;
   });

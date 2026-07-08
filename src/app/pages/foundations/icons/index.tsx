@@ -12,10 +12,12 @@ import { MarkdownComponents, remarkCodeMeta } from '../../../components/Markdown
 import HeadersType from '../../../components/Typography/Headers';
 import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../../components/util';
+import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../../components/util';
+import { useCollectionAssets, type DisplayableAsset } from '../../../components/util/useCollectionAssets';
 
-export const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
+export const DisplayIcon: React.FC<{ icon: DisplayableAsset }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
+    if (!icon.data) return '';
     // For SSR
     if (typeof window === 'undefined') {
       return icon.data.replace('<svg', '<svg class="o-icon"');
@@ -35,7 +37,8 @@ export const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }
     <div className="flex flex-col gap-2">
       <Link href={`/foundations/icons/${icon.icon}`}>
         <div className="flex flex-col items-center gap-6 rounded-lg border border-gray-100/80 bg-gray-100/80 py-12 transition-all hover:border-gray-300 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700 dark:hover:bg-gray-900">
-          <div dangerouslySetInnerHTML={{ __html: htmlData }} />
+          {/* Workspace/static: inline SVG body. Registry: the individual asset content URL. */}
+          {icon.data ? <div dangerouslySetInnerHTML={{ __html: htmlData }} /> : <img className="o-icon h-6 w-6" src={icon.src} alt={icon.name} />}
         </div>
       </Link>
       <Link href={`/foundations/icons/${icon.icon}`}>
@@ -57,7 +60,7 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       ...(await fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`)).props,
       config: getClientRuntimeConfig(),
-      assets: getTokens().assets,
+      assets: buildTimeAssets(),
     },
   };
 };
@@ -66,11 +69,12 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
   const [search, setSearch] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // Workspace/static hydrates from build-time props; registry hydrates from the docs read API.
+  const allIcons = useCollectionAssets('icons', assets?.icons);
   const icons = React.useMemo(() => {
-    if (!assets || !Array.isArray(assets.icons)) return [];
-    if (!search) return assets.icons;
-    return assets.icons.filter(icon => icon.index.includes(search));
-  }, [assets, search]);
+    if (!search) return allIcons;
+    return allIcons.filter((icon) => icon.index.includes(search));
+  }, [allIcons, search]);
 
   const filterList = React.useCallback<React.ChangeEventHandler<HTMLInputElement>>((event) => {
     setSearch(event.currentTarget.value.toLowerCase().replace(/[\W_]+/g, ' '));

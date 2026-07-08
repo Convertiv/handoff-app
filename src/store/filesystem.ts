@@ -9,14 +9,30 @@
  * without changing how anything is discovered or built.
  */
 
+import crypto from 'crypto';
 import fs from 'fs-extra';
+import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
 import { resolveTokenTransformers, tokenArtifactPathsForSet } from '../pipeline/token-transformers';
+import { resolveAssetPhysicalPath, type AssetPhysicalRoots } from '../registry/assets/layout';
+import { ASSET_COLLECTIONS, assetContentType } from '../registry/assets/sets';
 import { deriveTokenSets, isComponentSet, setNameForId } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 import type { Config, RuntimeConfig } from '../types/config';
 import { getRelatedSourceFilesForRecord, sourceContentTypeForPath } from './source-files';
-import type { ComponentStore, PageStore, PatternStore, SourceReference, TextFileResource, TokenArtifactResource, TokenSetRecord, TokenStore } from './types';
+import type {
+  AssetContentResource,
+  AssetMetadata,
+  AssetStore,
+  ComponentStore,
+  PageStore,
+  PatternStore,
+  SourceReference,
+  TextFileResource,
+  TokenArtifactResource,
+  TokenSetRecord,
+  TokenStore,
+} from './types';
 
 /**
  * Minimal context needed to back the filesystem store. A `Handoff` instance satisfies this (it
@@ -26,10 +42,18 @@ import type { ComponentStore, PageStore, PatternStore, SourceReference, TextFile
 export interface FilesystemStoreContext {
   runtimeConfig?: RuntimeConfig | null;
   config?: Config | null;
+  /** Workspace root (`Handoff.workingPath`), holding `public/` and `fonts/`. */
+  workingPath?: string;
   /** Absolute path to the generated `tokens.json` (`Handoff.getTokensFilePath()`). */
   getTokensFilePath?(): string;
   /** Absolute path to the generated tokens output dir (`Handoff.getVariablesFilePath()`). */
   getVariablesFilePath?(): string;
+  /** Absolute path to the docs API root `public/api` (`Handoff.getAssetsApiPath()`). */
+  getAssetsApiPath?(): string;
+  /** Absolute path of `icons.zip` (`Handoff.getIconsZipFilePath()`). */
+  getIconsZipFilePath?(): string;
+  /** Absolute path of `logos.zip` (`Handoff.getLogosZipFilePath()`). */
+  getLogosZipFilePath?(): string;
 }
 
 const readSourceByReference = (ref: SourceReference): TextFileResource | null => {
@@ -216,5 +240,154 @@ export class FilesystemTokenStore implements TokenStore {
 
   getArtifact(id: string, format: string): TokenArtifactResource | null {
     return this.getArtifacts(id).find((artifact) => artifact.format === format) ?? null;
+  }
+}
+
+const sha256 = (bytes: Buffer): string => crypto.createHash('sha256').update(bytes).digest('hex');
+
+/** One enumerated asset file: its logical path, name, carried metadata, and physical location. */
+interface AssetFileEntry {
+  logicalPath: string;
+  name: string;
+  metadata?: Record<string, unknown> | null;
+  absolutePath: string;
+}
+
+const isFile = (absolutePath: string): boolean => {
+  try {
+    return fs.existsSync(absolutePath) && fs.statSync(absolutePath).isFile();
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Filesystem-backed asset store. Enumerates each collection from the generated `public/api` tree
+ * (per-asset icon/logo bodies + the collection JSON + the icon sprite/manifest) plus the downloadable
+ * ZIP/font archives, reading bytes only to compute the content hash for publish. The physical layout
+ * is resolved through the shared {@link resolveAssetPhysicalPath} so it matches what checkout writes.
+ */
+export class FilesystemAssetStore implements AssetStore {
+  constructor(private readonly context: FilesystemStoreContext) {}
+
+  private roots(): AssetPhysicalRoots | null {
+    const apiPath = this.context.getAssetsApiPath?.();
+    const iconsZip = this.context.getIconsZipFilePath?.();
+    const logosZip = this.context.getLogosZipFilePath?.();
+    const workingPath = this.context.workingPath;
+    if (!apiPath || !iconsZip || !logosZip || !workingPath) {
+      return null;
+    }
+    return { apiPath, iconsZip, logosZip, workingPath };
+  }
+
+  /** Enumerate the files that make up a collection (existing on disk only). */
+  private enumerate(collection: string): AssetFileEntry[] {
+    const roots = this.roots();
+    if (!roots) {
+      return [];
+    }
+
+    if (collection === 'icons' || collection === 'logos') {
+      const entries: AssetFileEntry[] = [];
+      const collectionJson = `assets/${collection}.json`;
+      let assetObjects: CoreTypes.IAssetObject[] = [];
+      try {
+        const raw = fs.readFileSync(resolveAssetPhysicalPath(collectionJson, roots), 'utf8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) assetObjects = parsed as CoreTypes.IAssetObject[];
+      } catch {
+        assetObjects = [];
+      }
+      for (const asset of assetObjects) {
+        const logicalPath = `assets/${collection}/${asset.path}`;
+        entries.push({
+          logicalPath,
+          name: asset.name,
+          metadata: { icon: asset.icon, index: asset.index, description: asset.description ?? null },
+          absolutePath: resolveAssetPhysicalPath(logicalPath, roots),
+        });
+      }
+      // Derived, collection-owned artifacts served byte-for-byte (never regenerated on read).
+      const extras =
+        collection === 'icons'
+          ? [collectionJson, 'icons-sprite.svg', 'icons-sprite-manifest.json', 'icons.zip']
+          : [collectionJson, 'logos.zip'];
+      for (const logicalPath of extras) {
+        entries.push({ logicalPath, name: path.basename(logicalPath), absolutePath: resolveAssetPhysicalPath(logicalPath, roots) });
+      }
+      return entries.filter((entry) => isFile(entry.absolutePath));
+    }
+
+    if (collection === 'fonts') {
+      const fontsDir = path.resolve(roots.workingPath, 'fonts');
+      if (!fs.existsSync(fontsDir)) {
+        return [];
+      }
+      try {
+        return fs
+          .readdirSync(fontsDir)
+          .filter((file) => file.toLowerCase().endsWith('.zip'))
+          .map((file) => ({ logicalPath: `fonts/${file}`, name: file, absolutePath: path.join(fontsDir, file) }))
+          .filter((entry) => isFile(entry.absolutePath));
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  private toMetadata(collection: string, entry: AssetFileEntry, bytes: Buffer): AssetMetadata {
+    return {
+      collection,
+      path: entry.logicalPath,
+      name: entry.name,
+      contentType: assetContentType(entry.logicalPath),
+      size: bytes.length,
+      contentHash: sha256(bytes),
+      metadata: entry.metadata ?? null,
+    };
+  }
+
+  listCollections(): string[] {
+    return ASSET_COLLECTIONS.filter((collection) => this.enumerate(collection).length > 0);
+  }
+
+  listAssets(collection: string): AssetMetadata[] {
+    const out: AssetMetadata[] = [];
+    for (const entry of this.enumerate(collection)) {
+      try {
+        out.push(this.toMetadata(collection, entry, fs.readFileSync(entry.absolutePath)));
+      } catch {
+        // Skip files that vanished between enumeration and read.
+      }
+    }
+    return out;
+  }
+
+  getAsset(collection: string, assetPath: string): AssetMetadata | null {
+    const entry = this.enumerate(collection).find((candidate) => candidate.logicalPath === assetPath);
+    if (!entry) {
+      return null;
+    }
+    try {
+      return this.toMetadata(collection, entry, fs.readFileSync(entry.absolutePath));
+    } catch {
+      return null;
+    }
+  }
+
+  getAssetContent(collection: string, assetPath: string): AssetContentResource | null {
+    const entry = this.enumerate(collection).find((candidate) => candidate.logicalPath === assetPath);
+    if (!entry) {
+      return null;
+    }
+    try {
+      const bytes = fs.readFileSync(entry.absolutePath);
+      return { ...this.toMetadata(collection, entry, bytes), body: bytes };
+    } catch {
+      return null;
+    }
   }
 }

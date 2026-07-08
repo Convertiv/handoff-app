@@ -7,6 +7,7 @@ import { createRegistryStore } from '@handoff/store/registry';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
 import { getRegistryConnection } from '../registry-connection';
+import { getAssetStorageAdapter } from '../asset-storage';
 
 /**
  * Registry-mode backing for the docs read API.
@@ -70,7 +71,8 @@ const buildStatusFor = async (
 export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
   const connection = await getRegistryConnection();
   const { db } = connection;
-  const store = createRegistryStore({ db });
+  // Inject the storage-adapter resolver so object-backed asset content resolves by provider id.
+  const store = createRegistryStore({ db, resolveAssetAdapter: getAssetStorageAdapter });
 
   return {
     async listComponents() {
@@ -118,6 +120,12 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
         return null;
       }
       return { id: set.id, kind: set.kind, record: set.record, artifacts: await store.tokens.getArtifacts(id) };
+    },
+    async listAssets(collection: string) {
+      return store.assets.listAssets(collection);
+    },
+    async getAssetContent(collection: string, assetPath: string) {
+      return store.assets.getAssetContent(collection, assetPath);
     },
   };
 };

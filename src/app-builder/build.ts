@@ -8,6 +8,7 @@ import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
 import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
@@ -200,6 +201,13 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedRegistryAdapter = escapeForSingleQuotedJsString(resolveRegistryAdapter(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
   const escapedApiTokenEnv = escapeForSingleQuotedJsString(resolveApiTokenEnv(handoff.config));
+  // Asset storage selection baked (provider + module + env-var names + non-secret options JSON).
+  const assetStorage = resolveAssetStorageFromConfig(handoff.config);
+  const escapedAssetStorageAdapter = escapeForSingleQuotedJsString(assetStorage.adapterKind);
+  const escapedAssetStorageModule = escapeForSingleQuotedJsString(assetStorage.module ?? '');
+  const escapedAssetStorageTokenEnv = escapeForSingleQuotedJsString(assetStorage.tokenEnv);
+  const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
+  const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -211,6 +219,11 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_REGISTRY_ADAPTER%': escapedRegistryAdapter,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
     '%HANDOFF_REGISTRY_API_TOKEN_ENV%': escapedApiTokenEnv,
+    '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
+    '%HANDOFF_ASSET_STORAGE_MODULE%': escapedAssetStorageModule,
+    '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
+    '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
+    '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
   };
   let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
   for (const [placeholder, value] of Object.entries(placeholderValues)) {
@@ -431,7 +444,19 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   const base = ['next', 'react', 'react-dom', 'drizzle-orm'];
   const adapter = resolveRegistryAdapter(handoff.config);
   const driver = adapter === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
-  return [...base, ...driver];
+  // Asset-storage SDKs the deployed registry must be able to load at request time. The pre-packaged
+  // Vercel Blob adapter needs `@vercel/blob`; a custom adapter may declare its installed SDK
+  // package(s) via `assetStorage.options.sdkModules` so the trace/assertion covers them.
+  const assetStorage = resolveAssetStorageFromConfig(handoff.config);
+  const storage: string[] = [];
+  if (assetStorage.adapterKind === 'vercel-blob') {
+    storage.push('@vercel/blob');
+  }
+  const sdkModules = assetStorage.options?.sdkModules;
+  if (Array.isArray(sdkModules)) {
+    storage.push(...sdkModules.filter((mod): mod is string => typeof mod === 'string'));
+  }
+  return [...base, ...driver, ...storage];
 };
 
 /**

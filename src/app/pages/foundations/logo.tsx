@@ -1,7 +1,8 @@
 import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 
-import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../components/util';
+import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
+import { useCollectionAssets } from '../../components/util/useCollectionAssets';
 
 import { Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -41,12 +42,14 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       ...(await fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`)).props,
       config: getClientRuntimeConfig(),
-      assets: getTokens().assets,
+      assets: buildTimeAssets(),
     },
   };
 };
 
 const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
+  // Workspace/static uses build-time props; registry hydrates from the docs read API.
+  const logos = useCollectionAssets('logos', assets?.logos);
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
@@ -67,7 +70,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="mb-8">There is one main {config?.app?.client} logo that supports two variations.</p>
       </div>
       <div className="mb-8 grid grid-cols-2 gap-6">
-        {assets?.logos?.map((logo) => (
+        {logos.map((logo) => (
           <DisplayLogo logo={logo} content={config?.app?.client} key={logo.path} />
         ))}
       </div>

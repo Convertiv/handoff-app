@@ -9,10 +9,12 @@ import Footer from '../../../../components/Footer';
 import Layout from '../../../../components/Layout/Main';
 import HeadersType from '../../../../components/Typography/Headers';
 import { buttonVariants } from '../../../../components/ui/button';
-import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../../../components/util';
+import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens, isRegistryRuntime } from '../../../../components/util';
+import { useSingleAsset, type DisplayableAsset } from '../../../../components/util/useCollectionAssets';
 
-const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
+const DisplayIcon: React.FC<{ icon: DisplayableAsset }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {
+    if (!icon.data) return '';
     // For SSR
     if (typeof window === 'undefined') {
       return icon.data.replace('<svg', '<svg class="o-icon"');
@@ -30,19 +32,28 @@ const DisplayIcon: React.FC<{ icon: CoreTypes.IAssetObject }> = ({ icon }) => {
     return svgElement.outerHTML;
   }, [icon.data]);
 
+  // Registry: no inline body yet, so render the individual asset content URL.
+  if (!icon.data) {
+    return <img className="o-icon" src={icon.src} alt={icon.name} />;
+  }
   return <>{HtmlReactParser(htmlData)}</>;
 };
 
 /**
- * Render all index pages
+ * Render all index pages. In registry mode the icon set is unknown at build time (nothing is baked),
+ * so paths are resolved on demand via `fallback: 'blocking'` and the page hydrates from the API.
  * @returns
  */
 export async function getStaticPaths() {
-  const paths = getTokens().assets?.icons?.map((icon) => ({
-    params: {
-      name: icon.name,
-    },
-  })) ?? [];
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
+  const paths =
+    getTokens().assets?.icons?.map((icon) => ({
+      params: {
+        name: icon.name,
+      },
+    })) ?? [];
 
   return {
     paths,
@@ -63,7 +74,7 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       ...(await fetchDocPageMarkdown('docs/foundations/', 'icons', `/foundations`)).props,
       config: getClientRuntimeConfig(),
-      assets: getTokens().assets,
+      assets: buildTimeAssets(),
     },
   };
 };
@@ -73,12 +84,13 @@ export default function SingleIcon({ menu, metadata, current, config, assets }: 
   const nameParam = router.query.name;
   let name = undefined;
   if (typeof nameParam === 'string') { name = nameParam } else if (Array.isArray(nameParam)) { name = nameParam[0] } else { name = undefined }
-  const icon = assets?.icons.find((i) => i.icon === name);
+  // Workspace/static uses the baked asset; registry hydrates the single asset (+ its SVG body) by id.
+  const icon = useSingleAsset('icons', name, assets?.icons?.find((i) => i.icon === name));
 
   const copySvg = React.useCallback<React.MouseEventHandler>(
     (event) => {
       event.preventDefault();
-      if (icon) {
+      if (icon?.data) {
         navigator.clipboard.writeText(icon.data);
       }
     },
@@ -113,7 +125,7 @@ export default function SingleIcon({ menu, metadata, current, config, assets }: 
               </Link>
 
               <Link
-                href={'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data)}
+                href={icon.src ?? 'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data ?? '')}
                 download={icon.name}
                 className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
               >

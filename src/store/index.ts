@@ -9,6 +9,9 @@
  */
 
 export type {
+  AssetContentResource,
+  AssetMetadata,
+  AssetStore,
   Awaitable,
   ComponentStore,
   HandoffStore,
@@ -23,6 +26,7 @@ export type {
 } from './types';
 
 export {
+  FilesystemAssetStore,
   FilesystemComponentStore,
   FilesystemPageStore,
   FilesystemPatternStore,
@@ -32,7 +36,14 @@ export {
 
 export { getRelatedSourceFilesForRecord, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
 
-import { FilesystemComponentStore, FilesystemPageStore, FilesystemPatternStore, FilesystemTokenStore, type FilesystemStoreContext } from './filesystem';
+import {
+  FilesystemAssetStore,
+  FilesystemComponentStore,
+  FilesystemPageStore,
+  FilesystemPatternStore,
+  FilesystemTokenStore,
+  type FilesystemStoreContext,
+} from './filesystem';
 import type { HandoffStore } from './types';
 
 /**
@@ -44,4 +55,5 @@ export const createFilesystemStore = (context: FilesystemStoreContext): HandoffS
   patterns: new FilesystemPatternStore(context),
   pages: new FilesystemPageStore(context),
   tokens: new FilesystemTokenStore(context),
+  assets: new FilesystemAssetStore(context),
 });

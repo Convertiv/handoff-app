@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
+import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
 import type { Config, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
@@ -51,14 +52,24 @@ export const generateTokensApi = async (handoff: Handoff) => {
  * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
  * itself is never persisted, only resolved from the env var at request time.
  */
-const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) => ({
-  mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
-  registry: {
-    adapter: resolveRegistryAdapter(config),
-    databaseUrlEnv: resolveDatabaseUrlEnv(config),
-    apiTokenEnv: resolveApiTokenEnv(config),
-  },
-});
+const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) => {
+  const assetStorage = resolveAssetStorageFromConfig(config);
+  return {
+    mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
+    registry: {
+      adapter: resolveRegistryAdapter(config),
+      databaseUrlEnv: resolveDatabaseUrlEnv(config),
+      apiTokenEnv: resolveApiTokenEnv(config),
+    },
+    assetStorage: {
+      adapter: assetStorage.adapterKind,
+      module: assetStorage.module,
+      tokenEnv: assetStorage.tokenEnv,
+      maxInlineBytes: assetStorage.maxInlineBytes,
+      options: assetStorage.options,
+    },
+  };
+};
 
 /** Options for {@link persistClientConfig}. */
 export interface PersistClientConfigOptions {

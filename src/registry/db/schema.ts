@@ -23,10 +23,24 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { check, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { check, customType, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
 import type { TextFileKind } from '../../store/types';
 import type { TokenSetKind } from '../tokens/sets';
+
+/**
+ * PostgreSQL `bytea` column. Drizzle pg-core has no built-in binary type, so declare it once here.
+ * Reads/writes are Node `Buffer`s. The default asset storage adapter keeps small/ordinary asset
+ * bytes inline in this column; larger assets are offloaded to an object-storage `storageRef` instead.
+ */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea';
+  },
+});
+
+/** Where an asset blob's bytes physically live: the default DB adapter, Vercel Blob, or a custom id. */
+export type AssetStorageProvider = 'database' | 'vercel-blob' | (string & {});
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
 /**
@@ -342,6 +356,82 @@ export const tokenArtifacts = pgTable(
   (table) => [primaryKey({ columns: [table.tokenSetId, table.path] })]
 );
 
+/**
+ * Asset collections. Owns a collection (`icons`|`logos`|`fonts`) and its build/publish metadata
+ * (mirrors {@link tokenSets}): `sourceHash` drives skip-unchanged, and the set of `assets` rows for a
+ * collection is its current manifest. Publish replaces those rows atomically, so readers always see a
+ * complete manifest.
+ */
+export const assetCollections = pgTable(
+  'asset_collections',
+  {
+    /** Stable collection id (`icons`|`logos`|`fonts`). Join key across stores. */
+    collection: text('collection').primaryKey(),
+    /** Deterministic content hash over the collection's `(path, contentHash)` manifest (skip-unchanged). */
+    sourceHash: text('source_hash'),
+    /** Build/publish status for the collection. */
+    status: text('status').$type<RegistryBuildStatus>(),
+    builtAt: timestamp('built_at', { withTimezone: true }),
+    builderVersion: text('builder_version'),
+    /** Registry-only review/catalog metadata (parity with other entities; management-API only). */
+    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  }
+);
+
+/**
+ * Logical asset metadata - the collection manifest. One row per asset (icon/logo SVG, sprite,
+ * sprite manifest, ZIP archive, font archive), keyed by `(collection, path)`. Binary content is not
+ * stored here; `blobHash` references the content-addressed {@link assetBlobs} store, so identical
+ * bytes across paths/collections dedupe to one blob.
+ */
+export const assets = pgTable(
+  'assets',
+  {
+    collection: text('collection')
+      .notNull()
+      .references(() => assetCollections.collection, { onDelete: 'cascade' }),
+    /** Registry-safe logical path within the collection (e.g. `assets/icons/add.svg`, `icons.zip`). */
+    path: text('path').notNull(),
+    /** Human-facing asset name. */
+    name: text('name').notNull(),
+    contentType: text('content_type').notNull(),
+    size: integer('size'),
+    /** SHA-256 of the asset bytes - the blob identity, and the ETag for content responses. */
+    contentHash: text('content_hash').notNull(),
+    /** Free-form asset metadata carried from extraction (icon index, description, …). */
+    metadata: jsonb('metadata'),
+    /** References {@link assetBlobs.hash}; equals `contentHash`. */
+    blobHash: text('blob_hash')
+      .notNull()
+      .references(() => assetBlobs.hash),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.collection, table.path] })]
+);
+
+/**
+ * Content-addressed binary blob store, shared across assets/collections (the `hash` is the blob
+ * identity, so an unchanged file re-references the same row). Exactly one location is active per row:
+ * inline `content` (bytea, default DB adapter) or an external `storageRef` resolved through the
+ * recorded `storageProvider`. Both nullable so DB- and object-backed blobs coexist.
+ */
+export const assetBlobs = pgTable('asset_blobs', {
+  /** SHA-256 of the blob bytes (hex). */
+  hash: text('hash').primaryKey(),
+  /** Which storage backed this blob when it was written (`database`|`vercel-blob`|custom id). */
+  storageProvider: text('storage_provider').$type<AssetStorageProvider>().notNull(),
+  /** Inline bytes; null when stored externally via `storageRef`. */
+  content: bytea('content'),
+  /** External object reference/key; null when stored inline in `content`. */
+  storageRef: text('storage_ref'),
+  contentType: text('content_type').notNull(),
+  size: integer('size').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** All registry tables, for typed Drizzle clients and migration tooling. */
 export const registrySchema = {
   components,
@@ -354,4 +444,7 @@ export const registrySchema = {
   buildMetadata,
   tokenSets,
   tokenArtifacts,
+  assetCollections,
+  assets,
+  assetBlobs,
 };

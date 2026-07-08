@@ -195,6 +195,33 @@ class Handoff {
     return this;
   }
 
+  /**
+   * Publish asset collections (icons/logos/fonts) from this connected workspace to the configured
+   * remote registry. Runs a fresh build (Figma extract + asset generation), discovers the collections,
+   * uploads only content hashes the registry lacks, and finalizes each collection manifest atomically.
+   * Publishes every collection when `collection` is omitted, or only the named one. Loaded lazily so
+   * the registry client/build code never enters the docs app bundle.
+   */
+  async publishAssets(collection?: string): Promise<Handoff> {
+    this.preRunner();
+    const { publishAssets } = await import('./registry/publish/assets');
+    await publishAssets(this, collection);
+    return this;
+  }
+
+  /**
+   * Checkout asset collections from the connected remote registry into this workspace: recreate the
+   * standard workspace asset files, collection JSON, icon sprite/manifest, and downloadable archives.
+   * Checks out every published collection when `collection` is omitted, or only the named one. Loaded
+   * lazily so the registry client never enters the docs app bundle.
+   */
+  async checkoutAssets(collection?: string): Promise<Handoff> {
+    this.preRunner();
+    const { checkoutAssets } = await import('./registry/checkout/assets');
+    await checkoutAssets(this, collection);
+    return this;
+  }
+
   async ejectConfig(): Promise<Handoff> {
     this.preRunner();
     await ejectConfig(this);
@@ -348,6 +375,15 @@ class Handoff {
   }
 
   /**
+   * Gets the generated docs API root (`<workingPath>/public/api`) — the tree holding the asset
+   * collection JSON, per-asset icon/logo bodies, and the icon sprite + manifest.
+   * @returns {string} The absolute path to the public docs API directory
+   */
+  getAssetsApiPath(): string {
+    return path.resolve(this.workingPath, 'public', 'api');
+  }
+
+  /**
    * Gets the path to the icons.zip file
    * @returns {string} The absolute path to the icons.zip file
    */
@@ -415,6 +451,14 @@ export {
   definePattern,
   defineReactComponent,
 } from './declarations';
+export { defineAssetStorage } from './registry/asset-storage/define';
+export type {
+  AssetStorage,
+  AssetStorageContext,
+  AssetStorageFactory,
+  AssetStorageInput,
+  AssetStorageReadResult,
+} from './registry/asset-storage/types';
 export type {
   CsfDeclarationConfig,
   DeclarationPreview,

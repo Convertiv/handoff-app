@@ -847,6 +847,16 @@ export const buildTimeFoundationDesign = (): CoreTypes.IDocumentationObject['loc
     ? ({ color: [], typography: [], effect: [] } as CoreTypes.IDocumentationObject['localStyles'])
     : getTokens().localStyles;
 
+/**
+ * Build-time asset collections for an asset page's `getStaticProps`. Workspace/static bakes the local
+ * `tokens.json` assets (correct: static exports are immutable snapshots). A **registry** build returns
+ * empty: asset bodies must not be frozen into build-time page props from the build machine; the page
+ * hydrates them at request time from the DB-backed docs read API (`useCollectionAssets`). Without this
+ * gate a registry build bakes the builder's local assets, so they would appear before any publish.
+ */
+export const buildTimeAssets = (): CoreTypes.IDocumentationObject['assets'] =>
+  isRegistryRuntime() ? {} : getTokens().assets;
+
 export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH
     ? path.resolve(process.env.HANDOFF_EXPORT_PATH, 'tokens.json')

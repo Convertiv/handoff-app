@@ -147,10 +147,60 @@ export interface TokenStore {
   getArtifact(id: string, format: string): Awaitable<TokenArtifactResource | null>;
 }
 
+/**
+ * Lightweight metadata for one published asset. Collection/list reads return only this shape - never
+ * the binary body - so large collections do not produce oversized responses.
+ */
+export interface AssetMetadata {
+  /** Collection the asset belongs to (`icons`|`logos`|`fonts`). */
+  collection: string;
+  /** Registry-safe logical path within the collection (e.g. `assets/icons/add.svg`, `icons.zip`). */
+  path: string;
+  /** Human-facing asset name. */
+  name: string;
+  /** Content type to serve the asset with. */
+  contentType: string;
+  /** Byte length. */
+  size: number;
+  /** SHA-256 of the bytes (hex) - content identity + ETag. */
+  contentHash: string;
+  /** Free-form asset metadata carried from extraction (icon index, description, …). */
+  metadata?: Record<string, unknown> | null;
+}
+
+/**
+ * An asset's resolved content: inline bytes (filesystem store, or a DB-backed blob), or a redirect
+ * URL when an object-storage provider serves the content directly.
+ */
+export interface AssetContentResource extends AssetMetadata {
+  /** Inline bytes, when the content is served from the filesystem or an inline DB blob. */
+  body?: Buffer;
+  /** Signed/public provider URL to redirect to, when an object-storage provider serves the content. */
+  redirectUrl?: string;
+}
+
+/**
+ * Read contract implemented by every asset store backing. The filesystem backing derives collections
+ * from the generated `public/api` tree + archives; the registry backing reads the `assets` /
+ * `asset_collections` tables and resolves content through the configured storage provider. List
+ * methods return metadata only; content is fetched one asset at a time.
+ */
+export interface AssetStore {
+  /** All collections that have any published assets. */
+  listCollections(): Awaitable<string[]>;
+  /** Lightweight metadata for every asset in a collection (no bodies). Empty when unknown. */
+  listAssets(collection: string): Awaitable<AssetMetadata[]>;
+  /** Metadata for one asset by collection + logical path, or `null` when absent. */
+  getAsset(collection: string, path: string): Awaitable<AssetMetadata | null>;
+  /** One asset's resolved content (bytes or redirect), or `null` when absent. */
+  getAssetContent(collection: string, path: string): Awaitable<AssetContentResource | null>;
+}
+
 /** Convenience pairing of the stores backing one runtime. */
 export interface HandoffStore {
   components: ComponentStore;
   patterns: PatternStore;
   pages: PageStore;
   tokens: TokenStore;
+  assets: AssetStore;
 }
