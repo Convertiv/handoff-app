@@ -50,6 +50,12 @@ export const createRegistryDbConnection = async ({
     const { migrate } = await import('drizzle-orm/neon-serverless/migrator');
 
     const pool = new Pool({ connectionString });
+    try {
+      await pool.query('select 1');
+    } catch (error) {
+      await pool.end().catch(() => undefined);
+      throw error;
+    }
     const db = drizzle(pool, { schema });
 
     return {
@@ -65,6 +71,12 @@ export const createRegistryDbConnection = async ({
   const { migrate } = await import('drizzle-orm/node-postgres/migrator');
 
   const pool = new Pool({ connectionString });
+  try {
+    await pool.query('select 1');
+  } catch (error) {
+    await pool.end().catch(() => undefined);
+    throw error;
+  }
   const db = drizzle(pool, { schema });
 
   return {

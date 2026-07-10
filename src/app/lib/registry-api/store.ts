@@ -127,11 +127,7 @@ export const listEntities = async (db: RegistryDatabase, kind: ManagedEntityKind
 };
 
 /** Read a single entity with its build/artifact state, or `null` when absent. */
-export const getEntity = async (
-  db: RegistryDatabase,
-  kind: ManagedEntityKind,
-  id: string
-): Promise<EntityReadResult | null> => {
+export const getEntity = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string): Promise<EntityReadResult | null> => {
   const spec = ENTITY[kind];
   const rows = await db
     .select({ record: spec.table.record, metadata: spec.table.metadata })
@@ -153,10 +149,6 @@ export const createEntity = async (
 ): Promise<EntityReadResult | null> => {
   const spec = ENTITY[kind];
   const id = write.id as string;
-  if (await entityExists(db, kind, id)) {
-    return null;
-  }
-
   const path = `${spec.pathPrefix}/${id}`;
   const { fields } = write;
   const metadata = write.metadata ?? null;
@@ -184,7 +176,14 @@ export const createEntity = async (
         ? { ...baseValues, tags: asStringArray(fields.tags), components: [] }
         : baseValues;
 
-  await db.insert(spec.table).values(values as any);
+  const inserted = await db
+    .insert(spec.table)
+    .values(values as any)
+    .onConflictDoNothing({ target: spec.table.id })
+    .returning({ id: spec.table.id });
+  if (inserted.length === 0) {
+    return null;
+  }
   return { data: withMetadata(record, metadata), build: await resolveBuildMeta(db, kind, id) };
 };
 
@@ -239,7 +238,10 @@ export const updateEntityMetadata = async (
   promoted.record = record;
   promoted.metadata = metadata;
 
-  await db.update(spec.table).set(promoted as any).where(eq(spec.table.id, id));
+  await db
+    .update(spec.table)
+    .set(promoted as any)
+    .where(eq(spec.table.id, id));
   return { data: withMetadata(record, metadata), build: await resolveBuildMeta(db, kind, id) };
 };
 
@@ -248,27 +250,24 @@ export const updateEntityMetadata = async (
  * artifacts owned by `asset` are preserved. Returns `false` when the entity does not exist.
  */
 export const deleteEntity = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string): Promise<boolean> => {
-  const spec = ENTITY[kind];
-  if (!(await entityExists(db, kind, id))) {
-    return false;
-  }
-  await db.delete(docsArtifacts).where(and(eq(docsArtifacts.entityKind, kind), eq(docsArtifacts.entityId, id)));
-  // Pages own no artifacts (and `page` is not an artifact owner kind), so only components/patterns
-  // need their owned artifacts cleared.
-  if (kind !== 'page') {
-    await db.delete(docsArtifacts).where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id)));
-  }
-  await db.delete(buildMetadata).where(and(eq(buildMetadata.entityKind, kind), eq(buildMetadata.entityId, id)));
-  await db.delete(spec.table).where(eq(spec.table.id, id));
-  return true;
+  return db.transaction(async (tx) => {
+    const transactionalDb = tx as unknown as RegistryDatabase;
+    const spec = ENTITY[kind];
+    if (!(await entityExists(transactionalDb, kind, id))) {
+      return false;
+    }
+    await transactionalDb.delete(docsArtifacts).where(and(eq(docsArtifacts.entityKind, kind), eq(docsArtifacts.entityId, id)));
+    if (kind !== 'page') {
+      await transactionalDb.delete(docsArtifacts).where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id)));
+    }
+    await transactionalDb.delete(buildMetadata).where(and(eq(buildMetadata.entityKind, kind), eq(buildMetadata.entityId, id)));
+    await transactionalDb.delete(spec.table).where(eq(spec.table.id, id));
+    return true;
+  });
 };
 
 /** List an entity's text-file records (inline content only). */
-export const listEntityFiles = async (
-  db: RegistryDatabase,
-  kind: ManagedEntityKind,
-  id: string
-): Promise<ValidatedFile[]> => {
+export const listEntityFiles = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string): Promise<ValidatedFile[]> => {
   const spec = ENTITY[kind];
   const rows = await db
     .select({
@@ -334,12 +333,7 @@ export const upsertEntityFile = async (
 };
 
 /** Delete a text-file record by path. Returns `false` when no such file exists. */
-export const deleteEntityFile = async (
-  db: RegistryDatabase,
-  kind: ManagedEntityKind,
-  id: string,
-  filePath: string
-): Promise<boolean> => {
+export const deleteEntityFile = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string, filePath: string): Promise<boolean> => {
   const spec = ENTITY[kind];
   const rows = await db
     .select({ path: spec.filesTable.path })

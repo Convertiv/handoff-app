@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { handleDocsRoute, sendDocsError, singleQueryValue } from '@/lib/docs-api';
+import { singleQueryValue } from '@/lib/api/query';
+import { handleDocsRoute, sendDocsError } from '@/lib/docs-api';
 
 /**
  * `GET /api/docs/assets/{collection}`: lightweight metadata for every asset in a collection. Never

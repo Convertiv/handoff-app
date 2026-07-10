@@ -44,7 +44,10 @@ export const buildMeta = (build?: RegistryBuildMeta): RegistryMeta => ({
 
 /** Count rows matching a where-clause (used for artifact tallies). */
 const countWhere = async (db: RegistryDatabase, where: ReturnType<typeof eq>): Promise<number> => {
-  const rows = await db.select({ value: sql<number>`count(*)::int` }).from(docsArtifacts).where(where);
+  const rows = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(docsArtifacts)
+    .where(where);
   return rows[0]?.value ?? 0;
 };
 
@@ -57,22 +60,20 @@ export const resolveBuildMeta = async (
   entityKind: 'component' | 'pattern' | 'page',
   entityId: string
 ): Promise<RegistryBuildMeta> => {
-  const rows = await db
-    .select({
-      status: buildMetadata.status,
-      builtAt: buildMetadata.builtAt,
-      artifactHash: buildMetadata.artifactHash,
-    })
-    .from(buildMetadata)
-    .where(and(eq(buildMetadata.entityKind, entityKind), eq(buildMetadata.entityId, entityId)))
-    .limit(1);
+  const [rows, ingestedArtifacts, sharedArtifacts] = await Promise.all([
+    db
+      .select({
+        status: buildMetadata.status,
+        builtAt: buildMetadata.builtAt,
+        artifactHash: buildMetadata.artifactHash,
+      })
+      .from(buildMetadata)
+      .where(and(eq(buildMetadata.entityKind, entityKind), eq(buildMetadata.entityId, entityId)))
+      .limit(1),
+    countWhere(db, and(eq(docsArtifacts.entityKind, entityKind), eq(docsArtifacts.entityId, entityId))),
+    countWhere(db, eq(docsArtifacts.entityKind, 'asset')),
+  ]);
   const row = rows[0];
-
-  const ingestedArtifacts = await countWhere(
-    db,
-    and(eq(docsArtifacts.entityKind, entityKind), eq(docsArtifacts.entityId, entityId))
-  );
-  const sharedArtifacts = await countWhere(db, eq(docsArtifacts.entityKind, 'asset'));
 
   return {
     status: row?.status ?? 'not_built',

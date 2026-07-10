@@ -78,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tokenSets: componentTokenSets,
     });
   } catch (error) {
-    sendDocsError(res, 'unexpected_error', error instanceof Error ? error.message : 'Unexpected docs read API error.');
+    console.error('Docs navigation response failed.', error);
+    sendDocsError(res, 'unexpected_error', 'Unexpected docs read API error.');
   }
 }

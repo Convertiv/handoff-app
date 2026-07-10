@@ -8,7 +8,7 @@ import { ensureRegistryMode, sendRegistryError } from '@/lib/registry-api';
  * returns the documented bare `{ ok, runtime, source }` body rather than the data envelope.
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): void {
-  if (!ensureRegistryMode(req, res)) {
+  if (!ensureRegistryMode(res)) {
     return;
   }
   if ((req.method ?? 'GET').toUpperCase() !== 'GET') {

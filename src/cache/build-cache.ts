@@ -319,8 +319,36 @@ export function hasComponentChanged(
  * Checks if the component output files exist
  */
 export async function checkOutputExists(handoff: Handoff, componentId: string): Promise<boolean> {
-  const outputPath = path.resolve(handoff.workingPath, 'public/api/component', `${componentId}.json`);
-  return fs.pathExists(outputPath);
+  const outputDirectory = path.resolve(handoff.workingPath, 'public/api/component');
+  const componentPath = path.resolve(outputDirectory, `${componentId}.json`);
+  if (!(await fs.pathExists(componentPath))) {
+    return false;
+  }
+
+  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const previewIds = new Set([
+    ...Object.keys(runtimeComponent?.previews ?? {}),
+    ...Object.keys(runtimeComponent?.internalPatternPreviews ?? {}),
+  ]);
+
+  try {
+    const component = await fs.readJson(componentPath);
+    for (const previewId of Object.keys(component?.previews ?? {})) {
+      previewIds.add(previewId);
+    }
+  } catch {
+    return false;
+  }
+
+  for (const previewId of previewIds) {
+    const previewPath = path.resolve(outputDirectory, `${componentId}-${previewId}.html`);
+    const inspectPath = path.resolve(outputDirectory, `${componentId}-${previewId}-inspect.html`);
+    if (!(await fs.pathExists(previewPath)) || !(await fs.pathExists(inspectPath))) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**

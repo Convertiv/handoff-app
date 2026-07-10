@@ -26,14 +26,11 @@ export interface ResolvedRegistryConnection {
   urlEnv: string;
   /** Name of the env var the access token is read from. */
   accessTokenEnv: string;
-  /** Whether both a URL and a token are available. */
-  isConfigured: boolean;
 }
 
 /**
  * Resolve the connected-workspace registry connection from config + environment. Never throws —
- * callers inspect `isConfigured` (and `url`/`accessToken`) to surface actionable, situation-specific
- * errors (missing URL vs missing token).
+ * Callers inspect the resolved URL and access token to surface specific configuration errors.
  */
 export const resolveRegistryConnection = (config: Config | null | undefined): ResolvedRegistryConnection => {
   const connection = config?.runtime?.registryConnection;
@@ -49,6 +46,5 @@ export const resolveRegistryConnection = (config: Config | null | undefined): Re
     accessToken,
     urlEnv,
     accessTokenEnv,
-    isConfigured: Boolean(url && accessToken),
   };
 };

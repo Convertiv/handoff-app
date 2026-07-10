@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { and, eq } from 'drizzle-orm';
-import type { ArtifactKind, ArtifactOwnerKind } from '@handoff/artifacts/types';
+import { and, eq, inArray } from 'drizzle-orm';
+import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference, ArtifactReferenceKind } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
+import { isSafePathSegment, isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import {
   buildMetadata,
   componentFiles,
@@ -13,12 +14,14 @@ import {
   patterns,
 } from '@handoff/registry/db/schema';
 import type { TransferArtifact, TransferBuild, TransferEntityKind, TransferFile, TransferPackage } from '@handoff/registry/transfer';
+import { singleQueryValue } from '../api/query';
 import { sendRegistryError, type RegistryErrorDetails } from './errors';
-import { isSafeRelativePath, normalizeRelativePath, validateFileBody } from './files';
+import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
 import { getEntity, listEntityFiles } from './store';
+import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
 
 /**
  * Publish ingestion for the registry transfer endpoint.
@@ -41,11 +44,8 @@ import { getEntity, listEntityFiles } from './store';
 
 const VALID_ARTIFACT_KINDS = new Set<ArtifactKind>(['json', 'html', 'css', 'javascript', 'other']);
 const VALID_OWNER_KINDS = new Set<ArtifactOwnerKind>(['component', 'pattern', 'asset']);
+const VALID_REFERENCE_KINDS = new Set<ArtifactReferenceKind>(['client', 'style', 'script', 'shared', 'other']);
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
 const asStringArray = (value: unknown): string[] | undefined =>
   Array.isArray(value) && value.every((item) => typeof item === 'string') ? (value as string[]) : undefined;
 
@@ -73,6 +73,10 @@ const invalid = (message: string, details?: RegistryErrorDetails): PackageValida
  * against the package + already-stored artifacts.
  */
 const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): PackageValidation => {
+  const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
+  if (!validId) {
+    return invalid('Publish target id must be a registry-safe relative path.', { rejectedFields: ['id'] });
+  }
   if (!isPlainObject(body)) {
     return invalid('Request body must be a JSON object.');
   }
@@ -91,6 +95,7 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     return invalid('`files` must be an array.', { rejectedFields: ['files'] });
   }
   const files: TransferFile[] = [];
+  const seenFilePaths = new Set<string>();
   for (let i = 0; i < rawFiles.length; i += 1) {
     const validation = validateFileBody(rawFiles[i]);
     if (!validation.ok) {
@@ -98,12 +103,21 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
         rejectedFields: (validation.rejectedFields ?? []).map((field) => `files[${i}].${field}`),
       });
     }
+    if (seenFilePaths.has(validation.value.path)) {
+      return invalid(`Duplicate source file path "${validation.value.path}" in package.`, {
+        rejectedFields: [`files[${i}].path`],
+      });
+    }
+    seenFilePaths.add(validation.value.path);
     files.push(validation.value);
   }
 
   const rawArtifacts = body.artifacts ?? [];
   if (!Array.isArray(rawArtifacts)) {
     return invalid('`artifacts` must be an array.', { rejectedFields: ['artifacts'] });
+  }
+  if (kind === 'page' && rawArtifacts.length > 0) {
+    return invalid('Page publishes cannot contain rendered artifacts.', { rejectedFields: ['artifacts'] });
   }
   const artifacts: TransferArtifact[] = [];
   const seenPaths = new Set<string>();
@@ -143,11 +157,85 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     if (!ownerKind || !VALID_OWNER_KINDS.has(ownerKind)) {
       return invalid(`Artifact "${artifactPath}" has an invalid ownerKind.`, { rejectedFields: [field('ownerKind')] });
     }
-    const ownerId = ownerKind === 'asset' ? null : asString(raw.ownerId) ?? null;
+    const ownerId = ownerKind === 'asset' ? null : (asString(raw.ownerId) ?? null);
     if (ownerKind !== 'asset' && !ownerId) {
       return invalid(`Artifact "${artifactPath}" must name an ownerId for owner kind "${ownerKind}".`, {
         rejectedFields: [field('ownerId')],
       });
+    }
+    if (ownerKind === 'component' && kind === 'component' && ownerId !== id) {
+      return invalid(`Artifact "${artifactPath}" cannot be owned by another component.`, {
+        rejectedFields: [field('ownerId')],
+      });
+    }
+    if (ownerKind === 'pattern' && (kind !== 'pattern' || ownerId !== id)) {
+      return invalid(`Artifact "${artifactPath}" must be owned by the target pattern.`, {
+        rejectedFields: [field('ownerId')],
+      });
+    }
+    if (ownerKind === 'component' && !artifactPath.startsWith('component/')) {
+      return invalid(`Component artifact "${artifactPath}" must use the component path prefix.`, {
+        rejectedFields: [field('path')],
+      });
+    }
+    if (ownerKind === 'pattern' && !artifactPath.startsWith('pattern/')) {
+      return invalid(`Pattern artifact "${artifactPath}" must use the pattern path prefix.`, {
+        rejectedFields: [field('path')],
+      });
+    }
+
+    let references: ArtifactReference[] | undefined;
+    if (raw.references !== undefined) {
+      if (!Array.isArray(raw.references)) {
+        return invalid(`Artifact "${artifactPath}" references must be an array.`, {
+          rejectedFields: [field('references')],
+        });
+      }
+      references = [];
+      for (let referenceIndex = 0; referenceIndex < raw.references.length; referenceIndex += 1) {
+        const reference = raw.references[referenceIndex];
+        const referenceField = (name: string) => `${field('references')}[${referenceIndex}].${name}`;
+        if (!isPlainObject(reference)) {
+          return invalid(`Artifact "${artifactPath}" contains an invalid reference.`, {
+            rejectedFields: [`${field('references')}[${referenceIndex}]`],
+          });
+        }
+        const referencePath = asString(reference.path);
+        const referenceKind = asString(reference.kind) as ArtifactReferenceKind | undefined;
+        if (!referencePath || !isSafeRelativePath(referencePath)) {
+          return invalid(`Artifact "${artifactPath}" contains an unsafe reference path.`, {
+            rejectedFields: [referenceField('path')],
+          });
+        }
+        if (!referenceKind || !VALID_REFERENCE_KINDS.has(referenceKind)) {
+          return invalid(`Artifact "${artifactPath}" contains an invalid reference kind.`, {
+            rejectedFields: [referenceField('kind')],
+          });
+        }
+        if (typeof reference.required !== 'boolean') {
+          return invalid(`Artifact "${artifactPath}" reference must declare whether it is required.`, {
+            rejectedFields: [referenceField('required')],
+          });
+        }
+        const referenceOwnerKind = asString(reference.ownerKind) as ArtifactOwnerKind | undefined;
+        if (referenceOwnerKind && !VALID_OWNER_KINDS.has(referenceOwnerKind)) {
+          return invalid(`Artifact "${artifactPath}" contains an invalid reference owner.`, {
+            rejectedFields: [referenceField('ownerKind')],
+          });
+        }
+        references.push({
+          path: normalizeRelativePath(referencePath),
+          kind: referenceKind,
+          required: reference.required,
+          ...(referenceOwnerKind ? { ownerKind: referenceOwnerKind } : {}),
+          ...(referenceOwnerKind ? { ownerId: referenceOwnerKind === 'asset' ? null : (asString(reference.ownerId) ?? null) } : {}),
+          ...(asString(reference.contentType) ? { contentType: asString(reference.contentType) } : {}),
+          ...(asString(reference.formatVersion) ? { formatVersion: asString(reference.formatVersion) } : {}),
+          ...(asString(reference.buildId) ? { buildId: asString(reference.buildId) } : {}),
+          ...(asString(reference.hash) ? { hash: asString(reference.hash) } : {}),
+          ...(typeof reference.size === 'number' ? { size: reference.size } : {}),
+        });
+      }
     }
 
     artifacts.push({
@@ -157,7 +245,7 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
       contentType: asString(raw.contentType) || 'text/plain; charset=utf-8',
       ownerKind,
       ownerId,
-      references: Array.isArray(raw.references) ? (raw.references as TransferArtifact['references']) : undefined,
+      references,
       formatVersion: asString(raw.formatVersion),
       hash: asString(raw.hash),
       size: typeof raw.size === 'number' ? raw.size : undefined,
@@ -167,12 +255,12 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
   if (!isPlainObject(body.build)) {
     return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
   }
-  const status = asString(body.build.status);
-  if (!status || !['current', 'stale', 'missing', 'error'].includes(status)) {
+  const status = body.build.status;
+  if (!isRegistryBuildStatus(status)) {
     return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
   }
   const build: TransferBuild = {
-    status: status as TransferBuild['status'],
+    status,
     builtAt: asString(body.build.builtAt),
     builderVersion: asString(body.build.builderVersion),
     artifactHash: asString(body.build.artifactHash),
@@ -197,12 +285,6 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
   return { ok: true, value: { item, files, artifacts, build } };
 };
 
-/** Whether an artifact path already exists in the registry (for required-reference checks). */
-const artifactExists = async (db: RegistryDatabase, path: string): Promise<boolean> => {
-  const rows = await db.select({ path: docsArtifacts.path }).from(docsArtifacts).where(eq(docsArtifacts.path, path)).limit(1);
-  return rows.length > 0;
-};
-
 /**
  * Ensure every **required** structured reference is satisfied — present in the package or already
  * stored — so a published HTML artifact never depends on a missing required artifact.
@@ -212,17 +294,30 @@ const findMissingRequiredReference = async (
   pkg: TransferPackage
 ): Promise<{ artifact: string; reference: string } | null> => {
   const packagePaths = new Set(pkg.artifacts.map((artifact) => artifact.path));
-  for (const artifact of pkg.artifacts) {
-    for (const reference of artifact.references ?? []) {
-      if (!reference.required) {
-        continue;
+  const requiredReferences = pkg.artifacts.flatMap((artifact) =>
+    (artifact.references ?? [])
+      .filter((reference) => reference.required)
+      .map((reference) => ({ artifact: artifact.path, reference: reference.path }))
+  );
+  const storedCandidates = Array.from(
+    new Set(requiredReferences.map(({ reference }) => reference).filter((path) => !packagePaths.has(path)))
+  );
+  const storedPaths = new Set<string>();
+  if (storedCandidates.length > 0) {
+    const rows = await db
+      .select({ path: docsArtifacts.path, content: docsArtifacts.content })
+      .from(docsArtifacts)
+      .where(inArray(docsArtifacts.path, storedCandidates));
+    rows.forEach(({ path, content }) => {
+      if (content != null) {
+        storedPaths.add(path);
       }
-      if (packagePaths.has(reference.path)) {
-        continue;
-      }
-      if (!(await artifactExists(db, reference.path))) {
-        return { artifact: artifact.path, reference: reference.path };
-      }
+    });
+  }
+
+  for (const required of requiredReferences) {
+    if (!packagePaths.has(required.reference) && !storedPaths.has(required.reference)) {
+      return required;
     }
   }
   return null;
@@ -262,19 +357,17 @@ const upsertEntityRecord = async (
         : { ...base, weight: typeof item.weight === 'number' ? item.weight : null };
 
   if (existing[0]) {
-    await db.update(spec.table).set(values as any).where(eq(spec.table.id, id));
+    await db
+      .update(spec.table)
+      .set(values as any)
+      .where(eq(spec.table.id, id));
     return;
   }
   await db.insert(spec.table).values({ id, metadata: null, ...values } as any);
 };
 
 /** Replace the entity's source files: drop all existing, then insert the package's files. */
-const replaceEntityFiles = async (
-  db: RegistryDatabase,
-  kind: TransferEntityKind,
-  id: string,
-  files: TransferFile[]
-): Promise<void> => {
+const replaceEntityFiles = async (db: RegistryDatabase, kind: TransferEntityKind, id: string, files: TransferFile[]): Promise<void> => {
   const spec = ENTITY[kind];
   await db.delete(spec.filesTable).where(eq(spec.fileFk, id));
   for (const file of files) {
@@ -343,12 +436,7 @@ const ingestArtifacts = async (
 };
 
 /** Upsert the entity's build/provenance metadata. */
-const upsertBuildMetadata = async (
-  db: RegistryDatabase,
-  kind: TransferEntityKind,
-  id: string,
-  build: TransferBuild
-): Promise<void> => {
+const upsertBuildMetadata = async (db: RegistryDatabase, kind: TransferEntityKind, id: string, build: TransferBuild): Promise<void> => {
   const values = {
     entityKind: kind,
     entityId: id,
@@ -374,15 +462,18 @@ const upsertBuildMetadata = async (
  * they are filtered defensively so checkout never receives one. The read is unauthenticated,
  * running behind the registry-runtime + method guards only.
  */
-export const handleCheckoutRoute = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: TransferEntityKind
-): Promise<void> =>
+export const handleCheckoutRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
-    const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
+    const id = singleQueryValue(req.query.id);
     if (!id) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
+      return;
+    }
+    const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
+    if (!validId) {
+      sendRegistryError(res, 'bad_request', 'Entity id must be a registry-safe relative path.', {
+        rejectedFields: ['id'],
+      });
       return;
     }
 
@@ -403,13 +494,9 @@ export const handleCheckoutRoute = (
  * Handle `PUT /api/registry/transfer/{component|pattern}/:id` — validate and ingest a publish
  * package. Registry-runtime only; the bearer token is required (enforced by the guard stack).
  */
-export const handleTransferRoute = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: TransferEntityKind
-): Promise<void> =>
+export const handleTransferRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['PUT'], async ({ db }) => {
-    const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
+    const id = singleQueryValue(req.query.id);
     if (!id) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
       return;
@@ -433,10 +520,13 @@ export const handleTransferRoute = (
       return;
     }
 
-    await upsertEntityRecord(db, kind, id, pkg.item);
-    await replaceEntityFiles(db, kind, id, pkg.files);
-    await ingestArtifacts(db, kind, id, pkg.artifacts);
-    await upsertBuildMetadata(db, kind, id, pkg.build);
+    await db.transaction(async (tx) => {
+      const transactionalDb = tx as unknown as RegistryDatabase;
+      await upsertEntityRecord(transactionalDb, kind, id, pkg.item);
+      await replaceEntityFiles(transactionalDb, kind, id, pkg.files);
+      await ingestArtifacts(transactionalDb, kind, id, pkg.artifacts);
+      await upsertBuildMetadata(transactionalDb, kind, id, pkg.build);
+    });
 
     // The publish persisted; regenerate the affected docs pages on demand so the served pages reflect
     // the new content immediately (correct server-rendered `<head>` title/metadata).

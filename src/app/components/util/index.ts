@@ -19,7 +19,6 @@ export interface IParams extends ParsedUrlQuery {
   slug: string | string[];
 }
 
-
 // Type for the metadata from frontmatter
 export interface Metadata {
   title: string;
@@ -158,9 +157,7 @@ export const buildCatchAllStaticPaths = (includeWorkspacePages = true) => {
     }
   }
 
-  return allPaths
-    .filter((segments) => knownPaths.indexOf(segments.join('/')) < 0)
-    .map((segments) => ({ params: { slug: segments } }));
+  return allPaths.filter((segments) => knownPaths.indexOf(segments.join('/')) < 0).map((segments) => ({ params: { slug: segments } }));
 };
 
 /**
@@ -362,7 +359,9 @@ export const buildPagesMenu = (
             const sub = top.menu[key];
             if (sub.components) {
               const dynamic =
-                typeof sub.components === 'string' ? { kind: 'components' as const, type: sub.components } : { kind: 'components' as const };
+                typeof sub.components === 'string'
+                  ? { kind: 'components' as const, type: sub.components }
+                  : { kind: 'components' as const };
               return { title: sub.title, menu: buildComponentMenu(components, sub.components), dynamic };
             }
             if (sub.tokens) {
@@ -636,16 +635,6 @@ export const fetchComponentTokens = async (componentId: string): Promise<Compone
   }
 };
 
-/** List the registry's logical token sets (id + kind) through the docs read API; `[]` on failure. */
-export const fetchTokenSets = async (): Promise<{ id: string; kind: string }[]> => {
-  try {
-    const backend = await resolveDocsBackend();
-    return (await backend.listTokenSets()) ?? [];
-  } catch {
-    return [];
-  }
-};
-
 type FetchLocalComponentsOptions = {
   includeTokens?: boolean;
   includeApi?: boolean;
@@ -750,12 +739,7 @@ const getDefaultClientConfig = (): ClientConfigCache => {
  */
 const resolveClientConfigPath = (): string | null => {
   const candidates = [
-    path.resolve(
-      process.env.HANDOFF_MODULE_PATH ?? '',
-      '.handoff',
-      process.env.HANDOFF_PROJECT_ID ?? '',
-      'client.config.json'
-    ),
+    path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', process.env.HANDOFF_PROJECT_ID ?? '', 'client.config.json'),
     path.resolve(process.cwd(), 'client.config.json'),
   ];
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
@@ -771,7 +755,7 @@ const applyRuntimeModeOverride = (cache: ClientConfigCache): ClientConfigCache =
   if (bakedMode === 'workspace' || bakedMode === 'registry') {
     // A baked registry mode is never a connected workspace, so clear `connected` to keep the
     // projected state internally consistent regardless of the source project's config.
-    const connected = bakedMode === 'registry' ? false : cache.config.runtime?.connected ?? false;
+    const connected = bakedMode === 'registry' ? false : (cache.config.runtime?.connected ?? false);
     return { config: { ...cache.config, runtime: { ...cache.config.runtime, mode: bakedMode, connected } } };
   }
   return cache;
@@ -797,8 +781,6 @@ const loadClientConfig = (): ClientConfigCache => {
     return applyRuntimeModeOverride(getDefaultClientConfig());
   }
 };
-
-
 
 /**
  * Fetch Component Doc Page Markdown
@@ -854,8 +836,7 @@ export const buildTimeFoundationDesign = (): CoreTypes.IDocumentationObject['loc
  * hydrates them at request time from the DB-backed docs read API (`useCollectionAssets`). Without this
  * gate a registry build bakes the builder's local assets, so they would appear before any publish.
  */
-export const buildTimeAssets = (): CoreTypes.IDocumentationObject['assets'] =>
-  isRegistryRuntime() ? {} : getTokens().assets;
+export const buildTimeAssets = (): CoreTypes.IDocumentationObject['assets'] => (isRegistryRuntime() ? {} : getTokens().assets);
 
 export const getTokens = (): CoreTypes.IDocumentationObject => {
   const exportedFilePath = process.env.HANDOFF_EXPORT_PATH

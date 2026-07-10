@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { singleQueryValue } from '../api/query';
 
 /**
  * Docs read API error contract.
@@ -33,14 +34,6 @@ export const ensureGet = (req: NextApiRequest, res: NextApiResponse): boolean =>
   res.setHeader('Allow', 'GET');
   sendDocsError(res, 'method_not_allowed', `Method ${req.method ?? 'unknown'} not allowed; docs read API is GET-only.`);
   return false;
-};
-
-/** Coerce a Next.js dynamic route query value (string | string[] | undefined) to a single string. */
-export const singleQueryValue = (value: string | string[] | undefined): string | undefined => {
-  if (Array.isArray(value)) {
-    return value[0];
-  }
-  return value;
 };
 
 /**

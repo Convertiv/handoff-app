@@ -1,4 +1,6 @@
 import type { RegistryReviewMetadata } from '@handoff/registry/db/schema';
+import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
+import { isPlainObject } from './validation';
 
 /**
  * Metadata allowlist for registry create/update.
@@ -51,11 +53,7 @@ export interface MetadataValidation {
   message?: string;
 }
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const isStringArray = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((item) => typeof item === 'string');
+const isStringArray = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === 'string');
 
 export interface ValidateMetadataOptions {
   /** Allow (and require) an `id` field — used by create (POST). */
@@ -89,11 +87,13 @@ export const validateMetadataWrite = (
         rejectedFields.push('id');
         continue;
       }
-      if (typeof value !== 'string' || !value.trim()) {
+      const candidate = typeof value === 'string' ? value.trim() : '';
+      const validId = kind === 'page' ? isSafeRelativePath(candidate) : isSafePathSegment(candidate);
+      if (!validId) {
         rejectedFields.push('id');
         continue;
       }
-      id = value.trim();
+      id = candidate;
       continue;
     }
 

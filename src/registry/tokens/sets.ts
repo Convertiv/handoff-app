@@ -18,6 +18,7 @@
  */
 
 import type { Types as CoreTypes } from 'handoff-core';
+import { isSafePathSegment } from '../path';
 
 /** Kind of a logical token set. */
 export type TokenSetKind = 'foundation' | 'component';
@@ -47,6 +48,13 @@ const LOCAL_STYLES_KEY_BY_FOUNDATION: Record<string, keyof CoreTypes.IDocumentat
 /** Whether a set id refers to a component token set. */
 export const isComponentSet = (id: string): boolean => id.startsWith('component/');
 
+export const isTokenSetId = (id: string): boolean => {
+  if ((FOUNDATION_SET_IDS as readonly string[]).includes(id)) {
+    return true;
+  }
+  return isComponentSet(id) && isSafePathSegment(id.slice('component/'.length));
+};
+
 /** The kind of a set id. */
 export const kindForSetId = (id: string): TokenSetKind => (isComponentSet(id) ? 'component' : 'foundation');
 
@@ -55,12 +63,10 @@ export const kindForSetId = (id: string): TokenSetKind => (isComponentSet(id) ? 
  * component id for a component set. This is the name the style transformers write files under
  * (`<outDir>/<name>.<format>`).
  */
-export const setNameForId = (id: string): string =>
-  isComponentSet(id) ? id.slice('component/'.length) : id.split('/')[1] ?? id;
+export const setNameForId = (id: string): string => (isComponentSet(id) ? id.slice('component/'.length) : (id.split('/')[1] ?? id));
 
 /** The `foundations/<type>` page type (`colors`/`typography`/`effects`) for a foundation set id, else null. */
-export const foundationTypeForId = (id: string): string | null =>
-  isComponentSet(id) ? null : id.split('/')[1] ?? null;
+export const foundationTypeForId = (id: string): string | null => (isComponentSet(id) ? null : (id.split('/')[1] ?? null));
 
 /**
  * Split the generated token document into logical sets: the three foundation sets (each possibly an

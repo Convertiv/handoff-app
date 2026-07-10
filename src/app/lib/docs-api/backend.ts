@@ -2,7 +2,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { TokenSetKind } from '@handoff/registry/tokens/sets';
-import { FilesystemAssetStore, type AssetContentResource, type AssetMetadata, type TokenArtifactResource } from '@handoff/store';
+import { FilesystemAssetStore } from '@handoff/store/filesystem-assets';
+import type { AssetContentResource, AssetMetadata, TokenArtifactResource } from '@handoff/store';
 import { getArtifactRoot, resolveArtifactFile } from './artifacts';
 import {
   getComponentDetail as getWorkspaceComponentDetail,

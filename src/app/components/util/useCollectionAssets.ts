@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Types as CoreTypes } from 'handoff-core';
+import type { AssetMetadata } from '@handoff/store';
 
 /**
  * Client-side hydration for asset pages (icons grid, icon detail, logos). Asset routes are static, so
@@ -45,7 +46,7 @@ const fromWorkspace = (assets?: CoreTypes.IAssetObject[]): DisplayableAsset[] =>
   }));
 
 /** Map registry metadata rows (individual assets only) to displayable assets. */
-const fromRegistry = (collection: string, rows: any[]): DisplayableAsset[] => {
+const fromRegistry = (collection: string, rows: AssetMetadata[]): DisplayableAsset[] => {
   const prefix = `assets/${collection}/`;
   return (rows ?? [])
     .filter((row) => typeof row.path === 'string' && row.path.startsWith(prefix))
@@ -90,7 +91,9 @@ export const useSingleAsset = (
   initial?: CoreTypes.IAssetObject
 ): DisplayableAsset | null => {
   const [asset, setAsset] = useState<DisplayableAsset | null>(() =>
-    initial ? { icon: initial.icon, index: initial.index, name: initial.name, path: initial.path, size: initial.size, data: initial.data } : null
+    initial
+      ? { icon: initial.icon, index: initial.index, name: initial.name, path: initial.path, size: initial.size, data: initial.data }
+      : null
   );
 
   useEffect(() => {

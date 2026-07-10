@@ -50,7 +50,9 @@ export const getRegistryConnection = (): Promise<RegistryDbConnection> => {
   }
   connectionPromise = createRegistryDbConnection({ adapter: registry.adapter, connectionString }).catch((error) => {
     connectionPromise = null;
-    throw new RegistryConnectionError(error instanceof Error ? error.message : 'Failed to connect to the registry database.');
+    // TODO: Route server errors through the shared logger.
+    console.error('Registry database connection failed.', error);
+    throw new RegistryConnectionError('Registry database is unavailable.');
   });
   return connectionPromise;
 };

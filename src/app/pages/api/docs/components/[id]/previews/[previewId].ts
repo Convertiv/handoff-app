@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { handleDocsRoute, sendDocsError, serveArtifactBySegments, singleQueryValue } from '@/lib/docs-api';
+import { singleQueryValue } from '@/lib/api/query';
+import { handleDocsRoute, sendDocsError, serveArtifactBySegments } from '@/lib/docs-api';
 
 /**
  * `GET /api/docs/components/{id}/previews/{previewId}` — serves the preview HTML artifact

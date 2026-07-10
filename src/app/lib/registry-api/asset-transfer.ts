@@ -5,11 +5,13 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { assetBlobs, assetCollections, assets } from '@handoff/registry/db/schema';
 import { isAssetCollection, type AssetCollection } from '@handoff/registry/assets/sets';
 import type { AssetCollectionTransferPackage, AssetManifestEntry } from '@handoff/registry/assets/transfer';
+import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
+import { singleQueryValue } from '../api/query';
 import { getActiveAssetStorage, getActiveAssetStorageAdapter, getAssetStorageAdapter } from '../asset-storage';
 import { sendRegistryError, type RegistryErrorDetails } from './errors';
-import { isSafeRelativePath, normalizeRelativePath } from './files';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
+import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
 
 /**
  * Asset transfer ingestion + serving for the registry.
@@ -28,13 +30,6 @@ import { handleRegistryRoute, sendRegistryData } from './handler';
  * Runs behind {@link handleRegistryRoute}: runtime-mode, method, bearer-token (on mutations), and
  * database guards apply before any of this executes.
  */
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
-
-const singleValue = (value: string | string[] | undefined): string => (Array.isArray(value) ? value[0] ?? '' : value ?? '');
 
 interface PackageValidation {
   ok: boolean;
@@ -98,8 +93,8 @@ const validateAssetPackage = (body: unknown, collection: string): PackageValidat
   if (!isPlainObject(body.build)) {
     return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
   }
-  const status = asString(body.build.status);
-  if (!status || !['current', 'stale', 'missing', 'error'].includes(status)) {
+  const status = body.build.status;
+  if (!isRegistryBuildStatus(status)) {
     return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
   }
   if (status === 'current' && (!asString(body.build.builtAt) || !asString(body.build.builderVersion) || !asString(body.build.sourceHash))) {
@@ -114,7 +109,7 @@ const validateAssetPackage = (body: unknown, collection: string): PackageValidat
       collection: collection as AssetCollection,
       assets: manifest,
       build: {
-        status: status as AssetCollectionTransferPackage['build']['status'],
+        status,
         builtAt: asString(body.build.builtAt),
         builderVersion: asString(body.build.builderVersion),
         sourceHash: asString(body.build.sourceHash),
@@ -186,14 +181,18 @@ export const handleAssetSummaryRoute = (req: NextApiRequest, res: NextApiRespons
 /** `GET|PUT /api/registry/transfer/assets/:collection`: checkout / publish one collection manifest. */
 export const handleAssetCollectionRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT'], async ({ db, method }) => {
-    const collection = singleValue(req.query.collection);
+    const collection = singleQueryValue(req.query.collection) ?? '';
     if (!collection) {
       sendRegistryError(res, 'not_found', 'Missing asset collection.');
       return;
     }
 
     if (method === 'GET') {
-      const found = await db.select({ collection: assetCollections.collection }).from(assetCollections).where(eq(assetCollections.collection, collection as AssetCollection)).limit(1);
+      const found = await db
+        .select({ collection: assetCollections.collection })
+        .from(assetCollections)
+        .where(eq(assetCollections.collection, collection as AssetCollection))
+        .limit(1);
       if (!found.length) {
         sendRegistryError(res, 'not_found', `No asset collection "${collection}" exists in the registry.`);
         return;
@@ -234,10 +233,15 @@ export const handleAssetCollectionRoute = (req: NextApiRequest, res: NextApiResp
       const presentSet = new Set(present.map((row) => row.hash));
       const missing = referenced.filter((hash) => !presentSet.has(hash));
       if (missing.length > 0) {
-        sendRegistryError(res, 'bad_request', `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`, {
-          rejectedFields: ['assets'],
-          missing,
-        });
+        sendRegistryError(
+          res,
+          'bad_request',
+          `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`,
+          {
+            rejectedFields: ['assets'],
+            missing,
+          }
+        );
         return;
       }
     }
@@ -263,7 +267,7 @@ export const handleAssetBlobHaveRoute = (req: NextApiRequest, res: NextApiRespon
 /** `PUT|GET /api/registry/transfer/assets/blobs/:hash`: store / fetch one content-addressed blob. */
 export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT'], async ({ db, method }) => {
-    const hash = singleValue(req.query.hash).toLowerCase();
+    const hash = (singleQueryValue(req.query.hash) ?? '').toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(hash)) {
       sendRegistryError(res, 'bad_request', 'Blob hash must be a SHA-256 hex string.');
       return;
@@ -278,7 +282,14 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
         });
         return;
       }
-      const contentType = (Array.isArray(req.headers['content-type']) ? req.headers['content-type'][0] : req.headers['content-type']) || 'application/octet-stream';
+      const existing = await db.select({ hash: assetBlobs.hash }).from(assetBlobs).where(eq(assetBlobs.hash, hash)).limit(1);
+      if (existing.length > 0) {
+        sendRegistryData(res, 200, { hash, stored: true }, buildMeta());
+        return;
+      }
+      const contentType =
+        (Array.isArray(req.headers['content-type']) ? req.headers['content-type'][0] : req.headers['content-type']) ||
+        'application/octet-stream';
       const active = getActiveAssetStorage();
 
       let storageProvider = active.provider;
@@ -304,7 +315,6 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
         storageProvider = active.provider;
       }
 
-      // Content-addressed: an existing hash is already stored, so dedupe (no-op) rather than rewrite.
       await db
         .insert(assetBlobs)
         .values({ hash, storageProvider, content, storageRef, contentType, size: bytes.length } as any)
@@ -315,7 +325,12 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
 
     // GET: resolve and serve the blob bytes (redirecting to object storage where possible).
     const rows = await db
-      .select({ content: assetBlobs.content, storageRef: assetBlobs.storageRef, storageProvider: assetBlobs.storageProvider, contentType: assetBlobs.contentType })
+      .select({
+        content: assetBlobs.content,
+        storageRef: assetBlobs.storageRef,
+        storageProvider: assetBlobs.storageProvider,
+        contentType: assetBlobs.contentType,
+      })
       .from(assetBlobs)
       .where(eq(assetBlobs.hash, hash))
       .limit(1);

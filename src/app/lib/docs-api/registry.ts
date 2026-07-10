@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import matter from 'gray-matter';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
@@ -21,12 +21,6 @@ import { getAssetStorageAdapter } from '../asset-storage';
  * `registry`, so the Drizzle/Postgres driver code never loads in workspace dev/build.
  */
 
-/** Whether an artifact exists in the registry by logical path (used for required-reference checks). */
-const artifactExists = async (db: RegistryDatabase, path: string): Promise<boolean> => {
-  const rows = await db.select({ path: docsArtifacts.path }).from(docsArtifacts).where(eq(docsArtifacts.path, path)).limit(1);
-  return rows.length > 0;
-};
-
 /**
  * Resolve a content artifact from the registry by logical path. Returns `null` (→ `artifact_not_found`)
  * when the artifact is absent, when its content is stored externally (a future object-storage
@@ -41,11 +35,16 @@ const resolveRegistryArtifact = async (db: RegistryDatabase, segments: string[])
     return null;
   }
 
-  if (artifact.references) {
-    for (const reference of artifact.references) {
-      if (reference.required && !(await artifactExists(db, reference.path))) {
-        return null;
-      }
+  const requiredPaths = Array.from(
+    new Set((artifact.references ?? []).filter((reference) => reference.required).map((reference) => reference.path))
+  );
+  if (requiredPaths.length > 0) {
+    const rows = await db
+      .select({ path: docsArtifacts.path, content: docsArtifacts.content })
+      .from(docsArtifacts)
+      .where(inArray(docsArtifacts.path, requiredPaths));
+    if (rows.filter(({ content }) => content != null).length !== requiredPaths.length) {
+      return null;
     }
   }
 

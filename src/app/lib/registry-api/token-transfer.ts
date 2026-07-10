@@ -2,12 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { eq } from 'drizzle-orm';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { tokenArtifacts, tokenSets } from '@handoff/registry/db/schema';
-import { kindForSetId } from '@handoff/registry/tokens/sets';
+import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
+import { isTokenSetId, kindForSetId } from '@handoff/registry/tokens/sets';
 import type { TokenSetTransferArtifact, TokenSetTransferPackage } from '@handoff/registry/tokens/transfer';
+import { joinedQueryValue } from '../api/query';
 import { sendRegistryError, type RegistryErrorDetails } from './errors';
-import { isSafeRelativePath, normalizeRelativePath } from './files';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
+import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
 
 /**
  * Token-set transfer ingestion for the registry.
@@ -24,11 +26,6 @@ import { handleRegistryRoute, sendRegistryData } from './handler';
  * guards apply before any of this executes.
  */
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
-
 interface PackageValidation {
   ok: boolean;
   message?: string;
@@ -42,6 +39,9 @@ const invalid = (message: string, details?: RegistryErrorDetails): PackageValida
 const validateTokenPackage = (body: unknown, setId: string): PackageValidation => {
   if (!isPlainObject(body)) {
     return invalid('Request body must be a JSON object.');
+  }
+  if (!isTokenSetId(setId)) {
+    return invalid(`Unknown token set id "${setId}".`, { rejectedFields: ['id'] });
   }
 
   const bodyId = asString(body.id);
@@ -103,8 +103,8 @@ const validateTokenPackage = (body: unknown, setId: string): PackageValidation =
   if (!isPlainObject(body.build)) {
     return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
   }
-  const status = asString(body.build.status);
-  if (!status || !['current', 'stale', 'missing', 'error'].includes(status)) {
+  const status = body.build.status;
+  if (!isRegistryBuildStatus(status)) {
     return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
   }
   if (status === 'current' && (!asString(body.build.builtAt) || !asString(body.build.builderVersion) || !asString(body.build.sourceHash))) {
@@ -121,7 +121,7 @@ const validateTokenPackage = (body: unknown, setId: string): PackageValidation =
       record: body.record,
       artifacts,
       build: {
-        status: status as TokenSetTransferPackage['build']['status'],
+        status,
         builtAt: asString(body.build.builtAt),
         builderVersion: asString(body.build.builderVersion),
         sourceHash: asString(body.build.sourceHash),
@@ -170,9 +170,6 @@ const ingestTokenSet = async (db: RegistryDatabase, pkg: TokenSetTransferPackage
 };
 
 /** Recover the (multi-segment) set id from the catch-all `[...setId]` route param. */
-const setIdFromQuery = (value: string | string[] | undefined): string =>
-  Array.isArray(value) ? value.join('/') : value ?? '';
-
 /** `GET /api/registry/transfer/tokens` — list set summaries (unauthenticated read behind the guards). */
 export const handleTokenSummaryRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
@@ -185,9 +182,15 @@ export const handleTokenSummaryRoute = (req: NextApiRequest, res: NextApiRespons
 /** `GET /api/registry/transfer/tokens/:setId` — checkout one set's record + generated artifacts. */
 export const handleTokenCheckoutRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
-    const id = setIdFromQuery(req.query.setId);
+    const id = joinedQueryValue(req.query.setId) ?? '';
     if (!id) {
       sendRegistryError(res, 'not_found', 'Missing token set id.');
+      return;
+    }
+    if (!isTokenSetId(id)) {
+      sendRegistryError(res, 'bad_request', `Unknown or unsafe token set id "${id}".`, {
+        rejectedFields: ['id'],
+      });
       return;
     }
     const rows = await db.select({ kind: tokenSets.kind, record: tokenSets.record }).from(tokenSets).where(eq(tokenSets.id, id)).limit(1);
@@ -197,7 +200,14 @@ export const handleTokenCheckoutRoute = (req: NextApiRequest, res: NextApiRespon
       return;
     }
     const artifacts = await db
-      .select({ path: tokenArtifacts.path, format: tokenArtifacts.format, content: tokenArtifacts.content, contentType: tokenArtifacts.contentType, hash: tokenArtifacts.hash, size: tokenArtifacts.size })
+      .select({
+        path: tokenArtifacts.path,
+        format: tokenArtifacts.format,
+        content: tokenArtifacts.content,
+        contentType: tokenArtifacts.contentType,
+        hash: tokenArtifacts.hash,
+        size: tokenArtifacts.size,
+      })
       .from(tokenArtifacts)
       .where(eq(tokenArtifacts.tokenSetId, id));
     sendRegistryData(res, 200, { id, kind: set.kind, record: set.record, artifacts }, buildMeta());
@@ -206,7 +216,7 @@ export const handleTokenCheckoutRoute = (req: NextApiRequest, res: NextApiRespon
 /** `PUT /api/registry/transfer/tokens/:setId` — validate + atomically ingest one set. */
 export const handleTokenTransferRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['PUT'], async ({ db }) => {
-    const id = setIdFromQuery(req.query.setId);
+    const id = joinedQueryValue(req.query.setId) ?? '';
     if (!id) {
       sendRegistryError(res, 'not_found', 'Missing token set id.');
       return;

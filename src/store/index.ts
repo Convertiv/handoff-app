@@ -26,24 +26,25 @@ export type {
 } from './types';
 
 export {
-  FilesystemAssetStore,
   FilesystemComponentStore,
   FilesystemPageStore,
   FilesystemPatternStore,
   FilesystemTokenStore,
   type FilesystemStoreContext,
 } from './filesystem';
+
+export { FilesystemAssetStore } from './filesystem-assets';
 
 export { getRelatedSourceFilesForRecord, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
 
 import {
-  FilesystemAssetStore,
   FilesystemComponentStore,
   FilesystemPageStore,
   FilesystemPatternStore,
   FilesystemTokenStore,
   type FilesystemStoreContext,
 } from './filesystem';
+import { FilesystemAssetStore } from './filesystem-assets';
 import type { HandoffStore } from './types';
 
 /**

@@ -32,25 +32,16 @@ export interface RegistryRouteContext {
  * Guard that the active runtime is `registry`. Writes `409 runtime_mode_conflict` and returns
  * `false` in workspace mode. Used by routes (like health) that do not need a database connection.
  */
-export const ensureRegistryMode = (req: NextApiRequest, res: NextApiResponse): boolean => {
+export const ensureRegistryMode = (res: NextApiResponse): boolean => {
   if (getServerRuntimeConfig().mode === 'registry') {
     return true;
   }
-  sendRegistryError(
-    res,
-    'runtime_mode_conflict',
-    'The registry management API is available only when runtime.mode is "registry".'
-  );
+  sendRegistryError(res, 'runtime_mode_conflict', 'The registry management API is available only when runtime.mode is "registry".');
   return false;
 };
 
 /** Write a successful registry API response with the `{ data, meta }` envelope (data redacted). */
-export const sendRegistryData = (
-  res: NextApiResponse,
-  status: number,
-  data: unknown,
-  meta: RegistryMeta = buildMeta()
-): void => {
+export const sendRegistryData = (res: NextApiResponse, status: number, data: unknown, meta: RegistryMeta = buildMeta()): void => {
   res.status(status).json({ data: redactSecrets(data), meta });
 };
 
@@ -64,7 +55,7 @@ export const handleRegistryRoute = async (
   methods: string[],
   body: (ctx: RegistryRouteContext) => Promise<void>
 ): Promise<void> => {
-  if (!ensureRegistryMode(req, res)) {
+  if (!ensureRegistryMode(res)) {
     return;
   }
 
@@ -91,13 +82,15 @@ export const handleRegistryRoute = async (
       sendRegistryError(res, 'database_unavailable', error.message);
       return;
     }
-    sendRegistryError(res, 'unexpected_error', error instanceof Error ? error.message : 'Unexpected registry API error.');
+    console.error('Registry connection resolution failed.', error);
+    sendRegistryError(res, 'unexpected_error', 'Unexpected registry API error.');
     return;
   }
 
   try {
     await body({ req, res, db, method });
   } catch (error) {
-    sendRegistryError(res, 'unexpected_error', error instanceof Error ? error.message : 'Unexpected registry API error.');
+    console.error('Registry API request failed.', error);
+    sendRegistryError(res, 'unexpected_error', 'Unexpected registry API error.');
   }
 };

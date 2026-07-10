@@ -22,6 +22,7 @@ import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError } from '../client';
 import { resolveRegistryConnection } from '../connection';
+import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
@@ -106,7 +107,11 @@ const resolveTargetDir = async (handoff: Handoff, kind: TransferEntityKind, id: 
   const root = configuredRoots?.length
     ? path.resolve(handoff.workingPath, configuredRoots[0])
     : path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
-  return path.join(root, id);
+  const targetDir = resolvePathWithin(root, id);
+  if (!targetDir) {
+    throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
+  }
+  return targetDir;
 };
 
 /** Read the extension of an existing local declaration in `dir`, if any maps to a known format. */
@@ -119,9 +124,7 @@ const existingDeclarationFormat = (dir: string): DeclarationFormat | undefined =
     return undefined;
   }
   const ext = path.extname(declaration.fileName).slice(1).toLowerCase();
-  return (['ts', 'js', 'cjs', 'json'] as const).includes(ext as DeclarationFormat)
-    ? (ext as DeclarationFormat)
-    : undefined;
+  return (['ts', 'js', 'cjs', 'json'] as const).includes(ext as DeclarationFormat) ? (ext as DeclarationFormat) : undefined;
 };
 
 /**
@@ -281,17 +284,15 @@ const buildPatternComponents = (components: unknown): Record<string, unknown>[] 
   if (!Array.isArray(components)) {
     return [];
   }
-  return components
-    .filter(isPlainObject)
-    .map((entry) => {
-      const ref: Record<string, unknown> = {};
-      const id = asString(entry.id);
-      if (id) ref.id = id;
-      const preview = asString(entry.preview);
-      if (preview) ref.preview = preview;
-      if (isPlainObject(entry.args)) ref.args = entry.args;
-      return ref;
-    });
+  return components.filter(isPlainObject).map((entry) => {
+    const ref: Record<string, unknown> = {};
+    const id = asString(entry.id);
+    if (id) ref.id = id;
+    const preview = asString(entry.preview);
+    if (preview) ref.preview = preview;
+    if (isPlainObject(entry.args)) ref.args = entry.args;
+    return ref;
+  });
 };
 
 /**
@@ -492,7 +493,10 @@ const confirmOverwrite = async (handoff: Handoff, conflicts: string[]): Promise<
 
 /** Write a registry source file at its relative path under the target directory. */
 const writeSourceFile = async (targetDir: string, file: TransferFile): Promise<string> => {
-  const absolutePath = path.join(targetDir, ...file.path.split('/'));
+  const absolutePath = resolvePathWithin(targetDir, file.path);
+  if (!absolutePath) {
+    throw new CheckoutError(`Registry returned an unsafe source file path "${file.path}".`);
+  }
   await fs.ensureDir(path.dirname(absolutePath));
   await fs.writeFile(absolutePath, file.content, 'utf8');
   return absolutePath;
@@ -505,7 +509,13 @@ const writeSourceFile = async (targetDir: string, file: TransferFile): Promise<s
  */
 const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPayload): Promise<void> => {
   const pagesRoot = path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR.page);
-  const targets = payload.files.map((file) => path.join(pagesRoot, ...file.path.split('/')));
+  const targets = payload.files.map((file) => {
+    const target = resolvePathWithin(pagesRoot, file.path);
+    if (!target) {
+      throw new CheckoutError(`Registry returned an unsafe page source path "${file.path}".`);
+    }
+    return target;
+  });
   const conflicts = targets.filter((file) => fs.existsSync(file));
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of page "${id}" cancelled; no files were written.`);
@@ -515,8 +525,7 @@ const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPaylo
     await writeSourceFile(pagesRoot, file);
   }
   Logger.success(
-    `Checked out page "${id}" into ${path.relative(handoff.workingPath, pagesRoot) || '.'} ` +
-      `(${payload.files.length} markdown file(s)).`
+    `Checked out page "${id}" into ${path.relative(handoff.workingPath, pagesRoot) || '.'} ` + `(${payload.files.length} markdown file(s)).`
   );
 };
 
@@ -527,6 +536,10 @@ const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPaylo
  * messaging on any precondition or fetch failure.
  */
 export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
+  const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
+  if (!validId) {
+    throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
+  }
   const connection = resolveConnectionOrThrow(handoff);
 
   Logger.info(`Fetching ${kind} "${id}" from ${connection.url}…`);
@@ -553,7 +566,13 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
   const declarationPath = path.join(targetDir, declarationFileName);
 
   // Compute everything that would be written, then gate overwrite of any pre-existing file.
-  const sourceTargets = payload.files.map((file) => ({ file, absolutePath: path.join(targetDir, ...file.path.split('/')) }));
+  const sourceTargets = payload.files.map((file) => {
+    const absolutePath = resolvePathWithin(targetDir, file.path);
+    if (!absolutePath) {
+      throw new CheckoutError(`Registry returned an unsafe source file path "${file.path}".`);
+    }
+    return { file, absolutePath };
+  });
   const conflicts = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath].filter((file) => fs.existsSync(file));
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of ${kind} "${id}" cancelled; no files were written.`);

@@ -8,7 +8,7 @@
  * drift.
  */
 
-import path from 'path';
+import { isSafeRelativePath, resolvePathWithin } from '../path';
 
 /** The absolute roots a logical asset path can resolve against. */
 export interface AssetPhysicalRoots {
@@ -24,9 +24,15 @@ export interface AssetPhysicalRoots {
 
 /** Resolve a collection-relative logical asset path to its absolute workspace location. */
 export const resolveAssetPhysicalPath = (logicalPath: string, roots: AssetPhysicalRoots): string => {
+  if (!isSafeRelativePath(logicalPath)) {
+    throw new Error(`Unsafe asset path "${logicalPath}".`);
+  }
   if (logicalPath === 'icons.zip') return roots.iconsZip;
   if (logicalPath === 'logos.zip') return roots.logosZip;
-  const segments = logicalPath.split('/');
-  if (segments[0] === 'fonts') return path.resolve(roots.workingPath, ...segments);
-  return path.resolve(roots.apiPath, ...segments);
+  const root = logicalPath.startsWith('fonts/') ? roots.workingPath : roots.apiPath;
+  const resolved = resolvePathWithin(root, logicalPath);
+  if (!resolved) {
+    throw new Error(`Asset path "${logicalPath}" escapes its workspace root.`);
+  }
+  return resolved;
 };

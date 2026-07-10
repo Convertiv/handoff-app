@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { singleQueryValue } from '@/lib/api/query';
 import { handleRegistryRoute, sendRegistryError } from '@/lib/registry-api';
 import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/transfer';
 
@@ -14,7 +15,7 @@ import { handleCheckoutRoute, handleTransferRoute } from '@/lib/registry-api/tra
  * Both are registry-runtime only (enforced by the guard stack).
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const kind = Array.isArray(req.query.kind) ? req.query.kind[0] : req.query.kind;
+  const kind = singleQueryValue(req.query.kind);
   if (kind !== 'component' && kind !== 'pattern' && kind !== 'page') {
     return handleRegistryRoute(req, res, ['GET', 'PUT'], async () => {
       sendRegistryError(res, 'not_found', `Unknown transfer entity kind "${kind ?? ''}".`);

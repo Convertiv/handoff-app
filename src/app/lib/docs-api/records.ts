@@ -3,7 +3,7 @@ import matter from 'gray-matter';
 import path from 'path';
 import { Types as CoreTypes } from 'handoff-core';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
-import { deriveTokenSets, setNameForId } from '@handoff/registry/tokens/sets';
+import { deriveTokenSets, emptyTokenDocument, setNameForId } from '@handoff/registry/tokens/sets';
 import type { TokenArtifactResource } from '@handoff/store';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
@@ -108,16 +108,14 @@ export const listPages = (): PageListObject[] => {
 
 export const getPageDetail = (id: string): PageDetail | null => {
   const root = workingPagesRoot();
-  for (const segments of collectPageSlugs(root)) {
-    const slug = segments.join('/');
-    const sourcePath = path.resolve(root, `${slug}.md`);
-    const { data, content } = matter(fs.readFileSync(sourcePath, 'utf8'));
-    const record = normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath });
-    if (record.id === id) {
-      return { ...record, content };
-    }
+  const segments = collectPageSlugs(root).find((candidate) => candidate.join('/') === id);
+  if (!segments) {
+    return null;
   }
-  return null;
+  const slug = segments.join('/');
+  const sourcePath = path.resolve(root, `${slug}.md`);
+  const { data, content } = matter(fs.readFileSync(sourcePath, 'utf8'));
+  return { ...normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath }), content };
 };
 
 /**
@@ -135,12 +133,12 @@ const tokensExportRoot = (): string =>
 const readTokensDocument = (): CoreTypes.IDocumentationObject => {
   const filePath = path.resolve(tokensExportRoot(), 'tokens.json');
   if (!fs.existsSync(filePath)) {
-    return { localStyles: { color: [], typography: [], effect: [] }, components: {}, assets: {} } as CoreTypes.IDocumentationObject;
+    return emptyTokenDocument();
   }
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8')) as CoreTypes.IDocumentationObject;
   } catch {
-    return { localStyles: { color: [], typography: [], effect: [] }, components: {}, assets: {} } as CoreTypes.IDocumentationObject;
+    return emptyTokenDocument();
   }
 };
 
@@ -180,8 +178,7 @@ const readCoreTokenArtifacts = (name: string): TokenArtifactResource[] => {
   return artifacts;
 };
 
-export const listTokenSets = (): TokenSetListItem[] =>
-  deriveTokenSets(readTokensDocument()).map(({ id, kind }) => ({ id, kind }));
+export const listTokenSets = (): TokenSetListItem[] => deriveTokenSets(readTokensDocument()).map(({ id, kind }) => ({ id, kind }));
 
 export const getTokenSetDetail = (id: string): TokenSetDetail | null => {
   const set = deriveTokenSets(readTokensDocument()).find((candidate) => candidate.id === id);

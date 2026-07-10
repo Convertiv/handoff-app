@@ -3,7 +3,7 @@
  *
  * Config stores only env-var *names*, never secret values, so well-formed records should never
  * carry a token or connection string. This is a belt-and-braces final pass over every response
- * body: any object property whose key looks like a secret has its string value replaced with
+ * body: any string property whose key looks like a secret has its value replaced with
  * `[redacted]`, so an accidentally-stored secret can never leak through the API.
  */
 
@@ -13,27 +13,33 @@ const SECRET_KEY_PATTERN =
 const REDACTED = '[redacted]';
 
 /**
- * Recursively clone `value`, replacing the string value of any secret-looking key with `[redacted]`.
- * Arrays and nested objects are walked; non-string secret values are left structurally intact (only
- * leaked *string* secrets are the concern here). Cycles are guarded against with a seen-set.
+ * Recursively clone `value`, replacing string values whose keys look secret with `[redacted]`.
+ * Arrays and nested objects are cloned, and cycles are replaced with a serializable marker.
  */
-export const redactSecrets = <T>(value: T, seen: WeakSet<object> = new WeakSet()): T => {
+export const redactSecrets = <T>(value: T, ancestors: WeakSet<object> = new WeakSet()): T => {
   if (Array.isArray(value)) {
-    return value.map((item) => redactSecrets(item, seen)) as unknown as T;
+    if (ancestors.has(value)) {
+      return '[circular]' as T;
+    }
+    ancestors.add(value);
+    const result = value.map((item) => redactSecrets(item, ancestors));
+    ancestors.delete(value);
+    return result as T;
   }
   if (value && typeof value === 'object') {
-    if (seen.has(value as object)) {
-      return value;
+    if (ancestors.has(value as object)) {
+      return '[circular]' as T;
     }
-    seen.add(value as object);
+    ancestors.add(value as object);
     const result: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
       if (typeof val === 'string' && SECRET_KEY_PATTERN.test(key)) {
         result[key] = REDACTED;
       } else {
-        result[key] = redactSecrets(val, seen);
+        result[key] = redactSecrets(val, ancestors);
       }
     }
+    ancestors.delete(value as object);
     return result as T;
   }
   return value;

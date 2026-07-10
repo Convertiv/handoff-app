@@ -22,6 +22,7 @@ export const handleDocsRoute = async (
     const backend = await resolveDocsBackend();
     await handler(backend);
   } catch (error) {
-    sendDocsError(res, 'unexpected_error', error instanceof Error ? error.message : 'Unexpected docs read API error.');
+    console.error('Docs read API request failed.', error);
+    sendDocsError(res, 'unexpected_error', 'Unexpected docs read API error.');
   }
 };

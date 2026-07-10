@@ -15,7 +15,8 @@ import { Types as CoreTypes } from 'handoff-core';
 import Handoff from '../../index';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError } from '../client';
-import { mergeTokenSetsIntoDocument, type DerivedTokenSet } from '../tokens/sets';
+import { resolvePathWithin } from '../path';
+import { isTokenSetId, mergeTokenSetsIntoDocument, type DerivedTokenSet } from '../tokens/sets';
 import type { TokenSetCheckoutPayload } from '../tokens/transfer';
 import { CheckoutError, resolveConnectionOrThrow } from './index';
 
@@ -69,6 +70,9 @@ const wouldChange = (absolutePath: string, content: string): boolean => {
  * and restores generated files; prompts before overwriting changed local files unless `--force`.
  */
 export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<void> => {
+  if (setId && !isTokenSetId(setId)) {
+    throw new CheckoutError(`Unknown or unsafe token set id "${setId}".`);
+  }
   const connection = resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
@@ -86,6 +90,9 @@ export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<
 
   const payloads: TokenSetCheckoutPayload[] = [];
   for (const id of ids) {
+    if (!isTokenSetId(id)) {
+      throw new CheckoutError(`Registry returned an unknown or unsafe token set id "${id}".`);
+    }
     try {
       payloads.push(await client.checkoutTokens(id));
     } catch (error) {
@@ -103,10 +110,13 @@ export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<
 
   const variablesDir = handoff.getVariablesFilePath();
   const artifactWrites: ArtifactWrite[] = payloads.flatMap((payload) =>
-    payload.artifacts.map((artifact) => ({
-      absolutePath: path.resolve(variablesDir, ...artifact.path.split('/')),
-      content: artifact.content,
-    }))
+    payload.artifacts.map((artifact) => {
+      const absolutePath = resolvePathWithin(variablesDir, artifact.path);
+      if (!absolutePath) {
+        throw new CheckoutError(`Registry returned an unsafe token artifact path "${artifact.path}".`);
+      }
+      return { absolutePath, content: artifact.content };
+    })
   );
 
   const tokensFilePath = handoff.getTokensFilePath();
@@ -138,7 +148,5 @@ export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<
     await fs.writeFile(write.absolutePath, write.content);
   }
 
-  Logger.success(
-    `Checked out ${ids.length} token set(s) into ${tokensFilePath} (${artifactWrites.length} generated file(s) restored).`
-  );
+  Logger.success(`Checked out ${ids.length} token set(s) into ${tokensFilePath} (${artifactWrites.length} generated file(s) restored).`);
 };

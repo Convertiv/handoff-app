@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { isSafePathSegment, isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
+import { joinedQueryValue, singleQueryValue } from '../api/query';
 import type { ManagedEntityKind } from './allowlist';
 import { validateMetadataWrite } from './allowlist';
 import { sendRegistryError } from './errors';
-import { isSafeRelativePath, normalizeRelativePath, validateFileBody } from './files';
+import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
@@ -30,26 +32,10 @@ import {
 
 const label = (kind: ManagedEntityKind): string => (kind === 'component' ? 'Component' : 'Pattern');
 
-const singleParam = (value: string | string[] | undefined): string | undefined =>
-  Array.isArray(value) ? value[0] : value;
-
-/** Join a catch-all route param (already URL-decoded by Next) into a logical relative path. */
-const catchAllPath = (value: string | string[] | undefined): string | undefined => {
-  if (Array.isArray(value)) {
-    return value.length ? value.join('/') : undefined;
-  }
-  return value;
-};
-
-const rejectionDetails = (rejectedFields: string[]) =>
-  rejectedFields.length ? { rejectedFields } : undefined;
+const rejectionDetails = (rejectedFields: string[]) => (rejectedFields.length ? { rejectedFields } : undefined);
 
 /** `GET` (list) + `POST` (create metadata-only record) for a collection. */
-export const handleEntityCollection = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: ManagedEntityKind
-): Promise<void> =>
+export const handleEntityCollection = (req: NextApiRequest, res: NextApiResponse, kind: ManagedEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'POST'], async ({ db, method }) => {
     if (method === 'GET') {
       sendRegistryData(res, 200, await listEntities(db, kind));
@@ -71,15 +57,17 @@ export const handleEntityCollection = (
   });
 
 /** `GET` (detail) + `PUT` (allowlisted metadata update) + `DELETE` for a single entity. */
-export const handleEntityItem = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: ManagedEntityKind
-): Promise<void> =>
+export const handleEntityItem = (req: NextApiRequest, res: NextApiResponse, kind: ManagedEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT', 'DELETE'], async ({ db, method }) => {
-    const id = singleParam(req.query.id);
+    const id = singleQueryValue(req.query.id);
     if (!id) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
+      return;
+    }
+    if (!isSafePathSegment(id)) {
+      sendRegistryError(res, 'bad_request', `${label(kind)} id must be a registry-safe relative path.`, {
+        rejectedFields: ['id'],
+      });
       return;
     }
 
@@ -121,15 +109,17 @@ export const handleEntityItem = (
   });
 
 /** `GET` (list files) + `POST` (create/replace a file record) for an entity's files. */
-export const handleEntityFilesCollection = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: ManagedEntityKind
-): Promise<void> =>
+export const handleEntityFilesCollection = (req: NextApiRequest, res: NextApiResponse, kind: ManagedEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'POST'], async ({ db, method }) => {
-    const id = singleParam(req.query.id);
+    const id = singleQueryValue(req.query.id);
     if (!id) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
+      return;
+    }
+    if (!isSafePathSegment(id)) {
+      sendRegistryError(res, 'bad_request', `${label(kind)} id must be a registry-safe relative path.`, {
+        rejectedFields: ['id'],
+      });
       return;
     }
     if (!(await entityExists(db, kind, id))) {
@@ -151,16 +141,18 @@ export const handleEntityFilesCollection = (
   });
 
 /** `GET` + `PUT` + `DELETE` for a single text-file record addressed by its relative path. */
-export const handleEntityFileItem = (
-  req: NextApiRequest,
-  res: NextApiResponse,
-  kind: ManagedEntityKind
-): Promise<void> =>
+export const handleEntityFileItem = (req: NextApiRequest, res: NextApiResponse, kind: ManagedEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT', 'DELETE'], async ({ db, method }) => {
-    const id = singleParam(req.query.id);
-    const rawPath = catchAllPath(req.query.filePath);
+    const id = singleQueryValue(req.query.id);
+    const rawPath = joinedQueryValue(req.query.filePath);
     if (!id || !rawPath) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id or file path.`);
+      return;
+    }
+    if (!isSafePathSegment(id)) {
+      sendRegistryError(res, 'bad_request', `${label(kind)} id must be a registry-safe relative path.`, {
+        rejectedFields: ['id'],
+      });
       return;
     }
     if (!isSafeRelativePath(rawPath)) {

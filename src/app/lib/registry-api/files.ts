@@ -1,4 +1,6 @@
 import type { RegistryTextFileKind } from '@handoff/registry/db/schema';
+import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
+import { isPlainObject } from './validation';
 
 /**
  * Registry text-file record validation.
@@ -49,21 +51,6 @@ const contentTypeForPath = (filePath: string): string => {
  * separator, and no `.`/`..`/empty segments. Backslashes are normalized to `/` before checking so
  * Windows-style separators cannot smuggle traversal.
  */
-export const isSafeRelativePath = (path: string): boolean => {
-  if (typeof path !== 'string' || path.trim() === '') {
-    return false;
-  }
-  const normalized = path.replace(/\\/g, '/');
-  if (normalized.startsWith('/') || /^[a-zA-Z]:/.test(normalized)) {
-    return false;
-  }
-  const segments = normalized.split('/');
-  return segments.every((segment) => segment !== '' && segment !== '.' && segment !== '..');
-};
-
-/** Normalize a file path to its registry-safe relative form (backslashes → `/`). */
-export const normalizeRelativePath = (path: string): string => path.replace(/\\/g, '/');
-
 /** A validated, persistable registry file record. */
 export interface ValidatedFile {
   path: string;
@@ -83,9 +70,6 @@ export interface FileValidation {
   rejectedFields?: string[];
   message?: string;
 }
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export interface ValidateFileOptions {
   /**
@@ -109,7 +93,11 @@ export const validateFileBody = (body: unknown, options: ValidateFileOptions = {
   const rawPath = options.pathFromRoute ?? (typeof body.path === 'string' ? body.path : undefined);
   if (!rawPath || !isSafeRelativePath(rawPath)) {
     rejectedFields.push('path');
-  } else if (options.pathFromRoute && typeof body.path === 'string' && normalizeRelativePath(body.path) !== normalizeRelativePath(options.pathFromRoute)) {
+  } else if (
+    options.pathFromRoute &&
+    typeof body.path === 'string' &&
+    normalizeRelativePath(body.path) !== normalizeRelativePath(options.pathFromRoute)
+  ) {
     // A body path that disagrees with the route path is ambiguous; reject rather than guess.
     rejectedFields.push('path');
   }
