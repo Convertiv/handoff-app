@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { handleDocsRoute, idFromJsonParam, sendDocsError } from '@/lib/docs-api';
+import { handleDocsRoute, idFromJsonParam, sendDocsData, sendDocsError } from '@/lib/docs-api';
 import { tokenFormatStrings } from '@/lib/docs-api/token-detail';
 
 /**
@@ -21,7 +21,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse): Prom
       return;
     }
     res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.status(200).json({
+    sendDocsData(res, 200, {
       component: detail.record,
       ...tokenFormatStrings(detail.artifacts),
       artifacts: detail.artifacts,

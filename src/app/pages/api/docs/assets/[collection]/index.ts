@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { singleQueryValue } from '@/lib/api/query';
-import { handleDocsRoute, sendDocsError } from '@/lib/docs-api';
+import { handleDocsRoute, sendDocsData, sendDocsError } from '@/lib/docs-api';
 
 /**
  * `GET /api/docs/assets/{collection}`: lightweight metadata for every asset in a collection. Never
@@ -17,6 +17,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse): Prom
     }
     const assets = await backend.listAssets(collection);
     res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.status(200).json({ collection, assets });
+    sendDocsData(res, 200, { collection, assets });
   });
 }

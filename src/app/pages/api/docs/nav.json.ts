@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ensureGet, getServerRuntimeConfig, resolveDocsBackend, sendDocsError } from '@/lib/docs-api';
+import { ensureGet, getServerRuntimeConfig, resolveDocsBackend, sendDocsData, sendDocsError } from '@/lib/docs-api';
 import { buildPagesMenu, type SectionLink } from '@/components/util';
 import { setNameForId } from '@handoff/registry/tokens/sets';
 import type { TokenSetListItem } from '@/lib/docs-api/backend';
@@ -71,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Never cache: a publish must surface in the nav on the next (hard) reload with no rebuild/redeploy.
     res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.status(200).json({
+    sendDocsData(res, 200, {
       shell,
       components: components.map(({ id, title, group, type }) => ({ id, title, group, type })),
       patterns: patterns.map(({ id, title, group }) => ({ id, title, group })),

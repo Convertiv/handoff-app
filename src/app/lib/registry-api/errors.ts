@@ -1,4 +1,5 @@
 import type { NextApiResponse } from 'next';
+import { redactSecrets } from '../api/redact';
 import { buildMeta, type RegistryMeta } from './meta';
 
 /**
@@ -44,7 +45,7 @@ export const sendRegistryError = (
   meta: RegistryMeta = buildMeta()
 ): void => {
   res.status(STATUS_BY_CODE[code]).json({
-    error: { code, message, ...(details ? { details } : {}) },
+    error: { code, message, ...(details ? { details: redactSecrets(details) } : {}) },
     meta,
   });
 };

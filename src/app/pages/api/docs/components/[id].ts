@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { handleDocsRoute, idFromJsonParam, sendDocsError } from '@/lib/docs-api';
+import { handleDocsRoute, idFromJsonParam, sendDocsData, sendDocsError } from '@/lib/docs-api';
 
 /**
  * `GET /api/docs/components/{id}.json` — a single `ComponentListObject` including build state;
@@ -19,6 +19,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse): Prom
       sendDocsError(res, 'not_found', `Component "${id}" was not found.`);
       return;
     }
-    res.status(200).json(detail);
+    sendDocsData(res, 200, detail);
   });
 }

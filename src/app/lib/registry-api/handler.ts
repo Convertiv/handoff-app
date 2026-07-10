@@ -5,7 +5,7 @@ import { getRegistryConnection, RegistryConnectionError } from '../registry-conn
 import { authorizeMutation } from './auth';
 import { sendRegistryError } from './errors';
 import { buildMeta, type RegistryMeta } from './meta';
-import { redactSecrets } from './redact';
+import { redactSecrets } from '../api/redact';
 
 /**
  * Shared orchestration for every `/api/registry/*` route.

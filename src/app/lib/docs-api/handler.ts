@@ -1,6 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { redactSecrets } from '../api/redact';
 import { resolveDocsBackend, type DocsBackend } from './backend';
 import { ensureGet, sendDocsError } from './errors';
+
+/** Write a successful docs read API JSON response, redacting any accidentally-stored secrets. */
+export const sendDocsData = (res: NextApiResponse, status: number, data: unknown): void => {
+  res.status(status).json(redactSecrets(data));
+};
 
 /**
  * Shared entry point for every `/api/docs/*` route.
