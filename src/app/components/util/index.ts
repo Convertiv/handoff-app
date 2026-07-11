@@ -8,6 +8,7 @@ import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 import { buildMenuFromDirectory, buildTokensFoundationsMenu, KNOWN_PATHS } from '@handoff/utils/menu-shell';
+import type { SectionLink } from '@handoff/nav';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import { tokenFormatStrings } from '../../lib/docs-api/token-detail';
 // Build-time-baked navigation shell. Imported statically (same as `pages/api/docs/nav.json.ts`) so
@@ -27,29 +28,7 @@ export interface Metadata {
   metaDescription: string;
 }
 
-// Define what a section link looks like
-export interface SectionLink {
-  title: string;
-  weight: number;
-  external?: string | boolean;
-  path: string;
-  subSections: {
-    title: string;
-    path: string;
-    image: string;
-    menu?: {
-      title: string;
-      path: string;
-      image: string;
-    }[];
-    /**
-     * Marks a submenu whose contents are mode-aware registry entities (components/patterns). In
-     * registry mode the client nav refreshes these slots at request time from the live docs read
-     * API; the build-time `menu` is the workspace/static-export snapshot.
-     */
-    dynamic?: { kind: 'components' | 'patterns' | 'token-components'; type?: string };
-  }[];
-}
+export type { SectionLink } from '@handoff/nav';
 // Documentation Page Properties
 export interface DocumentationProps {
   metadata: Metadata;

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import matter from 'gray-matter';
 import { startCase } from 'lodash';
 import path from 'path';
+import type { NavMenuItem, NavSubSection, SectionLink } from '../nav';
 
 /**
  * Build-time menu *shell* builder.
@@ -27,36 +28,10 @@ import path from 'path';
  * to the workspace/static baked menu.
  */
 
-/** A submenu item (leaf link) within a section's submenu. */
-export interface MenuShellSubItem {
-  title: string;
-  path: string;
-  menu?: MenuShellSubItem[];
-}
-
-/** A submenu slot under a top-level section. */
-export interface MenuShellSubSection {
-  title: string;
-  path?: string;
-  image?: string;
-  menu?: MenuShellSubItem[];
-  /**
-   * Marks a slot whose contents are mode-aware registry entities. In registry mode the client nav
-   * refreshes these slots at request time from `/api/docs/nav.json`. For `components`/`patterns` the
-   * baked `menu` is empty; for `token-components` the client *appends* a Components group to the baked
-   * Foundations `menu`, so both survive.
-   */
-  dynamic?: { kind: 'components' | 'patterns' | 'token-components'; type?: string };
-}
-
-/** A top-level navigation section (mirrors `SectionLink` in the docs app). */
-export interface MenuShellSection {
-  title: string;
-  weight: number;
-  external?: string | boolean;
-  path: string;
-  subSections: MenuShellSubSection[];
-}
+/** Back-compatible shell-builder names reconciled to the canonical navigation contract. */
+export type MenuShellSubItem = NavMenuItem;
+export type MenuShellSubSection = NavSubSection;
+export type MenuShellSection = SectionLink;
 
 export interface BuildMenuShellOptions {
   /** Absolute path to the package docs root (`<modulePath>/config/docs`). */

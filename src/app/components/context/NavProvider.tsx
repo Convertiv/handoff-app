@@ -1,24 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { SectionLink } from '../util';
+import type { NavData, SectionLink } from '@handoff/nav';
 
-/** Minimal nav entity served by `/api/docs/nav.json` (mirrors the API payload). */
-export interface NavEntity {
-  id: string;
-  title?: string;
-  group?: string;
-  type?: string;
-}
-
-/** The full nav payload: build-time shell + runtime entity lists. */
-export interface NavData {
-  shell: SectionLink[];
-  components: NavEntity[];
-  patterns: NavEntity[];
-  /** Published component token sets, filling the Tokens › Components slot in registry mode. */
-  tokenSets: NavEntity[];
-}
+export type { NavData, NavEntity } from '@handoff/nav';
 
 interface INavContext {
   nav: NavData | null;
