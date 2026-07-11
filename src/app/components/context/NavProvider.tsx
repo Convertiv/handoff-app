@@ -1,12 +1,21 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { NavData, SectionLink } from '@handoff/nav';
+import type { NavEntity, SectionLink } from '@handoff/nav';
 
 export type { NavData, NavEntity } from '@handoff/nav';
 
+// Temporary compatibility for the pre-cutover endpoint/view contract. Issue 3 replaces this raw
+// payload with the canonical render-ready `NavData` tree.
+interface LegacyNavPayload {
+  shell: SectionLink[];
+  components: NavEntity[];
+  patterns: NavEntity[];
+  tokenSets: NavEntity[];
+}
+
 interface INavContext {
-  nav: NavData | null;
+  nav: LegacyNavPayload | null;
 }
 
 const NavContext = createContext<INavContext>({ nav: null });
@@ -17,15 +26,15 @@ export const isRegistryMode = process.env.HANDOFF_RUNTIME_MODE === 'registry';
 // navigations, the provider's state already survives them; the module cache additionally dedupes
 // concurrent/StrictMode mounts and is reset only on a full page reload — so newly published entities
 // appear on hard refresh ("load once, reuse until hard refresh").
-let cachedNav: NavData | null = null;
-let inFlight: Promise<NavData | null> | null = null;
+let cachedNav: LegacyNavPayload | null = null;
+let inFlight: Promise<LegacyNavPayload | null> | null = null;
 
-const loadNav = (): Promise<NavData | null> => {
+const loadNav = (): Promise<LegacyNavPayload | null> => {
   if (cachedNav) return Promise.resolve(cachedNav);
   if (inFlight) return inFlight;
   inFlight = fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/nav.json`)
     .then((res) => (res.ok ? res.json() : null))
-    .then((data: NavData | null) => {
+    .then((data: LegacyNavPayload | null) => {
       if (data) cachedNav = data;
       return cachedNav;
     })
@@ -45,7 +54,7 @@ const loadNav = (): Promise<NavData | null> => {
  * mode they fall back to the build-time baked menu props instead.
  */
 export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [nav, setNav] = useState<NavData | null>(cachedNav);
+  const [nav, setNav] = useState<LegacyNavPayload | null>(cachedNav);
 
   useEffect(() => {
     if (!isRegistryMode || nav) {
@@ -74,5 +83,5 @@ export const useNavContext = (): INavContext => useContext(NavContext);
  */
 export const useResolvedMenu = (fallbackMenu?: SectionLink[]): SectionLink[] | undefined => {
   const { nav } = useNavContext();
-  return isRegistryMode ? nav?.shell ?? fallbackMenu : fallbackMenu;
+  return isRegistryMode ? (nav?.shell ?? fallbackMenu) : fallbackMenu;
 };
