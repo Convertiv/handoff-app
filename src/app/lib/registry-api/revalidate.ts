@@ -24,12 +24,13 @@ export const revalidateEntityPages = async (
   id: string
 ): Promise<void> => {
   // Pages are served at their own route (`/<id>`); components/patterns live under `/system`.
-  const paths = kind === 'page' ? [`/${id}`] : [`/system/${kind}/${id}`, '/system'];
+  const paths = kind === 'page' ? [`/${id}/`] : [`/system/${kind}/${id}/`, '/system/'];
   for (const path of paths) {
     try {
       await res.revalidate(path);
-    } catch {
+    } catch (error) {
       // Best-effort: see note above. The entity is persisted regardless of revalidation outcome.
+      console.warn(`Failed to revalidate registry docs path "${path}" after ${kind} "${id}" changed.`, error);
     }
   }
 };

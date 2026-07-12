@@ -79,6 +79,9 @@ const REGISTRY_FUNCTION_NAME = 'index';
 /** Handler file the Node launcher executes; wraps the Next standalone server as a request listener. */
 const REGISTRY_FUNCTION_HANDLER = 'index.js';
 
+/** Catch-all docs pages may be overridden by registry records and must always reach the function. */
+const MUTABLE_REGISTRY_PAGE_SRC_ROUTE = '/[...slug]';
+
 /**
  * Node launcher emitted into the registry function directory. The Next `standalone` `server.js`
  * binds a port via `startServer`, which is not the Vercel Node function contract (a module exporting
@@ -168,11 +171,11 @@ export interface RegistryVercelOutputOptions {
  * now resolves on-demand data routes itself, so anything not copied here still resolves via the
  * catch-all.
  *
- * Only routes Next certified as fully static (no per-request data) appear in
- * `prerender-manifest.json` `routes`; `fallback:'blocking'` dynamic routes (component/pattern detail
- * pages, whose data is live DB content) are absent there and fall through the catch-all to the
- * function, which renders them on demand (same as `node server.js`). Static pages — e.g. the header's
- * `<Link href="/">` prefetch of `/_next/data/<buildId>/index.json` — are served straight from the CDN.
+ * Routes materialized from the mutable docs catch-all also appear in `routes` when package defaults
+ * are prerendered. They are identified by `srcRoute` and deliberately left behind the function so a
+ * published DB record can override the fallback. Other `fallback:'blocking'` dynamic routes are
+ * absent and naturally reach the function. Immutable pages — e.g. the header's `<Link href="/">`
+ * prefetch of `/_next/data/<buildId>/index.json` — are served straight from the CDN.
  *
  * No-op when nothing is prerendered (empty `routes`). Paths are emitted base-path-less, matching the
  * existing `_next/static` copy and the registry route table.
@@ -186,13 +189,19 @@ const copyPrerenderedStaticPages = async (appPath: string, staticOutDir: string)
   }
 
   const manifest = (await fs.readJson(manifestPath)) as {
-    routes?: Record<string, { dataRoute?: string | null }>;
+    routes?: Record<string, { dataRoute?: string | null; srcRoute?: string | null }>;
   };
   const routes = manifest.routes ?? {};
   const serverPages = path.join(nextDir, 'server', 'pages');
 
   let copied = 0;
-  for (const route of Object.keys(routes)) {
+  for (const [route, routeConfig] of Object.entries(routes)) {
+    // A static copy would win at the Build Output API filesystem route and permanently hide a
+    // published override (and its on-demand revalidation) from the registry function.
+    if (routeConfig.srcRoute === MUTABLE_REGISTRY_PAGE_SRC_ROUTE) {
+      continue;
+    }
+
     // `.next/server/pages/<rel>.{html,json}` — `/` maps to `index`, nested routes keep their path.
     const rel = route === '/' ? 'index' : route.replace(/^\/+/, '');
     const htmlSrc = path.join(serverPages, `${rel}.html`);
@@ -206,7 +215,7 @@ const copyPrerenderedStaticPages = async (appPath: string, staticOutDir: string)
     }
 
     // The data URL (with the build's BUILD_ID baked in) comes from the manifest's `dataRoute`.
-    const dataRoute = routes[route]?.dataRoute;
+    const dataRoute = routeConfig.dataRoute;
     if (dataRoute && fs.existsSync(jsonSrc)) {
       const jsonDest = path.join(staticOutDir, dataRoute.replace(/^\/+/, ''));
       await fs.ensureDir(path.dirname(jsonDest));

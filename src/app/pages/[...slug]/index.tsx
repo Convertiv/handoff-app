@@ -1,7 +1,5 @@
-import fs from 'fs-extra';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
-import path from 'path';
 import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -11,6 +9,7 @@ import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/Ma
 import { PageTOC } from '../../components/Navigation/AnchorNav';
 import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
+import defaultPages from '../../generated/default-pages.json';
 import {
   buildCatchAllStaticPaths,
   DocumentationProps,
@@ -21,12 +20,34 @@ import {
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 
+/**
+ * Registry deployments can run across independent serverless instances whose local ISR caches do
+ * not share on-demand invalidations. Keep mutable page entries short-lived so every instance
+ * converges on the published DB record even when it did not handle the publish request.
+ */
+const REGISTRY_PAGE_REVALIDATE_SECONDS = 1;
+
+type BakedDefaultPage = { metadata: Record<string, unknown>; content: string };
+
+/** Normalize published records and baked frontmatter into the page component's metadata contract. */
+const documentationMetadata = (source: Record<string, unknown>) => {
+  const value = (key: string): string => (typeof source[key] === 'string' ? (source[key] as string) : '');
+  const title = value('title');
+  const description = value('description');
+  return {
+    title,
+    description,
+    metaTitle: value('metaTitle') || title,
+    metaDescription: value('metaDescription') || description,
+  };
+};
+
 export async function getStaticPaths() {
-  // Registry prerenders the package `config/docs` catch-all pages (workspace `pages/` excluded —
-  // those are DB-served), and resolves DB-published pages on demand via `fallback: 'blocking'`.
-  // Workspace/static stays fully prerendered from markdown (pages included).
+  // Registry resolves every catch-all page on demand so a cold serverless instance queries the DB
+  // before it can cache a package default. Defaults are baked into the server bundle as JSON.
+  // Workspace/static stays fully prerendered from markdown (workspace pages included).
   if (isRegistryRuntime()) {
-    return { paths: buildCatchAllStaticPaths(false), fallback: 'blocking' as const };
+    return { paths: [], fallback: 'blocking' as const };
   }
   return {
     paths: buildCatchAllStaticPaths(),
@@ -42,39 +63,39 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
   const sectionId = `/${slug[0]}`;
 
-  // Registry mode: package `config/docs` pages are served from disk (prerendered at build); only
-  // DB-published custom pages are resolved from the registry database. Workspace markdown is never
-  // read. Both branches use the same shell-only first-paint navigation helper.
+  // Registry mode resolves published content first, then the package-default fallback baked during
+  // the build. Workspace markdown is never read and the deployed server needs no build-machine path.
   if (isRegistryRuntime()) {
     const id = slug.join('/');
-    const moduleDoc = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'docs', `${id}.md`);
-    if (fs.existsSync(moduleDoc)) {
+    const detail = await (await resolveDocsBackend()).getPageDetail(id);
+    if (detail) {
+      const navProps = await getNavProps(sectionId);
       return {
         props: {
-          ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
+          metadata: documentationMetadata(detail as unknown as Record<string, unknown>),
+          content: detail.content,
+          ...navProps,
           config,
         },
+        revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
       };
     }
 
-    const detail = await (await resolveDocsBackend()).getPageDetail(id);
-    if (!detail) {
-      return { notFound: true };
-    }
-    const navProps = await getNavProps(sectionId);
-    return {
-      props: {
-        metadata: {
-          title: detail.title ?? '',
-          description: detail.description ?? '',
-          metaTitle: detail.metaTitle ?? detail.title ?? '',
-          metaDescription: detail.metaDescription ?? detail.description ?? '',
+    const defaultPage = (defaultPages as Record<string, BakedDefaultPage>)[id];
+    if (defaultPage) {
+      const navProps = await getNavProps(sectionId);
+      return {
+        props: {
+          metadata: documentationMetadata(defaultPage.metadata),
+          content: defaultPage.content,
+          ...navProps,
+          config,
         },
-        content: detail.content,
-        ...navProps,
-        config,
-      },
-    };
+        revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
+      };
+    }
+
+    return { notFound: true, revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS };
   }
 
   return {

@@ -12,7 +12,7 @@ import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
-import { generateNavShell } from './nav-shell';
+import { generateDefaultPages, generateNavShell } from './nav-shell';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
 import { getVercelOutputPath, writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
@@ -236,6 +236,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   // target; only registry-mode clients fetch it.
   // Registry builds must not bake workspace pages into the shell — they come from the DB at runtime.
   await generateNavShell(handoff, appPath, runtimeMode !== 'registry');
+  await generateDefaultPages(handoff, appPath);
 
   return appPath;
 };

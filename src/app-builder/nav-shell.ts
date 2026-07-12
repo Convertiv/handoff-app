@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import matter from 'gray-matter';
 import path from 'path';
 import Handoff from '..';
 import { buildMenuShell } from '../utils/menu-shell';
@@ -11,6 +12,42 @@ import { Logger } from '../utils/logger';
  * markdown-driven shell must be frozen at build time for the Vercel registry function.
  */
 export const NAV_SHELL_RELATIVE_PATH = path.join('generated', 'nav-shell.json');
+
+/** Baked package-default markdown used as the registry catch-all's runtime fallback. */
+export const DEFAULT_PAGES_RELATIVE_PATH = path.join('generated', 'default-pages.json');
+
+interface BakedDefaultPage {
+  metadata: Record<string, unknown>;
+  content: string;
+}
+
+/** Recursively collect package docs (except dedicated index routes) by their catch-all id. */
+const collectDefaultPages = (root: string, relativeParts: string[] = []): Record<string, BakedDefaultPage> => {
+  if (!fs.existsSync(root)) return {};
+  const pages: Record<string, BakedDefaultPage> = {};
+  for (const entry of fs.readdirSync(root)) {
+    const absolutePath = path.join(root, entry);
+    if (fs.lstatSync(absolutePath).isDirectory()) {
+      Object.assign(pages, collectDefaultPages(absolutePath, [...relativeParts, entry]));
+    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+      const id = [...relativeParts, entry.replace(/\.md$/, '')].join('/');
+      const { data, content } = matter(fs.readFileSync(absolutePath, 'utf8'));
+      pages[id] = { metadata: data, content };
+    }
+  }
+  return pages;
+};
+
+/**
+ * Bake package-default docs into the staged app so registry fallback renders do not depend on the
+ * build machine's absolute module path. The static JSON import is traced into every deployment.
+ */
+export const generateDefaultPages = async (handoff: Handoff, appPath: string): Promise<void> => {
+  const pages = collectDefaultPages(path.join(handoff.modulePath, 'config', 'docs'));
+  const target = path.resolve(appPath, DEFAULT_PAGES_RELATIVE_PATH);
+  await fs.ensureDir(path.dirname(target));
+  await fs.writeJson(target, pages);
+};
 
 /**
  * Bake the markdown-driven navigation shell into the staged app as `generated/nav-shell.json`.
