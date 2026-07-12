@@ -9,23 +9,22 @@ import type { NavMenuItem, NavSubSection, SectionLink } from '../nav';
  *
  * The docs navigation is two things: a SHELL (which sections exist, their order/titles, and which
  * submenu slots are filled at runtime from the registry) and the runtime ENTITY lists
- * (components/patterns) that fill those slots. The shell is markdown-driven and therefore static per
- * build; the entities are mutable at runtime and served by `/api/docs/nav.json`.
+ * (components/patterns/token sets) that the resolver splices into those slots. The shell is
+ * markdown-driven and therefore static per build; the entities are mutable at runtime and the
+ * resolved tree is served by `/api/docs/nav.json`.
  *
  * On Vercel the registry function cannot read `config/docs` markdown at request time — those reads
  * use absolute build-machine paths (`HANDOFF_MODULE_PATH/...`) that do not exist on the deploy host
  * and that nft cannot trace. So the shell is frozen here at build time (where the markdown is
  * present) into `generated/nav-shell.json`, which the API route imports statically (bundled, path
- * independent). The runtime-variable entity lists are layered in client-side.
+ * independent). The resolver combines it with runtime-variable records before the client renders it.
  *
  * This module is intentionally dependency-light and PURE (fs + gray-matter, no DB, no React, no
  * `@handoff` aliases) so the compiled build pipeline (`dist/`) can import it — `src/app` is excluded
  * from `tsc` and is not importable from the builder.
  *
- * It mirrors the section structure that `staticBuildMenu()` in
- * `src/app/components/util/index.ts` produces with empty entity lists (components/patterns slots
- * emitted empty + tagged `dynamic`). Keep the two in sync: the registry nav must render identically
- * to the workspace/static baked menu.
+ * It emits the canonical section structure with empty entity lists and `dynamic` splice markers.
+ * `src/nav/resolver.ts` is the sole place that fills those markers in every runtime mode.
  */
 
 /** Back-compatible shell-builder names reconciled to the canonical navigation contract. */
@@ -69,7 +68,7 @@ export const KNOWN_PATHS = [
   'system/pattern',
 ];
 
-/** Normalize the base path to a `"prefix/"` form (or `""`), matching `buildBasePath()` in the app. */
+/** Normalize the base path to the resolver's `"prefix/"` form (or `""`). */
 const normalizeBasePath = (basePath?: string): string => {
   if (!basePath) {
     return '';
@@ -78,10 +77,10 @@ const normalizeBasePath = (basePath?: string): string => {
 };
 
 /**
- * The static Tokens submenu (Foundations only). Token *components* are sourced from local
- * build-time workspace artifacts that the registry never carries, so the shell bakes only the
- * deterministic Foundations entries. Shared with the app's `staticBuildTokensMenu()`, which appends
- * the local component entries on top of these. `basePath` must already be `"prefix/"`-normalized.
+ * The static Tokens submenu (Foundations only). Component token sets are mode-resolved runtime
+ * records, so the shell bakes only the deterministic Foundations entries. The resolver appends the
+ * component token-set records when it fills the dynamic slot. `basePath` must already be
+ * `"prefix/"`-normalized.
  */
 export const buildTokensFoundationsMenu = (basePath: string): MenuShellSubItem[] => [
   {
@@ -133,7 +132,7 @@ export const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): Menu
 
 /**
  * Build the full navigation shell from the docs markdown, with all registry entity slots
- * (components/patterns) emitted empty and tagged `dynamic` so the client fills them at runtime.
+ * (components/patterns/token sets) emitted empty and tagged `dynamic` for the resolver to fill.
  *
  * Returns the top-level `MenuShellSection[]` sorted by weight — the same shape the docs app's
  * `SectionLink[]` uses, so it serializes directly into `generated/nav-shell.json`.
@@ -188,11 +187,11 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
               : { kind: 'components' as const };
           subSections.push({ title: sub.title, menu: [], dynamic });
         } else if (sub.tokens) {
-          // Foundations are baked (deterministic); the client appends published component token sets
-          // into this slot at request time in registry mode (see SideNav `token-components`).
+          // Foundations are baked (deterministic); the resolver appends published component token
+          // sets into this slot when it builds the refreshed registry tree.
           subSections.push({ title: 'Tokens', menu: buildTokensFoundationsMenu(basePath), dynamic: { kind: 'token-components' } });
         } else if (sub.patterns) {
-          // Always keep the (empty) patterns slot in the shell — the client fills it at request time.
+          // Always keep the empty patterns slot in the shell for the resolver to fill on refresh.
           subSections.push({ title: sub.title || 'Patterns', menu: [], dynamic: { kind: 'patterns' } });
         } else if (sub.enabled !== false) {
           subSections.push(sub as MenuShellSubSection);
@@ -214,8 +213,8 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
         }
       }
       // Wrap the scanned children under one labeled group (no `path`) so the side nav renders them as
-      // links — a flat subsection carrying a `path` but no `menu` renders nothing. Mirrors the
-      // registry-mode `buildPagesMenu` shape so all modes produce identical nesting.
+      // links — a flat subsection carrying a `path` but no `menu` renders nothing. This matches the
+      // record-backed nesting produced by the resolver so all modes remain structurally identical.
       if (children.length > 0) {
         subSections.push({ title: metadata.menuTitle ?? metadata.title, menu: children });
       }
