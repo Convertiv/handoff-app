@@ -8,7 +8,7 @@ import { groupBy, startCase, uniq } from 'lodash';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 import { buildMenuFromDirectory, buildTokensFoundationsMenu, KNOWN_PATHS } from '@handoff/utils/menu-shell';
-import type { SectionLink } from '@handoff/nav';
+import { getRegistryNavData, getWorkspaceNavData, type NavData, type NavTokenSet, type SectionLink } from '@handoff/nav';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import { tokenFormatStrings } from '../../lib/docs-api/token-detail';
 // Build-time-baked navigation shell. Imported statically (same as `pages/api/docs/nav.json.ts`) so
@@ -36,6 +36,8 @@ export interface DocumentationProps {
   options?: ComponentDocumentationOptions;
   menu: SectionLink[];
   current: SectionLink;
+  navData: NavData;
+  currentSectionId: string;
   config: ClientConfig;
 }
 
@@ -142,7 +144,7 @@ export const buildCatchAllStaticPaths = (includeWorkspacePages = true) => {
 /**
  * Build the navigation menu from the filesystem for workspace dev and static export.
  *
- * Registry never calls this — it sources nav from the baked shell (`registryShellMenu`), so this
+ * Registry never calls this — `getNavProps()` sources its initial tree from the baked shell, so this
  * builder is workspace/static only: it reads `config/docs` + workspace `pages/` markdown and fills
  * the component/pattern submenus from the local workspace entities. Tokens stay local build-time.
  *
@@ -506,17 +508,45 @@ export const getCurrentSection = (menu: SectionLink[], path: string): SectionLin
   menu.filter((section) => section.path === path)[0];
 
 /**
- * Registry-mode nav props from the build-time-baked shell (NOT a per-request DB build).
- *
- * Registry pages source their first-paint `menu`/`current` from the same baked shell the client
- * (`NavProvider` → `/api/docs/nav.json`) uses, so SSR matches post-load with no flash and no
- * backend dependency. Component/pattern entity lists fill in client-side; their `dynamic` slots
- * reserve space so there is no layout shift. `sectionPath` is the section these pages live under
- * (`/system`). Returns the same shape `staticBuildMenu()` + `getCurrentSection()` produced.
+ * Resolve the render-ready first-paint navigation for every page. Registry initial delivery is
+ * deliberately shell-only; workspace delivery fills the same canonical tree from local records.
+ * The legacy `menu`/`current` aliases remain page-layout props while all navigation consumers read
+ * `navData` through `NavProvider`.
  */
-export const registryShellMenu = (sectionPath: string): { menu: SectionLink[]; current: SectionLink | null } => {
-  const menu = navShell as unknown as SectionLink[];
-  return { menu, current: getCurrentSection(menu, sectionPath) ?? null };
+export const getNavProps = async (
+  currentSectionId: string
+): Promise<{ navData: NavData; currentSectionId: string; menu: SectionLink[]; current: SectionLink | null }> => {
+  let navData: NavData;
+  if (isRegistryRuntime()) {
+    navData = await getRegistryNavData({
+      shell: navShell as unknown as SectionLink[],
+      load: 'initial',
+      basePath: process.env.HANDOFF_APP_BASE_PATH,
+      // `initial` never invokes this loader. Keeping it explicit makes the no-DB first-paint
+      // contract visible at the adapter boundary.
+      fetchRecords: async () => ({ components: [], patterns: [], pages: [], tokenSets: [] }),
+    });
+  } else {
+    const backend = await resolveDocsBackend();
+    navData = await getWorkspaceNavData({
+      docRoot: path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs'),
+      workingPagesDir: path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages'),
+      basePath: process.env.HANDOFF_APP_BASE_PATH,
+      load: 'initial',
+      loaders: {
+        components: () => backend.listComponents(),
+        patterns: () => backend.listPatterns(),
+        pages: () => backend.listPages(),
+        tokenSets: async () => (await backend.listTokenSets()) as NavTokenSet[],
+      },
+    });
+  }
+  return {
+    navData,
+    currentSectionId,
+    menu: navData.shell,
+    current: getCurrentSection(navData.shell, currentSectionId) ?? null,
+  };
 };
 
 /**
@@ -526,17 +556,7 @@ export const registryShellMenu = (sectionPath: string): { menu: SectionLink[]; c
  * @returns
  */
 export const fetchDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
-  // Content/metadata stay mode-aware (DB-backed in registry via `fetchDocPageMetadataAndContent`).
-  // Only the nav is decoupled: registry sources `menu`/`current` from the baked shell (the same
-  // source the client `NavProvider` loads — no per-request DB nav build); workspace/static build it
-  // from the filesystem. `current` resolves against the page's own top-level section the same way.
-  let nav: { menu: SectionLink[]; current: SectionLink | null };
-  if (isRegistryRuntime()) {
-    nav = registryShellMenu(`${id}`);
-  } else {
-    const menu = await staticBuildMenu();
-    nav = { menu, current: getCurrentSection(menu, `${id}`) ?? null };
-  }
+  const nav = await getNavProps(id);
   const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
   // Return props
   return {
@@ -546,6 +566,8 @@ export const fetchDocPageMarkdown = async (path: string, slug: string | undefine
       options,
       menu: nav.menu,
       current: nav.current,
+      navData: nav.navData,
+      currentSectionId: nav.currentSectionId,
     },
   };
 };

@@ -16,8 +16,8 @@ import {
   DocumentationProps,
   fetchDocPageMarkdown,
   getClientRuntimeConfig,
+  getNavProps,
   isRegistryRuntime,
-  registryShellMenu,
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 
@@ -44,7 +44,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   // Registry mode: package `config/docs` pages are served from disk (prerendered at build); only
   // DB-published custom pages are resolved from the registry database. Workspace markdown is never
-  // read. The nav is filled client-side from `/api/docs/nav.json`, so DB pages carry an empty menu.
+  // read. Both branches use the same shell-only first-paint navigation helper.
   if (isRegistryRuntime()) {
     const id = slug.join('/');
     const moduleDoc = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'docs', `${id}.md`);
@@ -61,11 +61,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     if (!detail) {
       return { notFound: true };
     }
-    // First-paint nav from the baked shell (same source the client `NavProvider` loads), so the
-    // header renders its sections immediately instead of empty. `current` resolves against this
-    // page's own top-level section; a DB-only section is absent from the static shell (it is merged
-    // in at request time by `/api/docs/nav.json`), so `current` is null there — same as before.
-    const { menu, current } = registryShellMenu(sectionId);
+    const navProps = await getNavProps(sectionId);
     return {
       props: {
         metadata: {
@@ -75,8 +71,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
           metaDescription: detail.metaDescription ?? detail.description ?? '',
         },
         content: detail.content,
-        menu,
-        current,
+        ...navProps,
         config,
       },
     };

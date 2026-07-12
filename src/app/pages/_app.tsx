@@ -8,7 +8,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     // NavProvider lives above the page tree so the registry nav (shell + entities) is fetched once
     // and cached across soft navigations, resetting only on hard refresh.
-    <NavProvider>
+    <NavProvider initialNav={pageProps.navData} currentSectionId={pageProps.currentSectionId}>
       {/* @ts-ignore */}
       <Component {...pageProps} />
     </NavProvider>

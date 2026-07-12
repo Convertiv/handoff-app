@@ -59,7 +59,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
             ) : showSidebar ? (
               <SidebarProvider>
                 <div className="flex w-full">
-                  <SideNav menu={current} />
+                  <SideNav />
                   <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
                     <div className="mx-auto w-full">{children}</div>
                   </SidebarInset>

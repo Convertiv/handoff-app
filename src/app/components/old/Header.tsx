@@ -2,14 +2,14 @@ import { ClientConfig } from '@handoff/types/config';
 import Link from 'next/link';
 import React from 'react';
 import NavLink from '../NavLink';
-import { SectionLink } from '../util';
+import { useNav } from '../context/NavProvider';
 
 interface HeaderProps {
-  menu: SectionLink[];
   config: ClientConfig;
 }
 
-function Header({ menu, config }: HeaderProps) {
+function Header({ config }: HeaderProps) {
+  const { menu } = useNav();
   const [mobile, setMobile] = React.useState('');
   const toggle = () => {
     if (mobile === 'is-active') {

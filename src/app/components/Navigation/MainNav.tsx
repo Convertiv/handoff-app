@@ -10,7 +10,7 @@ import {
 } from '../../components/ui/navigation-menu';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
-import { useResolvedMenu } from '../context/NavProvider';
+import { useNav } from '../context/NavProvider';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -19,8 +19,7 @@ const trimSlashes = (input: string): string => {
 export function MainNav() {
   const context = useConfigContext();
   const router = useRouter();
-  // Registry: cached shell (the per-page baked menu is empty for lambda pages); workspace/static: baked.
-  const menu = useResolvedMenu(context.menu);
+  const { menu } = useNav();
   return (
     <NavigationMenu>
       <NavigationMenuList>

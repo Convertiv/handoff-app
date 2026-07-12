@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
-import { useResolvedMenu } from '../context/NavProvider';
+import { useNav } from '../context/NavProvider';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -17,8 +17,7 @@ export function MobileNav() {
   const context = useConfigContext();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  // Registry: cached shell (baked per-page menu is empty for lambda pages); workspace/static: baked.
-  const menu = useResolvedMenu(context.menu);
+  const { menu } = useNav();
 
   const toggleTheme = () => {
     if (theme === 'light') {

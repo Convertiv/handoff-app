@@ -131,9 +131,9 @@ const declarationToSubSection = (declaration: NavPageMenuDeclaration, sources: N
   if (declaration.enabled === false) return undefined;
   return {
     title: declaration.title ?? '',
-    path: declaration.path,
-    image: declaration.image,
-    menu: declaration.menu ? cloneMenu(declaration.menu) : undefined,
+    ...(declaration.path !== undefined ? { path: declaration.path } : {}),
+    ...(declaration.image !== undefined ? { image: declaration.image } : {}),
+    ...(declaration.menu !== undefined ? { menu: cloneMenu(declaration.menu) } : {}),
   };
 };
 

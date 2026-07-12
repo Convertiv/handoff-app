@@ -1,40 +1,30 @@
 'use client';
 
+import type { NavData, SectionLink } from '@handoff/nav';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { NavEntity, SectionLink } from '@handoff/nav';
 
 export type { NavData, NavEntity } from '@handoff/nav';
 
-// Temporary compatibility for the pre-cutover endpoint/view contract. Issue 3 replaces this raw
-// payload with the canonical render-ready `NavData` tree.
-interface LegacyNavPayload {
-  shell: SectionLink[];
-  components: NavEntity[];
-  patterns: NavEntity[];
-  tokenSets: NavEntity[];
-}
-
 interface INavContext {
-  nav: LegacyNavPayload | null;
+  nav: NavData;
+  currentSectionId: string;
 }
 
-const NavContext = createContext<INavContext>({ nav: null });
+const EMPTY_NAV: NavData = { shell: [] };
+const NavContext = createContext<INavContext>({ nav: EMPTY_NAV, currentSectionId: '' });
+const isRegistryMode = process.env.HANDOFF_RUNTIME_MODE === 'registry';
 
-export const isRegistryMode = process.env.HANDOFF_RUNTIME_MODE === 'registry';
+// A module-level fulfilled cache and in-flight guard make the registry refresh a single hard-load
+// operation, including StrictMode remounts. A browser hard reload resets both and observes publishes.
+let cachedNav: NavData | null = null;
+let inFlight: Promise<NavData | null> | null = null;
 
-// Module-level cache + in-flight guard. Because `_app` is not remounted across client-side (soft)
-// navigations, the provider's state already survives them; the module cache additionally dedupes
-// concurrent/StrictMode mounts and is reset only on a full page reload — so newly published entities
-// appear on hard refresh ("load once, reuse until hard refresh").
-let cachedNav: LegacyNavPayload | null = null;
-let inFlight: Promise<LegacyNavPayload | null> | null = null;
-
-const loadNav = (): Promise<LegacyNavPayload | null> => {
+const loadNav = (): Promise<NavData | null> => {
   if (cachedNav) return Promise.resolve(cachedNav);
   if (inFlight) return inFlight;
   inFlight = fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/nav.json`)
     .then((res) => (res.ok ? res.json() : null))
-    .then((data: LegacyNavPayload | null) => {
+    .then((data: NavData | null) => {
       if (data) cachedNav = data;
       return cachedNav;
     })
@@ -45,43 +35,38 @@ const loadNav = (): Promise<LegacyNavPayload | null> => {
   return inFlight;
 };
 
-/**
- * Loads the registry navigation (shell + entities) ONCE and caches it across soft navigations.
- *
- * Mounted in `_app.tsx` above the page tree so its state is not remounted when the page `Component`
- * swaps on client-side navigation — that is what makes the cache survive soft nav and reset only on
- * hard refresh. The side nav and header consume it via {@link useNavContext}; in workspace/static
- * mode they fall back to the build-time baked menu props instead.
- */
-export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [nav, setNav] = useState<LegacyNavPayload | null>(cachedNav);
+export const NavProvider: React.FC<{
+  children: React.ReactNode;
+  initialNav?: NavData;
+  currentSectionId?: string;
+}> = ({ children, initialNav = EMPTY_NAV, currentSectionId = '' }) => {
+  // Registry alone owns refresh state. Workspace renders the latest page prop directly, so soft
+  // navigation cannot briefly expose the preceding page's tree and triggers no provider effect.
+  const [registryNav, setRegistryNav] = useState<NavData>(() => cachedNav ?? initialNav);
 
   useEffect(() => {
-    if (!isRegistryMode || nav) {
-      return;
-    }
+    if (!isRegistryMode || cachedNav) return;
     let active = true;
     loadNav().then((data) => {
-      if (active && data) setNav(data);
+      if (active && data) setRegistryNav(data);
     });
     return () => {
       active = false;
     };
+    // Registry refreshes exactly once for the lifetime of the provider. Workspace is inert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <NavContext.Provider value={{ nav }}>{children}</NavContext.Provider>;
+  const nav = isRegistryMode ? registryNav : initialNav;
+  return <NavContext.Provider value={{ nav, currentSectionId }}>{children}</NavContext.Provider>;
 };
 
-export const useNavContext = (): INavContext => useContext(NavContext);
-
-/**
- * Resolve the top-level menu (header/mobile nav) for the active runtime: in registry mode the
- * cached shell (the per-page baked menu is empty for lambda-rendered pages), falling back to the
- * baked menu until the shell loads; in workspace/static the build-time baked menu. Centralizes the
- * `isRegistry ? shell : baked` choice the header nav components used to each repeat.
- */
-export const useResolvedMenu = (fallbackMenu?: SectionLink[]): SectionLink[] | undefined => {
-  const { nav } = useNavContext();
-  return isRegistryMode ? (nav?.shell ?? fallbackMenu) : fallbackMenu;
+/** The sole view-facing navigation API: one active tree and an exact-match active section. */
+export const useNav = (): { nav: NavData; menu: SectionLink[]; current: SectionLink | null } => {
+  const { nav, currentSectionId } = useContext(NavContext);
+  return {
+    nav,
+    menu: nav.shell,
+    current: nav.shell.find((section) => section.path === currentSectionId) ?? null,
+  };
 };

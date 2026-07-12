@@ -16,10 +16,9 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
-import { groupBy, startCase } from 'lodash';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -33,12 +32,11 @@ import {
   SidebarSeparator,
 } from '../../components/ui/sidebar';
 import { normalizePathForMatch } from '../../lib/utils';
-import { isRegistryMode, NavEntity, useNavContext } from '../context/NavProvider';
-import { SectionLink } from '../util';
+import { useNav } from '../context/NavProvider';
 
 /**
  * `next/link` re-applies `basePath`, but the menu item paths already carry the base prefix (built by
- * `buildBasePath()` / `buildEntitySubmenu`). Strip the leading base segment once so the link is not
+ * the server navigation resolver). Strip the leading base segment once so the link is not
  * double-prefixed; with no base path this just returns a leading-slash route.
  */
 const stripBasePath = (p: string): string => {
@@ -48,25 +46,6 @@ const stripBasePath = (p: string): string => {
     rel = rel.slice(base.length).replace(/^\/+/, '');
   }
   return `/${rel}`;
-};
-
-/**
- * Resolve which top-level section's submenu the side nav should render from the current route, by
- * longest-prefix match against the shell section paths. Used in registry mode where the per-page
- * `menu` prop is empty for lambda-rendered (fallback) pages.
- */
-const findSectionForPath = (shell: SectionLink[], asPath: string): SectionLink | null => {
-  const normalized = normalizePathForMatch(asPath);
-  let best: SectionLink | null = null;
-  for (const section of shell) {
-    const sectionPath = normalizePathForMatch(section.path);
-    if (sectionPath && (normalized === sectionPath || normalized.startsWith(`${sectionPath}/`))) {
-      if (!best || sectionPath.length > normalizePathForMatch(best.path).length) {
-        best = section;
-      }
-    }
-  }
-  return best;
 };
 
 const NormalMenuItem = ({ title, icon, path }) => {
@@ -164,92 +143,9 @@ const MenuIcon = ({ icon, isActive = false }) => {
   }
 };
 
-/** Mirror of `buildBasePath()` in components/util so client-built links match the baked menu paths. */
-const buildBasePath = (): string => {
-  if (!process.env.HANDOFF_APP_BASE_PATH) {
-    return '';
-  }
-  return process.env.HANDOFF_APP_BASE_PATH.replace(/^\/+|\/+$/g, '') + '/';
-};
-
-/**
- * Build a grouped submenu from the minimal nav entities, mirroring the server-side
- * `buildComponentMenu`/`buildPatternMenu` shape (group → sorted items, both sorted by title) so the
- * client-resolved registry nav renders identically to the workspace/static baked menu.
- */
-const buildEntitySubmenu = (entities: NavEntity[], segment: 'component' | 'pattern') => {
-  const basePath = buildBasePath();
-  const grouped = groupBy(entities, (entity) => entity.group ?? '');
-  return Object.keys(grouped)
-    .map((group) => ({
-      title: group || 'Uncategorized',
-      menu: grouped[group]
-        .map((entity) => ({
-          path: `${basePath}system/${segment}/${entity.id}`,
-          title: entity.title || startCase(entity.id),
-        }))
-        .sort((a, b) => a.title.localeCompare(b.title)),
-    }))
-    .sort((a, b) => a.title.localeCompare(b.title));
-};
-
-/**
- * Build the Tokens › Components group from the published component token sets, mirroring the
- * workspace/static `staticBuildTokensMenu` component group. Returns `null` when none are published.
- */
-const buildTokenComponentsGroup = (tokenSets: NavEntity[]) => {
-  if (!tokenSets || tokenSets.length === 0) {
-    return null;
-  }
-  const basePath = buildBasePath();
-  return {
-    title: 'Components',
-    path: `${basePath}system/tokens/components`,
-    menu: tokenSets
-      .map((entity) => ({
-        path: `${basePath}system/tokens/components/${entity.id}`,
-        title: entity.title || startCase(entity.id),
-      }))
-      .sort((a, b) => a.title.localeCompare(b.title)),
-  };
-};
-
-const SideNav = ({ menu }: { menu: SectionLink }) => {
-  const { nav } = useNavContext();
-  const router = useRouter();
-  const isRegistry = isRegistryMode;
-
-  // Resolve which section's submenu to render. Workspace/static use the build-time baked `menu` prop.
-  // Registry resolves it from the cached shell by the current route, because the per-page prop is
-  // empty for lambda-rendered (fallback) pages (e.g. component detail). The shell is the same source
-  // the working `/system` page uses, so the nav renders identically everywhere.
-  const bakedSection = menu && (menu as SectionLink).path ? (menu as SectionLink) : null;
-  const shellSection = isRegistry && nav?.shell ? findSectionForPath(nav.shell, router.asPath) : null;
-  const activeSection = shellSection ?? bakedSection;
-
-  // Fill the `menu` of any subsection tagged `dynamic` with the cached, request-time entity lists.
-  const sections = useMemo(() => {
-    const subSections = activeSection?.subSections ?? [];
-    if (!isRegistry || !nav) {
-      return subSections;
-    }
-    return subSections.map((section) => {
-      const dyn = section.dynamic;
-      if (dyn?.kind === 'components') {
-        const components: NavEntity[] = dyn.type ? (nav.components ?? []).filter((c) => c.type === dyn.type) : nav.components ?? [];
-        return { ...section, menu: buildEntitySubmenu(components, 'component') };
-      }
-      if (dyn?.kind === 'patterns') {
-        return { ...section, menu: buildEntitySubmenu(nav.patterns ?? [], 'pattern') };
-      }
-      if (dyn?.kind === 'token-components') {
-        // Append the published component token sets to the baked Foundations menu (keep both).
-        const componentsGroup = buildTokenComponentsGroup(nav.tokenSets ?? []);
-        return componentsGroup ? { ...section, menu: [...(section.menu ?? []), componentsGroup] } : section;
-      }
-      return section;
-    });
-  }, [activeSection, isRegistry, nav]);
+const SideNav = () => {
+  const { current } = useNav();
+  const sections = current?.subSections ?? [];
 
   // Collapse the sidebar entirely (render nothing, reserve no gutter) when the resolved section has
   // no renderable content, so the page content goes full width. A `dynamic` slot counts as

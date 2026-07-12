@@ -20,7 +20,7 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, isRegistryRuntime, registryShellMenu, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getNavProps, IParams, isRegistryRuntime } from '../../../../components/util';
 
 /**
  * Render all index pages
@@ -87,9 +87,7 @@ export const getStaticProps = async (context) => {
   if (!componentData) {
     return { notFound: true };
   }
-  // Registry sources nav from the baked shell (no per-request DB build); workspace/static build it
-  // from the filesystem. Both resolve `current` against the `/system` section the same way.
-  const menu = isRegistryRuntime() ? registryShellMenu('/system').menu : await staticBuildMenu();
+  const navProps = await getNavProps('/system');
   const config = getClientRuntimeConfig();
   const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
@@ -106,9 +104,8 @@ export const getStaticProps = async (context) => {
       id: component,
       // isFigmaComponent: true,
       previews: { components: {} },
-      menu,
+      ...navProps,
       config,
-      current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         ...componentData,
         title: componentData.title || docs.metadata.title || startCase(component as string),

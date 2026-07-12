@@ -33,7 +33,7 @@ const AssetsLogosPage = ({ content, menu, metadata, config }: DocumentationProps
         <title>{metadata.metaTitle}</title>
         <meta name="description" content={metadata.metaDescription} />
       </Head>
-      <Header menu={menu} config={config} />
+      <Header config={config} />
       <section className="c-content">
         <div className="o-container-fluid">
           <div className="c-hero">

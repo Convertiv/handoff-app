@@ -17,11 +17,9 @@ import {
   DocumentationProps,
   fetchPatterns,
   getClientRuntimeConfig,
-  getCurrentSection,
+  getNavProps,
   IParams,
   isRegistryRuntime,
-  registryShellMenu,
-  staticBuildMenu,
 } from '../../../../components/util';
 
 type PatternNavItem = { id: string; title: string; description: string; group: string };
@@ -114,9 +112,7 @@ export const getStaticProps = async (context: { params: IParams }) => {
   if (!patternData) {
     return { notFound: true };
   }
-  // Registry sources nav from the baked shell (no per-request DB build); workspace/static build it
-  // from the filesystem. Both resolve `current` against the `/system` section the same way.
-  const menu = isRegistryRuntime() ? registryShellMenu('/system').menu : await staticBuildMenu();
+  const navProps = await getNavProps('/system');
   const config = getClientRuntimeConfig();
 
   const sameGroupPatterns = patterns.filter((p) => p.group === patternData?.group);
@@ -129,9 +125,8 @@ export const getStaticProps = async (context: { params: IParams }) => {
   return {
     props: {
       id: patternId,
-      menu,
+      ...navProps,
       config,
-      current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         title: fallbackTitle,
         description: patternData?.description || '',
