@@ -179,8 +179,6 @@ export const getNavProps = async (
       shell: navShell as unknown as SectionLink[],
       load: 'initial',
       basePath: process.env.HANDOFF_APP_BASE_PATH,
-      // `initial` never invokes this loader. Keeping it explicit makes the no-DB first-paint
-      // contract visible at the adapter boundary.
       fetchRecords: async () => ({ components: [], patterns: [], pages: [], tokenSets: [] }),
     });
   } else {

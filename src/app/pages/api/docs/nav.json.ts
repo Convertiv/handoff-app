@@ -43,7 +43,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     sendDocsData(res, 200, nav);
   } catch (error) {
     console.error('Docs navigation response failed.', error);
-    // `getRegistryNavData` catches backend failures. This path is limited to response failures.
     sendDocsError(res, 'unexpected_error', 'Unexpected docs read API error.');
   }
 }

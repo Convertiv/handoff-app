@@ -25,7 +25,7 @@ export const getRegistryNavData = async (options: RegistryNavAdapterOptions): Pr
     try {
       records = (await options.fetchRecords()) ?? records;
     } catch {
-      // The baked structure is deliberately useful without the registry backend.
+      // Fall back to the baked navigation shell when the registry backend is unavailable.
     }
   }
   const componentById = new Map(records.components.map((component) => [component.id, component]));

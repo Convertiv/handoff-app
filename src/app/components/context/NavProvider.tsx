@@ -53,7 +53,6 @@ export const NavProvider: React.FC<{
     return () => {
       active = false;
     };
-    // Registry refreshes exactly once for the lifetime of the provider. Workspace is inert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
