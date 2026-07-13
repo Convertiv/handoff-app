@@ -1,4 +1,4 @@
-import type { RegistryTextFileKind } from '@handoff/registry/db/schema';
+import type { RegistryTextFileKind } from '@handoff/store/types';
 import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import { isPlainObject } from './validation';
 
@@ -46,11 +46,6 @@ const contentTypeForPath = (filePath: string): string => {
   return CONTENT_TYPE_BY_EXT[ext] ?? 'text/plain; charset=utf-8';
 };
 
-/**
- * Whether `path` is a registry-safe relative path: no absolute/drive-letter root, no leading
- * separator, and no `.`/`..`/empty segments. Backslashes are normalized to `/` before checking so
- * Windows-style separators cannot smuggle traversal.
- */
 /** A validated, persistable registry file record. */
 export interface ValidatedFile {
   path: string;

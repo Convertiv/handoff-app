@@ -32,10 +32,8 @@ class Handoff {
   private _store?: HandoffStore;
 
   /**
-   * Normalized store over the current workspace (filesystem) runtime. Consumers read
-   * component/pattern records and related source files through this storage-agnostic interface.
-   * Created lazily and reads live from `runtimeConfig`, so it stays
-   * correct across `reload()`.
+   * Normalized store over the current workspace runtime for components, patterns, pages, tokens,
+   * and assets. It is created lazily and reads live from `runtimeConfig`.
    */
   get store(): HandoffStore {
     if (!this._store) {
@@ -140,11 +138,10 @@ class Handoff {
   }
 
   /**
-   * Publish a single component or pattern from this connected workspace to the configured remote
-   * registry: a fresh targeted build of the selected entity, then an upload of only that entity's
-   * package (record, source files, rendered artifacts + required shared/global artifacts, build
-   * metadata). The publish module is loaded lazily so the registry client/build code never enters
-   * the docs app bundle.
+   * Publish a single component, pattern, or page from this connected workspace to the configured
+   * remote registry. Components and patterns receive a fresh targeted build before upload. Pages
+   * upload their record and markdown source because they render at runtime. The publish module is
+   * loaded lazily so the registry client and build code never enter the docs app bundle.
    */
   async publish(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
     this.preRunner();
@@ -154,12 +151,8 @@ class Handoff {
   }
 
   /**
-   * Checkout a single component or pattern from the connected remote registry into this workspace:
-   * read its normalized record + registry-safe source files, write them in standard authoring form,
-   * and synthesize the local declaration in the configured `runtime.workspace.declarationFormat`
-   * (declarations are workspace-only and never read from the registry). Identity is matched by
-   * stable `id`. The checkout module is loaded lazily so the registry client never enters the docs
-   * app bundle.
+   * Checkout a single component, pattern, or page from the connected remote registry. The checkout
+   * module is loaded lazily so the registry client never enters the docs app bundle.
    */
   async checkout(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
     this.preRunner();

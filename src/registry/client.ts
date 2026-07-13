@@ -51,6 +51,21 @@ export interface RegistryClientOptions {
   accessToken: string;
 }
 
+/** HTTP operations used by connected workspace publish and checkout workflows. */
+export interface RegistryClient {
+  publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope>;
+  checkout(kind: TransferEntityKind, id: string): Promise<CheckoutPayload>;
+  listTokenSets(): Promise<TokenSetSummary[]>;
+  publishTokens(pkg: TokenSetTransferPackage): Promise<RegistryEnvelope>;
+  checkoutTokens(id: string): Promise<TokenSetCheckoutPayload>;
+  listAssetCollections(): Promise<AssetCollectionSummary[]>;
+  assetBlobHaveCheck(hashes: string[]): Promise<string[]>;
+  uploadAssetBlob(hash: string, contentType: string, bytes: Buffer): Promise<void>;
+  downloadAssetBlob(hash: string): Promise<Buffer>;
+  publishAssetManifest(pkg: AssetCollectionTransferPackage): Promise<RegistryEnvelope>;
+  checkoutAssetCollection(collection: string): Promise<AssetCollectionCheckoutPayload>;
+}
+
 /** Strip a single trailing slash so URL joining never doubles separators. */
 const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, '');
 
@@ -65,39 +80,53 @@ const describeNetworkError = (url: string, error: unknown): string => {
   return `Could not reach the registry at ${url}: ${message}${detail ? ` (${detail})` : ''}.`;
 };
 
+const fetchRegistry = async (url: string, init: RequestInit): Promise<Response> => {
+  try {
+    return await fetch(url, init);
+  } catch (error) {
+    throw new RegistryClientError(describeNetworkError(url, error));
+  }
+};
+
+const readEnvelope = async <T>(response: Response): Promise<RegistryEnvelope<T>> => {
+  const text = await response.text();
+  if (!text) {
+    return {};
+  }
+  try {
+    return JSON.parse(text) as RegistryEnvelope<T>;
+  } catch {
+    return {};
+  }
+};
+
+const readErrorEnvelope = async (response: Response): Promise<RegistryEnvelope> => {
+  try {
+    return await readEnvelope(response);
+  } catch {
+    return {};
+  }
+};
+
 /**
  * Build a registry HTTP client bound to one connection. Methods reject with a
  * {@link RegistryClientError} on transport failure, non-2xx responses, or an error envelope.
  */
-export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOptions) => {
+export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOptions): RegistryClient => {
   const root = trimTrailingSlash(baseUrl);
 
   const request = async <T>(method: string, path: string, body?: unknown): Promise<RegistryEnvelope<T>> => {
     const url = `${root}${path}`;
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-    } catch (error) {
-      throw new RegistryClientError(describeNetworkError(url, error));
-    }
-
-    let envelope: RegistryEnvelope<T> = {};
-    const text = await response.text();
-    if (text) {
-      try {
-        envelope = JSON.parse(text) as RegistryEnvelope<T>;
-      } catch {
-        // Non-JSON body (e.g. an HTML error page) — fall through to the status-based error below.
-      }
-    }
+    const response = await fetchRegistry(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const envelope = await readEnvelope<T>(response);
 
     if (!response.ok || envelope.error) {
       const code = envelope.error?.code;
@@ -159,43 +188,29 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
       // 308-redirected and undici must re-send the body; a typed-array body's ArrayBuffer is detached
       // after the first send ("slice on a detached ArrayBuffer"), but a Blob is re-readable.
       const body = new Blob([new Uint8Array(bytes)] as unknown as BlobPart[]);
-      let response: Response;
-      try {
-        response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': contentType || 'application/octet-stream',
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-          body,
-        });
-      } catch (error) {
-        throw new RegistryClientError(describeNetworkError(url, error));
-      }
+      const response = await fetchRegistry(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentType || 'application/octet-stream',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body,
+      });
       if (!response.ok) {
         let code: string | undefined;
         let message = `Blob upload failed (${response.status} ${response.statusText}).`;
-        try {
-          const parsed = JSON.parse(await response.text());
-          code = parsed?.error?.code;
-          message = parsed?.error?.message || message;
-        } catch {
-          // Non-JSON error body; keep the status-based message.
-        }
+        const envelope = await readErrorEnvelope(response);
+        code = envelope?.error?.code;
+        message = envelope?.error?.message || message;
         throw new RegistryClientError(message, { status: response.status, code });
       }
     },
     /** Download one blob's raw bytes by hash (follows any provider redirect). */
     async downloadAssetBlob(hash: string): Promise<Buffer> {
       const url = `${root}/api/registry/transfer/assets/blobs/${encodeURIComponent(hash)}`;
-      let response: Response;
-      try {
-        response = await fetch(url, {
-          headers: { ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
-        });
-      } catch (error) {
-        throw new RegistryClientError(describeNetworkError(url, error));
-      }
+      const response = await fetchRegistry(url, {
+        headers: { ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      });
       if (!response.ok) {
         throw new RegistryClientError(`Blob download failed for "${hash}" (${response.status} ${response.statusText}).`, {
           status: response.status,
@@ -217,6 +232,3 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
     },
   };
 };
-
-/** A bound registry client instance. */
-export type RegistryClient = ReturnType<typeof createRegistryClient>;

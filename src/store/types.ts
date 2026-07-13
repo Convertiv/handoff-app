@@ -32,6 +32,8 @@ export type TextFileKind =
   | 'schema'
   | 'other';
 
+export type RegistryTextFileKind = Exclude<TextFileKind, 'declaration'>;
+
 /**
  * A normalized text source file belonging to a component or pattern. Used for checkout,
  * inspection, and publish — never to rebuild previews during docs serving.
@@ -48,6 +50,8 @@ export interface TextFileResource {
   /** Content type to serve/transfer the file with. */
   contentType: string;
 }
+
+export type RegistryTextFileResource = TextFileResource & { kind: RegistryTextFileKind };
 
 /**
  * A reference to a source file resolvable by a store. For the filesystem store this is an

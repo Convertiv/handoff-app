@@ -8,10 +8,10 @@ export {
   registrySchema,
   type BuildMetadataEntityKind,
   type DocsArtifactEntityKind,
-  type RegistryBuildStatus,
   type RegistryReviewMetadata,
-  type RegistryTextFileKind,
 } from './schema';
+
+export type { ArtifactBuildStatus as RegistryBuildStatus } from '../../artifacts/types';
 
 export {
   DEFAULT_DATABASE_URL_ENV,

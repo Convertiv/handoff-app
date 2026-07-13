@@ -9,7 +9,7 @@
  */
 
 import type { AssetCollection } from './sets';
-import type { RegistryBuildStatus } from '../db/schema';
+import type { ArtifactBuildStatus } from '../../artifacts/types';
 import type { TransferBuild } from '../transfer';
 
 /** One asset's metadata in a collection manifest (never the binary body). */
@@ -28,7 +28,7 @@ export interface AssetManifestEntry {
 
 /**
  * The collection publish package uploaded to `PUT /api/registry/transfer/assets/:collection` after
- * its blobs have been uploaded: the full manifest + build/provenance metadata (keyed by `sourceHash`).
+ * its blobs have been uploaded: the full manifest and build metadata keyed by `sourceHash`.
  */
 export interface AssetCollectionTransferPackage {
   collection: AssetCollection;
@@ -46,5 +46,5 @@ export interface AssetCollectionCheckoutPayload {
 export interface AssetCollectionSummary {
   collection: AssetCollection;
   sourceHash: string | null;
-  status: RegistryBuildStatus | null;
+  status: ArtifactBuildStatus | null;
 }

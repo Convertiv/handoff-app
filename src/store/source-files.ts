@@ -11,7 +11,7 @@ import path from 'path';
 import { resolveComponentDeclaration } from '../config/runtime';
 import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { normalizePathForCompare } from '../utils/path';
-import type { TextFileKind, TextFileResource } from './types';
+import type { RegistryTextFileResource, TextFileKind, TextFileResource } from './types';
 
 /** A normalized record carrying a source directory `path` and resolved absolute `entries`. */
 type SourcedRecord = (ComponentListObject | PatternListObject) & {
@@ -151,3 +151,5 @@ export const getRelatedSourceFilesForRecord = (record: SourcedRecord): TextFileR
 
 /** Whether a file resource should be excluded from registry source records (declarations only). */
 export const isWorkspaceOnlyFile = (file: TextFileResource): boolean => file.kind === 'declaration';
+
+export const isRegistrySourceFile = (file: TextFileResource): file is RegistryTextFileResource => !isWorkspaceOnlyFile(file);

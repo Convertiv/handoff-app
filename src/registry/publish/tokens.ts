@@ -9,17 +9,15 @@
  * a separate management action).
  */
 
-import crypto from 'crypto';
-import { stableStringify } from '../../app-builder/config-diff';
 import Handoff from '../../index';
-import { Logger } from '../../utils/logger';
-import { createRegistryClient, RegistryClientError } from '../client';
 import type { TokenSetRecord } from '../../store/types';
+import { Logger } from '../../utils/logger';
+import { stableStringify } from '../../utils/stable-stringify';
+import { createRegistryClient } from '../client';
 import type { TokenSetSummary, TokenSetTransferArtifact, TokenSetTransferPackage } from '../tokens/transfer';
+import { describePublishError } from './errors';
 import { PublishError, resolveConnectionOrThrow } from './index';
-import { getBuilderVersion } from './package';
-
-const sha256 = (content: string): string => crypto.createHash('sha256').update(content).digest('hex');
+import { createCurrentBuild, hashPathValues, sha256 } from './publish-build';
 
 /**
  * Deterministic content hash for a token set: the key-order-independent record serialization plus the
@@ -27,16 +25,10 @@ const sha256 = (content: string): string => crypto.createHash('sha256').update(c
  * same across rebuilds and skip-unchanged works reliably.
  */
 const hashTokenSet = (record: unknown, artifacts: TokenSetTransferArtifact[]): string => {
-  const hash = crypto.createHash('sha256');
-  hash.update(stableStringify(record));
-  hash.update('\0');
-  for (const artifact of [...artifacts].sort((a, b) => a.path.localeCompare(b.path))) {
-    hash.update(artifact.path);
-    hash.update('\0');
-    hash.update(artifact.content);
-    hash.update('\0');
-  }
-  return hash.digest('hex');
+  return hashPathValues(
+    artifacts.map((artifact) => ({ path: artifact.path, value: artifact.content })),
+    stableStringify(record)
+  );
 };
 
 /** Assemble one set's publish package from the freshly generated local token output. */
@@ -55,29 +47,8 @@ const buildTokenSetPackage = async (handoff: Handoff, set: TokenSetRecord): Prom
     kind: set.kind,
     record: set.record,
     artifacts,
-    build: {
-      status: 'current',
-      builtAt: new Date().toISOString(),
-      builderVersion: getBuilderVersion(),
-      sourceHash: hashTokenSet(set.record, artifacts),
-    },
+    build: createCurrentBuild({ sourceHash: hashTokenSet(set.record, artifacts) }),
   };
-};
-
-/** Map a registry client error to an actionable publish message. */
-const describeUploadFailure = (error: RegistryClientError, registryUrl: string): string => {
-  switch (error.code) {
-    case 'runtime_mode_conflict':
-      return `The registry at ${registryUrl} is not running in registry mode, so it cannot accept publishes: ${error.message}`;
-    case 'token_not_configured':
-      return `The registry at ${registryUrl} has no management token configured, so it is rejecting mutations: ${error.message}`;
-    case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
-    case 'bad_request':
-      return `The registry rejected the token set (400): ${error.message}`;
-    default:
-      return error.message;
-  }
 };
 
 /**
@@ -132,8 +103,7 @@ export const publishTokens = async (handoff: Handoff, setId?: string): Promise<v
       published += 1;
       Logger.info(`Published: ${pkg.id} (${pkg.artifacts.length} artifact(s))`);
     } catch (error) {
-      const message = error instanceof RegistryClientError ? describeUploadFailure(error, connection.url) : error instanceof Error ? error.message : String(error);
-      failed.push({ id: pkg.id, message });
+      failed.push({ id: pkg.id, message: describePublishError(error, connection.url, 'token set') });
     }
   }
 

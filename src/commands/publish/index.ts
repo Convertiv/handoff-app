@@ -7,9 +7,6 @@ import { getSharedOptions } from '../utils';
 /** Entity kinds publishable from a connected workspace. */
 const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens', 'assets'] as const;
 
-/** Entity kinds that require an explicit id (tokens/assets support a bulk publish, so id is optional there). */
-const ID_REQUIRED_KINDS = ['component', 'pattern', 'page'] as const;
-
 export interface PublishArgs extends SharedArgs {
   type: (typeof ENTITY_KINDS)[number];
   id?: string;

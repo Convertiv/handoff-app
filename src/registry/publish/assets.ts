@@ -7,15 +7,15 @@
  * per-blob skip-unchanged), and the manifest is finalized atomically only after its blobs exist.
  */
 
-import crypto from 'crypto';
 import Handoff from '../../index';
+import type { AssetMetadata } from '../../store/types';
 import { Logger } from '../../utils/logger';
 import { ASSET_COLLECTIONS, isAssetCollection, type AssetCollection } from '../assets/sets';
 import type { AssetCollectionSummary, AssetCollectionTransferPackage, AssetManifestEntry } from '../assets/transfer';
-import { createRegistryClient, RegistryClientError } from '../client';
-import type { AssetMetadata } from '../../store/types';
+import { createRegistryClient } from '../client';
+import { describePublishError } from './errors';
 import { PublishError, resolveConnectionOrThrow } from './index';
-import { getBuilderVersion } from './package';
+import { createCurrentBuild, hashPathValues } from './publish-build';
 
 /**
  * Deterministic collection hash over the path-sorted `(path, contentHash)` manifest. Order-
@@ -23,30 +23,7 @@ import { getBuilderVersion } from './package';
  * here; each asset already carries its blob hash.
  */
 const hashCollection = (manifest: AssetMetadata[]): string => {
-  const hash = crypto.createHash('sha256');
-  for (const asset of [...manifest].sort((a, b) => a.path.localeCompare(b.path))) {
-    hash.update(asset.path);
-    hash.update('\0');
-    hash.update(asset.contentHash);
-    hash.update('\0');
-  }
-  return hash.digest('hex');
-};
-
-/** Map a registry client error to an actionable publish message. */
-const describeUploadFailure = (error: RegistryClientError, registryUrl: string): string => {
-  switch (error.code) {
-    case 'runtime_mode_conflict':
-      return `The registry at ${registryUrl} is not running in registry mode, so it cannot accept publishes: ${error.message}`;
-    case 'token_not_configured':
-      return `The registry at ${registryUrl} has no management token configured, so it is rejecting mutations: ${error.message}`;
-    case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
-    case 'bad_request':
-      return `The registry rejected the asset collection (400): ${error.message}`;
-    default:
-      return error.message;
-  }
+  return hashPathValues(manifest.map((asset) => ({ path: asset.path, value: asset.contentHash })));
 };
 
 const toManifestEntry = (asset: AssetMetadata): AssetManifestEntry => ({
@@ -74,7 +51,7 @@ export const publishAssets = async (handoff: Handoff, collection?: string): Prom
   await handoff.fetch();
 
   const available = await handoff.store.assets.listCollections();
-  const targets: AssetCollection[] = (collection ? [collection as AssetCollection] : (available as AssetCollection[])).filter(isAssetCollection);
+  const targets: AssetCollection[] = collection && isAssetCollection(collection) ? [collection] : available.filter(isAssetCollection);
 
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
   let remote: AssetCollectionSummary[] = [];
@@ -124,25 +101,17 @@ export const publishAssets = async (handoff: Handoff, collection?: string): Prom
 
       const pkg: AssetCollectionTransferPackage = {
         collection: col,
-        build: {
-          status: 'current',
-          builtAt: new Date().toISOString(),
-          builderVersion: getBuilderVersion(),
-          sourceHash,
-        },
+        build: createCurrentBuild({ sourceHash }),
         assets: manifest.map(toManifestEntry),
       };
       await client.publishAssetManifest(pkg);
       published += 1;
       Logger.info(`Published: ${col} (${manifest.length} asset(s), ${missing.length} new blob(s))`);
     } catch (error) {
-      const message =
-        error instanceof RegistryClientError
-          ? describeUploadFailure(error, connection.url)
-          : error instanceof Error
-            ? error.message
-            : String(error);
-      failed.push({ collection: col, message });
+      failed.push({
+        collection: col,
+        message: describePublishError(error, connection.url, 'asset collection'),
+      });
     }
   }
 

@@ -8,8 +8,8 @@
  * it) never drift. Types only — no runtime behavior.
  */
 
-import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../artifacts/types';
-import type { RegistryTextFileKind } from './db/schema';
+import type { ArtifactBuildStatus, ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../artifacts/types';
+import type { RegistryTextFileKind } from '../store/types';
 
 /** Entity kinds that can be transferred (published/checked out). */
 export type TransferEntityKind = 'component' | 'pattern' | 'page';
@@ -47,9 +47,9 @@ export interface TransferArtifact {
   size?: number;
 }
 
-/** Build/provenance metadata for the published entity. */
+/** Build metadata for the published entity. */
 export interface TransferBuild {
-  status: 'current' | 'stale' | 'missing' | 'error';
+  status: ArtifactBuildStatus;
   builtAt?: string;
   builderVersion?: string;
   artifactHash?: string;
@@ -59,12 +59,11 @@ export interface TransferBuild {
 }
 
 /**
- * The full publish package uploaded to `PUT /api/registry/transfer/{component|pattern}/:id`:
- * the normalized record, checkout-oriented source files (declarations excluded), the rendered
- * artifacts (including required shared/global artifacts), and build metadata.
+ * The full publish package uploaded to `PUT /api/registry/transfer/{component|pattern|page}/:id`.
+ * Rendered artifacts are included when the entity has a render pipeline.
  */
 export interface TransferPackage {
-  /** Normalized record (a `ComponentListObject`/`PatternListObject`), stored as the served record. */
+  /** Normalized component, pattern, or page record stored as the served record. */
   item: Record<string, unknown>;
   files: TransferFile[];
   artifacts: TransferArtifact[];
@@ -72,13 +71,12 @@ export interface TransferPackage {
 }
 
 /**
- * The checkout payload returned by `GET /api/registry/transfer/{component|pattern}/:id`:
- * the normalized record and its registry-safe source files. Declarations are workspace-only and are
- * never present — the consuming workspace synthesizes the declaration locally.
+ * The checkout payload returned by `GET /api/registry/transfer/{component|pattern|page}/:id`.
+ * Declarations are omitted because the consuming workspace creates them locally.
  */
 export interface CheckoutPayload {
   kind: TransferEntityKind;
-  /** Normalized record (a `ComponentListObject`/`PatternListObject`) the entity is reconstructed from. */
+  /** Normalized record used to reconstruct the entity. */
   item: Record<string, unknown>;
   files: TransferFile[];
 }

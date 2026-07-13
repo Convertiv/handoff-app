@@ -17,6 +17,8 @@ export type {
   HandoffStore,
   PageStore,
   PatternStore,
+  RegistryTextFileKind,
+  RegistryTextFileResource,
   SourceReference,
   TextFileKind,
   TextFileResource,
@@ -35,7 +37,7 @@ export {
 
 export { FilesystemAssetStore } from './filesystem-assets';
 
-export { getRelatedSourceFilesForRecord, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
+export { getRelatedSourceFilesForRecord, isRegistrySourceFile, isWorkspaceOnlyFile, sourceContentTypeForPath } from './source-files';
 
 import {
   FilesystemComponentStore,

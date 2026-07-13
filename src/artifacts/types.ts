@@ -63,8 +63,8 @@ export interface ArtifactReference {
 }
 
 /**
- * Build/provenance metadata for an artifact or entity. Captures enough to validate, serve,
- * and debug docs output.
+ * Build metadata for an artifact or entity. Captures enough to validate, serve, and debug docs
+ * output.
  */
 export interface ArtifactBuildMetadata {
   /** Current build state for the artifact/entity. */
@@ -127,7 +127,7 @@ export interface ArtifactDescriptor {
   hash?: string;
   /** Byte size of the artifact. */
   size?: number;
-  /** Build/provenance metadata for the artifact. */
+  /** Build metadata for the artifact. */
   build?: ArtifactBuildMetadata;
   /** Optional size diagnostics. */
   diagnostics?: ArtifactSizeDiagnostics;

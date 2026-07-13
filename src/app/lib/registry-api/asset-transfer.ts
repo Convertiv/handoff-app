@@ -5,13 +5,20 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { assetBlobs, assetCollections, assets } from '@handoff/registry/db/schema';
 import { isAssetCollection, type AssetCollection } from '@handoff/registry/assets/sets';
 import type { AssetCollectionTransferPackage, AssetManifestEntry } from '@handoff/registry/assets/transfer';
-import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import { singleQueryValue } from '../api/query';
 import { getActiveAssetStorage, getActiveAssetStorageAdapter, getAssetStorageAdapter } from '../asset-storage';
-import { sendRegistryError, type RegistryErrorDetails } from './errors';
+import { sendRegistryError } from './errors';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
-import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
+import {
+  asString,
+  invalidPackage as invalid,
+  isPlainObject,
+  isSha256Hash,
+  normalizeSafeRelativePath,
+  type PackageValidation,
+  validateTransferBuild,
+} from './validation';
 
 /**
  * Asset transfer ingestion + serving for the registry.
@@ -31,17 +38,8 @@ import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
  * database guards apply before any of this executes.
  */
 
-interface PackageValidation {
-  ok: boolean;
-  message?: string;
-  details?: RegistryErrorDetails;
-  value?: AssetCollectionTransferPackage;
-}
-
-const invalid = (message: string, details?: RegistryErrorDetails): PackageValidation => ({ ok: false, message, details });
-
 /** Validate an asset collection publish package (manifest metadata only; bodies travel as blobs). */
-const validateAssetPackage = (body: unknown, collection: string): PackageValidation => {
+const validateAssetPackage = (body: unknown, collection: string): PackageValidation<AssetCollectionTransferPackage> => {
   if (!isPlainObject(body)) {
     return invalid('Request body must be a JSON object.');
   }
@@ -67,17 +65,16 @@ const validateAssetPackage = (body: unknown, collection: string): PackageValidat
     if (!isPlainObject(raw)) {
       return invalid('Each asset must be an object.', { rejectedFields: [`assets[${i}]`] });
     }
-    const rawPath = asString(raw.path);
-    if (!rawPath || !isSafeRelativePath(rawPath)) {
+    const assetPath = normalizeSafeRelativePath(raw.path);
+    if (!assetPath) {
       return invalid('Asset path must be a registry-safe relative path.', { rejectedFields: [field('path')] });
     }
-    const assetPath = normalizeRelativePath(rawPath);
     if (seenPaths.has(assetPath)) {
       return invalid(`Duplicate asset path "${assetPath}" in manifest.`, { rejectedFields: [field('path')] });
     }
     seenPaths.add(assetPath);
     const contentHash = asString(raw.contentHash);
-    if (!contentHash || !/^[a-f0-9]{64}$/i.test(contentHash)) {
+    if (!isSha256Hash(contentHash)) {
       return invalid(`Asset "${assetPath}" is missing a valid SHA-256 contentHash.`, { rejectedFields: [field('contentHash')] });
     }
     manifest.push({
@@ -90,18 +87,14 @@ const validateAssetPackage = (body: unknown, collection: string): PackageValidat
     });
   }
 
-  if (!isPlainObject(body.build)) {
-    return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
+  const buildValidation = validateTransferBuild(body.build, {
+    requiredHashField: 'sourceHash',
+    currentMessage: 'A "current" asset build requires builtAt, builderVersion, and sourceHash.',
+  });
+  if (!buildValidation.ok) {
+    return invalid(buildValidation.message, buildValidation.details);
   }
-  const status = body.build.status;
-  if (!isRegistryBuildStatus(status)) {
-    return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
-  }
-  if (status === 'current' && (!asString(body.build.builtAt) || !asString(body.build.builderVersion) || !asString(body.build.sourceHash))) {
-    return invalid('A "current" asset build requires builtAt, builderVersion, and sourceHash.', {
-      rejectedFields: ['build.builtAt', 'build.builderVersion', 'build.sourceHash'],
-    });
-  }
+  const build = buildValidation.value;
 
   return {
     ok: true,
@@ -109,10 +102,10 @@ const validateAssetPackage = (body: unknown, collection: string): PackageValidat
       collection: collection as AssetCollection,
       assets: manifest,
       build: {
-        status,
-        builtAt: asString(body.build.builtAt),
-        builderVersion: asString(body.build.builderVersion),
-        sourceHash: asString(body.build.sourceHash),
+        status: build.status,
+        builtAt: build.builtAt,
+        builderVersion: build.builderVersion,
+        sourceHash: build.sourceHash,
       },
     },
   };
@@ -268,7 +261,7 @@ export const handleAssetBlobHaveRoute = (req: NextApiRequest, res: NextApiRespon
 export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT'], async ({ db, method }) => {
     const hash = (singleQueryValue(req.query.hash) ?? '').toLowerCase();
-    if (!/^[a-f0-9]{64}$/.test(hash)) {
+    if (!isSha256Hash(hash)) {
       sendRegistryError(res, 'bad_request', 'Blob hash must be a SHA-256 hex string.');
       return;
     }

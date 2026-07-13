@@ -2,14 +2,20 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { eq } from 'drizzle-orm';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { tokenArtifacts, tokenSets } from '@handoff/registry/db/schema';
-import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import { isTokenSetId, kindForSetId } from '@handoff/registry/tokens/sets';
 import type { TokenSetTransferArtifact, TokenSetTransferPackage } from '@handoff/registry/tokens/transfer';
 import { joinedQueryValue } from '../api/query';
-import { sendRegistryError, type RegistryErrorDetails } from './errors';
+import { sendRegistryError } from './errors';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
-import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
+import {
+  asString,
+  invalidPackage as invalid,
+  isPlainObject,
+  normalizeSafeRelativePath,
+  type PackageValidation,
+  validateTransferBuild,
+} from './validation';
 
 /**
  * Token-set transfer ingestion for the registry.
@@ -26,17 +32,8 @@ import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
  * guards apply before any of this executes.
  */
 
-interface PackageValidation {
-  ok: boolean;
-  message?: string;
-  details?: RegistryErrorDetails;
-  value?: TokenSetTransferPackage;
-}
-
-const invalid = (message: string, details?: RegistryErrorDetails): PackageValidation => ({ ok: false, message, details });
-
 /** Validate a token-set publish package against the transfer contract. */
-const validateTokenPackage = (body: unknown, setId: string): PackageValidation => {
+const validateTokenPackage = (body: unknown, setId: string): PackageValidation<TokenSetTransferPackage> => {
   if (!isPlainObject(body)) {
     return invalid('Request body must be a JSON object.');
   }
@@ -74,11 +71,10 @@ const validateTokenPackage = (body: unknown, setId: string): PackageValidation =
     if (!isPlainObject(raw)) {
       return invalid('Each artifact must be an object.', { rejectedFields: [`artifacts[${i}]`] });
     }
-    const rawPath = asString(raw.path);
-    if (!rawPath || !isSafeRelativePath(rawPath)) {
+    const artifactPath = normalizeSafeRelativePath(raw.path);
+    if (!artifactPath) {
       return invalid('Artifact path must be a registry-safe relative path.', { rejectedFields: [field('path')] });
     }
-    const artifactPath = normalizeRelativePath(rawPath);
     if (seenPaths.has(artifactPath)) {
       return invalid(`Duplicate artifact path "${artifactPath}" in package.`, { rejectedFields: [field('path')] });
     }
@@ -100,18 +96,14 @@ const validateTokenPackage = (body: unknown, setId: string): PackageValidation =
     });
   }
 
-  if (!isPlainObject(body.build)) {
-    return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
+  const buildValidation = validateTransferBuild(body.build, {
+    requiredHashField: 'sourceHash',
+    currentMessage: 'A "current" token build requires builtAt, builderVersion, and sourceHash.',
+  });
+  if (!buildValidation.ok) {
+    return invalid(buildValidation.message, buildValidation.details);
   }
-  const status = body.build.status;
-  if (!isRegistryBuildStatus(status)) {
-    return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
-  }
-  if (status === 'current' && (!asString(body.build.builtAt) || !asString(body.build.builderVersion) || !asString(body.build.sourceHash))) {
-    return invalid('A "current" token build requires builtAt, builderVersion, and sourceHash.', {
-      rejectedFields: ['build.builtAt', 'build.builderVersion', 'build.sourceHash'],
-    });
-  }
+  const build = buildValidation.value;
 
   return {
     ok: true,
@@ -121,10 +113,10 @@ const validateTokenPackage = (body: unknown, setId: string): PackageValidation =
       record: body.record,
       artifacts,
       build: {
-        status,
-        builtAt: asString(body.build.builtAt),
-        builderVersion: asString(body.build.builderVersion),
-        sourceHash: asString(body.build.sourceHash),
+        status: build.status,
+        builtAt: build.builtAt,
+        builderVersion: build.builderVersion,
+        sourceHash: build.sourceHash,
       },
     },
   };
@@ -169,7 +161,6 @@ const ingestTokenSet = async (db: RegistryDatabase, pkg: TokenSetTransferPackage
   });
 };
 
-/** Recover the (multi-segment) set id from the catch-all `[...setId]` route param. */
 /** `GET /api/registry/transfer/tokens` — list set summaries (unauthenticated read behind the guards). */
 export const handleTokenSummaryRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {

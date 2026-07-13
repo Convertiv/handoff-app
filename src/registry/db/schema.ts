@@ -24,8 +24,8 @@
 
 import { sql } from 'drizzle-orm';
 import { check, customType, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
-import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
-import type { TextFileKind } from '../../store/types';
+import type { ArtifactBuildStatus, ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
+import type { RegistryTextFileKind } from '../../store/types';
 import type { TokenSetKind } from '../tokens/sets';
 
 /**
@@ -42,12 +42,6 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
 /** Where an asset blob's bytes physically live: the default DB adapter, Vercel Blob, or a custom id. */
 export type AssetStorageProvider = 'database' | 'vercel-blob' | (string & {});
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
-
-/**
- * Text file kinds persisted by the registry. Declarations are a workspace-only concern
- * (synthesized on checkout) and are never stored as registry text file records.
- */
-export type RegistryTextFileKind = Exclude<TextFileKind, 'declaration'>;
 
 /**
  * Entity a docs read-model artifact is associated with. `page` is included only for type-compat with
@@ -77,7 +71,7 @@ export interface RegistryReviewMetadata {
 }
 
 /** Build status mirrored from {@link import('../../artifacts/types').ArtifactBuildStatus}. */
-export type RegistryBuildStatus = 'current' | 'stale' | 'missing' | 'error';
+export type RegistryBuildStatus = ArtifactBuildStatus;
 
 /**
  * Components record group. `record` holds the full normalized {@link ComponentListObject} so the

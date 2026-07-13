@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference, ArtifactReferenceKind } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
-import { isSafePathSegment, isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
+import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
 import {
   buildMetadata,
   componentFiles,
@@ -15,13 +15,20 @@ import {
 } from '@handoff/registry/db/schema';
 import type { TransferArtifact, TransferBuild, TransferEntityKind, TransferFile, TransferPackage } from '@handoff/registry/transfer';
 import { singleQueryValue } from '../api/query';
-import { sendRegistryError, type RegistryErrorDetails } from './errors';
+import { sendRegistryError } from './errors';
 import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
 import { getEntity, listEntityFiles } from './store';
-import { asString, isPlainObject, isRegistryBuildStatus } from './validation';
+import {
+  asString,
+  invalidPackage as invalid,
+  isPlainObject,
+  normalizeSafeRelativePath,
+  type PackageValidation,
+  validateTransferBuild,
+} from './validation';
 
 /**
  * Publish ingestion for the registry transfer endpoint.
@@ -56,23 +63,13 @@ const ENTITY = {
   page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId, fileFkName: 'pageId' as const },
 };
 
-/** Result of validating a publish package. Flat shape (the app compiles with `strictNullChecks` off). */
-interface PackageValidation {
-  ok: boolean;
-  message?: string;
-  details?: RegistryErrorDetails;
-  value?: TransferPackage;
-}
-
-const invalid = (message: string, details?: RegistryErrorDetails): PackageValidation => ({ ok: false, message, details });
-
 /**
  * Validate a publish package body against the transfer contract. Checks the normalized record,
  * source-file kinds/paths (declarations rejected), artifact path-prefix/kind/owner rules, and the
- * `build.status: 'current'` provenance requirement. Required-reference presence is checked later
+ * required build hash for `build.status: 'current'`. Required reference presence is checked later
  * against the package + already-stored artifacts.
  */
-const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): PackageValidation => {
+const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): PackageValidation<TransferPackage> => {
   const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
   if (!validId) {
     return invalid('Publish target id must be a registry-safe relative path.', { rejectedFields: ['id'] });
@@ -127,11 +124,10 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     if (!isPlainObject(raw)) {
       return invalid('Each artifact must be an object.', { rejectedFields: [`artifacts[${i}]`] });
     }
-    const rawPath = asString(raw.path);
-    if (!rawPath || !isSafeRelativePath(rawPath)) {
+    const artifactPath = normalizeSafeRelativePath(raw.path);
+    if (!artifactPath) {
       return invalid('Artifact path must be a registry-safe relative path.', { rejectedFields: [field('path')] });
     }
-    const artifactPath = normalizeRelativePath(rawPath);
     const allowedPrefixes = kind === 'component' ? ['component/'] : ['pattern/', 'component/'];
     if (!allowedPrefixes.some((prefix) => artifactPath.startsWith(prefix))) {
       return invalid(
@@ -200,9 +196,9 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
             rejectedFields: [`${field('references')}[${referenceIndex}]`],
           });
         }
-        const referencePath = asString(reference.path);
+        const referencePath = normalizeSafeRelativePath(reference.path);
         const referenceKind = asString(reference.kind) as ArtifactReferenceKind | undefined;
-        if (!referencePath || !isSafeRelativePath(referencePath)) {
+        if (!referencePath) {
           return invalid(`Artifact "${artifactPath}" contains an unsafe reference path.`, {
             rejectedFields: [referenceField('path')],
           });
@@ -224,7 +220,7 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
           });
         }
         references.push({
-          path: normalizeRelativePath(referencePath),
+          path: referencePath,
           kind: referenceKind,
           required: reference.required,
           ...(referenceOwnerKind ? { ownerKind: referenceOwnerKind } : {}),
@@ -252,37 +248,18 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     });
   }
 
-  if (!isPlainObject(body.build)) {
-    return invalid('`build` metadata is required to publish.', { rejectedFields: ['build'] });
-  }
-  const status = body.build.status;
-  if (!isRegistryBuildStatus(status)) {
-    return invalid('`build.status` must be one of current|stale|missing|error.', { rejectedFields: ['build.status'] });
-  }
-  const build: TransferBuild = {
-    status,
-    builtAt: asString(body.build.builtAt),
-    builderVersion: asString(body.build.builderVersion),
-    artifactHash: asString(body.build.artifactHash),
-    sourceHash: asString(body.build.sourceHash),
-    warnings: asStringArray(body.build.warnings),
-    error: asString(body.build.error),
-  };
-  if (build.status === 'current') {
-    // Pages carry no rendered artifacts, so their provenance is keyed by a source hash; component and
-    // pattern publishes prove a fresh render with an artifact hash.
-    const provenanceHash = kind === 'page' ? build.sourceHash : build.artifactHash;
-    if (!build.builtAt || !build.builderVersion || !provenanceHash) {
-      return invalid(
-        kind === 'page'
-          ? 'A "current" page build requires builtAt, builderVersion, and sourceHash.'
-          : 'A "current" build requires builtAt, builderVersion, and artifactHash.',
-        { rejectedFields: ['build.builtAt', 'build.builderVersion', kind === 'page' ? 'build.sourceHash' : 'build.artifactHash'] }
-      );
-    }
+  const buildValidation = validateTransferBuild(body.build, {
+    requiredHashField: kind === 'page' ? 'sourceHash' : 'artifactHash',
+    currentMessage:
+      kind === 'page'
+        ? 'A "current" page build requires builtAt, builderVersion, and sourceHash.'
+        : 'A "current" build requires builtAt, builderVersion, and artifactHash.',
+  });
+  if (!buildValidation.ok) {
+    return invalid(buildValidation.message, buildValidation.details);
   }
 
-  return { ok: true, value: { item, files, artifacts, build } };
+  return { ok: true, value: { item, files, artifacts, build: buildValidation.value } };
 };
 
 /**
@@ -435,7 +412,7 @@ const ingestArtifacts = async (
   }
 };
 
-/** Upsert the entity's build/provenance metadata. */
+/** Upsert the entity's build metadata. */
 const upsertBuildMetadata = async (db: RegistryDatabase, kind: TransferEntityKind, id: string, build: TransferBuild): Promise<void> => {
   const values = {
     entityKind: kind,

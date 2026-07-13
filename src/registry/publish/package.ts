@@ -13,21 +13,14 @@
  * publish before any network call.
  */
 
-import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  ARTIFACTS_ROUTE_SEGMENT,
-  SHARED_MAIN_CSS_ARTIFACT_PATH,
-  SHARED_MAIN_JS_ARTIFACT_PATH,
-  SHARED_STYLES_CSS_ARTIFACT_PATH,
-} from '../../artifacts';
-import type { ArtifactKind, ArtifactReference } from '../../artifacts/types';
 import Handoff from '../../index';
-import { isWorkspaceOnlyFile } from '../../store/source-files';
+import { isRegistrySourceFile } from '../../store/source-files';
 import type { ComponentListObject, PatternListObject } from '../../transformers/preview/types';
-import type { RegistryTextFileKind } from '../db/schema';
 import type { TransferArtifact, TransferEntityKind, TransferFile, TransferPackage } from '../transfer';
+import { addReferencedArtifact, getArtifactRoot, isSharedArtifactPath, readArtifact, resolveComponentArtifactOwner } from './artifacts';
+import { createCurrentBuild, hashPathValues } from './publish-build';
 
 /** A publish-time failure that should surface to the CLI as a clean, actionable message. */
 export class PublishPackageError extends Error {
@@ -37,128 +30,7 @@ export class PublishPackageError extends Error {
   }
 }
 
-const SHARED_ARTIFACT_PATHS = new Set([
-  SHARED_MAIN_CSS_ARTIFACT_PATH,
-  SHARED_MAIN_JS_ARTIFACT_PATH,
-  SHARED_STYLES_CSS_ARTIFACT_PATH,
-]);
-
-const CLIENT_ARTIFACT_SUFFIX = '.client.js';
-
-/** Absolute path of the generated artifact root the build writes to (`<workspace>/public/api`). */
-const getArtifactRoot = (handoff: Handoff): string => path.resolve(handoff.workingPath, 'public', 'api');
-
-const ARTIFACT_KIND_BY_EXT: Record<string, ArtifactKind> = {
-  '.json': 'json',
-  '.html': 'html',
-  '.css': 'css',
-  '.js': 'javascript',
-};
-
-const artifactKindForPath = (artifactPath: string): ArtifactKind => ARTIFACT_KIND_BY_EXT[path.extname(artifactPath).toLowerCase()] ?? 'other';
-
-const CONTENT_TYPE_BY_EXT: Record<string, string> = {
-  '.json': 'application/json',
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-};
-
-const contentTypeForPath = (artifactPath: string): string =>
-  CONTENT_TYPE_BY_EXT[path.extname(artifactPath).toLowerCase()] ?? 'text/plain; charset=utf-8';
-
-/**
- * Resolve the owning component id for a file under `public/api/component`, or `null` when it is a
- * shared/global artifact or owned by no known component. Single-segment `<id>.{css,js,json}` and
- * `<id>.client.js` map by exact id; preview/inspect HTML (`<id>-<preview>.html`) maps by the longest
- * known component id that prefixes the filename (so `button-group-…` is never read as `button`).
- */
-const resolveComponentArtifactOwner = (fileName: string, componentIds: Set<string>): string | null => {
-  if (SHARED_ARTIFACT_PATHS.has(`component/${fileName}`)) {
-    return null;
-  }
-  if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
-    const id = fileName.slice(0, -CLIENT_ARTIFACT_SUFFIX.length);
-    return componentIds.has(id) ? id : null;
-  }
-  const ext = path.extname(fileName).toLowerCase();
-  if (ext === '.css' || ext === '.js' || ext === '.json') {
-    const id = fileName.slice(0, -ext.length);
-    return componentIds.has(id) ? id : null;
-  }
-  if (ext === '.html') {
-    let longest: string | null = null;
-    for (const id of Array.from(componentIds)) {
-      if (fileName.startsWith(`${id}-`) && (!longest || id.length > longest.length)) {
-        longest = id;
-      }
-    }
-    return longest;
-  }
-  return null;
-};
-
-/** Extract the logical artifact paths an HTML document references through the canonical route. */
-const extractReferencedArtifactPaths = (html: string): string[] => {
-  const pattern = new RegExp(`(?:href|src)=["'][^"']*?${ARTIFACTS_ROUTE_SEGMENT}/([^"']+)["']`, 'g');
-  const paths = new Set<string>();
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(html)) !== null) {
-    const encoded = match[1].split(/[?#]/)[0];
-    const segments = encoded.split('/').filter(Boolean);
-    try {
-      const decoded = segments.map((segment) => decodeURIComponent(segment));
-      if (decoded.length > 0) {
-        paths.add(decoded.join('/'));
-      }
-    } catch {
-      paths.add(encoded);
-    }
-  }
-  return Array.from(paths);
-};
-
-/** Build a structured reference for a referenced artifact path (only the client bundle is required). */
-const toArtifactReference = (referencedPath: string): ArtifactReference => {
-  if (referencedPath.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
-    const ownerId = path.basename(referencedPath).slice(0, -CLIENT_ARTIFACT_SUFFIX.length);
-    return { path: referencedPath, kind: 'client', required: true, ownerKind: 'component', ownerId };
-  }
-  if (SHARED_ARTIFACT_PATHS.has(referencedPath)) {
-    return { path: referencedPath, kind: 'shared', required: false, ownerKind: 'asset', ownerId: null };
-  }
-  const ext = path.extname(referencedPath).toLowerCase();
-  if (referencedPath.startsWith('component/') && (ext === '.css' || ext === '.js')) {
-    const ownerId = path.basename(referencedPath, ext);
-    return { path: referencedPath, kind: ext === '.css' ? 'style' : 'script', required: false, ownerKind: 'component', ownerId };
-  }
-  return { path: referencedPath, kind: 'other', required: false };
-};
-
-/** Read a generated artifact file into a {@link TransferArtifact}, or `null` when it does not exist. */
-const readArtifact = (
-  root: string,
-  artifactPath: string,
-  ownerKind: TransferArtifact['ownerKind'],
-  ownerId: string | null
-): TransferArtifact | null => {
-  const absolutePath = path.resolve(root, ...artifactPath.split('/'));
-  if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
-    return null;
-  }
-  const content = fs.readFileSync(absolutePath, 'utf8');
-  const references = artifactPath.endsWith('.html') ? extractReferencedArtifactPaths(content).map(toArtifactReference) : undefined;
-  return {
-    path: artifactPath,
-    artifactKind: artifactKindForPath(artifactPath),
-    content,
-    contentType: contentTypeForPath(artifactPath),
-    ownerKind,
-    ownerId,
-    references,
-    size: Buffer.byteLength(content, 'utf8'),
-  };
-};
+type RenderedEntityKind = Extract<TransferEntityKind, 'component' | 'pattern'>;
 
 /**
  * Build a registry-safe `item` record: the built summary enriched with the renderer and the entry
@@ -168,12 +40,11 @@ const readArtifact = (
  */
 const enrichItem = async (
   handoff: Handoff,
-  kind: TransferEntityKind,
+  kind: RenderedEntityKind,
   id: string,
   summary: Record<string, unknown>
 ): Promise<Record<string, unknown>> => {
-  const runtime =
-    kind === 'component' ? await handoff.store.components.get(id) : await handoff.store.patterns.get(id);
+  const runtime = kind === 'component' ? await handoff.store.components.get(id) : await handoff.store.patterns.get(id);
   if (!runtime) {
     return summary;
   }
@@ -209,20 +80,13 @@ const collectSourceFiles = async (handoff: Handoff, kind: TransferEntityKind, id
   const store = kind === 'component' ? handoff.store.components : kind === 'pattern' ? handoff.store.patterns : handoff.store.pages;
   const related = await store.getRelatedSourceFiles(id);
   return related
-    .filter((file) => !isWorkspaceOnlyFile(file))
-    .map((file) => ({ path: file.path, kind: file.kind as RegistryTextFileKind, content: file.content, contentType: file.contentType }));
+    .filter(isRegistrySourceFile)
+    .map((file) => ({ path: file.path, kind: file.kind, content: file.content, contentType: file.contentType }));
 };
 
-/** Deterministic content hash over the package artifacts (sorted by path) for build provenance. */
+/** Deterministic content hash over the package artifacts, sorted by path. */
 const hashArtifacts = (artifacts: TransferArtifact[]): string => {
-  const hash = crypto.createHash('sha256');
-  for (const artifact of [...artifacts].sort((a, b) => a.path.localeCompare(b.path))) {
-    hash.update(artifact.path);
-    hash.update('\0');
-    hash.update(artifact.content);
-    hash.update('\0');
-  }
-  return hash.digest('hex');
+  return hashPathValues(artifacts.map((artifact) => ({ path: artifact.path, value: artifact.content })));
 };
 
 const readSummary = <T>(root: string, fileName: string): T[] => {
@@ -235,24 +99,6 @@ const readSummary = <T>(root: string, fileName: string): T[] => {
     return Array.isArray(parsed) ? (parsed as T[]) : [];
   } catch {
     return [];
-  }
-};
-
-/** Add a referenced shared/component artifact to the map when present on disk (deduped by path). */
-const addReferencedArtifact = (
-  root: string,
-  artifactPath: string,
-  byPath: Map<string, TransferArtifact>
-): void => {
-  if (byPath.has(artifactPath)) {
-    return;
-  }
-  const reference = toArtifactReference(artifactPath);
-  const ownerKind = reference.ownerKind ?? (SHARED_ARTIFACT_PATHS.has(artifactPath) ? 'asset' : 'component');
-  const ownerId = reference.ownerKind === 'asset' ? null : reference.ownerId ?? null;
-  const artifact = readArtifact(root, artifactPath, ownerKind, ownerId);
-  if (artifact) {
-    byPath.set(artifactPath, artifact);
   }
 };
 
@@ -271,9 +117,7 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
 
   const summary = readSummary<ComponentListObject>(root, 'components.json').find((entry) => entry.id === id);
   if (!summary) {
-    throw new PublishPackageError(
-      `No built record for component "${id}" was found in public/api/components.json after the build.`
-    );
+    throw new PublishPackageError(`No built record for component "${id}" was found in public/api/components.json after the build.`);
   }
 
   const byPath = new Map<string, TransferArtifact>();
@@ -298,7 +142,7 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
   // Pull in the shared/global artifacts the component's HTML actually references (present on disk).
   for (const artifact of Array.from(byPath.values())) {
     for (const reference of artifact.references ?? []) {
-      if (SHARED_ARTIFACT_PATHS.has(reference.path)) {
+      if (isSharedArtifactPath(reference.path)) {
         addReferencedArtifact(root, reference.path, byPath);
       }
     }
@@ -309,7 +153,7 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
     item: await enrichItem(handoff, 'component', id, summary as unknown as Record<string, unknown>),
     files: await collectSourceFiles(handoff, 'component', id),
     artifacts,
-    build: buildProvenance(artifacts),
+    build: createArtifactBuild(artifacts),
   };
 };
 
@@ -328,9 +172,7 @@ const buildPatternPackage = async (handoff: Handoff, id: string): Promise<Transf
 
   const summary = readSummary<PatternListObject>(root, 'patterns.json').find((entry) => entry.id === id);
   if (!summary) {
-    throw new PublishPackageError(
-      `No built record for pattern "${id}" was found in public/api/patterns.json after the build.`
-    );
+    throw new PublishPackageError(`No built record for pattern "${id}" was found in public/api/patterns.json after the build.`);
   }
 
   const byPath = new Map<string, TransferArtifact>();
@@ -361,34 +203,23 @@ const buildPatternPackage = async (handoff: Handoff, id: string): Promise<Transf
     item: await enrichItem(handoff, 'pattern', id, summary as unknown as Record<string, unknown>),
     files: await collectSourceFiles(handoff, 'pattern', id),
     artifacts,
-    build: buildProvenance(artifacts),
+    build: createArtifactBuild(artifacts),
   };
 };
 
-/** Build the `current` provenance block for a freshly built package. */
-const buildProvenance = (artifacts: TransferArtifact[]): TransferPackage['build'] => ({
-  status: 'current',
-  builtAt: new Date().toISOString(),
-  builderVersion: getBuilderVersion(),
-  artifactHash: hashArtifacts(artifacts),
-});
+/** Create current build metadata for a freshly built artifact package. */
+const createArtifactBuild = (artifacts: TransferArtifact[]): TransferPackage['build'] =>
+  createCurrentBuild({ artifactHash: hashArtifacts(artifacts) });
 
-/** Deterministic content hash over the package source files (sorted by path) for build provenance. */
+/** Deterministic content hash over the package source files, sorted by path. */
 const hashFiles = (files: TransferFile[]): string => {
-  const hash = crypto.createHash('sha256');
-  for (const file of [...files].sort((a, b) => a.path.localeCompare(b.path))) {
-    hash.update(file.path);
-    hash.update('\0');
-    hash.update(file.content);
-    hash.update('\0');
-  }
-  return hash.digest('hex');
+  return hashPathValues(files.map((file) => ({ path: file.path, value: file.content })));
 };
 
 /**
  * Assemble a page's publish package: the normalized record (frontmatter) plus its single verbatim
- * `.md` source file. Pages have no rendered-artifact pipeline (raw markdown is rendered at runtime),
- * so `artifacts` is always empty and provenance is keyed by a source hash rather than an artifact hash.
+ * `.md` source file. Pages have no rendered artifact pipeline because raw markdown is rendered at
+ * runtime, so `artifacts` is always empty and the build is keyed by a source hash.
  */
 const buildPagePackage = async (handoff: Handoff, id: string): Promise<TransferPackage> => {
   const record = await handoff.store.pages.get(id);
@@ -408,28 +239,8 @@ const buildPagePackage = async (handoff: Handoff, id: string): Promise<TransferP
     item: item as unknown as Record<string, unknown>,
     files,
     artifacts: [],
-    build: {
-      status: 'current',
-      builtAt: new Date().toISOString(),
-      builderVersion: getBuilderVersion(),
-      sourceHash: hashFiles(files),
-    },
+    build: createCurrentBuild({ sourceHash: hashFiles(files) }),
   };
-};
-
-let cachedBuilderVersion: string | undefined;
-/** Resolve the handoff-app package version stamped into build provenance. */
-export const getBuilderVersion = (): string => {
-  if (cachedBuilderVersion) {
-    return cachedBuilderVersion;
-  }
-  try {
-    const pkg = require('../../../package.json');
-    cachedBuilderVersion = typeof pkg.version === 'string' ? pkg.version : '0.0.0';
-  } catch {
-    cachedBuilderVersion = '0.0.0';
-  }
-  return cachedBuilderVersion;
 };
 
 /**
@@ -448,12 +259,14 @@ export const assertRequiredArtifactsPresent = (pkg: TransferPackage): void => {
   }
   if (missing.length > 0) {
     const detail = missing.map(({ artifact, reference }) => `  - ${reference} (required by ${artifact})`).join('\n');
-    throw new PublishPackageError(
-      `Publish aborted: ${missing.length} required artifact(s) are missing from the build output:\n${detail}`
-    );
+    throw new PublishPackageError(`Publish aborted: ${missing.length} required artifact(s) are missing from the build output:\n${detail}`);
   }
 };
 
 /** Assemble the publish package for an entity from the generated `public/api` artifacts. */
 export const buildPublishPackage = (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferPackage> =>
-  kind === 'component' ? buildComponentPackage(handoff, id) : kind === 'pattern' ? buildPatternPackage(handoff, id) : buildPagePackage(handoff, id);
+  kind === 'component'
+    ? buildComponentPackage(handoff, id)
+    : kind === 'pattern'
+      ? buildPatternPackage(handoff, id)
+      : buildPagePackage(handoff, id);

@@ -1,10 +1,8 @@
 /**
  * Connected-workspace publish orchestration.
  *
- * `publish <component|pattern> <id>` runs a fresh **targeted** local build for the selected entity,
- * assembles only that entity's package (record, source files, rendered artifacts + required
- * shared/global artifacts, build metadata), verifies required artifacts are present, and uploads it
- * to the connected registry through the shared registry client. Identity is matched by stable `id`.
+ * `publish <component|pattern|page> <id>` prepares one entity and uploads its record, source files,
+ * applicable rendered artifacts, and build metadata through the shared registry client.
  *
  * The build is targeted: a component builds the global artifacts + that component; a pattern builds
  * the global artifacts + the components it composes + the pattern itself. This is the smallest build
@@ -20,6 +18,7 @@ import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError } from '../client';
 import { resolveRegistryConnection } from '../connection';
 import type { TransferEntityKind } from '../transfer';
+import { describeUploadFailure } from './errors';
 import { assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
@@ -99,26 +98,9 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
   await processPatterns(handoff, { onlyPatternIds: new Set([id]) });
 };
 
-/** Map a registry client error to an actionable publish message. */
-const describeUploadFailure = (error: RegistryClientError, registryUrl: string): string => {
-  switch (error.code) {
-    case 'runtime_mode_conflict':
-      return `The registry at ${registryUrl} is not running in registry mode, so it cannot accept publishes: ${error.message}`;
-    case 'token_not_configured':
-      return `The registry at ${registryUrl} has no management token configured, so it is rejecting mutations: ${error.message}`;
-    case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
-    case 'bad_request':
-      return `The registry rejected the package (400): ${error.message}`;
-    default:
-      return error.message;
-  }
-};
-
 /**
- * Publish a single component or pattern from a connected workspace: targeted build → assemble
- * package → integrity check → upload. Throws {@link PublishError}/{@link PublishPackageError} with
- * actionable messaging on any precondition, build, or upload failure.
+ * Publish a single component, pattern, or page from a connected workspace. Components and patterns
+ * receive a targeted build, while pages are packaged directly from their source.
  */
 export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   const connection = resolveConnectionOrThrow(handoff);
@@ -137,7 +119,7 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
     await client.publish(kind, id, pkg);
   } catch (error) {
     if (error instanceof RegistryClientError) {
-      throw new PublishError(describeUploadFailure(error, connection.url));
+      throw new PublishError(describeUploadFailure(error, connection.url, 'package'));
     }
     throw error;
   }

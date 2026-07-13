@@ -8,7 +8,7 @@
  */
 
 import type { TransferBuild } from '../transfer';
-import type { RegistryBuildStatus } from '../db/schema';
+import type { ArtifactBuildStatus } from '../../artifacts/types';
 import type { TokenSetKind } from './sets';
 
 /** A generated token artifact in a transfer package (CSS/SCSS/Style Dictionary/types/custom output). */
@@ -24,9 +24,8 @@ export interface TokenSetTransferArtifact {
 }
 
 /**
- * The full token-set publish package uploaded to `PUT /api/registry/transfer/tokens/:setId`: the
- * extracted record slice, the generated artifacts, and build/provenance metadata (keyed by
- * `sourceHash`).
+ * The full token set publish package uploaded to `PUT /api/registry/transfer/tokens/:setId`: the
+ * extracted record slice, the generated artifacts, and build metadata keyed by `sourceHash`.
  */
 export interface TokenSetTransferPackage {
   id: string;
@@ -50,5 +49,5 @@ export interface TokenSetSummary {
   id: string;
   kind: TokenSetKind;
   sourceHash: string | null;
-  status: RegistryBuildStatus | null;
+  status: ArtifactBuildStatus | null;
 }
