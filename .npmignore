@@ -51,6 +51,13 @@ yarn-error.log*
 
 ### END .gitignore ###
 
+# agent tooling and documentation
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/docs/agents/
+
 # git
 .git
 
