@@ -12,6 +12,7 @@ import { MarkdownComponents, remarkCodeMeta } from '../../../components/Markdown
 import HeadersType from '../../../components/Typography/Headers';
 import { buttonVariants } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { buildAssetDownloadUrl } from '@handoff/artifacts/url';
 import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../../components/util';
 import { useCollectionAssets, type DisplayableAsset } from '../../../components/util/useCollectionAssets';
 
@@ -94,12 +95,13 @@ const IconsPage = ({ content, menu, metadata, current, config, assets }: AssetDo
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="max-w-[800px] text-lg font-light text-gray-500 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
-          <Link
+          <a
             className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
-            href={config?.assets_zip_links?.icons ?? '/icons.zip'}
+            href={config?.assets_zip_links?.icons ?? buildAssetDownloadUrl('icons', process.env.HANDOFF_APP_BASE_PATH)}
+            download
           >
             Download Icons <Download strokeWidth={1.5} />
-          </Link>
+          </a>
         </div>
       </div>
       <hr className="mb-10" />

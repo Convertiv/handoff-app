@@ -20,6 +20,9 @@ export const ARTIFACTS_ROUTE_SEGMENT = 'api/docs/artifacts';
 /** Route prefix for docs read API metadata (`.json`) reads. */
 export const DOCS_ROUTE_SEGMENT = 'api/docs';
 
+/** Canonical route prefix all asset content URLs are served under (mode-independent). */
+export const ASSETS_ROUTE_SEGMENT = 'api/docs/assets';
+
 /**
  * Normalize a configured basePath to either an empty string or a single-leading-slash,
  * no-trailing-slash form. Mirrors the Next app's `resolveBasePath` so builder output composes
@@ -88,3 +91,32 @@ export const buildComponentDetailUrl = (id: string, basePath?: string | null): s
  */
 export const buildPatternDetailUrl = (id: string, basePath?: string | null): string =>
   `${normalizeBasePath(basePath)}/${DOCS_ROUTE_SEGMENT}/patterns/${encodeURIComponent(id)}.json`;
+
+/**
+ * Build the canonical, basePath-aware content URL for one asset within a collection
+ * (`{basePath}/api/docs/assets/{collection}/{logicalPath}`). This is the same route the docs read API
+ * serves in every runtime mode: from the database in registry mode, and from statically materialized
+ * files in a static export. Each segment is individually encoded and traversal segments are rejected,
+ * mirroring {@link buildArtifactUrl}.
+ *
+ * @throws If the collection or logical path has no usable segments, or contains a `.`/`..` segment.
+ */
+export const buildAssetUrl = (collection: string, logicalPath: string, basePath?: string | null): string => {
+  const segments = [...toArtifactSegments(collection), ...toArtifactSegments(logicalPath)];
+  if (segments.length < 2) {
+    throw new Error(`Cannot build asset URL: empty collection ("${collection}") or path ("${logicalPath}").`);
+  }
+  if (segments.some(isTraversalSegment)) {
+    throw new Error(`Cannot build asset URL: path traversal is not allowed in "${collection}/${logicalPath}".`);
+  }
+  const encoded = segments.map((segment) => encodeURIComponent(segment)).join('/');
+  return `${normalizeBasePath(basePath)}/${ASSETS_ROUTE_SEGMENT}/${encoded}`;
+};
+
+/**
+ * Build the canonical download URL for a collection's whole-collection zip bundle
+ * (`{basePath}/api/docs/assets/{collection}/{collection}.zip`) — the default target for the docs
+ * "Download" links, overridable via `assets_zip_links`.
+ */
+export const buildAssetDownloadUrl = (collection: string, basePath?: string | null): string =>
+  buildAssetUrl(collection, `${collection}.zip`, basePath);

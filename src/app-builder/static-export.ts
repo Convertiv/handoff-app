@@ -209,7 +209,34 @@ export const materializeDocsReadModel = async (handoff: Handoff, outDir: string)
     await fs.writeJson(path.join(docsRoot, 'patterns', `${pattern.id}.json`), detail);
   }
 
+  await materializeAssetDownloads(handoff, docsRoot);
+
   Logger.success(
     `Materialized docs read model (${components.length} component(s), ${patterns.length} pattern(s)) for static export.`
   );
+}
+
+/**
+ * Materialize the whole-collection asset download bundles at the canonical asset route
+ * (`api/docs/assets/{collection}/{collection}.zip`) — the same URL the docs read API serves in
+ * registry mode, so the "Download" links resolve identically on a static host. The bundles come from
+ * the fetch output (`exported/<id>/{collection}.zip`); `next build` never re-creates them, and the
+ * fetch-time copy into the app `public/` is wiped by the build's clean+restage, so they are copied
+ * here. Absent bundles (a project with no logos/icons) are skipped, not an error.
+ */
+const materializeAssetDownloads = async (handoff: Handoff, docsRoot: string): Promise<void> => {
+  const bundles: Array<{ collection: string; src: string }> = [
+    { collection: 'logos', src: handoff.getLogosZipFilePath() },
+    { collection: 'icons', src: handoff.getIconsZipFilePath() },
+  ];
+  let copied = 0;
+  for (const { collection, src } of bundles) {
+    if (fs.existsSync(src) && fs.statSync(src).isFile()) {
+      await fs.copy(src, path.join(docsRoot, 'assets', collection, `${collection}.zip`), { overwrite: true });
+      copied += 1;
+    }
+  }
+  if (copied > 0) {
+    Logger.info(`Materialized ${copied} asset download bundle(s) for static export.`);
+  }
 };

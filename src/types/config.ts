@@ -214,18 +214,18 @@ export interface Config {
    */
   entries?: ConfigEntries;
   /**
-   * Configuration for asset zip file download links
-   * @default { icons: "/icons.zip", logos: "/logos.zip" }
+   * Override URLs for the asset zip download links. When unset, each link defaults to the canonical,
+   * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by
+   * the docs read API in every runtime mode (from the DB in registry mode, from statically
+   * materialized files in a static export).
    */
   assets_zip_links?: {
     /**
-     * Path to the icons zip file
-     * @default "/icons.zip"
+     * Override URL for the icons zip. Defaults to `/api/docs/assets/icons/icons.zip` (basePath-aware).
      */
     icons?: string;
     /**
-     * Path to the logos zip file
-     * @default "/logos.zip"
+     * Override URL for the logos zip. Defaults to `/api/docs/assets/logos/logos.zip` (basePath-aware).
      */
     logos?: string;
   };

@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import Footer from '../../components/Footer';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
+import { buildAssetDownloadUrl } from '@handoff/artifacts/url';
 import Header from '../../components/old/Header';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
 
@@ -52,7 +53,9 @@ const AssetsLogosPage = ({ content, menu, metadata, config }: DocumentationProps
                 <h4>{config?.app?.client} Logo</h4>
                 <p>Vector files of approved {config?.app?.client} logos.</p>
                 <p>
-                  <a href={config?.assets_zip_links?.logos ?? '/logos.zip'}>Download Logos</a>
+                  <a href={config?.assets_zip_links?.logos ?? buildAssetDownloadUrl('logos', process.env.HANDOFF_APP_BASE_PATH)} download>
+                    Download Logos
+                  </a>
                 </p>
               </div>
             </div>

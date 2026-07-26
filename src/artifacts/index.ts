@@ -14,4 +14,11 @@ export {
   type ArtifactSizeDiagnostics,
 } from './types';
 
-export { ARTIFACTS_ROUTE_SEGMENT, buildArtifactUrl, normalizeBasePath } from './url';
+export {
+  ARTIFACTS_ROUTE_SEGMENT,
+  ASSETS_ROUTE_SEGMENT,
+  buildArtifactUrl,
+  buildAssetDownloadUrl,
+  buildAssetUrl,
+  normalizeBasePath,
+} from './url';

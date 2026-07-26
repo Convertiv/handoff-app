@@ -124,13 +124,13 @@ export default function SingleIcon({ menu, metadata, current, config, assets }: 
                 Copy SVG <Code strokeWidth={1.5} />
               </Link>
 
-              <Link
+              <a
                 href={icon.src ?? 'data:text/plain;charset=utf-8,' + encodeURIComponent(icon.data ?? '')}
                 download={icon.name}
                 className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
               >
                 Download SVG <Download strokeWidth={1.5} />
-              </Link>
+              </a>
             </div>
           </div>
 

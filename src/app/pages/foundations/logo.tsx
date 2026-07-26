@@ -1,6 +1,6 @@
 import type { GetStaticProps } from 'next';
-import Link from 'next/link';
 
+import { buildAssetDownloadUrl } from '@handoff/artifacts/url';
 import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
 import { useCollectionAssets } from '../../components/util/useCollectionAssets';
 
@@ -56,12 +56,13 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
-          <Link
+          <a
             className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
-            href={config?.assets_zip_links?.logos ?? '/logos.zip'}
+            href={config?.assets_zip_links?.logos ?? buildAssetDownloadUrl('logos', process.env.HANDOFF_APP_BASE_PATH)}
+            download
           >
             Download Logos <Download strokeWidth={1.5} />
-          </Link>
+          </a>
         </div>
       </div>
 
