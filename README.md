@@ -25,6 +25,7 @@ authoring locally or running a shared, deployed catalog.
 * [Building artifacts](#building-artifacts)
   * [Static site (default)](#static-site-default)
   * [Registry app](#registry-app)
+  * [Deploying](#deploying)
 * [Publishing and checkout](#publishing-and-checkout)
 * [Configuration](#configuration)
   * [The runtime block](#the-runtime-block)
@@ -144,7 +145,7 @@ my-handoff-project/
 ├─ patterns/                # multi-component compositions
 ├─ sass/                    # optional global SCSS entry
 ├─ js/                      # optional global JS entry
-├─ exported/                # generated tokens and artifacts (gitignored)
+├─ exported/                # fetched tokens and assets (commit these so clean/CI builds have data)
 └─ out/                     # build output (gitignored)
 ```
 
@@ -226,8 +227,9 @@ preview updates. The site boots at http://localhost:3000 by default.
 
 ## Building artifacts
 
-`handoff-app build` accepts a `--target` flag. The target, not `NODE_ENV`,
-decides what gets produced.
+`handoff-app build` accepts two independent flags. `--target` decides *what* is
+produced — the target, not `NODE_ENV`, drives this. The optional `--package`
+decides *how* that target is packaged for deployment.
 
 ### Static site (default)
 
@@ -240,9 +242,8 @@ The static target builds your workspace components, patterns, and tokens,
 materializes the docs read model into route-shaped static files, and runs a
 static export to `out/<projectId>` (respecting `sitesOutputDirectory`). The
 output is plain static files: it renders list, detail, preview, and inspect
-pages and loads previews through canonical artifact URLs with no live server. It
-works on a managed host like Vercel and on a plain static file server with no
-host-specific rewrites.
+pages and loads previews through canonical artifact URLs with no live server, so
+any static file server or CDN can serve it with no host-specific rewrites.
 
 The build fails clearly if a required artifact referenced by generated HTML
 cannot be materialized, and it fails if the runtime is registry-only (there is
@@ -269,8 +270,8 @@ DATABASE_URL="postgres://…" node out/registry/server.js
 ```
 
 A generated `README.md` next to the bundle documents the required env vars and
-Docker/Vercel specifics. Apply database migrations from the CLI as a controlled
-release step (e.g. in CI/CD) before deploying:
+how to run it. Apply database migrations from the CLI as a controlled release
+step (e.g. in CI/CD) before deploying:
 
 ```bash
 handoff-app db:migrate
@@ -280,6 +281,26 @@ handoff-app db:migrate
 package-owned migration set, and runs independently of `build`. The database
 adapter (`pg` or `neon`) is chosen with `runtime.registry.database.adapter`, and
 both adapters ship with the package.
+
+### Deploying
+
+* **Static** produces plain files under `out/<projectId>`. Serve them with any
+  static file server or CDN. Commit `exported/` so a clean checkout has token
+  data to build from.
+* **Registry** produces a self-contained Node bundle under `out/registry`. Run it
+  on any Node host with `node out/registry/server.js` and a `DATABASE_URL` in the
+  environment.
+
+The optional `--package` flag repackages a target without changing what it
+builds:
+
+| `--package` | Output |
+| --- | --- |
+| omitted (default) | `out/<projectId>` (static) or the `out/registry` Node bundle (registry) |
+| `vercel` | `.vercel/output`, a Vercel Build Output API bundle |
+
+`handoff-app init` can scaffold a `vercel.json` that runs a packaged build; edit
+its `buildCommand` to change the target.
 
 ## Publishing and checkout
 
@@ -410,7 +431,7 @@ See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 | `fetch` | Fetch design tokens from Figma |
 | `dev` | Start the local dev server with the live docs read API |
 | `start` | Start the dev server with file watchers for live authoring |
-| `build [--target static\|registry]` | Build the static site (default) or package the registry app |
+| `build [--target static\|registry] [--package standalone\|vercel]` | Build the static site (default) or registry app; `--package vercel` emits a Vercel Build Output bundle |
 | `build:components [component]` | Build components without building the full app |
 | `publish <component\|pattern> <id>` | Build and publish an entity to the connected registry |
 | `checkout <component\|pattern> <id>` | Pull an entity from the connected registry |
