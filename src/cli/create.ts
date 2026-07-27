@@ -23,6 +23,8 @@ interface CreateOptions {
   figmaAccessToken: string;
   languagePreference: 'typescript' | 'javascript';
   includeExamples: boolean;
+  includeVercel: boolean;
+  vercelBuildCommand: string;
   [key: string]: string | boolean; // Allow dynamic access for template replacement
 }
 
@@ -67,7 +69,8 @@ interface TemplateConfig {
  */
 const getMandatoryTemplates = (
   includeExamples: boolean,
-  languagePreference: 'typescript' | 'javascript'
+  languagePreference: 'typescript' | 'javascript',
+  includeVercel: boolean
 ): TemplateConfig[] => {
   const configFormat = languagePreference;
   const configTemplateBaseName = includeExamples ? 'handoff.config.with-examples' : 'handoff.config';
@@ -87,6 +90,10 @@ const getMandatoryTemplates = (
 
   if (languagePreference === 'typescript') {
     templates.push({ source: 'tsconfig.json.tpl', destination: 'tsconfig.json' });
+  }
+
+  if (includeVercel) {
+    templates.push({ source: 'vercel.json.tpl', destination: 'vercel.json' });
   }
 
   return templates;
@@ -118,7 +125,8 @@ const renderTemplate = (content: string, data: CreateOptions): string => {
 };
 
 const getDependenciesToInstall = (options: CreateOptions): { dependencies: string[]; devDependencies: string[] } => {
-  const dependencies = ['handoff-app@latest'];
+  // TODO: switch back to `handoff-app@latest` before the 2.0 stable release.
+  const dependencies = ['handoff-app@next'];
   const devDependencies: string[] = [];
 
   if (options.includeExamples) {
@@ -263,6 +271,51 @@ const create = async (): Promise<void> => {
 
     const languagePreference = languagePreferenceSelection as 'typescript' | 'javascript';
 
+    const includeVercelSelection = await p.confirm({
+      message: 'Add a Vercel deployment config (vercel.json)?',
+      initialValue: true,
+    });
+
+    if (p.isCancel(includeVercelSelection)) {
+      p.cancel('Project creation cancelled.');
+      process.exit(0);
+    }
+
+    const includeVercel = includeVercelSelection as boolean;
+
+    // When a Vercel config is scaffolded, choose which deployment its build command produces. Both
+    // package to `.vercel/output`; they differ in what is served. Registry is the recommended,
+    // pre-selected option; static stays available as the simplest deploy.
+    let vercelBuildCommand = 'npm run build -- --target registry --package vercel';
+    if (includeVercel) {
+      const vercelDeploymentSelection = await p.select({
+        message: 'Which deployment should Vercel build?',
+        options: [
+          {
+            value: 'registry',
+            label: 'Registry (dynamic)',
+            hint: 'Live, database-backed app (needs a Postgres DATABASE_URL). The more capable, actively evolving option — recommended for a shared design system.',
+          },
+          {
+            value: 'static',
+            label: 'Static site',
+            hint: 'Prebuilt snapshot served as plain files. The simplest to deploy and run.',
+          },
+        ],
+        initialValue: 'registry',
+      });
+
+      if (p.isCancel(vercelDeploymentSelection)) {
+        p.cancel('Project creation cancelled.');
+        process.exit(0);
+      }
+
+      vercelBuildCommand =
+        vercelDeploymentSelection === 'registry'
+          ? 'npm run build -- --target registry --package vercel'
+          : 'npm run build -- --target static --package vercel';
+    }
+
     // Get Figma project ID
     p.log.step(chalk.blue('Figma Configuration'));
     const figmaProjectId = await p.text({
@@ -295,6 +348,8 @@ const create = async (): Promise<void> => {
       figmaAccessToken: ((figmaAccessToken as string) || '').trim(),
       languagePreference,
       includeExamples,
+      includeVercel,
+      vercelBuildCommand,
     };
 
     // Create files
@@ -309,7 +364,7 @@ const create = async (): Promise<void> => {
 
     // Combine mandatory templates with example templates based on user choice
     const templates = [
-      ...getMandatoryTemplates(includeExamples, languagePreference),
+      ...getMandatoryTemplates(includeExamples, languagePreference, includeVercel),
       ...(includeExamples ? getExampleTemplates(languagePreference) : []),
     ];
 

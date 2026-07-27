@@ -1,7 +1,22 @@
+# Dependencies
 node_modules/
-.env
+
+# Build output
 dist/
-.next/
 out/
-.DS_Store
+.next/
+
+# Generated build artifacts
+public/api
+
+# Environment
+.env
+
+# Deployment
+.vercel
+
+# Logs
 *.log
+
+# OS files
+.DS_Store

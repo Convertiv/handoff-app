@@ -6,8 +6,9 @@
   "scripts": {
     "start": "handoff-app start",
     "dev": "handoff-app dev",
+    "fetch": "handoff-app fetch",
     "build": "handoff-app build",
-    "fetch": "handoff-app fetch"
+    "db:migrate": "handoff-app db:migrate"
   },
   "dependencies": {},
   "devDependencies": {},
