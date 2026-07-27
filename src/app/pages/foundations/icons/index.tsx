@@ -36,13 +36,13 @@ export const DisplayIcon: React.FC<{ icon: DisplayableAsset }> = ({ icon }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <Link href={`/foundations/icons/${icon.icon}`}>
+      <Link href={`/foundations/icons/library/${icon.icon}`}>
         <div className="flex flex-col items-center gap-6 rounded-lg border border-gray-100/80 bg-gray-100/80 py-12 transition-all hover:border-gray-300 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700 dark:hover:bg-gray-900">
           {/* Workspace/static: inline SVG body. Registry: the individual asset content URL. */}
           {icon.data ? <div dangerouslySetInnerHTML={{ __html: htmlData }} /> : <img className="o-icon h-6 w-6" src={icon.src} alt={icon.name} />}
         </div>
       </Link>
-      <Link href={`/foundations/icons/${icon.icon}`}>
+      <Link href={`/foundations/icons/library/${icon.icon}`}>
         <p className="font-mono text-[11px]">{icon.icon}</p>
       </Link>
     </div>

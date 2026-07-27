@@ -5,12 +5,12 @@ import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import * as React from 'react';
-import Footer from '../../../../components/Footer';
-import Layout from '../../../../components/Layout/Main';
-import HeadersType from '../../../../components/Typography/Headers';
-import { buttonVariants } from '../../../../components/ui/button';
-import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens, isRegistryRuntime } from '../../../../components/util';
-import { useSingleAsset, type DisplayableAsset } from '../../../../components/util/useCollectionAssets';
+import Footer from '../../../../../components/Footer';
+import Layout from '../../../../../components/Layout/Main';
+import HeadersType from '../../../../../components/Typography/Headers';
+import { buttonVariants } from '../../../../../components/ui/button';
+import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens, isRegistryRuntime } from '../../../../../components/util';
+import { useSingleAsset, type DisplayableAsset } from '../../../../../components/util/useCollectionAssets';
 
 const DisplayIcon: React.FC<{ icon: DisplayableAsset }> = ({ icon }) => {
   const htmlData = React.useMemo(() => {

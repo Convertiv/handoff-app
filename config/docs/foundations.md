@@ -67,8 +67,10 @@ menu:
         title: Images
         icon: image
         menu:
-          - path: foundations/icons
-            title: Library
-          - path: foundations/icons/guidelines
+          - path: foundations/images
+            title: Overview
+          - path: foundations/images/guidelines
             title: Guidelines
+          - path: foundations/images/resources
+            title: Resources
 ---
