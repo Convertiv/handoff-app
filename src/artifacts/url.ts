@@ -20,7 +20,7 @@ export const ARTIFACTS_ROUTE_SEGMENT = 'api/docs/artifacts';
 /** Route prefix for docs read API metadata (`.json`) reads. */
 export const DOCS_ROUTE_SEGMENT = 'api/docs';
 
-/** Canonical route prefix all asset content URLs are served under (mode-independent). */
+/** Route prefix all asset content URLs are served under, regardless of runtime mode. */
 export const ASSETS_ROUTE_SEGMENT = 'api/docs/assets';
 
 /**
@@ -93,11 +93,11 @@ export const buildPatternDetailUrl = (id: string, basePath?: string | null): str
   `${normalizeBasePath(basePath)}/${DOCS_ROUTE_SEGMENT}/patterns/${encodeURIComponent(id)}.json`;
 
 /**
- * Build the canonical, basePath-aware content URL for one asset within a collection
+ * Build the basePath-aware content URL for a single asset in a collection
  * (`{basePath}/api/docs/assets/{collection}/{logicalPath}`). This is the same route the docs read API
  * serves in every runtime mode: from the database in registry mode, and from statically materialized
- * files in a static export. Each segment is individually encoded and traversal segments are rejected,
- * mirroring {@link buildArtifactUrl}.
+ * files in a static export. Each segment is encoded on its own and traversal segments are rejected,
+ * matching {@link buildArtifactUrl}.
  *
  * @throws If the collection or logical path has no usable segments, or contains a `.`/`..` segment.
  */
@@ -114,9 +114,9 @@ export const buildAssetUrl = (collection: string, logicalPath: string, basePath?
 };
 
 /**
- * Build the canonical download URL for a collection's whole-collection zip bundle
- * (`{basePath}/api/docs/assets/{collection}/{collection}.zip`) — the default target for the docs
- * "Download" links, overridable via `assets_zip_links`.
+ * Build the download URL for a collection's zip bundle
+ * (`{basePath}/api/docs/assets/{collection}/{collection}.zip`). This is the default target for the
+ * docs "Download" links and can be overridden via `assets_zip_links`.
  */
 export const buildAssetDownloadUrl = (collection: string, basePath?: string | null): string =>
   buildAssetUrl(collection, `${collection}.zip`, basePath);

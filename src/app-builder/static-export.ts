@@ -217,12 +217,12 @@ export const materializeDocsReadModel = async (handoff: Handoff, outDir: string)
 }
 
 /**
- * Materialize the whole-collection asset download bundles at the canonical asset route
- * (`api/docs/assets/{collection}/{collection}.zip`) — the same URL the docs read API serves in
- * registry mode, so the "Download" links resolve identically on a static host. The bundles come from
- * the fetch output (`exported/<id>/{collection}.zip`); `next build` never re-creates them, and the
- * fetch-time copy into the app `public/` is wiped by the build's clean+restage, so they are copied
- * here. Absent bundles (a project with no logos/icons) are skipped, not an error.
+ * Write the whole-collection asset bundles to the asset route
+ * (`api/docs/assets/{collection}/{collection}.zip`), the same URL the docs read API serves in
+ * registry mode, so the "Download" links work identically on a static host. The bundles come from the
+ * fetch output (`exported/<id>/{collection}.zip`); `next build` never re-creates them and the
+ * fetch-time copy into `public/` is wiped by the build's clean+restage, so we copy them here again.
+ * Projects with no logos/icons have no bundles, so those are skipped rather than treated as an error.
  */
 const materializeAssetDownloads = async (handoff: Handoff, docsRoot: string): Promise<void> => {
   const bundles: Array<{ collection: string; src: string }> = [

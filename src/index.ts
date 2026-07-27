@@ -138,26 +138,40 @@ class Handoff {
   }
 
   /**
-   * Publish a single component, pattern, or page from this connected workspace to the configured
-   * remote registry. Components and patterns receive a fresh targeted build before upload. Pages
-   * upload their record and markdown source because they render at runtime. The publish module is
-   * loaded lazily so the registry client and build code never enter the docs app bundle.
+   * Publish components, patterns, or pages from this connected workspace to the configured remote
+   * registry. With `id` it publishes that one entity after a targeted build; without `id` it builds
+   * the kind once and publishes every declared entity, skipping ones whose content is unchanged on
+   * the registry (`--force` re-uploads all). Pages upload their record and markdown source because
+   * they render at runtime. The publish module is loaded lazily so the registry client and build code
+   * never enter the docs app bundle.
    */
-  async publish(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
+  async publish(kind: 'component' | 'pattern' | 'page', id?: string): Promise<Handoff> {
     this.preRunner();
-    const { publishEntity } = await import('./registry/publish');
-    await publishEntity(this, kind, id);
+    if (id) {
+      const { publishEntity } = await import('./registry/publish');
+      await publishEntity(this, kind, id);
+    } else {
+      const { publishEntities } = await import('./registry/publish');
+      await publishEntities(this, kind);
+    }
     return this;
   }
 
   /**
-   * Checkout a single component, pattern, or page from the connected remote registry. The checkout
-   * module is loaded lazily so the registry client never enters the docs app bundle.
+   * Checkout components, patterns, or pages from the connected remote registry into this workspace.
+   * With `id` it checks out that one entity; without `id` it checks out every published entity of the
+   * kind. Overwriting existing local files requires `--force` or an interactive confirmation. The
+   * checkout module is loaded lazily so the registry client never enters the docs app bundle.
    */
-  async checkout(kind: 'component' | 'pattern' | 'page', id: string): Promise<Handoff> {
+  async checkout(kind: 'component' | 'pattern' | 'page', id?: string): Promise<Handoff> {
     this.preRunner();
-    const { checkoutEntity } = await import('./registry/checkout');
-    await checkoutEntity(this, kind, id);
+    if (id) {
+      const { checkoutEntity } = await import('./registry/checkout');
+      await checkoutEntity(this, kind, id);
+    } else {
+      const { checkoutEntities } = await import('./registry/checkout');
+      await checkoutEntities(this, kind);
+    }
     return this;
   }
 

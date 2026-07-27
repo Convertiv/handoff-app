@@ -13,8 +13,10 @@ export interface PublishArgs extends SharedArgs {
 }
 
 /**
- * `handoff-app publish <component|pattern|page> <id>` — fresh targeted local build + upload of the
- * selected entity to the connected registry.
+ * `handoff-app publish <component|pattern|page> [id]` runs a fresh local build and uploads to the
+ * connected registry. Pass an `id` to build and upload that one entity, or omit it to build the kind
+ * once and upload every declared entity, skipping any whose content already matches the registry
+ * (pass `--force` to re-upload everything).
  *
  * `handoff-app publish tokens [setId]` — fresh token build + upload of every logical token set, or
  * only the named set (`foundation/colors`, `component/button`).
@@ -34,7 +36,7 @@ const command: CommandModule<{}, PublishArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); optional for tokens/assets',
+        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); omit to publish all of that kind',
         type: 'string',
       });
   },
@@ -48,9 +50,6 @@ const command: CommandModule<{}, PublishArgs> = {
       if (args.type === 'assets') {
         await handoff.publishAssets(args.id);
         return;
-      }
-      if (!args.id) {
-        throw new Error(`An id is required to publish a ${args.type} (e.g. "handoff-app publish ${args.type} <id>").`);
       }
       await handoff.publish(args.type, args.id);
     } catch (error) {

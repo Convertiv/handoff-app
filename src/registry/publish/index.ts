@@ -17,7 +17,7 @@ import { processPatterns } from '../../transformers/preview/pattern/builder';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError } from '../client';
 import { resolveRegistryConnection } from '../connection';
-import type { TransferEntityKind } from '../transfer';
+import type { EntitySummary, TransferEntityKind } from '../transfer';
 import { describeUploadFailure } from './errors';
 import { assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
 
@@ -125,4 +125,102 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
   }
 
   Logger.success(`Published ${kind} "${id}" to the registry.`);
+};
+
+/** The published-content hash a bulk publish compares for skip-unchanged (artifact for rendered kinds, source for pages). */
+const entityHash = (value: { artifactHash?: string; sourceHash?: string }): string | undefined => value.artifactHash ?? value.sourceHash;
+
+/**
+ * Run one build covering every entity of the kind, so a bulk publish builds once instead of per id.
+ * Pages carry no rendered artifacts. Components need the global artifacts + all components; patterns
+ * additionally need all patterns composed (each references pre-built component HTML).
+ */
+const runBulkBuild = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
+  if (kind === 'page') {
+    return;
+  }
+  await buildMainJS(handoff);
+  await buildMainCss(handoff);
+  await processComponents(handoff);
+  if (kind === 'pattern') {
+    await processPatterns(handoff);
+  }
+};
+
+/** List every declared entity id of the kind from the workspace store. */
+const listWorkspaceEntityIds = async (handoff: Handoff, kind: TransferEntityKind): Promise<string[]> => {
+  const store = kind === 'component' ? handoff.store.components : kind === 'pattern' ? handoff.store.patterns : handoff.store.pages;
+  return (await store.list()).map((entity) => entity.id);
+};
+
+/**
+ * Publish every component, pattern, or page declared in this connected workspace. Builds the kind
+ * once, assembles each entity's package, skips entities whose content hash already matches the
+ * registry (unless `--force`), and reports published/unchanged/failed counts. A per-entity failure is
+ * collected and never aborts the rest; the run throws at the end if any entity failed.
+ */
+export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
+  const connection = resolveConnectionOrThrow(handoff);
+
+  Logger.info(`Building ${kind}s for publish…`);
+  await runBulkBuild(handoff, kind);
+
+  const ids = await listWorkspaceEntityIds(handoff, kind);
+  if (ids.length === 0) {
+    Logger.success(`No ${kind}s are declared in this workspace; nothing to publish.`);
+    return;
+  }
+
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+  let remote: EntitySummary[] = [];
+  if (!handoff.force) {
+    try {
+      remote = await client.listEntities(kind);
+    } catch {
+      // If the summary listing fails we simply publish everything (the server still overwrites in place).
+      Logger.info(`Could not read current registry ${kind}s; publishing all.`);
+    }
+  }
+  const remoteHashById = new Map(remote.map((entry) => [entry.id, entityHash(entry)]));
+
+  let published = 0;
+  let unchanged = 0;
+  const failed: { id: string; message: string }[] = [];
+
+  for (const id of ids) {
+    try {
+      const pkg = await buildPublishPackage(handoff, kind, id);
+      assertRequiredArtifactsPresent(pkg);
+
+      const remoteHash = remoteHashById.get(id);
+      const localHash = entityHash(pkg.build);
+      if (!handoff.force && remoteHash && localHash && remoteHash === localHash) {
+        unchanged += 1;
+        Logger.info(`Unchanged: ${id}`);
+        continue;
+      }
+
+      await client.publish(kind, id, pkg);
+      published += 1;
+      Logger.info(`Published: ${id} (${pkg.artifacts.length} artifact(s), ${pkg.files.length} source file(s))`);
+    } catch (error) {
+      const message =
+        error instanceof RegistryClientError
+          ? describeUploadFailure(error, connection.url, 'package')
+          : error instanceof Error
+            ? error.message
+            : String(error);
+      failed.push({ id, message });
+    }
+  }
+
+  Logger.success(
+    `${kind[0].toUpperCase()}${kind.slice(1)}s publish complete — ${published} published, ${unchanged} unchanged${failed.length ? `, ${failed.length} failed` : ''}.`
+  );
+  if (failed.length > 0) {
+    for (const failure of failed) {
+      Logger.error(`  - ${failure.id}: ${failure.message}`);
+    }
+    throw new PublishError(`${failed.length} ${kind}(s) failed to publish.`);
+  }
 };

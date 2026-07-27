@@ -8,7 +8,7 @@
  * and the browser both provide it), so this module stays runtime-agnostic.
  */
 
-import type { CheckoutPayload, TransferEntityKind, TransferPackage } from './transfer';
+import type { CheckoutPayload, EntitySummary, TransferEntityKind, TransferPackage } from './transfer';
 import type { TokenSetCheckoutPayload, TokenSetSummary, TokenSetTransferPackage } from './tokens/transfer';
 import type { AssetCollectionCheckoutPayload, AssetCollectionSummary, AssetCollectionTransferPackage } from './assets/transfer';
 
@@ -55,6 +55,7 @@ export interface RegistryClientOptions {
 export interface RegistryClient {
   publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope>;
   checkout(kind: TransferEntityKind, id: string): Promise<CheckoutPayload>;
+  listEntities(kind: TransferEntityKind): Promise<EntitySummary[]>;
   listTokenSets(): Promise<TokenSetSummary[]>;
   publishTokens(pkg: TokenSetTransferPackage): Promise<RegistryEnvelope>;
   checkoutTokens(id: string): Promise<TokenSetCheckoutPayload>;
@@ -153,6 +154,11 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
         throw new RegistryClientError(`The registry returned no data for ${kind} "${id}".`);
       }
       return envelope.data;
+    },
+    /** List the registry's entities of one kind (id + build hashes) for skip-unchanged / bulk checkout. */
+    async listEntities(kind: TransferEntityKind): Promise<EntitySummary[]> {
+      const envelope = await request<{ entities: EntitySummary[] }>('GET', `/api/registry/transfer/${kind}`);
+      return envelope.data?.entities ?? [];
     },
     /** List the registry's token sets (id + kind + source hash) for skip-unchanged / bulk checkout. */
     async listTokenSets(): Promise<TokenSetSummary[]> {

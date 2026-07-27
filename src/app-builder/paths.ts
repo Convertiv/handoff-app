@@ -42,13 +42,11 @@ const mirrorDirectory = async (sourcePath: string, destinationPath: string): Pro
 };
 
 /**
- * Stage the fetch-produced asset download bundles (`exported/<id>/{collection}.zip`) into the app
- * public root, where the docs read API's workspace asset store serves them at
- * `/api/docs/assets/{collection}/{collection}.zip` (the canonical download URL). `fetch` writes these
- * bundles, but a plain `build`/`start` cleans and re-stages `.handoff` without carrying them, so the
- * download links would 404 until a fetch happened to run. Copying the committed export bundles here
- * makes the route resolve deterministically in workspace dev and static builds. Absent bundles (a
- * project with no logos/icons) are skipped.
+ * Copy the fetch-produced asset bundles (`exported/<id>/{collection}.zip`) into the app's public
+ * root, where the docs read API serves them at `/api/docs/assets/{collection}/{collection}.zip`.
+ * `fetch` writes these bundles, but `build`/`start` cleans and re-stages `.handoff` without them, so
+ * the download links 404 until the next fetch. Copying them here keeps the route working in workspace
+ * dev and static builds. Projects with no logos/icons have no bundles, so those are skipped.
  */
 const stageAssetDownloadBundles = async (handoff: Handoff, destinationPublicPath: string): Promise<void> => {
   const bundles: Array<{ src: string; name: string }> = [
@@ -85,7 +83,7 @@ export const syncPublicFiles = async (handoff: Handoff): Promise<void> => {
     await mirrorDirectory(sourceApiPath, destinationApiPath);
   }
 
-  // Stage the asset download bundles regardless of whether the workspace has a `public/` dir — they
-  // come from the fetch output, not the workspace public tree.
+  // Stage the asset bundles even when the workspace has no `public/` dir; they come from the fetch
+  // output, not the workspace public tree.
   await stageAssetDownloadBundles(handoff, destinationPublicPath);
 };

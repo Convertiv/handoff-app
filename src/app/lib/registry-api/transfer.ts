@@ -433,6 +433,35 @@ const upsertBuildMetadata = async (db: RegistryDatabase, kind: TransferEntityKin
 };
 
 /**
+ * Handles `GET /api/registry/transfer/{component|pattern|page}`. Lists summaries for one kind of
+ * entity: each id plus its build hashes and status. A connected workspace uses these to skip
+ * unchanged entities on a bulk publish and to enumerate published ids for a bulk checkout. The read
+ * is unauthenticated; only the registry-runtime and method guards apply.
+ */
+export const handleEntitySummaryRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
+  handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
+    const table = ENTITY[kind].table;
+    const rows = await db
+      .select({
+        id: table.id,
+        status: buildMetadata.status,
+        artifactHash: buildMetadata.artifactHash,
+        sourceHash: buildMetadata.sourceHash,
+      })
+      .from(table)
+      .leftJoin(buildMetadata, and(eq(buildMetadata.entityKind, kind), eq(buildMetadata.entityId, table.id)));
+
+    const entities = rows.map((row) => ({
+      id: row.id,
+      kind,
+      status: row.status ?? undefined,
+      artifactHash: row.artifactHash ?? undefined,
+      sourceHash: row.sourceHash ?? undefined,
+    }));
+    sendRegistryData(res, 200, { entities }, buildMeta());
+  });
+
+/**
  * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read. Returns the
  * normalized record plus its registry-safe source files so a connected workspace can reconstruct
  * the entity locally. Declaration files are workspace-only: registry stores never hold them, but

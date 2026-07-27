@@ -13,9 +13,10 @@ export interface CheckoutArgs extends SharedArgs {
 }
 
 /**
- * `handoff-app checkout <component|pattern|page> <id>` — pull an entity from the connected registry
- * into this workspace: writes its source files in standard authoring form and synthesizes a local
- * declaration.
+ * `handoff-app checkout <component|pattern|page> [id]` pulls entities from the connected registry
+ * into this workspace, writing their source files in standard authoring form and synthesizing local
+ * declarations. Pass an `id` to pull that one entity, or omit it to pull every published entity of
+ * that kind.
  *
  * `handoff-app checkout tokens [setId]` — pull every published token set (or only the named set) into
  * this workspace: reconstruct `tokens.json` and restore the generated token files.
@@ -37,7 +38,7 @@ const command: CommandModule<{}, CheckoutArgs> = {
         type: 'string',
       })
       .positional('id', {
-        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); optional for tokens/assets',
+        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); omit to checkout all of that kind',
         type: 'string',
       });
   },
@@ -51,9 +52,6 @@ const command: CommandModule<{}, CheckoutArgs> = {
       if (args.type === 'assets') {
         await handoff.checkoutAssets(args.id);
         return;
-      }
-      if (!args.id) {
-        throw new Error(`An id is required to checkout a ${args.type} (e.g. "handoff-app checkout ${args.type} <id>").`);
       }
       await handoff.checkout(args.type, args.id);
     } catch (error) {

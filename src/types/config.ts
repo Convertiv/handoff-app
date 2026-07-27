@@ -214,7 +214,7 @@ export interface Config {
    */
   entries?: ConfigEntries;
   /**
-   * Override URLs for the asset zip download links. When unset, each link defaults to the canonical,
+   * Override URLs for the asset zip download links. When unset, each link defaults to the
    * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by
    * the docs read API in every runtime mode (from the DB in registry mode, from statically
    * materialized files in a static export).

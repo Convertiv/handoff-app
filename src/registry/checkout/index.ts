@@ -20,7 +20,7 @@ import { resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
-import { createRegistryClient, RegistryClientError } from '../client';
+import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
 import { resolveRegistryConnection } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
@@ -530,26 +530,31 @@ const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPaylo
 };
 
 /**
- * Checkout a single component or pattern from a connected workspace: precondition checks → fetch the
- * normalized record + source files → resolve the local target → explicit-overwrite guard → write
- * source files and synthesize the local declaration. Throws {@link CheckoutError} with actionable
- * messaging on any precondition or fetch failure.
+ * Checkout one entity through an already-resolved client: precondition checks → fetch the normalized
+ * record + source files → resolve the local target → explicit-overwrite guard → write source files
+ * and synthesize the local declaration. Shared by the single-id and bulk entry points so both behave
+ * identically. Throws {@link CheckoutError} with actionable messaging on any precondition or fetch
+ * failure.
  */
-export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
+const checkoutSingle = async (
+  handoff: Handoff,
+  kind: TransferEntityKind,
+  id: string,
+  client: RegistryClient,
+  registryUrl: string
+): Promise<void> => {
   const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
   if (!validId) {
     throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
   }
-  const connection = resolveConnectionOrThrow(handoff);
 
-  Logger.info(`Fetching ${kind} "${id}" from ${connection.url}…`);
-  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+  Logger.info(`Fetching ${kind} "${id}" from ${registryUrl}…`);
   let payload: CheckoutPayload;
   try {
     payload = await client.checkout(kind, id);
   } catch (error) {
     if (error instanceof RegistryClientError) {
-      throw new CheckoutError(describeFetchFailure(error, kind, id, connection.url));
+      throw new CheckoutError(describeFetchFailure(error, kind, id, registryUrl));
     }
     throw error;
   }
@@ -593,4 +598,61 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
     `Checked out ${kind} "${id}" into ${path.relative(handoff.workingPath, targetDir) || '.'} ` +
       `(${payload.files.length} source file(s) + ${declarationFileName}).`
   );
+};
+
+/**
+ * Checkout a single component, pattern, or page from the connected registry into this workspace.
+ * Overwriting existing local files requires `--force` or an interactive confirmation.
+ */
+export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
+  const connection = resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+  await checkoutSingle(handoff, kind, id, client, connection.url);
+};
+
+/**
+ * Checkout every published component, pattern, or page of the kind into this workspace. Enumerates
+ * the registry's published ids, then checks each out through the shared client. A per-entity failure
+ * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
+ * prompting is per entity (skipped under `--force`).
+ */
+export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
+  const connection = resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+
+  let summaries;
+  try {
+    summaries = await client.listEntities(kind);
+  } catch (error) {
+    if (error instanceof RegistryClientError) {
+      throw new CheckoutError(`Could not list ${kind}s from the registry at ${connection.url}: ${error.message}`);
+    }
+    throw error;
+  }
+
+  if (summaries.length === 0) {
+    Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
+    return;
+  }
+
+  let checkedOut = 0;
+  const failed: { id: string; message: string }[] = [];
+  for (const { id } of summaries) {
+    try {
+      await checkoutSingle(handoff, kind, id, client, connection.url);
+      checkedOut += 1;
+    } catch (error) {
+      failed.push({ id, message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  Logger.success(
+    `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} checked out${failed.length ? `, ${failed.length} failed` : ''}.`
+  );
+  if (failed.length > 0) {
+    for (const failure of failed) {
+      Logger.error(`  - ${failure.id}: ${failure.message}`);
+    }
+    throw new CheckoutError(`${failed.length} ${kind}(s) failed to checkout.`);
+  }
 };

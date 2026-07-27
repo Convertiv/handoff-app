@@ -80,3 +80,17 @@ export interface CheckoutPayload {
   item: Record<string, unknown>;
   files: TransferFile[];
 }
+
+/**
+ * A published entity's summary from `GET /api/registry/transfer/{component|pattern|page}`. Carries
+ * the build hashes so a connected workspace can skip unchanged entities on a bulk publish and
+ * enumerate published ids for a bulk checkout. Components/patterns key on `artifactHash`; pages key
+ * on `sourceHash`.
+ */
+export interface EntitySummary {
+  id: string;
+  kind: TransferEntityKind;
+  status?: string;
+  artifactHash?: string;
+  sourceHash?: string;
+}
