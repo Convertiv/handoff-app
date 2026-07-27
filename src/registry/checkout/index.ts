@@ -1,7 +1,7 @@
 /**
  * Connected-workspace checkout orchestration.
  *
- * `checkout <component|pattern> <id>` reads a normalized registry record and its registry-safe
+ * `checkout <components|patterns> <id>` reads a normalized registry record and its registry-safe
  * source files from the connected registry through the shared registry client, then writes them
  * into the local workspace in standard authoring form. The local **declaration is synthesized
  * locally** in the configured `runtime.workspace.declarationFormat` — declarations are never read

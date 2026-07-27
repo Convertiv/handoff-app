@@ -304,8 +304,8 @@ HANDOFF_REGISTRY_ACCESS_TOKEN=your-registry-token
 Then push and pull entities by `id`:
 
 ```bash
-handoff-app publish component button     # build locally, upload that entity's package
-handoff-app checkout pattern hero        # pull a registry entity into this workspace
+handoff-app publish components button    # build locally, upload that entity's package
+handoff-app checkout patterns hero       # pull a registry entity into this workspace
 ```
 
 `publish` runs a fresh targeted build of the selected entity and uploads only
@@ -412,8 +412,8 @@ See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 | `start` | Start the dev server with file watchers for live authoring |
 | `build [--target static\|registry]` | Build the static site (default) or package the registry app |
 | `build:components [component]` | Build components without building the full app |
-| `publish <component\|pattern> <id>` | Build and publish an entity to the connected registry |
-| `checkout <component\|pattern> <id>` | Pull an entity from the connected registry |
+| `publish <components\|patterns\|pages\|tokens\|assets> [id]` | Build and publish entities to the connected registry (all of the kind, or one by id) |
+| `checkout <components\|patterns\|pages\|tokens\|assets> [id]` | Pull entities from the connected registry into this workspace |
 | `db:migrate` | Run registry database migrations (Drizzle / PostgreSQL) |
 | `make:component <name>` | Scaffold a new component |
 | `make:page <name> [parent]` | Scaffold a documentation page |

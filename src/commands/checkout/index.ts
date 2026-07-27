@@ -2,18 +2,15 @@ import { CommandModule } from 'yargs';
 import Handoff from '../../';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
-
-/** Entity kinds checkout-able from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens', 'assets'] as const;
+import { ENTITY_WIRE_KIND, getSharedOptions, REGISTRY_ENTITY_KINDS, RegistryEntityKind } from '../utils';
 
 export interface CheckoutArgs extends SharedArgs {
-  type: (typeof ENTITY_KINDS)[number];
+  type: RegistryEntityKind;
   id?: string;
 }
 
 /**
- * `handoff-app checkout <component|pattern|page> [id]` pulls entities from the connected registry
+ * `handoff-app checkout <components|patterns|pages> [id]` pulls entities from the connected registry
  * into this workspace, writing their source files in standard authoring form and synthesizing local
  * declarations. Pass an `id` to pull that one entity, or omit it to pull every published entity of
  * that kind.
@@ -29,12 +26,12 @@ export interface CheckoutArgs extends SharedArgs {
  */
 const command: CommandModule<{}, CheckoutArgs> = {
   command: 'checkout <type> [id]',
-  describe: 'Pull a component, pattern, page, design tokens, or assets from the connected registry into this workspace',
+  describe: 'Pull components, patterns, pages, design tokens, or assets from the connected registry into this workspace',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
         describe: 'The kind of entity to checkout',
-        choices: ENTITY_KINDS,
+        choices: REGISTRY_ENTITY_KINDS,
         type: 'string',
       })
       .positional('id', {
@@ -53,7 +50,7 @@ const command: CommandModule<{}, CheckoutArgs> = {
         await handoff.checkoutAssets(args.id);
         return;
       }
-      await handoff.checkout(args.type, args.id);
+      await handoff.checkout(ENTITY_WIRE_KIND[args.type], args.id);
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;

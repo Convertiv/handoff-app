@@ -2,18 +2,15 @@ import { CommandModule } from 'yargs';
 import Handoff from '../../';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
-
-/** Entity kinds publishable from a connected workspace. */
-const ENTITY_KINDS = ['component', 'pattern', 'page', 'tokens', 'assets'] as const;
+import { ENTITY_WIRE_KIND, getSharedOptions, REGISTRY_ENTITY_KINDS, RegistryEntityKind } from '../utils';
 
 export interface PublishArgs extends SharedArgs {
-  type: (typeof ENTITY_KINDS)[number];
+  type: RegistryEntityKind;
   id?: string;
 }
 
 /**
- * `handoff-app publish <component|pattern|page> [id]` runs a fresh local build and uploads to the
+ * `handoff-app publish <components|patterns|pages> [id]` runs a fresh local build and uploads to the
  * connected registry. Pass an `id` to build and upload that one entity, or omit it to build the kind
  * once and upload every declared entity, skipping any whose content already matches the registry
  * (pass `--force` to re-upload everything).
@@ -27,12 +24,12 @@ export interface PublishArgs extends SharedArgs {
  */
 const command: CommandModule<{}, PublishArgs> = {
   command: 'publish <type> [id]',
-  describe: 'Build and publish a component, pattern, page, design tokens, or assets to the connected registry',
+  describe: 'Build and publish components, patterns, pages, design tokens, or assets to the connected registry',
   builder: (yargs) => {
     return getSharedOptions(yargs)
       .positional('type', {
         describe: 'The kind of entity to publish',
-        choices: ENTITY_KINDS,
+        choices: REGISTRY_ENTITY_KINDS,
         type: 'string',
       })
       .positional('id', {
@@ -51,7 +48,7 @@ const command: CommandModule<{}, PublishArgs> = {
         await handoff.publishAssets(args.id);
         return;
       }
-      await handoff.publish(args.type, args.id);
+      await handoff.publish(ENTITY_WIRE_KIND[args.type], args.id);
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 1;

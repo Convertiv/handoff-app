@@ -1,7 +1,7 @@
 /**
  * Connected-workspace publish orchestration.
  *
- * `publish <component|pattern|page> <id>` prepares one entity and uploads its record, source files,
+ * `publish <components|patterns|pages> <id>` prepares one entity and uploads its record, source files,
  * applicable rendered artifacts, and build metadata through the shared registry client.
  *
  * The build is targeted: a component builds the global artifacts + that component; a pattern builds
