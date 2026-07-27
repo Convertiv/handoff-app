@@ -1,3 +1,4 @@
+import * as p from '@clack/prompts';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import path from 'path';
@@ -102,6 +103,63 @@ const assertStaticBuildAllowed = (handoff: Handoff): void => {
         'or package the registry app with `handoff-app build --target registry`.'
     );
   }
+};
+
+/**
+ * Run the Next.js production build while keeping its delayed output out of the successful CLI flow.
+ * Captured output is replayed only when the child fails so compiler diagnostics remain available.
+ */
+const runNextBuild = async (appPath: string, target: BuildTarget, errorLabel: string): Promise<void> => {
+  const spinner = p.spinner();
+  spinner.start('Building Next.js app...');
+
+  const stdout: Buffer[] = [];
+  const stderr: Buffer[] = [];
+
+  await new Promise<void>((resolve, reject) => {
+    const buildProcess = spawn('npx', ['next', 'build'], {
+      cwd: appPath,
+      stdio: ['inherit', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        HANDOFF_BUILD_TARGET: target,
+      },
+    });
+
+    buildProcess.stdout?.on('data', (chunk: Buffer) => stdout.push(Buffer.from(chunk)));
+    buildProcess.stderr?.on('data', (chunk: Buffer) => stderr.push(Buffer.from(chunk)));
+
+    let settled = false;
+
+    const fail = (message: string): void => {
+      if (settled) return;
+      settled = true;
+
+      spinner.stop('Next.js app build failed');
+      Logger.childProcessBuffer(Buffer.concat(stdout));
+      Logger.childProcessBuffer(Buffer.concat(stderr));
+      reject(new Error(message));
+    };
+
+    buildProcess.once('error', (error) => {
+      fail(`${errorLabel} failed to start\nSpawn error: ${error.message}`);
+    });
+
+    buildProcess.once('close', (code, signal) => {
+      if (settled) return;
+
+      if (code === 0) {
+        settled = true;
+        spinner.stop('Next.js app built successfully');
+        resolve();
+        return;
+      }
+
+      const reason = signal ? ` because it was terminated by signal ${signal}` : ` with exit code ${code}`;
+      fail(`${errorLabel} failed${reason}`);
+    });
+  });
 };
 
 /**
@@ -283,26 +341,7 @@ const buildApp = async (
 
   // Build app. The static target drives Next's `output: 'export'` via HANDOFF_BUILD_TARGET so the
   // export gate is tied to the resolved target, not to NODE_ENV.
-  const buildResult = spawn.sync('npx', ['next', 'build'], {
-    cwd: appPath,
-    stdio: ['inherit', 'pipe', 'pipe'],
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      HANDOFF_BUILD_TARGET: target,
-    },
-  });
-
-  Logger.childProcessBuffer(buildResult.stdout);
-  Logger.childProcessBuffer(buildResult.stderr);
-
-  if (buildResult.status !== 0) {
-    let errorMsg = `Next.js build failed with exit code ${buildResult.status}`;
-    if (buildResult.error) {
-      errorMsg += `\nSpawn error: ${buildResult.error.message}`;
-    }
-    throw new Error(errorMsg);
-  }
+  await runNextBuild(appPath, target, 'Next.js build');
 
   // Reproduce the docs read API (`/api/docs/*`) as route-shaped static files in the export output,
   // since `output: 'export'` disables the live API routes.
@@ -632,26 +671,7 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
 
   // Build the dynamic app. `output: 'standalone'` (driven by HANDOFF_BUILD_TARGET) traces the runtime
   // and the selected Postgres/Neon driver into a self-contained bundle — never a static export.
-  const buildResult = spawn.sync('npx', ['next', 'build'], {
-    cwd: appPath,
-    stdio: ['inherit', 'pipe', 'pipe'],
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      HANDOFF_BUILD_TARGET: 'registry',
-    },
-  });
-
-  Logger.childProcessBuffer(buildResult.stdout);
-  Logger.childProcessBuffer(buildResult.stderr);
-
-  if (buildResult.status !== 0) {
-    let errorMsg = `Registry app build failed with exit code ${buildResult.status}`;
-    if (buildResult.error) {
-      errorMsg += `\nSpawn error: ${buildResult.error.message}`;
-    }
-    throw new Error(errorMsg);
-  }
+  await runNextBuild(appPath, 'registry', 'Registry app build');
 
   // Assemble the deployable package. Standalone tracing is rooted at the package (modulePath), so the
   // app's traced files land under `<relAppDir>` inside the standalone tree; static assets and public
