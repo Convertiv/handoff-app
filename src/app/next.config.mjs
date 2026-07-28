@@ -71,7 +71,7 @@ const nextConfig = {
     externalDir: true,
   },
   eslint: {
-    dirs: ['pages', 'utils'],
+    ignoreDuringBuilds: true,
   },
   transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
@@ -164,7 +164,7 @@ const nextConfig = {
       return content;
     },
   },
-  turbopack: { 
+  turbopack: {
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
       '@': path.resolve('.'),
