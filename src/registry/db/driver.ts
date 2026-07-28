@@ -1,17 +1,19 @@
 /**
- * Registry database adapter resolution.
+ * Registry database driver resolution.
  *
- * `runtime.registry.database.adapter` selects one of two built-in adapters shipped with the
- * `handoff-app` package — `pg` (default) and `neon` — both targeting the Postgres dialect.
- * `build --target registry` and `db:migrate` resolve the **same** adapter so build and migration
- * never diverge. Connection credentials are referenced by environment-variable name only and
- * resolved to a value at runtime; the value is never stored in config.
+ * PostgreSQL is the supported database. `runtime.registry.database.driver` selects one of two
+ * built-in connection drivers shipped with the `handoff-app` package — `pg` (default) and `neon` —
+ * both targeting the same Postgres dialect over one package-owned schema and migration set. The
+ * driver picks *how* to connect, not *which* database engine to use. `build --target registry` and
+ * `db:migrate` resolve the **same** driver so build and migration never diverge. Connection
+ * credentials are referenced by environment-variable name only and resolved to a value at runtime;
+ * the value is never stored in config.
  */
 
 import type { Config } from '../../types/config';
 
-/** Built-in registry database adapter. Both ship with the package and target Postgres. */
-export type RegistryDatabaseAdapter = 'pg' | 'neon';
+/** Built-in registry database connection driver. Both ship with the package and target Postgres. */
+export type RegistryDatabaseDriver = 'pg' | 'neon';
 
 /** Default env-var name holding the database connection string. */
 export const DEFAULT_DATABASE_URL_ENV = 'DATABASE_URL';
@@ -19,13 +21,13 @@ export const DEFAULT_DATABASE_URL_ENV = 'DATABASE_URL';
 /** Default env-var name holding the registry management API bearer token. */
 export const DEFAULT_REGISTRY_API_TOKEN_ENV = 'HANDOFF_REGISTRY_API_TOKEN';
 
-/** Default registry database adapter when none is configured. */
-export const DEFAULT_REGISTRY_ADAPTER: RegistryDatabaseAdapter = 'pg';
+/** Default registry database driver when none is configured. */
+export const DEFAULT_REGISTRY_DRIVER: RegistryDatabaseDriver = 'pg';
 
 /** Fully resolved registry database connection inputs. */
 export interface ResolvedRegistryDatabase {
-  /** Selected built-in adapter. */
-  adapter: RegistryDatabaseAdapter;
+  /** Selected built-in driver. */
+  driver: RegistryDatabaseDriver;
   /** Name of the env var the connection string was read from. */
   databaseUrlEnv: string;
   /** Resolved connection string (never persisted in config). */
@@ -48,9 +50,9 @@ export const resolveApiTokenEnv = (config: Config | null | undefined): string =>
   return configured || DEFAULT_REGISTRY_API_TOKEN_ENV;
 };
 
-/** Resolve the configured registry adapter (defaults to `pg`). */
-export const resolveRegistryAdapter = (config: Config | null | undefined): RegistryDatabaseAdapter => {
-  return config?.runtime?.registry?.database?.adapter ?? DEFAULT_REGISTRY_ADAPTER;
+/** Resolve the configured registry database driver (defaults to `pg`). */
+export const resolveRegistryDriver = (config: Config | null | undefined): RegistryDatabaseDriver => {
+  return config?.runtime?.registry?.database?.driver ?? DEFAULT_REGISTRY_DRIVER;
 };
 
 /**
@@ -59,7 +61,7 @@ export const resolveRegistryAdapter = (config: Config | null | undefined): Regis
  * message instead of failing deep inside the driver.
  */
 export const resolveRegistryDatabase = (config: Config | null | undefined): ResolvedRegistryDatabase => {
-  const adapter = resolveRegistryAdapter(config);
+  const driver = resolveRegistryDriver(config);
   const databaseUrlEnv = resolveDatabaseUrlEnv(config);
   const connectionString = process.env[databaseUrlEnv]?.trim();
 
@@ -70,5 +72,5 @@ export const resolveRegistryDatabase = (config: Config | null | undefined): Reso
     );
   }
 
-  return { adapter, databaseUrlEnv, connectionString };
+  return { driver, databaseUrlEnv, connectionString };
 };

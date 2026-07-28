@@ -66,7 +66,7 @@ export const writeStaticVercelOutput = async (handoff: Handoff, exportDir: strin
 };
 
 /**
- * Node.js runtime identifier baked into the registry function's `.vc-config.json`. The `pg` adapter
+ * Node.js runtime identifier baked into the registry function's `.vc-config.json`. The `pg` driver
  * (and the Neon serverless driver in its Node fallback) need the Node.js runtime, not the edge
  * runtime — this is the required baseline. Vercel resolves the patch
  * version within this major; pinning the major keeps the artifact stable.
@@ -98,7 +98,7 @@ const MUTABLE_REGISTRY_PAGE_SRC_ROUTE = '/[...slug]';
  * data routes resolve the same way they do under the standalone server. `minimalMode:false` keeps
  * the function doing full in-process routing (the catch-all route forwards everything here).
  *
- * Runtime mode, adapter, and the DB env-var *name* are already baked into the resolved config the
+ * Runtime mode, driver, and the DB env-var *name* are already baked into the resolved config the
  * standalone build wrote to `.next/required-server-files.json`; the connection-string value is still
  * read from the named env var at request time, never baked.
  */

@@ -3,7 +3,7 @@ import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
-import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
 import type { Config, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
@@ -48,7 +48,7 @@ export const generateTokensApi = async (handoff: Handoff) => {
  * Build the server-only runtime config consumed by the docs read API.
  *
  * The browser-facing `client.config.json` carries only the resolved mode; the server additionally
- * needs the registry connection *inputs* (selected adapter + the *name* of the database-URL env
+ * needs the registry connection *inputs* (selected driver + the *name* of the database-URL env
  * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
  * itself is never persisted, only resolved from the env var at request time.
  */
@@ -57,7 +57,7 @@ const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) =>
   return {
     mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
     registry: {
-      adapter: resolveRegistryAdapter(config),
+      driver: resolveRegistryDriver(config),
       databaseUrlEnv: resolveDatabaseUrlEnv(config),
       apiTokenEnv: resolveApiTokenEnv(config),
     },

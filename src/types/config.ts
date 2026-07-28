@@ -138,8 +138,12 @@ export interface HandoffRuntimeConfig {
     /** Name of the env var holding the registry API token. @default "HANDOFF_REGISTRY_API_TOKEN" */
     apiTokenEnv?: string;
     database?: {
-      /** @default "pg" */
-      adapter?: 'pg' | 'neon';
+      /**
+       * PostgreSQL is the supported database. `driver` selects the built-in connection driver — how
+       * to connect, not which engine — over the same package-owned Postgres schema and migrations.
+       * @default "pg"
+       */
+      driver?: 'pg' | 'neon';
     };
     /**
      * Where published asset blobs (icons/logos/fonts/sprites/archives) are stored. Defaults to the

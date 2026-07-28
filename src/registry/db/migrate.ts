@@ -2,7 +2,7 @@
  * Registry migration runner.
  *
  * `handoff-app db:migrate` reads the consuming project's config + DB env vars, resolves the same
- * `runtime.registry.database.adapter` used at runtime/build, and applies the package-owned
+ * `runtime.registry.database.driver` used at runtime/build, and applies the package-owned
  * migration set with the bundled Drizzle migrator. Migrations are resolved relative to the
  * installed package (not the consuming project), so the schema is versioned with the tool. This
  * runs independently of `build`.
@@ -12,7 +12,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import type Handoff from '../../';
 import { Logger } from '../../utils/logger';
-import { resolveRegistryDatabase } from './adapter';
+import { resolveRegistryDatabase } from './driver';
 import { createRegistryDbConnection } from './client';
 
 /**
@@ -33,7 +33,7 @@ export const runRegistryMigrations = async (handoff: Handoff): Promise<void> => 
     throw new Error('Handoff is not initialized; cannot resolve registry database configuration.');
   }
 
-  const { adapter, databaseUrlEnv, connectionString } = resolveRegistryDatabase(handoff.config);
+  const { driver, databaseUrlEnv, connectionString } = resolveRegistryDatabase(handoff.config);
 
   const migrationsFolder = getMigrationsFolder(handoff);
   const journalPath = path.join(migrationsFolder, 'meta', '_journal.json');
@@ -44,9 +44,9 @@ export const runRegistryMigrations = async (handoff: Handoff): Promise<void> => 
     );
   }
 
-  Logger.info(`Running registry migrations (adapter: "${adapter}", database url from "${databaseUrlEnv}").`);
+  Logger.info(`Running registry migrations (driver: "${driver}", database url from "${databaseUrlEnv}").`);
 
-  const connection = await createRegistryDbConnection({ adapter, connectionString });
+  const connection = await createRegistryDbConnection({ driver, connectionString });
   try {
     await connection.migrate(migrationsFolder);
     Logger.success('Registry migrations applied successfully.');

@@ -7,7 +7,7 @@ import { getServerRuntimeConfig } from './docs-api/runtime-config';
  * Both the registry-mode docs read API and the registry management API resolve their database
  * through this single helper so one connection pool backs the whole registry runtime rather than
  * one pool per consumer. The connection string is read from the configured env var *name* at
- * request time — never persisted in config — and the selected adapter comes from the server runtime
+ * request time — never persisted in config — and the selected driver comes from the server runtime
  * config baked at build time.
  *
  * Server-only: imported exclusively by registry-mode API route helpers, which are themselves only
@@ -48,7 +48,7 @@ export const getRegistryConnection = (): Promise<RegistryDbConnection> => {
       )
     );
   }
-  connectionPromise = createRegistryDbConnection({ adapter: registry.adapter, connectionString }).catch((error) => {
+  connectionPromise = createRegistryDbConnection({ driver: registry.driver, connectionString }).catch((error) => {
     connectionPromise = null;
     // TODO: Route server errors through the shared logger.
     console.error('Registry database connection failed.', error);

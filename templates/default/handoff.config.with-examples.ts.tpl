@@ -58,6 +58,20 @@ export default defineConfig({
     // patterns: [],
   },
 
+  // Registry deployment settings, used by `build --target registry` and `db:migrate`.
+  // These are only needed when publishing to a hosted registry. The default workspace mode
+  // doesn't use a database, so these should stay commented out unless deploying one.
+  // Handoff runs on PostgreSQL, and `driver` just picks the connection driver to use, not
+  // the database engine. Secrets are referenced by env var name and never written here.
+  // runtime: {
+  //   mode: "registry",
+  //   registry: {
+  //     databaseUrlEnv: "DATABASE_URL",
+  //     apiTokenEnv: "HANDOFF_REGISTRY_API_TOKEN",
+  //     database: { driver: "pg" }, // 'pg' | 'neon'
+  //   },
+  // },
+
   // Optional handoff-docgen settings used by component docs generation
   // reactDocgen: {
   //   maxDepth: 7,

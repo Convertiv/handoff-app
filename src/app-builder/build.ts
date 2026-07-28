@@ -8,7 +8,7 @@ import { buildPatterns } from '../pipeline/patterns';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryAdapter } from '../registry/db/adapter';
+import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
@@ -256,7 +256,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   // Resolved runtime mode + registry connection inputs (names only) baked into the Next bundle so the
   // deployed registry app resolves its mode/DB env-var name without any build-machine filesystem.
   const escapedRuntimeMode = escapeForSingleQuotedJsString(runtimeMode);
-  const escapedRegistryAdapter = escapeForSingleQuotedJsString(resolveRegistryAdapter(handoff.config));
+  const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
   const escapedApiTokenEnv = escapeForSingleQuotedJsString(resolveApiTokenEnv(handoff.config));
   // Asset storage selection baked (provider + module + env-var names + non-secret options JSON).
@@ -274,7 +274,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_EXPORT_PATH%': escapedExportPath,
     '%HANDOFF_WEBSOCKET_PORT%': escapedWebsocketPort,
     '%HANDOFF_RUNTIME_MODE%': escapedRuntimeMode,
-    '%HANDOFF_REGISTRY_ADAPTER%': escapedRegistryAdapter,
+    '%HANDOFF_REGISTRY_DRIVER%': escapedRegistryDriver,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
     '%HANDOFF_REGISTRY_API_TOKEN_ENV%': escapedApiTokenEnv,
     '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
@@ -429,7 +429,7 @@ pipeline) before deploying new code:
 ${databaseUrlEnv}="postgres://…" handoff-app db:migrate
 \`\`\`
 
-\`db:migrate\` reads your project config + DB env vars, resolves the same database adapter the app was
+\`db:migrate\` reads your project config + DB env vars, resolves the same database driver the app was
 built with, and applies the package-owned migration set. It runs independently of \`build\` and of
 starting the server, so run it as a release/one-shot job.
 
@@ -476,14 +476,14 @@ containers, custom Node servers, and other non-Vercel hosts.
 
 /**
  * Resolve the set of npm packages the packaged registry app must be able to `require`/`import` at
- * runtime, given the configured database adapter. `next`/`react`/`react-dom` run the server and React
+ * runtime, given the configured database driver. `next`/`react`/`react-dom` run the server and React
  * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the driver
- * is adapter-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
+ * package is driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
  */
 const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   const base = ['next', 'react', 'react-dom', 'drizzle-orm'];
-  const adapter = resolveRegistryAdapter(handoff.config);
-  const driver = adapter === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
+  const driver = resolveRegistryDriver(handoff.config);
+  const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
   // Asset-storage SDKs the deployed registry must be able to load at request time. The pre-packaged
   // Vercel Blob adapter needs `@vercel/blob`; a custom adapter may declare its installed SDK
   // package(s) via `assetStorage.options.sdkModules` so the trace/assertion covers them.
@@ -496,7 +496,7 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   if (Array.isArray(sdkModules)) {
     storage.push(...sdkModules.filter((mod): mod is string => typeof mod === 'string'));
   }
-  return [...base, ...driver, ...storage];
+  return [...base, ...driverModules, ...storage];
 };
 
 /**
@@ -623,7 +623,7 @@ const assembleRegistryStandalone = async (
  *   - `vercel` → the Vercel Build Output API directory (`.vercel/output`) at the repo root: the
  *     traced bundle wrapped as a Node function plus CDN static assets and a route table.
  *
- * Mode is forced to `registry`; the database adapter is honored from config (single-sourced so build
+ * Mode is forced to `registry`; the database driver is honored from config (single-sourced so build
  * and `db:migrate` never diverge). No connection-string value is ever baked — only env-var *names*.
  */
 const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = 'standalone'): Promise<void> => {
@@ -636,16 +636,16 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
     Logger.info(`Source runtime.mode is "${sourceMode}"; forcing "registry" mode in the packaged registry app.`);
   }
 
-  // The adapter stays single-sourced from config (never flipped by the package flag), so build and
+  // The driver stays single-sourced from config (never flipped by the package flag), so build and
   // `db:migrate` always resolve the same one. `pg` uses long-lived TCP connections that pool poorly on
   // serverless; warn (non-fatally) so the operator points DATABASE_URL at a pooled endpoint or selects
-  // the Neon adapter. The connection-string value is not available at build time, so this cannot be
+  // the Neon driver. The connection-string value is not available at build time, so this cannot be
   // validated — it is guidance only and never fails the build.
-  if (buildPackage === 'vercel' && resolveRegistryAdapter(handoff.config) === 'pg') {
+  if (buildPackage === 'vercel' && resolveRegistryDriver(handoff.config) === 'pg') {
     Logger.warn(
-      'Registry Vercel build uses the "pg" adapter (standard TCP connections), which pools poorly on ' +
+      'Registry Vercel build uses the "pg" driver (standard TCP connections), which pools poorly on ' +
         'serverless and can exhaust the database connection limit. Point DATABASE_URL at a pooled endpoint ' +
-        '(PgBouncer / transaction pooling), or set runtime.registry.database.adapter: "neon" for a ' +
+        '(PgBouncer / transaction pooling), or set runtime.registry.database.driver: "neon" for a ' +
         'serverless-native HTTP/WebSocket driver. The build will continue.'
     );
   }

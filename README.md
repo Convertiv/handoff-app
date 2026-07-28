@@ -278,9 +278,10 @@ handoff-app db:migrate
 ```
 
 `db:migrate` reads your project config and DB env vars, applies the
-package-owned migration set, and runs independently of `build`. The database
-adapter (`pg` or `neon`) is chosen with `runtime.registry.database.adapter`, and
-both adapters ship with the package.
+package-owned migration set, and runs independently of `build`. PostgreSQL is
+the supported database; `runtime.registry.database.driver` selects the
+connection driver (`pg` or `neon`) — how to connect, not the database engine —
+and both drivers ship with the package.
 
 ### Deploying
 
@@ -394,7 +395,7 @@ runtime: {
   registry: {
     databaseUrlEnv: 'DATABASE_URL',
     apiTokenEnv: 'HANDOFF_REGISTRY_API_TOKEN',
-    database: { adapter: 'pg' }, // 'pg' | 'neon'
+    database: { driver: 'pg' }, // connection driver: 'pg' | 'neon' (PostgreSQL only)
   },
 },
 ```

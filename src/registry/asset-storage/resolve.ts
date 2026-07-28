@@ -3,7 +3,7 @@
  *
  * `runtime.registry.assetStorage` selects the active provider for **new** uploads: the built-in
  * `database` inline default, the pre-packaged `vercel-blob` adapter, or a `custom` module. Mirrors
- * {@link import('../db/adapter')}: only provider selection, module location, non-secret options, and
+ * {@link import('../db/driver')}: only provider selection, module location, non-secret options, and
  * env-var *names* are ever persisted; secret *values* are read from `process.env` at request time.
  */
 

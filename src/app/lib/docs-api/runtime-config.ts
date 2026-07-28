@@ -3,10 +3,10 @@ import path from 'path';
 import type { RuntimeMode } from '@handoff/types/config';
 import {
   DEFAULT_DATABASE_URL_ENV,
-  DEFAULT_REGISTRY_ADAPTER,
+  DEFAULT_REGISTRY_DRIVER,
   DEFAULT_REGISTRY_API_TOKEN_ENV,
-  type RegistryDatabaseAdapter,
-} from '@handoff/registry/db/adapter';
+  type RegistryDatabaseDriver,
+} from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 
 /**
@@ -15,7 +15,7 @@ import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@hando
  * The docs read API is mode-aware: workspace mode resolves artifacts from generated filesystem
  * files, registry mode resolves them from the database. The browser-facing `client.config.json`
  * carries only the resolved {@link RuntimeMode} (no connection details), so the server needs its
- * own non-secret source for the registry connection *inputs* — the selected adapter and the *name*
+ * own non-secret source for the registry connection *inputs* — the selected driver and the *name*
  * of the env var holding the database URL. The build persists these to `runtime.server.json`
  * alongside `client.config.json`; this module reads them back, never crossing secrets to the
  * browser (the connection-string value is resolved from the env var at request time, not here).
@@ -25,8 +25,8 @@ import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@hando
 
 /** Non-secret registry connection inputs resolved on the server. */
 export interface ServerRegistryRuntimeConfig {
-  /** Selected built-in database adapter. */
-  adapter: RegistryDatabaseAdapter;
+  /** Selected built-in database driver. */
+  driver: RegistryDatabaseDriver;
   /** Name of the env var holding the database connection string (value resolved at request time). */
   databaseUrlEnv: string;
   /**
@@ -49,11 +49,11 @@ export interface ServerRuntimeConfig {
 
 let cached: ServerRuntimeConfig | null = null;
 
-/** Safe defaults: workspace mode with the default Postgres adapter + `DATABASE_URL` env var. */
+/** Safe defaults: workspace mode with the default Postgres driver + `DATABASE_URL` env var. */
 const defaults = (): ServerRuntimeConfig => ({
   mode: 'workspace',
   registry: {
-    adapter: DEFAULT_REGISTRY_ADAPTER,
+    driver: DEFAULT_REGISTRY_DRIVER,
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
     apiTokenEnv: DEFAULT_REGISTRY_API_TOKEN_ENV,
   },
@@ -112,7 +112,7 @@ const fromEnv = (): ServerRuntimeConfig | null => {
   return {
     mode: mode === 'registry' ? 'registry' : 'workspace',
     registry: {
-      adapter: process.env.HANDOFF_REGISTRY_ADAPTER?.trim() === 'neon' ? 'neon' : 'pg',
+      driver: process.env.HANDOFF_REGISTRY_DRIVER?.trim() === 'neon' ? 'neon' : 'pg',
       databaseUrlEnv,
       apiTokenEnv,
     },
@@ -156,7 +156,7 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
         registry: {
-          adapter: parsed?.registry?.adapter === 'neon' ? 'neon' : 'pg',
+          driver: parsed?.registry?.driver === 'neon' ? 'neon' : 'pg',
           databaseUrlEnv,
           apiTokenEnv,
         },
