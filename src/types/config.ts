@@ -135,7 +135,10 @@ export interface HandoffRuntimeConfig {
   registry?: {
     /** Name of the env var holding the database URL. @default "DATABASE_URL" */
     databaseUrlEnv?: string;
-    /** Name of the env var holding the registry API token. @default "HANDOFF_REGISTRY_API_TOKEN" */
+    /**
+     * @deprecated Fixed registry secrets are no longer authorized. This option remains parseable
+     * only so existing configuration files do not break.
+     */
     apiTokenEnv?: string;
     database?: {
       /**

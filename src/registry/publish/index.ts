@@ -16,7 +16,7 @@ import processComponents from '../../transformers/preview/component/builder';
 import { processPatterns } from '../../transformers/preview/pattern/builder';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError } from '../client';
-import { resolveRegistryConnection } from '../connection';
+import { resolveAuthenticatedRegistryConnection } from '../connection';
 import type { EntitySummary, TransferEntityKind } from '../transfer';
 import { describeUploadFailure } from './errors';
 import { assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
@@ -34,7 +34,7 @@ export class PublishError extends Error {
  * hosts do not publish) and a resolved registry URL + access token. Throws an actionable
  * {@link PublishError} naming the exact misconfiguration.
  */
-export const resolveConnectionOrThrow = (handoff: Handoff) => {
+export const resolveConnectionOrThrow = async (handoff: Handoff) => {
   const mode = handoff.config?.runtime?.mode ?? 'workspace';
   if (mode !== 'workspace') {
     throw new PublishError(
@@ -43,17 +43,17 @@ export const resolveConnectionOrThrow = (handoff: Handoff) => {
     );
   }
 
-  const connection = resolveRegistryConnection(handoff.config);
+  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath);
   if (!connection.url) {
     throw new PublishError(
-      `No registry URL is configured. Set runtime.registryConnection.url, or the "${connection.urlEnv}" environment variable, ` +
-        'to the base URL of the registry to publish to.'
+      `No registry is configured. Run \`handoff-app login --url <registry-url>\`, set runtime.registryConnection.url, ` +
+        `or set the "${connection.urlEnv}" environment variable to the base URL of the registry to publish to.`
     );
   }
   if (!connection.accessToken) {
     throw new PublishError(
-      `No registry access token is configured. Set the "${connection.accessTokenEnv}" environment variable to the ` +
-        "registry's bearer token to authorize publishing."
+      `No registry access token is configured. Run \`handoff-app login --url ${connection.url}\`, or set the ` +
+        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.`
     );
   }
   return connection;
@@ -103,7 +103,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
  * receive a targeted build, while pages are packaged directly from their source.
  */
 export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
 
   Logger.info(kind === 'page' ? `Preparing page "${id}" for publish…` : `Building ${kind} "${id}" for publish…`);
   await runTargetedBuild(handoff, kind, id);
@@ -160,7 +160,7 @@ const listWorkspaceEntityIds = async (handoff: Handoff, kind: TransferEntityKind
  * collected and never aborts the rest; the run throws at the end if any entity failed.
  */
 export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
 
   Logger.info(`Building ${kind}s for publish…`);
   await runBulkBuild(handoff, kind);

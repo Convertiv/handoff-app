@@ -58,6 +58,10 @@ Commands:
 
   db:migrate [opts] - Runs registry database migrations (Drizzle / PostgreSQL). Reads the project config and database env vars, applies the package-owned migration set, and runs independently of `build`.
 
+  login --url <registry-url> - Authorizes this workspace in the browser and stores a revocable token in `.handoff/cli-auth.json`.
+
+  logout [--url <registry-url>] - Revokes the saved token when possible, then removes the local credential.
+
   make
     make:template <component> <state> [opts] - Creates a new template
     make:page <component> <state> [opts] - Creates a new page

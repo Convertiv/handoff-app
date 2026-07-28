@@ -6,6 +6,7 @@ import { MobileNav } from '../../components/Navigation/MobileNav';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';
 import { useConfigContext } from '../context/ConfigContext';
+import { AuthControls } from '../Auth/AuthControls';
 
 const RUNTIME_MODE_LABEL: Record<'workspace' | 'registry', string> = {
   workspace: 'Workspace',
@@ -51,6 +52,7 @@ export function Header() {
           </div>
           <div className="hidden items-center gap-4 @2xl:flex">
             <MainNav />
+            {runtimeMode === 'registry' ? <AuthControls /> : null}
             <ModeToggle />
           </div>
           <div className="flex items-center gap-4 @2xl:hidden">

@@ -11,10 +11,10 @@ export const describeUploadFailure = (
   switch (error.code) {
     case 'runtime_mode_conflict':
       return `The registry at ${registryUrl} is not running in registry mode, so it cannot accept publishes: ${error.message}`;
-    case 'token_not_configured':
-      return `The registry at ${registryUrl} has no management token configured, so it is rejecting mutations: ${error.message}`;
     case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
+      return `The registry rejected the access token (401). Run \`handoff-app login --url ${registryUrl}\` again, or replace the user-issued CI token.`;
+    case 'forbidden':
+      return `The registry token does not have permission to publish (403). Sign in as an administrator and authorize a token with registry:write access.`;
     case 'bad_request':
       return `The registry rejected the ${rejectedPayload} (400): ${error.message}`;
     default:

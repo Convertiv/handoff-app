@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
+import type { RegistryPrincipal } from '@handoff/registry/auth';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { getRegistryConnection, RegistryConnectionError } from '../registry-connection';
 import { authorizeMutation } from './auth';
@@ -12,8 +13,9 @@ import { redactSecrets } from '../api/redact';
  *
  * Enforces, in order: the registry-runtime guard (management APIs exist only when
  * `runtime.mode: registry`, else `409 runtime_mode_conflict`); the per-route method allowlist
- * (`405 method_not_allowed`); the bearer-token guard for mutations (`503 token_not_configured` /
- * `401 unauthorized`); and database resolution (`503 database_unavailable`). The route body then
+ * (`405 method_not_allowed`); database resolution (`503 database_unavailable`); and scoped,
+ * revocable bearer-token authorization for mutations (`401 unauthorized` / `403 forbidden`).
+ * The route body then
  * runs against a live connection, with any thrown failure mapped to `unexpected_error`.
  */
 
@@ -26,6 +28,8 @@ export interface RegistryRouteContext {
   res: NextApiResponse;
   db: RegistryDatabase;
   method: string;
+  /** Authenticated token owner for mutation requests; public GET requests have no principal. */
+  principal?: RegistryPrincipal;
 }
 
 /**
@@ -66,14 +70,6 @@ export const handleRegistryRoute = async (
     return;
   }
 
-  if (MUTATION_METHODS.has(method)) {
-    const auth = authorizeMutation(req);
-    if (!auth.ok) {
-      sendRegistryError(res, auth.code, auth.message);
-      return;
-    }
-  }
-
   let db: RegistryDatabase;
   try {
     ({ db } = await getRegistryConnection());
@@ -87,8 +83,18 @@ export const handleRegistryRoute = async (
     return;
   }
 
+  let principal: RegistryPrincipal | undefined;
+  if (MUTATION_METHODS.has(method)) {
+    const auth = await authorizeMutation(req, db);
+    if (!auth.ok) {
+      sendRegistryError(res, auth.code!, auth.message!);
+      return;
+    }
+    principal = auth.principal;
+  }
+
   try {
-    await body({ req, res, db, method });
+    await body({ req, res, db, method, principal });
   } catch (error) {
     console.error('Registry API request failed.', error);
     sendRegistryError(res, 'unexpected_error', 'Unexpected registry API error.');

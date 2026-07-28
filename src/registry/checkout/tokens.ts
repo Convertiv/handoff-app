@@ -28,7 +28,9 @@ const describeFetchFailure = (error: RegistryClientError, target: string, regist
     case 'runtime_mode_conflict':
       return `The registry at ${registryUrl} is not running in registry mode, so it cannot serve a checkout: ${error.message}`;
     case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
+      return `The registry rejected the access token (401). Run \`handoff-app login --url ${registryUrl}\` again, or replace the user-issued CI token.`;
+    case 'forbidden':
+      return `The registry token does not have permission to checkout design tokens (403). Authorize a token with registry:read access.`;
     default:
       return error.message;
   }
@@ -73,7 +75,7 @@ export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<
   if (setId && !isTokenSetId(setId)) {
     throw new CheckoutError(`Unknown or unsafe token set id "${setId}".`);
   }
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
   let ids: string[];

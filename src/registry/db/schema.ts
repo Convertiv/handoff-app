@@ -23,7 +23,7 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { check, customType, index, integer, jsonb, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { check, customType, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { ArtifactBuildStatus, ArtifactKind, ArtifactOwnerKind, ArtifactReference } from '../../artifacts/types';
 import type { RegistryTextFileKind } from '../../store/types';
 import type { TokenSetKind } from '../tokens/sets';
@@ -42,6 +42,24 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
 /** Where an asset blob's bytes physically live: the default DB adapter, Vercel Blob, or a custom id. */
 export type AssetStorageProvider = 'database' | 'vercel-blob' | (string & {});
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
+
+/** Registry account role. Administrators may issue write-scoped credentials. */
+export type RegistryUserRole = 'admin' | 'member';
+
+/** Registry account lifecycle. Invited and deactivated accounts cannot authenticate. */
+export type RegistryUserStatus = 'invited' | 'active' | 'deactivated';
+
+/** One-time account action represented by a hashed secret. */
+export type RegistryAuthActionPurpose = 'invite' | 'password_reset';
+
+/** Capability granted to a registry access token. */
+export type RegistryAccessScope = 'registry:read' | 'registry:write';
+
+/** State machine for an RFC 8628-style CLI device authorization. */
+export type RegistryDeviceAuthorizationStatus = 'pending' | 'approved' | 'denied' | 'consumed';
+
+/** Public endpoint family protected by a database-backed throttling counter. */
+export type RegistryRateLimitBucket = 'login' | 'password_reset' | 'device';
 
 /**
  * Entity a docs read-model artifact is associated with. `page` is included only for type-compat with
@@ -426,6 +444,155 @@ export const assetBlobs = pgTable('asset_blobs', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Registry users. Browser sessions carry the id and auth version, while protected requests re-read
+ * this row so role/status changes take effect without waiting for a cookie to expire.
+ */
+export const registryUsers = pgTable(
+  'registry_users',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    email: text('email').notNull(),
+    name: text('name'),
+    image: text('image'),
+    role: text('role').$type<RegistryUserRole>().notNull().default('member'),
+    status: text('status').$type<RegistryUserStatus>().notNull().default('invited'),
+    passwordHash: text('password_hash'),
+    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+    authVersion: integer('auth_version').notNull().default(1),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('registry_users_normalized_email_idx').on(sql`lower(btrim(${table.email}))`),
+    index('registry_users_status_role_idx').on(table.status, table.role),
+    check('registry_users_email_normalized', sql`${table.email} = lower(btrim(${table.email}))`),
+    check('registry_users_role_valid', sql`${table.role} in ('admin', 'member')`),
+    check('registry_users_status_valid', sql`${table.status} in ('invited', 'active', 'deactivated')`),
+    check('registry_users_auth_version_positive', sql`${table.authVersion} > 0`),
+  ]
+);
+
+/**
+ * Permanent one-row installation marker. There is deliberately no reset path: deleting or
+ * deactivating users must never reopen the public first-visitor installer.
+ */
+export const registryInstallations = pgTable(
+  'registry_installations',
+  {
+    id: text('id').primaryKey().default('default'),
+    status: text('status').notNull().default('installed'),
+    schemaVersion: integer('schema_version').notNull(),
+    initialAdminUserId: text('initial_admin_user_id')
+      .notNull()
+      .references(() => registryUsers.id, { onDelete: 'restrict' }),
+    installedAt: timestamp('installed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check('registry_installations_singleton', sql`${table.id} = 'default'`),
+    check('registry_installations_status_valid', sql`${table.status} = 'installed'`),
+    check('registry_installations_schema_version_positive', sql`${table.schemaVersion} > 0`),
+  ]
+);
+
+/** Hash-only invitation and password-reset secrets. */
+export const registryAuthActionTokens = pgTable(
+  'registry_auth_action_tokens',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => registryUsers.id, { onDelete: 'cascade' }),
+    purpose: text('purpose').$type<RegistryAuthActionPurpose>().notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('registry_auth_action_tokens_hash_idx').on(table.tokenHash),
+    index('registry_auth_action_tokens_user_purpose_idx').on(table.userId, table.purpose),
+    check('registry_auth_action_tokens_purpose_valid', sql`${table.purpose} in ('invite', 'password_reset')`),
+  ]
+);
+
+/** Revocable, hash-only registry API credentials owned by one user. */
+export const registryAccessTokens = pgTable(
+  'registry_access_tokens',
+  {
+    /** Public lookup id embedded in the opaque token; not itself a credential. */
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => registryUsers.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    secretHash: text('secret_hash').notNull(),
+    scopes: jsonb('scopes').$type<RegistryAccessScope[]>().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('registry_access_tokens_user_idx').on(table.userId),
+    index('registry_access_tokens_expires_idx').on(table.expiresAt),
+    check('registry_access_tokens_name_not_blank', sql`length(btrim(${table.name})) > 0`),
+    check('registry_access_tokens_scopes_array', sql`jsonb_typeof(${table.scopes}) = 'array'`),
+  ]
+);
+
+/** Short-lived authorization used by `handoff-app login`. Plaintext device codes are never stored. */
+export const registryDeviceAuthorizations = pgTable(
+  'registry_device_authorizations',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    deviceCodeHash: text('device_code_hash').notNull(),
+    userCode: text('user_code').notNull(),
+    status: text('status').$type<RegistryDeviceAuthorizationStatus>().notNull().default('pending'),
+    userId: text('user_id').references(() => registryUsers.id, { onDelete: 'set null' }),
+    scopes: jsonb('scopes').$type<RegistryAccessScope[]>().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('registry_device_authorizations_device_hash_idx').on(table.deviceCodeHash),
+    uniqueIndex('registry_device_authorizations_user_code_idx').on(table.userCode),
+    index('registry_device_authorizations_expires_idx').on(table.expiresAt),
+    check('registry_device_authorizations_status_valid', sql`${table.status} in ('pending', 'approved', 'denied', 'consumed')`),
+    check('registry_device_authorizations_scopes_array', sql`jsonb_typeof(${table.scopes}) = 'array'`),
+  ]
+);
+
+/**
+ * Fixed-window throttling counters. Callers pass a hash of the identifying value so raw emails and
+ * IP addresses are not retained.
+ */
+export const registryAuthRateLimits = pgTable(
+  'registry_auth_rate_limits',
+  {
+    bucket: text('bucket').$type<RegistryRateLimitBucket>().notNull(),
+    identifierHash: text('identifier_hash').notNull(),
+    windowStartedAt: timestamp('window_started_at', { withTimezone: true }).notNull(),
+    attempts: integer('attempts').notNull().default(1),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.bucket, table.identifierHash, table.windowStartedAt] }),
+    index('registry_auth_rate_limits_expires_idx').on(table.expiresAt),
+    check('registry_auth_rate_limits_bucket_valid', sql`${table.bucket} in ('login', 'password_reset', 'device')`),
+    check('registry_auth_rate_limits_attempts_positive', sql`${table.attempts} > 0`),
+  ]
+);
+
 /** All registry tables, for typed Drizzle clients and migration tooling. */
 export const registrySchema = {
   components,
@@ -441,4 +608,10 @@ export const registrySchema = {
   assetCollections,
   assets,
   assetBlobs,
+  registryUsers,
+  registryInstallations,
+  registryAuthActionTokens,
+  registryAccessTokens,
+  registryDeviceAuthorizations,
+  registryAuthRateLimits,
 };

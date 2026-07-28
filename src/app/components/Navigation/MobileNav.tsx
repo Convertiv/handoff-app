@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../.
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
 import { useNav } from '../context/NavProvider';
+import { AuthControls } from '../Auth/AuthControls';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -90,6 +91,7 @@ export function MobileNav() {
               )}
             </Button>
           </div>
+          {context.config?.runtime?.mode === 'registry' ? <AuthControls mobile /> : null}
         </div>
       </SheetContent>
     </Sheet>

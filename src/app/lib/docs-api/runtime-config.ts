@@ -4,7 +4,6 @@ import type { RuntimeMode } from '@handoff/types/config';
 import {
   DEFAULT_DATABASE_URL_ENV,
   DEFAULT_REGISTRY_DRIVER,
-  DEFAULT_REGISTRY_API_TOKEN_ENV,
   type RegistryDatabaseDriver,
 } from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
@@ -29,11 +28,6 @@ export interface ServerRegistryRuntimeConfig {
   driver: RegistryDatabaseDriver;
   /** Name of the env var holding the database connection string (value resolved at request time). */
   databaseUrlEnv: string;
-  /**
-   * Name of the env var holding the registry management API bearer token. The token *value* is
-   * resolved from the environment at request time by the management API guard — never persisted.
-   */
-  apiTokenEnv: string;
 }
 
 /** Resolved server-side runtime configuration for the docs read API. */
@@ -55,7 +49,6 @@ const defaults = (): ServerRuntimeConfig => ({
   registry: {
     driver: DEFAULT_REGISTRY_DRIVER,
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
-    apiTokenEnv: DEFAULT_REGISTRY_API_TOKEN_ENV,
   },
   assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
 });
@@ -108,13 +101,11 @@ const fromEnv = (): ServerRuntimeConfig | null => {
     return null;
   }
   const databaseUrlEnv = process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV?.trim() || DEFAULT_DATABASE_URL_ENV;
-  const apiTokenEnv = process.env.HANDOFF_REGISTRY_API_TOKEN_ENV?.trim() || DEFAULT_REGISTRY_API_TOKEN_ENV;
   return {
     mode: mode === 'registry' ? 'registry' : 'workspace',
     registry: {
       driver: process.env.HANDOFF_REGISTRY_DRIVER?.trim() === 'neon' ? 'neon' : 'pg',
       databaseUrlEnv,
-      apiTokenEnv,
     },
     assetStorage: assetStorageFromEnv(),
   };
@@ -145,10 +136,6 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
         typeof parsed?.registry?.databaseUrlEnv === 'string' && parsed.registry.databaseUrlEnv.trim()
           ? parsed.registry.databaseUrlEnv.trim()
           : DEFAULT_DATABASE_URL_ENV;
-      const apiTokenEnv =
-        typeof parsed?.registry?.apiTokenEnv === 'string' && parsed.registry.apiTokenEnv.trim()
-          ? parsed.registry.apiTokenEnv.trim()
-          : DEFAULT_REGISTRY_API_TOKEN_ENV;
       const assetStorage: AssetStorageSettings =
         parsed?.assetStorage && typeof parsed.assetStorage === 'object'
           ? parsed.assetStorage
@@ -158,7 +145,6 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
         registry: {
           driver: parsed?.registry?.driver === 'neon' ? 'neon' : 'pg',
           databaseUrlEnv,
-          apiTokenEnv,
         },
         assetStorage,
       };

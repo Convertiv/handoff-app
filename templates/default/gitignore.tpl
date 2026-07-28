@@ -11,6 +11,7 @@ public/api
 
 # Environment
 .env
+.handoff/
 
 # Deployment
 .vercel

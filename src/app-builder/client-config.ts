@@ -3,7 +3,8 @@ import path from 'path';
 import Handoff from '..';
 import { getClientConfig } from '../config';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
-import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
+import { resolveAuthenticatedRegistryConnection } from '../registry/connection';
+import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
 import type { Config, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
@@ -59,7 +60,6 @@ const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) =>
     registry: {
       driver: resolveRegistryDriver(config),
       databaseUrlEnv: resolveDatabaseUrlEnv(config),
-      apiTokenEnv: resolveApiTokenEnv(config),
     },
     assetStorage: {
       adapter: assetStorage.adapterKind,
@@ -93,13 +93,14 @@ export const persistClientConfig = async (handoff: Handoff, options: PersistClie
   await fs.ensureDir(appPath);
 
   const clientConfig = getClientConfig(handoff.config);
-  if (options.runtimeModeOverride) {
-    // A forced registry mode (the registry build target) is never a connected workspace, so the
-    // baked client config must report `connected: false` even when packaged from a connected
-    // workspace project.
-    const connected = options.runtimeModeOverride === 'registry' ? false : clientConfig.runtime.connected;
-    clientConfig.runtime = { ...clientConfig.runtime, mode: options.runtimeModeOverride, connected };
-  }
+  const mode = options.runtimeModeOverride ?? clientConfig.runtime.mode;
+  // A registry build target is never a connected workspace, so it must bake `connected: false`
+  // even when packaged from a connected project. Otherwise a workspace is connected whenever a
+  // registry URL resolves — from config/env or a saved device login — so `login` alone surfaces
+  // the publish/checkout UI without also requiring HANDOFF_REGISTRY_URL.
+  const connected =
+    mode === 'registry' ? false : Boolean((await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath)).url);
+  clientConfig.runtime = { ...clientConfig.runtime, mode, connected };
 
   await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: clientConfig }, { spaces: 2 });
   await fs.writeJson(

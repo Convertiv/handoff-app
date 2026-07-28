@@ -8,7 +8,7 @@ import { buildPatterns } from '../pipeline/patterns';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
-import { resolveApiTokenEnv, resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
+import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
@@ -258,7 +258,6 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedRuntimeMode = escapeForSingleQuotedJsString(runtimeMode);
   const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
-  const escapedApiTokenEnv = escapeForSingleQuotedJsString(resolveApiTokenEnv(handoff.config));
   // Asset storage selection baked (provider + module + env-var names + non-secret options JSON).
   const assetStorage = resolveAssetStorageFromConfig(handoff.config);
   const escapedAssetStorageAdapter = escapeForSingleQuotedJsString(assetStorage.adapterKind);
@@ -276,7 +275,6 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_RUNTIME_MODE%': escapedRuntimeMode,
     '%HANDOFF_REGISTRY_DRIVER%': escapedRegistryDriver,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
-    '%HANDOFF_REGISTRY_API_TOKEN_ENV%': escapedApiTokenEnv,
     '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
     '%HANDOFF_ASSET_STORAGE_MODULE%': escapedAssetStorageModule,
     '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
@@ -418,7 +416,11 @@ and \`.next/static/\` already copied alongside so the server serves them.
 ## Required environment variables (supplied at deploy time, never baked in)
 
 - \`${databaseUrlEnv}\` — PostgreSQL/Neon connection string, read at request time.
-- \`HANDOFF_REGISTRY_API_TOKEN\` — bearer token for registry management mutations (if used).
+- \`AUTH_SECRET\` — a long, random secret used to sign browser sessions.
+- \`AUTH_URL\` — the canonical public registry URL, including the configured base path.
+
+Optional email delivery uses \`RESEND_API_KEY\` and \`AUTH_FROM_EMAIL\`. Without them, invitation
+links are shown once to an administrator for manual delivery.
 
 ## Database migrations
 
@@ -432,6 +434,21 @@ ${databaseUrlEnv}="postgres://…" handoff-app db:migrate
 \`db:migrate\` reads your project config + DB env vars, resolves the same database driver the app was
 built with, and applies the package-owned migration set. It runs independently of \`build\` and of
 starting the server, so run it as a release/one-shot job.
+
+## Complete the one-time installation
+
+After migrations and deployment, open \`/install\` immediately and create the initial administrator.
+The installer verifies the deployment but never changes the schema. An exposed, uninstalled registry
+can be claimed by its first visitor, so do not leave this step unattended.
+
+Once installation completes, sign in and authorize a workspace:
+
+\`\`\`bash
+handoff-app login --url https://registry.example.com
+\`\`\`
+
+The browser approval issues a revocable, user-owned credential. The former
+\`HANDOFF_REGISTRY_API_TOKEN\` fixed server secret is no longer accepted.
 
 ## Run it (self-hosting)
 
@@ -481,7 +498,7 @@ containers, custom Node servers, and other non-Vercel hosts.
  * package is driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
  */
 const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
-  const base = ['next', 'react', 'react-dom', 'drizzle-orm'];
+  const base = ['next', 'next-auth', 'react', 'react-dom', 'drizzle-orm'];
   const driver = resolveRegistryDriver(handoff.config);
   const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
   // Asset-storage SDKs the deployed registry must be able to load at request time. The pre-packaged

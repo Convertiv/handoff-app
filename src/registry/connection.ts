@@ -9,6 +9,7 @@
  */
 
 import type { Config } from '../types/config';
+import { cliAuthMatchesRegistry, cliAuthTokenIsValid, readCliAuth } from '../cli/auth/store';
 
 /** Default env-var name holding the remote registry base URL. */
 export const DEFAULT_REGISTRY_URL_ENV = 'HANDOFF_REGISTRY_URL';
@@ -47,4 +48,26 @@ export const resolveRegistryConnection = (config: Config | null | undefined): Re
     urlEnv,
     accessTokenEnv,
   };
+};
+
+/**
+ * Resolve the same connection for an authenticated CLI operation, letting a saved device login fill
+ * in what the environment does not provide. A valid login supplies both the registry URL and the
+ * access token, so `handoff-app login` alone is enough to publish and checkout. Environment values
+ * keep precedence for deterministic CI: `HANDOFF_REGISTRY_URL` (or inline config) wins over the
+ * saved URL, and `HANDOFF_REGISTRY_ACCESS_TOKEN` wins over the saved token. The saved token only
+ * applies to the URL it was issued for.
+ */
+export const resolveAuthenticatedRegistryConnection = async (
+  config: Config | null | undefined,
+  workingPath = process.cwd()
+): Promise<ResolvedRegistryConnection> => {
+  const connection = resolveRegistryConnection(config);
+
+  const auth = await readCliAuth(workingPath);
+  if (!cliAuthTokenIsValid(auth)) return connection;
+
+  const url = connection.url || auth!.remoteUrl;
+  const accessToken = connection.accessToken || (cliAuthMatchesRegistry(auth, url) ? auth!.accessToken : '');
+  return { ...connection, url, accessToken };
 };

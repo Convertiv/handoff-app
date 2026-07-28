@@ -52,3 +52,21 @@ It reads `DATABASE_URL` from the environment and applies the migrations bundled
 with Handoff. It runs on its own, separate from build and start, so use it as a
 release step (for example in CI/CD). Static deployments don't use a database and
 can skip it.
+
+### One-time installation
+
+Configure `AUTH_SECRET` and the canonical `AUTH_URL`, run migrations, deploy, and
+then open `/install` immediately. The browser installer verifies the deployment
+and transactionally creates the first administrator; it never runs migrations.
+The first visitor can claim an uninstalled registry, so do not leave a new
+deployment unattended.
+
+After installation, sign in and run:
+
+```bash
+handoff-app login --url https://registry.example.com
+```
+
+Approve the device in the browser before publishing or checking out. CI should
+use a user-issued access token from Account settings. The former fixed
+`HANDOFF_REGISTRY_API_TOKEN` is not accepted.

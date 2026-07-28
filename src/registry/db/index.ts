@@ -5,10 +5,22 @@ export {
   docsArtifacts,
   patternFiles,
   patterns,
+  registryAccessTokens,
+  registryAuthActionTokens,
+  registryAuthRateLimits,
+  registryDeviceAuthorizations,
+  registryInstallations,
   registrySchema,
+  registryUsers,
   type BuildMetadataEntityKind,
   type DocsArtifactEntityKind,
+  type RegistryAccessScope,
+  type RegistryAuthActionPurpose,
+  type RegistryDeviceAuthorizationStatus,
+  type RegistryRateLimitBucket,
   type RegistryReviewMetadata,
+  type RegistryUserRole,
+  type RegistryUserStatus,
 } from './schema';
 
 export type { ArtifactBuildStatus as RegistryBuildStatus } from '../../artifacts/types';

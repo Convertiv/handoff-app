@@ -97,7 +97,6 @@ const nextConfig = {
     HANDOFF_RUNTIME_MODE: '%HANDOFF_RUNTIME_MODE%',
     HANDOFF_REGISTRY_DRIVER: '%HANDOFF_REGISTRY_DRIVER%',
     HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
-    HANDOFF_REGISTRY_API_TOKEN_ENV: '%HANDOFF_REGISTRY_API_TOKEN_ENV%',
     // Asset storage selection (provider + non-secret options + env-var names). Secret values (Blob
     // token, custom credentials) are read from their named env var at request time, never baked.
     HANDOFF_ASSET_STORAGE_ADAPTER: '%HANDOFF_ASSET_STORAGE_ADAPTER%',

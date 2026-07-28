@@ -394,7 +394,6 @@ runtime: {
   // Registry deployment settings (build --target registry, db:migrate).
   registry: {
     databaseUrlEnv: 'DATABASE_URL',
-    apiTokenEnv: 'HANDOFF_REGISTRY_API_TOKEN',
     database: { driver: 'pg' }, // connection driver: 'pg' | 'neon' (PostgreSQL only)
   },
 },
@@ -410,9 +409,27 @@ values, and are redacted from API responses.
 | `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
 | `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
 | `HANDOFF_REGISTRY_URL` | Default env var for a connected workspace's registry URL |
-| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Connected-workspace access token for publish/checkout |
+| `HANDOFF_REGISTRY_ACCESS_TOKEN` | User-issued CI token for publish/checkout |
 | `DATABASE_URL` | Registry database connection string (name is configurable) |
-| `HANDOFF_REGISTRY_API_TOKEN` | Bearer token guarding registry management mutations |
+| `AUTH_SECRET` | Long random secret used to sign registry browser sessions |
+| `AUTH_URL` | Canonical public registry URL, including its base path |
+| `RESEND_API_KEY` | Optional Resend API key for invitations and password resets |
+| `AUTH_FROM_EMAIL` | Optional verified sender used with Resend |
+
+### Registry installation and login
+
+Database migrations remain an explicit deployment step. Configure the environment, run
+`handoff-app db:migrate`, deploy, and then open `/install` immediately to create the first
+administrator. The installer validates the deployment but never changes the schema.
+
+The first visitor can claim an uninstalled registry. Do not expose a new deployment longer than
+needed to complete installation.
+
+After installation, sign in and authorize each workspace with
+`handoff-app login --url https://registry.example.com`. Handoff stores the revocable credential in
+`.handoff/cli-auth.json` and uses it only for that exact normalized registry URL. For CI, create a
+token in Account settings and expose it through `runtime.registryConnection.accessTokenEnv`.
+The former `HANDOFF_REGISTRY_API_TOKEN` fixed server secret is no longer authorized.
 
 ### Hooks
 
@@ -436,6 +453,8 @@ See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 | `build:components [component]` | Build components without building the full app |
 | `publish <components\|patterns\|pages\|tokens\|assets> [id]` | Build and publish entities to the connected registry (all of the kind, or one by id) |
 | `checkout <components\|patterns\|pages\|tokens\|assets> [id]` | Pull entities from the connected registry into this workspace |
+| `login --url <registry-url>` | Authorize this workspace through the registry device flow |
+| `logout [--url <registry-url>]` | Revoke and remove the saved workspace credential |
 | `db:migrate` | Run registry database migrations (Drizzle / PostgreSQL) |
 | `make:component <name>` | Scaffold a new component |
 | `make:page <name> [parent]` | Scaffold a documentation page |

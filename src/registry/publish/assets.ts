@@ -42,7 +42,7 @@ const toManifestEntry = (asset: AssetMetadata): AssetManifestEntry => ({
  * throws at the end if any collection failed.
  */
 export const publishAssets = async (handoff: Handoff, collection?: string): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
   if (collection && !isAssetCollection(collection)) {
     throw new PublishError(`Unknown asset collection "${collection}". Supported collections: ${ASSET_COLLECTIONS.join(', ')}.`);
   }

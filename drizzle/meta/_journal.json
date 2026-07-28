@@ -36,6 +36,13 @@
       "when": 1783442253186,
       "tag": "0004_add_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785229875267,
+      "tag": "0005_add_registry_auth",
+      "breakpoints": true
     }
   ]
 }

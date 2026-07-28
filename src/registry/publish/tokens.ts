@@ -58,7 +58,7 @@ const buildTokenSetPackage = async (handoff: Handoff, set: TokenSetRecord): Prom
  * committed atomically server-side); the run throws at the end if any set failed.
  */
 export const publishTokens = async (handoff: Handoff, setId?: string): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
 
   Logger.info(setId ? `Building tokens to publish "${setId}"…` : 'Building tokens for publish…');
   await handoff.fetch();

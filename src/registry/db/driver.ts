@@ -18,7 +18,7 @@ export type RegistryDatabaseDriver = 'pg' | 'neon';
 /** Default env-var name holding the database connection string. */
 export const DEFAULT_DATABASE_URL_ENV = 'DATABASE_URL';
 
-/** Default env-var name holding the registry management API bearer token. */
+/** @deprecated Fixed registry server secrets are no longer authorized. */
 export const DEFAULT_REGISTRY_API_TOKEN_ENV = 'HANDOFF_REGISTRY_API_TOKEN';
 
 /** Default registry database driver when none is configured. */
@@ -41,9 +41,10 @@ export const resolveDatabaseUrlEnv = (config: Config | null | undefined): string
 };
 
 /**
- * Resolve the env-var *name* holding the registry management API bearer token (defaults to
- * `HANDOFF_REGISTRY_API_TOKEN`). Like the database URL, only the name is ever persisted — the token
- * value is resolved from the environment at request time and never written to config.
+ * Resolve the legacy fixed-token env-var name for configuration compatibility.
+ *
+ * @deprecated The returned env var is intentionally ignored by registry authorization. Use a
+ * user-issued access token or `handoff-app login`.
  */
 export const resolveApiTokenEnv = (config: Config | null | undefined): string => {
   const configured = config?.runtime?.registry?.apiTokenEnv?.trim();

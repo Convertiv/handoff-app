@@ -68,7 +68,6 @@ export default defineConfig({
   //   mode: "registry",
   //   registry: {
   //     databaseUrlEnv: "DATABASE_URL",
-  //     apiTokenEnv: "HANDOFF_REGISTRY_API_TOKEN",
   //     database: { driver: "pg" }, // 'pg' | 'neon'
   //   },
   // },

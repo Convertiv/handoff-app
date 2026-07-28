@@ -22,7 +22,7 @@ import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
-import { resolveRegistryConnection } from '../connection';
+import { resolveAuthenticatedRegistryConnection } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
@@ -52,7 +52,7 @@ const COMPONENT_EXTENSION = /\.(tsx|jsx|ts|js|cjs|mjs)$/i;
  * host has no local workspace to write into) and a resolved registry URL + access token. Throws an
  * actionable {@link CheckoutError} naming the exact misconfiguration.
  */
-export const resolveConnectionOrThrow = (handoff: Handoff) => {
+export const resolveConnectionOrThrow = async (handoff: Handoff) => {
   const mode = handoff.config?.runtime?.mode ?? 'workspace';
   if (mode !== 'workspace') {
     throw new CheckoutError(
@@ -61,17 +61,17 @@ export const resolveConnectionOrThrow = (handoff: Handoff) => {
     );
   }
 
-  const connection = resolveRegistryConnection(handoff.config);
+  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath);
   if (!connection.url) {
     throw new CheckoutError(
-      `No registry URL is configured. Set runtime.registryConnection.url, or the "${connection.urlEnv}" environment variable, ` +
-        'to the base URL of the registry to checkout from.'
+      `No registry is configured. Run \`handoff-app login --url <registry-url>\`, set runtime.registryConnection.url, ` +
+        `or set the "${connection.urlEnv}" environment variable to the base URL of the registry to checkout from.`
     );
   }
   if (!connection.accessToken) {
     throw new CheckoutError(
-      `No registry access token is configured. Set the "${connection.accessTokenEnv}" environment variable to the ` +
-        "registry's bearer token to authorize checkout."
+      `No registry access token is configured. Run \`handoff-app login --url ${connection.url}\`, or set the ` +
+        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.`
     );
   }
   return connection;
@@ -85,7 +85,9 @@ const describeFetchFailure = (error: RegistryClientError, kind: TransferEntityKi
     case 'runtime_mode_conflict':
       return `The registry at ${registryUrl} is not running in registry mode, so it cannot serve a checkout: ${error.message}`;
     case 'unauthorized':
-      return `The registry rejected the access token (401). Check the configured access token matches the registry's token.`;
+      return `The registry rejected the access token (401). Run \`handoff-app login --url ${registryUrl}\` again, or replace the user-issued CI token.`;
+    case 'forbidden':
+      return `The registry token does not have permission to checkout this content (403). Authorize a token with registry:read access.`;
     default:
       return error.message;
   }
@@ -683,7 +685,7 @@ const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, ta
  * Overwriting existing local files requires `--force` or an interactive confirmation.
  */
 export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
   const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
   if (targetDir) {
@@ -698,7 +700,7 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
  * prompting is per entity (skipped under `--force`).
  */
 export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
-  const connection = resolveConnectionOrThrow(handoff);
+  const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
   let summaries;
