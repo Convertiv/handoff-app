@@ -136,7 +136,11 @@ export const registryAuthOptions: NextAuthOptions = {
         mutable.authVersion = current.authVersion;
         mutable.authInvalid = false;
       } catch {
-        return clearUserToken(mutable);
+        // Don't invalidate a good session over a transient failure (database down, pool exhausted).
+        // Stripping identity here would strand the user in an unrecoverable "authenticated but no
+        // user" state that only clearing cookies fixes, so keep the last-known token and re-validate
+        // next request. Genuine invalidation (missing/inactive user, authVersion) is handled above.
+        return token;
       }
       return token;
     },

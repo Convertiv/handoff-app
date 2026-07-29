@@ -32,15 +32,18 @@ function RegistryAccountLayout({ children, title }: { children: ReactNode; title
   const router = useRouter();
   const role = (session?.user as { role?: string } | undefined)?.role;
 
+  // Redirect to login whenever there's no live user, not just on `unauthenticated`. An invalidated
+  // token still reports `authenticated` but carries no user, so checking status alone leaves the
+  // shell stuck in a broken half-signed-in state.
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (status !== 'loading' && !session?.user) {
       void router.replace(`/login?callbackUrl=${encodeURIComponent(router.asPath)}`);
     }
-  }, [router, status]);
+  }, [router, session, status]);
 
   return (
     <AuthShell title={title} wide>
-      {status === 'loading' || status === 'unauthenticated' ? (
+      {status === 'loading' || !session?.user ? (
         <p className="py-20 text-center text-sm text-muted-foreground">Loading account…</p>
       ) : (
         <div className="grid gap-8 md:grid-cols-[200px_minmax(0,1fr)]">

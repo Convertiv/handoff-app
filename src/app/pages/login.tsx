@@ -24,7 +24,7 @@ export default function LoginPage() {
 
 function RegistryLoginPage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [pending, setPending] = useState(false);
   const [checkingInstall, setCheckingInstall] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +43,14 @@ function RegistryLoginPage() {
       .finally(() => setCheckingInstall(false));
   }, [router]);
 
+  // Only a session with a live user counts as signed in. An invalidated token still reports
+  // `authenticated` but has no user, so redirecting on status alone would bounce the visitor away
+  // before they could reach this form. That's the sign-in loop that clearing cookies used to fix.
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && session?.user) {
       void router.replace(safeCallbackUrl(router.query.callbackUrl));
     }
-  }, [router, status]);
+  }, [router, session, status]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
