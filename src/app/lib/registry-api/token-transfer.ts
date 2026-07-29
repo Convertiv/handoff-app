@@ -161,7 +161,7 @@ const ingestTokenSet = async (db: RegistryDatabase, pkg: TokenSetTransferPackage
   });
 };
 
-/** `GET /api/registry/transfer/tokens` — list set summaries (unauthenticated read behind the guards). */
+/** `GET /api/registry/transfer/tokens` — list set summaries (requires a `registry:read` token). */
 export const handleTokenSummaryRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
     const rows = await db

@@ -5,8 +5,9 @@ import { handleAssetCollectionRoute } from '@/lib/registry-api/asset-transfer';
  * `/api/registry/transfer/assets/:collection`: the asset collection manifest endpoint.
  *
  * - `GET` is checkout: the collection's manifest metadata (bodies travel separately as blobs).
+ *   Requires a `registry:read` token.
  * - `PUT` is publish ingestion: validates the manifest, asserts referenced blobs exist, and
- *   atomically replaces the collection's manifest. Requires the bearer token.
+ *   atomically replaces the collection's manifest. Requires a `registry:write` token.
  *
  * Both are registry-runtime only (enforced by the guard stack).
  */

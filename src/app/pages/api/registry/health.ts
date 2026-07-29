@@ -3,9 +3,10 @@ import { ensureRegistryMode, sendRegistryError } from '@/lib/registry-api';
 
 /**
  * `GET /api/registry/health` — registry liveness. Registry-runtime only
- * (`409 runtime_mode_conflict` in workspace mode); unauthenticated, like all registry GET reads. It
- * reports the runtime/source without touching the database so it can be used as a cheap probe, and
- * returns the documented bare `{ ok, runtime, source }` body rather than the data envelope.
+ * (`409 runtime_mode_conflict` in workspace mode). Unlike the data endpoints (which require a scoped
+ * token), health is unauthenticated: it reports the runtime/source without touching the database so
+ * it can be used as a cheap probe, and returns the documented bare `{ ok, runtime, source }` body
+ * rather than the data envelope.
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): void {
   if (!ensureRegistryMode(res)) {

@@ -435,8 +435,8 @@ const upsertBuildMetadata = async (db: RegistryDatabase, kind: TransferEntityKin
 /**
  * Handles `GET /api/registry/transfer/{component|pattern|page}`. Lists summaries for one kind of
  * entity: each id plus its build hashes and status. A connected workspace uses these to skip
- * unchanged entities on a bulk publish and to enumerate published ids for a bulk checkout. The read
- * is unauthenticated; only the registry-runtime and method guards apply.
+ * unchanged entities on a bulk publish and to enumerate published ids for a bulk checkout. Requires
+ * a `registry:read` token (enforced by the guard stack).
  */
 export const handleEntitySummaryRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {
@@ -465,8 +465,8 @@ export const handleEntitySummaryRoute = (req: NextApiRequest, res: NextApiRespon
  * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read. Returns the
  * normalized record plus its registry-safe source files so a connected workspace can reconstruct
  * the entity locally. Declaration files are workspace-only: registry stores never hold them, but
- * they are filtered defensively so checkout never receives one. The read is unauthenticated,
- * running behind the registry-runtime + method guards only.
+ * they are filtered defensively so checkout never receives one. Requires a `registry:read` token
+ * (enforced by the guard stack).
  */
 export const handleCheckoutRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET'], async ({ db }) => {

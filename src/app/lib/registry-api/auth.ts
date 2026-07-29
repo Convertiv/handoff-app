@@ -3,11 +3,11 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import {
   authenticateRegistryAccessToken,
   registryPrincipalHasScope,
-  REGISTRY_WRITE_SCOPE,
+  type RegistryAccessScope,
   type RegistryPrincipal,
 } from '@handoff/registry/auth';
 
-export interface MutationAuthResult {
+export interface RegistryAuthResult {
   ok: boolean;
   code?: 'unauthorized' | 'forbidden';
   message?: string;
@@ -21,8 +21,16 @@ const bearerToken = (req: NextApiRequest): string => {
   return match ? match[1].trim() : '';
 };
 
-/** Authorize registry mutations with a live, revocable user token carrying `registry:write`. */
-export const authorizeMutation = async (req: NextApiRequest, db: RegistryDatabase): Promise<MutationAuthResult> => {
+/**
+ * Authorize a registry request with a live, revocable user token carrying the required scope: reads
+ * need `registry:read`, mutations need `registry:write`. Every `/api/registry/*` request runs
+ * through this — there are no public endpoints behind the guard stack.
+ */
+export const authorizeRegistryRequest = async (
+  req: NextApiRequest,
+  db: RegistryDatabase,
+  scope: RegistryAccessScope
+): Promise<RegistryAuthResult> => {
   const principal = await authenticateRegistryAccessToken(db, bearerToken(req));
   if (!principal) {
     return {
@@ -32,11 +40,11 @@ export const authorizeMutation = async (req: NextApiRequest, db: RegistryDatabas
         'A valid user-issued access token is required. Run `handoff-app login`, or create a CI token in registry Account settings.',
     };
   }
-  if (!registryPrincipalHasScope(principal, REGISTRY_WRITE_SCOPE)) {
+  if (!registryPrincipalHasScope(principal, scope)) {
     return {
       ok: false,
       code: 'forbidden',
-      message: 'This access token does not include the registry:write scope.',
+      message: `This access token does not include the ${scope} scope.`,
     };
   }
   return { ok: true, principal };

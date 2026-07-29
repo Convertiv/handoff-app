@@ -5,8 +5,9 @@ import { handleAssetBlobRoute } from '@/lib/registry-api/asset-transfer';
  * `/api/registry/transfer/assets/blobs/:hash`: one content-addressed blob.
  *
  * - `PUT` stores the raw binary body through the active storage provider (inline `bytea` by default,
- *   or an object-storage adapter). Idempotent by hash; requires the bearer token.
+ *   or an object-storage adapter). Idempotent by hash; requires a `registry:write` token.
  * - `GET` returns the blob's bytes, or redirects to a provider URL for object-backed content.
+ *   Requires a `registry:read` token.
  *
  * Registry-runtime only (guard stack).
  */
