@@ -22,36 +22,26 @@ export default async function installHandler(req: NextApiRequest, res: NextApiRe
   if (!context) return;
 
   let state: Awaited<ReturnType<typeof getRegistryInstallationState>> | null = null;
-  let migrationError = '';
   try {
     state = await getRegistryInstallationState(context.db);
   } catch {
-    migrationError = 'Authentication tables are missing. Run `handoff-app db:migrate` as a deployment step.';
+    // A failed state query means the registry database is not ready to serve the installer; the
+    // database check below reports it.
   }
 
   const installed = state?.status === 'installed';
   if (method === 'GET') {
     const secretReady = registryAuthSecret().length >= 32;
     const canonicalReady = canonicalRegistryUrl() !== null;
+    const databaseReady = Boolean(state);
     const emptyUsers = state?.status === 'ready';
     const checks = [
       check('runtime', 'Registry runtime', true, 'This deployment is running in registry mode.'),
-      check('database', 'Database connection', true, 'The registry database is reachable.'),
       check(
-        'migrations',
-        'Database migrations',
-        Boolean(state),
-        state ? 'The registry authentication schema is available.' : migrationError
-      ),
-      check(
-        'users',
-        'Empty user directory',
-        Boolean(emptyUsers || installed),
-        installed
-          ? 'The registry installation is already complete.'
-          : emptyUsers
-            ? 'No registry users exist yet.'
-            : 'Users exist without a completed installation record. Resolve this inconsistent database state before installing.'
+        'database',
+        'Database connection',
+        databaseReady,
+        databaseReady ? 'The registry database is reachable.' : 'The registry database is not ready. Check the deployment and try again.'
       ),
       check(
         'authSecret',

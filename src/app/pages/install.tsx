@@ -1,14 +1,14 @@
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { CheckCircle2, CircleAlert, Database, KeyRound, Mail, RefreshCw, UserRound } from 'lucide-react';
+import { CheckCircle2, CircleAlert, Mail, RefreshCw, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AuthShell } from '../components/Auth/AuthShell';
 import { authApiUrl, readApiError } from '../components/Auth/api';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 type InstallStep = 'preflight' | 'administrator' | 'complete';
 
@@ -32,8 +32,6 @@ interface InstallStatus {
 const checkLabels: Record<string, string> = {
   runtime: 'Registry runtime',
   database: 'Database connection',
-  migrations: 'Database migrations',
-  users: 'Empty user directory',
   authSecret: 'Authentication secret',
   appUrl: 'Canonical application URL',
   email: 'Email delivery',
@@ -56,7 +54,7 @@ const normalizeChecks = (status: InstallStatus): PreflightCheck[] => {
       id: 'preflight',
       label: 'Registry configuration',
       ok: status.ready === true,
-      message: status.ready ? 'The registry is ready to install.' : 'Complete the registry configuration and run database migrations.',
+      message: status.ready ? 'The registry is ready to install.' : 'Complete the registry configuration, then retry.',
     },
     {
       id: 'email',
@@ -75,6 +73,7 @@ export default function InstallPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [registryUrl, setRegistryUrl] = useState('<registry-url>');
 
   const runPreflight = useCallback(async () => {
     setLoading(true);
@@ -106,6 +105,10 @@ export default function InstallPage() {
   }, [router]);
 
   useEffect(() => {
+    // The workspace runs `handoff-app login` against this registry's public URL: its origin plus any
+    // deployed base path, never the /install route itself.
+    const basePath = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/\/+$/, '');
+    setRegistryUrl(`${window.location.origin}${basePath}`);
     if (process.env.HANDOFF_RUNTIME_MODE === 'registry') void runPreflight();
     else setLoading(false);
   }, [runPreflight]);
@@ -158,7 +161,7 @@ export default function InstallPage() {
   };
 
   return (
-    <AuthShell title="Install registry" description="Configure the first Handoff Registry administrator.">
+    <AuthShell title="Install registry" description="Configure the first Handoff Registry administrator." hideNav>
       <div className="mb-8">
         <p className="text-sm font-medium text-muted-foreground">Registry installation</p>
         <div className="mt-3 grid grid-cols-3 gap-2" aria-label="Installation progress">
@@ -169,9 +172,8 @@ export default function InstallPage() {
           ].map(([id, label]) => (
             <div
               key={id}
-              className={`rounded-md px-3 py-2 text-center text-xs font-medium ${
-                step === id ? 'bg-gray-800 text-white' : 'bg-muted text-muted-foreground'
-              }`}
+              className={`rounded-md px-3 py-2 text-center text-xs font-medium ${step === id ? 'bg-gray-800 text-white' : 'bg-muted text-muted-foreground'
+                }`}
             >
               {label}
             </div>
@@ -184,8 +186,8 @@ export default function InstallPage() {
           <CardHeader>
             <CardTitle>Welcome to Handoff Registry</CardTitle>
             <CardDescription>
-              Before creating the administrator, we will verify that this deployment is ready. The installer never changes the database
-              schema.
+              Before you create the first administrator account, we&rsquo;ll run a quick readiness check to make sure this deployment is
+              configured correctly.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -224,11 +226,9 @@ export default function InstallPage() {
             )}
             {blockingChecks.length > 0 ? (
               <Alert variant="warning">
-                <Database />
+                <CircleAlert />
                 <AlertTitle>Deployment action required</AlertTitle>
-                <AlertDescription>
-                  Correct the checks above, run <code>handoff-app db:migrate</code> if migrations are missing, then retry.
-                </AlertDescription>
+                <AlertDescription>Correct the checks above, then retry.</AlertDescription>
               </Alert>
             ) : null}
           </CardContent>
@@ -247,8 +247,8 @@ export default function InstallPage() {
       {step === 'administrator' ? (
         <Card>
           <CardHeader>
-            <CardTitle>Create the administrator</CardTitle>
-            <CardDescription>This account will manage registry users and issue access tokens.</CardDescription>
+            <CardTitle>Create an administrator account</CardTitle>
+            <CardDescription>This account will manage registry users and generate access tokens.</CardDescription>
           </CardHeader>
           <form onSubmit={install}>
             <CardContent className="space-y-4">
@@ -282,12 +282,6 @@ export default function InstallPage() {
                   minLength={12}
                 />
               </div>
-              <Alert variant="warning">
-                <KeyRound />
-                <AlertDescription>
-                  Installation is permanent. Handoff prevents this screen from creating another administrator after completion.
-                </AlertDescription>
-              </Alert>
             </CardContent>
             <CardFooter className="justify-between">
               <Button type="button" variant="outline" onClick={() => setStep('preflight')} disabled={submitting}>
@@ -308,8 +302,8 @@ export default function InstallPage() {
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
               <CheckCircle2 />
             </div>
-            <CardTitle>Registry installed</CardTitle>
-            <CardDescription>Your administrator account is ready. No access token was created during installation.</CardDescription>
+            <CardTitle>Registry setup complete</CardTitle>
+            <CardDescription>Your administrator account is ready. No access tokens were created during setup.</CardDescription>
           </CardHeader>
           <CardContent>
             <ol className="space-y-4 text-sm">
@@ -320,7 +314,7 @@ export default function InstallPage() {
               <li className="flex gap-3">
                 <strong>2.</strong>
                 <span>
-                  Run <code className="rounded bg-muted px-1.5 py-0.5">handoff-app login --url &lt;registry-url&gt;</code> in your
+                  Run <code className="rounded bg-muted px-1.5 py-0.5">handoff-app login --url {registryUrl}</code> in your
                   workspace.
                 </span>
               </li>
