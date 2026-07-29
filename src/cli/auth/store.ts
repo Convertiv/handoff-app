@@ -35,6 +35,27 @@ export const normalizeRegistryUrl = (value: string): string => {
   return `${parsed.origin}${pathname === '/' ? '' : pathname}`;
 };
 
+/**
+ * A verification URL is only trustworthy if it's a web URL on the same origin as the
+ * registry the CLI is authenticating against. This stops a tampered device-authorization
+ * response from sending the browser to (or injecting a command via) another origin.
+ */
+export const assertRegistryOriginUrl = (baseUrl: string, candidate: string): string => {
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new Error('The registry returned an invalid verification URL.');
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`The registry returned a verification URL with an unsupported protocol "${url.protocol}".`);
+  }
+  if (url.origin !== new URL(baseUrl).origin) {
+    throw new Error('The registry returned a verification URL for a different origin than the registry.');
+  }
+  return url.toString();
+};
+
 export const cliAuthFilePath = (workingPath: string): string => path.resolve(workingPath, AUTH_DIRECTORY, AUTH_FILE);
 
 const isCliAuth = (value: unknown): value is CliAuth => {

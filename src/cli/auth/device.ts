@@ -1,6 +1,6 @@
 import { Logger } from '../../utils/logger';
 import { tryOpenBrowser } from './browser';
-import { type CliAuth, normalizeRegistryUrl, writeCliAuth } from './store';
+import { assertRegistryOriginUrl, type CliAuth, normalizeRegistryUrl, writeCliAuth } from './store';
 
 const DEVICE_GRANT = 'urn:ietf:params:oauth:grant-type:device_code';
 const DEFAULT_DEVICE_EXPIRES_IN_SECONDS = 15 * 60;
@@ -95,9 +95,11 @@ export const loginWithDevice = async (workingPath: string, remoteUrl: string, op
     throw new Error('The registry returned an invalid device authorization response.');
   }
 
-  const verificationUrl =
+  const verificationUrl = assertRegistryOriginUrl(
+    baseUrl,
     device.verification_uri_complete ||
-    `${device.verification_uri}${device.verification_uri.includes('?') ? '&' : '?'}user_code=${encodeURIComponent(device.user_code)}`;
+      `${device.verification_uri}${device.verification_uri.includes('?') ? '&' : '?'}user_code=${encodeURIComponent(device.user_code)}`,
+  );
 
   Logger.log('');
   Logger.log('Approve this device in your browser:');
