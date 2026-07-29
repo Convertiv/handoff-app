@@ -3,19 +3,32 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { AuthShell } from '../components/Auth/AuthShell';
 import { authApiUrl, readApiError } from '../components/Auth/api';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const token = typeof router.query.token === 'string' ? router.query.token : '';
-  const purpose = router.query.purpose === 'invite' ? 'invite' : 'reset';
+  const [token, setToken] = useState('');
+  const [purpose, setPurpose] = useState<'invite' | 'reset'>('reset');
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The invite/reset secret arrives in the URL fragment, which never hits the server, so it stays
+  // out of access logs and referrers. Pull it into state, then clear the URL so it doesn't linger in
+  // browser history.
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const capturedToken = hash.get('token');
+    if (!capturedToken) return;
+    setToken(capturedToken);
+    setPurpose(hash.get('purpose') === 'invite' ? 'invite' : 'reset');
+    void router.replace('/reset-password', undefined, { shallow: true });
+  }, [router]);
 
   const requestReset = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -76,6 +89,9 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthShell title={token ? 'Set a new password' : 'Reset password'}>
+      <Head>
+        <meta name="referrer" content="no-referrer" />
+      </Head>
       <Card>
         <CardHeader>
           <CardTitle>{token ? 'Set a new password' : 'Reset password'}</CardTitle>

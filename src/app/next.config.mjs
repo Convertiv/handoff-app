@@ -67,6 +67,16 @@ const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
+  // Extra safety for the invite/reset flow. The token now lives in the URL fragment, so it never
+  // reaches the server or leaks via Referer, but this header hardens the page anyway. Only the
+  // dynamic registry server can send response headers; a static export can't.
+  ...(handoffBuildTarget === 'registry'
+    ? {
+        async headers() {
+          return [{ source: '/reset-password', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }] }];
+        },
+      }
+    : {}),
   experimental: {
     externalDir: true,
   },

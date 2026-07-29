@@ -28,7 +28,7 @@ export default async function usersHandler(req: NextApiRequest, res: NextApiResp
     return;
   }
 
-  const activationUrl = registryPageUrl('/reset-password', { token: result.token, purpose: 'invite' });
+  const activationUrl = registryPageUrl('/reset-password', undefined, { token: result.token, purpose: 'invite' });
   if (!activationUrl) {
     res.status(500).json({ error: 'AUTH_URL is not configured.' });
     return;

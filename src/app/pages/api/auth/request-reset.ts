@@ -33,7 +33,7 @@ export default async function requestResetHandler(req: NextApiRequest, res: Next
   }
   const result = await createPasswordReset(context.db, email);
   if (result.token && result.user) {
-    const resetUrl = registryPageUrl('/reset-password', { token: result.token });
+    const resetUrl = registryPageUrl('/reset-password', undefined, { token: result.token });
     if (resetUrl) {
       try {
         await sendRegistryAuthEmail({

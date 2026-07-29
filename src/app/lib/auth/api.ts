@@ -13,14 +13,26 @@ export const allowApiMethods = (req: NextApiRequest, res: NextApiResponse, metho
   return null;
 };
 
-export const registryPageUrl = (path: string, query?: Record<string, string>): string | null => {
+export const registryPageUrl = (
+  path: string,
+  query?: Record<string, string>,
+  fragment?: Record<string, string>
+): string | null => {
   const canonical = canonicalRegistryUrl();
   if (!canonical) return null;
   const base = canonical.pathname.replace(/\/+$/, '');
   canonical.pathname = `${base}/${path.replace(/^\/+/, '')}`;
   canonical.search = '';
+  canonical.hash = '';
   if (query) {
     for (const [key, value] of Object.entries(query)) canonical.searchParams.set(key, value);
+  }
+  // Put secrets (invite/reset tokens) in the fragment rather than the query string. The fragment
+  // never reaches the server, so it stays out of access logs, proxies, and Referer headers.
+  if (fragment) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(fragment)) params.set(key, value);
+    canonical.hash = params.toString();
   }
   return canonical.toString();
 };
