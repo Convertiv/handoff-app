@@ -370,6 +370,10 @@ export const getComponentsForPath = (searchPath: string): string[] => {
     return [searchPath];
   }
 
+  if (!fs.existsSync(searchPath)) {
+    return [searchPath];
+  }
+
   // Otherwise, treat each subdirectory as a potential component
   const subdirectories = fs
     .readdirSync(searchPath, { withFileTypes: true })
