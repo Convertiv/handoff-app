@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getRegistryInstallationState, installRegistry } from '@handoff/registry/auth';
-import { allowApiMethods, canonicalRegistryUrl, prepareRegistryApi } from '../../lib/auth/api';
-import { registryAuthSecret } from '../../lib/auth/config';
+import { allowApiMethods, prepareRegistryApi } from '../../lib/auth/api';
+import { canonicalRegistryUrl, registryAuthSecret } from '../../lib/auth/config';
 import { registryEmailIsConfigured } from '../../lib/auth/email';
 
 const check = (id: string, label: string, ok: boolean, message: string, optional = false) => ({

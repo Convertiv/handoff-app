@@ -16,6 +16,31 @@ import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 
 export const registryAuthSecret = (): string => process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim() || '';
 
+/** The canonical public registry URL (base path included), read from the documented AUTH_URL. */
+export const canonicalRegistryUrl = (): URL | null => {
+  const value = process.env.AUTH_URL?.trim() || process.env.NEXTAUTH_URL?.trim();
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+};
+
+// NextAuth v4 only reads NEXTAUTH_URL to resolve callback origins and set the Secure cookie flag,
+// but deployments configure the documented AUTH_URL (the way registryAuthSecret bridges AUTH_SECRET).
+// Mirror it onto NEXTAUTH_URL, keeping the base path and adding the /api/auth mount NextAuth expects,
+// so self-hosted registries get https callbacks and Secure cookies instead of falling back to localhost.
+if (!process.env.NEXTAUTH_URL?.trim()) {
+  const canonical = canonicalRegistryUrl();
+  if (canonical) {
+    canonical.pathname = `${canonical.pathname.replace(/\/+$/, '')}/api/auth`;
+    canonical.search = '';
+    process.env.NEXTAUTH_URL = canonical.toString();
+  }
+}
+
 const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
 const requestIdentifier = (request: { headers?: Record<string, string | string[] | undefined> }, email: string): string => {

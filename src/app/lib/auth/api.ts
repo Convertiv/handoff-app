@@ -3,7 +3,7 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { getRegistryInstallationState, type RegistryUser } from '@handoff/registry/auth';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { getRegistryConnection, RegistryConnectionError } from '../registry-connection';
-import { getRegistrySessionUser } from './config';
+import { canonicalRegistryUrl, getRegistrySessionUser } from './config';
 
 export const allowApiMethods = (req: NextApiRequest, res: NextApiResponse, methods: string[]): string | null => {
   const method = (req.method ?? 'GET').toUpperCase();
@@ -11,17 +11,6 @@ export const allowApiMethods = (req: NextApiRequest, res: NextApiResponse, metho
   res.setHeader('Allow', methods.join(', '));
   res.status(405).json({ error: `Method ${method} is not allowed.` });
   return null;
-};
-
-export const canonicalRegistryUrl = (): URL | null => {
-  const value = process.env.AUTH_URL?.trim() || process.env.NEXTAUTH_URL?.trim();
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
-  } catch {
-    return null;
-  }
 };
 
 export const registryPageUrl = (path: string, query?: Record<string, string>): string | null => {
