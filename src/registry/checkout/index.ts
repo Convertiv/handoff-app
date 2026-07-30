@@ -16,7 +16,7 @@
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
-import { resolveComponentDeclaration } from '../../config/runtime';
+import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
@@ -91,9 +91,59 @@ const describeFetchFailure = (error: RegistryClientError, kind: TransferEntityKi
 };
 
 /**
- * Resolve the local directory the entity is written into: an already-checked-out / locally-declared
- * entity keeps its existing source directory (matched by stable `id`); otherwise it lands under the
- * first configured `entries.{components|patterns}` root (falling back to `components`/`patterns`).
+ * Ask the user which collection directory a new entity should land in when the config is ambiguous.
+ * Under `--force` (or any non-interactive run) there's no one to ask, so we fail with an actionable
+ * message rather than guessing a root.
+ */
+const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind, roots: string[]): Promise<string> => {
+  const relative = (root: string) => path.relative(handoff.workingPath, root) || '.';
+  if (handoff.force) {
+    throw new CheckoutError(
+      `Cannot determine where to checkout the ${kind}: entries.${kind}s declares individual ${kind}s under different ` +
+        `directories (${roots.map(relative).join(', ')}). Declare a single collection directory in handoff.config, ` +
+        `or run checkout without --force to choose interactively.`
+    );
+  }
+  const choice = await p.select({
+    message: `Where should the new ${kind} be checked out?`,
+    options: roots.map((root) => ({ value: root, label: relative(root) })),
+    initialValue: roots[0],
+  });
+  if (p.isCancel(choice)) {
+    throw new CheckoutError('Checkout cancelled; no target directory chosen.');
+  }
+  return choice as string;
+};
+
+/**
+ * Resolve the collection directory a new entity is cloned into from the configured
+ * `entries.{components|patterns}`. Each entry is either a collection directory (used as-is) or a
+ * single declared entity directory, in which case its parent is the collection root so the new
+ * entity lands as a sibling rather than nested inside. Different parents mean the config is
+ * ambiguous, so we ask the user; with nothing configured we fall back to the default subdir.
+ */
+const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind): Promise<string> => {
+  const configuredRoots = kind === 'component' ? handoff.config?.entries?.components : handoff.config?.entries?.patterns;
+  if (!configuredRoots?.length) {
+    return path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
+  }
+
+  const roots = [
+    ...new Set(
+      configuredRoots.map((entry) => {
+        const resolved = path.resolve(handoff.workingPath, entry);
+        return isComponentDirectory(resolved) ? path.dirname(resolved) : resolved;
+      })
+    ),
+  ];
+
+  return roots.length === 1 ? roots[0] : promptForCollectionRoot(handoff, kind, roots);
+};
+
+/**
+ * Resolve the local directory the entity is written into. An already-checked-out or locally-declared
+ * entity keeps its existing source directory (matched by stable `id`); otherwise it lands as a
+ * sibling under its configured collection root (see {@link resolveCollectionRoot}).
  */
 const resolveTargetDir = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<string> => {
   const store = kind === 'component' ? handoff.store.components : handoff.store.patterns;
@@ -103,10 +153,7 @@ const resolveTargetDir = async (handoff: Handoff, kind: TransferEntityKind, id: 
     return existingDir;
   }
 
-  const configuredRoots = kind === 'component' ? handoff.config?.entries?.components : handoff.config?.entries?.patterns;
-  const root = configuredRoots?.length
-    ? path.resolve(handoff.workingPath, configuredRoots[0])
-    : path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
+  const root = await resolveCollectionRoot(handoff, kind);
   const targetDir = resolvePathWithin(root, id);
   if (!targetDir) {
     throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);

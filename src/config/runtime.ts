@@ -348,25 +348,22 @@ const collectPageMarkdownPaths = (rootDir: string, relativeParts: string[] = [])
 };
 
 /**
- * Returns a list of component directories for a given path.
- *
- * This function determines whether the provided `searchPath` is:
- * 1. A single component directory (contains a config file named after the directory)
- * 2. A collection of component directories (subdirectories are components)
- *
- * A directory is considered a component if it contains a config file matching
- * `{dirname}.json`, `{dirname}.js`, or `{dirname}.cjs`.
+ * True when `searchPath` is itself a single component directory: it holds a declaration file named
+ * after the directory (`{dirname}.handoff.*`, or a legacy `{dirname}.{json,js,cjs}`). This is what
+ * separates a declared component from a collection directory.
+ */
+export const isComponentDirectory = (searchPath: string): boolean =>
+  !!resolveComponentDeclaration(searchPath, path.basename(searchPath));
+
+/**
+ * Returns the component directories for a given path. If `searchPath` is itself a component
+ * directory it's returned as-is; otherwise each subdirectory is treated as a potential component.
  *
  * @param searchPath - The absolute path to check for components.
- * @returns An array of string paths to component directories.
+ * @returns Paths to the component directories.
  */
 export const getComponentsForPath = (searchPath: string): string[] => {
-  const dirName = path.basename(searchPath);
-  const hasOwnConfig = !!resolveComponentDeclaration(searchPath, dirName);
-
-  // Check if searchPath itself is a component directory (has a config file named after the directory)
-  if (hasOwnConfig) {
-    // This directory is a single component
+  if (isComponentDirectory(searchPath)) {
     return [searchPath];
   }
 
