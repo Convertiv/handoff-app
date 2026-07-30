@@ -13,3 +13,7 @@ export { initRuntimeConfig } from './runtime';
 
 // Config validation
 export { validateConfig } from './validator';
+
+// Registering directory-list entries (components/patterns)
+export { isEntryCovered, writeEntries } from './entries';
+export type { EntryKind, WriteEntriesResult } from './entries';

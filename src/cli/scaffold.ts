@@ -2,10 +2,10 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
+import { isEntryCovered, writeEntries } from '../config/entries';
 import Handoff from '../index';
 
 // Constants
-const CONFIG_FILES = ['handoff.config.ts', 'handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'] as const;
 const COMPONENTS_DIR = 'components';
 const DEFAULT_GROUPS = [
   { value: 'Atomic Elements', label: 'Atomic Elements' },
@@ -197,182 +197,6 @@ const countMatchingRegisteredComponents = (
 ): number => {
   const figmaSet = new Set(figmaComponents.map((c) => c.name.toLowerCase()));
   return registeredIds.filter((id) => figmaSet.has(id.toLowerCase())).length;
-};
-
-/**
- * Check if components will be auto-loaded by an existing entry
- * e.g., if 'components' directory is listed, all subdirectories are auto-loaded
- */
-const willComponentsAutoLoad = (existingPaths: string[]): boolean => {
-  // Normalize paths for comparison
-  const normalizedPaths = existingPaths.map((p) => p.replace(/\/$/, '').toLowerCase());
-  // If 'components' directory itself is in the list, all components auto-load
-  return normalizedPaths.includes(COMPONENTS_DIR);
-};
-
-/**
- * Format component paths as a properly indented array string for JS files
- */
-const formatComponentsArray = (paths: string[], indent: string = '      '): string => {
-  if (paths.length === 0) return '[]';
-  if (paths.length === 1) return `['${paths[0]}']`;
-  return `[\n${paths.map((p) => `${indent}'${p}',`).join('\n')}\n${indent.slice(2)}]`;
-};
-
-/**
- * Update handoff config file to add component paths
- */
-const updateConfigFile = async (
-  handoff: Handoff,
-  componentNames: string[]
-): Promise<{ success: boolean; isJsConfig: boolean; configPath: string; skipped: boolean }> => {
-  const configFile = CONFIG_FILES.find((file) =>
-    fs.existsSync(path.resolve(handoff.workingPath, file))
-  );
-
-  const newComponentPaths = componentNames.map((name) => `${COMPONENTS_DIR}/${name}`);
-
-  if (!configFile) {
-    // Create a new handoff.config.json
-    const newConfig = {
-      entries: {
-        components: newComponentPaths,
-      },
-    };
-    const configPath = path.resolve(handoff.workingPath, 'handoff.config.json');
-    await fs.writeJSON(configPath, newConfig, { spaces: 2 });
-    return { success: true, isJsConfig: false, configPath, skipped: false };
-  }
-
-  const configPath = path.resolve(handoff.workingPath, configFile);
-
-  if (configFile.endsWith('.json')) {
-    const config = await fs.readJSON(configPath);
-
-    // Initialize entries if not present
-    if (!config.entries) {
-      config.entries = {};
-    }
-    if (!config.entries.components) {
-      config.entries.components = [];
-    }
-
-    // Check if components will auto-load
-    if (willComponentsAutoLoad(config.entries.components)) {
-      return { success: true, isJsConfig: false, configPath, skipped: true };
-    }
-
-    // Add new component paths
-    const existingPaths = new Set(config.entries.components);
-    for (const componentPath of newComponentPaths) {
-      if (!existingPaths.has(componentPath)) {
-        config.entries.components.push(componentPath);
-      }
-    }
-
-    await fs.writeJSON(configPath, config, { spaces: 2 });
-    return { success: true, isJsConfig: false, configPath, skipped: false };
-  }
-
-  // For code config files, try to update them programmatically
-  if (configFile.endsWith('.ts') || configFile.endsWith('.js') || configFile.endsWith('.cjs')) {
-    try {
-      let content = await fs.readFile(configPath, 'utf8');
-
-      // Check if entries.components already exists
-      const hasEntriesComponents = /entries\s*:\s*\{[\s\S]*?components\s*:/.test(content);
-      
-      if (hasEntriesComponents) {
-        // Find and update the components array
-        // Match: components: [...] or components: ["..."]
-        const componentsArrayRegex = /(components\s*:\s*\[)([^\]]*)(\])/;
-        const match = content.match(componentsArrayRegex);
-        
-        if (match) {
-          const existingContent = match[2].trim();
-          const existingPaths = existingContent
-            .split(',')
-            .map((s) => s.trim().replace(/['"]/g, ''))
-            .filter((s) => s.length > 0);
-          
-          // Check if components will auto-load
-          if (willComponentsAutoLoad(existingPaths)) {
-            return { success: true, isJsConfig: true, configPath, skipped: true };
-          }
-          
-          const existingSet = new Set(existingPaths);
-          const pathsToAdd = newComponentPaths.filter((p) => !existingSet.has(p));
-          
-          if (pathsToAdd.length > 0) {
-            const allPaths = [...existingPaths, ...pathsToAdd];
-            // Format with proper indentation (detect existing indentation)
-            const indentMatch = content.match(/components\s*:\s*\[\s*\n(\s*)/);
-            const indent = indentMatch ? indentMatch[1] : '      ';
-            const formattedArray = formatComponentsArray(allPaths, indent);
-            content = content.replace(componentsArrayRegex, `components: ${formattedArray}`);
-            await fs.writeFile(configPath, content, 'utf8');
-          }
-          return { success: true, isJsConfig: true, configPath, skipped: false };
-        }
-      }
-      
-      // If entries exists but no components, or no entries at all
-      // Try to add the entries.components section
-      const hasEntries = /entries\s*:\s*\{/.test(content);
-      
-      if (hasEntries) {
-        // Add components to existing entries object with proper formatting
-        const formattedArray = formatComponentsArray(newComponentPaths);
-        content = content.replace(
-          /(entries\s*:\s*\{)/,
-          `$1\n    components: ${formattedArray},`
-        );
-        await fs.writeFile(configPath, content, 'utf8');
-        return { success: true, isJsConfig: true, configPath, skipped: false };
-      }
-      
-      // No entries object, try to add it before the closing of exported object
-      const formattedArray = formatComponentsArray(newComponentPaths);
-      const entriesBlock = `  entries: {\n    components: ${formattedArray},\n  },\n`;
-      
-      // Try to insert after module.exports = {
-      if (content.includes('module.exports = {')) {
-        content = content.replace(
-          /(module\.exports\s*=\s*\{)/,
-          `$1\n${entriesBlock}`
-        );
-        await fs.writeFile(configPath, content, 'utf8');
-        return { success: true, isJsConfig: true, configPath, skipped: false };
-      }
-
-      // Try to insert after export default {
-      if (/export\s+default\s+\{/.test(content)) {
-        content = content.replace(
-          /(export\s+default\s+\{)/,
-          `$1\n${entriesBlock}`
-        );
-        await fs.writeFile(configPath, content, 'utf8');
-        return { success: true, isJsConfig: true, configPath, skipped: false };
-      }
-
-      // Try to insert into defineConfig({ ... })
-      if (/defineConfig\s*\(\s*\{/.test(content)) {
-        content = content.replace(
-          /(defineConfig\s*\(\s*\{)/,
-          `$1\n${entriesBlock}`
-        );
-        await fs.writeFile(configPath, content, 'utf8');
-        return { success: true, isJsConfig: true, configPath, skipped: false };
-      }
-      
-      // Fallback: couldn't parse the JS config
-      return { success: false, isJsConfig: true, configPath, skipped: false };
-    } catch {
-      return { success: false, isJsConfig: true, configPath, skipped: false };
-    }
-  }
-
-  return { success: false, isJsConfig: false, configPath, skipped: false };
 };
 
 /**
@@ -609,21 +433,6 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
     componentNames.push(config.name);
   }
 
-  // Update config if requested
-  let configUpdateResult: { success: boolean; isJsConfig: boolean; configPath: string; skipped: boolean } | null = null;
-  if (updateConfig) {
-    configUpdateResult = await updateConfigFile(handoff, componentNames);
-    if (!configUpdateResult.success) {
-      const relativePath = path.relative(handoff.workingPath, configUpdateResult.configPath);
-      p.log.warn(
-        `Could not automatically update ${relativePath}. Please manually add these paths to entries.components:`
-      );
-      for (const name of componentNames) {
-        console.log(chalk.yellow(`  'components/${name}'`));
-      }
-    }
-  }
-
   generationSpinner.stop('Files created successfully');
 
   // Display summary
@@ -633,12 +442,26 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
     console.log(chalk.dim(`  ${relativePath}`));
   }
 
-  if (updateConfig && configUpdateResult?.success) {
-    const configFileName = path.basename(configUpdateResult.configPath);
-    if (configUpdateResult.skipped) {
-      p.log.info(`Config already includes 'components' directory - new components will auto-load`);
+  // Update config if requested. Components already covered by a collection directory auto-load,
+  // so we only write the uncovered ones into entries.components.
+  if (updateConfig) {
+    const componentDirs = componentNames.map((name) => path.resolve(handoff.workingPath, COMPONENTS_DIR, name));
+    const uncovered = componentDirs.filter((dir) => !isEntryCovered(handoff, 'components', dir));
+
+    if (uncovered.length === 0) {
+      p.log.info(`Config already covers these components - they'll auto-load`);
     } else {
-      p.log.success(`Updated ${configFileName} with component paths`);
+      const result = await writeEntries(handoff, 'components', uncovered);
+      if (result.status === 'added') {
+        const configFileName = result.configPath ? path.basename(result.configPath) : 'handoff.config.json';
+        p.log.success(`Updated ${configFileName} with component paths`);
+      } else {
+        const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
+        p.log.warn(`Could not automatically update ${where}. Please manually add these paths to entries.components:`);
+        for (const rel of result.pending) {
+          console.log(chalk.yellow(`  '${rel}'`));
+        }
+      }
     }
   }
 

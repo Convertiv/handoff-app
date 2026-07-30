@@ -16,6 +16,7 @@
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
+import { type EntryKind, isEntryCovered, writeEntries } from '../../config/entries';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
@@ -589,7 +590,7 @@ const checkoutSingle = async (
   id: string,
   client: RegistryClient,
   registryUrl: string
-): Promise<void> => {
+): Promise<string | null> => {
   const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
   if (!validId) {
     throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
@@ -606,10 +607,11 @@ const checkoutSingle = async (
     throw error;
   }
 
-  // Pages round-trip as a single verbatim `.md` with no declaration synthesis.
+  // Pages round-trip as a single verbatim `.md` with no declaration synthesis, and aren't
+  // declared in `entries`, so there's nothing to register.
   if (kind === 'page') {
     await checkoutPage(handoff, id, payload);
-    return;
+    return null;
   }
 
   const targetDir = await resolveTargetDir(handoff, kind, id);
@@ -628,7 +630,7 @@ const checkoutSingle = async (
   const conflicts = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath].filter((file) => fs.existsSync(file));
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of ${kind} "${id}" cancelled; no files were written.`);
-    return;
+    return null;
   }
 
   await fs.ensureDir(targetDir);
@@ -645,6 +647,35 @@ const checkoutSingle = async (
     `Checked out ${kind} "${id}" into ${path.relative(handoff.workingPath, targetDir) || '.'} ` +
       `(${payload.files.length} source file(s) + ${declarationFileName}).`
   );
+  return targetDir;
+};
+
+/**
+ * Declare freshly checked-out entities in `entries.{components|patterns}` so the workspace build
+ * picks them up. Ones already covered by a collection directory load on their own and are left
+ * alone; the rest are added to the config automatically. If the config can't be edited (a computed
+ * or unusual `entries` array), we print the paths for the user to add so nothing is silently orphaned.
+ */
+const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, targetDirs: string[]): Promise<void> => {
+  if (kind === 'page') {
+    return;
+  }
+  const entryKind: EntryKind = kind === 'component' ? 'components' : 'patterns';
+  const uncovered = targetDirs.filter((dir) => !isEntryCovered(handoff, entryKind, dir));
+  if (uncovered.length === 0) {
+    return;
+  }
+
+  const result = await writeEntries(handoff, entryKind, uncovered);
+  if (result.status === 'added') {
+    const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath) : 'handoff.config';
+    Logger.success(`Updated ${where} with ${result.added.length} ${entryKind} path(s).`);
+    return;
+  }
+
+  const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
+  Logger.warn(`Could not update ${where} automatically. Add these to entries.${entryKind} manually:`);
+  result.pending.forEach((rel) => Logger.warn(`  - ${rel}`));
 };
 
 /**
@@ -654,7 +685,10 @@ const checkoutSingle = async (
 export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   const connection = resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
-  await checkoutSingle(handoff, kind, id, client, connection.url);
+  const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
+  if (targetDir) {
+    await registerCheckedOut(handoff, kind, [targetDir]);
+  }
 };
 
 /**
@@ -684,14 +718,21 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
 
   let checkedOut = 0;
   const failed: { id: string; message: string }[] = [];
+  const targetDirs: string[] = [];
   for (const { id } of summaries) {
     try {
-      await checkoutSingle(handoff, kind, id, client, connection.url);
+      const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
+      if (targetDir) {
+        targetDirs.push(targetDir);
+      }
       checkedOut += 1;
     } catch (error) {
       failed.push({ id, message: error instanceof Error ? error.message : String(error) });
     }
   }
+
+  // Register everything checked out in one pass, so the config is edited (and confirmed) once.
+  await registerCheckedOut(handoff, kind, targetDirs);
 
   Logger.success(
     `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} checked out${failed.length ? `, ${failed.length} failed` : ''}.`
