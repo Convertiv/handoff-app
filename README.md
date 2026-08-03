@@ -19,7 +19,7 @@ authoring locally or running a shared, deployed catalog.
 * [Requirements](#requirements)
 * [Quick start](#quick-start)
 * [Project layout](#project-layout)
-* [Authoring components and patterns](#authoring-components-and-patterns)
+* [Authoring components, patterns, and pages](#authoring-components-patterns-and-pages)
 * [Fetching design tokens](#fetching-design-tokens)
 * [Running locally](#running-locally)
 * [Building artifacts](#building-artifacts)
@@ -30,9 +30,9 @@ authoring locally or running a shared, deployed catalog.
 * [Configuration](#configuration)
   * [The runtime block](#the-runtime-block)
   * [Environment variables](#environment-variables)
+  * [Registry installation and access](#registry-installation-and-access)
   * [Hooks](#hooks)
 * [CLI reference](#cli-reference)
-* [Further reading](#further-reading)
 * [Maintainers](#maintainers)
 * [Contributing](#contributing)
 * [License](#license)
@@ -48,16 +48,16 @@ It brings a few pieces together:
 * **Token extraction.** Pull standardized foundations from your design source and
   store them as JSON. Figma is supported out of the box through the Figma REST
   API.
-* **Transformation pipeline.** Produce SCSS, CSS, Style Dictionary, and preview
-  snippets from that data.
+* **Transformation pipeline.** Produce SCSS and CSS by default, with optional
+  Style Dictionary or custom transformer output.
 * **Documentation runtime.** Render live, working previews of your components,
   tokens, and styles, served through a stable docs read API.
 * **Delivery tooling.** Build and ship the deliverables, either as a static site
   or as a deployed, database-backed catalog.
 
-Out of the box Handoff ships SCSS and CSS maps for [Bootstrap 5](https://getbootstrap.com/).
-If you use another framework or custom CSS, you can write your own map files to
-connect the generated tokens to your project.
+Use the global `entries.scss` and `entries.js` files to load a framework or your
+own frontend code into previews. For example, a Bootstrap project can import
+[Bootstrap 5](https://getbootstrap.com/) from its Sass and JavaScript entries.
 
 You install `handoff-app` as a project-local dependency and run its commands in
 your project's context, so every project pins its own toolchain version.
@@ -75,13 +75,12 @@ badge so the active mode is always clear.
   server, and build a static documentation snapshot. Local authoring stays fast
   and self-contained, with no database or registry required.
 * **Registry mode.** A deployed, dynamic Next.js app backed by PostgreSQL serves
-  a shared catalog. It only ever serves what a workspace published to it. The
+  a shared catalog from published records and packaged default pages. The
   registry never compiles or materializes workspace source.
 
 A **connected workspace** is workspace mode plus a registry connection. It still
-renders only your local files and still reads as `Workspace`, but it gains two
-commands: `publish` to push a locally built component or pattern up to a
-registry, and `checkout` to pull one back down into your workspace.
+renders only local files and still reads as `Workspace`, but it can publish and
+check out components, patterns, pages, token sets, and asset collections.
 
 Under the hood, documentation in every mode is consumed through one stable docs
 read API and one canonical artifact URL scheme (`/api/docs/artifacts/{path}`),
@@ -90,7 +89,7 @@ which store is behind it.
 
 ## Requirements
 
-* Node 18.17+
+* Node 18.18 or newer. Node 20 LTS or newer is recommended.
 * npm 8+
 * A paid Figma account, if you fetch tokens from a Figma library
 * PostgreSQL (or a Postgres-compatible service such as Neon) for registry mode
@@ -104,13 +103,13 @@ npx handoff-app init
 ```
 
 The wizard asks for a project name, whether to include sample components, your
-preferred language (TypeScript or JavaScript), and optionally your Figma project
-ID and access token. It then creates the project directory, writes the config
-and starter files, and installs dependencies.
+preferred language, optional Vercel deployment settings, and optional Figma
+credentials. It then creates the project, writes the starter files, and installs
+the project-local dependencies.
 
 ```bash
 cd my-handoff-project
-npm run fetch    # pull design tokens from Figma (optional if no Figma creds yet)
+npm run fetch    # pull design tokens after adding Figma credentials (optional)
 npm run start    # author locally with live preview at http://localhost:3000
 ```
 
@@ -121,8 +120,9 @@ The generated `package.json` wires up the common scripts:
   "scripts": {
     "start": "handoff-app start",
     "dev": "handoff-app dev",
+    "fetch": "handoff-app fetch",
     "build": "handoff-app build",
-    "fetch": "handoff-app fetch"
+    "db:migrate": "handoff-app db:migrate"
   }
 }
 ```
@@ -143,18 +143,28 @@ my-handoff-project/
 │     ├─ Button.tsx         # component implementation
 │     └─ button.handoff.ts  # component declaration
 ├─ patterns/                # multi-component compositions
+│  └─ hero/
+│     └─ hero.handoff.ts
+├─ pages/                   # custom Markdown documentation and navigation
+│  └─ guides/
+│     └─ getting-started.md
 ├─ sass/                    # optional global SCSS entry
 ├─ js/                      # optional global JS entry
-├─ exported/                # fetched tokens and assets (commit these so clean/CI builds have data)
+├─ public/                  # optional static assets
+├─ exported/                # fetched tokens and assets; commit this directory
 └─ out/                     # build output (gitignored)
 ```
 
-## Authoring components and patterns
+A working Handoff project can mix global Sass and JavaScript entry points,
+React, Handlebars, and CSF components, composed patterns, nested Markdown pages,
+and fetched files under `exported/<projectId>`.
+
+## Authoring components, patterns, and pages
 
 A component is a directory with an implementation file and a declaration. The
-declaration is discovered as `*.handoff.{ts,js,cjs,json}` (the legacy
-`{dirname}.{js,cjs,json}` form keeps working too). List the directories you want
-built under `entries.components` in your config.
+declaration is discovered as `*.handoff.{ts,js,cjs,json}`. The older
+`{dirname}.{js,cjs,json}` form also works. List individual directories or a
+parent collection such as `components` under `entries.components`.
 
 Declarations are written with the typed helpers exported from `handoff-app`:
 
@@ -192,6 +202,12 @@ directory name). The display `name`/`title` is independent of the `id`, so you
 can rename freely without breaking references. Identity is matched by `id`
 during publish and checkout.
 
+Patterns use `definePattern` and compose component IDs. Each reference can select
+a named preview or supply its own arguments. Custom documentation lives as
+Markdown under `pages/`. A page's relative file path becomes both its route and
+registry ID, so `pages/guides/getting-started.md` is served and transferred as
+`guides/getting-started`.
+
 ## Fetching design tokens
 
 Handoff fetches tokens from Figma out of the box. Set your Figma credentials in
@@ -208,10 +224,16 @@ Then pull the latest foundations and component data:
 npm run fetch
 ```
 
-To get a personal access token in Figma, open the Figma menu, go to
-`Help and Account` then `Account Settings`, scroll to `Personal Access Token`,
-name a token, and copy it. Republish your Figma library after design changes and
-run `fetch` again to pick them up.
+The fetch output is stored under `exported/<projectId>`. It includes
+`tokens.json`, generated CSS and Sass, and available icon or logo archives. Keep
+this directory in version control so local and CI builds use the same source
+data.
+
+To create a personal access token in Figma, open the account menu from the file
+browser, select `Settings`, open `Security`, and generate a token under
+`Personal access tokens`. Grant `file_content:read` and `library_content:read`,
+then copy the token when Figma displays it. Republish your Figma library after
+design changes and run `fetch` again to pick them up.
 
 ## Running locally
 
@@ -228,7 +250,7 @@ preview updates. The site boots at http://localhost:3000 by default.
 ## Building artifacts
 
 `handoff-app build` accepts two independent flags. `--target` decides *what* is
-produced — the target, not `NODE_ENV`, drives this. The optional `--package`
+produced. The target, not `NODE_ENV`, drives this. The optional `--package`
 decides *how* that target is packaged for deployment.
 
 ### Static site (default)
@@ -238,12 +260,12 @@ handoff-app build                  # static target (default)
 handoff-app build --target static  # explicit, identical output
 ```
 
-The static target builds your workspace components, patterns, and tokens,
-materializes the docs read model into route-shaped static files, and runs a
-static export to `out/<projectId>` (respecting `sitesOutputDirectory`). The
-output is plain static files: it renders list, detail, preview, and inspect
-pages and loads previews through canonical artifact URLs with no live server, so
-any static file server or CDN can serve it with no host-specific rewrites.
+The static target builds workspace components and patterns, includes local
+pages, tokens, and assets, materializes the docs read model into route-shaped
+static files, and exports to `out/<projectId>` (respecting
+`sitesOutputDirectory`). The output renders list, detail, preview, and inspect
+pages with no live server, so any static file server or CDN can serve it without
+host-specific rewrites.
 
 The build fails clearly if a required artifact referenced by generated HTML
 cannot be materialized, and it fails if the runtime is registry-only (there is
@@ -261,12 +283,15 @@ standalone bundle. It never builds or bundles workspace source and has no
 workspace-source runtime dependency. It serves the docs read API and the
 registry API from the database and published artifacts.
 
-The bundle is self-hostable on a Node server, VPS, or container. Start it with
-`node server.js` from the output directory and supply the database connection at
-deploy time:
+The bundle is self-hostable on a Node server, VPS, or container. Supply the
+database connection, a session secret of at least 32 characters, and the public
+registry URL at deploy time:
 
 ```bash
-DATABASE_URL="postgres://…" node out/registry/server.js
+DATABASE_URL="postgres://..." \
+AUTH_SECRET="replace-with-a-long-random-value" \
+AUTH_URL="https://registry.example.com" \
+node out/registry/server.js
 ```
 
 A generated `README.md` next to the bundle documents the required env vars and
@@ -277,11 +302,15 @@ step (e.g. in CI/CD) before deploying:
 handoff-app db:migrate
 ```
 
-`db:migrate` reads your project config and DB env vars, applies the
+`db:migrate` reads your project config and database environment variables, applies the
 package-owned migration set, and runs independently of `build`. PostgreSQL is
 the supported database; `runtime.registry.database.driver` selects the
-connection driver (`pg` or `neon`) — how to connect, not the database engine —
-and both drivers ship with the package.
+connection driver (`pg` or `neon`), not the database engine. Both drivers ship
+with the package.
+
+Registry assets are stored in PostgreSQL by default, with a 4 MB limit per
+blob. Larger deployments can use the built-in Vercel Blob adapter or a custom
+storage adapter through `runtime.registry.assetStorage`.
 
 ### Deploying
 
@@ -289,8 +318,8 @@ and both drivers ship with the package.
   static file server or CDN. Commit `exported/` so a clean checkout has token
   data to build from.
 * **Registry** produces a self-contained Node bundle under `out/registry`. Run it
-  on any Node host with `node out/registry/server.js` and a `DATABASE_URL` in the
-  environment.
+  on any Node host with `node out/registry/server.js` and configure
+  `DATABASE_URL`, `AUTH_SECRET`, and `AUTH_URL` in the environment.
 
 The optional `--package` flag repackages a target without changing what it
 builds:
@@ -305,8 +334,15 @@ its `buildCommand` to change the target.
 
 ## Publishing and checkout
 
-Connect a workspace to a registry by adding a `registryConnection` block to your
-config and setting the access token env var:
+For interactive use, authorize the workspace with the browser device flow:
+
+```bash
+handoff-app login --url https://registry.example.com
+```
+
+The saved login supplies the registry URL and credential to `publish` and
+`checkout`. For CI or another headless environment, add a `registryConnection`
+block and provide a user-issued access token through an environment variable:
 
 ```ts
 runtime: {
@@ -323,44 +359,37 @@ runtime: {
 HANDOFF_REGISTRY_ACCESS_TOKEN=your-registry-token
 ```
 
-Then push and pull entities by `id`:
+Then push and pull one entity by ID, or omit the ID to process every entity of
+that kind:
 
 ```bash
 handoff-app publish components button    # build locally, upload that entity's package
 handoff-app checkout patterns hero       # pull a registry entity into this workspace
+handoff-app publish pages                # publish every custom Markdown page
+handoff-app checkout tokens foundation/colors
 ```
 
-`publish` runs a fresh targeted build of the selected entity and uploads only
-that entity's package: normalized metadata, source files referenced by its
-`entries`, rendered docs artifacts (including required shared artifacts like
-`component/main.css` and `component/main.js`), and build metadata. It fails
-before upload if required artifacts are missing, stale, or incompatible, and it
-never touches unrelated entities' artifacts. Declaration files are never
-uploaded.
+`publish` builds the selected content before upload. Components and patterns
+include normalized metadata, referenced source files, rendered docs artifacts,
+shared preview assets, and build metadata. Pages upload their Markdown source.
+Tokens and assets upload their generated sets or collections. Declaration files
+remain local to the workspace.
 
-`checkout` reads the registry record and source files, writes them in standard
-authoring form, and synthesizes a local declaration in your configured
-`runtime.workspace.declarationFormat` (defaulting to `js`). Declarations are a
-workspace-only concern, so they are always synthesized locally and never read
-from the registry. Overwriting existing local files requires `--force` or an
-interactive confirmation.
+`checkout` restores the standard workspace layout. It synthesizes component and
+pattern declarations in `runtime.workspace.declarationFormat`, which defaults to
+`js`, and restores pages, tokens, and assets to their normal locations.
+Overwriting local files requires `--force` or interactive confirmation.
 
 ## Configuration
 
-Project configuration lives in `handoff.config.{ts,js,cjs,json}` (resolved in
-that precedence order). TypeScript and ESM configs use `defineConfig` for typed
-authoring; plain CommonJS configs that never call `defineConfig` keep working
-unchanged.
+Project configuration lives in `handoff.config.{ts,js,cjs,json}` and is resolved
+in that order. Use `defineConfig` for typed authoring and camelCase aliases.
+Plain object exports remain supported.
 
 ```ts
 import { defineConfig } from 'handoff-app';
 
 export default defineConfig({
-  app: {
-    title: 'Acme Design System',
-    client: 'Acme Corp',
-    basePath: '',
-  },
   entries: {
     scss: './sass/main.scss',
     js: './js/main.js',
@@ -395,11 +424,15 @@ runtime: {
   registry: {
     databaseUrlEnv: 'DATABASE_URL',
     database: { driver: 'pg' }, // connection driver: 'pg' | 'neon' (PostgreSQL only)
+    assetStorage: {
+      adapter: 'database', // 'database' | 'vercel-blob' | 'custom'
+      maxInlineBytes: 4194304,
+    },
   },
 },
 ```
 
-Secrets are always referenced by environment-variable name, never written as
+Registry secrets are referenced by environment-variable name, never written as
 values, and are redacted from API responses.
 
 ### Environment variables
@@ -415,21 +448,33 @@ values, and are redacted from API responses.
 | `AUTH_URL` | Canonical public registry URL, including its base path |
 | `RESEND_API_KEY` | Optional Resend API key for invitations and password resets |
 | `AUTH_FROM_EMAIL` | Optional verified sender used with Resend |
+| `BLOB_READ_WRITE_TOKEN` | Default credential for the Vercel Blob asset adapter |
+| `HANDOFF_OUTPUT_DIR` | Override the fetched output directory (`exported`) |
+| `HANDOFF_SITES_DIR` | Override the build output directory (`out`) |
+| `HANDOFF_APP_PORT` | Local documentation server port (`3000`) |
+| `HANDOFF_WEBSOCKET_PORT` | Local reload server port (`3001`) |
+| `HANDOFF_LOG_LEVEL` | Logging level: `debug`, `info`, `warn`, `error`, or `silent` |
 
-### Registry installation and login
+### Registry installation and access
 
-Database migrations remain an explicit deployment step. Configure the environment, run
-`handoff-app db:migrate`, deploy, and then open `/install` immediately to create the first
-administrator. The installer validates the deployment but never changes the schema.
+Database migrations remain an explicit deployment step. Configure the
+environment, run `handoff-app db:migrate`, deploy, and immediately open
+`/install` to create the first administrator. The installer validates the
+deployment but never changes the schema.
 
-The first visitor can claim an uninstalled registry. Do not expose a new deployment longer than
-needed to complete installation.
+The first visitor can claim an uninstalled registry. Do not leave a new
+deployment unattended before installation is complete.
 
-After installation, sign in and authorize each workspace with
-`handoff-app login --url https://registry.example.com`. Handoff stores the revocable credential in
-`.handoff/cli-auth.json` and uses it only for that exact normalized registry URL. For CI, create a
-token in Account settings and expose it through `runtime.registryConnection.accessTokenEnv`.
-The former `HANDOFF_REGISTRY_API_TOKEN` fixed server secret is no longer authorized.
+Administrators can invite users, manage roles, and deactivate accounts. Members
+receive read access for browsing and checkout, while administrators can also
+publish. If Resend is not configured, the registry shows invitation links once
+for manual delivery.
+
+`handoff-app login` stores a revocable credential in
+`.handoff/cli-auth.json` and only uses it for the exact registry URL that issued
+it. For CI, create a scoped token in Account settings and expose it through
+`runtime.registryConnection.accessTokenEnv`. The former
+`HANDOFF_REGISTRY_API_TOKEN` server secret is no longer accepted.
 
 ### Hooks
 
@@ -447,9 +492,11 @@ See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 | --- | --- |
 | `init` | Scaffold a new workspace project with the interactive wizard |
 | `fetch` | Fetch design tokens from Figma |
+| `scaffold` | Scaffold component stubs from fetched Figma components |
 | `dev` | Start the local dev server with the live docs read API |
 | `start` | Start the dev server with file watchers for live authoring |
 | `build [--target static\|registry] [--package standalone\|vercel]` | Build the static site (default) or registry app; `--package vercel` emits a Vercel Build Output bundle |
+| `build:app` | Alias for `build --target static` |
 | `build:components [component]` | Build components without building the full app |
 | `publish <components\|patterns\|pages\|tokens\|assets> [id]` | Build and publish entities to the connected registry (all of the kind, or one by id) |
 | `checkout <components\|patterns\|pages\|tokens\|assets> [id]` | Pull entities from the connected registry into this workspace |
@@ -465,17 +512,8 @@ See [docs/api.md](docs/api.md#hooks) for hook arguments and examples.
 | `validate:components` | Run component validation |
 
 Global flags: `-c, --config <file>`, `-d, --debug`, `-f, --force`,
-`-h, --help`, `-v, --version`. See [docs/cli.md](docs/cli.md) for the full
-reference.
-
-## Further reading
-
-* [Configure your project](https://www.handoff.com/docs/customization)
-* [Customize the content](https://www.handoff.com/docs/customization/content)
-* [Integrate tokens with your project](https://www.handoff.com/docs/tokens/integration)
-* [Build to static assets](https://www.handoff.com/docs/tokens/publishing)
-* [GitHub Actions CI/CD](https://www.handoff.com/docs/infrastructure/github/)
-* [Bitbucket Pipelines CI/CD](https://www.handoff.com/docs/infrastructure/bitbucket/)
+`-h, --help`, `-v, --version`. Run `handoff-app <command> --help` for the exact
+options in your installed version.
 
 ## Maintainers
 
