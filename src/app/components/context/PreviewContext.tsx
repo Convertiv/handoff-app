@@ -33,13 +33,13 @@ function groupVariantProperties(items: Record<string, string>[]): Record<string,
 
   for (const item of items) {
     for (const [key, value] of Object.entries(item)) {
+      if (typeof value !== 'string' || value === '') continue;
       (grouped[key] ||= new Set()).add(value);
     }
   }
 
   return Object.fromEntries(
     Object.entries(grouped).map(([key, set]) => [key, Array.from(set)])
-    // .filter((i) => i[1].length > 1)
   );
 }
 

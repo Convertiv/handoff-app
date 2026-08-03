@@ -19,8 +19,7 @@ import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeCon
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
+export const getStaticProps: GetStaticProps = async () => {
   const config = getClientRuntimeConfig();
   return {
     ...{
@@ -32,6 +31,36 @@ export const getStaticProps: GetStaticProps = async (context) => {
     },
   };
 };
+
+const ColorGroupTable = ({ colors }: { group: string; colors: CoreTypes.IColorObject[] }) => {
+  return (
+    <Table className="border-b-[0.5px] border-l-[0.5px] border-r-[0.5px]">
+      <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
+        <TableRow className="border-b-[0.5px]!">
+          <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Name</TableHead>
+          <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Value</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {colors.map((color) => (
+          <TableRow key={color.id} className="h-10 border-b-[0.5px]">
+            <TableCell className="border-r-[0.5px] px-3.5 py-1">{color.reference}</TableCell>
+            <TableCell className="border-r-[0.5px] px-3.5 py-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className="group relative block h-4 w-4 rounded-full"
+                  style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
+                ></span>
+                <code className="text-xs">{color.value}</code>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
 /**
  * Define the components page
  * @param param0
@@ -91,35 +120,6 @@ const ComponentsPage = ({ content, menu, metadata, current, config, design }: Fo
         />
       </div>
     </Layout>
-  );
-};
-
-const ColorGroupTable = ({ group, colors }: { group: string; colors: CoreTypes.IColorObject[] }) => {
-  return (
-    <Table className="border-b-[0.5px] border-l-[0.5px] border-r-[0.5px]">
-      <TableHeader className="border-b-0 border-l-[0.5px] border-r-[0.5px] border-t-[0.5px] bg-gray-50/80 dark:bg-gray-800/80 ">
-        <TableRow className="border-b-[0.5px]!">
-          <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Name</TableHead>
-          <TableHead className="border-r-[0.5px] px-4 text-xs font-light text-gray-900 dark:text-gray-100">Value</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {colors.map((color) => (
-          <TableRow key={color.id} className="h-10 border-b-[0.5px]">
-            <TableCell className="border-r-[0.5px] px-3.5 py-1">{color.reference}</TableCell>
-            <TableCell className="border-r-[0.5px] px-3.5 py-1">
-              <div className="flex items-center gap-2">
-                <span
-                  className="group relative block h-4 w-4 rounded-full"
-                  style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
-                ></span>
-                <code className="text-xs">{color.value}</code>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   );
 };
 

@@ -18,7 +18,7 @@ import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       ...fetchDocPageMarkdown('docs/', 'assets', `/assets`).props,
@@ -27,7 +27,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-const AssetsPage = ({ content, menu, metadata, current, config }: DocumentationProps) => {
+const AssetsPage = ({ content, menu, metadata, config }: DocumentationProps) => {
   return (
     <div className="c-page">
       <Head>

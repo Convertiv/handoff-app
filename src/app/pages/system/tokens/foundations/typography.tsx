@@ -20,8 +20,7 @@ import { fetchDocPageMarkdown, FoundationDocumentationProps, getClientRuntimeCon
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
-  // Read current slug
+export const getStaticProps: GetStaticProps = async () => {
   const config = getClientRuntimeConfig();
   return {
     ...{
@@ -32,40 +31,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       } as FoundationDocumentationProps,
     },
   };
-};
-/**
- * Define the components page
- * @param param0
- * @returns
- */
-const ComponentsPage = ({ content, menu, metadata, current, config, design }: FoundationDocumentationProps) => {
-  const typography = design.typography.slice().sort((a, b) => {
-    const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
-    const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;
-    return l !== r ? l - r : a.name.localeCompare(b.name);
-  });
-
-  return (
-    <Layout config={config} menu={menu} current={current} metadata={metadata}>
-      <div className="flex flex-col gap-2 pb-7">
-        <HeadersType.H1>{metadata.title}</HeadersType.H1>
-        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
-      </div>
-      <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
-        <div>
-          <div className="prose">
-            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
-              {content}
-            </ReactMarkdown>
-          </div>
-          <FontsTable types={typography} />
-        </div>
-        <AnchorNav
-          groups={[Object.assign({}, ...[...typography.map((type) => ({ [`${type.name}-typography`]: `${upperFirst(type.name)}` }))])]}
-        />
-      </div>
-    </Layout>
-  );
 };
 
 const FontsTable = ({ types }: { types: CoreTypes.ITypographyObject[] }) => {
@@ -111,6 +76,41 @@ const FontsTable = ({ types }: { types: CoreTypes.ITypographyObject[] }) => {
         );
       })}
     </>
+  );
+};
+
+/**
+ * Define the components page
+ * @param param0
+ * @returns
+ */
+const ComponentsPage = ({ content, menu, metadata, current, config, design }: FoundationDocumentationProps) => {
+  const typography = design.typography.slice().sort((a, b) => {
+    const l = (config?.app?.type_sort ?? []).indexOf(a.name) >>> 0;
+    const r = (config?.app?.type_sort ?? []).indexOf(b.name) >>> 0;
+    return l !== r ? l - r : a.name.localeCompare(b.name);
+  });
+
+  return (
+    <Layout config={config} menu={menu} current={current} metadata={metadata}>
+      <div className="flex flex-col gap-2 pb-7">
+        <HeadersType.H1>{metadata.title}</HeadersType.H1>
+        <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+      </div>
+      <div className="mt-10 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
+        <div>
+          <div className="prose">
+            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+              {content}
+            </ReactMarkdown>
+          </div>
+          <FontsTable types={typography} />
+        </div>
+        <AnchorNav
+          groups={[Object.assign({}, ...[...typography.map((type) => ({ [`${type.name}-typography`]: `${upperFirst(type.name)}` }))])]}
+        />
+      </div>
+    </Layout>
   );
 };
 

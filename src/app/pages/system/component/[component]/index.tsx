@@ -110,7 +110,7 @@ export const getStaticProps = async (context) => {
 };
 
 function filterPreviews(previews: Record<string, OptionalPreviewRender>, filter: Filter): Record<string, OptionalPreviewRender> {
-  return Object.fromEntries(Object.entries(previews).filter(([_, preview]) => evaluateFilter(preview.values, filter)));
+  return Object.fromEntries(Object.entries(previews).filter(([, preview]) => evaluateFilter(preview.values, filter)));
 }
 
 const GenericComponentPage = ({ menu, metadata, current, id, config, componentHotReloadIsAvailable, previousComponent, nextComponent }) => {
@@ -123,7 +123,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const componentRoute = (componentId: string) => `${normalizedBasePath}/system/component/${componentId}`;
 
   const fetchComponents = async () => {
-    let data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
+    const data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
     setComponent(data as PreviewObject);
   };
 

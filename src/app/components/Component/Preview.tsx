@@ -78,10 +78,12 @@ export const ComponentDisplay: React.FC<{
       const variantMap: Record<string, Set<string>> = {};
       Object.values(component.previews).forEach((preview: any) => {
         Object.entries(preview.values).forEach(([key, value]) => {
+          const strValue = String(value);
+          if (!strValue) return;
           if (!variantMap[key]) {
             variantMap[key] = new Set();
           }
-          variantMap[key].add(String(value));
+          variantMap[key].add(strValue);
         });
       });
 

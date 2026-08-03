@@ -22,7 +22,7 @@ import { getTokens } from '../../components/util';
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
