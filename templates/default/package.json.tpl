@@ -8,6 +8,10 @@
     "dev": "handoff-app dev",
     "fetch": "handoff-app fetch",
     "build": "handoff-app build",
+    "login": "handoff-app login",
+    "logout": "handoff-app logout",
+    "publish": "handoff-app publish",
+    "checkout": "handoff-app checkout",
     "db:migrate": "handoff-app db:migrate"
   },
   "dependencies": {},
