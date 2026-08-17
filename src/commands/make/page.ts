@@ -1,8 +1,7 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../../';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions } from '../utils';
 
 export interface MakePageArgs extends SharedArgs {
   name: string;
@@ -24,7 +23,7 @@ const command: CommandModule<{}, MakePageArgs> = {
       });
   },
   handler: async (args: MakePageArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
 
     const pageName = args.name;
 

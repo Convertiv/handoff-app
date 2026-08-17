@@ -1,9 +1,8 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../../';
 import { DEFAULT_BUILD_TARGET, HandoffBuildError, type BuildPackage, type BuildTarget } from '../../app-builder';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions } from '../utils';
 
 const BUILD_TARGETS: BuildTarget[] = ['static', 'registry'];
 const BUILD_PACKAGES: BuildPackage[] = ['standalone', 'vercel'];
@@ -42,7 +41,7 @@ const command: CommandModule<{}, BuildArgs> = {
       });
   },
   handler: async (args: BuildArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
     try {
       await handoff.build(args.target ?? DEFAULT_BUILD_TARGET, args.skipComponents ?? false, args.package);
     } catch (error) {

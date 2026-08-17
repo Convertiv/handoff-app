@@ -5,6 +5,7 @@ import { createRequire } from 'module';
 import path from 'path';
 import { Config } from '../types/config';
 import { Logger } from '../utils/logger';
+import { resolveWorkingPath } from '../utils/path';
 import { defaultConfig } from './defaults';
 
 const CONFIG_FILE_PREFERENCE = [
@@ -14,8 +15,27 @@ const CONFIG_FILE_PREFERENCE = [
   'handoff.config.json',
 ] as const;
 
+/** Extensions the loader knows how to evaluate, derived from the discoverable file names. */
+const SUPPORTED_CONFIG_EXTENSIONS = Array.from(new Set(CONFIG_FILE_PREFERENCE.map((fileName) => path.extname(fileName))));
+
+/** Raised when an explicitly requested config file cannot be used. */
+export class HandoffConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'HandoffConfigError';
+  }
+}
+
 type ConfigLoadResult = {
   config: Config;
+  configPath?: string;
+};
+
+/** Where to look for the config: the working directory, plus an optional explicit file. */
+export type ConfigLoadContext = {
+  /** Directory relative config paths resolve from, and the root that gets searched. */
+  workingPath?: string;
+  /** Explicit config file (the CLI's `-c, --config`), replacing discovery entirely. */
   configPath?: string;
 };
 
@@ -52,12 +72,14 @@ const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): 
 };
 
 const loadConfigFile = (configPath: string): Config => {
-  if (configPath.endsWith('.json')) {
+  const extension = path.extname(configPath);
+
+  if (extension === '.json') {
     const buffer = fs.readFileSync(configPath);
     return JSON.parse(buffer.toString()) as Config;
   }
 
-  if (configPath.endsWith('.ts')) {
+  if (extension === '.ts') {
     const handoffModulePath = path.resolve(__dirname, '../..');
     const importedConfig = evaluateTypeScriptConfig(configPath, handoffModulePath);
     return (importedConfig.default || importedConfig) as Config;
@@ -69,9 +91,30 @@ const loadConfigFile = (configPath: string): Config => {
   return (importedConfig.default || importedConfig) as Config;
 };
 
-const resolveConfigFilePath = (): { selected?: string; ignored: string[] } => {
+/**
+ * Picks the config file to load. An explicitly requested file replaces discovery - it is resolved
+ * from `workingPath` and must exist in a format the loader can evaluate. Otherwise every known
+ * config name is looked for in `workingPath`, the first match winning.
+ */
+const resolveConfigFilePath = (workingPath: string, requestedPath?: string): { selected?: string; ignored: string[] } => {
+  if (requestedPath) {
+    const selected = path.resolve(workingPath, requestedPath);
+
+    if (!fs.existsSync(selected)) {
+      throw new HandoffConfigError(`Config file not found: "${requestedPath}" (resolved to ${selected})`);
+    }
+
+    if (!SUPPORTED_CONFIG_EXTENSIONS.includes(path.extname(selected))) {
+      throw new HandoffConfigError(
+        `Unsupported config file "${path.basename(selected)}". Supported extensions: ${SUPPORTED_CONFIG_EXTENSIONS.join(', ')}`
+      );
+    }
+
+    return { selected, ignored: [] };
+  }
+
   const existing = CONFIG_FILE_PREFERENCE
-    .map((fileName) => path.resolve(process.cwd(), fileName))
+    .map((fileName) => path.resolve(workingPath, fileName))
     .filter((filePath) => fs.existsSync(filePath));
 
   if (!existing.length) {
@@ -83,11 +126,11 @@ const resolveConfigFilePath = (): { selected?: string; ignored: string[] } => {
 };
 
 /**
- * Loads the handoff configuration from the project root and returns metadata.
+ * Loads the handoff configuration for the given working directory and returns metadata.
  */
-export const initConfigWithMetadata = (configOverride?: Partial<Config>): ConfigLoadResult => {
+export const initConfigWithMetadata = (configOverride?: Partial<Config>, context?: ConfigLoadContext): ConfigLoadResult => {
   let config: Partial<Config> = {};
-  const { selected: configPath, ignored } = resolveConfigFilePath();
+  const { selected: configPath, ignored } = resolveConfigFilePath(context?.workingPath ?? resolveWorkingPath(), context?.configPath);
 
   if (ignored.length > 0 && configPath) {
     Logger.warn(
@@ -123,14 +166,16 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>): Config
 };
 
 /**
- * Loads the handoff configuration from the project root.
+ * Loads the handoff configuration for the given working directory.
  *
- * Searches for config files in order: handoff.config.ts, handoff.config.js, handoff.config.cjs, handoff.config.json.
- * Merges file config with any provided overrides, then applies defaults for missing values.
+ * Searches for config files in order: handoff.config.ts, handoff.config.js, handoff.config.cjs, handoff.config.json,
+ * unless `context.configPath` names one explicitly. Merges file config with any provided overrides,
+ * then applies defaults for missing values.
  *
  * @param configOverride - Optional partial config to override file-loaded values.
+ * @param context - Optional working directory and explicit config file to load.
  * @returns The fully resolved Config object.
  */
-export const initConfig = (configOverride?: Partial<Config>): Config => {
-  return initConfigWithMetadata(configOverride).config;
+export const initConfig = (configOverride?: Partial<Config>, context?: ConfigLoadContext): Config => {
+  return initConfigWithMetadata(configOverride, context).config;
 };

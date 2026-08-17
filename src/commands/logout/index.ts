@@ -1,10 +1,9 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../../';
 import { revokeAccessToken } from '../../cli/auth/device';
 import { clearCliAuth, cliAuthFilePath, cliAuthMatchesRegistry, normalizeRegistryUrl, readCliAuth } from '../../cli/auth/store';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions } from '../utils';
 
 export interface LogoutArgs extends SharedArgs {
   url?: string;
@@ -19,7 +18,7 @@ const command: CommandModule<{}, LogoutArgs> = {
       describe: 'Revoke credentials only when they belong to this exact registry URL',
     }),
   handler: async (args: LogoutArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
     const auth = await readCliAuth(handoff.workingPath);
     if (args.url && auth && !cliAuthMatchesRegistry(auth, args.url)) {
       Logger.error(`The saved login belongs to ${auth.remoteUrl}, not ${normalizeRegistryUrl(args.url)}. No credentials were changed.`);

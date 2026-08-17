@@ -1,11 +1,10 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../../';
 import { loginWithDevice } from '../../cli/auth/device';
 import { cliAuthFilePath } from '../../cli/auth/store';
 import { resolveRegistryConnection } from '../../registry/connection';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions } from '../utils';
 
 export interface LoginArgs extends SharedArgs {
   url?: string;
@@ -27,7 +26,7 @@ const command: CommandModule<{}, LoginArgs> = {
         describe: 'Open the approval URL in the default browser (disable with --no-browser)',
       }),
   handler: async (args: LoginArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
     try {
       const configured = resolveRegistryConnection(handoff.config);
       const remoteUrl = args.url?.trim() || configured.url;

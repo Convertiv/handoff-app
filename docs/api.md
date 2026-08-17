@@ -19,9 +19,7 @@ https://github.com/Convertiv/handoff-0-6-0/
 ```js
 import Handoff from 'handoff-app';
 
-const handoff = new Handoff({
-  // You can customize the configuration here
-});
+const handoff = new Handoff();
 handoff.fetch();
 ```
 

@@ -1,8 +1,7 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../../';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { ENTITY_WIRE_KIND, getSharedOptions, REGISTRY_ENTITY_KINDS, RegistryEntityKind } from '../utils';
+import { createHandoff, ENTITY_WIRE_KIND, getSharedOptions, REGISTRY_ENTITY_KINDS, RegistryEntityKind } from '../utils';
 
 export interface PublishArgs extends SharedArgs {
   type: RegistryEntityKind;
@@ -38,7 +37,7 @@ const command: CommandModule<{}, PublishArgs> = {
       });
   },
   handler: async (args: PublishArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
     try {
       if (args.type === 'tokens') {
         await handoff.publishTokens(args.id);
