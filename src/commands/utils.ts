@@ -1,5 +1,7 @@
 import { Argv } from 'yargs';
+import Handoff from '../';
 import type { TransferEntityKind } from '../registry/transfer';
+import { SharedArgs } from './types';
 
 /** Plural entity kinds accepted by the `publish`/`checkout` commands. */
 export const REGISTRY_ENTITY_KINDS = ['components', 'patterns', 'pages', 'tokens', 'assets'] as const;
@@ -12,12 +14,15 @@ export const ENTITY_WIRE_KIND: Record<'components' | 'patterns' | 'pages', Trans
   pages: 'page',
 };
 
+export const createHandoff = (args: SharedArgs): Handoff =>
+  new Handoff({ debug: args.debug, force: args.force, configPath: args.config });
+
 export const getSharedOptions = (yargs: Argv) => {
   return yargs.options({
     config: {
       alias: 'c',
       type: 'string',
-      description: 'Path to config file',
+      description: 'Path to config file, relative to the working directory',
     },
     force: {
       alias: 'f',

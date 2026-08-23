@@ -3,7 +3,8 @@ export { defaultConfig, getClientConfig } from './defaults';
 export type { ImageStyle } from './defaults';
 
 // Config file loading
-export { initConfig, initConfigWithMetadata } from './loader';
+export { HandoffConfigError, initConfig, initConfigWithMetadata } from './loader';
+export type { ConfigLoadContext } from './loader';
 
 // Config helpers
 export { defineConfig } from './helpers';

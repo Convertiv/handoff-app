@@ -16,7 +16,7 @@ but the various kinds of configurations can be tailored or extended.
 
 Handoff has 4 configuration areas - 
 
-`handoff.config.*` - Defines the general handoff configuration. Supported files are `handoff.config.ts`, `handoff.config.js`, `handoff.config.cjs`, and `handoff.config.json` (resolved in that precedence order).
+`handoff.config.*` - Defines the general handoff configuration. Supported files are `handoff.config.ts`, `handoff.config.js`, `handoff.config.cjs`, and `handoff.config.json` (resolved in that precedence order). Pass `-c, --config <file>` to load one specific file instead, resolved from the working directory (`HANDOFF_WORKING_PATH`, or the directory the command runs in).
 `pages` - Markdown files that will create or customize pages in the documentation
 app
 `exportables` - JSON schemas for each component in your figma file that you

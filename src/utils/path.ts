@@ -8,27 +8,27 @@ import path from 'path';
 export function generateFilesystemSafeId(workingPath: string): string {
   // Normalize path separators to forward slashes for consistent processing
   let safeId = workingPath.replace(/\\/g, '/');
-  
+
   // Replace forward slashes with dashes
   safeId = safeId.replace(/\//g, '-');
-  
+
   // Remove or replace invalid filesystem characters
   safeId = safeId.replace(/[<>:"|?*\x00]/g, '-');
-  
+
   // Remove leading/trailing dashes and spaces
   safeId = safeId.replace(/^[\s-]+|[\s-]+$/g, '');
-  
+
   // Handle Windows reserved names (case-insensitive)
   const reservedNames = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
   if (reservedNames.test(safeId)) {
     safeId = `project-${safeId}`;
   }
-  
+
   // Ensure we have at least one character
   if (!safeId) {
     safeId = 'default-project';
   }
-  
+
   return safeId;
 }
 
@@ -48,6 +48,15 @@ export function normalizePathForCompare(inputPath: string): string {
  */
 export function arePathsEqual(pathA: string, pathB: string): boolean {
   return normalizePathForCompare(pathA) === normalizePathForCompare(pathB);
+}
+
+/**
+ * The directory handoff commands run against - `HANDOFF_WORKING_PATH` when set, otherwise the
+ * process working directory. Relative paths passed on the command line (e.g. `-c`) resolve from here.
+ */
+export function resolveWorkingPath(): string {
+  const configured = process.env.HANDOFF_WORKING_PATH;
+  return configured ? path.resolve(configured) : process.cwd();
 }
 
 /**

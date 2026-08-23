@@ -11,15 +11,25 @@ import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
-import { normalizePathForCompare } from './utils/path';
+import { normalizePathForCompare, resolveWorkingPath } from './utils/path';
 import { generateFilesystemSafeId } from './utils/path';
+
+/** How a {@link Handoff} instance is set up. */
+export interface HandoffOptions {
+  debug?: boolean;
+  force?: boolean;
+  /** Partial config merged over the loaded config file. */
+  config?: Partial<Config>;
+  /** Explicit config file (the CLI's `-c, --config`), resolved from the working path. */
+  configPath?: string;
+}
 
 class Handoff {
   config: Config | null;
   debug: boolean = false;
   force: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
-  workingPath: string = process.cwd();
+  workingPath: string = resolveWorkingPath();
   exportsDirectory: string = 'exported';
   sitesDirectory: string = 'out';
   runtimeConfig?: RuntimeConfig | null;
@@ -42,29 +52,32 @@ class Handoff {
     return this._store;
   }
 
-  private _initialArgs: { debug?: boolean; force?: boolean; config?: Partial<Config> } = {};
+  private _options: HandoffOptions = {};
   private _configFilePaths: string[] = [];
   private _configFileIndex: Map<string, ConfigFileEntry> = new Map();
   private _mainConfigFilePath?: string;
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
-  constructor(debug?: boolean, force?: boolean, config?: Partial<Config>) {
-    this._initialArgs = { debug, force, config };
-    this.construct(debug, force, config);
+  constructor(options: HandoffOptions = {}) {
+    this._options = options;
+    this.construct(options);
   }
 
-  private construct(debug?: boolean, force?: boolean, config?: Partial<Config>) {
+  private construct(options: HandoffOptions) {
     this.config = null;
-    this.debug = debug ?? false;
-    this.force = force ?? false;
+    this.debug = options.debug ?? false;
+    this.force = options.force ?? false;
     Logger.init({ debug: this.debug });
-    this.init(config);
+    this.init(options.config);
     global.handoff = this;
   }
 
   init(configOverride?: Partial<Config>): Handoff {
-    const configResult = initConfigWithMetadata(configOverride ?? {});
+    const configResult = initConfigWithMetadata(configOverride ?? {}, {
+      workingPath: this.workingPath,
+      configPath: this._options.configPath,
+    });
     const config = configResult.config;
     this.config = config;
     this._mainConfigFilePath = configResult.configPath;
@@ -78,7 +91,7 @@ class Handoff {
   }
 
   reload(): Handoff {
-    this.construct(this._initialArgs.debug, this._initialArgs.force, this._initialArgs.config);
+    this.construct(this._options);
     return this;
   }
 
