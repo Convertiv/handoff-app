@@ -2,9 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { RegistryPrincipal } from '@handoff/registry/auth';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
-import { REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE } from '@handoff/registry/auth';
 import { getRegistryConnection, RegistryConnectionError } from '../registry-connection';
-import { authorizeRegistryRequest } from './auth';
+import { authorizeRegistryRequest, requiredScopeForMethod } from './auth';
 import { sendRegistryError } from './errors';
 import { buildMeta, type RegistryMeta } from './meta';
 import { redactSecrets } from '../api/redact';
@@ -14,14 +13,15 @@ import { redactSecrets } from '../api/redact';
  *
  * Enforces, in order: the registry-runtime guard (management APIs exist only when
  * `runtime.mode: registry`, else `409 runtime_mode_conflict`); the per-route method allowlist
- * (`405 method_not_allowed`); database resolution (`503 database_unavailable`); and scoped,
- * revocable bearer-token authorization on every request — reads require `registry:read`, mutations
- * require `registry:write` (`401 unauthorized` / `403 forbidden`). The route body then runs against
- * a live connection, with any thrown failure mapped to `unexpected_error`.
+ * (`405 method_not_allowed`); database resolution (`503 database_unavailable`); and scoped credential
+ * authorization on every request: reads require `registry:read`, mutations require `registry:write`
+ * (`400 bad_request` / `401 unauthorized` / `403 forbidden`). The route body then runs against a live
+ * connection, with any thrown failure mapped to `unexpected_error`.
+ *
+ * The database is resolved before authorization because that is the only guard needing a connection,
+ * so a request that would fail auth against a registry with a down database reports
+ * `database_unavailable` first.
  */
-
-/** Methods that mutate state and therefore require the `registry:write` scope; all others read. */
-const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /** Context handed to a registry route body once all guards pass. */
 export interface RegistryRouteContext {
@@ -29,7 +29,7 @@ export interface RegistryRouteContext {
   res: NextApiResponse;
   db: RegistryDatabase;
   method: string;
-  /** Authenticated token owner; every request that reaches a route body is authorized. */
+  /** Authenticated caller; every request that reaches a route body is authorized. */
   principal: RegistryPrincipal;
 }
 
@@ -84,8 +84,7 @@ export const handleRegistryRoute = async (
     return;
   }
 
-  const requiredScope = MUTATION_METHODS.has(method) ? REGISTRY_WRITE_SCOPE : REGISTRY_READ_SCOPE;
-  const auth = await authorizeRegistryRequest(req, db, requiredScope);
+  const auth = await authorizeRegistryRequest(req, db, requiredScopeForMethod(method));
   if (!auth.ok) {
     sendRegistryError(res, auth.code!, auth.message!);
     return;

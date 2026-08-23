@@ -3,8 +3,8 @@ import { handleEntityItem } from '@/lib/registry-api/entity-routes';
 
 /**
  * `GET` (detail incl. build state), `PUT` (allowlisted metadata update — never touches
- * artifacts/build), and `DELETE` for a single component. Registry-runtime only; mutations require
- * the bearer token.
+ * artifacts/build), and `DELETE` for a single component. Registry-runtime only; mutations require a
+ * write-scoped credential.
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   return handleEntityItem(req, res, 'component');

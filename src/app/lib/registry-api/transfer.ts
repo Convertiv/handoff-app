@@ -538,7 +538,7 @@ export const applyEntityPackage = async (
 
 /**
  * Handle `PUT /api/registry/transfer/{component|pattern}/:id` — validate and ingest a publish
- * package. Registry-runtime only; the bearer token is required (enforced by the guard stack).
+ * package. Registry-runtime only; a write-scoped credential is required (enforced by the guard stack).
  */
 export const handleTransferRoute = (req: NextApiRequest, res: NextApiResponse, kind: TransferEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['PUT'], async ({ db }) => {

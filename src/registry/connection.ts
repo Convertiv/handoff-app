@@ -10,6 +10,9 @@
 
 import type { Config } from '../types/config';
 import { cliAuthMatchesRegistry, cliAuthTokenIsValid, readCliAuth } from '../cli/auth/store';
+// Imported straight from the module, not the `auth` barrel, to keep the database schema off the CLI
+// startup path; this file is resolved for every command.
+import { resolveRegistrySyncSecret } from './auth/sync-secret';
 
 /** Default env-var name holding the remote registry base URL. */
 export const DEFAULT_REGISTRY_URL_ENV = 'HANDOFF_REGISTRY_URL';
@@ -57,6 +60,10 @@ export const resolveRegistryConnection = (config: Config | null | undefined): Re
  * keep precedence for deterministic CI: `HANDOFF_REGISTRY_URL` (or inline config) wins over the
  * saved URL, and `HANDOFF_REGISTRY_ACCESS_TOKEN` wins over the saved token. The saved token only
  * applies to the URL it was issued for.
+ *
+ * A configured `HANDOFF_SYNC_SECRET` is the last resort. Being deployment-wide rather than personal,
+ * it fills in only where there is no explicit token and no login (CI, in practice), instead of quietly
+ * speaking for a developer who is signed in.
  */
 export const resolveAuthenticatedRegistryConnection = async (
   config: Config | null | undefined,
@@ -65,9 +72,10 @@ export const resolveAuthenticatedRegistryConnection = async (
   const connection = resolveRegistryConnection(config);
 
   const auth = await readCliAuth(workingPath);
-  if (!cliAuthTokenIsValid(auth)) return connection;
+  const login = cliAuthTokenIsValid(auth) ? auth! : null;
 
-  const url = connection.url || auth!.remoteUrl;
-  const accessToken = connection.accessToken || (cliAuthMatchesRegistry(auth, url) ? auth!.accessToken : '');
+  const url = connection.url || login?.remoteUrl || '';
+  const savedToken = login && cliAuthMatchesRegistry(login, url) ? login.accessToken : '';
+  const accessToken = connection.accessToken || savedToken || resolveRegistrySyncSecret();
   return { ...connection, url, accessToken };
 };
