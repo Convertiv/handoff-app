@@ -1,7 +1,7 @@
 import type { NextApiResponse } from 'next';
 
 /** Entity kinds whose docs pages are statically generated and can be regenerated on demand. */
-type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
+export type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
 
 /**
  * Best-effort on-demand revalidation of the statically-generated docs pages affected by a registry
@@ -18,19 +18,37 @@ type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
  * page that has not been generated yet, or a runtime without ISR) must never fail the request — the
  * page refreshes on its next natural regeneration.
  */
-export const revalidateEntityPages = async (
+/** The docs paths one entity change affects. Pages own their route; components/patterns live under `/system`. */
+const affectedPaths = (kind: RevalidatableEntityKind, id: string): string[] =>
+  kind === 'page' ? [`/${id}/`] : [`/system/${kind}/${id}/`, '/system/'];
+
+/** Regenerate one path, absorbing any failure. See the best-effort note above. */
+const revalidatePath = async (res: NextApiResponse, path: string): Promise<void> => {
+  try {
+    await res.revalidate(path);
+  } catch (error) {
+    // Best-effort: see note above. The entity is persisted regardless of revalidation outcome.
+    console.warn(`Failed to revalidate registry docs path "${path}".`, error);
+  }
+};
+
+export const revalidateEntityPages = async (res: NextApiResponse, kind: RevalidatableEntityKind, id: string): Promise<void> => {
+  for (const path of affectedPaths(kind, id)) {
+    await revalidatePath(res, path);
+  }
+};
+
+/**
+ * Revalidate the pages a batch of mutations affects. Paths are de-duplicated first, so a batch
+ * touching many components regenerates the shared `/system/` index once instead of once per item.
+ * Same best-effort contract as {@link revalidateEntityPages}.
+ */
+export const revalidateEntityBatch = async (
   res: NextApiResponse,
-  kind: RevalidatableEntityKind,
-  id: string
+  entities: readonly { kind: RevalidatableEntityKind; id: string }[]
 ): Promise<void> => {
-  // Pages are served at their own route (`/<id>`); components/patterns live under `/system`.
-  const paths = kind === 'page' ? [`/${id}/`] : [`/system/${kind}/${id}/`, '/system/'];
+  const paths = new Set(entities.flatMap(({ kind, id }) => affectedPaths(kind, id)));
   for (const path of paths) {
-    try {
-      await res.revalidate(path);
-    } catch (error) {
-      // Best-effort: see note above. The entity is persisted regardless of revalidation outcome.
-      console.warn(`Failed to revalidate registry docs path "${path}" after ${kind} "${id}" changed.`, error);
-    }
+    await revalidatePath(res, path);
   }
 };

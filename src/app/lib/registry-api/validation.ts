@@ -1,7 +1,7 @@
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import { isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import type { TransferBuild } from '@handoff/registry/transfer';
-import type { RegistryErrorDetails } from './errors';
+import type { RegistryErrorCode, RegistryErrorDetails } from './errors';
 
 const REGISTRY_BUILD_STATUSES: readonly ArtifactBuildStatus[] = ['current', 'stale', 'missing', 'error'];
 
@@ -29,6 +29,38 @@ export interface PackageValidation<T> {
 
 export const invalidPackage = <T = never>(message: string, details?: RegistryErrorDetails): PackageValidation<T> => ({
   ok: false,
+  message,
+  details,
+});
+
+/**
+ * The outcome of applying one transfer package to the registry.
+ *
+ * Ingestion is kept apart from responding so a single-entity route and a batch caller share the same
+ * validation and persistence: the route maps this onto `sendRegistryData`/`sendRegistryError`, while a
+ * batch collects many of them into one response.
+ */
+export interface ApplyResult<T = void> {
+  ok: boolean;
+  /** Present when `ok`; describes what the ingest did (e.g. whether it was a no-op). */
+  value?: T;
+  code?: RegistryErrorCode;
+  message?: string;
+  details?: RegistryErrorDetails;
+}
+
+/** Lift a failed {@link PackageValidation} into a `bad_request` {@link ApplyResult}. */
+export const rejected = <T>(validation: PackageValidation<unknown>, fallback: string): ApplyResult<T> => ({
+  ok: false,
+  code: 'bad_request',
+  message: validation.message ?? fallback,
+  details: validation.details,
+});
+
+/** Report a failed ingest with an explicit registry error code. */
+export const applyFailed = <T>(code: RegistryErrorCode, message: string, details?: RegistryErrorDetails): ApplyResult<T> => ({
+  ok: false,
+  code,
   message,
   details,
 });

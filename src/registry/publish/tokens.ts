@@ -1,7 +1,7 @@
 /**
  * Connected-workspace token publish orchestration.
  *
- * `publish tokens [setId]` runs a **fresh token build** (`handoff.fetch()` — Figma extract +
+ * `publish tokens [setId...]` runs a **fresh token build** (`handoff.fetch()` — Figma extract +
  * `buildStyles`) so the local `tokens.json` and generated token outputs are current, discovers the
  * logical sets from that document, then uploads each selected set (its extracted record + generated
  * artifacts) to the connected registry. Each set is one atomic upsert; a set whose deterministic
@@ -13,10 +13,10 @@ import Handoff from '../../index';
 import type { TokenSetRecord } from '../../store/types';
 import { Logger } from '../../utils/logger';
 import { stableStringify } from '../../utils/stable-stringify';
-import { createRegistryClient } from '../client';
+import { selectIds } from '../selection';
 import type { TokenSetSummary, TokenSetTransferArtifact, TokenSetTransferPackage } from '../tokens/transfer';
 import { describePublishError } from './errors';
-import { PublishError, resolveConnectionOrThrow } from './index';
+import { PublishError, publishedLabel, resolveTransport } from './index';
 import { createCurrentBuild, hashPathValues, sha256 } from './publish-build';
 
 /**
@@ -57,33 +57,39 @@ const buildTokenSetPackage = async (handoff: Handoff, set: TokenSetRecord): Prom
  * counts. A per-set upload failure is collected and never leaves a partially written set (each set is
  * committed atomically server-side); the run throws at the end if any set failed.
  */
-export const publishTokens = async (handoff: Handoff, setId?: string): Promise<void> => {
-  const connection = await resolveConnectionOrThrow(handoff);
+export const publishTokens = async (handoff: Handoff, selection?: string[]): Promise<void> => {
+  const { client, url } = await resolveTransport(handoff);
 
-  Logger.info(setId ? `Building tokens to publish "${setId}"…` : 'Building tokens for publish…');
-  await handoff.fetch();
+  if (!handoff.skipBuild) {
+    Logger.info(selection ? `Building tokens to publish ${selection.map((id) => `"${id}"`).join(', ')}…` : 'Building tokens for publish…');
+    await handoff.fetch();
+  }
 
   const allSets = await handoff.store.tokens.listSets();
-  let targetSets = allSets;
-  if (setId) {
-    const found = allSets.find((set) => set.id === setId);
-    if (!found) {
-      throw new PublishError(
-        `Token set "${setId}" was not found in the generated tokens. Discovered sets: ${allSets.map((set) => set.id).join(', ') || '(none)'}.`
-      );
-    }
-    targetSets = [found];
+  const { selected, unknown } = selectIds(
+    allSets.map((set) => set.id),
+    selection
+  );
+  if (unknown.length > 0) {
+    throw new PublishError(
+      `Token set ${unknown.map((id) => `"${id}"`).join(', ')} was not found in the generated tokens. ` +
+        `Discovered sets: ${allSets.map((set) => set.id).join(', ') || '(none)'}.`
+    );
   }
+  const selectedIds = new Set(selected);
+  const targetSets = allSets.filter((set) => selectedIds.has(set.id));
 
   const packages = await Promise.all(targetSets.map((set) => buildTokenSetPackage(handoff, set)));
 
-  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+  // Without a registry there is nothing to compare against, so a dry run reports every set.
   let remote: TokenSetSummary[] = [];
-  try {
-    remote = await client.listTokenSets();
-  } catch (error) {
-    // If the summary listing fails we simply publish everything (the server still no-ops unchanged sets).
-    Logger.info('Could not read current registry token sets; publishing all selected sets.');
+  if (client) {
+    try {
+      remote = await client.listTokenSets();
+    } catch (error) {
+      // If the summary listing fails we simply publish everything (the server still no-ops unchanged sets).
+      Logger.info('Could not read current registry token sets; publishing all selected sets.');
+    }
   }
   const remoteHashById = new Map(remote.map((entry) => [entry.id, entry.sourceHash]));
 
@@ -99,16 +105,19 @@ export const publishTokens = async (handoff: Handoff, setId?: string): Promise<v
       continue;
     }
     try {
-      await client.publishTokens(pkg);
+      if (client) {
+        await client.publishTokens(pkg);
+      }
       published += 1;
-      Logger.info(`Published: ${pkg.id} (${pkg.artifacts.length} artifact(s))`);
+      Logger.info(`${publishedLabel(handoff)}: ${pkg.id} (${pkg.artifacts.length} artifact(s))`);
     } catch (error) {
-      failed.push({ id: pkg.id, message: describePublishError(error, connection.url, 'token set') });
+      failed.push({ id: pkg.id, message: describePublishError(error, url, 'token set') });
     }
   }
 
   Logger.success(
-    `Tokens publish complete — ${published} published, ${unchanged} unchanged${failed.length ? `, ${failed.length} failed` : ''}.`
+    `Tokens publish complete — ${published} ${handoff.dryRun ? 'would be published' : 'published'}, ` +
+      `${unchanged} unchanged${failed.length ? `, ${failed.length} failed` : ''}.`
   );
   if (failed.length > 0) {
     for (const failure of failed) {

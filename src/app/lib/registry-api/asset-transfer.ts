@@ -16,6 +16,9 @@ import {
   isPlainObject,
   isSha256Hash,
   normalizeSafeRelativePath,
+  applyFailed,
+  rejected,
+  type ApplyResult,
   type PackageValidation,
   validateTransferBuild,
 } from './validation';
@@ -205,43 +208,67 @@ export const handleAssetCollectionRoute = (req: NextApiRequest, res: NextApiResp
       return;
     }
 
-    // PUT: publish ingestion.
-    const validation = validateAssetPackage(req.body, collection);
-    if (!validation.ok) {
-      sendRegistryError(res, 'bad_request', validation.message ?? 'Invalid asset collection package.', validation.details);
-      return;
-    }
-    const pkg = validation.value;
-
-    const existingHash = await storedSourceHash(db, collection);
-    if (existingHash && pkg.build.sourceHash && existingHash === pkg.build.sourceHash) {
-      sendRegistryData(res, 200, { collection, published: false, unchanged: true }, buildMeta());
+    const result = await applyAssetCollectionPackage(db, collection, req.body);
+    if (!result.ok) {
+      sendRegistryError(res, result.code ?? 'bad_request', result.message ?? 'Invalid asset collection package.', result.details);
       return;
     }
 
-    // Guard: never finalize a manifest that references a blob the registry does not have.
-    const referenced = Array.from(new Set(pkg.assets.map((asset) => asset.contentHash)));
-    if (referenced.length > 0) {
-      const present = await db.select({ hash: assetBlobs.hash }).from(assetBlobs).where(inArray(assetBlobs.hash, referenced));
-      const presentSet = new Set(present.map((row) => row.hash));
-      const missing = referenced.filter((hash) => !presentSet.has(hash));
-      if (missing.length > 0) {
-        sendRegistryError(
-          res,
-          'bad_request',
-          `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`,
-          {
-            rejectedFields: ['assets'],
-            missing,
-          }
-        );
-        return;
-      }
-    }
-
-    await ingestAssetCollection(db, pkg);
-    sendRegistryData(res, 200, { collection, published: true, assets: pkg.assets.length }, buildMeta());
+    const { unchanged, assets: assetCount } = result.value;
+    sendRegistryData(
+      res,
+      200,
+      unchanged ? { collection, published: false, unchanged: true } : { collection, published: true, assets: assetCount },
+      buildMeta()
+    );
   });
+
+/** The outcome of an asset-collection ingest: `unchanged` when the stored `sourceHash` already matched. */
+export interface AssetCollectionApplied {
+  collection: string;
+  unchanged: boolean;
+  assets: number;
+}
+
+/**
+ * Validate and ingest one asset-collection manifest. The one ingestion service behind both the
+ * `PUT /api/registry/transfer/assets/:collection` route and any batch caller. Blob bytes travel
+ * separately through the blob endpoints, so this checks every referenced blob is already stored and a
+ * manifest never points at missing content.
+ */
+export const applyAssetCollectionPackage = async (
+  db: RegistryDatabase,
+  collection: string,
+  body: unknown
+): Promise<ApplyResult<AssetCollectionApplied>> => {
+  const validation = validateAssetPackage(body, collection);
+  if (!validation.ok || !validation.value) {
+    return rejected(validation, 'Invalid asset collection package.');
+  }
+  const pkg = validation.value;
+
+  const existingHash = await storedSourceHash(db, collection);
+  if (existingHash && pkg.build.sourceHash && existingHash === pkg.build.sourceHash) {
+    return { ok: true, value: { collection, unchanged: true, assets: pkg.assets.length } };
+  }
+
+  // Guard: never finalize a manifest that references a blob the registry does not have.
+  const referenced = Array.from(new Set(pkg.assets.map((asset) => asset.contentHash)));
+  if (referenced.length > 0) {
+    const present = await db.select({ hash: assetBlobs.hash }).from(assetBlobs).where(inArray(assetBlobs.hash, referenced));
+    const presentSet = new Set(present.map((row) => row.hash));
+    const missing = referenced.filter((hash) => !presentSet.has(hash));
+    if (missing.length > 0) {
+      return applyFailed('bad_request', `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`, {
+        rejectedFields: ['assets'],
+        missing,
+      });
+    }
+  }
+
+  await ingestAssetCollection(db, pkg);
+  return { ok: true, value: { collection, unchanged: false, assets: pkg.assets.length } };
+};
 
 /** `POST /api/registry/transfer/assets/blobs/have`: return which of the given hashes are missing. */
 export const handleAssetBlobHaveRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>

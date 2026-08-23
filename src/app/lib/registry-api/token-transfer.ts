@@ -13,6 +13,8 @@ import {
   invalidPackage as invalid,
   isPlainObject,
   normalizeSafeRelativePath,
+  rejected,
+  type ApplyResult,
   type PackageValidation,
   validateTransferBuild,
 } from './validation';
@@ -204,6 +206,38 @@ export const handleTokenCheckoutRoute = (req: NextApiRequest, res: NextApiRespon
     sendRegistryData(res, 200, { id, kind: set.kind, record: set.record, artifacts }, buildMeta());
   });
 
+/** The outcome of a token-set ingest: `unchanged` when the stored `sourceHash` already matched. */
+export interface TokenSetApplied {
+  id: string;
+  kind: 'foundation' | 'component';
+  unchanged: boolean;
+  artifacts: number;
+}
+
+/**
+ * Validate and ingest one token-set publish package. The one ingestion service behind both the
+ * `PUT /api/registry/transfer/tokens/:setId` route and any batch caller.
+ */
+export const applyTokenSetPackage = async (
+  db: RegistryDatabase,
+  setId: string,
+  body: unknown
+): Promise<ApplyResult<TokenSetApplied>> => {
+  const validation = validateTokenPackage(body, setId);
+  if (!validation.ok || !validation.value) {
+    return rejected(validation, 'Invalid token set package.');
+  }
+  const pkg = validation.value;
+
+  const existingHash = await storedSourceHash(db, setId);
+  if (existingHash && pkg.build.sourceHash && existingHash === pkg.build.sourceHash) {
+    return { ok: true, value: { id: setId, kind: pkg.kind, unchanged: true, artifacts: pkg.artifacts.length } };
+  }
+
+  await ingestTokenSet(db, pkg);
+  return { ok: true, value: { id: setId, kind: pkg.kind, unchanged: false, artifacts: pkg.artifacts.length } };
+};
+
 /** `PUT /api/registry/transfer/tokens/:setId` — validate + atomically ingest one set. */
 export const handleTokenTransferRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
   handleRegistryRoute(req, res, ['PUT'], async ({ db }) => {
@@ -213,19 +247,17 @@ export const handleTokenTransferRoute = (req: NextApiRequest, res: NextApiRespon
       return;
     }
 
-    const validation = validateTokenPackage(req.body, id);
-    if (!validation.ok) {
-      sendRegistryError(res, 'bad_request', validation.message ?? 'Invalid token set package.', validation.details);
-      return;
-    }
-    const pkg = validation.value;
-
-    const existingHash = await storedSourceHash(db, id);
-    if (existingHash && pkg.build.sourceHash && existingHash === pkg.build.sourceHash) {
-      sendRegistryData(res, 200, { id, kind: pkg.kind, published: false, unchanged: true }, buildMeta());
+    const result = await applyTokenSetPackage(db, id, req.body);
+    if (!result.ok) {
+      sendRegistryError(res, result.code ?? 'bad_request', result.message ?? 'Invalid token set package.', result.details);
       return;
     }
 
-    await ingestTokenSet(db, pkg);
-    sendRegistryData(res, 200, { id, kind: pkg.kind, published: true, artifacts: pkg.artifacts.length }, buildMeta());
+    const { kind, unchanged, artifacts } = result.value;
+    sendRegistryData(
+      res,
+      200,
+      unchanged ? { id, kind, published: false, unchanged: true } : { id, kind, published: true, artifacts },
+      buildMeta()
+    );
   });

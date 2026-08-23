@@ -1,21 +1,36 @@
 import { Argv } from 'yargs';
 import Handoff from '../';
-import type { TransferEntityKind } from '../registry/transfer';
+import { REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from '../registry/content-kinds';
+import { Logger } from '../utils/logger';
 import { SharedArgs } from './types';
 
-/** Plural entity kinds accepted by the `publish`/`checkout` commands. */
-export const REGISTRY_ENTITY_KINDS = ['components', 'patterns', 'pages', 'tokens', 'assets'] as const;
-export type RegistryEntityKind = (typeof REGISTRY_ENTITY_KINDS)[number];
-
-/** Map the plural CLI kind to the singular wire kind used by entity publish/checkout. */
-export const ENTITY_WIRE_KIND: Record<'components' | 'patterns' | 'pages', TransferEntityKind> = {
-  components: 'component',
-  patterns: 'pattern',
-  pages: 'page',
-};
+/** The `type` argument accepted by publish/checkout: any content kind, or `all` for every kind. */
+export const REGISTRY_TARGET_KINDS = [...REGISTRY_ENTITY_KINDS, 'all'] as const;
+export type RegistryTargetKind = (typeof REGISTRY_TARGET_KINDS)[number];
 
 export const createHandoff = (args: SharedArgs): Handoff =>
-  new Handoff({ debug: args.debug, force: args.force, configPath: args.config });
+  new Handoff({
+    debug: args.debug,
+    force: args.force,
+    configPath: args.config,
+    dryRun: args.dryRun,
+    // yargs gives `--no-build` as `build: false`; anything else leaves the build in place.
+    skipBuild: args.build === false,
+  });
+
+/**
+ * Run a registry command against a fresh Handoff. Registry failures are the user's to act on, so they
+ * surface as one actionable line and a non-zero exit rather than a stack trace.
+ */
+export const runRegistryCommand = async (args: SharedArgs, run: (handoff: Handoff) => Promise<unknown>): Promise<void> => {
+  const handoff = createHandoff(args);
+  try {
+    await run(handoff);
+  } catch (error) {
+    Logger.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
+};
 
 export const getSharedOptions = (yargs: Argv) => {
   return yargs.options({
@@ -35,4 +50,53 @@ export const getSharedOptions = (yargs: Argv) => {
       description: 'Enable debug mode',
     },
   });
+};
+
+/** Shared options plus the transfer options: publish and its compatibility aliases use these. */
+export const getPublishOptions = (yargs: Argv) =>
+  getSharedOptions(yargs).options({
+    'dry-run': {
+      type: 'boolean',
+      description: 'Report what would be published without contacting the registry (the build still runs; add --no-build to skip it)',
+    },
+    build: {
+      type: 'boolean',
+      default: true,
+      description: 'Run a fresh build first; use --no-build to publish the existing output',
+    },
+  });
+
+/** Shared options plus `--dry-run`: checkout and its compatibility aliases use these. */
+export const getCheckoutOptions = (yargs: Argv) =>
+  getSharedOptions(yargs).options({
+    'dry-run': {
+      type: 'boolean',
+      description: 'Report what would be written without changing any workspace file',
+    },
+  });
+
+/**
+ * Positional `type` + variadic `id`, shared by publish, checkout, and their compatibility aliases.
+ * `choices` is always declared: yargs allows an omitted optional positional while still rejecting an
+ * unrecognized one, so the deprecated commands get the same guard as the canonical ones.
+ */
+export const withTargetPositionals = (yargs: Argv, verb: 'publish' | 'checkout') =>
+  yargs
+    .positional('type', {
+      describe: `The kind of content to ${verb}, or "all" for every kind`,
+      choices: REGISTRY_TARGET_KINDS,
+      type: 'string',
+    })
+    .positional('id', {
+      describe: `The stable id (component/pattern/page id, token set id, or asset collection); omit to ${verb} all of that kind`,
+      type: 'string',
+      array: true,
+    });
+
+/** Dispatch one `type` argument to the matching Handoff entry point. */
+export const runTarget = (handoff: Handoff, type: RegistryTargetKind, ids: string[] | undefined, verb: 'publish' | 'checkout') => {
+  if (type === 'all') {
+    return verb === 'publish' ? handoff.publishAll() : handoff.checkoutAll();
+  }
+  return verb === 'publish' ? handoff.publishKind(type, ids) : handoff.checkoutKind(type as RegistryEntityKind, ids);
 };

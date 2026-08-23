@@ -18,7 +18,7 @@ import { resolveAssetPhysicalPath, type AssetPhysicalRoots } from '../assets/lay
 import { ASSET_COLLECTIONS, isAssetCollection, type AssetCollection } from '../assets/sets';
 import type { AssetCollectionCheckoutPayload } from '../assets/transfer';
 import { createRegistryClient, RegistryClientError } from '../client';
-import { CheckoutError, resolveConnectionOrThrow } from './index';
+import { CheckoutError, reportPlannedWrites, resolveConnectionOrThrow } from './index';
 
 /** Map a registry client error to an actionable checkout message. */
 const describeFetchFailure = (error: RegistryClientError, target: string, registryUrl: string): string => {
@@ -56,16 +56,21 @@ const wouldChange = (absolutePath: string, bytes: Buffer): boolean => {
  * Checkout all published asset collections, or a single collection when `collection` is given.
  * Recreates workspace asset files; prompts before overwriting changed local files unless `--force`.
  */
-export const checkoutAssets = async (handoff: Handoff, collection?: string): Promise<void> => {
+export const checkoutAssets = async (handoff: Handoff, selection?: string[]): Promise<void> => {
   const connection = await resolveConnectionOrThrow(handoff);
-  if (collection && !isAssetCollection(collection)) {
-    throw new CheckoutError(`Unknown asset collection "${collection}". Supported collections: ${ASSET_COLLECTIONS.join(', ')}.`);
+  const unsupported = selection?.filter((name) => !isAssetCollection(name)) ?? [];
+  if (unsupported.length > 0) {
+    throw new CheckoutError(
+      `Unknown asset collection ${unsupported.map((name) => `"${name}"`).join(', ')}. ` +
+        `Supported collections: ${ASSET_COLLECTIONS.join(', ')}.`
+    );
   }
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
+  // A named selection is trusted as-is; only a full checkout has to ask the registry what exists.
   let collections: AssetCollection[];
-  if (collection) {
-    collections = [collection as AssetCollection];
+  if (selection) {
+    collections = selection as AssetCollection[];
   } else {
     const summaries = await client.listAssetCollections();
     collections = summaries.map((summary) => summary.collection).filter(isAssetCollection);
@@ -97,15 +102,27 @@ export const checkoutAssets = async (handoff: Handoff, collection?: string): Pro
   // Download each referenced blob once (dedup by hash), then resolve every asset to a physical write.
   const blobCache = new Map<string, Buffer>();
   const writes: AssetWrite[] = [];
+  const plannedPaths: string[] = [];
   for (const payload of payloads) {
     for (const asset of payload.assets) {
+      const absolutePath = resolveAssetPhysicalPath(asset.path, roots);
+      plannedPaths.push(absolutePath);
+      // A dry run reports paths only, so there is no reason to pull the bytes down.
+      if (handoff.dryRun) {
+        continue;
+      }
       let bytes = blobCache.get(asset.contentHash);
       if (!bytes) {
         bytes = await client.downloadAssetBlob(asset.contentHash);
         blobCache.set(asset.contentHash, bytes);
       }
-      writes.push({ absolutePath: resolveAssetPhysicalPath(asset.path, roots), bytes });
+      writes.push({ absolutePath, bytes });
     }
+  }
+
+  if (handoff.dryRun) {
+    reportPlannedWrites(handoff, 'asset collections', plannedPaths, plannedPaths.filter((target) => fs.existsSync(target)));
+    return;
   }
 
   const existingChanges = writes.filter((write) => fs.existsSync(write.absolutePath) && wouldChange(write.absolutePath, write.bytes));
