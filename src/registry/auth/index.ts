@@ -7,6 +7,8 @@ export {
   formatRegistryAccessToken,
   parseRegistryAccessToken,
   normalizeRegistryScopes,
+  expandRegistryScopes,
+  resolveRegistryScope,
   registryRoleAllowsScopes,
   type RegistryAccessTokenSummary,
   type CreateRegistryAccessTokenResult,
@@ -25,6 +27,7 @@ export {
 } from './action-tokens';
 export { createOpaqueSecret, hashSecret, normalizeEmail, secretHashMatches } from './crypto';
 export { buildGravatarUrl } from './gravatar';
+export { authenticateRegistrySyncSecret, resolveRegistrySyncSecret, SYNC_SECRET_ENV } from './sync-secret';
 export {
   createRegistryDeviceAuthorization,
   approveRegistryDeviceAuthorization,
@@ -80,10 +83,13 @@ export {
   REGISTRY_WRITE_SCOPE,
   scopesForRegistryRole,
   registryPrincipalHasScope,
+  isRegistryTokenPrincipal,
   type RegistryAccessScope,
   type RegistryPrincipal,
+  type RegistryTokenPrincipal,
+  type RegistrySyncSecretPrincipal,
   type RegistryUser,
   type RegistryUserRole,
   type RegistryUserStatus,
 } from './types';
-export { validateRegistryDisplayName, validateRegistryEmail, validateRegistryImageUrl } from './validation';
+export { isTransmittableCredential, validateRegistryDisplayName, validateRegistryEmail, validateRegistryImageUrl } from './validation';

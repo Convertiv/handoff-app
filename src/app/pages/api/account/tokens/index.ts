@@ -1,11 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import {
-  createRegistryAccessToken,
-  listRegistryAccessTokens,
-  REGISTRY_READ_SCOPE,
-  REGISTRY_WRITE_SCOPE,
-  type RegistryAccessScope,
-} from '@handoff/registry/auth';
+import { createRegistryAccessToken, expandRegistryScopes, listRegistryAccessTokens } from '@handoff/registry/auth';
 import { allowApiMethods, prepareRegistryApi } from '../../../../lib/auth/api';
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
@@ -23,15 +17,12 @@ export default async function accountTokensHandler(req: NextApiRequest, res: Nex
   }
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const requested = Array.isArray(body.scopes) ? body.scopes : [];
-  const scopes = requested.filter(
-    (scope: unknown): scope is RegistryAccessScope => scope === REGISTRY_READ_SCOPE || scope === REGISTRY_WRITE_SCOPE
-  );
-  const normalizedScopes = scopes.includes(REGISTRY_WRITE_SCOPE) ? [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE] : [REGISTRY_READ_SCOPE];
+  // Accepts the documented `sync:*` aliases as well as the canonical scope names; write implies read.
+  const scopes = expandRegistryScopes(Array.isArray(body.scopes) ? body.scopes : []);
   const result = await createRegistryAccessToken(context.db, {
     userId: context.user.id,
     name: typeof body.name === 'string' ? body.name : '',
-    scopes: normalizedScopes,
+    scopes,
     expiresAt: new Date(Date.now() + ONE_YEAR_MS),
   });
   if ('reason' in result) {

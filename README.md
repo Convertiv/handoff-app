@@ -399,6 +399,7 @@ Useful environment variables:
 | `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
 | `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
 | `HANDOFF_REGISTRY_ACCESS_TOKEN` | User-issued CI token |
+| `HANDOFF_SYNC_SECRET` | Optional deployment-wide registry credential |
 | `DATABASE_URL` | Registry PostgreSQL connection string |
 | `AUTH_SECRET` | Registry session-signing secret, at least 32 characters |
 | `AUTH_URL` | Canonical public registry URL |
