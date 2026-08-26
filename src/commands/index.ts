@@ -14,7 +14,9 @@ import logoutCommand from './logout';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
 import makeTemplateCommand from './make/template';
+import pullCommand from './pull';
 import publishCommand from './publish';
+import { pushCommands } from './push';
 import scaffoldCommand from './scaffold';
 import startCommand from './start';
 import validateComponentsCommand from './validate/components';
@@ -37,6 +39,8 @@ export const commands = [
   makeComponentCommand,
   makeTemplateCommand,
   publishCommand,
+  pullCommand,
+  ...pushCommands,
   scaffoldCommand,
   startCommand,
   validateComponentsCommand,

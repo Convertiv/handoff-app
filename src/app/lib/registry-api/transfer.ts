@@ -26,6 +26,9 @@ import {
   invalidPackage as invalid,
   isPlainObject,
   normalizeSafeRelativePath,
+  applyFailed,
+  rejected,
+  type ApplyResult,
   type PackageValidation,
   validateTransferBuild,
 } from './validation';
@@ -497,6 +500,43 @@ export const handleCheckoutRoute = (req: NextApiRequest, res: NextApiResponse, k
   });
 
 /**
+ * Validate and ingest one entity publish package. The one ingestion service behind both the
+ * `PUT /api/registry/transfer/{kind}/:id` route and any batch caller, so the transfer contract is
+ * enforced in one place. Returns a result instead of writing a response.
+ */
+export const applyEntityPackage = async (
+  db: RegistryDatabase,
+  kind: TransferEntityKind,
+  id: string,
+  body: unknown
+): Promise<ApplyResult> => {
+  const validation = validatePackage(body, kind, id);
+  if (!validation.ok || !validation.value) {
+    return rejected(validation, 'Invalid publish package.');
+  }
+  const pkg = validation.value;
+
+  const missing = await findMissingRequiredReference(db, pkg);
+  if (missing) {
+    return applyFailed(
+      'bad_request',
+      `Required artifact "${missing.reference}" referenced by "${missing.artifact}" is neither in the package nor already published.`,
+      { rejectedFields: ['artifacts'], missingReference: missing.reference }
+    );
+  }
+
+  await db.transaction(async (tx) => {
+    const transactionalDb = tx as unknown as RegistryDatabase;
+    await upsertEntityRecord(transactionalDb, kind, id, pkg.item);
+    await replaceEntityFiles(transactionalDb, kind, id, pkg.files);
+    await ingestArtifacts(transactionalDb, kind, id, pkg.artifacts);
+    await upsertBuildMetadata(transactionalDb, kind, id, pkg.build);
+  });
+
+  return { ok: true };
+};
+
+/**
  * Handle `PUT /api/registry/transfer/{component|pattern}/:id` — validate and ingest a publish
  * package. Registry-runtime only; the bearer token is required (enforced by the guard stack).
  */
@@ -508,31 +548,11 @@ export const handleTransferRoute = (req: NextApiRequest, res: NextApiResponse, k
       return;
     }
 
-    const validation = validatePackage(req.body, kind, id);
-    if (!validation.ok) {
-      sendRegistryError(res, 'bad_request', validation.message ?? 'Invalid publish package.', validation.details);
+    const result = await applyEntityPackage(db, kind, id, req.body);
+    if (!result.ok) {
+      sendRegistryError(res, result.code ?? 'bad_request', result.message ?? 'Invalid publish package.', result.details);
       return;
     }
-    const pkg = validation.value;
-
-    const missing = await findMissingRequiredReference(db, pkg);
-    if (missing) {
-      sendRegistryError(
-        res,
-        'bad_request',
-        `Required artifact "${missing.reference}" referenced by "${missing.artifact}" is neither in the package nor already published.`,
-        { rejectedFields: ['artifacts'], missingReference: missing.reference }
-      );
-      return;
-    }
-
-    await db.transaction(async (tx) => {
-      const transactionalDb = tx as unknown as RegistryDatabase;
-      await upsertEntityRecord(transactionalDb, kind, id, pkg.item);
-      await replaceEntityFiles(transactionalDb, kind, id, pkg.files);
-      await ingestArtifacts(transactionalDb, kind, id, pkg.artifacts);
-      await upsertBuildMetadata(transactionalDb, kind, id, pkg.build);
-    });
 
     // The publish persisted; regenerate the affected docs pages on demand so the served pages reflect
     // the new content immediately (correct server-rendered `<head>` title/metadata).

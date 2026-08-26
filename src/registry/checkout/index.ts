@@ -24,6 +24,7 @@ import { Logger } from '../../utils/logger';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
 import { resolveAuthenticatedRegistryConnection } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
+import { selectIds } from '../selection';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
@@ -553,6 +554,21 @@ const writeSourceFile = async (targetDir: string, file: TransferFile): Promise<s
 };
 
 /**
+ * Report the files a checkout would create or replace, and write nothing. Called once the real
+ * checkout has computed its targets but before it prompts or writes, so a dry run exercises the same
+ * path resolution and conflict detection as the real thing. Shared by the entity, page, token and
+ * asset checkout paths.
+ */
+export const reportPlannedWrites = (handoff: Handoff, label: string, targets: string[], conflicts: string[]): void => {
+  const conflicting = new Set(conflicts);
+  Logger.info(`Would checkout ${label} (${targets.length} file(s)):`);
+  for (const target of targets) {
+    const relative = path.relative(handoff.workingPath, target) || target;
+    Logger.info(`  ${conflicting.has(target) ? 'overwrite' : 'create'}: ${relative}`);
+  }
+};
+
+/**
  * Checkout a page: write its single verbatim `.md` (transfer path `<id>.md`) back under
  * `<workingPath>/pages/`. Unlike components/patterns there is no declaration to synthesize — the
  * markdown file is itself the authored source — so the page round-trips byte-for-byte.
@@ -567,6 +583,10 @@ const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPaylo
     return target;
   });
   const conflicts = targets.filter((file) => fs.existsSync(file));
+  if (handoff.dryRun) {
+    reportPlannedWrites(handoff, `page "${id}"`, targets, conflicts);
+    return;
+  }
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of page "${id}" cancelled; no files were written.`);
     return;
@@ -629,7 +649,13 @@ const checkoutSingle = async (
     }
     return { file, absolutePath };
   });
-  const conflicts = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath].filter((file) => fs.existsSync(file));
+  const plannedWrites = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath];
+  const conflicts = plannedWrites.filter((file) => fs.existsSync(file));
+  if (handoff.dryRun) {
+    // Returning null also skips `registerCheckedOut`, so a dry run never edits handoff.config either.
+    reportPlannedWrites(handoff, `${kind} "${id}"`, plannedWrites, conflicts);
+    return null;
+  }
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of ${kind} "${id}" cancelled; no files were written.`);
     return null;
@@ -699,7 +725,7 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
  * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
  * prompting is per entity (skipped under `--force`).
  */
-export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
+export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
   const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
@@ -713,7 +739,16 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
     throw error;
   }
 
-  if (summaries.length === 0) {
+  const published = summaries.map((summary) => summary.id);
+  const { selected: targets, unknown } = selectIds(published, ids);
+  if (unknown.length > 0) {
+    throw new CheckoutError(
+      `No ${kind} named ${unknown.map((id) => `"${id}"`).join(', ')} is published in the registry. ` +
+        `Published ${kind}s: ${published.join(', ') || '(none)'}.`
+    );
+  }
+
+  if (targets.length === 0) {
     Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
     return;
   }
@@ -721,7 +756,7 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
   let checkedOut = 0;
   const failed: { id: string; message: string }[] = [];
   const targetDirs: string[] = [];
-  for (const { id } of summaries) {
+  for (const id of targets) {
     try {
       const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
       if (targetDir) {
@@ -737,7 +772,8 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
   await registerCheckedOut(handoff, kind, targetDirs);
 
   Logger.success(
-    `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} checked out${failed.length ? `, ${failed.length} failed` : ''}.`
+    `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} ${handoff.dryRun ? 'would be checked out' : 'checked out'}` +
+      `${failed.length ? `, ${failed.length} failed` : ''}.`
   );
   if (failed.length > 0) {
     for (const failure of failed) {

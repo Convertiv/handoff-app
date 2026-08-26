@@ -18,7 +18,7 @@ import { createRegistryClient, RegistryClientError } from '../client';
 import { resolvePathWithin } from '../path';
 import { isTokenSetId, mergeTokenSetsIntoDocument, type DerivedTokenSet } from '../tokens/sets';
 import type { TokenSetCheckoutPayload } from '../tokens/transfer';
-import { CheckoutError, resolveConnectionOrThrow } from './index';
+import { CheckoutError, reportPlannedWrites, resolveConnectionOrThrow } from './index';
 
 /** Map a registry client error to an actionable checkout message. */
 const describeFetchFailure = (error: RegistryClientError, target: string, registryUrl: string): string => {
@@ -71,16 +71,18 @@ const wouldChange = (absolutePath: string, content: string): boolean => {
  * Checkout all published token sets, or a single set when `setId` is given. Reconstructs `tokens.json`
  * and restores generated files; prompts before overwriting changed local files unless `--force`.
  */
-export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<void> => {
-  if (setId && !isTokenSetId(setId)) {
-    throw new CheckoutError(`Unknown or unsafe token set id "${setId}".`);
+export const checkoutTokens = async (handoff: Handoff, selection?: string[]): Promise<void> => {
+  const unsupported = selection?.filter((id) => !isTokenSetId(id)) ?? [];
+  if (unsupported.length > 0) {
+    throw new CheckoutError(`Unknown or unsafe token set id ${unsupported.map((id) => `"${id}"`).join(', ')}.`);
   }
   const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
 
+  // A named selection is trusted as-is; only a full checkout has to ask the registry what exists.
   let ids: string[];
-  if (setId) {
-    ids = [setId];
+  if (selection) {
+    ids = selection;
   } else {
     const summaries = await client.listTokenSets();
     ids = summaries.map((summary) => summary.id);
@@ -133,6 +135,10 @@ export const checkoutTokens = async (handoff: Handoff, setId?: string): Promise<
   }
 
   const existingChanges = changed.filter((filePath) => fs.existsSync(filePath));
+  if (handoff.dryRun) {
+    reportPlannedWrites(handoff, 'token sets', changed, existingChanges);
+    return;
+  }
   if (existingChanges.length > 0 && !handoff.force) {
     const proceed = await p.confirm({
       message: `Checkout will overwrite ${existingChanges.length} changed local token file(s). Continue?`,

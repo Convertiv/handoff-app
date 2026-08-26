@@ -1,60 +1,35 @@
 import { CommandModule } from 'yargs';
-import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { createHandoff, ENTITY_WIRE_KIND, getSharedOptions, REGISTRY_ENTITY_KINDS, RegistryEntityKind } from '../utils';
+import { getCheckoutOptions, RegistryTargetKind, runRegistryCommand, runTarget, withTargetPositionals } from '../utils';
 
 export interface CheckoutArgs extends SharedArgs {
-  type: RegistryEntityKind;
-  id?: string;
+  type: RegistryTargetKind;
+  id?: string[];
 }
 
 /**
- * `handoff-app checkout <components|patterns|pages> [id]` pulls entities from the connected registry
- * into this workspace, writing their source files in standard authoring form and synthesizing local
- * declarations. Pass an `id` to pull that one entity, or omit it to pull every published entity of
- * that kind.
+ * `handoff-app checkout <components|patterns|pages> [id...]` pulls entities from the connected
+ * registry into this workspace, writing their source files in standard authoring form and
+ * synthesizing local declarations. Pass ids to pull only those entities, or omit them for every
+ * published entity of that kind.
  *
- * `handoff-app checkout tokens [setId]` — pull every published token set (or only the named set) into
- * this workspace: reconstruct `tokens.json` and restore the generated token files.
+ * `handoff-app checkout tokens [setId...]` pulls every published token set, or only the named ones,
+ * reconstructing `tokens.json` and restoring the generated token files.
  *
- * `handoff-app checkout assets [collection]` pulls every published asset collection (or only the
- * named one) into this workspace, recreating the standard asset files, sprite/manifest, and archives.
+ * `handoff-app checkout assets [collection...]` pulls every published asset collection, or only the
+ * named ones, recreating the standard asset files, sprite/manifest and archives.
+ *
+ * `handoff-app checkout all` runs every kind in the same order publish uses.
+ *
  * Available only from a connected workspace (`runtime.mode: workspace` + a configured
  * `registryConnection`). Overwriting existing local files requires `--force` or an interactive
- * confirmation.
+ * confirmation; `--dry-run` lists what would be written and changes nothing.
  */
 const command: CommandModule<{}, CheckoutArgs> = {
-  command: 'checkout <type> [id]',
+  command: 'checkout <type> [id..]',
   describe: 'Pull components, patterns, pages, design tokens, or assets from the connected registry into this workspace',
-  builder: (yargs) => {
-    return getSharedOptions(yargs)
-      .positional('type', {
-        describe: 'The kind of entity to checkout',
-        choices: REGISTRY_ENTITY_KINDS,
-        type: 'string',
-      })
-      .positional('id', {
-        describe: 'The stable id of the entity (component/pattern/page id, token set id, or asset collection); omit to checkout all of that kind',
-        type: 'string',
-      });
-  },
-  handler: async (args: CheckoutArgs) => {
-    const handoff = createHandoff(args);
-    try {
-      if (args.type === 'tokens') {
-        await handoff.checkoutTokens(args.id);
-        return;
-      }
-      if (args.type === 'assets') {
-        await handoff.checkoutAssets(args.id);
-        return;
-      }
-      await handoff.checkout(ENTITY_WIRE_KIND[args.type], args.id);
-    } catch (error) {
-      Logger.error(error instanceof Error ? error.message : String(error));
-      process.exitCode = 1;
-    }
-  },
+  builder: (yargs) => withTargetPositionals(getCheckoutOptions(yargs), 'checkout'),
+  handler: (args: CheckoutArgs) => runRegistryCommand(args, (handoff) => runTarget(handoff, args.type, args.id, 'checkout')),
 };
 
 export default command;

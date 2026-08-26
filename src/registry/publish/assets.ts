@@ -1,7 +1,7 @@
 /**
  * Connected-workspace asset publish orchestration.
  *
- * `publish assets [collection]` runs a fresh build (`handoff.fetch()`), discovers the collections, and
+ * `publish assets [collection...]` runs a fresh build (`handoff.fetch()`), discovers the collections, and
  * uploads each changed one. A collection is skipped when its deterministic `sourceHash` is unchanged;
  * content transfers blob-by-blob (only hashes the registry lacks, since content-addressed dedup is the
  * per-blob skip-unchanged), and the manifest is finalized atomically only after its blobs exist.
@@ -12,9 +12,9 @@ import type { AssetMetadata } from '../../store/types';
 import { Logger } from '../../utils/logger';
 import { ASSET_COLLECTIONS, isAssetCollection, type AssetCollection } from '../assets/sets';
 import type { AssetCollectionSummary, AssetCollectionTransferPackage, AssetManifestEntry } from '../assets/transfer';
-import { createRegistryClient } from '../client';
+import { selectIds } from '../selection';
 import { describePublishError } from './errors';
-import { PublishError, resolveConnectionOrThrow } from './index';
+import { PublishError, publishedLabel, resolveTransport } from './index';
 import { createCurrentBuild, hashPathValues } from './publish-build';
 
 /**
@@ -41,24 +41,32 @@ const toManifestEntry = (asset: AssetMetadata): AssetManifestEntry => ({
  * blobs, and finalizes each manifest atomically. Reports published/unchanged/uploaded/failed counts;
  * throws at the end if any collection failed.
  */
-export const publishAssets = async (handoff: Handoff, collection?: string): Promise<void> => {
-  const connection = await resolveConnectionOrThrow(handoff);
-  if (collection && !isAssetCollection(collection)) {
-    throw new PublishError(`Unknown asset collection "${collection}". Supported collections: ${ASSET_COLLECTIONS.join(', ')}.`);
+export const publishAssets = async (handoff: Handoff, selection?: string[]): Promise<void> => {
+  const { client, url } = await resolveTransport(handoff);
+  const unsupported = selection?.filter((collection) => !isAssetCollection(collection)) ?? [];
+  if (unsupported.length > 0) {
+    throw new PublishError(
+      `Unknown asset collection ${unsupported.map((name) => `"${name}"`).join(', ')}. ` +
+        `Supported collections: ${ASSET_COLLECTIONS.join(', ')}.`
+    );
   }
 
-  Logger.info(collection ? `Building assets to publish "${collection}"…` : 'Building assets for publish…');
-  await handoff.fetch();
+  if (!handoff.skipBuild) {
+    Logger.info(selection ? `Building assets to publish ${selection.join(', ')}…` : 'Building assets for publish…');
+    await handoff.fetch();
+  }
 
-  const available = await handoff.store.assets.listCollections();
-  const targets: AssetCollection[] = collection && isAssetCollection(collection) ? [collection] : available.filter(isAssetCollection);
+  const available = (await handoff.store.assets.listCollections()).filter(isAssetCollection);
+  const targets = selectIds(available, selection).selected as AssetCollection[];
 
-  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+  // Without a registry there is nothing to compare against, so a dry run reports every collection.
   let remote: AssetCollectionSummary[] = [];
-  try {
-    remote = await client.listAssetCollections();
-  } catch {
-    Logger.info('Could not read current registry asset collections; publishing all selected collections.');
+  if (client) {
+    try {
+      remote = await client.listAssetCollections();
+    } catch {
+      Logger.info('Could not read current registry asset collections; publishing all selected collections.');
+    }
   }
   const remoteHashByCollection = new Map(remote.map((entry) => [entry.collection, entry.sourceHash]));
 
@@ -87,38 +95,40 @@ export const publishAssets = async (handoff: Handoff, collection?: string): Prom
       for (const asset of manifest) {
         if (!byHash.has(asset.contentHash)) byHash.set(asset.contentHash, asset);
       }
-      const missing = await client.assetBlobHaveCheck(Array.from(byHash.keys()));
-      for (const hash of missing) {
-        const asset = byHash.get(hash);
-        if (!asset) continue;
-        const content = await handoff.store.assets.getAssetContent(col, asset.path);
-        if (!content?.body) {
-          throw new Error(`Could not read bytes for asset "${asset.path}" in collection "${col}".`);
+      // A dry run has no registry to ask, so every deduped blob counts as one that would upload.
+      const missing = client ? await client.assetBlobHaveCheck(Array.from(byHash.keys())) : Array.from(byHash.keys());
+      if (client) {
+        for (const hash of missing) {
+          const asset = byHash.get(hash);
+          if (!asset) continue;
+          const content = await handoff.store.assets.getAssetContent(col, asset.path);
+          if (!content?.body) {
+            throw new Error(`Could not read bytes for asset "${asset.path}" in collection "${col}".`);
+          }
+          await client.uploadAssetBlob(hash, content.contentType, content.body);
+          uploaded += 1;
         }
-        await client.uploadAssetBlob(hash, content.contentType, content.body);
-        uploaded += 1;
-      }
 
-      const pkg: AssetCollectionTransferPackage = {
-        collection: col,
-        build: createCurrentBuild({ sourceHash }),
-        assets: manifest.map(toManifestEntry),
-      };
-      await client.publishAssetManifest(pkg);
+        const pkg: AssetCollectionTransferPackage = {
+          collection: col,
+          build: createCurrentBuild({ sourceHash }),
+          assets: manifest.map(toManifestEntry),
+        };
+        await client.publishAssetManifest(pkg);
+      }
       published += 1;
-      Logger.info(`Published: ${col} (${manifest.length} asset(s), ${missing.length} new blob(s))`);
+      Logger.info(`${publishedLabel(handoff)}: ${col} (${manifest.length} asset(s), ${missing.length} new blob(s))`);
     } catch (error) {
       failed.push({
         collection: col,
-        message: describePublishError(error, connection.url, 'asset collection'),
+        message: describePublishError(error, url, 'asset collection'),
       });
     }
   }
 
   Logger.success(
-    `Assets publish complete: ${published} published, ${unchanged} unchanged, ${uploaded} blob(s) uploaded${
-      failed.length ? `, ${failed.length} failed` : ''
-    }.`
+    `Assets publish complete: ${published} ${handoff.dryRun ? 'would be published' : 'published'}, ` +
+      `${unchanged} unchanged, ${uploaded} blob(s) uploaded${failed.length ? `, ${failed.length} failed` : ''}.`
   );
   if (failed.length > 0) {
     for (const failure of failed) {

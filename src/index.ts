@@ -7,6 +7,8 @@ import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage, makeTemplate } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
+import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
+import type { TransferEntityKind } from './registry/transfer';
 import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
 import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
@@ -18,16 +20,100 @@ import { generateFilesystemSafeId } from './utils/path';
 export interface HandoffOptions {
   debug?: boolean;
   force?: boolean;
+  /**
+   * Report what would happen instead of doing it: publish uploads nothing and needs no registry URL
+   * or token, and checkout writes no workspace file. A publish dry run still runs the build, so build
+   * output on disk is refreshed; pair it with `skipBuild` to leave that alone too.
+   */
+  dryRun?: boolean;
+  /** Publish from the existing build output instead of running a fresh build. */
+  skipBuild?: boolean;
   /** Partial config merged over the loaded config file. */
   config?: Partial<Config>;
   /** Explicit config file (the CLI's `-c, --config`), resolved from the working path. */
   configPath?: string;
 }
 
+/**
+ * A content kind to act on, optionally narrowed to specific ids. The plain form is the common case
+ * (`'components'`); the object form publishes or checks out only part of a kind.
+ */
+export type ContentTarget = RegistryEntityKind | { kind: RegistryEntityKind; ids?: string[] };
+
+/**
+ * Reject a kind we do not know. Plural kinds arrive from CLI arguments and HTTP payloads, so an
+ * unrecognized one has to stop here: the entity paths below pick their store by elimination, and an
+ * unchecked value would quietly resolve to pages.
+ */
+const assertContentKind = (kind: string): void => {
+  if (!isRegistryEntityKind(kind)) {
+    throw new Error(`Unknown content kind "${kind}". Supported kinds: ${REGISTRY_ENTITY_KINDS.join(', ')}.`);
+  }
+};
+
+const normalizeTarget = (target: ContentTarget): { kind: RegistryEntityKind; ids?: string[] } =>
+  typeof target === 'string' ? { kind: target } : target;
+
+/**
+ * Normalize an optional single-or-list selection to a list, or `undefined` for "everything". An empty
+ * list means "everything" too: yargs defaults an omitted variadic positional to `[]`, and that has to
+ * read as "no narrowing", not "no targets".
+ */
+const toSelection = (value?: string | string[]): string[] | undefined => {
+  if (value === undefined) return undefined;
+  const selection = Array.isArray(value) ? value : [value];
+  return selection.length > 0 ? selection : undefined;
+};
+
+/**
+ * The one id a selection names, if it names exactly one. Lets a single-target request keep the
+ * cheaper targeted-build path whether it arrived as a string or a one-element list.
+ */
+const onlyId = (value?: string | string[]): string | undefined => {
+  const selection = toSelection(value);
+  return selection?.length === 1 ? selection[0] : undefined;
+};
+
+/**
+ * Run one operation across several targets in order, reporting each failure as it happens and throwing
+ * once at the end. Shared by {@link Handoff.publishAll} and {@link Handoff.checkoutAll} so a
+ * multi-kind run behaves the same in both directions.
+ */
+const runKinds = async (
+  targets: readonly ContentTarget[],
+  verb: 'publish' | 'checkout',
+  dryRun: boolean,
+  run: (kind: RegistryEntityKind, ids?: string[]) => Promise<unknown>
+): Promise<void> => {
+  const kinds = targets.map(normalizeTarget);
+  const failed: { kind: RegistryEntityKind; message: string }[] = [];
+  for (const { kind, ids } of kinds) {
+    try {
+      await run(kind, ids);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failed.push({ kind, message });
+      Logger.error(`Failed to ${verb} ${kind}: ${message}`);
+    }
+  }
+
+  const succeeded = kinds.length - failed.length;
+  const outcome = verb === 'publish' ? 'published' : 'checked out';
+  Logger.success(
+    `${dryRun ? 'Dry run' : `${verb[0].toUpperCase()}${verb.slice(1)} complete`} — ${succeeded}/${kinds.length} kind(s) ` +
+      `${dryRun ? `would be ${outcome}` : outcome}${failed.length ? `, ${failed.length} failed` : ''}.`
+  );
+  if (failed.length > 0) {
+    throw new Error(`${failed.length} kind(s) failed to ${verb}: ${failed.map((entry) => entry.kind).join(', ')}.`);
+  }
+};
+
 class Handoff {
   config: Config | null;
   debug: boolean = false;
   force: boolean = false;
+  dryRun: boolean = false;
+  skipBuild: boolean = false;
   modulePath: string = path.resolve(__filename, '../..');
   workingPath: string = resolveWorkingPath();
   exportsDirectory: string = 'exported';
@@ -68,6 +154,8 @@ class Handoff {
     this.config = null;
     this.debug = options.debug ?? false;
     this.force = options.force ?? false;
+    this.dryRun = options.dryRun ?? false;
+    this.skipBuild = options.skipBuild ?? false;
     Logger.init({ debug: this.debug });
     this.init(options.config);
     global.handoff = this;
@@ -152,38 +240,41 @@ class Handoff {
 
   /**
    * Publish components, patterns, or pages from this connected workspace to the configured remote
-   * registry. With `id` it publishes that one entity after a targeted build; without `id` it builds
-   * the kind once and publishes every declared entity, skipping ones whose content is unchanged on
-   * the registry (`--force` re-uploads all). Pages upload their record and markdown source because
-   * they render at runtime. The publish module is loaded lazily so the registry client and build code
-   * never enter the docs app bundle.
+   * registry. With a single `id` it publishes that one entity after a targeted build; with a list of
+   * ids, or none, it builds the kind once and publishes the selected (or every declared) entity,
+   * skipping ones whose content is unchanged on the registry (`--force` re-uploads all). Pages upload
+   * their record and markdown source because they render at runtime. The publish module is loaded
+   * lazily so the registry client and build code never enter the docs app bundle.
    */
-  async publish(kind: 'component' | 'pattern' | 'page', id?: string): Promise<Handoff> {
+  async publish(kind: TransferEntityKind, id?: string | string[]): Promise<Handoff> {
     this.preRunner();
-    if (id) {
+    const single = onlyId(id);
+    if (single) {
       const { publishEntity } = await import('./registry/publish');
-      await publishEntity(this, kind, id);
+      await publishEntity(this, kind, single);
     } else {
       const { publishEntities } = await import('./registry/publish');
-      await publishEntities(this, kind);
+      await publishEntities(this, kind, toSelection(id));
     }
     return this;
   }
 
   /**
    * Checkout components, patterns, or pages from the connected remote registry into this workspace.
-   * With `id` it checks out that one entity; without `id` it checks out every published entity of the
-   * kind. Overwriting existing local files requires `--force` or an interactive confirmation. The
-   * checkout module is loaded lazily so the registry client never enters the docs app bundle.
+   * With a single `id` it checks out that one entity; with a list of ids, or none, it checks out the
+   * selected (or every published) entity of the kind. Overwriting existing local files requires
+   * `--force` or an interactive confirmation. The checkout module is loaded lazily so the registry
+   * client never enters the docs app bundle.
    */
-  async checkout(kind: 'component' | 'pattern' | 'page', id?: string): Promise<Handoff> {
+  async checkout(kind: TransferEntityKind, id?: string | string[]): Promise<Handoff> {
     this.preRunner();
-    if (id) {
+    const single = onlyId(id);
+    if (single) {
       const { checkoutEntity } = await import('./registry/checkout');
-      await checkoutEntity(this, kind, id);
+      await checkoutEntity(this, kind, single);
     } else {
       const { checkoutEntities } = await import('./registry/checkout');
-      await checkoutEntities(this, kind);
+      await checkoutEntities(this, kind, toSelection(id));
     }
     return this;
   }
@@ -192,26 +283,26 @@ class Handoff {
    * Publish design token sets from this connected workspace to the configured remote registry. Runs a
    * fresh token build (Figma extract + style transformers), discovers the logical sets, and uploads
    * each changed set (its extracted record + generated artifacts). Publishes every set when `setId` is
-   * omitted, or only the named set (`foundation/colors`, `component/<id>`). Loaded lazily so the
+   * omitted, or only the named set(s) (`foundation/colors`, `component/<id>`). Loaded lazily so the
    * registry client/build code never enters the docs app bundle.
    */
-  async publishTokens(setId?: string): Promise<Handoff> {
+  async publishTokens(setId?: string | string[]): Promise<Handoff> {
     this.preRunner();
     const { publishTokens } = await import('./registry/publish/tokens');
-    await publishTokens(this, setId);
+    await publishTokens(this, toSelection(setId));
     return this;
   }
 
   /**
    * Checkout design token sets from the connected remote registry into this workspace: reconstruct
    * the canonical local `tokens.json` and restore the generated token files to their configured output
-   * paths. Checks out every published set when `setId` is omitted, or only the named set. Loaded lazily
-   * so the registry client never enters the docs app bundle.
+   * paths. Checks out every published set when `setId` is omitted, or only the named set(s). Loaded
+   * lazily so the registry client never enters the docs app bundle.
    */
-  async checkoutTokens(setId?: string): Promise<Handoff> {
+  async checkoutTokens(setId?: string | string[]): Promise<Handoff> {
     this.preRunner();
     const { checkoutTokens } = await import('./registry/checkout/tokens');
-    await checkoutTokens(this, setId);
+    await checkoutTokens(this, toSelection(setId));
     return this;
   }
 
@@ -219,26 +310,63 @@ class Handoff {
    * Publish asset collections (icons/logos/fonts) from this connected workspace to the configured
    * remote registry. Runs a fresh build (Figma extract + asset generation), discovers the collections,
    * uploads only content hashes the registry lacks, and finalizes each collection manifest atomically.
-   * Publishes every collection when `collection` is omitted, or only the named one. Loaded lazily so
+   * Publishes every collection when `collection` is omitted, or only the named one(s). Loaded lazily so
    * the registry client/build code never enters the docs app bundle.
    */
-  async publishAssets(collection?: string): Promise<Handoff> {
+  async publishAssets(collection?: string | string[]): Promise<Handoff> {
     this.preRunner();
     const { publishAssets } = await import('./registry/publish/assets');
-    await publishAssets(this, collection);
+    await publishAssets(this, toSelection(collection));
     return this;
   }
 
   /**
    * Checkout asset collections from the connected remote registry into this workspace: recreate the
    * standard workspace asset files, collection JSON, icon sprite/manifest, and downloadable archives.
-   * Checks out every published collection when `collection` is omitted, or only the named one. Loaded
-   * lazily so the registry client never enters the docs app bundle.
+   * Checks out every published collection when `collection` is omitted, or only the named one(s).
+   * Loaded lazily so the registry client never enters the docs app bundle.
    */
-  async checkoutAssets(collection?: string): Promise<Handoff> {
+  async checkoutAssets(collection?: string | string[]): Promise<Handoff> {
     this.preRunner();
     const { checkoutAssets } = await import('./registry/checkout/assets');
-    await checkoutAssets(this, collection);
+    await checkoutAssets(this, toSelection(collection));
+    return this;
+  }
+
+  /**
+   * Publish one content kind named by its plural form (`components`, `tokens`, …). The entry point for
+   * callers working in the plural vocabulary, so the plural-to-transfer-path mapping lives in one
+   * place.
+   */
+  async publishKind(kind: RegistryEntityKind, id?: string | string[]): Promise<Handoff> {
+    assertContentKind(kind);
+    if (kind === 'tokens') return this.publishTokens(id);
+    if (kind === 'assets') return this.publishAssets(id);
+    return this.publish(ENTITY_WIRE_KIND[kind], id);
+  }
+
+  /** Checkout one content kind named by its plural form. Mirrors {@link publishKind}. */
+  async checkoutKind(kind: RegistryEntityKind, id?: string | string[]): Promise<Handoff> {
+    assertContentKind(kind);
+    if (kind === 'tokens') return this.checkoutTokens(id);
+    if (kind === 'assets') return this.checkoutAssets(id);
+    return this.checkout(ENTITY_WIRE_KIND[kind], id);
+  }
+
+  /**
+   * Publish every content kind, or the given subset of kinds and ids, in dependency order: tokens and
+   * assets first (rendered component artifacts reference the CSS variables and asset URLs they
+   * produce), then components, patterns and pages. A failing kind is reported and never aborts the
+   * rest; the run throws at the end if any kind failed.
+   */
+  async publishAll(targets: readonly ContentTarget[] = ALL_KIND_ORDER): Promise<Handoff> {
+    await runKinds(targets, 'publish', this.dryRun, (kind, ids) => this.publishKind(kind, ids));
+    return this;
+  }
+
+  /** Checkout every content kind, or the given subset, in the same order. Mirrors {@link publishAll}. */
+  async checkoutAll(targets: readonly ContentTarget[] = ALL_KIND_ORDER): Promise<Handoff> {
+    await runKinds(targets, 'checkout', this.dryRun, (kind, ids) => this.checkoutKind(kind, ids));
     return this;
   }
 

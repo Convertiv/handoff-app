@@ -331,7 +331,13 @@ completed in the browser. The revocable credential is saved in
 
 ### 5. Content publishing
 
-Each entity kind that exists in the workspace is published with:
+Every kind in the workspace is published in dependency order with:
+
+```bash
+npm run publish -- all
+```
+
+A single kind is published on its own:
 
 ```bash
 npm run publish -- components
@@ -344,11 +350,25 @@ npm run publish -- assets
 Publishing tokens or assets runs the Figma data pipeline before upload, so the
 documented Figma credentials must be available.
 
-An ID can be appended when one entity is published:
+One or more IDs can be appended to narrow a publish to those entities:
 
 ```bash
-npm run publish -- components component-id
+npm run publish -- components component-id another-id
 ```
+
+`--dry-run` reports what would be uploaded and contacts no registry at all, so
+it needs neither a registry URL nor a token. It still runs the build, which
+refreshes generated output on disk; `--no-build` skips the build and publishes
+the existing output, and the two combine to leave the workspace untouched:
+
+```bash
+npm run publish -- all --dry-run
+npm run publish -- components --no-build
+```
+
+`checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
+checkout reads from the registry, lists the files it would create or overwrite,
+and writes nothing.
 
 After the registry is reloaded, the published components, patterns, and
 foundations should be visible. Published database records are read by registry
@@ -407,10 +427,12 @@ both.
 | `npm run build -- [--target static\|registry]` | The static site or standalone registry bundle is built |
 | `npm run db:migrate` | Registry database migrations are applied |
 | `npm run validate` | Configured components are validated |
-| `npm run publish -- <kind> [id]` | Components, patterns, pages, tokens, or assets are published |
-| `npm run checkout -- <kind> [id]` | Published content is pulled into a workspace |
+| `npm run publish -- <kind\|all> [id...]` | Components, patterns, pages, tokens, or assets are published |
+| `npm run checkout -- <kind\|all> [id...]` | Published content is pulled into a workspace |
 | `npm run login -- --url <url>` | The CLI is authorized through the registry device flow |
 | `npm run logout -- [--url <url>]` | A saved CLI credential is revoked and removed |
+
+`publish` and `checkout` additionally accept `--dry-run`, and `publish` accepts `--no-build`.
 
 Arguments after `--` are forwarded to the local CLI. Exact options can be shown
 by adding `--help` after the separator. Advanced configuration and hooks are
