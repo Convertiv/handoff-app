@@ -16,6 +16,16 @@ A design system documentation site powered by Handoff App.
 - `npm run build` - Build the documentation site
 - `npm run db:migrate` - Apply registry database migrations
 
+## Coding agents (MCP)
+
+The documentation site serves a Model Context Protocol endpoint at `/api/mcp/`, so
+a coding agent can read the components and tokens that already exist instead of
+inventing markup and values. The plug icon in the site header opens a ready-made
+config for Claude Code, Cursor and VS Code. A static export has no API routes, so
+it serves no endpoint.
+
+Set `runtime.mcp: false` in `handoff.config` to leave the endpoint out of the build.
+
 ## Deploying
 
 Handoff builds two deployment shapes:

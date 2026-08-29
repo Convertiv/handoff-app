@@ -385,6 +385,51 @@ runtime: {
 },
 ```
 
+## MCP
+
+The documentation app serves a Model Context Protocol endpoint at `/api/mcp/`, so
+coding agents can look up the components and tokens that already exist instead
+of inventing markup and values. It is stateless Streamable HTTP over `POST`;
+there is nothing to start and no extra port. Keep the trailing slash: the app
+sets `trailingSlash: true`, so `/api/mcp` answers with a 308 redirect.
+
+| Target | Endpoint | Credential |
+| --- | --- | --- |
+| Workspace (`dev` / `start`) | `http://localhost:3000/api/mcp/` | none, as with `/api/docs/*` |
+| Registry (standalone or Vercel) | `<registry url>/api/mcp/` | an access token, read-only is enough |
+| Static export | not available, a static site has no API routes | n/a |
+
+Registry tokens come from `handoff-app login` or Account settings in the
+registry itself, and are the same credentials the rest of the registry API takes.
+
+The endpoint is served unless a project turns it off:
+
+```ts
+runtime: {
+  mcp: false,
+},
+```
+
+Like `runtime.mode`, this is config-only and baked at build time, so changing it
+in a deployed registry means a rebuild. A disabled build answers 404 on the route,
+drops the MCP SDK from the packaged bundle, and shows no connect affordance at all
+rather than one that fails.
+
+The documentation app carries its own endpoint and a ready-made client config
+for Claude Code, Cursor and VS Code behind the plug icon in the header. By hand:
+
+```json
+{
+  "mcpServers": {
+    "handoff": {
+      "type": "http",
+      "url": "https://registry.example.com/api/mcp/",
+      "headers": { "Authorization": "Bearer hnd_..." }
+    }
+  }
+}
+```
+
 ## Configuration
 
 Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in

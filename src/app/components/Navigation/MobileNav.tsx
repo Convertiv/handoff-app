@@ -3,6 +3,7 @@ import { Menu, Monitor, Moon, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { McpConfigMobile } from '../../components/McpIntegration/McpConfigDialog';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
@@ -37,7 +38,7 @@ export function MobileNav() {
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full max-w-[300px] [&>button:first-of-type]:hidden">
+      <SheetContent side="right" className="w-full max-w-[300px] overflow-y-auto [&>button:first-of-type]:hidden">
         <SheetHeader className="flex flex-row items-center justify-between">
           <SheetTitle>
             <Link href="/">
@@ -69,6 +70,7 @@ export function MobileNav() {
                 </Link>
               );
             })}
+          <McpConfigMobile />
           <div className="mt-4 border-t pt-4">
             <Button variant="ghost" className="w-full justify-start font-normal" onClick={toggleTheme}>
               {theme === 'light' && (
