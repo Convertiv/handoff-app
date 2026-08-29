@@ -49,8 +49,9 @@ handoff.config.js
 test_components/
 
 # agent tooling and documentation
+/*.local
+/*.local.*
 /.agents/
 /.claude/
 /.codex/
 /.cursor/
-/docs/agents/
