@@ -46,16 +46,23 @@ export interface BuildMenuShellOptions {
  * Single source of truth — the docs app imports this (re-exported there as `knownPaths`).
  */
 export const KNOWN_PATHS = [
+  'account',
+  'account/tokens',
+  'account/users',
   'assets',
   'assets/fonts',
   'assets/icons',
   'assets/logos',
+  'cli/device',
   'foundations',
   'foundations/colors',
   'foundations/icons',
   'foundations/effects',
   'foundations/logo',
   'foundations/typography',
+  'install',
+  'login',
+  'reset-password',
   'system',
   'system/component',
   'system/tokens',
