@@ -54,7 +54,6 @@ export const KNOWN_PATHS = [
   'foundations/colors',
   'foundations/icons',
   'foundations/effects',
-  'foundations/logos',
   'foundations/logo',
   'foundations/typography',
   'system',
