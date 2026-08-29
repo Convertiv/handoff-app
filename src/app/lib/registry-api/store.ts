@@ -1,4 +1,6 @@
 import { and, eq } from 'drizzle-orm';
+import matter from 'gray-matter';
+import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import {
   buildMetadata,
@@ -11,6 +13,7 @@ import {
   patterns,
   type RegistryReviewMetadata,
 } from '@handoff/registry/db/schema';
+import { hashPathValues } from '@handoff/registry/publish/publish-build';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import { mergeReviewMetadata, type ManagedEntityKind, type ValidatedMetadataWrite } from './allowlist';
 import type { ValidatedFile } from './files';
@@ -22,8 +25,10 @@ import { resolveBuildMeta, type RegistryBuildMeta } from './meta';
  * Reads return the normalized record merged with registry-only review metadata; writes are limited
  * to the metadata allowlist and the text-file record groups. Crucially, metadata create/update
  * never touches `docs_artifacts` or `build_metadata` — published artifacts and build state are only
- * changed by transfer/publish. Entity deletion removes only that entity's owned
- * artifacts; shared/global artifacts (owned by `asset`) are preserved.
+ * changed by transfer/publish. Pages are the one exception: their markdown frontmatter *is* the
+ * record's source, so a page edit writes both rows and re-hashes the file (see
+ * {@link updatePageMetadata}). Entity deletion removes only that entity's owned artifacts;
+ * shared/global artifacts (owned by `asset`) are preserved.
  */
 
 /** A registry record as served by the management API: the normalized record plus review metadata. */
@@ -110,6 +115,8 @@ const buildPageRecord = (id: string, path: string, fields: Record<string, unknow
   title: asString(fields.title) ?? id,
   description: asString(fields.description) ?? '',
   group: asString(fields.group) ?? '',
+  ...(asString(fields.metaTitle) ? { metaTitle: asString(fields.metaTitle) } : {}),
+  ...(asString(fields.metaDescription) ? { metaDescription: asString(fields.metaDescription) } : {}),
 });
 
 /** Whether an entity exists by id. */
@@ -188,6 +195,75 @@ export const createEntity = async (
 };
 
 /**
+ * Apply a page metadata update to the frontmatter, the record, and the source hash together.
+ *
+ * A page's `.md` frontmatter is the only source its record is ever derived from, so writing
+ * `pages.record` alone drifts from `page_files.content`: a checkout hands the workspace the stale
+ * frontmatter and the next publish reverts the edit, while `sourceHash` — hashed from file content —
+ * still reports the two sides as matching. Merging the edit into the frontmatter, re-deriving the
+ * record from it, and re-hashing the file keeps all three honest, so the edit survives a round trip
+ * and a bulk publish sees the page as changed.
+ */
+const updatePageMetadata = async (db: RegistryDatabase, id: string, write: ValidatedMetadataWrite): Promise<EntityReadResult | null> => {
+  const rows = await db
+    .select({ path: pages.path, record: pages.record, metadata: pages.metadata })
+    .from(pages)
+    .where(eq(pages.id, id))
+    .limit(1);
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+
+  const files = await db.select({ path: pageFiles.path, content: pageFiles.content }).from(pageFiles).where(eq(pageFiles.pageId, id));
+  // A page carries a single verbatim `.md`; a metadata-only page (created, never published) has none.
+  const source = files.find((file) => file.content != null);
+  const parsed = matter(source?.content ?? '');
+  const frontmatter = { ...parsed.data, ...write.fields };
+  const { sourcePath: _sourcePath, ...record } = normalizePageDeclaration(frontmatter, {
+    id,
+    routePath: row.path || `/${id}`,
+    sourcePath: '',
+  });
+  const metadata = mergeReviewMetadata(row.metadata, write.metadata);
+  const content = source ? matter.stringify(parsed.content, frontmatter) : null;
+
+  await db.transaction(async (tx) => {
+    const transactionalDb = tx as unknown as RegistryDatabase;
+    await transactionalDb
+      .update(pages)
+      .set({
+        title: record.title,
+        description: record.description ?? null,
+        group: record.group ?? null,
+        weight: typeof record.weight === 'number' ? record.weight : null,
+        record,
+        metadata,
+        updatedAt: new Date(),
+      })
+      .where(eq(pages.id, id));
+
+    if (!source || content === null) {
+      return;
+    }
+    await transactionalDb
+      .update(pageFiles)
+      .set({ content, updatedAt: new Date() })
+      .where(and(eq(pageFiles.pageId, id), eq(pageFiles.path, source.path)));
+    // Hash exactly as publish does, so the next bulk publish compares like for like.
+    const sourceHash = hashPathValues(
+      files.map((file) => ({ path: file.path, value: file.path === source.path ? content : (file.content ?? '') }))
+    );
+    await transactionalDb
+      .update(buildMetadata)
+      .set({ sourceHash, updatedAt: new Date() })
+      .where(and(eq(buildMetadata.entityKind, 'page'), eq(buildMetadata.entityId, id)));
+  });
+
+  return { data: withMetadata(record, metadata), build: await resolveBuildMeta(db, 'page', id) };
+};
+
+/**
  * Apply an allowlisted metadata update: allowlisted top-level fields are written to both the
  * normalized record and their promoted columns, and review metadata is merged over the existing
  * value. Artifacts and build state are deliberately untouched. Returns `null` when absent.
@@ -198,6 +274,9 @@ export const updateEntityMetadata = async (
   id: string,
   write: ValidatedMetadataWrite
 ): Promise<EntityReadResult | null> => {
+  if (kind === 'page') {
+    return updatePageMetadata(db, id, write);
+  }
   const spec = ENTITY[kind];
   const rows = await db
     .select({ record: spec.table.record, metadata: spec.table.metadata })

@@ -15,12 +15,14 @@ export type ManagedEntityKind = 'component' | 'pattern' | 'page';
 
 /**
  * Top-level allowlisted fields per entity kind. Components additionally allow `categories`; pages
- * have no promoted `tags` column, so their catalog fields stop at title/description/group.
+ * have no promoted `tags` column, but do allow the SEO overrides — a page's `<title>` comes from
+ * `metaTitle` when it declares one, so a title edit that cannot reach it leaves the browser title
+ * pinned to the old value.
  */
 const TOP_LEVEL_FIELDS: Record<ManagedEntityKind, readonly string[]> = {
   component: ['title', 'description', 'group', 'tags', 'categories'],
   pattern: ['title', 'description', 'group', 'tags'],
-  page: ['title', 'description', 'group'],
+  page: ['title', 'description', 'group', 'metaTitle', 'metaDescription'],
 };
 
 /** Allowlisted nested review-metadata keys. */
@@ -29,7 +31,7 @@ const METADATA_FIELDS: readonly (keyof RegistryReviewMetadata)[] = ['reviewStatu
 /** String-array fields (validated element-wise). */
 const ARRAY_FIELDS = new Set(['tags', 'categories']);
 /** Plain-string fields. */
-const STRING_FIELDS = new Set(['title', 'description', 'group']);
+const STRING_FIELDS = new Set(['title', 'description', 'group', 'metaTitle', 'metaDescription']);
 
 /** Validated, allowlist-filtered metadata write. */
 export interface ValidatedMetadataWrite {
