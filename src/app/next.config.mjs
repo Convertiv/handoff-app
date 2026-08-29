@@ -75,6 +75,12 @@ const nextConfig = {
         async headers() {
           return [{ source: '/reset-password', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }] }];
         },
+        async redirects() {
+          // Next otherwise sends `/index` through the catch-all route but stores its ISR result
+          // under the root cache key. Canonicalize the alias before routing so it cannot overwrite
+          // the published home page with a catch-all result.
+          return [{ source: '/index/', destination: '/', permanent: true }];
+        },
       }
     : {}),
   experimental: {

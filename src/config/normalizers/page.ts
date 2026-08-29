@@ -3,7 +3,7 @@ import { PageListObject } from '../../transformers/preview/types';
 type RawPageFrontmatter = Record<string, any>;
 
 type NormalizePageOptions = {
-  /** The page id — its slug path (e.g. `guides/setup`), derived from the file location. */
+  /** The page id derived from its file location (`index` is reserved for the root home page). */
   id: string;
   /** Logical route the page is served at (e.g. `/guides/setup`). */
   routePath: string;
@@ -21,8 +21,8 @@ const humanize = (segment: string): string =>
 /**
  * Normalize a page's parsed markdown frontmatter into a {@link PageListObject}. Pages have no
  * required authored fields (a bare `.md` is valid); the title falls back to a humanized last slug
- * segment. The id is always the slug path (a page is addressed by its URL, so id ≡ route): the file
- * location is the single source of identity for both filesystem and registry serving.
+ * segment. The file location is the source of identity for filesystem and registry serving. Normal
+ * page ids match their routes; the reserved `index` id is served at `/`.
  */
 export const normalizePageDeclaration = (raw: RawPageFrontmatter, options: NormalizePageOptions): PageListObject => {
   const lastSegment = options.id.split('/').pop() ?? options.id;

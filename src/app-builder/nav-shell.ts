@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import matter from 'gray-matter';
 import path from 'path';
 import Handoff from '..';
+import { HOME_PAGE_ID } from '../registry/content-kinds';
 import { buildMenuShell } from '../utils/menu-shell';
 import { Logger } from '../utils/logger';
 
@@ -21,7 +22,7 @@ interface BakedDefaultPage {
   content: string;
 }
 
-/** Recursively collect package docs (except dedicated index routes) by their catch-all id. */
+/** Collect package defaults for registry fallbacks, including the dedicated root home page. */
 const collectDefaultPages = (root: string, relativeParts: string[] = []): Record<string, BakedDefaultPage> => {
   if (!fs.existsSync(root)) return {};
   const pages: Record<string, BakedDefaultPage> = {};
@@ -29,7 +30,7 @@ const collectDefaultPages = (root: string, relativeParts: string[] = []): Record
     const absolutePath = path.join(root, entry);
     if (fs.lstatSync(absolutePath).isDirectory()) {
       Object.assign(pages, collectDefaultPages(absolutePath, [...relativeParts, entry]));
-    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || relativeParts.length === 0)) {
       const id = [...relativeParts, entry.replace(/\.md$/, '')].join('/');
       const { data, content } = matter(fs.readFileSync(absolutePath, 'utf8'));
       pages[id] = { metadata: data, content };

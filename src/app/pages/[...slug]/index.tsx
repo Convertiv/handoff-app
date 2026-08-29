@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import { PageTOC } from '../../components/Navigation/AnchorNav';
@@ -19,28 +20,10 @@ import {
   isRegistryRuntime,
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
+import { BakedDefaultPage, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../../lib/docs-api/page-rendering';
+import { Home, getStaticProps as getHomeStaticProps } from '../index';
 
-/**
- * Registry deployments can run across independent serverless instances whose local ISR caches do
- * not share on-demand invalidations. Keep mutable page entries short-lived so every instance
- * converges on the published DB record even when it did not handle the publish request.
- */
-const REGISTRY_PAGE_REVALIDATE_SECONDS = 1;
-
-type BakedDefaultPage = { metadata: Record<string, unknown>; content: string };
-
-/** Normalize published records and baked frontmatter into the page component's metadata contract. */
-const documentationMetadata = (source: Record<string, unknown>) => {
-  const value = (key: string): string => (typeof source[key] === 'string' ? (source[key] as string) : '');
-  const title = value('title');
-  const description = value('description');
-  return {
-    title,
-    description,
-    metaTitle: value('metaTitle') || title,
-    metaDescription: value('metaDescription') || description,
-  };
-};
+type CatchAllDocumentationProps = DocumentationProps & { homeAlias?: boolean };
 
 export async function getStaticPaths() {
   // Registry resolves every catch-all page on demand so a cold serverless instance queries the DB
@@ -67,6 +50,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
   // the build. Workspace markdown is never read and the deployed server needs no build-machine path.
   if (isRegistryRuntime()) {
     const id = slug.join('/');
+    // Next shares the root ISR cache key with its internal `/index` data alias. The public URL
+    // redirects to `/`, but any internal alias regeneration must still produce the same home page.
+    if (id === HOME_PAGE_ID) {
+      const result = await getHomeStaticProps(context);
+      if ('props' in result) {
+        return { ...result, props: { ...(await result.props), homeAlias: true } };
+      }
+      return result;
+    }
     const detail = await (await resolveDocsBackend()).getPageDetail(id);
     if (detail) {
       const navProps = await getNavProps(sectionId);
@@ -106,8 +98,31 @@ export const getStaticProps: GetStaticProps = async (context) => {
   };
 };
 
-export default function DocCatchAllPage({ content, menu, metadata, current, config }: DocumentationProps) {
+export default function DocCatchAllPage({
+  content,
+  menu,
+  metadata,
+  current,
+  config,
+  navData,
+  currentSectionId,
+  homeAlias,
+}: CatchAllDocumentationProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  if (homeAlias) {
+    return (
+      <Home
+        content={content}
+        menu={menu}
+        metadata={metadata}
+        current={current}
+        config={config}
+        navData={navData}
+        currentSectionId={currentSectionId}
+      />
+    );
+  }
 
   if (!content && !metadata?.title) {
     return (

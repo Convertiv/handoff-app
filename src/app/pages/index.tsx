@@ -5,12 +5,16 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import Footer from '../components/Footer';
 import Layout from '../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../components/util';
+import defaultPages from '../generated/default-pages.json';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getNavProps, isRegistryRuntime } from '../components/util';
+import { resolveDocsBackend } from '../lib/docs-api/backend';
+import { BakedDefaultPage, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../lib/docs-api/page-rendering';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -20,16 +24,37 @@ import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async (context) => {
+  const config = getClientRuntimeConfig();
+
+  if (isRegistryRuntime()) {
+    // The registry build has no database dependency. On-demand and stale regenerations resolve the
+    // published home page; the baked package page remains the fallback when none has been published.
+    const detail = context.revalidateReason === 'build' ? null : await (await resolveDocsBackend()).getPageDetail(HOME_PAGE_ID);
+    const fallback = (defaultPages as Record<string, BakedDefaultPage>)[HOME_PAGE_ID];
+    const navProps = await getNavProps(HOME_PAGE_PATH);
+    const metadataSource = detail ? (detail as unknown as Record<string, unknown>) : (fallback?.metadata ?? {});
+
+    return {
+      props: {
+        metadata: documentationMetadata(metadataSource),
+        content: detail?.content ?? fallback?.content ?? '',
+        ...navProps,
+        config,
+      },
+      revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
+    };
+  }
+
   return {
     props: {
-      ...(await fetchDocPageMarkdown('docs/', 'index', `/`)).props,
-      config: getClientRuntimeConfig(),
+      ...(await fetchDocPageMarkdown('docs/', HOME_PAGE_ID, HOME_PAGE_PATH)).props,
+      config,
     },
   };
 };
 
-const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
+export const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
       <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">

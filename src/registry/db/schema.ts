@@ -206,9 +206,9 @@ export const patternFiles = pgTable(
 export const pages = pgTable(
   'pages',
   {
-    /** Stable page id (slug path, e.g. `guides/setup`). Join key across stores. */
+    /** Stable page id (e.g. `guides/setup`; `index` is the root page). Join key across stores. */
     id: text('id').primaryKey(),
-    /** Logical route the page is served at (e.g. `/guides/setup`). */
+    /** Logical route the page is served at (e.g. `/guides/setup`, or `/` for `index`). */
     path: text('path').notNull(),
     title: text('title'),
     description: text('description'),

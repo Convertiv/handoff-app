@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { HOME_PAGE_PATH } from '../registry/content-kinds';
 import { Logger } from '../utils/logger';
 
 /**
@@ -173,9 +174,8 @@ export interface RegistryVercelOutputOptions {
  *
  * Routes materialized from the mutable docs catch-all also appear in `routes` when package defaults
  * are prerendered. They are identified by `srcRoute` and deliberately left behind the function so a
- * published DB record can override the fallback. Other `fallback:'blocking'` dynamic routes are
- * absent and naturally reach the function. Immutable pages — e.g. the header's `<Link href="/">`
- * prefetch of `/_next/data/<buildId>/index.json` — are served straight from the CDN.
+ * published DB record can override the fallback. The root page is also mutable and stays behind the
+ * function. Other `fallback:'blocking'` dynamic routes are absent and naturally reach the function.
  *
  * No-op when nothing is prerendered (empty `routes`). Paths are emitted base-path-less, matching the
  * existing `_next/static` copy and the registry route table.
@@ -198,7 +198,7 @@ const copyPrerenderedStaticPages = async (appPath: string, staticOutDir: string)
   for (const [route, routeConfig] of Object.entries(routes)) {
     // A static copy would win at the Build Output API filesystem route and permanently hide a
     // published override (and its on-demand revalidation) from the registry function.
-    if (routeConfig.srcRoute === MUTABLE_REGISTRY_PAGE_SRC_ROUTE) {
+    if (route === HOME_PAGE_PATH || routeConfig.srcRoute === MUTABLE_REGISTRY_PAGE_SRC_ROUTE) {
       continue;
     }
 

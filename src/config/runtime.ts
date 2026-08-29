@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import matter from 'gray-matter';
 import { createRequire } from 'module';
 import path from 'path';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
 import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
@@ -305,15 +306,16 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
   // Discover markdown pages
   // -------------------------------------------------------------------------
   // Working pages under `<workingPath>/pages/` are first-class registry entities (publish/checkout).
-  // Discovery mirrors the catch-all/static-path walk: every `.md` except `index.md` becomes a page
-  // keyed by its slug path. Package `config/docs` defaults are NOT entities (they ship with the tool).
+  // The root `index.md` uses the stable id `index` but is served at `/`; nested index files remain
+  // excluded because section indexes are owned by dedicated routes. Package defaults are not entities.
   const pagesRoot = path.resolve(handoff.workingPath, 'pages');
   for (const segments of collectPageMarkdownPaths(pagesRoot)) {
     const slug = segments.join('/');
     const sourcePath = path.resolve(pagesRoot, `${slug}.md`);
     try {
       const { data: frontmatter } = matter(fs.readFileSync(sourcePath, 'utf-8'));
-      const page = normalizePageDeclaration(frontmatter, { id: slug, routePath: `/${slug}`, sourcePath });
+      const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
+      const page = normalizePageDeclaration(frontmatter, { id: slug, routePath, sourcePath });
       result.entries.pages[page.id] = page;
     } catch (err) {
       Logger.warn(`Page skipped (unreadable or invalid frontmatter): ${sourcePath}`);
@@ -331,7 +333,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
 
 /**
  * Recursively collect `.md` files under a root, returning slug segments (relative path without the
- * `.md`). `index.md` is excluded — section index content is served by dedicated/home routes.
+ * `.md`). The root `index.md` is included; nested index files remain owned by dedicated routes.
  */
 const collectPageMarkdownPaths = (rootDir: string, relativeParts: string[] = []): string[][] => {
   if (!fs.existsSync(rootDir)) return [];
@@ -340,7 +342,7 @@ const collectPageMarkdownPaths = (rootDir: string, relativeParts: string[] = [])
     const fullPath = path.join(rootDir, entry);
     if (fs.lstatSync(fullPath).isDirectory()) {
       results.push(...collectPageMarkdownPaths(fullPath, [...relativeParts, entry]));
-    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || relativeParts.length === 0)) {
       results.push([...relativeParts, entry.replace(/\.md$/, '')]);
     }
   }

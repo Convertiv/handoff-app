@@ -270,9 +270,9 @@ export type PageObject = {
 };
 
 export type PageListObject = {
-  /** Stable page id — its slug path (e.g. `guides/setup`), derived from the file location (id ≡ route). */
+  /** Stable page id derived from the file location; `index` identifies the root home page. */
   id: string;
-  /** Logical route the page is served at (e.g. `/guides/setup`). */
+  /** Logical route the page is served at (e.g. `/guides/setup`, or `/` for `index`). */
   path: string;
   /**
    * Absolute filesystem path of the source `.md` (workspace store only). Workspace-only and stripped

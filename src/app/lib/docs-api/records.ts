@@ -3,6 +3,7 @@ import matter from 'gray-matter';
 import path from 'path';
 import { Types as CoreTypes } from 'handoff-core';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import { deriveTokenSets, emptyTokenDocument, setNameForId } from '@handoff/registry/tokens/sets';
 import type { TokenArtifactResource } from '@handoff/store';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
@@ -81,7 +82,7 @@ export const getPatternDetail = (id: string): PatternDetail | null => {
  */
 const workingPagesRoot = (): string => path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
 
-/** Recursively collect page slug segments under `root` (every `.md` except `index.md`). */
+/** Collect page slugs, including the root home page but excluding nested section index files. */
 const collectPageSlugs = (root: string, parts: string[] = []): string[][] => {
   if (!fs.existsSync(root)) return [];
   const out: string[][] = [];
@@ -89,7 +90,7 @@ const collectPageSlugs = (root: string, parts: string[] = []): string[][] => {
     const full = path.join(root, entry);
     if (fs.statSync(full).isDirectory()) {
       out.push(...collectPageSlugs(full, [...parts, entry]));
-    } else if (entry.endsWith('.md') && entry !== 'index.md') {
+    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || parts.length === 0)) {
       out.push([...parts, entry.replace(/\.md$/, '')]);
     }
   }
@@ -102,7 +103,8 @@ export const listPages = (): PageListObject[] => {
     const slug = segments.join('/');
     const sourcePath = path.resolve(root, `${slug}.md`);
     const { data } = matter(fs.readFileSync(sourcePath, 'utf8'));
-    return normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath });
+    const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
+    return normalizePageDeclaration(data, { id: slug, routePath, sourcePath });
   });
 };
 
@@ -115,7 +117,8 @@ export const getPageDetail = (id: string): PageDetail | null => {
   const slug = segments.join('/');
   const sourcePath = path.resolve(root, `${slug}.md`);
   const { data, content } = matter(fs.readFileSync(sourcePath, 'utf8'));
-  return { ...normalizePageDeclaration(data, { id: slug, routePath: `/${slug}`, sourcePath }), content };
+  const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
+  return { ...normalizePageDeclaration(data, { id: slug, routePath, sourcePath }), content };
 };
 
 /**

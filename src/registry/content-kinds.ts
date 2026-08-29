@@ -10,6 +10,10 @@
 
 import type { TransferEntityKind } from './transfer';
 
+/** Stable identity used to publish `pages/index.md` while serving it at the root route. */
+export const HOME_PAGE_ID = 'index';
+export const HOME_PAGE_PATH = '/';
+
 /** Plural content kinds accepted wherever a publish or checkout target is named. */
 export const REGISTRY_ENTITY_KINDS = ['components', 'patterns', 'pages', 'tokens', 'assets'] as const;
 export type RegistryEntityKind = (typeof REGISTRY_ENTITY_KINDS)[number];

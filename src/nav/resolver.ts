@@ -1,4 +1,5 @@
 import { startCase } from 'lodash';
+import { HOME_PAGE_ID } from '../registry/content-kinds';
 import type {
   NavData,
   NavEntity,
@@ -163,7 +164,8 @@ const buildChildPageItems = (parentId: string, pages: NavPageRecord[]): NavMenuI
 const buildPageSections = (sources: NavSources, keepEmpty: boolean): SectionLink[] => {
   const pages = sources.pages.filter((page) => page.enabled !== false);
   return pages
-    .filter((page) => !page.id.includes('/'))
+    // The home page is reachable through the header logo and must not become a duplicate nav section.
+    .filter((page) => page.id !== HOME_PAGE_ID && !page.id.includes('/'))
     .map((page) => {
       const declared = page.menu
         ? pageMenuEntries(page.menu)

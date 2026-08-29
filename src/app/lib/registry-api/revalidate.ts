@@ -1,4 +1,5 @@
 import type { NextApiResponse } from 'next';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 
 /** Entity kinds whose docs pages are statically generated and can be regenerated on demand. */
 export type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
@@ -20,7 +21,7 @@ export type RevalidatableEntityKind = 'component' | 'pattern' | 'page';
  */
 /** The docs paths one entity change affects. Pages own their route; components/patterns live under `/system`. */
 const affectedPaths = (kind: RevalidatableEntityKind, id: string): string[] =>
-  kind === 'page' ? [`/${id}/`] : [`/system/${kind}/${id}/`, '/system/'];
+  kind === 'page' ? [id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}/`] : [`/system/${kind}/${id}/`, '/system/'];
 
 /** Regenerate one path, absorbing any failure. See the best-effort note above. */
 const revalidatePath = async (res: NextApiResponse, path: string): Promise<void> => {
