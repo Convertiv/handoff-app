@@ -46,7 +46,6 @@ interface EntitySpec {
   filesTable: typeof componentFiles | typeof patternFiles | typeof pageFiles;
   fileFkColumn: typeof componentFiles.componentId;
   fileFkName: 'componentId' | 'patternId' | 'pageId';
-  pathPrefix: string;
 }
 
 const ENTITY: Record<ManagedEntityKind, EntitySpec> = {
@@ -55,21 +54,18 @@ const ENTITY: Record<ManagedEntityKind, EntitySpec> = {
     filesTable: componentFiles,
     fileFkColumn: componentFiles.componentId,
     fileFkName: 'componentId',
-    pathPrefix: 'component',
   },
   pattern: {
     table: patterns,
     filesTable: patternFiles as unknown as typeof componentFiles,
     fileFkColumn: patternFiles.patternId as unknown as typeof componentFiles.componentId,
     fileFkName: 'patternId',
-    pathPrefix: 'pattern',
   },
   page: {
     table: pages,
     filesTable: pageFiles as unknown as typeof componentFiles,
     fileFkColumn: pageFiles.pageId as unknown as typeof componentFiles.componentId,
     fileFkName: 'pageId',
-    pathPrefix: 'page',
   },
 };
 
@@ -108,16 +104,11 @@ const buildPatternRecord = (id: string, path: string, fields: Record<string, unk
   ...(asStringArray(fields.tags) ? { tags: asStringArray(fields.tags) } : {}),
 });
 
-/** Build a minimal, valid metadata-only page record from allowlisted fields. */
-const buildPageRecord = (id: string, path: string, fields: Record<string, unknown>): PageListObject => ({
-  id,
-  path,
-  title: asString(fields.title) ?? id,
-  description: asString(fields.description) ?? '',
-  group: asString(fields.group) ?? '',
-  ...(asString(fields.metaTitle) ? { metaTitle: asString(fields.metaTitle) } : {}),
-  ...(asString(fields.metaDescription) ? { metaDescription: asString(fields.metaDescription) } : {}),
-});
+/** Normalize page frontmatter without persisting its workspace-only source path. */
+const normalizeManagedPageRecord = (id: string, path: string, frontmatter: Record<string, unknown>): PageListObject => {
+  const { sourcePath: _sourcePath, ...record } = normalizePageDeclaration(frontmatter, { id, routePath: path, sourcePath: '' });
+  return record;
+};
 
 /** Whether an entity exists by id. */
 export const entityExists = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string): Promise<boolean> => {
@@ -156,7 +147,7 @@ export const createEntity = async (
 ): Promise<EntityReadResult | null> => {
   const spec = ENTITY[kind];
   const id = write.id as string;
-  const path = `${spec.pathPrefix}/${id}`;
+  const path = kind === 'page' ? `/${id}` : `${kind}/${id}`;
   const { fields } = write;
   const metadata = write.metadata ?? null;
   const record =
@@ -164,7 +155,7 @@ export const createEntity = async (
       ? buildComponentRecord(id, path, fields)
       : kind === 'pattern'
         ? buildPatternRecord(id, path, fields)
-        : buildPageRecord(id, path, fields);
+        : normalizeManagedPageRecord(id, path, fields);
 
   // `tags` is promoted on components/patterns only; the pages table has no such column.
   const baseValues = {
@@ -218,15 +209,12 @@ const updatePageMetadata = async (db: RegistryDatabase, id: string, write: Valid
   const files = await db.select({ path: pageFiles.path, content: pageFiles.content }).from(pageFiles).where(eq(pageFiles.pageId, id));
   // A page carries a single verbatim `.md`; a metadata-only page (created, never published) has none.
   const source = files.find((file) => file.content != null);
-  const parsed = matter(source?.content ?? '');
-  const frontmatter = { ...parsed.data, ...write.fields };
-  const { sourcePath: _sourcePath, ...record } = normalizePageDeclaration(frontmatter, {
-    id,
-    routePath: row.path || `/${id}`,
-    sourcePath: '',
-  });
+  const hasFrontmatterChanges = Object.keys(write.fields).length > 0;
+  const parsed = hasFrontmatterChanges ? matter(source?.content ?? '') : null;
+  const frontmatter = parsed ? { ...parsed.data, ...write.fields } : null;
+  const record = frontmatter ? normalizeManagedPageRecord(id, row.path || `/${id}`, frontmatter) : row.record;
   const metadata = mergeReviewMetadata(row.metadata, write.metadata);
-  const content = source ? matter.stringify(parsed.content, frontmatter) : null;
+  const content = source && parsed && frontmatter ? matter.stringify(parsed.content, frontmatter) : null;
 
   await db.transaction(async (tx) => {
     const transactionalDb = tx as unknown as RegistryDatabase;

@@ -20,6 +20,8 @@ export interface RegistryBuildMeta {
   entityId: string;
   builtAt: string | null;
   artifactHash: string | null;
+  /** Published source hash. Pages use this instead of an artifact hash. */
+  sourceHash: string | null;
   /** Number of entity-owned docs read-model artifacts stored. */
   ingestedArtifacts: number;
   /** Number of shared/global artifacts stored (path-keyed, owned by `asset`). */
@@ -66,6 +68,7 @@ export const resolveBuildMeta = async (
         status: buildMetadata.status,
         builtAt: buildMetadata.builtAt,
         artifactHash: buildMetadata.artifactHash,
+        sourceHash: buildMetadata.sourceHash,
       })
       .from(buildMetadata)
       .where(and(eq(buildMetadata.entityKind, entityKind), eq(buildMetadata.entityId, entityId)))
@@ -81,6 +84,7 @@ export const resolveBuildMeta = async (
     entityId,
     builtAt: row?.builtAt ? new Date(row.builtAt).toISOString() : null,
     artifactHash: row?.artifactHash ?? null,
+    sourceHash: row?.sourceHash ?? null,
     ingestedArtifacts,
     sharedArtifacts,
   };

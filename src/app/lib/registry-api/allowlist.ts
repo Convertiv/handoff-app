@@ -1,5 +1,5 @@
 import type { RegistryReviewMetadata } from '@handoff/registry/db/schema';
-import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
+import { isSafePathSegment, isSafeRelativePath, normalizeRelativePath } from '@handoff/registry/path';
 import { isPlainObject } from './validation';
 
 /**
@@ -95,7 +95,7 @@ export const validateMetadataWrite = (
         rejectedFields.push('id');
         continue;
       }
-      id = candidate;
+      id = kind === 'page' ? normalizeRelativePath(candidate) : candidate;
       continue;
     }
 

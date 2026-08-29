@@ -24,13 +24,23 @@ import {
 /**
  * Entity-kind-parameterized route bodies for the registry management API.
  *
- * Components and patterns expose the identical CRUD + files surface, so the four `/api/registry/*`
- * route shapes are implemented once here and bound to a kind by the thin page route files. Each runs
- * behind {@link handleRegistryRoute}, which applies the runtime-mode, method, bearer-token, and
- * database guards before the body executes.
+ * Components, patterns, and pages expose the same CRUD surface, so the collection and item route
+ * shapes are implemented once here and bound to a kind by thin API route files. Components and
+ * patterns also expose source-file routes; pages deliberately do not. Each route runs behind
+ * {@link handleRegistryRoute}, which applies the runtime-mode, method, bearer-token, and database
+ * guards before the body executes.
  */
 
-const label = (kind: ManagedEntityKind): string => (kind === 'component' ? 'Component' : 'Pattern');
+const label = (kind: ManagedEntityKind): string => (kind === 'component' ? 'Component' : kind === 'pattern' ? 'Pattern' : 'Page');
+
+/** Resolve and normalize the route id. Page ids can span catch-all route segments. */
+const routeEntityId = (req: NextApiRequest, kind: ManagedEntityKind): string | undefined => {
+  const value = kind === 'page' ? joinedQueryValue(req.query.id) : singleQueryValue(req.query.id);
+  return value && kind === 'page' ? normalizeRelativePath(value) : value;
+};
+
+const isValidEntityId = (kind: ManagedEntityKind, id: string): boolean =>
+  kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
 
 const rejectionDetails = (rejectedFields: string[]) => (rejectedFields.length ? { rejectedFields } : undefined);
 
@@ -59,12 +69,12 @@ export const handleEntityCollection = (req: NextApiRequest, res: NextApiResponse
 /** `GET` (detail) + `PUT` (allowlisted metadata update) + `DELETE` for a single entity. */
 export const handleEntityItem = (req: NextApiRequest, res: NextApiResponse, kind: ManagedEntityKind): Promise<void> =>
   handleRegistryRoute(req, res, ['GET', 'PUT', 'DELETE'], async ({ db, method }) => {
-    const id = singleQueryValue(req.query.id);
+    const id = routeEntityId(req, kind);
     if (!id) {
       sendRegistryError(res, 'not_found', `Missing ${kind} id.`);
       return;
     }
-    if (!isSafePathSegment(id)) {
+    if (!isValidEntityId(kind, id)) {
       sendRegistryError(res, 'bad_request', `${label(kind)} id must be a registry-safe relative path.`, {
         rejectedFields: ['id'],
       });
