@@ -32,8 +32,8 @@ export interface RegistryTokenPrincipal {
 /**
  * A request authenticated by the deployment-wide `HANDOFF_SYNC_SECRET`. The secret is the credential
  * itself, so there is no token row and no owner, only the scopes it grants. Nothing derived from the
- * secret lives here: `redactSecrets` scrubs by key name, so a field like `hash` or `label` would slip
- * into a response body unnoticed.
+ * secret lives here — no hash, no label: response bodies are serialized verbatim, so any field added
+ * to this principal reaches a client as written.
  */
 export interface RegistrySyncSecretPrincipal {
   kind: 'sync_secret';

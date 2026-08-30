@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { redactSecrets } from '../api/redact';
 import { resolveDocsBackend, type DocsBackend } from './backend';
 import { ensureGet, sendDocsError } from './errors';
 
-/** Write a successful docs read API JSON response, redacting any accidentally-stored secrets. */
+/** Write a successful docs read API JSON response. */
 export const sendDocsData = (res: NextApiResponse, status: number, data: unknown): void => {
-  res.status(status).json(redactSecrets(data));
+  res.status(status).json(data);
 };
 
 /**

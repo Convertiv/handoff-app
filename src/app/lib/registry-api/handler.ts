@@ -6,7 +6,6 @@ import { getRegistryConnection, RegistryConnectionError } from '../registry-conn
 import { authorizeRegistryRequest, requiredScopeForMethod } from './auth';
 import { sendRegistryError } from './errors';
 import { buildMeta, type RegistryMeta } from './meta';
-import { redactSecrets } from '../api/redact';
 
 /**
  * Shared orchestration for every `/api/registry/*` route.
@@ -45,9 +44,9 @@ export const ensureRegistryMode = (res: NextApiResponse): boolean => {
   return false;
 };
 
-/** Write a successful registry API response with the `{ data, meta }` envelope (data redacted). */
+/** Write a successful registry API response with the `{ data, meta }` envelope. */
 export const sendRegistryData = (res: NextApiResponse, status: number, data: unknown, meta: RegistryMeta = buildMeta()): void => {
-  res.status(status).json({ data: redactSecrets(data), meta });
+  res.status(status).json({ data, meta });
 };
 
 /**

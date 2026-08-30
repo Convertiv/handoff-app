@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { singleQueryValue } from '../api/query';
-import { redactSecrets } from '../api/redact';
 
 /**
  * Docs read API error contract.
@@ -21,7 +20,7 @@ const STATUS_BY_CODE: Record<DocsErrorCode, number> = {
 
 /** Write a docs read API error response with the status mapped from its code. */
 export const sendDocsError = (res: NextApiResponse, code: DocsErrorCode, message: string): void => {
-  res.status(STATUS_BY_CODE[code]).json(redactSecrets({ error: { code, message } }));
+  res.status(STATUS_BY_CODE[code]).json({ error: { code, message } });
 };
 
 /**

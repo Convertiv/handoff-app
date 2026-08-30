@@ -1,5 +1,4 @@
 import type { NextApiResponse } from 'next';
-import { redactSecrets } from '../api/redact';
 import { buildMeta, type RegistryMeta } from './meta';
 
 /**
@@ -30,10 +29,17 @@ const STATUS_BY_CODE: Record<RegistryErrorCode, number> = {
   unexpected_error: 500,
 };
 
-/** Optional structured error details. `rejectedFields` names the fields that failed validation. */
+/**
+ * Optional structured error details. Deliberately closed: an error body must never echo request data
+ * back to the client, so every permitted field is named here rather than allowed by an index
+ * signature. `rejectedFields` names the fields that failed validation.
+ */
 export interface RegistryErrorDetails {
   rejectedFields?: string[];
-  [key: string]: unknown;
+  /** Blob hashes a publish package referenced but never uploaded. */
+  missing?: string[];
+  /** Artifact reference a publish package required but neither included nor already published. */
+  missingReference?: string;
 }
 
 /** Write a registry API error response with the status mapped from its code, plus the `meta` envelope. */
@@ -45,7 +51,7 @@ export const sendRegistryError = (
   meta: RegistryMeta = buildMeta()
 ): void => {
   res.status(STATUS_BY_CODE[code]).json({
-    error: { code, message, ...(details ? { details: redactSecrets(details) } : {}) },
+    error: { code, message, ...(details ? { details } : {}) },
     meta,
   });
 };
