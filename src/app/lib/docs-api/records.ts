@@ -5,6 +5,7 @@ import { Types as CoreTypes } from 'handoff-core';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import { deriveTokenSets, emptyTokenDocument, setNameForId } from '@handoff/registry/tokens/sets';
+import { collectPageSlugSegments } from '@handoff/utils/pages';
 import type { TokenArtifactResource } from '@handoff/store';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
@@ -83,19 +84,7 @@ export const getPatternDetail = (id: string): PatternDetail | null => {
 const workingPagesRoot = (): string => path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
 
 /** Collect page slugs, including the root home page but excluding nested section index files. */
-const collectPageSlugs = (root: string, parts: string[] = []): string[][] => {
-  if (!fs.existsSync(root)) return [];
-  const out: string[][] = [];
-  for (const entry of fs.readdirSync(root)) {
-    const full = path.join(root, entry);
-    if (fs.statSync(full).isDirectory()) {
-      out.push(...collectPageSlugs(full, [...parts, entry]));
-    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || parts.length === 0)) {
-      out.push([...parts, entry.replace(/\.md$/, '')]);
-    }
-  }
-  return out;
-};
+const collectPageSlugs = (root: string): string[][] => collectPageSlugSegments(root, { includeRootIndex: true });
 
 export const listPages = (): PageListObject[] => {
   const root = workingPagesRoot();

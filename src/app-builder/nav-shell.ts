@@ -2,9 +2,9 @@ import fs from 'fs-extra';
 import matter from 'gray-matter';
 import path from 'path';
 import Handoff from '..';
-import { HOME_PAGE_ID } from '../registry/content-kinds';
 import { buildMenuShell } from '../utils/menu-shell';
 import { Logger } from '../utils/logger';
+import { collectPageSlugSegments } from '../utils/pages';
 
 /**
  * Relative path (within the staged Next app) of the baked navigation shell. The docs read API
@@ -23,18 +23,12 @@ interface BakedDefaultPage {
 }
 
 /** Collect package defaults for registry fallbacks, including the dedicated root home page. */
-const collectDefaultPages = (root: string, relativeParts: string[] = []): Record<string, BakedDefaultPage> => {
-  if (!fs.existsSync(root)) return {};
+const collectDefaultPages = (root: string): Record<string, BakedDefaultPage> => {
   const pages: Record<string, BakedDefaultPage> = {};
-  for (const entry of fs.readdirSync(root)) {
-    const absolutePath = path.join(root, entry);
-    if (fs.lstatSync(absolutePath).isDirectory()) {
-      Object.assign(pages, collectDefaultPages(absolutePath, [...relativeParts, entry]));
-    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || relativeParts.length === 0)) {
-      const id = [...relativeParts, entry.replace(/\.md$/, '')].join('/');
-      const { data, content } = matter(fs.readFileSync(absolutePath, 'utf8'));
-      pages[id] = { metadata: data, content };
-    }
+  for (const segments of collectPageSlugSegments(root, { includeRootIndex: true })) {
+    const id = segments.join('/');
+    const { data, content } = matter(fs.readFileSync(path.resolve(root, `${id}.md`), 'utf8'));
+    pages[id] = { metadata: data, content };
   }
   return pages;
 };

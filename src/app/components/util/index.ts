@@ -7,6 +7,7 @@ import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
 import { KNOWN_PATHS } from '@handoff/utils/menu-shell';
+import { collectPageSlugSegments } from '@handoff/utils/pages';
 import { getRegistryNavData, getWorkspaceNavData, type NavData, type NavTokenSet, type SectionLink } from '@handoff/nav';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import { tokenFormatStrings } from '../../lib/docs-api/token-detail';
@@ -96,25 +97,6 @@ export const pluralizeComponent = (singular: string): string => {
 };
 
 /**
- * Recursively collect all .md files from a directory, returning their
- * path segments relative to the root (without the .md extension).
- */
-const collectMarkdownPaths = (rootDir: string, relativeParts: string[] = []): string[][] => {
-  if (!fs.existsSync(rootDir)) return [];
-  const entries = fs.readdirSync(rootDir);
-  const results: string[][] = [];
-  for (const entry of entries) {
-    const fullPath = path.join(rootDir, entry);
-    if (fs.lstatSync(fullPath).isDirectory()) {
-      results.push(...collectMarkdownPaths(fullPath, [...relativeParts, entry]));
-    } else if (entry.endsWith('.md') && entry !== 'index.md') {
-      results.push([...relativeParts, entry.replace('.md', '')]);
-    }
-  }
-  return results;
-};
-
-/**
  * Build catch-all static paths for all markdown pages at any depth.
  * Excludes paths in knownPaths (those have dedicated route files).
  */
@@ -122,8 +104,8 @@ export const buildCatchAllStaticPaths = (includeWorkspacePages = true) => {
   const docRoot = path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config/docs');
   const pageRoot = path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
 
-  const docPaths = collectMarkdownPaths(docRoot);
-  const pagePaths = includeWorkspacePages ? collectMarkdownPaths(pageRoot) : [];
+  const docPaths = collectPageSlugSegments(docRoot);
+  const pagePaths = includeWorkspacePages ? collectPageSlugSegments(pageRoot) : [];
 
   const seen = new Set<string>();
   const allPaths: string[][] = [];

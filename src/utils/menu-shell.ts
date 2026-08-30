@@ -3,6 +3,7 @@ import matter from 'gray-matter';
 import { startCase } from 'lodash';
 import path from 'path';
 import type { NavMenuItem, NavSubSection, SectionLink } from '../nav';
+import { stripMarkdownExtension } from './pages';
 
 /**
  * Build-time menu *shell* builder.
@@ -117,7 +118,7 @@ export const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): Menu
         items.push({ title: startCase(entry), path: `${urlPrefix}/${entry}`, menu: nestedItems });
       }
     } else if (entry.endsWith('.md') && entry !== 'index.md') {
-      const slug = entry.replace('.md', '');
+      const slug = stripMarkdownExtension(entry);
       const fullSlugPath = `${urlPrefix}/${slug}`.replace(/^\/+/, '');
       if (KNOWN_PATHS.indexOf(fullSlugPath) >= 0) continue;
 
@@ -179,7 +180,7 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
       continue;
     }
 
-    const filepath = `/${fileName.replace('.md', '')}`;
+    const filepath = `/${stripMarkdownExtension(fileName)}`;
     const subSections: MenuShellSubSection[] = [];
 
     if (metadata.menu) {
@@ -205,7 +206,7 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
       }
     } else {
       // No frontmatter menu: auto-scan the matching directory (working pages win over docs).
-      const dirName = fileName.replace('.md', '');
+      const dirName = stripMarkdownExtension(fileName);
       const nestedFromDocs = buildMenuFromDirectory(path.resolve(docRoot, dirName), `/${dirName}`);
       const nestedFromPages = workingPagesDir
         ? buildMenuFromDirectory(path.resolve(workingPagesDir, dirName), `/${dirName}`)

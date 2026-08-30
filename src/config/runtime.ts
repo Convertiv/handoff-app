@@ -9,6 +9,7 @@ import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
 import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
+import { collectPageSlugSegments } from '../utils/pages';
 import { normalizePathForCompare } from '../utils/path';
 import { normalizeComponentDeclaration } from './normalizers/declaration';
 import { normalizePageDeclaration } from './normalizers/page';
@@ -309,7 +310,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
   // The root `index.md` uses the stable id `index` but is served at `/`; nested index files remain
   // excluded because section indexes are owned by dedicated routes. Package defaults are not entities.
   const pagesRoot = path.resolve(handoff.workingPath, 'pages');
-  for (const segments of collectPageMarkdownPaths(pagesRoot)) {
+  for (const segments of collectPageSlugSegments(pagesRoot, { includeRootIndex: true })) {
     const slug = segments.join('/');
     const sourcePath = path.resolve(pagesRoot, `${slug}.md`);
     try {
@@ -329,24 +330,6 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
   injectPatternPreviews(result);
 
   return [result, Array.from(configFiles), configFileIndex];
-};
-
-/**
- * Recursively collect `.md` files under a root, returning slug segments (relative path without the
- * `.md`). The root `index.md` is included; nested index files remain owned by dedicated routes.
- */
-const collectPageMarkdownPaths = (rootDir: string, relativeParts: string[] = []): string[][] => {
-  if (!fs.existsSync(rootDir)) return [];
-  const results: string[][] = [];
-  for (const entry of fs.readdirSync(rootDir)) {
-    const fullPath = path.join(rootDir, entry);
-    if (fs.lstatSync(fullPath).isDirectory()) {
-      results.push(...collectPageMarkdownPaths(fullPath, [...relativeParts, entry]));
-    } else if (entry.endsWith('.md') && (entry !== `${HOME_PAGE_ID}.md` || relativeParts.length === 0)) {
-      results.push([...relativeParts, entry.replace(/\.md$/, '')]);
-    }
-  }
-  return results;
 };
 
 /**
