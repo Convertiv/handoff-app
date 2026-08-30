@@ -63,14 +63,14 @@ export const makePage = async (handoff: Handoff, name: string, parent: string | 
     Logger.error(`Page name must be set`);
     return;
   }
-  if (!/^[a-z0-9]+$/i.test(name)) {
+  if (!/^[a-z0-9_-]+$/i.test(name)) {
     Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
     return;
   }
 
   let workingPath, sourcePath, templatePath;
   if (parent) {
-    if (!/^[a-z0-9]+$/i.test(parent)) {
+    if (!/^[a-z0-9_-]+$/i.test(parent)) {
       Logger.error(`Parent name must be alphanumeric and may contain dashes or underscores`);
       return;
     }

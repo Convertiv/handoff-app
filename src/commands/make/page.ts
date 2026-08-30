@@ -27,14 +27,14 @@ const command: CommandModule<{}, MakePageArgs> = {
 
     const pageName = args.name;
 
-    if (!/^[a-z0-9]+$/i.test(pageName)) {
+    if (!/^[a-z0-9_-]+$/i.test(pageName)) {
       Logger.error(`Page name must be alphanumeric and may contain dashes or underscores`);
       return;
     }
 
     let pageParent = args.parent;
 
-    if (pageParent && !/^[a-z0-9]+$/i.test(pageParent)) {
+    if (pageParent && !/^[a-z0-9_-]+$/i.test(pageParent)) {
       Logger.error(`Page parent must be alphanumeric and may contain dashes or underscores`);
       return;
     }
