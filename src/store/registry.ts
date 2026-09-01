@@ -14,7 +14,7 @@
  *   returned exactly as it was published.
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
 import {
@@ -95,11 +95,7 @@ export class RegistryComponentStore implements ComponentStore {
   }
 
   async get(id: string): Promise<ComponentListObject | null> {
-    const rows = await this.context.db
-      .select({ record: components.record })
-      .from(components)
-      .where(eq(components.id, id))
-      .limit(1);
+    const rows = await this.context.db.select({ record: components.record }).from(components).where(eq(components.id, id)).limit(1);
     return rows[0]?.record ?? null;
   }
 
@@ -135,11 +131,7 @@ export class RegistryPatternStore implements PatternStore {
   }
 
   async get(id: string): Promise<PatternListObject | null> {
-    const rows = await this.context.db
-      .select({ record: patterns.record })
-      .from(patterns)
-      .where(eq(patterns.id, id))
-      .limit(1);
+    const rows = await this.context.db.select({ record: patterns.record }).from(patterns).where(eq(patterns.id, id)).limit(1);
     return rows[0]?.record ?? null;
   }
 
@@ -192,6 +184,65 @@ export class RegistryPageStore implements PageStore {
   }
 }
 
+/** The page fields that search reads. The Markdown includes frontmatter. */
+export interface PageSearchCandidate {
+  record: PageListObject;
+  markdown: string | null;
+}
+
+export interface PageSearchCandidateQuery {
+  /** Normalized terms. A page is a candidate when any term occurs in any searchable column. */
+  terms: string[];
+  /** Optional group filter, matched case-insensitively. */
+  group?: string;
+  /** Maximum rows returned to the server for one search. */
+  limit: number;
+}
+
+/** Escape the wildcards Postgres reads in an `ILIKE` pattern, so a term cannot widen its own match. */
+const likePattern = (term: string): string => `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+
+/**
+ * Candidate pages for a search, filtered and capped in SQL.
+ *
+ * `enabled` and `menuTitle` are fields in the `record` JSON, so the query uses JSON operators. An
+ * absent `enabled` field means enabled. ID order makes both runtime modes apply the candidate cap to
+ * the same pages. The body includes frontmatter, so this filter can include a false match. Ranking
+ * uses the body without frontmatter and removes that match.
+ */
+export const searchPageCandidates = async (db: RegistryDatabase, query: PageSearchCandidateQuery): Promise<PageSearchCandidate[]> => {
+  const matchesTerm = (term: string) => {
+    const pattern = likePattern(term);
+    return or(
+      ilike(pages.title, pattern),
+      ilike(pages.description, pattern),
+      sql`${pages.record}->>'menuTitle' ilike ${pattern}`,
+      ilike(pageFiles.content, pattern)
+    );
+  };
+
+  return db
+    .select({ record: pages.record, markdown: pageFiles.content })
+    .from(pages)
+    .leftJoin(pageFiles, and(eq(pageFiles.pageId, pages.id), eq(pageFiles.kind, 'markdown')))
+    .where(
+      and(
+        sql`${pages.record}->>'enabled' is distinct from 'false'`,
+        query.group ? sql`lower(${pages.group}) = lower(${query.group})` : undefined,
+        or(...query.terms.map(matchesTerm))
+      )
+    )
+    .orderBy(pages.id)
+    .limit(query.limit);
+};
+
+/**
+ * IDs of published pages. Search uses them to exclude replaced package defaults, including pages that
+ * did not match the term filter. The query does not read page records.
+ */
+export const listPublishedPageIds = async (db: RegistryDatabase): Promise<string[]> =>
+  (await db.select({ id: pages.id }).from(pages)).map((row) => row.id);
+
 export class RegistryTokenStore implements TokenStore {
   constructor(private readonly context: RegistryStoreContext) {}
 
@@ -212,7 +263,12 @@ export class RegistryTokenStore implements TokenStore {
 
   async getArtifacts(id: string): Promise<TokenArtifactResource[]> {
     const rows = await this.context.db
-      .select({ path: tokenArtifacts.path, format: tokenArtifacts.format, content: tokenArtifacts.content, contentType: tokenArtifacts.contentType })
+      .select({
+        path: tokenArtifacts.path,
+        format: tokenArtifacts.format,
+        content: tokenArtifacts.content,
+        contentType: tokenArtifacts.contentType,
+      })
       .from(tokenArtifacts)
       .where(eq(tokenArtifacts.tokenSetId, id));
     return rows
@@ -228,7 +284,9 @@ export class RegistryTokenStore implements TokenStore {
 const readableToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk as unknown as Uint8Array));
+    chunks.push(
+      Buffer.isBuffer(chunk) ? chunk : typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk as unknown as Uint8Array)
+    );
   }
   return Buffer.concat(chunks);
 };

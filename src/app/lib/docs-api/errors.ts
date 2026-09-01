@@ -4,16 +4,18 @@ import { singleQueryValue } from '../api/query';
 /**
  * Docs read API error contract.
  *
- * Unlike the registry management API, docs read responses carry a bare `{ error: { code, message } }`
- * envelope (no `meta`). Codes are deliberately narrow: a malformed/traversal/missing route param or
- * record is `not_found`; a missing content artifact (or a missing required HTML reference) is
- * `artifact_not_found`; everything else maps to `method_not_allowed` or `unexpected_error`.
+ * Unlike the registry management API, docs read responses omit `meta` from the
+ * `{ error: { code, message } }` envelope. A malformed, unsafe, or missing route parameter maps to
+ * `not_found`. A missing record also maps to `not_found`. A missing content artifact or required HTML
+ * reference maps to `artifact_not_found`. Invalid query input maps to `invalid_request`. All other
+ * errors map to `method_not_allowed` or `unexpected_error`.
  */
-export type DocsErrorCode = 'not_found' | 'artifact_not_found' | 'method_not_allowed' | 'unexpected_error';
+export type DocsErrorCode = 'not_found' | 'artifact_not_found' | 'invalid_request' | 'method_not_allowed' | 'unexpected_error';
 
 const STATUS_BY_CODE: Record<DocsErrorCode, number> = {
   not_found: 404,
   artifact_not_found: 404,
+  invalid_request: 400,
   method_not_allowed: 405,
   unexpected_error: 500,
 };

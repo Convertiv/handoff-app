@@ -5,6 +5,9 @@ import type { TokenSetKind } from '@handoff/registry/tokens/sets';
 import { FilesystemAssetStore } from '@handoff/store/filesystem-assets';
 import type { AssetContentResource, AssetMetadata, TokenArtifactResource } from '@handoff/store';
 import { getArtifactRoot, resolveArtifactFile } from './artifacts';
+import { searchWorkspacePages } from './page-discovery';
+import type { PageSearchRequest, PageSearchResult } from './page-search';
+import type { SearchResponse } from './search';
 import {
   getComponentDetail as getWorkspaceComponentDetail,
   getPageDetail as getWorkspacePageDetail,
@@ -64,6 +67,11 @@ export interface DocsBackend {
   getPatternDetail(id: string): Promise<PatternDetail | null>;
   /** A page's record + rendered markdown body, or `null` when absent. Read by the catch-all route. */
   getPageDetail(id: string): Promise<PageDetail | null>;
+  /**
+   * Search the effective page set and return ranked, display-ready results. Project pages replace
+   * package defaults. Both backings use the same ranking rules.
+   */
+  searchPages(request: PageSearchRequest): Promise<SearchResponse<PageSearchResult>>;
   /** Resolve an already-validated logical artifact path, or `null` when it cannot be served. */
   resolveArtifact(segments: string[]): Promise<ResolvedArtifactBody | null>;
   /** List logical token sets (id + kind). The real consumer is registry-mode token navigation. */
@@ -116,6 +124,9 @@ const workspaceBackend: DocsBackend = {
   },
   async getPageDetail(id: string) {
     return getWorkspacePageDetail(id);
+  },
+  async searchPages(request: PageSearchRequest) {
+    return searchWorkspacePages(request);
   },
   async resolveArtifact(segments: string[]) {
     const resolved = resolveArtifactFile(segments);
