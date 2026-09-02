@@ -35,8 +35,8 @@ export interface PageSearchResult {
 export type PageSearchRequest = SearchRequest & { group?: string };
 
 /**
- * Relevance weights per field group. The gaps are wider than either bonus, so field priority always
- * wins: one term in a title outranks every term in a body.
+ * Relevance weights per field group. A title match contributes more than the same match in a
+ * description or body. Term coverage and phrase bonuses can still change the final order.
  */
 const TITLE_WEIGHT = 10;
 const DESCRIPTION_WEIGHT = 4;
