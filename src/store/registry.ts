@@ -14,7 +14,7 @@
  *   returned exactly as it was published.
  */
 
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, or, sql, type SQLWrapper } from 'drizzle-orm';
 import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
 import {
@@ -203,23 +203,35 @@ export interface PageSearchCandidateQuery {
 const likePattern = (term: string): string => `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 
 /**
+ * Strip a leading `---` frontmatter block, so the body filter reads the text that ranking scores.
+ *
+ * The first quantifier must stay non-greedy. Postgres takes the greediness of the whole pattern from
+ * it, and a greedy pattern would strip through the last `---` line of the body.
+ */
+const FRONTMATTER_PATTERN = '^---.*?\\n---[^\\n]*(\\n|$)';
+
+/**
  * Candidate pages for a search, filtered and capped in SQL.
  *
  * `enabled` and `menuTitle` are fields in the `record` JSON, so the query uses JSON operators. An
- * absent `enabled` field means enabled. ID order makes both runtime modes apply the candidate cap to
- * the same pages. The body includes frontmatter, so this filter can include a false match. Ranking
- * uses the body without frontmatter and removes that match.
+ * absent `enabled` field means enabled. The body filter excludes frontmatter, so an excluded field
+ * such as `metaTitle` cannot consume a candidate slot. Each column is compared against every term
+ * once, which keeps the body to one frontmatter strip per row.
+ *
+ * `C` collation orders IDs by code point, as the merge in registry search does. Both orders must
+ * agree, or the cap can keep different pages in each runtime mode.
  */
 export const searchPageCandidates = async (db: RegistryDatabase, query: PageSearchCandidateQuery): Promise<PageSearchCandidate[]> => {
-  const matchesTerm = (term: string) => {
-    const pattern = likePattern(term);
-    return or(
-      ilike(pages.title, pattern),
-      ilike(pages.description, pattern),
-      sql`${pages.record}->>'menuTitle' ilike ${pattern}`,
-      ilike(pageFiles.content, pattern)
-    );
-  };
+  // No term means no candidate, and an empty list would build `array[]`, which Postgres cannot type.
+  if (query.terms.length === 0) {
+    return [];
+  }
+  const patterns = sql.join(
+    query.terms.map((term) => sql`${likePattern(term)}`),
+    sql`, `
+  );
+  const matchesAnyTerm = (text: SQLWrapper) => sql`${text} ilike any (array[${patterns}])`;
+  const body = sql`regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, '')`;
 
   return db
     .select({ record: pages.record, markdown: pageFiles.content })
@@ -229,19 +241,32 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
       and(
         sql`${pages.record}->>'enabled' is distinct from 'false'`,
         query.group ? sql`lower(${pages.group}) = lower(${query.group})` : undefined,
-        or(...query.terms.map(matchesTerm))
+        or(
+          matchesAnyTerm(pages.title),
+          matchesAnyTerm(pages.description),
+          matchesAnyTerm(sql`${pages.record}->>'menuTitle'`),
+          matchesAnyTerm(body)
+        )
       )
     )
-    .orderBy(pages.id)
+    .orderBy(sql`${pages.id} collate "C"`)
     .limit(query.limit);
 };
 
 /**
- * IDs of published pages. Search uses them to exclude replaced package defaults, including pages that
- * did not match the term filter. The query does not read page records.
+ * The published pages among the given IDs. Search asks only about packaged default IDs, because no
+ * other ID can replace a default. This keeps the query bounded as the registry grows.
+ *
+ * A published page replaces the default with the same ID even when it does not match the search
+ * terms, so this query ignores the term filter.
  */
-export const listPublishedPageIds = async (db: RegistryDatabase): Promise<string[]> =>
-  (await db.select({ id: pages.id }).from(pages)).map((row) => row.id);
+export const findPublishedPageIds = async (db: RegistryDatabase, ids: string[]): Promise<string[]> => {
+  if (ids.length === 0) {
+    return [];
+  }
+  const rows = await db.select({ id: pages.id }).from(pages).where(inArray(pages.id, ids));
+  return rows.map((row) => row.id);
+};
 
 export class RegistryTokenStore implements TokenStore {
   constructor(private readonly context: RegistryStoreContext) {}

@@ -6,12 +6,13 @@ import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { PageListObject } from '@handoff/transformers/preview/types';
 import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
-import { createRegistryStore, listPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
+import { createRegistryStore, findPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
 import {
   isPageEnabled,
   isPageInGroup,
+  pageMatches,
   rankPages,
   toSearchablePage,
   type PageSearchRequest,
@@ -86,15 +87,22 @@ const buildStatusFor = async (
 /**
  * Search published pages together with the packaged defaults.
  *
- * SQL filters and caps published candidates before they reach the server. A separate ID-only query
- * identifies package defaults that published pages replace. The published page takes precedence even
- * when it does not match the terms. This prevents stale default content from appearing in results.
- * The shared ranking logic processes the merged candidates.
+ * SQL filters published candidates before they reach the server. A separate ID-only query identifies
+ * the package defaults that published pages replace. The published page takes precedence even when it
+ * does not match the terms. This prevents stale default content from appearing in results.
+ *
+ * The published pages and the remaining defaults are one effective page set. The candidate cap applies
+ * to that merged set in ID order, as it does in workspace mode, so both runtime modes rank the same
+ * candidates. The query reads one row beyond the cap to detect a cut.
  */
 const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequest): Promise<SearchResponse<PageSearchResult>> => {
-  const [rows, publishedIds] = await Promise.all([
-    searchPageCandidates(db, { terms: request.terms, group: request.group, limit: MAX_SEARCH_CANDIDATES }),
-    listPublishedPageIds(db).then((ids) => new Set(ids)),
+  const defaults = Object.entries(defaultPages as Record<string, BakedDefaultPage>);
+  const [rows, replacedDefaultIds] = await Promise.all([
+    searchPageCandidates(db, { terms: request.terms, group: request.group, limit: MAX_SEARCH_CANDIDATES + 1 }),
+    findPublishedPageIds(
+      db,
+      defaults.map(([id]) => id)
+    ).then((ids) => new Set(ids)),
   ]);
 
   const candidates: SearchablePage[] = [];
@@ -104,25 +112,32 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
       return;
     }
     seen.add(record.id);
-    candidates.push(toSearchablePage(record, markdown));
+    const candidate = toSearchablePage(record, markdown);
+    // The SQL filter also reads the body of an external page, which search excludes. A page that no
+    // term matches must not occupy a candidate slot.
+    if (pageMatches(candidate, request)) {
+      candidates.push(candidate);
+    }
   };
 
   for (const row of rows) {
     // Stored Markdown includes frontmatter, which search must exclude from the body.
     addCandidate(row.record, matter(row.markdown ?? '').content);
   }
-  for (const [id, page] of Object.entries(defaultPages as Record<string, BakedDefaultPage>)) {
-    if (publishedIds.has(id)) {
+  for (const [id, page] of defaults) {
+    if (replacedDefaultIds.has(id)) {
       continue;
     }
     const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
     addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), page.content);
   }
+  candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  const { results, truncated } = rankPages(candidates, request);
-  // The SQL filter can match frontmatter and include a page that ranking removes. At the cap, this can
-  // change the boundary candidate, but `truncated` still reports the candidate cut.
-  return { query: request.query, results, truncated: truncated || rows.length >= MAX_SEARCH_CANDIDATES };
+  // A row that `pageMatches` drops can pull the merged count back under the cap, so the extra row the
+  // query asked for stays the only evidence that SQL cut a page.
+  const capped = candidates.length > MAX_SEARCH_CANDIDATES || rows.length > MAX_SEARCH_CANDIDATES;
+  const { results, truncated } = rankPages(candidates.slice(0, MAX_SEARCH_CANDIDATES), request);
+  return { query: request.query, results, truncated: truncated || capped };
 };
 
 /** Construct the registry-mode docs backend over a live database connection. */

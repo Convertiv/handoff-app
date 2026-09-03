@@ -105,8 +105,8 @@ const readBody = (absolutePath: string): string => {
 export const searchWorkspacePages = (request: PageSearchRequest): SearchResponse<PageSearchResult> => {
   const eligible = discoverPages().filter((page) => isPageEnabled(page.record) && isPageInGroup(page.record, request.group));
 
-  // The cap counts matches, as the registry's SQL `LIMIT` does. Capping all pages would make the
-  // runtime modes return different results and report truncation when no match was removed.
+  // The cap counts matches, as registry search does. Capping all pages would make the runtime modes
+  // return different results and report truncation when no match was removed.
   const candidates: SearchablePage[] = [];
   let capped = false;
   for (const page of eligible) {
