@@ -201,8 +201,9 @@ export interface PageSearchCandidateQuery {
   /** Maximum rows returned to the server for one search. */
   limit: number;
   /**
-   * Characters of each returned body, and the prefix the body filter reads, so one search costs at most
-   * `limit × bodyLength`. Workspace search must cut at the same length, or the modes match different text.
+   * Code points of each returned body, and the prefix the body filter reads, so one search costs at most
+   * `limit × bodyLength`. The query cuts with `left`, which counts code points. Workspace search must count the same
+   * unit, or the modes match different text.
    */
   bodyLength: number;
 }

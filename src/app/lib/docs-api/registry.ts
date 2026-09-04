@@ -20,7 +20,7 @@ import {
   type SearchablePage,
 } from './page-search';
 import type { BakedDefaultPage } from './page-rendering';
-import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
+import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 import { getRegistryConnection } from '../registry-connection';
 import { getAssetStorageAdapter } from '../asset-storage';
 // A static import includes package defaults in each registry serverless bundle. A deployed function
@@ -134,7 +134,7 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
       continue;
     }
     const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
-    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), page.content.slice(0, MAX_SEARCH_BODY_LENGTH));
+    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), truncateSearchBody(page.content));
   }
   candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 

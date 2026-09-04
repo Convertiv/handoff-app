@@ -15,7 +15,7 @@ import {
   type PageSearchResult,
   type SearchablePage,
 } from './page-search';
-import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
+import { MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 
 /**
  * Workspace search uses package defaults from `config/docs` and overlays the project's `pages/`
@@ -96,7 +96,7 @@ const discoverPages = (): DiscoveredPage[] => {
 
 const readBody = (absolutePath: string): string => {
   try {
-    return parseMarkdown(fs.readFileSync(absolutePath, 'utf8')).content.slice(0, MAX_SEARCH_BODY_LENGTH);
+    return truncateSearchBody(parseMarkdown(fs.readFileSync(absolutePath, 'utf8')).content);
   } catch {
     return '';
   }

@@ -20,12 +20,34 @@ export const DEFAULT_RESULT_LIMIT = 20;
 export const MAX_RESULT_LIMIT = 50;
 export const MAX_SEARCH_CANDIDATES = 500;
 /**
- * Characters of a page body that search reads. With no bound, one anonymous request costs whatever the project
- * published: a broad query reads every candidate body in full, and only the publish route limits the size of a page.
- * A term after this prefix is unfindable in both modes — registry search cuts in SQL, workspace search cuts the file
- * it read — and both must cut at the same length so that they rank the same text.
+ * Unicode code points of a page body that search reads. With no bound, one anonymous request costs whatever the
+ * project published. A broad query reads every candidate body in full, and only the publish route limits the size of
+ * a page. A term after this prefix is unfindable in both modes: registry search cuts in SQL with `left`, and
+ * workspace search cuts the file it read. Both must cut the same prefix so that they rank the same text.
  */
 export const MAX_SEARCH_BODY_LENGTH = 32_768;
+
+/**
+ * Cut a page body to the prefix that search reads. `String.prototype.slice` counts UTF-16 code units, so it cuts a
+ * body with emoji earlier than Postgres `left(text, length)` does. It can also leave half of a surrogate pair.
+ */
+export const truncateSearchBody = (value: string): string => {
+  // A body with no more code units than the limit cannot have more code points.
+  if (value.length <= MAX_SEARCH_BODY_LENGTH) {
+    return value;
+  }
+
+  let codePoints = 0;
+  let end = 0;
+  for (const character of value) {
+    if (codePoints === MAX_SEARCH_BODY_LENGTH) {
+      break;
+    }
+    end += character.length;
+    codePoints += 1;
+  }
+  return value.slice(0, end);
+};
 
 /** A parsed, validated search request. */
 export interface SearchRequest {
