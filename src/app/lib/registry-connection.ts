@@ -48,7 +48,7 @@ export const getRegistryConnection = (): Promise<RegistryDbConnection> => {
       )
     );
   }
-  connectionPromise = createRegistryDbConnection({ driver: registry.driver, connectionString }).catch((error) => {
+  connectionPromise = createRegistryDbConnection({ driver: registry.driver, connectionString, serving: true }).catch((error) => {
     connectionPromise = null;
     // TODO: Route server errors through the shared logger.
     console.error('Registry database connection failed.', error);

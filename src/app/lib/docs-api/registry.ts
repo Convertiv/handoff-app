@@ -1,5 +1,4 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import matter from 'gray-matter';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
@@ -7,6 +6,7 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { PageListObject } from '@handoff/transformers/preview/types';
 import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
 import { createRegistryStore, findPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
+import { parseMarkdown } from '@handoff/utils/markdown';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
 import {
@@ -20,7 +20,7 @@ import {
   type SearchablePage,
 } from './page-search';
 import type { BakedDefaultPage } from './page-rendering';
-import { MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
+import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
 import { getRegistryConnection } from '../registry-connection';
 import { getAssetStorageAdapter } from '../asset-storage';
 // A static import includes package defaults in each registry serverless bundle. A deployed function
@@ -94,11 +94,17 @@ const buildStatusFor = async (
  * The published pages and the remaining defaults are one effective page set. The candidate cap applies
  * to that merged set in ID order, as it does in workspace mode, so both runtime modes rank the same
  * candidates. The query reads one row beyond the cap to detect a cut.
+ * Ranking compares a published body against a packaged default, so both are cut to {@link MAX_SEARCH_BODY_LENGTH}.
  */
 const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequest): Promise<SearchResponse<PageSearchResult>> => {
   const defaults = Object.entries(defaultPages as Record<string, BakedDefaultPage>);
   const [rows, replacedDefaultIds] = await Promise.all([
-    searchPageCandidates(db, { terms: request.terms, group: request.group, limit: MAX_SEARCH_CANDIDATES + 1 }),
+    searchPageCandidates(db, {
+      terms: request.terms,
+      group: request.group,
+      limit: MAX_SEARCH_CANDIDATES + 1,
+      bodyLength: MAX_SEARCH_BODY_LENGTH,
+    }),
     findPublishedPageIds(
       db,
       defaults.map(([id]) => id)
@@ -121,15 +127,14 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
   };
 
   for (const row of rows) {
-    // Stored Markdown includes frontmatter, which search must exclude from the body.
-    addCandidate(row.record, matter(row.markdown ?? '').content);
+    addCandidate(row.record, row.body);
   }
   for (const [id, page] of defaults) {
     if (replacedDefaultIds.has(id)) {
       continue;
     }
     const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
-    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), page.content);
+    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), page.content.slice(0, MAX_SEARCH_BODY_LENGTH));
   }
   candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
@@ -178,7 +183,7 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
       }
       // The markdown body travels as the page's single source file; parse it to drop the frontmatter.
       const files = await store.pages.getRelatedSourceFiles(id);
-      const { content } = matter(files[0]?.content ?? '');
+      const { content } = parseMarkdown(files[0]?.content ?? '');
       return { ...record, content };
     },
     async searchPages(request: PageSearchRequest) {

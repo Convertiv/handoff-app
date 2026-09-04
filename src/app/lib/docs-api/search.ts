@@ -19,6 +19,13 @@ export const MAX_TERMS = 12;
 export const DEFAULT_RESULT_LIMIT = 20;
 export const MAX_RESULT_LIMIT = 50;
 export const MAX_SEARCH_CANDIDATES = 500;
+/**
+ * Characters of a page body that search reads. With no bound, one anonymous request costs whatever the project
+ * published: a broad query reads every candidate body in full, and only the publish route limits the size of a page.
+ * A term after this prefix is unfindable in both modes — registry search cuts in SQL, workspace search cuts the file
+ * it read — and both must cut at the same length so that they rank the same text.
+ */
+export const MAX_SEARCH_BODY_LENGTH = 32_768;
 
 /** A parsed, validated search request. */
 export interface SearchRequest {

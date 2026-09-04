@@ -2,10 +2,10 @@ import { ComponentListObject, ComponentType, PatternListObject } from '@handoff/
 import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
-import matter from 'gray-matter';
 import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
 import { ParsedUrlQuery } from 'querystring';
+import { parseMarkdown } from '@handoff/utils/markdown';
 import { KNOWN_PATHS } from '@handoff/utils/menu-shell';
 import { collectPageSlugSegments } from '@handoff/utils/pages';
 import { getRegistryNavData, getWorkspaceNavData, type NavData, type NavTokenSet, type SectionLink } from '@handoff/nav';
@@ -544,7 +544,7 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
     currentContents = fs.readFileSync(contentModuleFilePath, 'utf-8');
   }
 
-  const { data: metadata, content } = matter(currentContents);
+  const { data: metadata, content } = parseMarkdown(currentContents);
 
   if (typeof slug === 'string' && runtimeConfig?.entries?.templates) {
     const viewConfigFilePath = path.resolve(runtimeConfig.entries.templates, slug, 'view.config.json');

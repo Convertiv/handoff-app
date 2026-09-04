@@ -1,9 +1,9 @@
 import fs from 'fs-extra';
-import matter from 'gray-matter';
 import path from 'path';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import type { PageListObject } from '@handoff/transformers/preview/types';
+import { parseMarkdown } from '@handoff/utils/markdown';
 import { collectPageSlugSegments } from '@handoff/utils/pages';
 import {
   isPageEnabled,
@@ -15,7 +15,7 @@ import {
   type PageSearchResult,
   type SearchablePage,
 } from './page-search';
-import { MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
+import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, type SearchResponse } from './search';
 
 /**
  * Workspace search uses package defaults from `config/docs` and overlays the project's `pages/`
@@ -58,7 +58,7 @@ const readRecord = (id: string, absolutePath: string): CachedPage | null => {
     return cached;
   }
   try {
-    const { data } = matter(fs.readFileSync(absolutePath, 'utf8'));
+    const { data } = parseMarkdown(fs.readFileSync(absolutePath, 'utf8'));
     const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
     const page: CachedPage = {
       record: normalizePageDeclaration(data, { id, routePath, sourcePath: absolutePath }),
@@ -96,7 +96,7 @@ const discoverPages = (): DiscoveredPage[] => {
 
 const readBody = (absolutePath: string): string => {
   try {
-    return matter(fs.readFileSync(absolutePath, 'utf8')).content;
+    return parseMarkdown(fs.readFileSync(absolutePath, 'utf8')).content.slice(0, MAX_SEARCH_BODY_LENGTH);
   } catch {
     return '';
   }

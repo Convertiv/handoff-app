@@ -184,10 +184,13 @@ export class RegistryPageStore implements PageStore {
   }
 }
 
-/** The page fields that search reads. The Markdown includes frontmatter. */
+/**
+ * The page fields that search reads. The query strips frontmatter from the body, cuts it to `bodyLength`, and returns
+ * an empty body for a page with no stored markdown.
+ */
 export interface PageSearchCandidate {
   record: PageListObject;
-  markdown: string | null;
+  body: string;
 }
 
 export interface PageSearchCandidateQuery {
@@ -197,6 +200,11 @@ export interface PageSearchCandidateQuery {
   group?: string;
   /** Maximum rows returned to the server for one search. */
   limit: number;
+  /**
+   * Characters of each returned body, and the prefix the body filter reads, so one search costs at most
+   * `limit × bodyLength`. Workspace search must cut at the same length, or the modes match different text.
+   */
+  bodyLength: number;
 }
 
 /** Escape the wildcards Postgres reads in an `ILIKE` pattern, so a term cannot widen its own match. */
@@ -215,8 +223,10 @@ const FRONTMATTER_PATTERN = '^---.*?\\n---[^\\n]*(\\n|$)';
  *
  * `enabled` and `menuTitle` are fields in the `record` JSON, so the query uses JSON operators. An
  * absent `enabled` field means enabled. The body filter excludes frontmatter, so an excluded field
- * such as `metaTitle` cannot consume a candidate slot. Each column is compared against every term
- * once, which keeps the body to one frontmatter strip per row.
+ * such as `metaTitle` cannot consume a candidate slot.
+ *
+ * The filter and the projection share one body expression, so every term SQL matched is inside the text that the
+ * server ranks. Postgres thus strips each row twice, which costs much less than the return of an unbounded body.
  *
  * `C` collation orders IDs by code point, as the merge in registry search does. Both orders must
  * agree, or the cap can keep different pages in each runtime mode.
@@ -231,10 +241,10 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
     sql`, `
   );
   const matchesAnyTerm = (text: SQLWrapper) => sql`${text} ilike any (array[${patterns}])`;
-  const body = sql`regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, '')`;
+  const body = sql<string>`left(regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, ''), ${query.bodyLength})`;
 
   return db
-    .select({ record: pages.record, markdown: pageFiles.content })
+    .select({ record: pages.record, body })
     .from(pages)
     .leftJoin(pageFiles, and(eq(pageFiles.pageId, pages.id), eq(pageFiles.kind, 'markdown')))
     .where(

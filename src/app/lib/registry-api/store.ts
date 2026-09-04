@@ -14,6 +14,7 @@ import {
   type RegistryReviewMetadata,
 } from '@handoff/registry/db/schema';
 import { hashPathValues } from '@handoff/registry/publish/publish-build';
+import { parseMarkdown } from '@handoff/utils/markdown';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
 import { mergeReviewMetadata, type ManagedEntityKind, type ValidatedMetadataWrite } from './allowlist';
 import type { ValidatedFile } from './files';
@@ -210,7 +211,7 @@ const updatePageMetadata = async (db: RegistryDatabase, id: string, write: Valid
   // A page carries a single verbatim `.md`; a metadata-only page (created, never published) has none.
   const source = files.find((file) => file.content != null);
   const hasFrontmatterChanges = Object.keys(write.fields).length > 0;
-  const parsed = hasFrontmatterChanges ? matter(source?.content ?? '') : null;
+  const parsed = hasFrontmatterChanges ? parseMarkdown(source?.content ?? '') : null;
   const frontmatter = parsed ? { ...parsed.data, ...write.fields } : null;
   const record = frontmatter ? normalizeManagedPageRecord(id, row.path || `/${id}`, frontmatter) : row.record;
   const metadata = mergeReviewMetadata(row.metadata, write.metadata);
