@@ -9,6 +9,9 @@ export interface ImageStyle {
   description: string;
 }
 
+/** Whether the MCP endpoint is served. On unless `runtime.mcp` is explicitly `false`. */
+export const isMcpEnabled = (config: Config | null | undefined): boolean => config?.runtime?.mcp !== false;
+
 export const defaultConfig = (): Config => ({
   dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
   figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,

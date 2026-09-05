@@ -1,5 +1,5 @@
 // Config defaults and client config
-export { defaultConfig, getClientConfig } from './defaults';
+export { defaultConfig, getClientConfig, isMcpEnabled } from './defaults';
 export type { ImageStyle } from './defaults';
 
 // Config file loading
