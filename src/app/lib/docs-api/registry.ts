@@ -119,8 +119,8 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
     }
     seen.add(record.id);
     const candidate = toSearchablePage(record, markdown);
-    // The SQL filter also reads the body of an external page, which search excludes. A page that no
-    // term matches must not occupy a candidate slot.
+    // SQL does not filter the packaged defaults, so this test must run here. Without this test, a default that no
+    // term matches takes a candidate slot. For a SQL row the test is a no-op unless the two filters ever disagree.
     if (pageMatches(candidate, request)) {
       candidates.push(candidate);
     }
@@ -138,8 +138,8 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
   }
   candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  // A row that `pageMatches` drops can pull the merged count back under the cap, so the extra row the
-  // query asked for stays the only evidence that SQL cut a page.
+  // SQL caps the published pages before the merge adds the defaults, so the merged count alone cannot show that a
+  // published match was cut. The extra row the query asks for is the only evidence of that cut.
   const capped = candidates.length > MAX_SEARCH_CANDIDATES || rows.length > MAX_SEARCH_CANDIDATES;
   const { results, truncated } = rankPages(candidates.slice(0, MAX_SEARCH_CANDIDATES), request);
   return { query: request.query, results, truncated: truncated || capped };

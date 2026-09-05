@@ -185,8 +185,8 @@ export class RegistryPageStore implements PageStore {
 }
 
 /**
- * The page fields that search reads. The query strips frontmatter from the body, cuts it to `bodyLength`, and returns
- * an empty body for a page with no stored markdown.
+ * The page fields that search reads. The query strips frontmatter from the body and cuts it to `bodyLength`.
+ * The body is empty for an external-link page and for a page with no stored markdown.
  */
 export interface PageSearchCandidate {
   record: PageListObject;
@@ -229,6 +229,10 @@ const FRONTMATTER_PATTERN = '^---.*?\\n---[^\\n]*(\\n|$)';
  * The filter and the projection share one body expression, so every term SQL matched is inside the text that the
  * server ranks. Postgres thus strips each row twice, which costs much less than the return of an unbounded body.
  *
+ * The body expression is empty for an external-link page. Search reads such a page by title, menu title, and
+ * description only. The exclusion must happen in SQL. An external body otherwise satisfies the filter and takes one
+ * of the `limit` rows. It pushes a real candidate past the cap before the server can drop it.
+ *
  * `C` collation orders IDs by code point, as the merge in registry search does. Both orders must
  * agree, or the cap can keep different pages in each runtime mode.
  */
@@ -242,10 +246,25 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
     sql`, `
   );
   const matchesAnyTerm = (text: SQLWrapper) => sql`${text} ilike any (array[${patterns}])`;
-  const body = sql<string>`left(regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, ''), ${query.bodyLength})`;
+  // This mirrors `record.external ? '' : markdown` in `toSearchablePage`. The transfer endpoint stores a published
+  // record verbatim, so `external` can hold any JSON. The list holds every value that JS reads as falsy, and
+  // `coalesce` prevents a NULL result for an absent key. The case blanks the external side, so an unrecognized
+  // value keeps its body.
+  const isExternal = sql<boolean>`
+    coalesce(${pages.record}->'external', 'false'::jsonb) not in (
+      'null'::jsonb, 'false'::jsonb, '""'::jsonb, '0'::jsonb
+    )
+  `;
+  const storedBody = sql<string>`left(regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, ''), ${query.bodyLength})`;
+  const searchableBody = sql<string>`
+    case
+      when ${isExternal} then ''
+      else ${storedBody}
+    end
+  `;
 
   return db
-    .select({ record: pages.record, body })
+    .select({ record: pages.record, body: searchableBody })
     .from(pages)
     .leftJoin(pageFiles, and(eq(pageFiles.pageId, pages.id), eq(pageFiles.kind, 'markdown')))
     .where(
@@ -256,7 +275,7 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
           matchesAnyTerm(pages.title),
           matchesAnyTerm(pages.description),
           matchesAnyTerm(sql`${pages.record}->>'menuTitle'`),
-          matchesAnyTerm(body)
+          matchesAnyTerm(searchableBody)
         )
       )
     )
