@@ -284,17 +284,17 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
 };
 
 /**
- * The published pages among the given IDs. Search asks only about packaged default IDs, because no
- * other ID can replace a default. This keeps the query bounded as the registry grows.
+ * The candidate IDs that have a published page. Search asks only about packaged default IDs, because
+ * no other ID can replace a default. This keeps the query bounded as the registry grows.
  *
  * A published page replaces the default with the same ID even when it does not match the search
  * terms, so this query ignores the term filter.
  */
-export const findPublishedPageIds = async (db: RegistryDatabase, ids: string[]): Promise<string[]> => {
-  if (ids.length === 0) {
+export const filterPublishedPageIds = async (db: RegistryDatabase, candidateIds: string[]): Promise<string[]> => {
+  if (candidateIds.length === 0) {
     return [];
   }
-  const rows = await db.select({ id: pages.id }).from(pages).where(inArray(pages.id, ids));
+  const rows = await db.select({ id: pages.id }).from(pages).where(inArray(pages.id, candidateIds));
   return rows.map((row) => row.id);
 };
 

@@ -5,7 +5,7 @@ import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { PageListObject } from '@handoff/transformers/preview/types';
 import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
-import { createRegistryStore, findPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
+import { createRegistryStore, filterPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
 import { parseMarkdown } from '@handoff/utils/markdown';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
@@ -105,7 +105,7 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
       limit: MAX_SEARCH_CANDIDATES + 1,
       bodyLength: MAX_SEARCH_BODY_LENGTH,
     }),
-    findPublishedPageIds(
+    filterPublishedPageIds(
       db,
       defaults.map(([id]) => id)
     ).then((ids) => new Set(ids)),
