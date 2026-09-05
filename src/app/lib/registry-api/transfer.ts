@@ -112,6 +112,19 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     files.push(validation.value);
   }
 
+  if (kind === 'page') {
+    if (files.length !== 1) {
+      return invalid('A page publish must contain exactly one Markdown source file.', { rejectedFields: ['files'] });
+    }
+    if (files[0].kind !== 'markdown') {
+      return invalid('The page source file `kind` must be "markdown".', { rejectedFields: ['files[0].kind'] });
+    }
+    const expectedPath = `${id}.md`;
+    if (files[0].path !== expectedPath) {
+      return invalid(`The page source file path must be "${expectedPath}".`, { rejectedFields: ['files[0].path'] });
+    }
+  }
+
   const rawArtifacts = body.artifacts ?? [];
   if (!Array.isArray(rawArtifacts)) {
     return invalid('`artifacts` must be an array.', { rejectedFields: ['artifacts'] });

@@ -524,20 +524,23 @@
         }
       },
       "compositePrimaryKeys": {
-        "page_files_page_id_path_pk": {
-          "name": "page_files_page_id_path_pk",
+        "page_files_page_id_pk": {
+          "name": "page_files_page_id_pk",
           "columns": [
-            "page_id",
-            "path"
+            "page_id"
           ]
         }
       },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "page_files_kind_not_declaration": {
-          "name": "page_files_kind_not_declaration",
-          "value": "\"page_files\".\"kind\" <> 'declaration'"
+        "page_files_kind_markdown": {
+          "name": "page_files_kind_markdown",
+          "value": "\"page_files\".\"kind\" = 'markdown'"
+        },
+        "page_files_canonical_path": {
+          "name": "page_files_canonical_path",
+          "value": "\"page_files\".\"path\" = \"page_files\".\"page_id\" || '.md'"
         }
       },
       "isRLSEnabled": false

@@ -226,9 +226,9 @@ export const pages = pgTable(
 );
 
 /**
- * Page source files. A page has a single verbatim `.md` (kind `markdown`) stored for byte-exact
- * checkout and for resolving the rendered body at request time. Declaration files are rejected at the
- * schema level (consistent with the other file tables, though pages never carry declarations).
+ * Published pages store one verbatim `.md` file for byte-exact checkout and runtime body resolution.
+ * The schema permits at most one row per page, and its path must be `${pageId}.md`. This invariant
+ * lets readers select the body without ordering or deduplication.
  */
 export const pageFiles = pgTable(
   'page_files',
@@ -246,8 +246,9 @@ export const pageFiles = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    primaryKey({ columns: [table.pageId, table.path] }),
-    check('page_files_kind_not_declaration', sql`${table.kind} <> 'declaration'`),
+    primaryKey({ columns: [table.pageId] }),
+    check('page_files_kind_markdown', sql`${table.kind} = 'markdown'`),
+    check('page_files_canonical_path', sql`${table.path} = ${table.pageId} || '.md'`),
   ]
 );
 
