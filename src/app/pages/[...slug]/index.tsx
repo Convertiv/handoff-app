@@ -10,7 +10,6 @@ import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/Ma
 import { PageTOC } from '../../components/Navigation/AnchorNav';
 import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
-import defaultPages from '../../generated/default-pages.json';
 import {
   buildCatchAllStaticPaths,
   DocumentationProps,
@@ -20,7 +19,7 @@ import {
   isRegistryRuntime,
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
-import { BakedDefaultPage, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../../lib/docs-api/page-rendering';
+import { documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../../lib/docs-api/page-rendering';
 import { Home, getStaticProps as getHomeStaticProps } from '../index';
 
 type CatchAllDocumentationProps = DocumentationProps & { homeAlias?: boolean };
@@ -46,8 +45,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
   const sectionId = `/${slug[0]}`;
 
-  // Registry mode resolves published content first, then the package-default fallback baked during
-  // the build. Workspace markdown is never read and the deployed server needs no build-machine path.
+  // The backing resolves published content first and the baked package default second. Workspace
+  // markdown is never read, so the deployed server needs no build-machine path and anything the
+  // backing cannot resolve is a real 404.
   if (isRegistryRuntime()) {
     const id = slug.join('/');
     // Next shares the root ISR cache key with its internal `/index` data alias. The public URL
@@ -60,34 +60,20 @@ export const getStaticProps: GetStaticProps = async (context) => {
       return result;
     }
     const detail = await (await resolveDocsBackend()).getPageDetail(id);
-    if (detail) {
-      const navProps = await getNavProps(sectionId);
-      return {
-        props: {
-          metadata: documentationMetadata(detail as unknown as Record<string, unknown>),
-          content: detail.content,
-          ...navProps,
-          config,
-        },
-        revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
-      };
+    if (!detail) {
+      return { notFound: true, revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS };
     }
 
-    const defaultPage = (defaultPages as Record<string, BakedDefaultPage>)[id];
-    if (defaultPage) {
-      const navProps = await getNavProps(sectionId);
-      return {
-        props: {
-          metadata: documentationMetadata(defaultPage.metadata),
-          content: defaultPage.content,
-          ...navProps,
-          config,
-        },
-        revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
-      };
-    }
-
-    return { notFound: true, revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS };
+    const navProps = await getNavProps(sectionId);
+    return {
+      props: {
+        metadata: documentationMetadata(detail as unknown as Record<string, unknown>),
+        content: detail.content,
+        ...navProps,
+        config,
+      },
+      revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
+    };
   }
 
   return {

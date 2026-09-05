@@ -11,10 +11,9 @@ import Layout from '../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import defaultPages from '../generated/default-pages.json';
 import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getNavProps, isRegistryRuntime } from '../components/util';
 import { resolveDocsBackend } from '../lib/docs-api/backend';
-import { BakedDefaultPage, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../lib/docs-api/page-rendering';
+import { defaultPageDetail, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../lib/docs-api/page-rendering';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -28,17 +27,19 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const config = getClientRuntimeConfig();
 
   if (isRegistryRuntime()) {
-    // The registry build has no database dependency. On-demand and stale regenerations resolve the
-    // published home page; the baked package page remains the fallback when none has been published.
-    const detail = context.revalidateReason === 'build' ? null : await (await resolveDocsBackend()).getPageDetail(HOME_PAGE_ID);
-    const fallback = (defaultPages as Record<string, BakedDefaultPage>)[HOME_PAGE_ID];
+    // The registry build must have no database dependency, so it resolves the packaged home page
+    // directly. On-demand and stale regenerations read the backing, which falls back to the same
+    // page when nothing has been published.
+    const detail =
+      context.revalidateReason === 'build'
+        ? defaultPageDetail(HOME_PAGE_ID)
+        : await (await resolveDocsBackend()).getPageDetail(HOME_PAGE_ID);
     const navProps = await getNavProps(HOME_PAGE_PATH);
-    const metadataSource = detail ? (detail as unknown as Record<string, unknown>) : (fallback?.metadata ?? {});
 
     return {
       props: {
-        metadata: documentationMetadata(metadataSource),
-        content: detail?.content ?? fallback?.content ?? '',
+        metadata: documentationMetadata((detail ?? {}) as unknown as Record<string, unknown>),
+        content: detail?.content ?? '',
         ...navProps,
         config,
       },

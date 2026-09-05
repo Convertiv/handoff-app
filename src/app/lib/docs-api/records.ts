@@ -77,14 +77,32 @@ export const getPatternDetail = (id: string): PatternDetail | null => {
 };
 
 /**
- * Workspace-mode page reads. These scan `<workingPath>/pages/` directly (there is no generated page
- * summary). Vestigial in practice — workspace nav is baked and the catch-all reads markdown through
- * `fetchDocPageMarkdown` — but implemented honestly so the {@link DocsBackend} contract holds.
+ * Workspace-mode page reads, scanned from the filesystem because there is no generated page summary.
+ * `getPageDetail` resolves the effective page, so it answers for every route the site serves.
+ * `listPages` stays project-only: it feeds the nav resolver, which already gets the package defaults
+ * from the baked menu shell.
  */
 const workingPagesRoot = (): string => path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages');
 
+/** Effective page roots in precedence order: a project page replaces a package default of the same id. */
+export const pageRoots = (): string[] => [path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'docs'), workingPagesRoot()];
+
 /** Collect page slugs, including the root home page but excluding nested section index files. */
 const collectPageSlugs = (root: string): string[][] => collectPageSlugSegments(root, { includeRootIndex: true });
+
+/**
+ * The markdown file for a page id. The id is matched against the collected slugs rather than joined
+ * onto a root, so a request cannot reach outside them.
+ */
+const resolvePageSource = (id: string): string | null => {
+  let sourcePath: string | null = null;
+  for (const root of pageRoots()) {
+    if (collectPageSlugs(root).some((segments) => segments.join('/') === id)) {
+      sourcePath = path.resolve(root, `${id}.md`);
+    }
+  }
+  return sourcePath;
+};
 
 export const listPages = (): PageListObject[] => {
   const root = workingPagesRoot();
@@ -98,16 +116,13 @@ export const listPages = (): PageListObject[] => {
 };
 
 export const getPageDetail = (id: string): PageDetail | null => {
-  const root = workingPagesRoot();
-  const segments = collectPageSlugs(root).find((candidate) => candidate.join('/') === id);
-  if (!segments) {
+  const sourcePath = resolvePageSource(id);
+  if (!sourcePath) {
     return null;
   }
-  const slug = segments.join('/');
-  const sourcePath = path.resolve(root, `${slug}.md`);
   const { data, content } = parseMarkdown(fs.readFileSync(sourcePath, 'utf8'));
-  const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
-  return { ...normalizePageDeclaration(data, { id: slug, routePath, sourcePath }), content };
+  const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
+  return { ...normalizePageDeclaration(data, { id, routePath, sourcePath }), content };
 };
 
 /**

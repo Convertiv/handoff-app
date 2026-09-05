@@ -15,6 +15,7 @@ import {
   type PageSearchResult,
   type SearchablePage,
 } from './page-search';
+import { pageRoots } from './records';
 import { MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 
 /**
@@ -37,12 +38,6 @@ interface CachedPage extends DiscoveredPage {
 }
 
 const discoveryCache = new Map<string, CachedPage>();
-
-/** Project pages replace package defaults with the same ID. */
-const pageRoots = (): string[] => [
-  path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', 'config', 'docs'),
-  path.resolve(process.env.HANDOFF_WORKING_PATH ?? '', 'pages'),
-];
 
 /** Reuse a cached record when the file size and modification time have not changed. */
 const readRecord = (id: string, absolutePath: string): CachedPage | null => {

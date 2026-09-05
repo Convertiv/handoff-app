@@ -18,7 +18,7 @@ import {
   type PageSearchResult,
   type SearchablePage,
 } from './page-search';
-import type { BakedDefaultPage } from './page-rendering';
+import { defaultPageDetail, type BakedDefaultPage } from './page-rendering';
 import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 import { getRegistryConnection } from '../registry-connection';
 import { getAssetStorageAdapter } from '../asset-storage';
@@ -181,7 +181,9 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
         .from(pages)
         .leftJoin(pageFiles, eq(pageFiles.pageId, pages.id))
         .where(eq(pages.id, id));
-      return row ? { ...row.record, content: row.body ?? '' } : null;
+      // A package default the project never published is still served at its route, so it resolves
+      // here too. Publishing the same id replaces it, as it does in search.
+      return row ? { ...row.record, content: row.body ?? '' } : defaultPageDetail(id);
     },
     async searchPages(request: PageSearchRequest) {
       return searchRegistryPages(db, request);

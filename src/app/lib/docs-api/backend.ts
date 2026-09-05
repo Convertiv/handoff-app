@@ -65,7 +65,11 @@ export interface DocsBackend {
   listPages(): Promise<PageListObject[]>;
   getComponentDetail(id: string): Promise<ComponentDetail | null>;
   getPatternDetail(id: string): Promise<PatternDetail | null>;
-  /** A page's record + rendered markdown body, or `null` when absent. Read by the catch-all route. */
+  /**
+   * The effective page for an id: its record plus the markdown body. A package default resolves
+   * here like a published or project page, so a caller can read every route the site serves. Same
+   * overlay rule as {@link DocsBackend.searchPages}.
+   */
   getPageDetail(id: string): Promise<PageDetail | null>;
   /**
    * Search the effective page set and return ranked, display-ready results. Project pages replace
