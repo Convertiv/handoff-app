@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import matter from 'gray-matter';
 import path from 'path';
+import { parseMarkdown } from '../utils/markdown';
 import { buildMenuShell, buildTokensFoundationsMenu } from '../utils/menu-shell';
 import type { NavData, NavEntity, NavLoad, NavPageRecord, NavTokenSet } from '.';
 import { getNavData } from './resolver';
@@ -37,7 +37,7 @@ const markdownTitle = (id: string, docRoot: string, workingPagesDir?: string): s
   ];
   for (const candidate of candidates) {
     if (!candidate || !fs.existsSync(candidate)) continue;
-    const title = matter(fs.readFileSync(candidate, 'utf8')).data.title;
+    const title = parseMarkdown(fs.readFileSync(candidate, 'utf8')).data.title;
     if (typeof title === 'string' && title.trim()) return title;
   }
   return undefined;

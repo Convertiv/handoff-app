@@ -1,6 +1,5 @@
 import esbuild from 'esbuild';
 import fs from 'fs-extra';
-import matter from 'gray-matter';
 import { createRequire } from 'module';
 import path from 'path';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
@@ -9,6 +8,7 @@ import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
 import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
+import { parseMarkdown } from '../utils/markdown';
 import { collectPageSlugSegments } from '../utils/pages';
 import { normalizePathForCompare } from '../utils/path';
 import { normalizeComponentDeclaration } from './normalizers/declaration';
@@ -314,7 +314,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     const slug = segments.join('/');
     const sourcePath = path.resolve(pagesRoot, `${slug}.md`);
     try {
-      const { data: frontmatter } = matter(fs.readFileSync(sourcePath, 'utf-8'));
+      const { data: frontmatter } = parseMarkdown(fs.readFileSync(sourcePath, 'utf-8'));
       const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
       const page = normalizePageDeclaration(frontmatter, { id: slug, routePath, sourcePath });
       result.entries.pages[page.id] = page;

@@ -5,3 +5,5 @@ export { serveArtifactBySegments } from './serve';
 export { handleDocsRoute, sendDocsData } from './handler';
 export { resolveDocsBackend } from './backend';
 export { getServerRuntimeConfig, type ServerRuntimeConfig } from './runtime-config';
+export { parseSearchRequest, type SearchRequest, type SearchResponse } from './search';
+export type { PageSearchRequest, PageSearchResult } from './page-search';

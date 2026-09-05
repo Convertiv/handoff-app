@@ -1,8 +1,8 @@
 import * as fs from 'fs';
-import matter from 'gray-matter';
 import { startCase } from 'lodash';
 import path from 'path';
 import type { NavMenuItem, NavSubSection, SectionLink } from '../nav';
+import { parseMarkdown } from './markdown';
 import { stripMarkdownExtension } from './pages';
 
 /**
@@ -123,7 +123,7 @@ export const buildMenuFromDirectory = (dirPath: string, urlPrefix: string): Menu
       if (KNOWN_PATHS.indexOf(fullSlugPath) >= 0) continue;
 
       const contents = fs.readFileSync(fullPath, 'utf-8');
-      const { data: metadata } = matter(contents);
+      const { data: metadata } = parseMarkdown(contents);
       if (metadata.enabled === false) continue;
 
       items.push({
@@ -175,7 +175,7 @@ export const buildMenuShell = (options: BuildMenuShellOptions): MenuShellSection
     }
 
     const contents = fs.readFileSync(search, 'utf-8');
-    const { data: metadata } = matter(contents);
+    const { data: metadata } = parseMarkdown(contents);
     if (metadata.enabled === false) {
       continue;
     }

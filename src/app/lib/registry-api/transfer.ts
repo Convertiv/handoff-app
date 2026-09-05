@@ -20,7 +20,7 @@ import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
-import { getEntity, listEntityFiles } from './store';
+import { getEntity, listEntityFiles, upsertEntityFile } from './store';
 import {
   asString,
   invalidPackage as invalid,
@@ -61,9 +61,9 @@ const asStringArray = (value: unknown): string[] | undefined =>
 
 /** Binds an entity kind to its tables and file foreign-key column. */
 const ENTITY = {
-  component: { table: components, filesTable: componentFiles, fileFk: componentFiles.componentId, fileFkName: 'componentId' as const },
-  pattern: { table: patterns, filesTable: patternFiles, fileFk: patternFiles.patternId, fileFkName: 'patternId' as const },
-  page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId, fileFkName: 'pageId' as const },
+  component: { table: components, filesTable: componentFiles, fileFk: componentFiles.componentId },
+  pattern: { table: patterns, filesTable: patternFiles, fileFk: patternFiles.patternId },
+  page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId },
 };
 
 /**
@@ -110,6 +110,19 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     }
     seenFilePaths.add(validation.value.path);
     files.push(validation.value);
+  }
+
+  if (kind === 'page') {
+    if (files.length !== 1) {
+      return invalid('A page publish must contain exactly one Markdown source file.', { rejectedFields: ['files'] });
+    }
+    if (files[0].kind !== 'markdown') {
+      return invalid('The page source file `kind` must be "markdown".', { rejectedFields: ['files[0].kind'] });
+    }
+    const expectedPath = `${id}.md`;
+    if (files[0].path !== expectedPath) {
+      return invalid(`The page source file path must be "${expectedPath}".`, { rejectedFields: ['files[0].path'] });
+    }
   }
 
   const rawArtifacts = body.artifacts ?? [];
@@ -351,13 +364,7 @@ const replaceEntityFiles = async (db: RegistryDatabase, kind: TransferEntityKind
   const spec = ENTITY[kind];
   await db.delete(spec.filesTable).where(eq(spec.fileFk, id));
   for (const file of files) {
-    await db.insert(spec.filesTable).values({
-      [spec.fileFkName]: id,
-      path: file.path,
-      kind: file.kind,
-      content: file.content,
-      contentType: file.contentType,
-    } as any);
+    await upsertEntityFile(db, kind, id, file);
   }
 };
 

@@ -8,7 +8,7 @@ type NormalizePageOptions = {
   /** Logical route the page is served at (e.g. `/guides/setup`). */
   routePath: string;
   /** Absolute filesystem path of the source `.md` (workspace-only, stripped on publish). */
-  sourcePath: string;
+  sourcePath?: string;
 };
 
 /** Humanize a slug segment (`getting-started` → `Getting Started`) for a default title. */

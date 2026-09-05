@@ -30,7 +30,25 @@ export interface RegistryDbConnection {
 export interface CreateRegistryDbConnectionParams {
   driver: RegistryDatabaseDriver;
   connectionString: string;
+  /**
+   * Apply {@link SERVING_POOL_LIMITS}. `db:migrate` leaves this unset, because a migration statement can run for
+   * minutes.
+   */
+  serving?: boolean;
 }
+
+/**
+ * One pool backs the anonymous docs read API, the authenticated management API, and every auth query, so a request
+ * must not hold a connection, or wait for one, without a deadline.
+ *
+ * `statement_timeout` bounds one statement, not a transaction, so it does not cut a publish short — an ingest is many
+ * small row writes in one transaction. `connectionTimeoutMillis` makes a saturated pool fail a request instead of
+ * queueing it forever, which is the `pg` default.
+ */
+const SERVING_POOL_LIMITS = {
+  statement_timeout: 15_000,
+  connectionTimeoutMillis: 5_000,
+} as const;
 
 /**
  * Create a registry database connection for the resolved driver. Both drivers target the
@@ -40,7 +58,9 @@ export interface CreateRegistryDbConnectionParams {
 export const createRegistryDbConnection = async ({
   driver,
   connectionString,
+  serving,
 }: CreateRegistryDbConnectionParams): Promise<RegistryDbConnection> => {
+  const limits = serving ? SERVING_POOL_LIMITS : {};
   if (driver === 'neon') {
     const { Pool, neonConfig } = await import('@neondatabase/serverless');
     // Neon's serverless driver needs a WebSocket constructor in Node; reuse the bundled `ws`.
@@ -49,7 +69,7 @@ export const createRegistryDbConnection = async ({
     const { drizzle } = await import('drizzle-orm/neon-serverless');
     const { migrate } = await import('drizzle-orm/neon-serverless/migrator');
 
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({ connectionString, ...limits });
     try {
       await pool.query('select 1');
     } catch (error) {
@@ -70,7 +90,7 @@ export const createRegistryDbConnection = async ({
   const { drizzle } = await import('drizzle-orm/node-postgres');
   const { migrate } = await import('drizzle-orm/node-postgres/migrator');
 
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({ connectionString, ...limits });
   try {
     await pool.query('select 1');
   } catch (error) {

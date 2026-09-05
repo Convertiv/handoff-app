@@ -1,10 +1,10 @@
 import fs from 'fs-extra';
-import matter from 'gray-matter';
 import path from 'path';
 import { Types as CoreTypes } from 'handoff-core';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import { deriveTokenSets, emptyTokenDocument, setNameForId } from '@handoff/registry/tokens/sets';
+import { parseMarkdown } from '@handoff/utils/markdown';
 import { collectPageSlugSegments } from '@handoff/utils/pages';
 import type { TokenArtifactResource } from '@handoff/store';
 import type { ComponentListObject, PageListObject, PatternListObject } from '@handoff/transformers/preview/types';
@@ -91,7 +91,7 @@ export const listPages = (): PageListObject[] => {
   return collectPageSlugs(root).map((segments) => {
     const slug = segments.join('/');
     const sourcePath = path.resolve(root, `${slug}.md`);
-    const { data } = matter(fs.readFileSync(sourcePath, 'utf8'));
+    const { data } = parseMarkdown(fs.readFileSync(sourcePath, 'utf8'));
     const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
     return normalizePageDeclaration(data, { id: slug, routePath, sourcePath });
   });
@@ -105,7 +105,7 @@ export const getPageDetail = (id: string): PageDetail | null => {
   }
   const slug = segments.join('/');
   const sourcePath = path.resolve(root, `${slug}.md`);
-  const { data, content } = matter(fs.readFileSync(sourcePath, 'utf8'));
+  const { data, content } = parseMarkdown(fs.readFileSync(sourcePath, 'utf8'));
   const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
   return { ...normalizePageDeclaration(data, { id: slug, routePath, sourcePath }), content };
 };

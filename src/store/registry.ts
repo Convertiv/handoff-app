@@ -14,7 +14,7 @@
  *   returned exactly as it was published.
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, or, sql, type SQLWrapper } from 'drizzle-orm';
 import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
 import {
@@ -95,11 +95,7 @@ export class RegistryComponentStore implements ComponentStore {
   }
 
   async get(id: string): Promise<ComponentListObject | null> {
-    const rows = await this.context.db
-      .select({ record: components.record })
-      .from(components)
-      .where(eq(components.id, id))
-      .limit(1);
+    const rows = await this.context.db.select({ record: components.record }).from(components).where(eq(components.id, id)).limit(1);
     return rows[0]?.record ?? null;
   }
 
@@ -135,11 +131,7 @@ export class RegistryPatternStore implements PatternStore {
   }
 
   async get(id: string): Promise<PatternListObject | null> {
-    const rows = await this.context.db
-      .select({ record: patterns.record })
-      .from(patterns)
-      .where(eq(patterns.id, id))
-      .limit(1);
+    const rows = await this.context.db.select({ record: patterns.record }).from(patterns).where(eq(patterns.id, id)).limit(1);
     return rows[0]?.record ?? null;
   }
 
@@ -192,6 +184,112 @@ export class RegistryPageStore implements PageStore {
   }
 }
 
+/**
+ * The page fields that search reads. The query cuts the stored parsed body to `bodyLength`.
+ * The body is empty for an external-link page and for a page with no stored markdown.
+ */
+export interface PageSearchCandidate {
+  record: PageListObject;
+  body: string;
+}
+
+export interface PageSearchCandidateQuery {
+  /** Normalized terms. A page is a candidate when any term occurs in any searchable column. */
+  terms: string[];
+  /** Optional group filter, matched case-insensitively. */
+  group?: string;
+  /** Maximum rows returned to the server for one search. */
+  limit: number;
+  /**
+   * Code points of each returned body, and the prefix the body filter reads, so one search costs at most
+   * `limit × bodyLength`. The query cuts with `left`, which counts code points. Workspace search must count the same
+   * unit, or the modes match different text.
+   */
+  bodyLength: number;
+}
+
+/** Escape the wildcards Postgres reads in an `ILIKE` pattern, so a term cannot widen its own match. */
+const likePattern = (term: string): string => `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+
+/**
+ * Candidate pages for a search, filtered and capped in SQL.
+ *
+ * `enabled` and `menuTitle` are fields in the `record` JSON, so the query uses JSON operators. An
+ * absent `enabled` field means enabled. The body filter excludes frontmatter, so an excluded field
+ * such as `metaTitle` cannot consume a candidate slot.
+ *
+ * The filter and the projection share one body expression, so every term SQL matched is inside the text that the
+ * server ranks.
+ *
+ * The body expression is empty for an external-link page. Search reads such a page by title, menu title, and
+ * description only. The exclusion must happen in SQL. An external body otherwise satisfies the filter and takes one
+ * of the `limit` rows. It pushes a real candidate past the cap before the server can drop it.
+ *
+ * `C` collation orders IDs by code point, as the merge in registry search does. Both orders must
+ * agree, or the cap can keep different pages in each runtime mode.
+ */
+export const searchPageCandidates = async (db: RegistryDatabase, query: PageSearchCandidateQuery): Promise<PageSearchCandidate[]> => {
+  // No term means no candidate, and an empty list would build `array[]`, which Postgres cannot type.
+  if (query.terms.length === 0) {
+    return [];
+  }
+  const patterns = sql.join(
+    query.terms.map((term) => sql`${likePattern(term)}`),
+    sql`, `
+  );
+  const matchesAnyTerm = (text: SQLWrapper) => sql`${text} ilike any (array[${patterns}])`;
+  // This mirrors `record.external ? '' : markdown` in `toSearchablePage`. The transfer endpoint stores a published
+  // record verbatim, so `external` can hold any JSON. The list holds every value that JS reads as falsy, and
+  // `coalesce` prevents a NULL result for an absent key. The case blanks the external side, so an unrecognized
+  // value keeps its body.
+  const isExternal = sql<boolean>`
+    coalesce(${pages.record}->'external', 'false'::jsonb) not in (
+      'null'::jsonb, 'false'::jsonb, '""'::jsonb, '0'::jsonb
+    )
+  `;
+  const storedBody = sql<string>`left(coalesce(${pageFiles.body}, ''), ${query.bodyLength})`;
+  const searchableBody = sql<string>`
+    case
+      when ${isExternal} then ''
+      else ${storedBody}
+    end
+  `;
+
+  return db
+    .select({ record: pages.record, body: searchableBody })
+    .from(pages)
+    .leftJoin(pageFiles, and(eq(pageFiles.pageId, pages.id), eq(pageFiles.kind, 'markdown')))
+    .where(
+      and(
+        sql`${pages.record}->>'enabled' is distinct from 'false'`,
+        query.group ? sql`lower(${pages.group}) = lower(${query.group})` : undefined,
+        or(
+          matchesAnyTerm(pages.title),
+          matchesAnyTerm(pages.description),
+          matchesAnyTerm(sql`${pages.record}->>'menuTitle'`),
+          matchesAnyTerm(searchableBody)
+        )
+      )
+    )
+    .orderBy(sql`${pages.id} collate "C"`)
+    .limit(query.limit);
+};
+
+/**
+ * The candidate IDs that have a published page. Search asks only about packaged default IDs, because
+ * no other ID can replace a default. This keeps the query bounded as the registry grows.
+ *
+ * A published page replaces the default with the same ID even when it does not match the search
+ * terms, so this query ignores the term filter.
+ */
+export const filterPublishedPageIds = async (db: RegistryDatabase, candidateIds: string[]): Promise<string[]> => {
+  if (candidateIds.length === 0) {
+    return [];
+  }
+  const rows = await db.select({ id: pages.id }).from(pages).where(inArray(pages.id, candidateIds));
+  return rows.map((row) => row.id);
+};
+
 export class RegistryTokenStore implements TokenStore {
   constructor(private readonly context: RegistryStoreContext) {}
 
@@ -212,7 +310,12 @@ export class RegistryTokenStore implements TokenStore {
 
   async getArtifacts(id: string): Promise<TokenArtifactResource[]> {
     const rows = await this.context.db
-      .select({ path: tokenArtifacts.path, format: tokenArtifacts.format, content: tokenArtifacts.content, contentType: tokenArtifacts.contentType })
+      .select({
+        path: tokenArtifacts.path,
+        format: tokenArtifacts.format,
+        content: tokenArtifacts.content,
+        contentType: tokenArtifacts.contentType,
+      })
       .from(tokenArtifacts)
       .where(eq(tokenArtifacts.tokenSetId, id));
     return rows
@@ -228,7 +331,9 @@ export class RegistryTokenStore implements TokenStore {
 const readableToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk as unknown as Uint8Array));
+    chunks.push(
+      Buffer.isBuffer(chunk) ? chunk : typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk as unknown as Uint8Array)
+    );
   }
   return Buffer.concat(chunks);
 };

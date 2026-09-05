@@ -1,13 +1,30 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import matter from 'gray-matter';
 import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
+import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
-import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
-import { createRegistryStore } from '@handoff/store/registry';
+import type { PageListObject } from '@handoff/transformers/preview/types';
+import { buildMetadata, docsArtifacts, pageFiles, pages } from '@handoff/registry/db/schema';
+import { createRegistryStore, filterPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
+import {
+  isPageEnabled,
+  isPageInGroup,
+  pageMatches,
+  rankPages,
+  toSearchablePage,
+  type PageSearchRequest,
+  type PageSearchResult,
+  type SearchablePage,
+} from './page-search';
+import type { BakedDefaultPage } from './page-rendering';
+import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 import { getRegistryConnection } from '../registry-connection';
 import { getAssetStorageAdapter } from '../asset-storage';
+// A static import includes package defaults in each registry serverless bundle. A deployed function
+// cannot read the build machine's `config/docs` directory.
+import defaultPages from '../../generated/default-pages.json';
 
 /**
  * Registry-mode backing for the docs read API.
@@ -66,6 +83,67 @@ const buildStatusFor = async (
   return rows[0]?.status ?? 'missing';
 };
 
+/**
+ * Search published pages together with the packaged defaults.
+ *
+ * SQL filters published candidates before they reach the server. A separate ID-only query identifies
+ * the package defaults that published pages replace. The published page takes precedence even when it
+ * does not match the terms. This prevents stale default content from appearing in results.
+ *
+ * The published pages and the remaining defaults are one effective page set. The candidate cap applies
+ * to that merged set in ID order, as it does in workspace mode, so both runtime modes rank the same
+ * candidates. The query reads one row beyond the cap to detect a cut.
+ * Ranking compares a published body against a packaged default, so both are cut to {@link MAX_SEARCH_BODY_LENGTH}.
+ */
+const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequest): Promise<SearchResponse<PageSearchResult>> => {
+  const defaults = Object.entries(defaultPages as Record<string, BakedDefaultPage>);
+  const [rows, replacedDefaultIds] = await Promise.all([
+    searchPageCandidates(db, {
+      terms: request.terms,
+      group: request.group,
+      limit: MAX_SEARCH_CANDIDATES + 1,
+      bodyLength: MAX_SEARCH_BODY_LENGTH,
+    }),
+    filterPublishedPageIds(
+      db,
+      defaults.map(([id]) => id)
+    ).then((ids) => new Set(ids)),
+  ]);
+
+  const candidates: SearchablePage[] = [];
+  const seen = new Set<string>();
+  const addCandidate = (record: PageListObject, markdown: string): void => {
+    if (seen.has(record.id) || !isPageEnabled(record) || !isPageInGroup(record, request.group)) {
+      return;
+    }
+    seen.add(record.id);
+    const candidate = toSearchablePage(record, markdown);
+    // SQL does not filter the packaged defaults, so this test must run here. Without this test, a default that no
+    // term matches takes a candidate slot. For a SQL row the test is a no-op unless the two filters ever disagree.
+    if (pageMatches(candidate, request)) {
+      candidates.push(candidate);
+    }
+  };
+
+  for (const row of rows) {
+    addCandidate(row.record, row.body);
+  }
+  for (const [id, page] of defaults) {
+    if (replacedDefaultIds.has(id)) {
+      continue;
+    }
+    const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
+    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), truncateSearchBody(page.content));
+  }
+  candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  // SQL caps the published pages before the merge adds the defaults, so the merged count alone cannot show that a
+  // published match was cut. The extra row the query asks for is the only evidence of that cut.
+  const capped = candidates.length > MAX_SEARCH_CANDIDATES || rows.length > MAX_SEARCH_CANDIDATES;
+  const { results, truncated } = rankPages(candidates.slice(0, MAX_SEARCH_CANDIDATES), request);
+  return { query: request.query, results, truncated: truncated || capped };
+};
+
 /** Construct the registry-mode docs backend over a live database connection. */
 export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
   const connection = await getRegistryConnection();
@@ -98,14 +176,15 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
       return { ...record, build: { status: await buildStatusFor(db, 'pattern', id) } };
     },
     async getPageDetail(id: string) {
-      const record = await store.pages.get(id);
-      if (!record) {
-        return null;
-      }
-      // The markdown body travels as the page's single source file; parse it to drop the frontmatter.
-      const files = await store.pages.getRelatedSourceFiles(id);
-      const { content } = matter(files[0]?.content ?? '');
-      return { ...record, content };
+      const [row] = await db
+        .select({ record: pages.record, body: pageFiles.body })
+        .from(pages)
+        .leftJoin(pageFiles, eq(pageFiles.pageId, pages.id))
+        .where(eq(pages.id, id));
+      return row ? { ...row.record, content: row.body ?? '' } : null;
+    },
+    async searchPages(request: PageSearchRequest) {
+      return searchRegistryPages(db, request);
     },
     async resolveArtifact(segments: string[]) {
       return resolveRegistryArtifact(db, segments);

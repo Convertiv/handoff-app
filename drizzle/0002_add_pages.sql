@@ -3,12 +3,14 @@ CREATE TABLE "page_files" (
 	"path" text NOT NULL,
 	"kind" text NOT NULL,
 	"content" text,
+	"body" text NOT NULL,
 	"storage_ref" text,
 	"content_type" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "page_files_page_id_path_pk" PRIMARY KEY("page_id","path"),
-	CONSTRAINT "page_files_kind_not_declaration" CHECK ("page_files"."kind" <> 'declaration')
+	CONSTRAINT "page_files_page_id_pk" PRIMARY KEY("page_id"),
+	CONSTRAINT "page_files_kind_markdown" CHECK ("page_files"."kind" = 'markdown'),
+	CONSTRAINT "page_files_canonical_path" CHECK ("page_files"."path" = "page_files"."page_id" || '.md')
 );
 --> statement-breakpoint
 CREATE TABLE "pages" (

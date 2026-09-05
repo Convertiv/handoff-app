@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
-import matter from 'gray-matter';
 import path from 'path';
 import Handoff from '..';
+import { parseMarkdown } from '../utils/markdown';
 import { buildMenuShell } from '../utils/menu-shell';
 import { Logger } from '../utils/logger';
 import { collectPageSlugSegments } from '../utils/pages';
@@ -27,7 +27,7 @@ const collectDefaultPages = (root: string): Record<string, BakedDefaultPage> => 
   const pages: Record<string, BakedDefaultPage> = {};
   for (const segments of collectPageSlugSegments(root, { includeRootIndex: true })) {
     const id = segments.join('/');
-    const { data, content } = matter(fs.readFileSync(path.resolve(root, `${id}.md`), 'utf8'));
+    const { data, content } = parseMarkdown(fs.readFileSync(path.resolve(root, `${id}.md`), 'utf8'));
     pages[id] = { metadata: data, content };
   }
   return pages;
