@@ -388,7 +388,7 @@ runtime: {
 ## MCP
 
 The documentation app serves a Model Context Protocol endpoint at `/api/mcp/`, so
-coding agents can look up the components and tokens that already exist instead
+coding agents can look up the pages, components and tokens that already exist instead
 of inventing markup and values. It is stateless Streamable HTTP over `POST`;
 there is nothing to start and no extra port. Keep the trailing slash: the app
 sets `trailingSlash: true`, so `/api/mcp` answers with a 308 redirect.

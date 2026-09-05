@@ -2,6 +2,8 @@ import { buildArtifactUrl } from '@handoff/artifacts/url';
 import type { SlotMetadata } from '@handoff/transformers/preview/component';
 import type { ComponentListObject, OptionalPreviewRender, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
 import type { TokenArtifactResource } from '@handoff/store';
+import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
+import type { PageDetail } from '../docs-api/records';
 
 /**
  * Agent-facing projections of the store records.
@@ -15,6 +17,34 @@ import type { TokenArtifactResource } from '@handoff/store';
 /** The generated-code fields an agent can ask for; the build artifact carries them under these names. */
 export const CODE_FIELDS = ['code', 'html', 'css', 'sass', 'js'] as const;
 export type CodeField = (typeof CODE_FIELDS)[number];
+
+/** Accept internal page routes without URL normalization hiding traversal segments. */
+export const pageIdFromUrl = (url: string): string | null => {
+  if (!url.startsWith('/') || url.startsWith('//') || /[?#\\\u0000-\u001f\u007f]/.test(url)) {
+    return null;
+  }
+  if (url === '/') return HOME_PAGE_ID;
+  const id = url.slice(1).replace(/\/$/, '');
+  for (const segment of id.split('/')) {
+    try {
+      const decoded = decodeURIComponent(segment);
+      if (!decoded || decoded === '.' || decoded === '..' || /[/\\\u0000-\u001f\u007f]/.test(decoded)) return null;
+    } catch {
+      return null;
+    }
+  }
+  return id;
+};
+
+export const toPageResult = (page: PageDetail) => ({
+  id: page.id,
+  url: page.path,
+  title: page.title,
+  description: page.description,
+  group: page.group,
+  external: page.external,
+  content: page.content,
+});
 
 /**
  * One row of a component search result: identity and classification, and nothing else.

@@ -4,20 +4,23 @@ import { z } from 'zod';
 import type { ComponentListObject, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
 import { resolveDocsBackend } from '../docs-api';
 import type { DocsBackend, TokenSetDetail } from '../docs-api/backend';
+import { createSearchRequest, DEFAULT_RESULT_LIMIT, MAX_QUERY_LENGTH, MAX_RESULT_LIMIT, MAX_TERMS } from '../docs-api/search';
 import {
   availableFormats,
   CODE_FIELDS,
   matchesComponent,
+  pageIdFromUrl,
   stripFigmaIds,
   synthesizeComponentTokens,
   synthesizeFoundationTokens,
   toComponentResult,
   toComponentSummary,
+  toPageResult,
   type CodeField,
 } from './shape';
 
 /**
- * The Handoff MCP server: read-only access to the design system's components and tokens.
+ * The Handoff MCP server: read-only access to the design system's components, tokens and pages.
  *
  * Every tool reads through {@link resolveDocsBackend}, the same mode-aware backing the `/api/docs/*`
  * routes use, so workspace and registry deployments answer identically. Results are projections (see
@@ -98,7 +101,8 @@ export const createMcpServer = (): McpServer => {
         'Design-system knowledge for this project. Before writing UI code, search for an existing ' +
         'component with handoff_search_components, read its props and variants with ' +
         'handoff_get_component, and take colors, typography and spacing from handoff_get_tokens ' +
-        'rather than inventing values.',
+        'rather than inventing values. Search documentation with handoff_search_pages, then pass a ' +
+        'result URL to handoff_get_page for the full Markdown content.',
     }
   );
 
@@ -226,6 +230,69 @@ export const createMcpServer = (): McpServer => {
         }
         return ok({ id: detail.id, kind: detail.kind, format, path: artifact.path, content: artifact.content });
       })
+  );
+
+  server.registerTool(
+    'handoff_search_pages',
+    {
+      title: 'Search pages',
+      description:
+        'Search documentation titles, descriptions and Markdown bodies. Returns ranked matches with ' +
+        'internal URLs and snippets. Returns { query, results, truncated }; each result has url, title, ' +
+        'optional description and snippet. If truncated is true, narrow the query or group to find more ' +
+        'specific matches. Project pages replace package defaults at the same route; disabled pages ' +
+        'are excluded. External-link pages match visible metadata only. Pass a result URL to ' +
+        'handoff_get_page for the full content.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        query: z
+          .string()
+          .describe(
+            `Required search text, at most ${MAX_QUERY_LENGTH} characters and ${MAX_TERMS} distinct terms. ` +
+              'Terms shorter than two characters are ignored; at least one longer term is required. ' +
+              'Matching ignores case and treats hyphens and underscores as spaces.'
+          ),
+        group: z.string().optional().describe('Exact group name, matched case-insensitively.'),
+        limit: z.number().int().min(1).max(MAX_RESULT_LIMIT).optional().describe(`Max results (default ${DEFAULT_RESULT_LIMIT}).`),
+      },
+    },
+    async ({ query, group, limit }) => {
+      const parsed = createSearchRequest(query, limit?.toString());
+      if ('error' in parsed) {
+        return fail(parsed.error.replace('`q` search parameter', '`query` argument'));
+      }
+      return read('pages', async (backend) => ok(await backend.searchPages({ ...parsed.request, group: group?.trim() || undefined })));
+    }
+  );
+
+  server.registerTool(
+    'handoff_get_page',
+    {
+      title: 'Get page',
+      description:
+        'Read a documentation page by its internal URL from handoff_search_pages, such as /guides/setup ' +
+        'or / for the home page. Returns id, url, title, optional description, group and external, ' +
+        'plus content containing the full Markdown body without frontmatter. Project pages replace ' +
+        'package defaults at the same route. A missing page returns a tool error. ' +
+        'External-link pages return their stored content; external destinations are not fetched.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        url: z.string().describe('Internal page route without a site base path, query string or fragment. A trailing slash is accepted.'),
+      },
+    },
+    async ({ url }) => {
+      const id = pageIdFromUrl(url);
+      if (id === null) {
+        return fail('Provide an internal page URL such as /guides/setup or /, without a query string, fragment or traversal segments.');
+      }
+      return read(`page "${url}"`, async (backend) => {
+        const page = await backend.getPageDetail(id);
+        if (!page) {
+          return fail(`Page "${url}" was not found. Use handoff_search_pages to find available pages.`);
+        }
+        return ok(toPageResult(page));
+      });
+    }
   );
 
   return server;
