@@ -3,6 +3,7 @@ CREATE TABLE "page_files" (
 	"path" text NOT NULL,
 	"kind" text NOT NULL,
 	"content" text,
+	"body" text NOT NULL,
 	"storage_ref" text,
 	"content_type" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,

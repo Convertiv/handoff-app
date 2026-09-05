@@ -4,9 +4,8 @@ import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { PageListObject } from '@handoff/transformers/preview/types';
-import { buildMetadata, docsArtifacts } from '@handoff/registry/db/schema';
+import { buildMetadata, docsArtifacts, pageFiles, pages } from '@handoff/registry/db/schema';
 import { createRegistryStore, filterPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
-import { parseMarkdown } from '@handoff/utils/markdown';
 import { contentTypeForArtifactPath } from './artifacts';
 import type { DocsBackend, ResolvedArtifactBody } from './backend';
 import {
@@ -177,14 +176,12 @@ export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
       return { ...record, build: { status: await buildStatusFor(db, 'pattern', id) } };
     },
     async getPageDetail(id: string) {
-      const record = await store.pages.get(id);
-      if (!record) {
-        return null;
-      }
-      // The markdown body travels as the page's single source file; parse it to drop the frontmatter.
-      const files = await store.pages.getRelatedSourceFiles(id);
-      const { content } = parseMarkdown(files[0]?.content ?? '');
-      return { ...record, content };
+      const [row] = await db
+        .select({ record: pages.record, body: pageFiles.body })
+        .from(pages)
+        .leftJoin(pageFiles, eq(pageFiles.pageId, pages.id))
+        .where(eq(pages.id, id));
+      return row ? { ...row.record, content: row.body ?? '' } : null;
     },
     async searchPages(request: PageSearchRequest) {
       return searchRegistryPages(db, request);

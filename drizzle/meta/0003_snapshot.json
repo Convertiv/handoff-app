@@ -480,6 +480,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "storage_ref": {
           "name": "storage_ref",
           "type": "text",

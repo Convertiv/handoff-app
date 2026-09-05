@@ -185,7 +185,7 @@ export class RegistryPageStore implements PageStore {
 }
 
 /**
- * The page fields that search reads. The query strips frontmatter from the body and cuts it to `bodyLength`.
+ * The page fields that search reads. The query cuts the stored parsed body to `bodyLength`.
  * The body is empty for an external-link page and for a page with no stored markdown.
  */
 export interface PageSearchCandidate {
@@ -212,14 +212,6 @@ export interface PageSearchCandidateQuery {
 const likePattern = (term: string): string => `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 
 /**
- * Strip a leading `---` frontmatter block, so the body filter reads the text that ranking scores.
- *
- * The first quantifier must stay non-greedy. Postgres takes the greediness of the whole pattern from
- * it, and a greedy pattern would strip through the last `---` line of the body.
- */
-const FRONTMATTER_PATTERN = '^---.*?\\n---[^\\n]*(\\n|$)';
-
-/**
  * Candidate pages for a search, filtered and capped in SQL.
  *
  * `enabled` and `menuTitle` are fields in the `record` JSON, so the query uses JSON operators. An
@@ -227,7 +219,7 @@ const FRONTMATTER_PATTERN = '^---.*?\\n---[^\\n]*(\\n|$)';
  * such as `metaTitle` cannot consume a candidate slot.
  *
  * The filter and the projection share one body expression, so every term SQL matched is inside the text that the
- * server ranks. Postgres thus strips each row twice, which costs much less than the return of an unbounded body.
+ * server ranks.
  *
  * The body expression is empty for an external-link page. Search reads such a page by title, menu title, and
  * description only. The exclusion must happen in SQL. An external body otherwise satisfies the filter and takes one
@@ -255,7 +247,7 @@ export const searchPageCandidates = async (db: RegistryDatabase, query: PageSear
       'null'::jsonb, 'false'::jsonb, '""'::jsonb, '0'::jsonb
     )
   `;
-  const storedBody = sql<string>`left(regexp_replace(coalesce(${pageFiles.content}, ''), ${FRONTMATTER_PATTERN}, ''), ${query.bodyLength})`;
+  const storedBody = sql<string>`left(coalesce(${pageFiles.body}, ''), ${query.bodyLength})`;
   const searchableBody = sql<string>`
     case
       when ${isExternal} then ''

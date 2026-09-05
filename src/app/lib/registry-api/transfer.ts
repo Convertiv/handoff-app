@@ -20,7 +20,7 @@ import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
-import { getEntity, listEntityFiles } from './store';
+import { getEntity, listEntityFiles, upsertEntityFile } from './store';
 import {
   asString,
   invalidPackage as invalid,
@@ -61,9 +61,9 @@ const asStringArray = (value: unknown): string[] | undefined =>
 
 /** Binds an entity kind to its tables and file foreign-key column. */
 const ENTITY = {
-  component: { table: components, filesTable: componentFiles, fileFk: componentFiles.componentId, fileFkName: 'componentId' as const },
-  pattern: { table: patterns, filesTable: patternFiles, fileFk: patternFiles.patternId, fileFkName: 'patternId' as const },
-  page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId, fileFkName: 'pageId' as const },
+  component: { table: components, filesTable: componentFiles, fileFk: componentFiles.componentId },
+  pattern: { table: patterns, filesTable: patternFiles, fileFk: patternFiles.patternId },
+  page: { table: pages, filesTable: pageFiles, fileFk: pageFiles.pageId },
 };
 
 /**
@@ -364,13 +364,7 @@ const replaceEntityFiles = async (db: RegistryDatabase, kind: TransferEntityKind
   const spec = ENTITY[kind];
   await db.delete(spec.filesTable).where(eq(spec.fileFk, id));
   for (const file of files) {
-    await db.insert(spec.filesTable).values({
-      [spec.fileFkName]: id,
-      path: file.path,
-      kind: file.kind,
-      content: file.content,
-      contentType: file.contentType,
-    } as any);
+    await upsertEntityFile(db, kind, id, file);
   }
 };
 

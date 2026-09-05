@@ -240,6 +240,7 @@ export const pageFiles = pgTable(
     path: text('path').notNull(),
     kind: text('kind').$type<RegistryTextFileKind>().notNull(),
     content: text('content'),
+    body: text('body').notNull(),
     storageRef: text('storage_ref'),
     contentType: text('content_type').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

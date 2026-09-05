@@ -207,9 +207,8 @@ const updatePageMetadata = async (db: RegistryDatabase, id: string, write: Valid
     return null;
   }
 
-  const files = await db.select({ path: pageFiles.path, content: pageFiles.content }).from(pageFiles).where(eq(pageFiles.pageId, id));
-  // A page carries a single verbatim `.md`; a metadata-only page (created, never published) has none.
-  const source = files.find((file) => file.content != null);
+  // A metadata-only page has no source until it is published.
+  const source = await getEntityFile(db, 'page', id, `${id}.md`);
   const hasFrontmatterChanges = Object.keys(write.fields).length > 0;
   const parsed = hasFrontmatterChanges ? parseMarkdown(source?.content ?? '') : null;
   const frontmatter = parsed ? { ...parsed.data, ...write.fields } : null;
@@ -235,14 +234,9 @@ const updatePageMetadata = async (db: RegistryDatabase, id: string, write: Valid
     if (!source || content === null) {
       return;
     }
-    await transactionalDb
-      .update(pageFiles)
-      .set({ content, updatedAt: new Date() })
-      .where(and(eq(pageFiles.pageId, id), eq(pageFiles.path, source.path)));
+    await upsertEntityFile(transactionalDb, 'page', id, { ...source, content });
     // Hash exactly as publish does, so the next bulk publish compares like for like.
-    const sourceHash = hashPathValues(
-      files.map((file) => ({ path: file.path, value: file.path === source.path ? content : (file.content ?? '') }))
-    );
+    const sourceHash = hashPathValues([{ path: source.path, value: content }]);
     await transactionalDb
       .update(buildMetadata)
       .set({ sourceHash, updatedAt: new Date() })
@@ -376,7 +370,7 @@ export const getEntityFile = async (
   return { path: row.path, kind: row.kind, content: row.content, contentType: row.contentType };
 };
 
-/** Insert or update a text-file record for an entity. */
+/** Write source and, for pages, its parsed body together. Callers supply the enclosing transaction. */
 export const upsertEntityFile = async (
   db: RegistryDatabase,
   kind: ManagedEntityKind,
@@ -384,18 +378,19 @@ export const upsertEntityFile = async (
   file: ValidatedFile
 ): Promise<ValidatedFile> => {
   const spec = ENTITY[kind];
+  const values = {
+    path: file.path,
+    kind: file.kind,
+    content: file.content,
+    contentType: file.contentType,
+    ...(kind === 'page' ? { body: parseMarkdown(file.content).content } : {}),
+  };
   await db
     .insert(spec.filesTable)
-    .values({
-      [spec.fileFkName]: id,
-      path: file.path,
-      kind: file.kind,
-      content: file.content,
-      contentType: file.contentType,
-    } as any)
+    .values({ [spec.fileFkName]: id, ...values } as any)
     .onConflictDoUpdate({
-      target: [spec.fileFkColumn, spec.filesTable.path],
-      set: { kind: file.kind, content: file.content, contentType: file.contentType, updatedAt: new Date() },
+      target: kind === 'page' ? [spec.fileFkColumn] : [spec.fileFkColumn, spec.filesTable.path],
+      set: { ...values, updatedAt: new Date() },
     });
   return file;
 };
