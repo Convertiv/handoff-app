@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-accordion": "^1.2.8",
     "@radix-ui/react-collapsible": "^1.1.2",
@@ -121,7 +122,8 @@
     "vaul": "^1.1.2",
     "vite": "^6.3.5",
     "ws": "^8.18.3",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "typescript": ">=5.6 <7"

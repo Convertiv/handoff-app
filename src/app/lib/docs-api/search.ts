@@ -96,7 +96,12 @@ const parseLimit = (raw: string | undefined): number => {
  * of rejecting the full query. The request fails only when it contains no usable term.
  */
 export const parseSearchRequest = (req: NextApiRequest): { request: SearchRequest } | { error: string } => {
-  const query = singleQueryValue(req.query.q)?.trim() ?? '';
+  return createSearchRequest(singleQueryValue(req.query.q), singleQueryValue(req.query.limit));
+};
+
+/** Shared validation and normalization for HTTP and MCP search callers. */
+export const createSearchRequest = (rawQuery?: string, rawLimit?: string): { request: SearchRequest } | { error: string } => {
+  const query = rawQuery?.trim() ?? '';
   if (!query) {
     return { error: 'Provide a non-empty `q` search parameter.' };
   }
@@ -111,5 +116,5 @@ export const parseSearchRequest = (req: NextApiRequest): { request: SearchReques
   if (terms.length > MAX_TERMS) {
     return { error: `Search query must contain no more than ${MAX_TERMS} distinct terms.` };
   }
-  return { request: { query, terms, phrase, limit: parseLimit(singleQueryValue(req.query.limit)) } };
+  return { request: { query, terms, phrase, limit: parseLimit(rawLimit) } };
 };

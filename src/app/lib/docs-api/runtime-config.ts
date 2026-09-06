@@ -33,6 +33,8 @@ export interface ServerRegistryRuntimeConfig {
 /** Resolved server-side runtime configuration for the docs read API. */
 export interface ServerRuntimeConfig {
   mode: RuntimeMode;
+  /** Whether this build serves `/api/mcp/`. Config-only, baked at build time. */
+  mcp: boolean;
   registry: ServerRegistryRuntimeConfig;
   /**
    * Asset storage selection for registry mode (provider + non-secret options + env-var names). Secret
@@ -46,6 +48,7 @@ let cached: ServerRuntimeConfig | null = null;
 /** Safe defaults: workspace mode with the default Postgres driver + `DATABASE_URL` env var. */
 const defaults = (): ServerRuntimeConfig => ({
   mode: 'workspace',
+  mcp: true,
   registry: {
     driver: DEFAULT_REGISTRY_DRIVER,
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
@@ -103,6 +106,7 @@ const fromEnv = (): ServerRuntimeConfig | null => {
   const databaseUrlEnv = process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV?.trim() || DEFAULT_DATABASE_URL_ENV;
   return {
     mode: mode === 'registry' ? 'registry' : 'workspace',
+    mcp: process.env.HANDOFF_MCP_ENABLED?.trim() !== 'false',
     registry: {
       driver: process.env.HANDOFF_REGISTRY_DRIVER?.trim() === 'neon' ? 'neon' : 'pg',
       databaseUrlEnv,
@@ -142,6 +146,7 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           : { adapter: DEFAULT_ASSET_STORAGE_ADAPTER };
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
+        mcp: parsed?.mcp !== false,
         registry: {
           driver: parsed?.registry?.driver === 'neon' ? 'neon' : 'pg',
           databaseUrlEnv,

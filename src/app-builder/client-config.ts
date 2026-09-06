@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
-import { getClientConfig } from '../config';
+import { getClientConfig, isMcpEnabled } from '../config';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveAuthenticatedRegistryConnection } from '../registry/connection';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
@@ -57,6 +57,7 @@ const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) =>
   const assetStorage = resolveAssetStorageFromConfig(config);
   return {
     mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
+    mcp: isMcpEnabled(config),
     registry: {
       driver: resolveRegistryDriver(config),
       databaseUrlEnv: resolveDatabaseUrlEnv(config),

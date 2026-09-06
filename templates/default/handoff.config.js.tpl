@@ -61,13 +61,16 @@ const config = {
   //   patterns: ["patterns"],
   // },
 
-  // Registry deployment settings, used by `build --target registry` and `db:migrate`.
-  // These are only needed when publishing to a hosted registry. The default workspace mode
-  // doesn't use a database, so these should stay commented out unless deploying one.
+  // Runtime settings, all optional. The default is workspace mode with the MCP endpoint served.
+  // `mcp: false` leaves the /api/mcp/ endpoint, and the connect affordance in the docs header, out
+  // of the build; the route then answers 404.
+  // The registry block is only needed when deploying a hosted registry, and is used by
+  // `build --target registry` and `db:migrate`. The default workspace mode uses no database.
   // Handoff runs on PostgreSQL, and `driver` just picks the connection driver to use, not
   // the database engine. Secrets are referenced by env var name and never written here.
   // runtime: {
   //   mode: "registry",
+  //   mcp: false,
   //   registry: {
   //     databaseUrlEnv: "DATABASE_URL",
   //     database: { driver: "pg" }, // 'pg' | 'neon'

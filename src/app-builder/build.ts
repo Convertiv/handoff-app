@@ -3,6 +3,7 @@ import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { isMcpEnabled } from '../config';
 import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
@@ -256,6 +257,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   // Resolved runtime mode + registry connection inputs (names only) baked into the Next bundle so the
   // deployed registry app resolves its mode/DB env-var name without any build-machine filesystem.
   const escapedRuntimeMode = escapeForSingleQuotedJsString(runtimeMode);
+  const escapedMcpEnabled = escapeForSingleQuotedJsString(String(isMcpEnabled(handoff.config)));
   const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
   // Asset storage selection baked (provider + module + env-var names + non-secret options JSON).
@@ -273,6 +275,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_EXPORT_PATH%': escapedExportPath,
     '%HANDOFF_WEBSOCKET_PORT%': escapedWebsocketPort,
     '%HANDOFF_RUNTIME_MODE%': escapedRuntimeMode,
+    '%HANDOFF_MCP_ENABLED%': escapedMcpEnabled,
     '%HANDOFF_REGISTRY_DRIVER%': escapedRegistryDriver,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
     '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
@@ -494,11 +497,15 @@ containers, custom Node servers, and other non-Vercel hosts.
 /**
  * Resolve the set of npm packages the packaged registry app must be able to `require`/`import` at
  * runtime, given the configured database driver. `next`/`react`/`react-dom` run the server and React
- * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the driver
- * package is driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
+ * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the MCP SDK
+ * (and its `zod` peer) is only needed when `/api/mcp/` is enabled; the driver package is
+ * driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
  */
 const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   const base = ['next', 'next-auth', 'react', 'react-dom', 'drizzle-orm'];
+  if (isMcpEnabled(handoff.config)) {
+    base.push('@modelcontextprotocol/sdk', 'zod');
+  }
   const driver = resolveRegistryDriver(handoff.config);
   const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
   // Asset-storage SDKs the deployed registry must be able to load at request time. The pre-packaged

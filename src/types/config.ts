@@ -126,6 +126,13 @@ export interface HandoffRuntimeConfig {
    * Mode is never inferred from environment variables, database settings, or token presence.
    */
   mode?: RuntimeMode;
+  /**
+   * Whether the app serves the `/api/mcp/` Model Context Protocol endpoint. Set to `false` to leave
+   * the endpoint and the header affordance out of the build; the route then answers 404. Like
+   * `mode`, this is config-only and baked at build time, so changing it needs a rebuild.
+   * @default true
+   */
+  mcp?: boolean;
   /** Workspace-mode settings. */
   workspace?: {
     entries?: ConfigEntries;

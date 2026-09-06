@@ -111,6 +111,9 @@ const nextConfig = {
     // config-only — these are derived from `runtime.*`, not inferred from env at runtime. The DB
     // connection string itself is read from the named env var at request time (deployment-supplied).
     HANDOFF_RUNTIME_MODE: '%HANDOFF_RUNTIME_MODE%',
+    // Whether this build serves `/api/mcp/`. Both the route and the header UI read this, so a
+    // disabled build hides the affordance instead of showing it fail against a 404.
+    HANDOFF_MCP_ENABLED: '%HANDOFF_MCP_ENABLED%',
     HANDOFF_REGISTRY_DRIVER: '%HANDOFF_REGISTRY_DRIVER%',
     HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
     // Asset storage selection (provider + non-secret options + env-var names). Secret values (Blob
