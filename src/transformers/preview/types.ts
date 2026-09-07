@@ -120,6 +120,8 @@ export type ComponentObject = {
   };
   /** Optional explicit renderer id */
   renderer?: RendererKind;
+  /** Export of `entries.component` that holds the implementation. Defaults to the default export. */
+  componentExport?: string;
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
@@ -185,6 +187,7 @@ export type TransformComponentTokensResult = {
     templates?: string;
   };
   renderer?: RendererKind;
+  componentExport?: string;
   options?: {
     preview?: {
       groupBy?: string;

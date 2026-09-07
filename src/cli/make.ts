@@ -168,32 +168,30 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }
 
-  const declarationEntries = [`template: './${name}.hbs'`];
+  // `implementation` names the template, so `entries` carries only supporting files.
+  const declarationEntries: string[] = [];
   if (writeJSFile === true) {
     declarationEntries.push(`js: './${name}.js'`);
   }
   if (writeSassFile === true) {
     declarationEntries.push(`scss: './${name}.scss'`);
   }
+  const entriesBlock = declarationEntries.length ? `\n  entries: {\n    ${declarationEntries.join(',\n    ')}\n  },` : '';
 
-  const declarationContent = `const { defineHandlebarsComponent } = require('handoff-app');
+  const declarationContent = `const { defineCatalogItem } = require('handoff-app/handlebars');
 
-module.exports = defineHandlebarsComponent({
+exports.default = defineCatalogItem({
   id: '${name}',
   name: '',
   description: '',
   group: '',
   type: 'element',
-  entries: {
-    ${declarationEntries.join(',\n    ')}
-  },
-  previews: {
-    default: {
-      title: 'Default',
-      args: {}
-    }
-  }
+  implementation: './${name}.hbs',${entriesBlock}
 });
+
+exports.Default = {
+  args: {},
+};
 `;
 
   fs.writeFileSync(path.resolve(workingPath, `${name}.handoff.js`), declarationContent);

@@ -592,6 +592,17 @@ class Handoff {
 export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
+export { defineCatalogItem } from './catalog';
+export type {
+  CatalogItem,
+  CatalogItemEntries,
+  CatalogItemInput,
+  CatalogItemMeta,
+  CatalogPreview,
+  CompositionRef,
+  Preview,
+  SourceDescriptor,
+} from './catalog';
 export {
   defineComponent,
   defineCsfComponent,

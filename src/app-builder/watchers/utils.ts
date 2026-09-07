@@ -6,9 +6,8 @@ export interface WatcherState {
   pendingHandlers: Map<string, () => Promise<void>>;
   runtimeComponentsWatcher: chokidar.FSWatcher | null;
   runtimeConfigurationWatcher: chokidar.FSWatcher | null;
-  componentDirectoriesWatcher: chokidar.FSWatcher | null;
-  /** Watches entries.patterns parent directories for newly created pattern subdirectories. */
-  patternDirectoriesWatcher: chokidar.FSWatcher | null;
+  /** Watches every registered catalog directory for newly created item subdirectories. */
+  catalogDirectoriesWatcher: chokidar.FSWatcher | null;
 }
 
 /**

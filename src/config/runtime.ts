@@ -2,6 +2,18 @@ import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
+import {
+  createDeprecationCollector,
+  isCatalogItem,
+  isInsideDirectory,
+  normalizeCatalogItem,
+  orderPreviews,
+  readExportOrder,
+  resolvePropertySource,
+  type CatalogNormalizeResult,
+  type DeprecationCollector,
+} from '../catalog';
+import { readDeprecatedApi } from '../declarations';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
 import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
@@ -139,7 +151,11 @@ const discoverCsfPreviews = (
 
   try {
     const loaded = buildAndEvaluateModuleSync(component.entries.template, handoff);
-    const discoveredPreviews = createCsfStoryPreviews(loaded.exports as Record<string, any>);
+    // esbuild emits its export map alphabetically, so story order comes from the source text.
+    const discoveredPreviews = orderPreviews(
+      createCsfStoryPreviews(loaded.exports as Record<string, any>),
+      readExportOrder(component.entries.template)
+    );
 
     if (Object.keys(discoveredPreviews).length === 0) {
       Logger.warn(
@@ -156,6 +172,88 @@ const discoverCsfPreviews = (
     Logger.debug('CSF discovery error', error);
     return component.previews;
   }
+};
+
+/**
+ * Every directory registered as a catalog item, from `catalog.include` and from the deprecated
+ * `entries.components` / `entries.patterns` keys. A path is either an item directory or a
+ * collection directory whose subdirectories are each an item. Duplicates are dropped, so a
+ * directory listed under both forms loads once.
+ */
+export const getCatalogItemDirectories = (config: Config, workingPath: string): string[] => {
+  const registered = [
+    ...(config.catalog?.include ?? []),
+    ...(config.entries?.components ?? []),
+    ...(config.entries?.patterns ?? []),
+  ];
+
+  const seen = new Set<string>();
+  const directories: string[] = [];
+
+  for (const entry of registered) {
+    for (const directory of getComponentsForPath(path.resolve(workingPath, entry))) {
+      const key = normalizePathForCompare(directory);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      directories.push(directory);
+    }
+  }
+
+  return directories;
+};
+
+type ClassifyOptions = {
+  declarationPath: string;
+  fallbackId: string;
+  warn: (message: string) => void;
+};
+
+/**
+ * Decides which lane a declaration belongs to and returns the raw shape that lane's normalizer
+ * accepts. A catalog item is recognized by `implementation` or `composition`; anything else came
+ * from a deprecated API and is recorded for the single deprecation notice.
+ */
+const classifyDeclaration = (
+  moduleExports: Record<string, any>,
+  raw: Record<string, any>,
+  options: ClassifyOptions,
+  deprecations: DeprecationCollector
+): CatalogNormalizeResult => {
+  if (isCatalogItem(raw)) {
+    return normalizeCatalogItem(moduleExports, options);
+  }
+
+  const legacyApi =
+    readDeprecatedApi(raw) || (options.declarationPath.endsWith('.json') ? 'JSON declaration' : 'plain declaration object');
+  deprecations.note(legacyApi, options.declarationPath);
+
+  return Array.isArray(raw.components) ? { kind: 'pattern', raw } : { kind: 'component', raw };
+};
+
+/**
+ * Records the React component a CSF file documents, so it is watched, documented, and published.
+ * `csf-render` reads `meta.component` as a value; only the source text says which file it came
+ * from. A component outside the item directory is left unrecorded, because publish rejects a
+ * source path that escapes the entity directory.
+ */
+const resolveCsfComponentSource = (component: ComponentListObject): void => {
+  if (component.renderer !== 'csf') return;
+
+  const storyPath = component.entries?.story;
+  if (!storyPath || component.entries?.component) return;
+
+  const resolved = resolvePropertySource(storyPath, 'component');
+  if (!resolved) return;
+
+  if (!isInsideDirectory(resolved.file, component.path)) {
+    Logger.warn(
+      `Catalog item "${component.id}" documents a component at "${resolved.file}", outside "${component.path}". ` +
+        `Previews still build, but that file is not published. Move it into the item directory to publish it.`
+    );
+    return;
+  }
+
+  component.entries.component = resolved.file;
 };
 
 /**
@@ -186,121 +284,117 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
 
-  if (handoff.config.entries?.components?.length) {
-    const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
-    for (const componentPath of componentPaths) {
-      const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
-      const componentBaseName = path.basename(resolvedComponentPath);
-      const declaration = resolveComponentDeclaration(resolvedComponentPath, componentBaseName);
+  const deprecations = createDeprecationCollector(
+    (message) => Logger.warn(message),
+    (source) => path.relative(handoff.workingPath, source) || source
+  );
 
-      if (!declaration) {
-        const modernFiles = getModernDeclarationFiles(componentBaseName);
-        const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
-        Logger.warn(
-          `Missing config: ${path.resolve(
-            resolvedComponentPath,
-            [...modernFiles, ...legacyFiles].join(' or ')
-          )}`
-        );
-        continue;
-      }
-
-      const resolvedComponentConfigPath = path.resolve(resolvedComponentPath, declaration.fileName);
-      configFiles.push(resolvedComponentConfigPath);
-
-      let component: ComponentListObject;
-
-      try {
-        const importedDeclaration = loadDeclarationFile(resolvedComponentConfigPath, handoff.modulePath);
-        const rawComponent = importedDeclaration.default || importedDeclaration;
-        component = normalizeComponentDeclaration(rawComponent, {
-          declarationPath: resolvedComponentConfigPath,
-          fallbackId: componentBaseName,
-          warn: (message) => Logger.warn(message),
-        });
-      } catch (err) {
-        Logger.error(`Failed to read or parse config: ${resolvedComponentConfigPath}`, err);
-        continue;
-      }
-
-      // Initialize options with safe defaults
-      component.options ||= {
-        transformer: { defaults: {}, replace: {} },
-      };
-      component.options.transformer ||= { defaults: {}, replace: {} };
-
-      const transformer = component.options.transformer;
-      transformer.cssRootClass ??= null;
-      transformer.tokenNameSegments ??= null;
-
-      // Normalize keys and values to lowercase
-      transformer.defaults = toLowerCaseKeysAndValues({
-        ...transformer.defaults,
-      });
-
-      transformer.replace = toLowerCaseKeysAndValues({
-        ...transformer.replace,
-      });
-
-      // Save transformer config
-      result.options[component.id] = transformer;
-
-      // Discover CSF stories early so patterns can resolve stories like normal previews.
-      component.previews = discoverCsfPreviews(component, handoff);
-
-      // Save full component entry
-      result.entries.components[component.id] = component;
-      configFileIndex.set(normalizePathForCompare(resolvedComponentConfigPath), { kind: 'component', entityId: component.id });
-    }
+  if (handoff.config.entries?.components?.length || handoff.config.entries?.patterns?.length) {
+    deprecations.note('entries.components / entries.patterns', 'handoff config');
   }
 
-  // -------------------------------------------------------------------------
-  // Load pattern declarations
-  // -------------------------------------------------------------------------
-  if (handoff.config.entries?.patterns?.length) {
-    const patternPaths = handoff.config.entries.patterns.flatMap(getItemsForPath);
-    for (const patternPath of patternPaths) {
-      const resolvedPatternPath = path.resolve(handoff.workingPath, patternPath);
-      const patternBaseName = path.basename(resolvedPatternPath);
-      const declaration = resolveComponentDeclaration(resolvedPatternPath, patternBaseName);
+  // A directory's lane depends on what its declaration holds, not on which config key registered
+  // it, so the declaration is loaded before the lane is chosen.
+  for (const itemPath of getCatalogItemDirectories(handoff.config, handoff.workingPath)) {
+    const itemBaseName = path.basename(itemPath);
+    const declaration = resolveComponentDeclaration(itemPath, itemBaseName);
 
-      if (!declaration) {
-        const modernFiles = getModernDeclarationFiles(patternBaseName);
-        const legacyFiles = getLegacyDeclarationFiles(patternBaseName);
-        Logger.warn(
-          `Missing pattern config: ${path.resolve(
-            resolvedPatternPath,
-            [...modernFiles, ...legacyFiles].join(' or ')
-          )}`
-        );
-        continue;
-      }
+    if (!declaration) {
+      const modernFiles = getModernDeclarationFiles(itemBaseName);
+      const legacyFiles = getLegacyDeclarationFiles(itemBaseName);
+      Logger.warn(`Missing config: ${path.resolve(itemPath, [...modernFiles, ...legacyFiles].join(' or '))}`);
+      continue;
+    }
 
-      const resolvedPatternConfigPath = path.resolve(resolvedPatternPath, declaration.fileName);
-      configFiles.push(resolvedPatternConfigPath);
+    const declarationPath = path.resolve(itemPath, declaration.fileName);
+    const indexKey = normalizePathForCompare(declarationPath);
+    configFiles.push(declarationPath);
 
+    // A declaration can be mid-edit under `start`, so every failure is a warning and the file is
+    // retried on the next save. The index records it with an unknown kind, so a watcher does not
+    // guess the wrong lane.
+    const skip = (message: string, error: unknown): void => {
+      Logger.warn(`${message}: ${declarationPath}`);
+      Logger.debug('Declaration parse detail:', error);
+      configFileIndex.set(indexKey, { kind: 'unknown', entityId: itemBaseName });
+    };
+
+    let classified: CatalogNormalizeResult;
+
+    try {
+      const moduleExports = loadDeclarationFile(declarationPath, handoff.modulePath);
+      const rawDeclaration = moduleExports.default || moduleExports;
+      classified = classifyDeclaration(
+        moduleExports,
+        rawDeclaration,
+        { declarationPath, fallbackId: itemBaseName, warn: (message) => Logger.warn(message) },
+        deprecations
+      );
+    } catch (err) {
+      skip('Declaration skipped (incomplete or invalid) — will retry on next save', err);
+      continue;
+    }
+
+    if (classified.kind === 'pattern') {
       let pattern: PatternListObject;
 
       try {
-        const importedDeclaration = loadDeclarationFile(resolvedPatternConfigPath, handoff.modulePath);
-        const rawPattern = importedDeclaration.default || importedDeclaration;
-        pattern = normalizePatternDeclaration(rawPattern, {
-          declarationPath: resolvedPatternConfigPath,
-          fallbackId: patternBaseName,
+        pattern = normalizePatternDeclaration(classified.raw, {
+          declarationPath,
+          fallbackId: itemBaseName,
         });
       } catch (err) {
-        // Treat as a warning rather than an error: the file may be empty or
-        // mid-edit. It is already tracked in configFiles above, so
-        // watchRuntimeConfiguration will pick it up once the file is saved
-        // with valid content.
-        Logger.warn(`Pattern config skipped (incomplete or invalid) — will retry on next save: ${resolvedPatternConfigPath}`);
-        Logger.debug(`Pattern parse detail:`, err);
+        skip('Composition skipped (incomplete or invalid) — will retry on next save', err);
         continue;
       }
 
-      configFileIndex.set(normalizePathForCompare(resolvedPatternConfigPath), { kind: 'pattern', entityId: pattern.id });
+      configFileIndex.set(indexKey, { kind: 'pattern', entityId: pattern.id });
       result.entries.patterns[pattern.id] = pattern;
+      continue;
     }
+
+    let component: ComponentListObject;
+
+    try {
+      component = normalizeComponentDeclaration(classified.raw, {
+        declarationPath,
+        fallbackId: itemBaseName,
+        warn: (message) => Logger.warn(message),
+      });
+    } catch (err) {
+      skip('Catalog item skipped (incomplete or invalid) — will retry on next save', err);
+      continue;
+    }
+
+    // Initialize options with safe defaults
+    component.options ||= {
+      transformer: { defaults: {}, replace: {} },
+    };
+    component.options.transformer ||= { defaults: {}, replace: {} };
+
+    const transformer = component.options.transformer;
+    transformer.cssRootClass ??= null;
+    transformer.tokenNameSegments ??= null;
+
+    // Normalize keys and values to lowercase
+    transformer.defaults = toLowerCaseKeysAndValues({
+      ...transformer.defaults,
+    });
+
+    transformer.replace = toLowerCaseKeysAndValues({
+      ...transformer.replace,
+    });
+
+    // Save transformer config
+    result.options[component.id] = transformer;
+
+    // Discover CSF stories early so compositions can resolve stories like normal previews.
+    component.previews = discoverCsfPreviews(component, handoff);
+    resolveCsfComponentSource(component);
+
+    // Save full component entry
+    result.entries.components[component.id] = component;
+    configFileIndex.set(indexKey, { kind: 'component', entityId: component.id });
   }
 
   // -------------------------------------------------------------------------
@@ -328,6 +422,8 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
   // Inject synthetic previews from patterns onto components
   // -------------------------------------------------------------------------
   injectPatternPreviews(result);
+
+  deprecations.flush();
 
   return [result, Array.from(configFiles), configFileIndex];
 };

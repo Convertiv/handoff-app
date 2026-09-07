@@ -3,7 +3,8 @@ export {
   defineCsfComponent,
   defineHandlebarsComponent,
   definePattern,
-  defineReactComponent
+  defineReactComponent,
+  readDeprecatedApi
 } from './helpers';
 
 export type {

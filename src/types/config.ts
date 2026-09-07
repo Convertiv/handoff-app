@@ -96,15 +96,27 @@ export interface ConfigEntries {
   js?: string;
   /**
    * Array of component paths to be included in the build
+   * @deprecated Use `catalog.include`.
    * @example ["components/button", "components/input"]
    */
   components?: string[];
   /**
    * Array of pattern paths to be included in the build.
    * Patterns compose multiple component previews into single-page views.
+   * @deprecated Use `catalog.include`.
    * @example ["patterns/hero-section", "patterns"]
    */
   patterns?: string[];
+}
+
+/** Catalog item registration. */
+export interface ConfigCatalog {
+  /**
+   * Directories to search for catalog items. A path is either an item directory or a collection
+   * directory whose subdirectories are each treated as an item.
+   * @example ["components", "patterns"]
+   */
+  include?: string[];
 }
 
 /** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
@@ -227,6 +239,10 @@ export interface Config {
    * Configuration for entry points to assets and components that will be built
    */
   entries?: ConfigEntries;
+  /**
+   * Where catalog items are registered.
+   */
+  catalog?: ConfigCatalog;
   /**
    * Override URLs for the asset zip download links. When unset, each link defaults to the
    * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by

@@ -66,11 +66,16 @@ my-handoff-project/
 └─ out/            # build output; gitignored
 ```
 
-## Components and patterns
+## Catalog items
 
-An implementation and a `*.handoff.ts` declaration are required for a
-TypeScript React component. Stable identity, documentation metadata, source
-entries, and previews are supplied by the declaration.
+Every documented UI entry is a catalog item. Each item declares either an implementation or a composition of other items.
+Use `defineCatalogItem` from the entry point that matches its framework.
+The declaration supplies stable identity, documentation metadata, source entries, and previews.
+
+### React
+
+Handoff finds the implementation file from its import, so you do not need to repeat the path.
+Previews are named exports. `Preview<typeof item>` gives them the implementation's argument type.
 
 ```tsx
 // components/example/Component.tsx
@@ -83,61 +88,128 @@ export default function Component({ label }: ComponentProps) {
 }
 ```
 
-```ts
-// components/example/component.handoff.ts
-import { defineReactComponent } from 'handoff-app';
+```tsx
+// components/example/example.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/react';
 import Component from './Component';
 
-export default defineReactComponent(Component, {
+const item = defineCatalogItem({
   id: 'component-id',
   name: 'Component name',
   description: 'Usage guidance for the component.',
   group: 'Group name',
-  entries: {
-    component: './Component.tsx',
-  },
-  previews: {
-    default: {
-      title: 'Default',
-      args: { label: 'Example' },
-    },
-  },
+  implementation: Component,
+});
+
+export default item;
+
+type ComponentPreview = Preview<typeof item>;
+
+export const Default = {
+  args: { label: 'Example' },
+} satisfies ComponentPreview;
+```
+
+The export name is the preview name. Use `name` to set a different display title.
+
+### Handlebars
+
+The implementation is the path to the template. Arguments are `Record<string, unknown>` by default;
+an explicit argument type is supplied through `defineCatalogItem<BadgeArgs>`.
+
+```ts
+// components/badge/badge.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/handlebars';
+
+const item = defineCatalogItem({
+  id: 'badge',
+  name: 'Badge',
+  implementation: './Badge.hbs',
+});
+
+export default item;
+
+type BadgePreview = Preview<typeof item>;
+
+export const Primary = {
+  args: { variant: 'primary', children: 'New' },
+} satisfies BadgePreview;
+```
+
+### CSF
+
+CSF is a React source format. A React item can reference an existing CSF file with `fromCSF`.
+The CSF file stays unchanged and defines its previews through named exports. Each story's `args` merge with and override `meta.args`.
+Handoff preserves story names, `argTypes`, and `render` functions.
+It finds the React component through `meta.component`, then documents and publishes it with the story file.
+
+```ts
+// components/card/card.handoff.ts
+import { defineCatalogItem, fromCSF } from 'handoff-app/react';
+
+export default defineCatalogItem({
+  id: 'card',
+  name: 'Card',
+  implementation: fromCSF('./Card.stories.tsx'),
 });
 ```
 
-Components are referenced by stable ID in patterns. A named preview can be
-selected and its arguments can be overridden by each reference. Additional
-references can be added as required by the composition.
+`Meta` and `StoryObj` are exported from `handoff-app/react`, so a story file type-checks without a
+Storybook dependency. A project that already has Storybook keeps using its own types.
+
+```tsx
+// components/card/Card.stories.tsx
+import { type Meta, type StoryObj } from 'handoff-app/react';
+import Card from './Card';
+
+const meta = { component: Card } satisfies Meta<typeof Card>;
+export default meta;
+
+export const Primary: StoryObj<typeof meta> = {
+  args: { title: 'Example' },
+};
+```
+
+A CSF preview is rendered on the server and is not hydrated. A direct React implementation is
+hydrated in the browser.
+
+### Compositions
+
+A composition references other items by stable id. A named preview can be selected and its arguments
+can be overridden by each reference. A composition needs no framework, so it is declared with
+`defineCatalogItem` from the package root.
 
 ```ts
-// patterns/example/pattern.handoff.ts
-import { definePattern } from 'handoff-app';
+// patterns/example/example.handoff.ts
+import { defineCatalogItem } from 'handoff-app';
 
-export default definePattern({
+export default defineCatalogItem({
   id: 'pattern-id',
   name: 'Pattern name',
   description: 'Purpose and usage of the composition.',
   group: 'Group name',
-  components: [
-    {
-      id: 'component-id',
-      preview: 'default',
-      args: { label: 'Pattern example' },
-    },
+  composition: [
+    { ref: 'component-id', preview: 'Default' },
+    { ref: 'badge', args: { children: 'Send' } },
   ],
 });
 ```
 
-Component and pattern directories are registered in the project config:
+An item declares `implementation` or `composition`, never both. Terms such as atom, element, and
+block stay optional classification metadata on `type` and `categories`.
+
+### Registration
+
+Catalog directories are registered in one place. A path is either an item directory or a collection
+directory whose subdirectories are each treated as an item.
 
 ```ts
 // handoff.config.ts
 import { defineConfig } from 'handoff-app';
 
 export default defineConfig({
-  entries: {
-    components: ['components/example'],
-    patterns: ['patterns'],
+  catalog: {
+    include: ['components', 'patterns'],
   },
   runtime: {
     workspace: {
@@ -146,6 +218,23 @@ export default defineConfig({
   },
 });
 ```
+
+### Migrating from the earlier API
+
+These APIs still work but will be removed in a future major release. Handoff prints one notice per build with the files that use them.
+
+| Earlier API | Replacement |
+|---|---|
+| `defineReactComponent(Component, config)` | `defineCatalogItem({ ...config, implementation: Component })` from `handoff-app/react` |
+| `defineHandlebarsComponent(config)` | `defineCatalogItem({ ...config, implementation: './Template.hbs' })` from `handoff-app/handlebars` |
+| `defineCsfComponent(config)` | `defineCatalogItem({ ...config, implementation: fromCSF('./Component.stories.tsx') })` from `handoff-app/react` |
+| `definePattern({ components })` | `defineCatalogItem({ composition })` from `handoff-app`, with `ref` in place of `id` |
+| `defineComponent(config)` | `defineCatalogItem` from the entry point that matches the renderer |
+| `previews: { primary: { title, args } }` | `export const Primary = { name, args }` |
+| `entries.components`, `entries.patterns` | `catalog.include` |
+| Plain JavaScript, CommonJS, and JSON declarations | A `.handoff.ts` declaration that calls `defineCatalogItem` |
+
+A JSON declaration cannot call a function or carry a named export, so it stays on the earlier form.
 
 Custom documentation pages are Markdown files under `pages/`. Their relative
 paths become their routes and registry IDs.

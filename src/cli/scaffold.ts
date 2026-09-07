@@ -46,15 +46,12 @@ const toTitleCase = (str: string): string => {
  * Generate the component JS stub content
  */
 const generateComponentStub = (config: ComponentConfig): string => {
+  // `implementation` names the source, so `entries` carries only supporting files.
   const entriesLines: string[] = [];
-  if (config.generateTsx) {
-    entriesLines.push(`    component: './${config.name}.tsx',`);
-  } else {
-    entriesLines.push(`    template: './${config.name}.hbs',`);
-  }
   if (config.generateScss) {
     entriesLines.push(`    scss: './${config.name}.scss',`);
   }
+  const entriesBlock = entriesLines.length ? `\n  entries: {\n${entriesLines.join('\n')}\n  },` : '';
 
   const commonMetadata = `  id: "${config.name}",
   name: "${config.title}",
@@ -63,34 +60,31 @@ const generateComponentStub = (config: ComponentConfig): string => {
   type: "element",
   figmaComponentId: "${config.name}",`;
 
+  const previewExport = `
+exports.Default = {
+  args: {},
+};
+`;
+
   if (config.generateTsx) {
-    return `const { defineReactComponent } = require('handoff-app');
-const ${toTitleCase(config.name).replace(/\s/g, '')} = require('./${config.name}').default;
+    const identifier = toTitleCase(config.name).replace(/\s/g, '');
+    return `const { defineCatalogItem } = require('handoff-app/react');
+const ${identifier} = require('./${config.name}').default;
 
-module.exports = defineReactComponent(${toTitleCase(config.name).replace(/\s/g, '')}, {
+exports.default = defineCatalogItem({
 ${commonMetadata}
-  entries: {
-${entriesLines.join('\n')}
-  },
-  previews: {
-    default: { title: "Default", args: {} }
-  }
+  implementation: ${identifier},${entriesBlock}
 });
-`;
+${previewExport}`;
   }
 
-  return `const { defineHandlebarsComponent } = require('handoff-app');
+  return `const { defineCatalogItem } = require('handoff-app/handlebars');
 
-module.exports = defineHandlebarsComponent({
+exports.default = defineCatalogItem({
 ${commonMetadata}
-  entries: {
-${entriesLines.join('\n')}
-  },
-  previews: {
-    default: { title: "Default", args: {} }
-  }
+  implementation: './${config.name}.hbs',${entriesBlock}
 });
-`;
+${previewExport}`;
 };
 
 /**
@@ -446,7 +440,7 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
   // so we only write the uncovered ones into entries.components.
   if (updateConfig) {
     const componentDirs = componentNames.map((name) => path.resolve(handoff.workingPath, COMPONENTS_DIR, name));
-    const uncovered = componentDirs.filter((dir) => !isEntryCovered(handoff, 'components', dir));
+    const uncovered = componentDirs.filter((dir) => !isEntryCovered(handoff, dir));
 
     if (uncovered.length === 0) {
       p.log.info(`Config already covers these components - they'll auto-load`);

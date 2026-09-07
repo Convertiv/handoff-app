@@ -165,6 +165,13 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
   let templateDir: string | undefined;
   const componentDirs = new Set<string>();
 
+  // A catalog item declares its previews in the declaration file, and its implementation can sit
+  // outside the item directory. The directories derived from `entries` below can therefore miss the
+  // declaration, which would leave a preview edit uncached.
+  if (runtimeComponent.path) {
+    componentDirs.add(normalizePathForCompare(runtimeComponent.path));
+  }
+
   // Add entry files and infer component directories from resolved entry paths
   const entries = runtimeComponent.entries as Record<string, string | undefined> | undefined;
   if (entries) {

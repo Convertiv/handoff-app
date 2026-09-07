@@ -262,8 +262,19 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
                 ? normalizePathForCompare(handoff.getMainConfigFilePath() as string)
                 : undefined;
 
+              const kindChanged = !!entryBefore && !!entryAfter && entryBefore.kind !== entryAfter.kind;
+
               if (normalizedMainConfig && normalizedChanged === normalizedMainConfig) {
                 await processComponents(handoff);
+              } else if (kindChanged) {
+                // The declaration switched between an implementation and a composition. A targeted
+                // rebuild would leave the previous lane's summary entry and artifacts behind, so
+                // rebuild everything and let the finalizers re-sync.
+                await processComponents(handoff);
+              } else if (entryAfter?.kind === 'unknown') {
+                // The file did not parse. It stays watched, so the next valid save rebuilds it.
+                // Guessing a lane here would rebuild the wrong entity.
+                Logger.warn(`Declaration is not valid yet; skipping rebuild: ${changedFile}`);
               } else if (handle) {
                 await handle.apply(handoff, entryAfter?.entityId);
               } else if (entryAfter?.kind === 'pattern') {
@@ -327,9 +338,13 @@ const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarC
   if (configPaths.length === 0) return;
 
   const dirsToWatch: string[] = [];
+  const seenDirs = new Set<string>();
   for (const configPath of configPaths) {
     const resolved = path.resolve(handoff.workingPath, configPath);
+    const key = normalizePathForCompare(resolved);
+    if (seenDirs.has(key)) continue;
     if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+      seenDirs.add(key);
       dirsToWatch.push(resolved);
     }
   }
@@ -403,57 +418,49 @@ const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarC
 };
 
 /**
- * Watches the parent component directories from config.entries.components for
- * new components being added. When a new config file appears in a new
- * subdirectory, reloads the runtime config, restarts the component and
- * configuration watchers, then builds the new component and any patterns that
- * reference it.
+ * Watches the directories from `catalog.include` and from the deprecated `entries.components` /
+ * `entries.patterns` keys for a new item. A single watcher covers all three, because a directory
+ * holds either kind and the declaration decides which; watching one list twice would handle each
+ * new file twice.
+ *
+ * The rebuild differs by kind, and the dependency arrow is reversed between them. A new item with
+ * an implementation builds itself, then the compositions that reference it. A new composition
+ * rebuilds the preview segment of the items it references, so the synthetic `__pattern_*` HTML
+ * exists, and only then composes itself.
  */
-export const watchComponentDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
+export const watchCatalogDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
   watchEntityDirectories(handoff, state, chokidarConfig, {
-    getConfigPaths: (h) => h.config.entries?.components ?? [],
-    getKnownIds: (h) => Object.keys(h.runtimeConfig?.entries?.components ?? {}),
-    getWatcher: (s) => s.componentDirectoriesWatcher,
-    setWatcher: (s, w) => { s.componentDirectoriesWatcher = w; },
-    scheduleKeyPrefix: 'newComponent',
-    entityLabel: 'component',
+    getConfigPaths: (h) => [
+      ...(h.config.catalog?.include ?? []),
+      ...(h.config.entries?.components ?? []),
+      ...(h.config.entries?.patterns ?? []),
+    ],
+    getKnownIds: (h) => [
+      ...Object.keys(h.runtimeConfig?.entries?.components ?? {}),
+      ...Object.keys(h.runtimeConfig?.entries?.patterns ?? {}),
+    ],
+    getWatcher: (s) => s.catalogDirectoriesWatcher,
+    setWatcher: (s, w) => {
+      s.catalogDirectoriesWatcher = w;
+    },
+    scheduleKeyPrefix: 'newCatalogItem',
+    entityLabel: 'catalog item',
     onDetected: async (handoff, { addedIds }) => {
-      for (const componentId of addedIds) {
+      const addedComponentIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entries?.components?.[id]);
+      const addedPatternIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entries?.patterns?.[id]);
+
+      for (const componentId of addedComponentIds) {
         await processComponents(handoff, componentId);
         await runAllFinalizers(handoff, { patternRebuildComponentIds: [componentId] });
       }
-    },
-  });
-};
 
-/**
- * Watches the parent pattern directories from config.entries.patterns for new
- * patterns being added. The rebuild sequence intentionally differs from
- * watchComponentDirectories because the dependency arrow is reversed: a new
- * pattern references existing components, so we rebuild only the preview
- * segment of those components (to produce the __pattern_* HTML files that
- * injectPatternPreviews registered) before composing the pattern itself.
- */
-export const watchPatternDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
-  watchEntityDirectories(handoff, state, chokidarConfig, {
-    getConfigPaths: (h) => h.config.entries?.patterns ?? [],
-    getKnownIds: (h) => Object.keys(h.runtimeConfig?.entries?.patterns ?? {}),
-    getWatcher: (s) => s.patternDirectoriesWatcher,
-    setWatcher: (s, w) => { s.patternDirectoriesWatcher = w; },
-    scheduleKeyPrefix: 'newPattern',
-    entityLabel: 'pattern',
-    onDetected: async (handoff, { addedIds }) => {
-      // Rebuild only the previews segment for each component the new pattern
-      // references. Their JS/CSS/structure are unchanged — only the new
-      // synthetic preview HTML files need to be generated so that buildPatterns
-      // can assemble the pattern from them.
-      for (const patternId of addedIds) {
+      for (const patternId of addedPatternIds) {
         await rebuildPatternComponentPreviews(handoff, patternId);
       }
 
-      // Build only the new pattern directly rather than going through
-      // runAllFinalizers, which would rebuild all patterns unnecessarily.
-      await buildPatterns(handoff, { onlyPatternIds: new Set(addedIds) });
+      if (addedPatternIds.length > 0) {
+        await buildPatterns(handoff, { onlyPatternIds: new Set(addedPatternIds) });
+      }
     },
   });
 };
