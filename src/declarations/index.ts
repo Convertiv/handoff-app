@@ -13,8 +13,10 @@ export type {
   GenericDeclarationConfig,
   GenericPatternDeclarationConfig,
   HandlebarsDeclarationConfig,
+  LegacyRendererKind,
   PatternComponentRef,
   ReactDeclarationConfig,
-  RendererKind
+  RendererKind,
+  SourceFormat
 } from './types';
 

@@ -33,7 +33,8 @@ export class PublishPackageError extends Error {
 type RenderedEntityKind = Extract<TransferEntityKind, 'component' | 'pattern'>;
 
 /**
- * Build a registry-safe `item` record: the built summary enriched with the renderer and the entry
+ * Build a registry-safe `item` record: the built summary enriched with the renderer, its source
+ * format, and the entry
  * source-file paths **remapped** from absolute workspace locations to the registry-safe relative
  * paths the uploaded source files use. Workspace-absolute paths never cross to the registry, and a
  * later checkout can reconstruct the entity from the relative entries + uploaded files.
@@ -56,6 +57,11 @@ const enrichItem = async (
   const renderer = (runtime as { renderer?: string }).renderer;
   if (renderer) {
     item.renderer = renderer;
+  }
+
+  const sourceFormat = (runtime as { sourceFormat?: string }).sourceFormat;
+  if (sourceFormat) {
+    item.sourceFormat = sourceFormat;
   }
 
   if (rawEntries && sourceDir) {

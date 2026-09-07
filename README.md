@@ -69,8 +69,8 @@ my-handoff-project/
 ## Catalog items
 
 Every documented UI entry is a catalog item. Each item declares either an implementation or a composition of other items.
-Use `defineCatalogItem` from the entry point that matches its framework.
-The declaration supplies stable identity, documentation metadata, source entries, and previews.
+An implementation always names its renderer. Import `defineCatalogItem` from the renderer module, or specify the renderer through
+the package root. The declaration supplies stable identity, documentation metadata, source entries, and previews.
 
 ### React
 
@@ -138,7 +138,7 @@ export const Primary = {
 
 ### CSF
 
-CSF is a React source format. A React item can reference an existing CSF file with `fromCSF`.
+CSF is a source format. A story file uses the renderer from the module that declares it. A React item references an existing CSF file with `fromCSF`.
 The CSF file stays unchanged and defines its previews through named exports. Each story's `args` merge with and override `meta.args`.
 Handoff preserves story names, `argTypes`, and `render` functions.
 It finds the React component through `meta.component`, then documents and publishes it with the story file.
@@ -176,12 +176,12 @@ hydrated in the browser.
 ### Compositions
 
 A composition references other items by stable id. A named preview can be selected and its arguments
-can be overridden by each reference. A composition needs no framework, so it is declared with
-`defineCatalogItem` from the package root.
+can be overridden by each reference. A composition needs no renderer, so it is declared with
+`defineCatalogItem` from `handoff-app/pattern`.
 
 ```ts
 // patterns/example/example.handoff.ts
-import { defineCatalogItem } from 'handoff-app';
+import { defineCatalogItem } from 'handoff-app/pattern';
 
 export default defineCatalogItem({
   id: 'pattern-id',
@@ -197,6 +197,7 @@ export default defineCatalogItem({
 
 An item declares `implementation` or `composition`, never both. Terms such as atom, element, and
 block stay optional classification metadata on `type` and `categories`.
+
 
 ### Registration
 
@@ -228,13 +229,14 @@ These APIs still work but will be removed in a future major release. Handoff pri
 | `defineReactComponent(Component, config)` | `defineCatalogItem({ ...config, implementation: Component })` from `handoff-app/react` |
 | `defineHandlebarsComponent(config)` | `defineCatalogItem({ ...config, implementation: './Template.hbs' })` from `handoff-app/handlebars` |
 | `defineCsfComponent(config)` | `defineCatalogItem({ ...config, implementation: fromCSF('./Component.stories.tsx') })` from `handoff-app/react` |
-| `definePattern({ components })` | `defineCatalogItem({ composition })` from `handoff-app`, with `ref` in place of `id` |
-| `defineComponent(config)` | `defineCatalogItem` from the entry point that matches the renderer |
+| `definePattern({ components })` | `defineCatalogItem({ composition })` from `handoff-app/pattern`, with `ref` in place of `id` |
+| `defineComponent(config)` | `defineCatalogItem({ implementation: { renderer, file } })` from `handoff-app` |
 | `previews: { primary: { title, args } }` | `export const Primary = { name, args }` |
 | `entries.components`, `entries.patterns` | `catalog.include` |
 | Plain JavaScript, CommonJS, and JSON declarations | A `.handoff.ts` declaration that calls `defineCatalogItem` |
 
-A JSON declaration cannot call a function or carry a named export, so it stays on the earlier form.
+A JSON declaration cannot call a function, but `implementation: { renderer, file }` is plain data, so
+it can declare a catalog item. It cannot carry a named export, so its previews stay under `previews`.
 
 Custom documentation pages are Markdown files under `pages/`. Their relative
 paths become their routes and registry IDs.

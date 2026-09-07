@@ -266,6 +266,8 @@ export interface ComponentResult {
   group?: string;
   type?: string;
   renderer?: string;
+  /** Source format the implementation is written in, when the renderer alone does not say. */
+  sourceFormat?: string;
   categories?: string[];
   tags?: string[];
   properties?: Record<string, ComponentProperty>;
@@ -335,6 +337,7 @@ export const toComponentResult = (
     // The workspace summary omits `renderer` while the registry has a column for it. The artifact
     // carries it either way, so prefer that and both modes agree.
     renderer: artifact?.renderer ?? record.renderer,
+    sourceFormat: artifact?.sourceFormat ?? record.sourceFormat,
     categories: record.categories?.length ? record.categories : undefined,
     tags: record.tags?.length ? record.tags : undefined,
     properties,

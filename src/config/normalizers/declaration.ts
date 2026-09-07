@@ -1,5 +1,12 @@
 import path from 'path';
-import { RendererKind } from '../../declarations/types';
+import {
+  moduleFor,
+  readRenderer,
+  sourceForFile,
+  type ComponentSource,
+  type RendererKind,
+  type SourceFormat,
+} from '../../catalog/renderers';
 import { ComponentListObject } from '../../transformers/preview/types';
 
 type RawDeclaration = Record<string, any>;
@@ -10,32 +17,48 @@ type NormalizeOptions = {
   warn: (message: string) => void;
 };
 
-const isCsfStoryFile = (filePath?: string): boolean => {
-  return !!filePath && /\.stories\.(jsx|tsx|js|ts)$/.test(filePath);
-};
-
-const isReactComponentFile = (filePath?: string): boolean => {
-  return !!filePath && /\.(jsx|tsx)$/.test(filePath) && !isCsfStoryFile(filePath);
-};
-
-const isHandlebarsFile = (filePath?: string): boolean => {
-  return !!filePath && /\.hbs$/.test(filePath);
-};
-
-export const inferRendererFromEntries = (entries?: Record<string, string | undefined>): RendererKind | undefined => {
+/**
+ * Entry keys and template extensions identify the source when no renderer is specified.
+ * `component` implies React regardless of extension. CSF takes priority because `.stories.tsx` also matches `.tsx`.
+ */
+export const inferSourceFromEntries = (
+  entries?: Record<string, string | undefined>
+): ComponentSource | undefined => {
   if (!entries) return undefined;
 
-  if (entries.story || isCsfStoryFile(entries.template)) {
-    return 'csf';
-  }
-  if (entries.component || isReactComponentFile(entries.template)) {
-    return 'react';
-  }
-  if (isHandlebarsFile(entries.template)) {
-    return 'handlebars';
+  if (entries.story) {
+    return { renderer: 'react', sourceFormat: 'csf' };
   }
 
-  return undefined;
+  const fromTemplate = sourceForFile(entries.template);
+  if (fromTemplate?.sourceFormat) {
+    return fromTemplate;
+  }
+  if (entries.component) {
+    return { renderer: 'react' };
+  }
+
+  return fromTemplate;
+};
+
+/** A declared renderer takes priority over file extensions. Warn here before a mismatch fails in a renderer plugin. */
+const warnOnFileMismatch = (
+  stated: { renderer?: RendererKind; sourceFormat?: SourceFormat },
+  entries: Record<string, string>,
+  options: NormalizeOptions
+): void => {
+  if (!stated.renderer) return;
+
+  const file = entries.component ?? entries.story ?? entries.template;
+  const fromFile = sourceForFile(file);
+  if (!fromFile || fromFile.renderer === stated.renderer) return;
+
+  options.warn(
+    `Component "${options.fallbackId}" states renderer "${stated.renderer}", but its implementation file ` +
+      `"${path.relative(path.dirname(options.declarationPath), file)}" is a "${fromFile.renderer}" source, ` +
+      `so the build will fail. Declare it with defineCatalogItem from "${moduleFor(fromFile.renderer)}", or ` +
+      `point "implementation" at a file the renderer can read.`
+  );
 };
 
 const resolveEntryPaths = (entries: Record<string, string | undefined>, declarationPath: string): Record<string, string> => {
@@ -123,10 +146,27 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     options.warn
   );
   const entries = resolveEntryPaths({ ...(normalizedRaw.entries || {}) }, options.declarationPath);
-  const resolvedRenderer: RendererKind | undefined =
-    normalizedRaw.renderer || inferRendererFromEntries(entries);
 
-  if (resolvedRenderer === 'react') {
+  const stated = readRenderer(normalizedRaw);
+  warnOnFileMismatch(stated, entries, options);
+
+  const inferred = inferSourceFromEntries(entries);
+  const renderer = stated.renderer ?? inferred?.renderer;
+  // An inferred format only applies to the renderer it was inferred for.
+  const sourceFormat =
+    stated.sourceFormat ?? (renderer === inferred?.renderer ? inferred?.sourceFormat : undefined);
+
+  // Format before renderer: a CSF item is a React item, so the React branch would claim it first.
+  if (sourceFormat === 'csf') {
+    const storyPath = entries.story || entries.template;
+    if (!storyPath) {
+      throw new Error(
+        `Component "${options.fallbackId}" in "${options.declarationPath}" uses format "csf" but is missing entries.story`
+      );
+    }
+    entries.story = storyPath;
+    entries.template = storyPath;
+  } else if (renderer === 'react') {
     const componentPath = entries.component || entries.template;
     if (!componentPath) {
       throw new Error(
@@ -135,20 +175,7 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     }
     entries.component = componentPath;
     entries.template = componentPath;
-  }
-
-  if (resolvedRenderer === 'csf') {
-    const storyPath = entries.story || entries.template;
-    if (!storyPath) {
-      throw new Error(
-        `Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "csf" but is missing entries.story`
-      );
-    }
-    entries.story = storyPath;
-    entries.template = storyPath;
-  }
-
-  if (resolvedRenderer === 'handlebars') {
+  } else if (renderer === 'handlebars') {
     if (!entries.template) {
       throw new Error(
         `Component "${options.fallbackId}" in "${options.declarationPath}" uses renderer "handlebars" but is missing entries.template`
@@ -169,7 +196,8 @@ export const normalizeComponentDeclaration = (raw: RawDeclaration, options: Norm
     ...(normalizedRaw as ComponentListObject),
     id: explicitId || options.fallbackId,
     title: normalizedRaw.name || normalizedRaw.title || '',
-    renderer: resolvedRenderer,
+    renderer,
+    sourceFormat,
     entries,
     previews: normalizedPreviews,
     // Source location of the entity (declaration directory), retained so the store can expose a

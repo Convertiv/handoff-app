@@ -38,14 +38,23 @@ export type StoryObj<TMeta = unknown> = TMeta extends { component?: infer TCompo
     }
   : never;
 
+/** A template is not a React source. The message is the type, so the error reads as a sentence. */
+type TemplateOnReact = "a .hbs template belongs to 'handoff-app/handlebars', not 'handoff-app/react'";
+
+/**
+ * Excluding known template extensions keeps extensionless paths and string variables valid.
+ * The build reports mismatches that types cannot catch.
+ */
+type ReactSourcePath<TPath extends string> = TPath extends `${string}.hbs` ? TemplateOnReact : TPath;
+
 /**
  * `implementation` accepts an imported component, a file path, or `fromCSF(...)`. For an imported
  * component, the file is resolved from the import in this declaration.
  */
-export function defineCatalogItem<TProps = Record<string, unknown>>(
-  input: CatalogItemMeta & { implementation: ComponentType<TProps> | string }
+export function defineCatalogItem<TProps = Record<string, unknown>, TPath extends string = string>(
+  input: CatalogItemMeta & { implementation: ComponentType<TProps> | ReactSourcePath<TPath> }
 ): CatalogItem<TProps>;
 export function defineCatalogItem(input: CatalogItemMeta & { implementation: CsfSource }): CatalogItem<never>;
 export function defineCatalogItem(input: CatalogItemMeta & { implementation: unknown }): CatalogItem<any> {
-  return createCatalogItem(input);
+  return createCatalogItem(input, 'react');
 }

@@ -1,7 +1,16 @@
 import type React from 'react';
 import type { ComponentObject } from '../transformers/preview/types';
 
-export type RendererKind = 'react' | 'handlebars' | 'csf';
+import type { RendererKind } from '../catalog/renderers';
+
+export type { RendererKind, SourceFormat } from '../catalog/renderers';
+
+/**
+ * Legacy declarations use `csf` for React with a CSF source. Only deprecated types accept this value.
+ *
+ * @deprecated Use `RendererKind` with `implementation`.
+ */
+export type LegacyRendererKind = RendererKind | 'csf';
 
 /** @deprecated Use `CatalogPreview`, or `Preview<typeof item>` for an inferred argument type. */
 export type DeclarationPreview<TArgs = Record<string, any>> = {
@@ -18,13 +27,15 @@ type BaseDeclarationEntries = NonNullable<ComponentObject['entries']> & {
   templates?: string;
 };
 
-type OptionalComponentMetadata = Partial<Omit<ComponentObject, 'previews' | 'entries' | 'title' | 'should_do' | 'should_not_do'>>;
+type OptionalComponentMetadata = Partial<
+  Omit<ComponentObject, 'previews' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer'>
+>;
 
 /** @deprecated Use `CatalogItemMeta` from the catalog API. */
 export type BaseDeclarationConfig = OptionalComponentMetadata & {
   id?: string;
   name: string;
-  renderer?: RendererKind;
+  renderer?: LegacyRendererKind;
   entries?: BaseDeclarationEntries;
   previews?: Record<string, DeclarationPreview>;
   shouldDo?: string[];
@@ -49,7 +60,7 @@ export type CsfDeclarationConfig = Omit<BaseDeclarationConfig, 'renderer' | 'ent
 
 /** @deprecated Use `CatalogItem` from the catalog API. */
 export type GenericDeclarationConfig = Omit<BaseDeclarationConfig, 'renderer'> & {
-  renderer: RendererKind;
+  renderer: LegacyRendererKind;
 };
 
 export type ReactComponentType<TProps = any> = React.ComponentType<TProps>;

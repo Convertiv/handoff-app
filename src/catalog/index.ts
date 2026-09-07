@@ -8,6 +8,19 @@ export {
   type ResolvedSource,
 } from './implementation';
 export { normalizeCatalogItem, type CatalogNormalizeResult } from './normalize';
+export {
+  authoredEntryKeyFor,
+  deprecatedFactoryFor,
+  entryKeyFor,
+  moduleFor,
+  readRenderer,
+  sourceForFile,
+  sourceForFormat,
+  type ComponentSource,
+  type EntryKey,
+  type RendererKind,
+  type SourceFormat,
+} from './renderers';
 export { createCatalogPreviews, orderPreviews, readExportOrder, readExportOrderFromSource } from './previews';
 export type {
   CatalogItem,
@@ -17,6 +30,8 @@ export type {
   CatalogPreview,
   CompositionRef,
   CsfSource,
+  ImplementationSource,
+  NormalizedImplementation,
   Preview,
   SourceDescriptor,
 } from './types';

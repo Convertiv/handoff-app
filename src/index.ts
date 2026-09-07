@@ -600,8 +600,10 @@ export type {
   CatalogItemMeta,
   CatalogPreview,
   CompositionRef,
+  ImplementationSource,
   Preview,
   SourceDescriptor,
+  SourceFormat,
 } from './catalog';
 export {
   defineComponent,

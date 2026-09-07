@@ -17,6 +17,7 @@ import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import { startCase } from 'lodash';
 import path from 'path';
+import { authoredEntryKeyFor, deprecatedFactoryFor, moduleFor, readRenderer, type ComponentSource } from '../../catalog/renderers';
 import { type EntryKind, isEntryCovered, writeEntries } from '../../config/entries';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
@@ -202,19 +203,7 @@ const resolveDeclarationFileName = (dir: string, id: string, format: Declaration
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/**
- * The single authored "primary" entry key per renderer. The normalizer derives the others (e.g. it
- * mirrors a React `component` into `template`, and a CSF `story` into `template`), so the stored
- * record carries duplicates that must not be re-authored. React authors `component`; handlebars and
- * CSF author `template` (a `.stories.*` template is what marks a CSF component).
- */
-const PRIMARY_ENTRY_BY_RENDERER: Record<string, string> = {
-  react: 'component',
-  handlebars: 'template',
-  csf: 'template',
-};
-
-/** Primary entry keys, in preference order, for an unknown renderer. */
+/** Primary entry keys, in preference order, for a renderer the registry does not know. */
 const PRIMARY_ENTRY_KEYS = ['component', 'template', 'story'] as const;
 
 /** Supporting entry keys kept verbatim regardless of renderer. */
@@ -225,13 +214,12 @@ const asStringArray = (value: unknown): string[] | undefined =>
   Array.isArray(value) && value.every((item) => typeof item === 'string') ? (value as string[]) : undefined;
 
 /**
- * Rebuild the authored `entries` for a renderer: keep only the renderer's primary entry key (so the
- * normalizer-duplicated keys are dropped) plus the supporting source entries (`js`/`scss`/`schema`/
- * `templates`). An unknown renderer keeps the first available primary key by preference order.
+ * Normalization mirrors React `component` and CSF `story` entries into `template`. Checkout omits these duplicates
+ * and preserves supporting entries (`js`/`scss`/`schema`/`templates`). Unknown renderers use the first available primary key.
  */
 const buildEntries = (
   entries: unknown,
-  renderer: string | undefined,
+  source: Partial<ComponentSource>,
   options: { includePrimary?: boolean } = {}
 ): Record<string, unknown> | undefined => {
   if (!isPlainObject(entries)) {
@@ -241,7 +229,7 @@ const buildEntries = (
 
   // A catalog item names its implementation through `implementation`, so re-emitting the primary
   // entry key would state the same fact twice.
-  const primaryKey = renderer ? PRIMARY_ENTRY_BY_RENDERER[renderer] : undefined;
+  const primaryKey = authoredEntryKeyFor(source.renderer, source.sourceFormat);
   if (options.includePrimary !== false) {
     if (primaryKey && typeof entries[primaryKey] === 'string') {
       result[primaryKey] = entries[primaryKey];
@@ -307,11 +295,12 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   if (group) declaration.group = group;
   const type = asString(item.type);
   if (type) declaration.type = type;
-  const renderer = asString(item.renderer);
-  if (renderer) declaration.renderer = renderer;
+  const source = readRenderer(item);
+  if (source.renderer) declaration.renderer = source.renderer;
+  if (source.sourceFormat) declaration.sourceFormat = source.sourceFormat;
   const componentExport = asString(item.componentExport);
   if (componentExport) declaration.componentExport = componentExport;
-  const entries = buildEntries(item.entries, renderer);
+  const entries = buildEntries(item.entries, source);
   if (entries) declaration.entries = entries;
 
   const previews = buildPreviews(item.previews);
@@ -379,24 +368,10 @@ const buildPatternDeclaration = (item: Record<string, unknown>): Record<string, 
   return declaration;
 };
 
-/**
- * Pick the renderer-specific `handoff-app` component factory from the record's renderer so the
- * synthesized declaration matches the authored contract for that renderer. `react`/`handlebars`/`csf`
- * each have a dedicated factory that stamps the renderer itself (so the renderer is dropped from the
- * authored config); an unknown/absent renderer falls back to the generic `defineComponent`, which
- * keeps `renderer` in the config.
- */
-const resolveComponentFactory = (renderer: string | undefined): { name: string; stampsRenderer: boolean } => {
-  switch (renderer) {
-    case 'react':
-      return { name: 'defineReactComponent', stampsRenderer: true };
-    case 'handlebars':
-      return { name: 'defineHandlebarsComponent', stampsRenderer: true };
-    case 'csf':
-      return { name: 'defineCsfComponent', stampsRenderer: true };
-    default:
-      return { name: 'defineComponent', stampsRenderer: false };
-  }
+/** Deprecated factories preserve declarations that the catalog API cannot express. */
+const resolveComponentFactory = (source: Partial<ComponentSource>): { name: string; stampsSource: boolean } => {
+  const factory = deprecatedFactoryFor(source.renderer, source.sourceFormat);
+  return factory ? { name: factory, stampsSource: true } : { name: 'defineComponent', stampsSource: false };
 };
 
 /** Drop a key from an object without mutating it. */
@@ -404,6 +379,8 @@ const omit = (object: Record<string, unknown>, key: string): Record<string, unkn
   const { [key]: _removed, ...rest } = object;
   return rest;
 };
+
+const omitSource = (object: Record<string, unknown>): Record<string, unknown> => omit(omit(object, 'renderer'), 'sourceFormat');
 
 /** Turn a relative entry path into a module specifier (extension stripped, `./`-prefixed). */
 const toImportSpecifier = (entryPath: string): string => {
@@ -620,7 +597,8 @@ const renderComponentDeclaration = (
   format: DeclarationFormat,
   warn?: (message: string) => void
 ): string => {
-  const renderer = asString(declaration.renderer);
+  const source = readRenderer(declaration);
+  const { renderer, sourceFormat } = source;
   const previews = isPlainObject(declaration.previews) ? declaration.previews : undefined;
   const entries = isPlainObject(declaration.entries) ? declaration.entries : undefined;
   const componentEntry = entries ? asString(entries.component) : undefined;
@@ -628,7 +606,10 @@ const renderComponentDeclaration = (
   const storyEntry = entries ? (asString(entries.story) ?? templateEntry) : undefined;
 
   if (format === 'json') {
-    warn?.(`"${asString(declaration.id) ?? 'item'}" is written as a JSON declaration, which cannot use defineCatalogItem.`);
+    warn?.(
+      `"${asString(declaration.id) ?? 'item'}" is written as a JSON declaration, which cannot carry previews as named ` +
+        `exports, so it keeps the record form.`
+    );
     return `${JSON.stringify(omit(declaration, 'componentExport'), null, 2)}\n`;
   }
 
@@ -638,26 +619,29 @@ const renderComponentDeclaration = (
         `deprecated declaration form. Rename the preview to migrate it.`
     );
   } else {
-    const item = omit(omit(omit(declaration, 'renderer'), 'previews'), 'componentExport');
-    const supportingEntries = buildEntries(declaration.entries, renderer, { includePrimary: false });
+    const item = omit(omit(omitSource(declaration), 'previews'), 'componentExport');
+    const supportingEntries = buildEntries(declaration.entries, source, { includePrimary: false });
     if (supportingEntries) item.entries = supportingEntries;
     else delete item.entries;
 
-    if (renderer === 'csf' && storyEntry) {
+    // Format before renderer: a CSF item is a React item, so the React branch would claim it first.
+    // The guard is the format, never `storyEntry` — that falls back to the mirrored `template`, so
+    // it is set for every React component too.
+    if (sourceFormat === 'csf' && storyEntry) {
       // The story file owns the previews, so the declaration carries none.
       return renderCatalogDeclaration({
         format,
-        entryPoint: 'handoff-app/react',
+        entryPoint: moduleFor('react'),
         imports: [],
         named: ['defineCatalogItem', 'fromCSF'],
         item: withImplementation(item, new RawExpression(`fromCSF('${toFilePath(storyEntry)}')`)),
       });
     }
 
-    if (renderer === 'handlebars' && templateEntry) {
+    if (!sourceFormat && renderer === 'handlebars' && templateEntry) {
       return renderCatalogDeclaration({
         format,
-        entryPoint: 'handoff-app/handlebars',
+        entryPoint: moduleFor(renderer),
         imports: [],
         named: ['defineCatalogItem'],
         item: withImplementation(item, toFilePath(templateEntry)),
@@ -665,34 +649,49 @@ const renderComponentDeclaration = (
       });
     }
 
-    if (renderer === 'react' && componentEntry) {
+    if (!sourceFormat && renderer === 'react' && componentEntry) {
       const { statement, identifier } = buildImplementationImport(declaration, componentEntry, format);
       return renderCatalogDeclaration({
         format,
-        entryPoint: 'handoff-app/react',
+        entryPoint: moduleFor(renderer),
         imports: [statement],
         named: ['defineCatalogItem'],
         item: withImplementation(item, new RawExpression(identifier)),
         previews: toCatalogPreviews(previews),
       });
     }
+
+    // A renderer with no module of its own states itself through the root module, which takes plain
+    // data — so no deprecated factory is needed for it.
+    const primaryEntry = componentEntry ?? templateEntry ?? storyEntry;
+    if (renderer && !moduleFor(renderer) && primaryEntry) {
+      const implementation = { renderer, ...(sourceFormat ? { format: sourceFormat } : {}), file: toFilePath(primaryEntry) };
+      return renderCatalogDeclaration({
+        format,
+        entryPoint: 'handoff-app',
+        imports: [],
+        named: ['defineCatalogItem'],
+        item: withImplementation(item, implementation),
+        previews: toCatalogPreviews(previews),
+      });
+    }
   }
 
   // Anything the catalog API cannot express falls back to the renderer's deprecated factory.
-  const factory = resolveComponentFactory(renderer);
+  const factory = resolveComponentFactory(source);
   const legacy = omit(declaration, 'componentExport');
 
   if (factory.name === 'defineReactComponent' && componentEntry) {
     const specifier = toImportSpecifier(componentEntry);
     const identifier = toComponentIdentifier(componentEntry, asString(declaration.id) ?? 'Component');
-    const literal = toJsLiteral(omit(legacy, 'renderer'));
+    const literal = toJsLiteral(omitSource(legacy));
     return format === 'ts'
       ? `import { defineReactComponent } from 'handoff-app';\nimport ${identifier} from '${specifier}';\n\nexport default defineReactComponent(${identifier}, ${literal});\n`
       : `const { defineReactComponent } = require('handoff-app');\nconst ${identifier} = require('${specifier}').default;\n\nmodule.exports = defineReactComponent(${identifier}, ${literal});\n`;
   }
 
-  const effective = factory.name === 'defineReactComponent' ? { name: 'defineComponent', stampsRenderer: false } : factory;
-  const config = effective.stampsRenderer ? omit(legacy, 'renderer') : legacy;
+  const effective = factory.name === 'defineReactComponent' ? { name: 'defineComponent', stampsSource: false } : factory;
+  const config = effective.stampsSource ? omitSource(legacy) : legacy;
   return wrapFactory(effective.name, config, format);
 };
 
@@ -711,7 +710,7 @@ const renderPatternDeclaration = (declaration: Record<string, unknown>, format: 
     }),
   };
 
-  return renderCatalogDeclaration({ format, entryPoint: 'handoff-app', imports: [], named: ['defineCatalogItem'], item });
+  return renderCatalogDeclaration({ format, entryPoint: 'handoff-app/pattern', imports: [], named: ['defineCatalogItem'], item });
 };
 
 /** Synthesize the declaration file contents for an entity, faithful to its renderer/kind contract. */

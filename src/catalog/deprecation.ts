@@ -13,10 +13,10 @@ const REPLACEMENTS: Record<string, string> = {
   defineReactComponent: "defineCatalogItem from 'handoff-app/react'",
   defineHandlebarsComponent: "defineCatalogItem from 'handoff-app/handlebars'",
   defineCsfComponent: "defineCatalogItem with fromCSF() from 'handoff-app/react'",
-  defineComponent: 'defineCatalogItem from the entry point that matches the renderer',
-  definePattern: "defineCatalogItem with composition from 'handoff-app'",
+  defineComponent: "defineCatalogItem with implementation: { renderer, file } from 'handoff-app'",
+  definePattern: "defineCatalogItem with composition from 'handoff-app/pattern'",
   'plain declaration object': 'a .handoff.ts declaration that calls defineCatalogItem',
-  'JSON declaration': 'a .handoff.ts declaration that calls defineCatalogItem',
+  'JSON declaration': 'a .handoff.json declaration with implementation: { renderer, file }',
   'entries.components / entries.patterns': 'catalog.include',
 };
 

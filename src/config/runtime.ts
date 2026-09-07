@@ -145,7 +145,7 @@ const discoverCsfPreviews = (
   component: ComponentListObject,
   handoff: HandoffContext
 ): Record<string, any> | undefined => {
-  if (component.renderer !== 'csf' || !component.entries?.template) {
+  if (component.sourceFormat !== 'csf' || !component.entries?.template) {
     return component.previews;
   }
 
@@ -237,7 +237,7 @@ const classifyDeclaration = (
  * source path that escapes the entity directory.
  */
 const resolveCsfComponentSource = (component: ComponentListObject): void => {
-  if (component.renderer !== 'csf') return;
+  if (component.sourceFormat !== 'csf') return;
 
   const storyPath = component.entries?.story;
   if (!storyPath || component.entries?.component) return;
@@ -314,7 +314,10 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     // retried on the next save. The index records it with an unknown kind, so a watcher does not
     // guess the wrong lane.
     const skip = (message: string, error: unknown): void => {
-      Logger.warn(`${message}: ${declarationPath}`);
+      // The message carries the authoring error, so it belongs in the warning rather than in a
+      // debug line the default log level hides.
+      const detail = error instanceof Error && error.message ? ` — ${error.message}` : '';
+      Logger.warn(`${message}: ${declarationPath}${detail}`);
       Logger.debug('Declaration parse detail:', error);
       configFileIndex.set(indexKey, { kind: 'unknown', entityId: itemBaseName });
     };

@@ -65,7 +65,8 @@ export const defineCsfComponent = (config: CsfDeclarationConfig): GenericDeclara
   return markDeprecated(
     {
       ...config,
-      renderer: 'csf',
+      renderer: 'react',
+      sourceFormat: 'csf',
     },
     'defineCsfComponent'
   );

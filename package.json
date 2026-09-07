@@ -36,6 +36,10 @@
       "types": "./dist/handlebars.d.ts",
       "default": "./dist/handlebars.js"
     },
+    "./pattern": {
+      "types": "./dist/pattern.d.ts",
+      "default": "./dist/pattern.js"
+    },
     "./package.json": "./package.json",
     "./*": "./*"
   },
@@ -46,6 +50,9 @@
       ],
       "handlebars": [
         "./dist/handlebars.d.ts"
+      ],
+      "pattern": [
+        "./dist/pattern.d.ts"
       ]
     }
   },

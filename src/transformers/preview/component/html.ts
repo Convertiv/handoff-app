@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
-import { RendererKind } from '../../../declarations/types';
+import { readRenderer, sourceForFile, type ComponentSource } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
@@ -9,16 +9,17 @@ import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
-const resolveRenderer = (data: TransformComponentTokensResult): RendererKind | undefined => {
-  const templatePath = data.entries?.template || '';
-  return (
-    data.renderer ||
-    (data.entries?.story || templatePath.match(/\.stories\.(jsx|tsx|js|ts)$/) ? 'csf' : undefined) ||
-    (data.entries?.component || (templatePath.includes('.tsx') && !templatePath.match(/\.stories\.(jsx|tsx|js|ts)$/))
-      ? 'react'
-      : undefined) ||
-    (templatePath.includes('.hbs') ? 'handlebars' : undefined)
-  );
+/** The renderer and source format to build with. A record states them; older ones are read off the entries. */
+const resolveSource = (data: TransformComponentTokensResult): Partial<ComponentSource> => {
+  const stated = readRenderer(data);
+  if (stated.renderer) return stated;
+
+  if (data.entries?.story) return { renderer: 'react', sourceFormat: 'csf' };
+
+  const fromTemplate = sourceForFile(data.entries?.template);
+  if (fromTemplate) return fromTemplate;
+
+  return data.entries?.component ? { renderer: 'react' } : {};
 };
 
 /**
@@ -42,14 +43,20 @@ export const buildPreviews = async (
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
-  const resolvedRenderer = resolveRenderer(data);
+  const { renderer, sourceFormat } = resolveSource(data);
 
-  const plugins = [
-    ...(viteBaseConfig.plugins || []),
-    ...(resolvedRenderer === 'handlebars' ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
-    ...(resolvedRenderer === 'csf' ? [csfRenderPlugin(data, components, handoff)] : []),
-    ...(resolvedRenderer === 'react' ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
-  ];
+  // Exactly one renderer builds an item. A CSF item is a React item, so independent tests would
+  // hand it both the CSF and the SSR plugin, and each would write its own previews.
+  const rendererPlugins =
+    sourceFormat === 'csf'
+      ? [csfRenderPlugin(data, components, handoff)]
+      : renderer === 'handlebars'
+        ? [handlebarsPreviewsPlugin(data, components, handoff)]
+        : renderer === 'react'
+          ? [react(), ssrRenderPlugin(data, components, handoff)]
+          : [];
+
+  const plugins = [...(viteBaseConfig.plugins || []), ...rendererPlugins];
 
   // Store the current NODE_ENV value before vite build
   // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'
