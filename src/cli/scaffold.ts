@@ -437,7 +437,7 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
   }
 
   // Update config if requested. Components already covered by a collection directory auto-load,
-  // so we only write the uncovered ones into entries.components.
+  // so we only write the uncovered ones into catalog.include.
   if (updateConfig) {
     const componentDirs = componentNames.map((name) => path.resolve(handoff.workingPath, COMPONENTS_DIR, name));
     const uncovered = componentDirs.filter((dir) => !isEntryCovered(handoff, dir));
@@ -445,13 +445,13 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
     if (uncovered.length === 0) {
       p.log.info(`Config already covers these components - they'll auto-load`);
     } else {
-      const result = await writeEntries(handoff, 'components', uncovered);
+      const result = await writeEntries(handoff, uncovered);
       if (result.status === 'added') {
         const configFileName = result.configPath ? path.basename(result.configPath) : 'handoff.config.json';
         p.log.success(`Updated ${configFileName} with component paths`);
       } else {
         const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
-        p.log.warn(`Could not automatically update ${where}. Please manually add these paths to entries.components:`);
+        p.log.warn(`Could not automatically update ${where}. Please manually add these paths to catalog.include:`);
         for (const rel of result.pending) {
           console.log(chalk.yellow(`  '${rel}'`));
         }

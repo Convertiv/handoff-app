@@ -4,7 +4,7 @@ The authoring contract for a documented UI entry. A catalog item declares either
 `implementation`, which names its renderer, or a `composition` of other items. The shared model
 carries no React types, so another framework adds an entry point without changing it.
 
-The module converts declarations into the raw shapes the component and pattern normalizers accept. An item with
+The module maps declarations directly into the runtime component and pattern records. An item with
 an implementation takes the component pipeline; an item with a composition takes the pattern
 pipeline.
 
@@ -12,13 +12,12 @@ pipeline.
 
 | File                | Purpose                                                                                                                                              |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `renderers.ts`      | The renderer registry: one row per renderer and per source format, plus `sourceForFile()`, `entryKeyFor()`, `moduleFor()`, `readRenderer()`          |
+| `renderers.ts`      | The renderer registry: one row per renderer and per source format, plus `sourceForFile()`, `entryKeyFor()`, `moduleFor()`          |
 | `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `ImplementationSource`, `SourceDescriptor`. Types only, no React |
-| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `defineCatalogItem()` for the root module, `isCatalogItem()`              |
+| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `defineCatalogItem()` for the root module, `validateCatalogItem()`              |
 | `previews.ts`       | `createCatalogPreviews()` — named exports of a declaration module become previews; `readExportOrder()` / `orderPreviews()` restore declaration order |
 | `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export                                                                |
-| `normalize.ts`      | `normalizeCatalogItem()` — declaration module to raw component or pattern shape                                                                      |
-| `deprecation.ts`    | `createDeprecationCollector()` — one deduplicated notice per declaration load                                                                        |
+| `normalize.ts`      | `normalizeCatalogItem()` — declaration module to runtime component or pattern record                                                                      |
 | `index.ts`          | Barrel re-exports                                                                                                                                    |
 
 ## Entry points
@@ -36,11 +35,8 @@ A new renderer module requires a definition in `renderers.ts`, an `exports` entr
 
 The renderer entry point specifies the renderer. The package root accepts `implementation: { renderer, file }`.
 
-The renderer is plain data, so JSON declarations can specify it without a function call.
-`resolvePropertySource` reads the declaration source text, which still says `implementation: Button`.
-
-A JSON declaration can therefore declare a catalog item, but it cannot carry previews as named
-exports, so it keeps authoring them under `previews`.
+Declarations use `.handoff.ts`, `.handoff.js`, or `.handoff.cjs` modules and export previews by name.
+`validateCatalogItem` rejects removed fields and invalid renderer/source-format pairs.
 
 ## Why the implementation file is resolved from source text
 
@@ -48,7 +44,7 @@ exports, so it keeps authoring them under `previews`.
 docgen, file watching, and publishing. `resolvePropertySource` reads the declaration or story source,
 finds the identifier the property is bound to, and follows its import. Resolution never throws. An
 explicit path takes precedence, and a single sibling component file is the fallback.
-If resolution fails, Handoff prints a warning and leaves the entry unset.
+If resolution fails, Handoff skips the item with an actionable warning and retries on the next save.
 
 A resolved file outside the item directory is reported. `publish` makes entry paths relative to the
 entity directory and `registry/path.ts` rejects a `..` segment, so such an item cannot be published.
@@ -62,3 +58,6 @@ preview whose export form does not parse keeps its position at the end rather th
 
 The same pass runs on CSF story files, in the loader and again in `csf-render`, so a story list
 matches the file the way Storybook shows it.
+
+Publish records carry `previewOrder` because PostgreSQL jsonb does not preserve object key order.
+Registry reads and checkout restore this order before serving or exporting previews.

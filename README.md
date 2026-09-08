@@ -220,23 +220,10 @@ export default defineConfig({
 });
 ```
 
-### Migrating from the earlier API
+### Upgrade from version 1.x.x to version 2.x.x
 
-These APIs still work but will be removed in a future major release. Handoff prints one notice per build with the files that use them.
-
-| Earlier API | Replacement |
-|---|---|
-| `defineReactComponent(Component, config)` | `defineCatalogItem({ ...config, implementation: Component })` from `handoff-app/react` |
-| `defineHandlebarsComponent(config)` | `defineCatalogItem({ ...config, implementation: './Template.hbs' })` from `handoff-app/handlebars` |
-| `defineCsfComponent(config)` | `defineCatalogItem({ ...config, implementation: fromCSF('./Component.stories.tsx') })` from `handoff-app/react` |
-| `definePattern({ components })` | `defineCatalogItem({ composition })` from `handoff-app/pattern`, with `ref` in place of `id` |
-| `defineComponent(config)` | `defineCatalogItem({ implementation: { renderer, file } })` from `handoff-app` |
-| `previews: { primary: { title, args } }` | `export const Primary = { name, args }` |
-| `entries.components`, `entries.patterns` | `catalog.include` |
-| Plain JavaScript, CommonJS, and JSON declarations | A `.handoff.ts` declaration that calls `defineCatalogItem` |
-
-A JSON declaration cannot call a function, but `implementation: { renderer, file }` is plain data, so
-it can declare a catalog item. It cannot carry a named export, so its previews stay under `previews`.
+See the [version 1.x.x to version 2.x.x migration guide](UPGRADE.md#version-1xx-to-version-2xx)
+for breaking changes, migration steps, and upgrade verification.
 
 Custom documentation pages are Markdown files under `pages/`. Their relative
 paths become their routes and registry IDs.

@@ -1,3 +1,5 @@
+import { isEntryCovered, writeEntries } from '../config/entries';
+import { isComponentDirectory } from '../config/runtime';
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
@@ -117,17 +119,9 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
   name = name.replace('.html', '');
 
-  let componentsRoot: string;
-  if (handoff.config?.entries?.components?.length) {
-    componentsRoot = path.resolve(handoff.workingPath, handoff.config.entries.components[0]);
-  } else {
-    componentsRoot = path.resolve(handoff.workingPath, DEFAULT_COMPONENTS_DIR);
-    Logger.warn(
-      `No entries.components configured in handoff.config.*. ` +
-      `Scaffolding into "${DEFAULT_COMPONENTS_DIR}/". ` +
-      `Add this path to entries.components in your config so the build picks it up.`
-    );
-  }
+  const configuredRoot = handoff.config.catalog?.include?.[0];
+  const root = path.resolve(handoff.workingPath, configuredRoot ?? DEFAULT_COMPONENTS_DIR);
+  const componentsRoot = isComponentDirectory(root) ? path.dirname(root) : root;
 
   let workingPath = path.resolve(componentsRoot, name);
   if (!fs.existsSync(workingPath)) {
@@ -196,6 +190,11 @@ exports.Default = {
 
   fs.writeFileSync(path.resolve(workingPath, `${name}.handoff.js`), declarationContent);
   Logger.success(`New component declaration ${name}.handoff.js was created in ${workingPath}`);
+
+  if (!isEntryCovered(handoff, workingPath)) {
+    const result = await writeEntries(handoff, [workingPath]);
+    if (result.status === 'unsupported') Logger.warn(`Add ${result.pending.join(', ')} to catalog.include in handoff.config.`);
+  }
 
   return handoff;
 };

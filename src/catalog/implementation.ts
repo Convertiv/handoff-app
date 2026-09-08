@@ -75,11 +75,11 @@ const findBinding = (sourceCode: string, localName: string): Binding | undefined
     if (exportName) return { specifier: match[2], exportName };
   }
 
-  const requireDefault = sourceCode.match(
-    new RegExp(`(?:const|let|var)\\s+${localName}\\s*=\\s*require\\(\\s*['"]([^'"]+)['"]\\s*\\)(\\.default)?`)
+  const requireBinding = sourceCode.match(
+    new RegExp(`(?:const|let|var)\\s+${localName}\\s*=\\s*require\\(\\s*['"]([^'"]+)['"]\\s*\\)(?:\\.([A-Za-z_$][\\w$]*))?`)
   );
-  if (requireDefault) {
-    return { specifier: requireDefault[1], exportName: requireDefault[2] ? 'default' : '*' };
+  if (requireBinding) {
+    return { specifier: requireBinding[1], exportName: requireBinding[2] ?? '*' };
   }
 
   const requireNamed = sourceCode.match(

@@ -131,6 +131,8 @@ export type ComponentObject = {
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
   previews: { [key: string]: OptionalPreviewRender };
+  /** Source export order retained when publishing previews through jsonb storage. */
+  previewOrder?: string[];
   /** Internal previews generated only for pattern composition, not public docs */
   internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   /** Optional array of high-level categories for search/filtering */

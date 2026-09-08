@@ -16,5 +16,5 @@ export { initRuntimeConfig } from './runtime';
 export { validateConfig } from './validator';
 
 // Registering directory-list entries (components/patterns)
-export { isEntryCovered, resolveEntryTarget, writeEntries } from './entries';
-export type { EntryKind, EntryTarget, WriteEntriesResult } from './entries';
+export { isEntryCovered, writeEntries } from './entries';
+export type { WriteEntriesResult } from './entries';

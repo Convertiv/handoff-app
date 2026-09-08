@@ -94,6 +94,9 @@ export const createCatalogPreviews = (
   for (const [exportName, value] of Object.entries(moduleExports ?? {})) {
     if (exportName === 'default' || exportName === '__esModule') continue;
     if (!isPreviewDeclaration(value)) continue;
+    if (value && typeof value === 'object' && ('values' in value || 'title' in value)) {
+      throw new Error(`Preview "${exportName}" uses removed fields. Use args and name. See UPGRADE.md#catalog-items.`);
+    }
 
     const preview = value as CatalogPreview;
     previews[exportName] = {

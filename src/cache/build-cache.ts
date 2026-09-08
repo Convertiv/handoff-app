@@ -205,19 +205,9 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
 
   // Find the config file path for this component using exact config filename + directory matching.
   const configPaths = handoff.getConfigFilePaths();
-  const expectedConfigFileNames = new Set([
-    `${componentId}.handoff.ts`,
-    `${componentId}.handoff.js`,
-    `${componentId}.handoff.cjs`,
-    `${componentId}.handoff.json`,
-    `${componentId}.json`,
-    `${componentId}.js`,
-    `${componentId}.cjs`,
-  ]);
   const matchingConfigPath = configPaths.find((configPath) => {
     const configFileName = path.basename(configPath);
-    const isModernDeclaration = /\.handoff\.(ts|js|cjs|json)$/.test(configFileName);
-    if (!expectedConfigFileNames.has(configFileName) && !isModernDeclaration) {
+    if (!/\.handoff\.(ts|js|cjs)$/.test(configFileName)) {
       return false;
     }
 

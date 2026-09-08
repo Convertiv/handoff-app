@@ -8,11 +8,8 @@
  * - an individual entity directory (e.g. `"components/button"`): the entity stays invisible until
  *   its own path is added to the list.
  *
- * A workspace registers items under `catalog.include`, or under the deprecated
- * `entries.components` / `entries.patterns` keys. {@link isEntryCovered} answers "does this already
- * load?" across all three by reusing the runtime expansion ({@link getComponentsForPath});
- * {@link writeEntries} appends the paths that don't, across the `.json`, `.ts`, `.js`, and `.cjs`
- * config formats.
+ * A workspace registers items under `catalog.include`. Discovery expands collection directories;
+ * the writer appends uncovered paths in JSON, TypeScript, JavaScript, and CommonJS project configs.
  */
 
 import fs from 'fs-extra';
@@ -20,20 +17,6 @@ import path from 'path';
 import { Config } from '../types/config';
 import { arePathsEqual } from '../utils/path';
 import { getComponentsForPath } from './runtime';
-
-/**
- * The deprecated `entries` keys whose values are declared as a list of directory paths.
- * @deprecated Use `catalog.include`.
- */
-export type EntryKind = 'components' | 'patterns';
-
-/** Config location a directory list lives in, as a parent object and the key inside it. */
-export interface EntryTarget {
-  parent: 'catalog' | 'entries';
-  key: string;
-}
-
-const CATALOG_TARGET: EntryTarget = { parent: 'catalog', key: 'include' };
 
 /** Minimal handoff shape needed here; avoids importing the full Handoff class (circular dep). */
 interface ConfigContext {
@@ -59,23 +42,7 @@ export interface WriteEntriesResult {
 const toEntryPath = (handoff: ConfigContext, targetDir: string): string =>
   path.relative(handoff.workingPath, targetDir).split(path.sep).join('/');
 
-/**
- * Where a new entity is registered: `catalog.include` when the config declares it, otherwise the
- * deprecated key for the kind. Checkout follows the layout the config already uses rather than
- * rewriting it into a shape the author did not choose.
- */
-export const resolveEntryTarget = (handoff: ConfigContext, kind: EntryKind): EntryTarget => {
-  if (handoff.config?.catalog?.include) return CATALOG_TARGET;
-  const usesLegacyKeys = !!handoff.config?.entries?.components || !!handoff.config?.entries?.patterns;
-  return usesLegacyKeys ? { parent: 'entries', key: kind } : CATALOG_TARGET;
-};
-
-/** Every directory path registered in the config, whatever key declares it. */
-const registeredPaths = (handoff: ConfigContext): string[] => [
-  ...(handoff.config?.catalog?.include ?? []),
-  ...(handoff.config?.entries?.components ?? []),
-  ...(handoff.config?.entries?.patterns ?? []),
-];
+const registeredPaths = (handoff: ConfigContext): string[] => handoff.config?.catalog?.include ?? [];
 
 /**
  * True when `targetDir` already loads through an existing declaration: listed directly, or sitting
@@ -100,17 +67,17 @@ const formatEntryArray = (paths: string[], indent: string): string => {
 };
 
 /** Append entry paths to a structured `.json` config (lossless read/modify/write). */
-const addToJsonConfig = async (configPath: string, target: EntryTarget, relPaths: string[]): Promise<boolean> => {
+const addToJsonConfig = async (configPath: string, relPaths: string[]): Promise<boolean> => {
   try {
     const config = await fs.readJSON(configPath);
-    config[target.parent] = config[target.parent] ?? {};
-    const parent = config[target.parent];
-    const existing: string[] = Array.isArray(parent[target.key]) ? parent[target.key] : [];
+    config.catalog = config.catalog ?? {};
+    const parent = config.catalog;
+    const existing: string[] = Array.isArray(parent.include) ? parent.include : [];
     const existingSet = new Set(existing);
     for (const relPath of relPaths) {
       if (!existingSet.has(relPath)) existing.push(relPath);
     }
-    parent[target.key] = existing;
+    parent.include = existing;
     await fs.writeJSON(configPath, config, { spaces: 2 });
     return true;
   } catch {
@@ -151,8 +118,8 @@ type ListLocation = {
 };
 
 /** Locates `parent: { key: [ ... ] }` in a code config, ignoring commented-out examples. */
-const locateList = (masked: string, target: EntryTarget): ListLocation | undefined => {
-  const parentMatch = new RegExp(`(^|[\\s{,;])${target.parent}\\s*:\\s*\\{`, 'm').exec(masked);
+const locateList = (masked: string): ListLocation | undefined => {
+  const parentMatch = new RegExp(`(^|[\\s{,;])catalog\\s*:\\s*\\{`, 'm').exec(masked);
   if (!parentMatch) return undefined;
 
   const parentBrace = masked.indexOf('{', parentMatch.index + parentMatch[0].length - 1);
@@ -160,7 +127,7 @@ const locateList = (masked: string, target: EntryTarget): ListLocation | undefin
   if (parentClose < 0) return { parentBrace };
 
   const block = masked.slice(parentBrace, parentClose + 1);
-  const keyMatch = new RegExp(`(^|[\\s{,])${target.key}\\s*:\\s*\\[`).exec(block);
+  const keyMatch = new RegExp(`(^|[\\s{,])include\\s*:\\s*\\[`).exec(block);
   if (!keyMatch) return { parentBrace };
 
   const listStart = parentBrace + block.indexOf('[', keyMatch.index);
@@ -175,12 +142,12 @@ const locateList = (masked: string, target: EntryTarget): ListLocation | undefin
  * modules, not data, so there's no lossless structured write; if a computed or spread list can't be
  * edited textually, the caller falls back to printing the paths for the user to add.
  */
-const addToCodeConfig = async (configPath: string, target: EntryTarget, relPaths: string[]): Promise<boolean> => {
+const addToCodeConfig = async (configPath: string, relPaths: string[]): Promise<boolean> => {
   try {
     const content = await fs.readFile(configPath, 'utf8');
     const masked = maskComments(content);
     const arrayBlock = formatEntryArray(relPaths, '      ');
-    const location = locateList(masked, target);
+    const location = locateList(masked);
 
     // 1) The list already exists, so merge into it.
     if (location?.listStart !== undefined && location.listEnd !== undefined) {
@@ -204,12 +171,12 @@ const addToCodeConfig = async (configPath: string, target: EntryTarget, relPaths
     // 2) The parent object exists but not this key, so add the key.
     if (location) {
       const insertAt = location.parentBrace + 1;
-      await fs.writeFile(configPath, `${content.slice(0, insertAt)}\n    ${target.key}: ${arrayBlock},${content.slice(insertAt)}`, 'utf8');
+      await fs.writeFile(configPath, `${content.slice(0, insertAt)}\n    include: ${arrayBlock},${content.slice(insertAt)}`, 'utf8');
       return true;
     }
 
     // 3) No parent object, so insert one into the exported config object.
-    const parentBlock = `  ${target.parent}: {\n    ${target.key}: ${arrayBlock},\n  },\n`;
+    const parentBlock = `  catalog: {\n    include: ${arrayBlock},\n  },\n`;
     for (const anchor of [/module\.exports\s*=\s*\{/, /export\s+default\s+\{/, /defineConfig\s*\(\s*\{/]) {
       const anchorMatch = anchor.exec(masked);
       if (anchorMatch) {
@@ -231,8 +198,7 @@ const addToCodeConfig = async (configPath: string, target: EntryTarget, relPaths
  * config is edited losslessly, a code config best-effort. When no config file exists a minimal
  * `handoff.config.json` is created.
  */
-export const writeEntries = async (handoff: ConfigContext, kind: EntryKind, targetDirs: string[]): Promise<WriteEntriesResult> => {
-  const target = resolveEntryTarget(handoff, kind);
+export const writeEntries = async (handoff: ConfigContext, targetDirs: string[]): Promise<WriteEntriesResult> => {
   const relPaths = [...new Set(targetDirs.map((dir) => toEntryPath(handoff, dir)))];
   const configFile = CONFIG_FILES.find((file) => fs.existsSync(path.resolve(handoff.workingPath, file)));
   const configPath = configFile ? path.resolve(handoff.workingPath, configFile) : null;
@@ -244,7 +210,7 @@ export const writeEntries = async (handoff: ConfigContext, kind: EntryKind, targ
   if (!configPath) {
     const newConfigPath = path.resolve(handoff.workingPath, 'handoff.config.json');
     try {
-      await fs.writeJSON(newConfigPath, { [target.parent]: { [target.key]: relPaths } }, { spaces: 2 });
+      await fs.writeJSON(newConfigPath, { catalog: { include: relPaths } }, { spaces: 2 });
       return { status: 'added', configPath: newConfigPath, added: relPaths, pending: [] };
     } catch {
       return { status: 'unsupported', configPath: null, added: [], pending: relPaths };
@@ -252,8 +218,8 @@ export const writeEntries = async (handoff: ConfigContext, kind: EntryKind, targ
   }
 
   const ok = configPath.endsWith('.json')
-    ? await addToJsonConfig(configPath, target, relPaths)
-    : await addToCodeConfig(configPath, target, relPaths);
+    ? await addToJsonConfig(configPath, relPaths)
+    : await addToCodeConfig(configPath, relPaths);
 
   return ok
     ? { status: 'added', configPath, added: relPaths, pending: [] }

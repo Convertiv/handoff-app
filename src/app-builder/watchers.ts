@@ -365,13 +365,8 @@ const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarC
     const basename = path.basename(file);
     const dirName = path.basename(path.dirname(file));
 
-    // Only react to the primary declaration file for the directory (e.g.
-    // button.json, button.js, or button.handoff.ts inside a button/ subdir).
-    // The basename.startsWith(dirName) guard below ensures .ts here only
-    // ever matches files named after their parent directory, not arbitrary
-    // TypeScript source files.
-    const isConfigFile = basename.endsWith('.json') || basename.endsWith('.js') || basename.endsWith('.cjs') || basename.endsWith('.ts');
-    const isNewEntity = isConfigFile && basename.startsWith(dirName) && !knownIds.has(dirName);
+    const isConfigFile = /\.handoff\.(ts|js|cjs)$/.test(basename);
+    const isNewEntity = isConfigFile && !knownIds.has(dirName);
 
     if (!isNewEntity) return;
 
@@ -418,10 +413,8 @@ const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarC
 };
 
 /**
- * Watches the directories from `catalog.include` and from the deprecated `entries.components` /
- * `entries.patterns` keys for a new item. A single watcher covers all three, because a directory
- * holds either kind and the declaration decides which; watching one list twice would handle each
- * new file twice.
+ * Watches `catalog.include` directories for a new item. A single watcher covers implementations
+ * and compositions; the declaration determines which pipeline builds the item.
  *
  * The rebuild differs by kind, and the dependency arrow is reversed between them. A new item with
  * an implementation builds itself, then the compositions that reference it. A new composition
@@ -430,11 +423,7 @@ const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarC
  */
 export const watchCatalogDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions) => {
   watchEntityDirectories(handoff, state, chokidarConfig, {
-    getConfigPaths: (h) => [
-      ...(h.config.catalog?.include ?? []),
-      ...(h.config.entries?.components ?? []),
-      ...(h.config.entries?.patterns ?? []),
-    ],
+    getConfigPaths: (h) => [...(h.config.catalog?.include ?? [])],
     getKnownIds: (h) => [
       ...Object.keys(h.runtimeConfig?.entries?.components ?? {}),
       ...Object.keys(h.runtimeConfig?.entries?.patterns ?? {}),

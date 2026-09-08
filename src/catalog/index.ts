@@ -1,5 +1,4 @@
-export { createCatalogItem, defineCatalogItem, isCatalogItem } from './define';
-export { createDeprecationCollector, type DeprecationCollector } from './deprecation';
+export { createCatalogItem, defineCatalogItem, validateCatalogItem } from './define';
 export {
   findSiblingComponentFile,
   isInsideDirectory,
@@ -9,13 +8,9 @@ export {
 } from './implementation';
 export { normalizeCatalogItem, type CatalogNormalizeResult } from './normalize';
 export {
-  authoredEntryKeyFor,
-  deprecatedFactoryFor,
   entryKeyFor,
   moduleFor,
-  readRenderer,
   sourceForFile,
-  sourceForFormat,
   type ComponentSource,
   type EntryKey,
   type RendererKind,

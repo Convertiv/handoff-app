@@ -1,26 +1,12 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, build as viteBuild } from 'vite';
-import { readRenderer, sourceForFile, type ComponentSource } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
-
-/** The renderer and source format to build with. A record states them; older ones are read off the entries. */
-const resolveSource = (data: TransformComponentTokensResult): Partial<ComponentSource> => {
-  const stated = readRenderer(data);
-  if (stated.renderer) return stated;
-
-  if (data.entries?.story) return { renderer: 'react', sourceFormat: 'csf' };
-
-  const fromTemplate = sourceForFile(data.entries?.template);
-  if (fromTemplate) return fromTemplate;
-
-  return data.entries?.component ? { renderer: 'react' } : {};
-};
 
 /**
  * Builds previews for components using Vite and Handlebars.
@@ -43,7 +29,7 @@ export const buildPreviews = async (
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
-  const { renderer, sourceFormat } = resolveSource(data);
+  const { renderer, sourceFormat } = data;
 
   // Exactly one renderer builds an item. A CSF item is a React item, so independent tests would
   // hand it both the CSF and the SSR plugin, and each would write its own previews.

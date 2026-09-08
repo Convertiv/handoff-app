@@ -64,6 +64,13 @@ const enrichItem = async (
     item.sourceFormat = sourceFormat;
   }
 
+  const componentExport = (runtime as ComponentListObject).componentExport;
+  if (componentExport) item.componentExport = componentExport;
+  if (kind === 'component') {
+    // PostgreSQL jsonb does not preserve object key order.
+    item.previewOrder = Object.keys((runtime as ComponentListObject).previews ?? {});
+  }
+
   if (rawEntries && sourceDir) {
     const remapped: Record<string, string> = {};
     for (const [key, value] of Object.entries(rawEntries)) {

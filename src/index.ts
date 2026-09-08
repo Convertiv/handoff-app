@@ -589,7 +589,6 @@ class Handoff {
   }
 }
 
-export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
 export { defineCatalogItem } from './catalog';
@@ -604,14 +603,8 @@ export type {
   Preview,
   SourceDescriptor,
   SourceFormat,
+  RendererKind,
 } from './catalog';
-export {
-  defineComponent,
-  defineCsfComponent,
-  defineHandlebarsComponent,
-  definePattern,
-  defineReactComponent,
-} from './declarations';
 export { defineAssetStorage } from './registry/asset-storage/define';
 export type {
   AssetStorage,
@@ -620,16 +613,6 @@ export type {
   AssetStorageInput,
   AssetStorageReadResult,
 } from './registry/asset-storage/types';
-export type {
-  CsfDeclarationConfig,
-  DeclarationPreview,
-  GenericDeclarationConfig,
-  GenericPatternDeclarationConfig,
-  HandlebarsDeclarationConfig,
-  PatternComponentRef,
-  ReactDeclarationConfig,
-  RendererKind,
-} from './declarations';
 
 // Export transformers and types from handoff-core
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

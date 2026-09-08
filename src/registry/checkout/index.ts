@@ -15,10 +15,13 @@
 
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
+import { transformSync } from 'esbuild';
 import { startCase } from 'lodash';
 import path from 'path';
-import { authoredEntryKeyFor, deprecatedFactoryFor, moduleFor, readRenderer, type ComponentSource } from '../../catalog/renderers';
-import { type EntryKind, isEntryCovered, writeEntries } from '../../config/entries';
+import { orderPreviews } from '../../catalog/previews';
+import { validateCatalogItem } from '../../catalog/define';
+import { entryKeyFor, moduleFor, isRendererKind, isSourceFormat, SOURCE_FORMATS, type ComponentSource } from '../../catalog/renderers';
+import { isEntryCovered, writeEntries } from '../../config/entries';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
@@ -123,13 +126,13 @@ const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKin
 
 /**
  * Resolve the collection directory a new entity is cloned into from the configured
- * `entries.{components|patterns}`. Each entry is either a collection directory (used as-is) or a
+ * `catalog.include`. Each entry is either a collection directory (used as-is) or a
  * single declared entity directory, in which case its parent is the collection root so the new
  * entity lands as a sibling rather than nested inside. Different parents mean the config is
  * ambiguous, so we ask the user; with nothing configured we fall back to the default subdir.
  */
 const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind): Promise<string> => {
-  const configuredRoots = kind === 'component' ? handoff.config?.entries?.components : handoff.config?.entries?.patterns;
+  const configuredRoots = handoff.config?.catalog?.include;
   if (!configuredRoots?.length) {
     return path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
   }
@@ -177,7 +180,7 @@ const existingDeclarationFormat = (dir: string): DeclarationFormat | undefined =
     return undefined;
   }
   const ext = path.extname(declaration.fileName).slice(1).toLowerCase();
-  return (['ts', 'js', 'cjs', 'json'] as const).includes(ext as DeclarationFormat) ? (ext as DeclarationFormat) : undefined;
+  return (['ts', 'js', 'cjs'] as const).includes(ext as DeclarationFormat) ? (ext as DeclarationFormat) : undefined;
 };
 
 /**
@@ -203,9 +206,6 @@ const resolveDeclarationFileName = (dir: string, id: string, format: Declaration
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** Primary entry keys, in preference order, for a renderer the registry does not know. */
-const PRIMARY_ENTRY_KEYS = ['component', 'template', 'story'] as const;
-
 /** Supporting entry keys kept verbatim regardless of renderer. */
 const SUPPORTING_ENTRY_KEYS = ['js', 'scss', 'schema', 'templates'] as const;
 
@@ -215,7 +215,7 @@ const asStringArray = (value: unknown): string[] | undefined =>
 
 /**
  * Normalization mirrors React `component` and CSF `story` entries into `template`. Checkout omits these duplicates
- * and preserves supporting entries (`js`/`scss`/`schema`/`templates`). Unknown renderers use the first available primary key.
+ * and preserves supporting entries (`js`/`scss`/`schema`/`templates`).
  */
 const buildEntries = (
   entries: unknown,
@@ -229,15 +229,10 @@ const buildEntries = (
 
   // A catalog item names its implementation through `implementation`, so re-emitting the primary
   // entry key would state the same fact twice.
-  const primaryKey = authoredEntryKeyFor(source.renderer, source.sourceFormat);
+  const primaryKey = entryKeyFor(source.renderer, source.sourceFormat);
   if (options.includePrimary !== false) {
     if (primaryKey && typeof entries[primaryKey] === 'string') {
       result[primaryKey] = entries[primaryKey];
-    } else if (!primaryKey) {
-      const fallback = PRIMARY_ENTRY_KEYS.find((key) => typeof entries[key] === 'string');
-      if (fallback) {
-        result[fallback] = entries[fallback];
-      }
     }
   }
 
@@ -251,9 +246,9 @@ const buildEntries = (
 };
 
 /**
- * Rebuild the authored `previews` map (`DeclarationPreview`) from the stored previews, keeping only
+ * Rebuild the authored preview map from the stored previews, keeping only
  * authored fields (`title`, `args`) and dropping build-derived ones (rendered `url`, `usage`,
- * `sourcePreview`). The component normalizer maps authored `args` to `values`, so the stored record
+ * `sourcePreview`). Catalog normalization maps authored `args` to `values`, so the stored record
  * carries `values`; checkout re-emits it as `args` to match the authoring convention (the form
  * `make`/`scaffold` generate). Both rebuild identically.
  */
@@ -268,7 +263,7 @@ const buildPreviews = (previews: unknown): Record<string, unknown> | undefined =
     }
     const preview: Record<string, unknown> = {};
     if (typeof raw.title === 'string') preview.title = raw.title;
-    const args = raw.args !== undefined ? raw.args : raw.values;
+    const args = raw.values;
     if (args !== undefined) preview.args = args;
     result[key] = preview;
   }
@@ -276,7 +271,7 @@ const buildPreviews = (previews: unknown): Record<string, unknown> | undefined =
 };
 
 /**
- * Synthesize an authored component declaration (`GenericDeclarationConfig`) from the normalized
+ * Synthesize an authored component declaration from the normalized
  * record. Only authored fields are kept; registry-/build-derived data (`path`, `image`,
  * `properties`/docgen, rendered preview URLs, `internalPatternPreviews`, `validations`, `variant`,
  * review `metadata`) is dropped so the local build regenerates it. `name` carries the record title
@@ -295,7 +290,10 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   if (group) declaration.group = group;
   const type = asString(item.type);
   if (type) declaration.type = type;
-  const source = readRenderer(item);
+  const source = {
+    renderer: item.renderer as ComponentSource['renderer'],
+    sourceFormat: item.sourceFormat as ComponentSource['sourceFormat'],
+  };
   if (source.renderer) declaration.renderer = source.renderer;
   if (source.sourceFormat) declaration.sourceFormat = source.sourceFormat;
   const componentExport = asString(item.componentExport);
@@ -303,7 +301,9 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   const entries = buildEntries(item.entries, source);
   if (entries) declaration.entries = entries;
 
-  const previews = buildPreviews(item.previews);
+  const previews = buildPreviews(
+    isPlainObject(item.previews) ? orderPreviews(item.previews, asStringArray(item.previewOrder) ?? []) : undefined
+  );
   if (previews) declaration.previews = previews;
 
   const categories = asStringArray(item.categories);
@@ -311,9 +311,9 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   const tags = asStringArray(item.tags);
   if (tags) declaration.tags = tags;
 
-  const shouldDo = asStringArray(item.shouldDo) ?? asStringArray(item.should_do);
+  const shouldDo = asStringArray(item.should_do);
   if (shouldDo) declaration.shouldDo = shouldDo;
-  const shouldNotDo = asStringArray(item.shouldNotDo) ?? asStringArray(item.should_not_do);
+  const shouldNotDo = asStringArray(item.should_not_do);
   if (shouldNotDo) declaration.shouldNotDo = shouldNotDo;
 
   const figma = asString(item.figma);
@@ -327,7 +327,7 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
 };
 
 /**
- * Rebuild the authored pattern component refs (`PatternComponentRef`) from the stored entries,
+ * Rebuild the authored pattern component refs from the stored entries,
  * keeping only `id`/`preview`/`args` and dropping build-time resolution fields (`resolvedPreview`,
  * `resolved`).
  */
@@ -347,7 +347,7 @@ const buildPatternComponents = (components: unknown): Record<string, unknown>[] 
 };
 
 /**
- * Synthesize an authored pattern declaration (`GenericPatternDeclarationConfig`) from the normalized
+ * Synthesize an authored pattern declaration from the normalized
  * record. Only the authored fields (`id`, `name`, `description`, `group`, `tags`, `components`) are
  * kept; derived fields (`path`, rendered `url`, review `metadata`) are dropped.
  */
@@ -366,12 +366,6 @@ const buildPatternDeclaration = (item: Record<string, unknown>): Record<string, 
 
   declaration.components = buildPatternComponents(item.components);
   return declaration;
-};
-
-/** Deprecated factories preserve declarations that the catalog API cannot express. */
-const resolveComponentFactory = (source: Partial<ComponentSource>): { name: string; stampsSource: boolean } => {
-  const factory = deprecatedFactoryFor(source.renderer, source.sourceFormat);
-  return factory ? { name: factory, stampsSource: true } : { name: 'defineComponent', stampsSource: false };
 };
 
 /** Drop a key from an object without mutating it. */
@@ -476,14 +470,6 @@ const toJsLiteral = (value: unknown, indentLevel = 0): string => {
   return `{\n${lines.join(',\n')}\n${pad}}`;
 };
 
-/** Wrap a config object in a factory call for the given code format (unquoted identifier keys). */
-const wrapFactory = (factory: string, config: Record<string, unknown>, format: DeclarationFormat): string => {
-  const literal = toJsLiteral(config);
-  return format === 'ts'
-    ? `import { ${factory} } from 'handoff-app';\n\nexport default ${factory}(${literal});\n`
-    : `const { ${factory} } = require('handoff-app');\n\nmodule.exports = ${factory}(${literal});\n`;
-};
-
 /**
  * Re-shape stored previews for the catalog API: the display title becomes `name`, and is omitted
  * when it matches what `startCase` derives from the export name.
@@ -586,121 +572,75 @@ const renderCatalogDeclaration = (options: {
   return `${head}\n\nexports.default = defineCatalogItem(${literal});\n${buildPreviewExports(previews, format)}`;
 };
 
-/**
- * Code declarations use the catalog API, with previews as named exports. Two cases use the
- * inline-`previews` form instead: a JSON file, which cannot carry an export, and a preview name
- * that is not a JS identifier, which would have to be renamed and would break any composition
- * referencing it.
- */
-const renderComponentDeclaration = (
-  declaration: Record<string, unknown>,
-  format: DeclarationFormat,
-  warn?: (message: string) => void
-): string => {
-  const source = readRenderer(declaration);
+/** Emit only catalog declarations, with previews as named exports. */
+const renderComponentDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
+  const source = {
+    renderer: declaration.renderer as ComponentSource['renderer'],
+    sourceFormat: declaration.sourceFormat as ComponentSource['sourceFormat'],
+  };
   const { renderer, sourceFormat } = source;
   const previews = isPlainObject(declaration.previews) ? declaration.previews : undefined;
   const entries = isPlainObject(declaration.entries) ? declaration.entries : undefined;
   const componentEntry = entries ? asString(entries.component) : undefined;
   const templateEntry = entries ? asString(entries.template) : undefined;
-  const storyEntry = entries ? (asString(entries.story) ?? templateEntry) : undefined;
+  const storyEntry = entries ? asString(entries.story) : undefined;
 
-  if (format === 'json') {
-    warn?.(
-      `"${asString(declaration.id) ?? 'item'}" is written as a JSON declaration, which cannot carry previews as named ` +
-        `exports, so it keeps the record form.`
+  if (
+    !isRendererKind(renderer) ||
+    (sourceFormat !== undefined && (!isSourceFormat(sourceFormat) || !SOURCE_FORMATS[sourceFormat].renderers.includes(renderer)))
+  ) {
+    throw new CheckoutError(`Catalog item "${declaration.id}" has invalid renderer/source-format metadata. Rebuild and republish it.`);
+  }
+  if (!previewKeysAreIdentifiers(previews) && sourceFormat !== 'csf') {
+    throw new CheckoutError(
+      `Catalog item "${declaration.id}" has preview names that cannot be exported. Rename them and update composition references before publishing.`
     );
-    return `${JSON.stringify(omit(declaration, 'componentExport'), null, 2)}\n`;
+  }
+  const item = omit(omit(omitSource(declaration), 'previews'), 'componentExport');
+  const supportingEntries = buildEntries(declaration.entries, source, { includePrimary: false });
+  if (supportingEntries) item.entries = supportingEntries;
+  else delete item.entries;
+
+  // Format before renderer: a CSF item is a React item, so the React branch would claim it first.
+  if (sourceFormat === 'csf' && storyEntry) {
+    // The story file owns the previews, so the declaration carries none.
+    return renderCatalogDeclaration({
+      format,
+      entryPoint: moduleFor('react'),
+      imports: [],
+      named: ['defineCatalogItem', 'fromCSF'],
+      item: withImplementation(item, new RawExpression(`fromCSF('${toFilePath(storyEntry)}')`)),
+    });
   }
 
-  if (!previewKeysAreIdentifiers(previews)) {
-    warn?.(
-      `"${asString(declaration.id) ?? 'item'}" has a preview name that cannot be an export name, so it keeps the ` +
-        `deprecated declaration form. Rename the preview to migrate it.`
-    );
-  } else {
-    const item = omit(omit(omitSource(declaration), 'previews'), 'componentExport');
-    const supportingEntries = buildEntries(declaration.entries, source, { includePrimary: false });
-    if (supportingEntries) item.entries = supportingEntries;
-    else delete item.entries;
-
-    // Format before renderer: a CSF item is a React item, so the React branch would claim it first.
-    // The guard is the format, never `storyEntry` — that falls back to the mirrored `template`, so
-    // it is set for every React component too.
-    if (sourceFormat === 'csf' && storyEntry) {
-      // The story file owns the previews, so the declaration carries none.
-      return renderCatalogDeclaration({
-        format,
-        entryPoint: moduleFor('react'),
-        imports: [],
-        named: ['defineCatalogItem', 'fromCSF'],
-        item: withImplementation(item, new RawExpression(`fromCSF('${toFilePath(storyEntry)}')`)),
-      });
-    }
-
-    if (!sourceFormat && renderer === 'handlebars' && templateEntry) {
-      return renderCatalogDeclaration({
-        format,
-        entryPoint: moduleFor(renderer),
-        imports: [],
-        named: ['defineCatalogItem'],
-        item: withImplementation(item, toFilePath(templateEntry)),
-        previews: toCatalogPreviews(previews),
-      });
-    }
-
-    if (!sourceFormat && renderer === 'react' && componentEntry) {
-      const { statement, identifier } = buildImplementationImport(declaration, componentEntry, format);
-      return renderCatalogDeclaration({
-        format,
-        entryPoint: moduleFor(renderer),
-        imports: [statement],
-        named: ['defineCatalogItem'],
-        item: withImplementation(item, new RawExpression(identifier)),
-        previews: toCatalogPreviews(previews),
-      });
-    }
-
-    // A renderer with no module of its own states itself through the root module, which takes plain
-    // data — so no deprecated factory is needed for it.
-    const primaryEntry = componentEntry ?? templateEntry ?? storyEntry;
-    if (renderer && !moduleFor(renderer) && primaryEntry) {
-      const implementation = { renderer, ...(sourceFormat ? { format: sourceFormat } : {}), file: toFilePath(primaryEntry) };
-      return renderCatalogDeclaration({
-        format,
-        entryPoint: 'handoff-app',
-        imports: [],
-        named: ['defineCatalogItem'],
-        item: withImplementation(item, implementation),
-        previews: toCatalogPreviews(previews),
-      });
-    }
+  if (!sourceFormat && renderer === 'handlebars' && templateEntry) {
+    return renderCatalogDeclaration({
+      format,
+      entryPoint: moduleFor(renderer),
+      imports: [],
+      named: ['defineCatalogItem'],
+      item: withImplementation(item, toFilePath(templateEntry)),
+      previews: toCatalogPreviews(previews),
+    });
   }
 
-  // Anything the catalog API cannot express falls back to the renderer's deprecated factory.
-  const factory = resolveComponentFactory(source);
-  const legacy = omit(declaration, 'componentExport');
-
-  if (factory.name === 'defineReactComponent' && componentEntry) {
-    const specifier = toImportSpecifier(componentEntry);
-    const identifier = toComponentIdentifier(componentEntry, asString(declaration.id) ?? 'Component');
-    const literal = toJsLiteral(omitSource(legacy));
-    return format === 'ts'
-      ? `import { defineReactComponent } from 'handoff-app';\nimport ${identifier} from '${specifier}';\n\nexport default defineReactComponent(${identifier}, ${literal});\n`
-      : `const { defineReactComponent } = require('handoff-app');\nconst ${identifier} = require('${specifier}').default;\n\nmodule.exports = defineReactComponent(${identifier}, ${literal});\n`;
+  if (!sourceFormat && renderer === 'react' && componentEntry) {
+    const { statement, identifier } = buildImplementationImport(declaration, componentEntry, format);
+    return renderCatalogDeclaration({
+      format,
+      entryPoint: moduleFor(renderer),
+      imports: [statement],
+      named: ['defineCatalogItem'],
+      item: withImplementation(item, new RawExpression(identifier)),
+      previews: toCatalogPreviews(previews),
+    });
   }
 
-  const effective = factory.name === 'defineReactComponent' ? { name: 'defineComponent', stampsSource: false } : factory;
-  const config = effective.stampsSource ? omitSource(legacy) : legacy;
-  return wrapFactory(effective.name, config, format);
+  throw new CheckoutError(`Catalog item "${declaration.id}" has no valid implementation source. Rebuild and republish it.`);
 };
 
-/** Synthesize the composition declaration file via `defineCatalogItem` (or a bare object for JSON). */
+/** Synthesize the composition declaration file via `defineCatalogItem`. */
 const renderPatternDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
-  if (format === 'json') {
-    return `${JSON.stringify(declaration, null, 2)}\n`;
-  }
-
   const { components, ...rest } = declaration;
   const item: Record<string, unknown> = {
     ...rest,
@@ -710,19 +650,25 @@ const renderPatternDeclaration = (declaration: Record<string, unknown>, format: 
     }),
   };
 
+  validateCatalogItem(item);
   return renderCatalogDeclaration({ format, entryPoint: 'handoff-app/pattern', imports: [], named: ['defineCatalogItem'], item });
 };
 
 /** Synthesize the declaration file contents for an entity, faithful to its renderer/kind contract. */
-const synthesizeDeclaration = (
-  kind: TransferEntityKind,
-  item: Record<string, unknown>,
-  format: DeclarationFormat,
-  warn?: (message: string) => void
-): string =>
-  kind === 'component'
-    ? renderComponentDeclaration(buildComponentDeclaration(item), format, warn)
-    : renderPatternDeclaration(buildPatternDeclaration(item), format);
+const synthesizeDeclaration = (kind: TransferEntityKind, item: Record<string, unknown>, format: DeclarationFormat): string => {
+  const declaration =
+    kind === 'component'
+      ? renderComponentDeclaration(buildComponentDeclaration(item), format)
+      : renderPatternDeclaration(buildPatternDeclaration(item), format);
+  try {
+    transformSync(declaration, { loader: format === 'ts' ? 'ts' : 'js', logLevel: 'silent' });
+  } catch {
+    throw new CheckoutError(
+      `Catalog item "${item.id}" cannot be exported as ${format}. Use valid, distinct preview and component export names, then republish.`
+    );
+  }
+  return declaration;
+};
 
 /**
  * Confirm overwriting any local files the checkout would replace. Returns `true` to proceed. With
@@ -848,6 +794,7 @@ const checkoutSingle = async (
     }
     return { file, absolutePath };
   });
+  const declaration = synthesizeDeclaration(kind, payload.item, format);
   const plannedWrites = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath];
   const conflicts = plannedWrites.filter((file) => fs.existsSync(file));
   if (handoff.dryRun) {
@@ -866,7 +813,6 @@ const checkoutSingle = async (
     written.push(await writeSourceFile(targetDir, file));
   }
 
-  const declaration = synthesizeDeclaration(kind, payload.item, format, (message) => Logger.warn(message));
   await fs.writeFile(declarationPath, declaration, 'utf8');
   written.push(declarationPath);
 
@@ -878,7 +824,7 @@ const checkoutSingle = async (
 };
 
 /**
- * Declare freshly checked-out entities in `entries.{components|patterns}` so the workspace build
+ * Declare freshly checked-out entities in `catalog.include` so the workspace build
  * picks them up. Ones already covered by a collection directory load on their own and are left
  * alone; the rest are added to the config automatically. If the config can't be edited (a computed
  * or unusual `entries` array), we print the paths for the user to add so nothing is silently orphaned.
@@ -887,21 +833,23 @@ const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, ta
   if (kind === 'page') {
     return;
   }
-  const entryKind: EntryKind = kind === 'component' ? 'components' : 'patterns';
+  const entryKind = kind === 'component' ? 'components' : 'patterns';
   const uncovered = targetDirs.filter((dir) => !isEntryCovered(handoff, dir));
   if (uncovered.length === 0) {
     return;
   }
 
-  const result = await writeEntries(handoff, entryKind, uncovered);
+  const result = await writeEntries(handoff, uncovered);
   if (result.status === 'added') {
-    const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath) : 'handoff.config';
+    const where = result.configPath
+      ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath)
+      : 'handoff.config';
     Logger.success(`Updated ${where} with ${result.added.length} ${entryKind} path(s).`);
     return;
   }
 
   const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
-  Logger.warn(`Could not update ${where} automatically. Add these to entries.${entryKind} manually:`);
+  Logger.warn(`Could not update ${where} automatically. Add these to catalog.include manually:`);
   result.pending.forEach((rel) => Logger.warn(`  - ${rel}`));
 };
 

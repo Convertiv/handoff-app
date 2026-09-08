@@ -12,7 +12,7 @@ export type SourceDescriptor<TFormat extends string = string> = {
 
 export type CsfSource = SourceDescriptor<'csf'>;
 
-/** Plain data accepted by the package root and JSON declarations. */
+/** Explicit implementation source accepted by the package root. */
 export type ImplementationSource = {
   renderer: RendererKind;
   format?: SourceFormat;
@@ -27,14 +27,14 @@ export type NormalizedImplementation = {
   value?: unknown;
 };
 
-export type CatalogItemEntries = NonNullable<ComponentObject['entries']>;
+export type CatalogItemEntries = Pick<NonNullable<ComponentObject['entries']>, 'js' | 'scss' | 'schema' | 'templates'>;
 
 /**
  * Metadata a catalog item can carry. `type` and `categories` are free-form classification, so a
  * term such as atom, element, or block goes there.
  */
 export type CatalogItemMeta = Partial<
-  Omit<ComponentObject, 'previews' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer' | 'sourceFormat' | 'componentExport'>
+  Omit<ComponentObject, 'previews' | 'previewOrder' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer' | 'sourceFormat' | 'componentExport'>
 > & {
   id?: string;
   name?: string;

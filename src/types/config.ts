@@ -94,19 +94,6 @@ export interface ConfigEntries {
    * @example "scripts/main.js"
    */
   js?: string;
-  /**
-   * Array of component paths to be included in the build
-   * @deprecated Use `catalog.include`.
-   * @example ["components/button", "components/input"]
-   */
-  components?: string[];
-  /**
-   * Array of pattern paths to be included in the build.
-   * Patterns compose multiple component previews into single-page views.
-   * @deprecated Use `catalog.include`.
-   * @example ["patterns/hero-section", "patterns"]
-   */
-  patterns?: string[];
 }
 
 /** Catalog item registration. */
@@ -123,7 +110,7 @@ export interface ConfigCatalog {
 export type RuntimeMode = 'workspace' | 'registry';
 
 /** Format used when synthesizing local workspace declarations. */
-export type DeclarationFormat = 'ts' | 'js' | 'cjs' | 'json';
+export type DeclarationFormat = 'ts' | 'js' | 'cjs';
 
 /**
  * User-facing `runtime` configuration block. A single optional block that selects the runtime
