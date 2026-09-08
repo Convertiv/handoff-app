@@ -1,4 +1,4 @@
-export { createCatalogItem, defineCatalogItem, validateCatalogItem } from './define';
+export { createCatalogItem, validateCatalogItem } from './define';
 export {
   findSiblingComponentFile,
   isInsideDirectory,
@@ -25,7 +25,6 @@ export type {
   CatalogPreview,
   CompositionRef,
   CsfSource,
-  ImplementationSource,
   NormalizedImplementation,
   Preview,
   SourceDescriptor,

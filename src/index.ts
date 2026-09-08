@@ -591,7 +591,6 @@ class Handoff {
 
 export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
-export { defineCatalogItem } from './catalog';
 export type {
   CatalogItem,
   CatalogItemEntries,
@@ -599,7 +598,6 @@ export type {
   CatalogItemMeta,
   CatalogPreview,
   CompositionRef,
-  ImplementationSource,
   Preview,
   SourceDescriptor,
   SourceFormat,

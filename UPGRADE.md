@@ -66,7 +66,7 @@ If `runtime.workspace.declarationFormat` is `json`, change it to `ts`, `js`, or 
 | `defineReactComponent(Component, config)` | `defineCatalogItem({ ...config, implementation: Component })` from `handoff-app/react` |
 | `defineHandlebarsComponent(config)` | `defineCatalogItem({ ...config, implementation: './Button.hbs' })` from `handoff-app/handlebars` |
 | `defineCsfComponent(config)` | `defineCatalogItem({ ...config, implementation: fromCSF('./Button.stories.tsx') })` from `handoff-app/react` |
-| `defineComponent(config)` | `defineCatalogItem({ ...config, implementation: { renderer: 'react', file: './Button.tsx' } })` from `handoff-app` |
+| `defineComponent(config)` | `defineCatalogItem({ ...config, implementation: './Button.tsx' })` from the module for its renderer |
 | `definePattern({ components })` | `defineCatalogItem({ composition })` from `handoff-app/pattern` |
 
 Remove the old `renderer`, `entries.component`, `entries.template`, and `entries.story` fields.
@@ -125,15 +125,6 @@ export default defineCatalogItem({
 
 CSF is a React source format. The story file supplies the previews.
 The filename does not select CSF automatically.
-The equivalent explicit source from the package root is:
-
-```ts
-import { defineCatalogItem } from 'handoff-app';
-
-export default defineCatalogItem({
-  implementation: { renderer: 'react', format: 'csf', file: './Button.stories.tsx' },
-});
-```
 
 ##### Compositions
 

@@ -69,8 +69,8 @@ my-handoff-project/
 ## Catalog items
 
 Every documented UI entry is a catalog item. Each item declares either an implementation or a composition of other items.
-An implementation always names its renderer. Import `defineCatalogItem` from the renderer module, or specify the renderer through
-the package root. The declaration supplies stable identity, documentation metadata, source entries, and previews.
+An implementation names its renderer. `defineCatalogItem` comes from the module for that renderer.
+The declaration supplies stable identity, documentation metadata, source entries, and previews.
 
 ### React
 

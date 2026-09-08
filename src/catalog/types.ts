@@ -12,12 +12,6 @@ export type SourceDescriptor<TFormat extends string = string> = {
 
 export type CsfSource = SourceDescriptor<'csf'>;
 
-/** Explicit implementation source accepted by the package root. */
-export type ImplementationSource = {
-  renderer: RendererKind;
-  format?: SourceFormat;
-  file: string;
-};
 
 /** The loader recovers the file for an imported component in `value` from the declaration source. */
 export type NormalizedImplementation = {

@@ -13,8 +13,8 @@ pipeline.
 | File                | Purpose                                                                                                                                              |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `renderers.ts`      | The renderer registry: one row per renderer and per source format, plus `sourceForFile()`, `entryKeyFor()`, `moduleFor()`          |
-| `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `ImplementationSource`, `SourceDescriptor`. Types only, no React |
-| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `defineCatalogItem()` for the root module, `validateCatalogItem()`              |
+| `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `SourceDescriptor`. Types only, no React |
+| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `validateCatalogItem()`                                                   |
 | `previews.ts`       | `createCatalogPreviews()` — named exports of a declaration module become previews; `readExportOrder()` / `orderPreviews()` restore declaration order |
 | `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export                                                                |
 | `normalize.ts`      | `normalizeCatalogItem()` — declaration module to runtime component or pattern record                                                                      |
@@ -33,7 +33,7 @@ A new renderer module requires a definition in `renderers.ts`, an `exports` entr
 
 ## Why the renderer is stamped into the declaration
 
-The renderer entry point specifies the renderer. The package root accepts `implementation: { renderer, file }`.
+The renderer entry point specifies the renderer.
 
 Declarations use `.handoff.ts`, `.handoff.js`, or `.handoff.cjs` modules and export previews by name.
 `validateCatalogItem` rejects removed fields and invalid renderer/source-format pairs.

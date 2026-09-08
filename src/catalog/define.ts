@@ -1,31 +1,11 @@
 import { isRendererKind, isSourceFormat, SOURCE_FORMATS, type RendererKind } from './renderers';
-import type {
-  CatalogItem,
-  CatalogItemInput,
-  CatalogItemMeta,
-  CompositionRef,
-  ImplementationSource,
-  NormalizedImplementation,
-} from './types';
+import type { CatalogItem, CatalogItemInput, NormalizedImplementation } from './types';
 
-/** The literal type gives callers an actionable error for an implementation without a renderer. */
-type NeedsStatedRenderer =
-  "state the renderer, as implementation: { renderer, file } — or import defineCatalogItem from 'handoff-app/react' or 'handoff-app/handlebars'";
-
-const ROOT_IMPLEMENTATION_HELP =
-  `A catalog item declared from 'handoff-app' states its renderer, as implementation: { renderer, file }. ` +
-  `Import defineCatalogItem from the renderer's own module to pass a file path or a component directly.`;
+const MISSING_RENDERER_HELP =
+  "An implementation needs a renderer. Import defineCatalogItem from 'handoff-app/react' or 'handoff-app/handlebars'.";
 
 /** Handles the shared implementation forms here so renderer entry points only supply types and a renderer. */
-const stampImplementation = (implementation: unknown, renderer: RendererKind | undefined): NormalizedImplementation => {
-  if (!renderer) {
-    const source = implementation as Partial<ImplementationSource>;
-    if (!source || typeof source !== 'object' || typeof source.renderer !== 'string' || typeof source.file !== 'string') {
-      throw new Error(ROOT_IMPLEMENTATION_HELP);
-    }
-    return { renderer: source.renderer, format: source.format, file: source.file };
-  }
-
+const stampImplementation = (implementation: unknown, renderer: RendererKind): NormalizedImplementation => {
   if (typeof implementation === 'string') {
     return { renderer, file: implementation };
   }
@@ -56,6 +36,9 @@ export const createCatalogItem = <TArgs = Record<string, unknown>>(
   if (!hasImplementation) {
     validateCatalogItem(input);
     return input as CatalogItem<TArgs>;
+  }
+  if (!renderer) {
+    throw new Error(MISSING_RENDERER_HELP);
   }
 
   const item = { ...input, implementation: stampImplementation(input.implementation, renderer) };
@@ -93,22 +76,4 @@ export function validateCatalogItem(value: unknown): asserts value is CatalogIte
   ) {
     throw new Error('implementation.format is not supported by this renderer.' + help);
   }
-}
-
-/**
- * Declares a catalog item from an implementation that states its renderer, or from a `composition`
- * of other items. A file path or an imported component goes through the renderer's own module
- * (`handoff-app/react`, `handoff-app/handlebars`), and a composition reads better from
- * `handoff-app/pattern`.
- *
- * A file carries no argument type, so pass one to check previews: `defineCatalogItem<BadgeArgs>`.
- */
-export function defineCatalogItem<TArgs = Record<string, unknown>>(
-  input: CatalogItemMeta &
-    (
-      | { implementation: ImplementationSource | NeedsStatedRenderer; composition?: never }
-      | { composition: CompositionRef[]; implementation?: never }
-    )
-): CatalogItem<TArgs> {
-  return createCatalogItem<TArgs>(input as CatalogItemInput);
 }
