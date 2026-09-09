@@ -2,7 +2,7 @@ import * as p from '@clack/prompts';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { isEntryCovered, writeEntries } from '../config/entries';
+import { addToCatalog, isIncluded } from '../config/catalog-include';
 import Handoff from '../index';
 
 // Constants
@@ -437,15 +437,15 @@ export const runScaffold = async (handoff: Handoff): Promise<void> => {
   }
 
   // Update config if requested. Components already covered by a collection directory auto-load,
-  // so we only write the uncovered ones into catalog.include.
+  // so we only write the unlisted ones into catalog.include.
   if (updateConfig) {
     const componentDirs = componentNames.map((name) => path.resolve(handoff.workingPath, COMPONENTS_DIR, name));
-    const uncovered = componentDirs.filter((dir) => !isEntryCovered(handoff, dir));
+    const unlisted = componentDirs.filter((dir) => !isIncluded(handoff, dir));
 
-    if (uncovered.length === 0) {
+    if (unlisted.length === 0) {
       p.log.info(`Config already covers these components - they'll auto-load`);
     } else {
-      const result = await writeEntries(handoff, uncovered);
+      const result = await addToCatalog(handoff, unlisted);
       if (result.status === 'added') {
         const configFileName = result.configPath ? path.basename(result.configPath) : 'handoff.config.json';
         p.log.success(`Updated ${configFileName} with component paths`);

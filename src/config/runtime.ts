@@ -135,8 +135,8 @@ export const getCatalogItemDirectories = (config: Config, workingPath: string): 
   const seen = new Set<string>();
   const directories: string[] = [];
 
-  for (const entry of registered) {
-    for (const directory of getComponentsForPath(path.resolve(workingPath, entry))) {
+  for (const included of registered) {
+    for (const directory of getComponentsForPath(path.resolve(workingPath, included))) {
       const key = normalizePathForCompare(directory);
       if (seen.has(key)) continue;
       seen.add(key);

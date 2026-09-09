@@ -9,7 +9,7 @@
  *   its own path is added to the list.
  *
  * A workspace registers items under `catalog.include`. Discovery expands collection directories;
- * the writer appends uncovered paths in JSON, TypeScript, JavaScript, and CommonJS project configs.
+ * the writer appends unlisted paths in JSON, TypeScript, JavaScript, and CommonJS project configs.
  */
 
 import fs from 'fs-extra';
@@ -27,8 +27,8 @@ interface ConfigContext {
 /** Config files in precedence order; the first that exists is the one we mutate. */
 const CONFIG_FILES = ['handoff.config.ts', 'handoff.config.js', 'handoff.config.cjs', 'handoff.config.json'] as const;
 
-/** Outcome of {@link writeEntries}: `added` on success, `unsupported` when the config couldn't be edited. */
-export interface WriteEntriesResult {
+/** Outcome of {@link addToCatalog}: `added` on success, `unsupported` when the config couldn't be edited. */
+export interface AddToCatalogResult {
   status: 'added' | 'unsupported';
   /** The config file written (or that would need editing); null only when none exists and creation failed. */
   configPath: string | null;
@@ -38,35 +38,35 @@ export interface WriteEntriesResult {
   pending: string[];
 }
 
-/** Workspace-relative, POSIX-separated path used as a config entry value. */
-const toEntryPath = (handoff: ConfigContext, targetDir: string): string =>
+/** Workspace-relative, POSIX-separated path, as stored in `catalog.include`. */
+const toIncludePath = (handoff: ConfigContext, targetDir: string): string =>
   path.relative(handoff.workingPath, targetDir).split(path.sep).join('/');
 
-const registeredPaths = (handoff: ConfigContext): string[] => handoff.config?.catalog?.include ?? [];
+const includedPaths = (handoff: ConfigContext): string[] => handoff.config?.catalog?.include ?? [];
 
 /**
  * True when `targetDir` already loads through an existing declaration: listed directly, or sitting
  * under a declared collection directory that runtime discovery expands. Reuses the same expansion
  * the runtime uses, so every declaration style is covered.
  */
-export const isEntryCovered = (handoff: ConfigContext, targetDir: string): boolean => {
-  const configured = registeredPaths(handoff);
+export const isIncluded = (handoff: ConfigContext, targetDir: string): boolean => {
+  const configured = includedPaths(handoff);
   if (!configured.length) {
     return false;
   }
   return configured
-    .flatMap((entry) => getComponentsForPath(path.resolve(handoff.workingPath, entry)))
+    .flatMap((included) => getComponentsForPath(path.resolve(handoff.workingPath, included)))
     .some((dir) => arePathsEqual(dir, targetDir));
 };
 
-/** Format an entry array as source, matching the surrounding indentation of a code config. */
-const formatEntryArray = (paths: string[], indent: string): string => {
+/** Format the path list as source, matching the surrounding indentation of a code config. */
+const formatPathArray = (paths: string[], indent: string): string => {
   if (paths.length === 0) return '[]';
   if (paths.length === 1) return `['${paths[0]}']`;
-  return `[\n${paths.map((entry) => `${indent}'${entry}',`).join('\n')}\n${indent.slice(2)}]`;
+  return `[\n${paths.map((relPath) => `${indent}'${relPath}',`).join('\n')}\n${indent.slice(2)}]`;
 };
 
-/** Append entry paths to a structured `.json` config (lossless read/modify/write). */
+/** Append paths to a structured `.json` config (lossless read/modify/write). */
 const addToJsonConfig = async (configPath: string, relPaths: string[]): Promise<boolean> => {
   try {
     const config = await fs.readJSON(configPath);
@@ -87,8 +87,8 @@ const addToJsonConfig = async (configPath: string, relPaths: string[]): Promise<
 
 /**
  * Blanks out comment regions while keeping every index in place, so a match found here points at
- * the same offset in the original source. The shipped config templates carry commented-out
- * `entries` and `catalog` examples, and a plain search would rewrite the comment instead of the code.
+ * the same offset in the original source. A project config often carries a commented-out `catalog`
+ * example, and a plain search would rewrite that comment instead of the live code.
  */
 const maskComments = (content: string): string =>
   content
@@ -138,7 +138,7 @@ const locateList = (masked: string): ListLocation | undefined => {
 };
 
 /**
- * Best-effort splice of entry paths into an executable `.ts` / `.js` / `.cjs` config. These are
+ * Best-effort splice of paths into an executable `.ts` / `.js` / `.cjs` config. These are
  * modules, not data, so there's no lossless structured write; if a computed or spread list can't be
  * edited textually, the caller falls back to printing the paths for the user to add.
  */
@@ -146,7 +146,7 @@ const addToCodeConfig = async (configPath: string, relPaths: string[]): Promise<
   try {
     const content = await fs.readFile(configPath, 'utf8');
     const masked = maskComments(content);
-    const arrayBlock = formatEntryArray(relPaths, '      ');
+    const arrayBlock = formatPathArray(relPaths, '      ');
     const location = locateList(masked);
 
     // 1) The list already exists, so merge into it.
@@ -154,7 +154,7 @@ const addToCodeConfig = async (configPath: string, relPaths: string[]): Promise<
       const existing = content
         .slice(location.listStart + 1, location.listEnd)
         .split(',')
-        .map((entry) => entry.trim().replace(/['"]/g, ''))
+        .map((listed) => listed.trim().replace(/['"]/g, ''))
         .filter(Boolean);
       const existingSet = new Set(existing);
       const toAdd = relPaths.filter((relPath) => !existingSet.has(relPath));
@@ -162,7 +162,7 @@ const addToCodeConfig = async (configPath: string, relPaths: string[]): Promise<
       if (toAdd.length > 0) {
         const indentMatch = /\[\s*\n(\s*)/.exec(content.slice(location.listStart));
         const indent = indentMatch ? indentMatch[1] : '      ';
-        const merged = formatEntryArray([...existing, ...toAdd], indent);
+        const merged = formatPathArray([...existing, ...toAdd], indent);
         await fs.writeFile(configPath, content.slice(0, location.listStart) + merged + content.slice(location.listEnd + 1), 'utf8');
       }
       return true;
@@ -194,12 +194,12 @@ const addToCodeConfig = async (configPath: string, relPaths: string[]): Promise<
 
 /**
  * Add `targetDirs` to the config so the build discovers them. Callers should first drop
- * already-loading dirs via {@link isEntryCovered}. Paths are stored workspace-relative; a `.json`
+ * already-loading dirs via {@link isIncluded}. Paths are stored workspace-relative; a `.json`
  * config is edited losslessly, a code config best-effort. When no config file exists a minimal
  * `handoff.config.json` is created.
  */
-export const writeEntries = async (handoff: ConfigContext, targetDirs: string[]): Promise<WriteEntriesResult> => {
-  const relPaths = [...new Set(targetDirs.map((dir) => toEntryPath(handoff, dir)))];
+export const addToCatalog = async (handoff: ConfigContext, targetDirs: string[]): Promise<AddToCatalogResult> => {
+  const relPaths = [...new Set(targetDirs.map((dir) => toIncludePath(handoff, dir)))];
   const configFile = CONFIG_FILES.find((file) => fs.existsSync(path.resolve(handoff.workingPath, file)));
   const configPath = configFile ? path.resolve(handoff.workingPath, configFile) : null;
 

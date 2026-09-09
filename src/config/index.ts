@@ -15,6 +15,6 @@ export { initRuntimeConfig } from './runtime';
 // Config validation
 export { validateConfig } from './validator';
 
-// Registering directory-list entries (components/patterns)
-export { isEntryCovered, writeEntries } from './entries';
-export type { WriteEntriesResult } from './entries';
+// Registering catalog item directories under `catalog.include`
+export { addToCatalog, isIncluded } from './catalog-include';
+export type { AddToCatalogResult } from './catalog-include';

@@ -1,4 +1,4 @@
-import { isEntryCovered, writeEntries } from '../config/entries';
+import { addToCatalog, isIncluded } from '../config/catalog-include';
 import { isComponentDirectory } from '../config/runtime';
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
@@ -142,8 +142,8 @@ exports.Default = {
   fs.writeFileSync(path.resolve(workingPath, `${name}.handoff.js`), declarationContent);
   Logger.success(`New component declaration ${name}.handoff.js was created in ${workingPath}`);
 
-  if (!isEntryCovered(handoff, workingPath)) {
-    const result = await writeEntries(handoff, [workingPath]);
+  if (!isIncluded(handoff, workingPath)) {
+    const result = await addToCatalog(handoff, [workingPath]);
     if (result.status === 'unsupported') Logger.warn(`Add ${result.pending.join(', ')} to catalog.include in handoff.config.`);
   }
 

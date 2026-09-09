@@ -30,7 +30,7 @@ import {
   type RendererKind,
   type SourceFormat,
 } from '../../catalog/renderers';
-import { isEntryCovered, writeEntries } from '../../config/entries';
+import { addToCatalog, isIncluded } from '../../config/catalog-include';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
@@ -817,7 +817,7 @@ const checkoutSingle = async (
   }
 
   // Pages round-trip as a single verbatim `.md` with no declaration synthesis, and aren't
-  // declared in `entries`, so there's nothing to register.
+  // listed in `catalog.include`, so there's nothing to register.
   if (kind === 'page') {
     await checkoutPage(handoff, id, payload);
     return null;
@@ -869,24 +869,24 @@ const checkoutSingle = async (
  * Declare freshly checked-out entities in `catalog.include` so the workspace build
  * picks them up. Ones already covered by a collection directory load on their own and are left
  * alone; the rest are added to the config automatically. If the config can't be edited (a computed
- * or unusual `entries` array), we print the paths for the user to add so nothing is silently orphaned.
+ * or unusual `include` array), we print the paths for the user to add so nothing is silently orphaned.
  */
 const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, targetDirs: string[]): Promise<void> => {
   if (kind === 'page') {
     return;
   }
-  const entryKind = kind === 'component' ? 'components' : 'patterns';
-  const uncovered = targetDirs.filter((dir) => !isEntryCovered(handoff, dir));
-  if (uncovered.length === 0) {
+  const kindLabel = kind === 'component' ? 'components' : 'patterns';
+  const unlisted = targetDirs.filter((dir) => !isIncluded(handoff, dir));
+  if (unlisted.length === 0) {
     return;
   }
 
-  const result = await writeEntries(handoff, uncovered);
+  const result = await addToCatalog(handoff, unlisted);
   if (result.status === 'added') {
     const where = result.configPath
       ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath)
       : 'handoff.config';
-    Logger.success(`Updated ${where} with ${result.added.length} ${entryKind} path(s).`);
+    Logger.success(`Updated ${where} with ${result.added.length} ${kindLabel} path(s).`);
     return;
   }
 
