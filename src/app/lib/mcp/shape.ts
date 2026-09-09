@@ -310,7 +310,7 @@ const pickCode = (
  * declared but not built. That still has usable metadata, so it comes back without `code` rather
  * than as an error. The compiled `sharedStyles` blob is left out: it is the bulk of the artifact and
  * is shared across every component, so it says nothing about this one. So are `validations`,
- * `entries` (absolute workspace paths), `docgen`, `page`, `options` and the Figma sync fields.
+ * `docgen`, `page`, `options` and the Figma sync fields.
  */
 export const toComponentResult = (
   record: ComponentListObject,
