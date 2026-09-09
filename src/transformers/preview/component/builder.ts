@@ -191,7 +191,7 @@ export async function processComponents(
   if (id && !runtimeComponents[id]) {
     await removeComponentApi(handoff, id);
     await removeComponentFromSummaryApi(handoff, id);
-    await syncComponentArtifacts(handoff);
+    await syncComponentArtifacts(handoff, [id]);
     return [];
   }
 

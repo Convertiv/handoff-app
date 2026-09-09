@@ -67,7 +67,7 @@ export const removeComponentApi = async (handoff: Handoff, id: string): Promise<
   }
 };
 
-export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> => {
+export const syncComponentArtifacts = async (handoff: Handoff, removedIds: readonly string[] = []): Promise<void> => {
   const componentPath = getComponentApiPath(handoff);
   await fs.ensureDir(componentPath);
 
@@ -75,7 +75,11 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
   const runtimeIds = Object.keys(runtimeComponents);
   const entries = await fs.readdir(componentPath);
 
-  const discoveredArtifactIds = new Set<string>(runtimeIds);
+  // `getArtifactComponentId` prunes a preview file only when it can name the owner. A deleted
+  // component is gone from the runtime config, and its `.json` is already removed, so nothing can
+  // match it. Naming it here restores the match without making its files valid. Every artifact it
+  // owns is then pruned, including the `__pattern_*` previews that the `.json` does not list.
+  const discoveredArtifactIds = new Set<string>([...runtimeIds, ...removedIds]);
   for (const entry of entries) {
     const parsed = path.parse(entry);
     if (parsed.ext === '.json' || parsed.ext === '.js' || parsed.ext === '.css') {
