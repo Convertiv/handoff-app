@@ -26,7 +26,7 @@ export const getPatternIdsReferencingComponents = (handoff: Handoff, componentId
     return [];
   }
   const idSet = new Set(componentIds);
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  const runtimePatterns = handoff.runtimeConfig?.entities.patterns ?? {};
   const result: string[] = [];
 
   for (const patternId of Object.keys(runtimePatterns)) {
@@ -127,7 +127,7 @@ async function buildPattern(
  */
 export async function processPatterns(handoff: Handoff, options?: ProcessPatternsOptions): Promise<PatternListObject[]> {
   // Resolve the pattern set through the storage-agnostic store (v2). The filesystem store is a read
-  // view over `runtimeConfig.entries.patterns`, so these are the same records the build has always
+  // view over `runtimeConfig.entities.patterns`, so these are the same records the build has always
   // used — rebuilt into the id-keyed map the build logic below expects.
   const runtimePatterns: Record<string, PatternListObject> = {};
   for (const pattern of await handoff.store.patterns.list()) {

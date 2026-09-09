@@ -165,7 +165,7 @@ const getFigmaComponents = async (handoff: Handoff): Promise<FigmaComponent[]> =
  * Get list of registered component IDs from runtime config
  */
 const getRegisteredComponentIds = (handoff: Handoff): string[] => {
-  const components = handoff.runtimeConfig?.entries?.components || {};
+  const components = handoff.runtimeConfig?.entities.components || {};
   return Object.keys(components);
 };
 

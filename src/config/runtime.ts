@@ -190,6 +190,8 @@ export const initRuntimeConfig = (
     entries: {
       scss: undefined,
       js: undefined,
+    },
+    entities: {
       components: {},
       patterns: {},
       pages: {},
@@ -251,7 +253,7 @@ export const initRuntimeConfig = (
       const pattern = classified.item;
 
       configFileIndex.set(indexKey, { kind: 'pattern', entityId: pattern.id });
-      result.entries.patterns[pattern.id] = pattern;
+      result.entities.patterns[pattern.id] = pattern;
       continue;
     }
 
@@ -284,7 +286,7 @@ export const initRuntimeConfig = (
     resolveCsfComponentSource(component);
 
     // Save full component entry
-    result.entries.components[component.id] = component;
+    result.entities.components[component.id] = component;
     configFileIndex.set(indexKey, { kind: 'component', entityId: component.id });
   }
 
@@ -302,7 +304,7 @@ export const initRuntimeConfig = (
       const { data: frontmatter } = parseMarkdown(fs.readFileSync(sourcePath, 'utf-8'));
       const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
       const page = normalizePageDeclaration(frontmatter, { id: slug, routePath, sourcePath });
-      result.entries.pages[page.id] = page;
+      result.entities.pages[page.id] = page;
     } catch (err) {
       Logger.warn(`Page skipped (unreadable or invalid frontmatter): ${sourcePath}`);
       Logger.debug(`Page parse detail:`, err);
@@ -365,8 +367,8 @@ export const getComponentsForPath = (searchPath: string): string[] => {
  * so that pattern composition is purely file I/O (no rendering).
  */
 const injectPatternPreviews = (result: RuntimeConfig): void => {
-  const patterns = result.entries?.patterns ?? {};
-  const components = result.entries?.components ?? {};
+  const patterns = result.entities.patterns;
+  const components = result.entities.components;
 
   for (const [patternId, pattern] of Object.entries(patterns)) {
     for (let i = 0; i < pattern.components.length; i++) {

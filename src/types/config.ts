@@ -415,9 +415,13 @@ export interface ConfigFileEntry {
 }
 
 export interface RuntimeConfig {
+  /** Resolved absolute paths of the project-wide bundle entry points, from `config.entries`. */
   entries?: {
     scss?: string;
     js?: string;
+  };
+  /** Entities discovered from the workspace, keyed by id. Always present, possibly empty. */
+  entities: {
     components: {
       [id: string]: ComponentListObject;
     };

@@ -211,7 +211,7 @@ export const watchRuntimeComponents = (
 };
 
 const rebuildPatternComponentPreviews = async (handoff: Handoff, patternId: string) => {
-  const pattern = handoff.runtimeConfig?.entries?.patterns?.[patternId];
+  const pattern = handoff.runtimeConfig?.entities.patterns[patternId];
   if (!pattern?.components?.length) return;
 
   for (const ref of pattern.components) {
@@ -307,7 +307,7 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
  *  - the rebuild work to run once the runtime config is fresh
  */
 const watchEntityDirectories = (handoff: Handoff, state: WatcherState, chokidarConfig: chokidar.WatchOptions, options: {
-  /** Config paths to watch, e.g. handoff.config.entries?.components */
+  /** Config paths to watch, e.g. handoff.config.catalog?.include */
   getConfigPaths: (handoff: Handoff) => string[];
   /** Current known entity ids from runtime config, called again after reload to refresh the set */
   getKnownIds: (handoff: Handoff) => string[];
@@ -425,8 +425,8 @@ export const watchCatalogDirectories = (handoff: Handoff, state: WatcherState, c
   watchEntityDirectories(handoff, state, chokidarConfig, {
     getConfigPaths: (h) => [...(h.config.catalog?.include ?? [])],
     getKnownIds: (h) => [
-      ...Object.keys(h.runtimeConfig?.entries?.components ?? {}),
-      ...Object.keys(h.runtimeConfig?.entries?.patterns ?? {}),
+      ...Object.keys(h.runtimeConfig?.entities.components ?? {}),
+      ...Object.keys(h.runtimeConfig?.entities.patterns ?? {}),
     ],
     getWatcher: (s) => s.catalogDirectoriesWatcher,
     setWatcher: (s, w) => {
@@ -435,8 +435,8 @@ export const watchCatalogDirectories = (handoff: Handoff, state: WatcherState, c
     scheduleKeyPrefix: 'newCatalogItem',
     entityLabel: 'catalog item',
     onDetected: async (handoff, { addedIds }) => {
-      const addedComponentIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entries?.components?.[id]);
-      const addedPatternIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entries?.patterns?.[id]);
+      const addedComponentIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entities.components[id]);
+      const addedPatternIds = addedIds.filter((id) => !!handoff.runtimeConfig?.entities.patterns[id]);
 
       for (const componentId of addedComponentIds) {
         await processComponents(handoff, componentId);

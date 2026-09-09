@@ -16,7 +16,7 @@ const CLIENT_ARTIFACT_SUFFIX = '.client.js';
 export const getComponentApiPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 
 const getComponentPreviewKeys = async (handoff: Handoff, componentId: string): Promise<Set<string>> => {
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   const previewKeys = new Set<string>();
 
   const outputFilePath = path.resolve(getComponentApiPath(handoff), `${componentId}.json`);
@@ -71,7 +71,7 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
   const componentPath = getComponentApiPath(handoff);
   await fs.ensureDir(componentPath);
 
-  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  const runtimeComponents = handoff.runtimeConfig?.entities.components ?? {};
   const runtimeIds = Object.keys(runtimeComponents);
   const entries = await fs.readdir(componentPath);
 

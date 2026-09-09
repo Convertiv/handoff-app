@@ -104,7 +104,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
   // Pages carry no rendered artifacts (raw markdown is rendered at runtime), so there is nothing to
   // build — the package is assembled directly from the discovered page record + its `.md`.
   if (kind === 'page') {
-    if (!handoff.runtimeConfig?.entries?.pages?.[id]) {
+    if (!handoff.runtimeConfig?.entities.pages[id]) {
       throw new PublishPackageError(`Page "${id}" is not declared in this workspace.`);
     }
     return;
@@ -116,14 +116,14 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
   await buildMainCss(handoff);
 
   if (kind === 'component') {
-    if (!handoff.runtimeConfig?.entries?.components?.[id]) {
+    if (!handoff.runtimeConfig?.entities.components[id]) {
       throw new PublishPackageError(`Component "${id}" is not declared in this workspace.`);
     }
     await processComponents(handoff, id);
     return;
   }
 
-  const pattern = handoff.runtimeConfig?.entries?.patterns?.[id];
+  const pattern = handoff.runtimeConfig?.entities.patterns[id];
   if (!pattern) {
     throw new PublishPackageError(`Pattern "${id}" is not declared in this workspace.`);
   }
@@ -131,7 +131,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
   // then compose just this pattern.
   const referencedComponentIds = new Set(pattern.components.map((ref) => ref.id));
   for (const componentId of Array.from(referencedComponentIds)) {
-    if (handoff.runtimeConfig?.entries?.components?.[componentId]) {
+    if (handoff.runtimeConfig?.entities.components[componentId]) {
       await processComponents(handoff, componentId);
     }
   }

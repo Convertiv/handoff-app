@@ -156,7 +156,7 @@ export function haveGlobalDepsChanged(cached: GlobalDepsState | null | undefined
  * Gets all file paths that should be tracked for a component
  */
 export function getComponentFilePaths(handoff: Handoff, componentId: string): { files: string[]; templateDir?: string } {
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   if (!runtimeComponent) {
     return { files: [] };
   }
@@ -229,7 +229,7 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
   // what processComponents must render. Without tracking these files here, the
   // cache would incorrectly consider the component unchanged and skip the preview
   // rebuild, leaving buildPatterns unable to find the required HTML fragments.
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  const runtimePatterns = handoff.runtimeConfig?.entities.patterns ?? {};
   for (const configPath of configPaths) {
     const entry = handoff.getConfigFileEntry(configPath);
     if (entry?.kind !== 'pattern') continue;
@@ -322,7 +322,7 @@ export async function checkOutputExists(handoff: Handoff, componentId: string): 
     return false;
   }
 
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   const previewIds = new Set([
     ...Object.keys(runtimeComponent?.previews ?? {}),
     ...Object.keys(runtimeComponent?.internalPatternPreviews ?? {}),
