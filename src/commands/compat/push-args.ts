@@ -9,13 +9,13 @@
 
 import { ASSET_COLLECTIONS, type AssetCollection } from '../../registry/assets/sets';
 import { ALL_KIND_ORDER, ENTITY_KIND_ORDER, type RegistryEntityKind } from '../../registry/content-kinds';
-import type { RegistryTargetKind } from '../utils';
+import type { CompatTargetKind } from '../utils';
 import type { ContentTarget } from '../../index';
 import { Logger } from '../../utils/logger';
 
 /** The documented `push` / `pull` arguments read here. */
 export interface CompatTargetArgs {
-  type?: RegistryTargetKind;
+  type?: CompatTargetKind;
   id?: string[];
   components?: string[];
   patterns?: string[];

@@ -38,7 +38,7 @@ import { Logger } from '../../utils/logger';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
 import { resolveAuthenticatedRegistryConnection } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
-import { selectIds } from '../selection';
+import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
@@ -117,9 +117,9 @@ const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKin
   const relative = (root: string) => path.relative(handoff.workingPath, root) || '.';
   if (handoff.force) {
     throw new CheckoutError(
-      `Cannot determine where to checkout the ${kind}: entries.${kind}s declares individual ${kind}s under different ` +
-        `directories (${roots.map(relative).join(', ')}). Declare a single collection directory in handoff.config, ` +
-        `or run checkout without --force to choose interactively.`
+      `Cannot determine where to checkout the ${kind}: catalog.include declares directories under different ` +
+        `parents (${roots.map(relative).join(', ')}), and none is named "${DEFAULT_ENTITY_DIR[kind]}". Declare a single ` +
+        `collection directory in handoff.config, or run checkout without --force to choose interactively.`
     );
   }
   const choice = await p.select({
@@ -137,8 +137,9 @@ const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKin
  * Resolve the collection directory a new entity is cloned into from the configured
  * `catalog.include`. Each entry is either a collection directory (used as-is) or a
  * single declared entity directory, in which case its parent is the collection root so the new
- * entity lands as a sibling rather than nested inside. Different parents mean the config is
- * ambiguous, so we ask the user; with nothing configured we fall back to the default subdir.
+ * entity lands as a sibling rather than nested inside. Different parents are settled by the
+ * conventional directory name for the kind, and only then by asking the user. With nothing
+ * configured we fall back to the default subdir.
  */
 const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind): Promise<string> => {
   const configuredRoots = handoff.config?.catalog?.include;
@@ -155,7 +156,19 @@ const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind)
     ),
   ];
 
-  return roots.length === 1 ? roots[0] : promptForCollectionRoot(handoff, kind, roots);
+  if (roots.length === 1) {
+    return roots[0];
+  }
+
+  // `catalog.include` is one list for both lanes, so a project that registers `components` and
+  // `patterns` offers two roots for every checkout. Without this, every such project prompts, and a
+  // non-interactive `--force` run fails.
+  const conventional = roots.filter((root) => path.basename(root) === DEFAULT_ENTITY_DIR[kind]);
+  if (conventional.length === 1) {
+    return conventional[0];
+  }
+
+  return promptForCollectionRoot(handoff, kind, roots);
 };
 
 /**
@@ -895,46 +908,39 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
   }
 };
 
-/**
- * Checkout every published component, pattern, or page of the kind into this workspace. Enumerates
- * the registry's published ids, then checks each out through the shared client. A per-entity failure
- * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
- * prompting is per entity (skipped under `--force`).
- */
-export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
-  const connection = await resolveConnectionOrThrow(handoff);
-  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
-
-  let summaries;
+/** List the ids the registry publishes for one kind, naming the registry in a listing failure. */
+const listPublishedIds = async (kind: TransferEntityKind, client: RegistryClient, registryUrl: string): Promise<string[]> => {
   try {
-    summaries = await client.listEntities(kind);
+    const summaries = await client.listEntities(kind);
+    return summaries.map((summary) => summary.id);
   } catch (error) {
     if (error instanceof RegistryClientError) {
-      throw new CheckoutError(`Could not list ${kind}s from the registry at ${connection.url}: ${error.message}`);
+      throw new CheckoutError(`Could not list ${kind}s from the registry at ${registryUrl}: ${error.message}`);
     }
     throw error;
   }
+};
 
-  const published = summaries.map((summary) => summary.id);
-  const { selected: targets, unknown } = selectIds(published, ids);
-  if (unknown.length > 0) {
-    throw new CheckoutError(
-      `No ${kind} named ${unknown.map((id) => `"${id}"`).join(', ')} is published in the registry. ` +
-        `Published ${kind}s: ${published.join(', ') || '(none)'}.`
-    );
-  }
-
-  if (targets.length === 0) {
-    Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
-    return;
-  }
-
+/**
+ * Check out the given ids of one kind and register what landed. The caller selects the ids, because a
+ * catalog run resolves them across both entity lanes before any of them is written.
+ *
+ * A per-entity failure is collected and never aborts the rest. Failures are reported here, and the
+ * count is returned so the caller raises one error for the whole run.
+ */
+const checkoutSelected = async (
+  handoff: Handoff,
+  kind: TransferEntityKind,
+  targets: string[],
+  client: RegistryClient,
+  registryUrl: string
+): Promise<number> => {
   let checkedOut = 0;
   const failed: { id: string; message: string }[] = [];
   const targetDirs: string[] = [];
   for (const id of targets) {
     try {
-      const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
+      const targetDir = await checkoutSingle(handoff, kind, id, client, registryUrl);
       if (targetDir) {
         targetDirs.push(targetDir);
       }
@@ -951,10 +957,92 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
     `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} ${handoff.dryRun ? 'would be checked out' : 'checked out'}` +
       `${failed.length ? `, ${failed.length} failed` : ''}.`
   );
-  if (failed.length > 0) {
-    for (const failure of failed) {
-      Logger.error(`  - ${failure.id}: ${failure.message}`);
+  for (const failure of failed) {
+    Logger.error(`  - ${failure.id}: ${failure.message}`);
+  }
+  return failed.length;
+};
+
+/**
+ * Checkout every published component, pattern, or page of the kind into this workspace. Enumerates
+ * the registry's published ids, then checks each out through the shared client. A per-entity failure
+ * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
+ * prompting is per entity (skipped under `--force`).
+ */
+export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
+  const connection = await resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+
+  const published = await listPublishedIds(kind, client, connection.url);
+  const { selected: targets, unknown } = selectIds(published, ids);
+  if (unknown.length > 0) {
+    throw new CheckoutError(
+      `No ${kind} named ${quoteIds(unknown)} is published in the registry. ` + `Published ${kind}s: ${published.join(', ') || '(none)'}.`
+    );
+  }
+
+  if (targets.length === 0) {
+    Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
+    return;
+  }
+
+  const failed = await checkoutSelected(handoff, kind, targets, client, connection.url);
+  if (failed > 0) {
+    throw new CheckoutError(`${failed} ${kind}(s) failed to checkout.`);
+  }
+};
+
+/** The entity lanes a catalog run visits, in dependency order: a pattern composes components. */
+const CATALOG_LANES = ['component', 'pattern'] as const;
+
+/**
+ * Checkout published catalog items into this workspace: every one, or only `ids` when given. An item
+ * was published as a component or as a pattern depending on its declaration, so the lane is looked up
+ * in the registry and the caller never names one.
+ *
+ * A failing lane is reported and never aborts the other. The run throws at the end if any item
+ * failed.
+ */
+export const checkoutCatalog = async (handoff: Handoff, ids?: string[]): Promise<void> => {
+  const connection = await resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+
+  const available = {
+    component: await listPublishedIds('component', client, connection.url),
+    pattern: await listPublishedIds('pattern', client, connection.url),
+  };
+
+  let lanes: { kind: TransferEntityKind; targets: string[] }[];
+  if (ids) {
+    const split = splitCatalogIds(ids, available);
+    if (split.ambiguous.length > 0) {
+      throw new CheckoutError(
+        `${quoteIds(split.ambiguous)} is published both as a component and as a pattern. Ask the registry owner to fix the id.`
+      );
     }
-    throw new CheckoutError(`${failed.length} ${kind}(s) failed to checkout.`);
+    if (split.unknown.length > 0) {
+      const publishedIds = [...available.component, ...available.pattern];
+      throw new CheckoutError(
+        `No catalog item named ${quoteIds(split.unknown)} is published in the registry. ` +
+          `Published catalog items: ${publishedIds.join(', ') || '(none)'}.`
+      );
+    }
+    lanes = CATALOG_LANES.map((kind) => ({ kind, targets: split.lanes[kind] }));
+  } else {
+    lanes = CATALOG_LANES.map((kind) => ({ kind, targets: available[kind] }));
+  }
+
+  const selected = lanes.filter((lane) => lane.targets.length > 0);
+  if (selected.length === 0) {
+    Logger.success('No catalog items are published in the registry; nothing to checkout.');
+    return;
+  }
+
+  let failed = 0;
+  for (const lane of selected) {
+    failed += await checkoutSelected(handoff, lane.kind, lane.targets, client, connection.url);
+  }
+  if (failed > 0) {
+    throw new CheckoutError(`${failed} catalog item(s) failed to checkout.`);
   }
 };

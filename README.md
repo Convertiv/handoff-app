@@ -418,12 +418,15 @@ npm run publish -- all
 A single kind is published on its own:
 
 ```bash
-npm run publish -- components
-npm run publish -- patterns
+npm run publish -- catalog
 npm run publish -- pages
 npm run publish -- tokens
 npm run publish -- assets
 ```
+
+`catalog` covers every catalog item. An item is stored as a component or as a
+pattern, and its declaration decides which. The command names items and never a
+kind.
 
 Publishing tokens or assets runs the Figma data pipeline before upload, so the
 documented Figma credentials must be available.
@@ -431,7 +434,7 @@ documented Figma credentials must be available.
 One or more IDs can be appended to narrow a publish to those entities:
 
 ```bash
-npm run publish -- components component-id another-id
+npm run publish -- catalog item-id another-id
 ```
 
 `--dry-run` reports what would be uploaded and contacts no registry at all, so
@@ -441,16 +444,16 @@ the existing output, and the two combine to leave the workspace untouched:
 
 ```bash
 npm run publish -- all --dry-run
-npm run publish -- components --no-build
+npm run publish -- catalog --no-build
 ```
 
 `checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
 checkout reads from the registry, lists the files it would create or overwrite,
 and writes nothing.
 
-After the registry is reloaded, the published components, patterns, and
-foundations should be visible. Published database records are read by registry
-pages; the local workspace is never read directly.
+After the registry is reloaded, the published catalog items and foundations are
+visible. Published database records are read by registry pages; the local
+workspace is never read directly.
 
 For CI, a registry connection and user-issued token are configured:
 
@@ -551,7 +554,7 @@ both.
 | `npm run build -- [--target static\|registry]` | The static site or standalone registry bundle is built |
 | `npm run db:migrate` | Registry database migrations are applied |
 | `npm run validate` | Configured components are validated |
-| `npm run publish -- <kind\|all> [id...]` | Components, patterns, pages, tokens, or assets are published |
+| `npm run publish -- <kind\|all> [id...]` | Catalog items, pages, tokens, or assets are published |
 | `npm run checkout -- <kind\|all> [id...]` | Published content is pulled into a workspace |
 | `npm run login -- --url <url>` | The CLI is authorized through the registry device flow |
 | `npm run logout -- [--url <url>]` | A saved CLI credential is revoked and removed |

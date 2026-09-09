@@ -1,8 +1,9 @@
 /**
  * Connected-workspace publish orchestration.
  *
- * `publish <components|patterns|pages> <id>` prepares one entity and uploads its record, source files,
- * applicable rendered artifacts, and build metadata through the shared registry client.
+ * `publish <catalog|pages> <id>` prepares one entity and uploads its record, source files, applicable
+ * rendered artifacts, and build metadata through the shared registry client. A catalog item's lane
+ * comes from its declaration, so the caller names items and this module resolves the lane.
  *
  * The build is targeted: a component builds the global artifacts + that component; a pattern builds
  * the global artifacts + the components it composes + the pattern itself. This is the smallest build
@@ -18,7 +19,7 @@ import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError, type RegistryClient } from '../client';
 import { resolveAuthenticatedRegistryConnection } from '../connection';
 import type { EntitySummary, TransferEntityKind } from '../transfer';
-import { selectIds } from '../selection';
+import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import { describePublishError, describeUploadFailure } from './errors';
 import { assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
 
@@ -218,24 +219,18 @@ const selectEntityIds = (available: string[], requested: string[] | undefined, k
 };
 
 /**
- * Publish the components, patterns or pages declared in this connected workspace: every one of the
- * kind, or only `ids` when given. Builds the kind once, assembles each entity's package, skips
- * entities whose content hash already matches the registry (unless `--force`), and reports
- * published/unchanged/failed counts. A per-entity failure is collected and never aborts the rest; the
- * run throws at the end if any entity failed.
+ * Assemble and upload the selected entities of one kind. The caller runs the build, because a catalog
+ * run covers both entity lanes from one build.
+ *
+ * A per-entity failure is collected and never aborts the rest. Failures are reported here, and the
+ * count is returned so the caller raises one error for the whole run.
  */
-export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
-  const { client, url } = await resolveTransport(handoff);
-
-  if (!handoff.skipBuild) {
-    Logger.info(`Building ${kind}s for publish…`);
-    await runBulkBuild(handoff, kind);
-  }
-
+const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kind: TransferEntityKind, ids?: string[]): Promise<number> => {
+  const { client, url } = transport;
   const targets = selectEntityIds(await listWorkspaceEntityIds(handoff, kind), ids, kind);
   if (targets.length === 0) {
     Logger.success(`No ${kind}s are declared in this workspace; nothing to publish.`);
-    return;
+    return 0;
   }
 
   // Without a registry there is nothing to compare against, so a dry run reports every target.
@@ -281,10 +276,92 @@ export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind
     `${kind[0].toUpperCase()}${kind.slice(1)}s publish complete — ${published} ${handoff.dryRun ? 'would be published' : 'published'}, ` +
       `${unchanged} unchanged${failed.length ? `, ${failed.length} failed` : ''}.`
   );
-  if (failed.length > 0) {
-    for (const failure of failed) {
-      Logger.error(`  - ${failure.id}: ${failure.message}`);
-    }
-    throw new PublishError(`${failed.length} ${kind}(s) failed to publish.`);
+  for (const failure of failed) {
+    Logger.error(`  - ${failure.id}: ${failure.message}`);
+  }
+  return failed.length;
+};
+
+/**
+ * Publish the components, patterns or pages declared in this connected workspace: every one of the
+ * kind, or only `ids` when given. Builds the kind once, assembles each entity's package, skips
+ * entities whose content hash already matches the registry (unless `--force`), and reports
+ * published/unchanged/failed counts. A per-entity failure is collected and never aborts the rest; the
+ * run throws at the end if any entity failed.
+ */
+export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
+  const transport = await resolveTransport(handoff);
+
+  if (!handoff.skipBuild) {
+    Logger.info(`Building ${kind}s for publish…`);
+    await runBulkBuild(handoff, kind);
+  }
+
+  const failed = await uploadEntities(handoff, transport, kind, ids);
+  if (failed > 0) {
+    throw new PublishError(`${failed} ${kind}(s) failed to publish.`);
+  }
+};
+
+/** The entity lanes a catalog run visits, in dependency order: a pattern composes components. */
+const CATALOG_LANES = ['component', 'pattern'] as const;
+
+/**
+ * Resolve which lane each requested catalog id belongs to. Without ids every lane runs in full. An
+ * unknown id is reported against the whole catalog, because the caller never chose a lane to report
+ * it against.
+ */
+const resolveCatalogLanes = async (handoff: Handoff, ids?: string[]): Promise<{ kind: TransferEntityKind; ids?: string[] }[]> => {
+  if (!ids) {
+    return CATALOG_LANES.map((kind) => ({ kind }));
+  }
+
+  const available = {
+    component: await listWorkspaceEntityIds(handoff, 'component'),
+    pattern: await listWorkspaceEntityIds(handoff, 'pattern'),
+  };
+  const { lanes, unknown, ambiguous } = splitCatalogIds(ids, available);
+
+  if (ambiguous.length > 0) {
+    throw new PublishError(
+      `${quoteIds(ambiguous)} names both a component and a pattern in this workspace. Give each catalog item a unique id.`
+    );
+  }
+  if (unknown.length > 0) {
+    const declared = [...available.component, ...available.pattern];
+    throw new PublishError(
+      `No catalog item named ${quoteIds(unknown)} is declared in this workspace. ` +
+        `Declared catalog items: ${declared.join(', ') || '(none)'}.`
+    );
+  }
+
+  return CATALOG_LANES.map((kind) => ({ kind, ids: lanes[kind] })).filter((lane) => lane.ids.length > 0);
+};
+
+/**
+ * Publish the catalog items declared in this connected workspace: every one, or only `ids` when
+ * given. An item takes the component lane or the pattern lane depending on whether it declares an
+ * implementation or a composition, so the caller names items and never names a lane.
+ *
+ * One build covers both lanes, because building the patterns already builds every component they
+ * compose. A failing lane is reported and never aborts the other. The run throws at the end if any
+ * item failed.
+ */
+export const publishCatalog = async (handoff: Handoff, ids?: string[]): Promise<void> => {
+  const transport = await resolveTransport(handoff);
+  const lanes = await resolveCatalogLanes(handoff, ids);
+
+  if (!handoff.skipBuild) {
+    Logger.info('Building catalog items for publish…');
+    // The pattern build runs the component build first, so one call covers both lanes.
+    await runBulkBuild(handoff, 'pattern');
+  }
+
+  let failed = 0;
+  for (const lane of lanes) {
+    failed += await uploadEntities(handoff, transport, lane.kind, lane.ids);
+  }
+  if (failed > 0) {
+    throw new PublishError(`${failed} catalog item(s) failed to publish.`);
   }
 };

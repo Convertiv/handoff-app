@@ -280,6 +280,32 @@ class Handoff {
   }
 
   /**
+   * Publish the catalog items declared in this connected workspace to the configured remote registry:
+   * every one, or only the named ids. An item takes the component lane or the pattern lane depending
+   * on whether it declares an implementation or a composition, so the lane is resolved from the
+   * workspace rather than named by the caller. One build covers both lanes. The publish module is
+   * loaded lazily so the registry client and build code never enter the docs app bundle.
+   */
+  async publishCatalog(id?: string | string[]): Promise<Handoff> {
+    this.preRunner();
+    const { publishCatalog } = await import('./registry/publish');
+    await publishCatalog(this, toSelection(id));
+    return this;
+  }
+
+  /**
+   * Checkout published catalog items from the connected remote registry into this workspace: every
+   * one, or only the named ids. The lane an item was published into is looked up in the registry.
+   * Mirrors {@link publishCatalog}.
+   */
+  async checkoutCatalog(id?: string | string[]): Promise<Handoff> {
+    this.preRunner();
+    const { checkoutCatalog } = await import('./registry/checkout');
+    await checkoutCatalog(this, toSelection(id));
+    return this;
+  }
+
+  /**
    * Publish design token sets from this connected workspace to the configured remote registry. Runs a
    * fresh token build (Figma extract + style transformers), discovers the logical sets, and uploads
    * each changed set (its extracted record + generated artifacts). Publishes every set when `setId` is

@@ -2,7 +2,7 @@ import { CommandModule } from 'yargs';
 import { warnDeprecatedCommand } from '../compat/deprecations';
 import { type CompatTargetArgs, resolveCompatTargets } from '../compat/push-args';
 import { SharedArgs } from '../types';
-import { getCheckoutOptions, runRegistryCommand, withTargetPositionals } from '../utils';
+import { COMPAT_TARGET_KINDS, getCheckoutOptions, runRegistryCommand, withTargetPositionals } from '../utils';
 
 /**
  * Deprecated `pull`, the documented name for `checkout`, kept working over the canonical
@@ -17,7 +17,7 @@ const pull: CommandModule<{}, PullArgs> = {
   describe: 'Deprecated alias for checkout',
   deprecated: true,
   builder: (yargs) =>
-    withTargetPositionals(getCheckoutOptions(yargs), 'checkout').options({
+    withTargetPositionals(getCheckoutOptions(yargs), 'checkout', COMPAT_TARGET_KINDS).options({
       components: { type: 'array', string: true, description: 'Checkout only these component ids' },
       patterns: { type: 'array', string: true, description: 'Checkout only these pattern ids' },
       pages: { type: 'array', string: true, description: 'Checkout only these page slugs' },
