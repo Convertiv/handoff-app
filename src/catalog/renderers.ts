@@ -19,27 +19,24 @@ type RendererDefinition = {
   module: string;
   /** Entry key normalization writes the implementation file to. */
   entryKey: EntryKey;
-  /** Extensions identifying this renderer's source, matched case-insensitively. */
-  extensions: string[];
 };
 
 type SourceFormatDefinition = {
-  /** Renderers this format applies to. Also used to diagnose file mismatches. */
+  /** Renderers this format applies to. */
   renderers: RendererKind[];
   entryKey: EntryKey;
-  matches: RegExp;
+  /** Export of the renderer module that declares an implementation in this format. */
+  helper: string;
 };
 
 export const RENDERERS: Record<RendererKind, RendererDefinition> = {
   react: {
     module: 'handoff-app/react',
     entryKey: 'component',
-    extensions: ['.tsx', '.jsx'],
   },
   handlebars: {
     module: 'handoff-app/handlebars',
     entryKey: 'template',
-    extensions: ['.hbs'],
   },
 };
 
@@ -47,9 +44,31 @@ export const SOURCE_FORMATS: Record<SourceFormat, SourceFormatDefinition> = {
   csf: {
     renderers: ['react'],
     entryKey: 'story',
-    matches: /\.stories\.(jsx|tsx|js|ts)$/i,
+    helper: 'fromCSF',
   },
 };
+
+/** Which renderers can own a file name, and the source format the name implies. */
+export type SourceClaim = { renderers: RendererKind[]; format?: SourceFormat };
+
+/**
+ * This table never decides a renderer. The declaration states it, and the table only checks the
+ * implementation file against it. Keying by suffix keeps one row per file name: a suffix that more
+ * than one renderer owns lists them all, and a duplicate key is a compile error. A file that no
+ * row claims is not checked.
+ */
+const SOURCE_SUFFIXES: Record<string, SourceClaim> = {
+  '.stories.tsx': { renderers: ['react'], format: 'csf' },
+  '.stories.jsx': { renderers: ['react'], format: 'csf' },
+  '.stories.ts': { renderers: ['react'], format: 'csf' },
+  '.stories.js': { renderers: ['react'], format: 'csf' },
+  '.tsx': { renderers: ['react'] },
+  '.jsx': { renderers: ['react'] },
+  '.hbs': { renderers: ['handlebars'] },
+};
+
+/** Longest first, so `.stories.tsx` reads as a CSF source rather than a plain React source. */
+const SUFFIXES_BY_LENGTH = Object.keys(SOURCE_SUFFIXES).sort((first, second) => second.length - first.length);
 
 const RENDERER_KINDS = Object.keys(RENDERERS) as RendererKind[];
 const SOURCE_FORMAT_KINDS = Object.keys(SOURCE_FORMATS) as SourceFormat[];
@@ -58,25 +77,13 @@ export const isRendererKind = (value: unknown): value is RendererKind => RENDERE
 
 export const isSourceFormat = (value: unknown): value is SourceFormat => SOURCE_FORMAT_KINDS.includes(value as SourceFormat);
 
-/** Source formats take priority because `.stories.tsx` also matches the React `.tsx` extension. */
-export const sourceForFile = (file: string | undefined): ComponentSource | undefined => {
+/** What the file name says about a source, matched case-insensitively. Undefined when no suffix claims it. */
+export const sourceForFile = (file: string | undefined): SourceClaim | undefined => {
   if (!file) return undefined;
 
-  for (const format of SOURCE_FORMAT_KINDS) {
-    const definition = SOURCE_FORMATS[format];
-    if (definition.matches.test(file)) {
-      return { renderer: definition.renderers[0], sourceFormat: format };
-    }
-  }
-
   const lowerCased = file.toLowerCase();
-  for (const kind of RENDERER_KINDS) {
-    if (RENDERERS[kind].extensions.some((extension) => lowerCased.endsWith(extension))) {
-      return { renderer: kind };
-    }
-  }
-
-  return undefined;
+  const suffix = SUFFIXES_BY_LENGTH.find((candidate) => lowerCased.endsWith(candidate));
+  return suffix ? SOURCE_SUFFIXES[suffix] : undefined;
 };
 
 /** Entry key normalization records the implementation file under, if the renderer is registered. */

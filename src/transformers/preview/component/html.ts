@@ -1,12 +1,33 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
-import { InlineConfig, build as viteBuild } from 'vite';
+import { InlineConfig, PluginOption, build as viteBuild } from 'vite';
+import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
+
+type PreviewPlugins = (
+  data: TransformComponentTokensResult,
+  components: CoreTypes.IDocumentationObject['components'] | undefined,
+  handoff: Handoff
+) => PluginOption[];
+
+/**
+ * Exactly one entry builds an item. A source format claims it before its renderer, because a CSF
+ * item is also a React item and both plugins would write their own previews. The maps are
+ * exhaustive, so a new renderer fails to compile until its previews are built.
+ */
+const FORMAT_PLUGINS: Record<SourceFormat, PreviewPlugins> = {
+  csf: (data, components, handoff) => [csfRenderPlugin(data, components, handoff)],
+};
+
+const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
+  handlebars: (data, components, handoff) => [handlebarsPreviewsPlugin(data, components, handoff)],
+  react: (data, components, handoff) => [react(), ssrRenderPlugin(data, components, handoff)],
+};
 
 /**
  * Builds previews for components using Vite and Handlebars.
@@ -31,18 +52,15 @@ export const buildPreviews = async (
 
   const { renderer, sourceFormat } = data;
 
-  // Exactly one renderer builds an item. A CSF item is a React item, so independent tests would
-  // hand it both the CSF and the SSR plugin, and each would write its own previews.
-  const rendererPlugins =
-    sourceFormat === 'csf'
-      ? [csfRenderPlugin(data, components, handoff)]
-      : renderer === 'handlebars'
-        ? [handlebarsPreviewsPlugin(data, components, handoff)]
-        : renderer === 'react'
-          ? [react(), ssrRenderPlugin(data, components, handoff)]
-          : [];
+  const previewPlugins = sourceFormat ? FORMAT_PLUGINS[sourceFormat] : RENDERER_PLUGINS[renderer];
+  if (!previewPlugins) {
+    Logger.error(
+      `No preview support for renderer "${renderer}"${sourceFormat ? ` and source format "${sourceFormat}"` : ''}: ${data.entries.template}`
+    );
+    return data;
+  }
 
-  const plugins = [...(viteBaseConfig.plugins || []), ...rendererPlugins];
+  const plugins = [...(viteBaseConfig.plugins || []), ...previewPlugins(data, components, handoff)];
 
   // Store the current NODE_ENV value before vite build
   // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'

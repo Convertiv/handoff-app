@@ -4,7 +4,7 @@ import type { ComponentListObject, PatternListObject } from '../transformers/pre
 import { validateCatalogItem } from './define';
 import { findSiblingComponentFile, isInsideDirectory, resolvePropertySource } from './implementation';
 import { createCatalogPreviews } from './previews';
-import { entryKeyFor, sourceForFile, type RendererKind, type SourceFormat } from './renderers';
+import { entryKeyFor, moduleFor, SOURCE_FORMATS, sourceForFile, type RendererKind, type SourceFormat } from './renderers';
 import type { CatalogItem, NormalizedImplementation } from './types';
 
 type NormalizeOptions = {
@@ -59,6 +59,8 @@ const resolveImplementation = (item: CatalogItem, options: NormalizeOptions): Re
   return source;
 };
 
+const quotedList = (values: string[]): string => values.map((value) => `"${value}"`).join(' or ');
+
 /** Maps the authoring contract directly into the runtime read model. */
 export const normalizeCatalogItem = (moduleExports: Record<string, unknown>, options: NormalizeOptions): CatalogNormalizeResult => {
   const item = moduleExports.default ?? moduleExports;
@@ -99,10 +101,24 @@ export const normalizeCatalogItem = (moduleExports: Record<string, unknown>, opt
   entries[entryKey] = path.resolve(directory, source.file);
   // Existing builders consume template as the primary build input for every renderer.
   entries.template = entries[entryKey];
-  const fromFile = sourceForFile(source.file);
-  if (fromFile && fromFile.renderer !== source.renderer) {
-    options.warn(
-      `Catalog item "${id}" declares renderer "${source.renderer}", but "${source.file}" is a "${fromFile.renderer}" source. Fix implementation or its renderer module.`
+  // A wrong renderer builds a broken preview without failing on its own, so a mismatch is fatal.
+  // `config/runtime.ts` turns the throw into a skipped item that retries on the next save.
+  const claim = sourceForFile(source.file);
+  if (claim && !claim.renderers.includes(source.renderer)) {
+    throw new Error(
+      `Catalog item "${id}" declares renderer "${source.renderer}", but "${source.file}" is a ${quotedList(claim.renderers)} source. ` +
+        `Declare it from ${quotedList(claim.renderers.map(moduleFor))}.`
+    );
+  }
+  // Only a suffix that names a format is conclusive. A `.stories.tsx` file is always CSF, while a
+  // plain `.tsx` file says nothing about its format.
+  const fileFormat = claim?.format;
+  // The comparison narrows a single-format union to `never`, so read the helper first.
+  const fileFormatHelper = fileFormat && SOURCE_FORMATS[fileFormat].helper;
+  if (fileFormat && fileFormat !== source.sourceFormat) {
+    throw new Error(
+      `Catalog item "${id}" declares "${source.file}" as a plain source, but it is a "${fileFormat}" source. ` +
+        `Wrap it with ${fileFormatHelper}() from "${moduleFor(source.renderer)}".`
     );
   }
   if (meta.page?.slices && !Array.isArray(meta.page.slices)) {
