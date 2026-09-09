@@ -4,7 +4,7 @@ import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff
 import path from 'path';
 import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
-import { makeComponent, makePage, makeTemplate } from './cli/make';
+import { makeComponent, makePage } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
@@ -411,12 +411,6 @@ class Handoff {
   async ejectTheme(): Promise<Handoff> {
     this.preRunner();
     await ejectTheme(this);
-    return this;
-  }
-
-  async makeTemplate(component: string, state: string): Promise<Handoff> {
-    this.preRunner();
-    await makeTemplate(this, component, state);
     return this;
   }
 

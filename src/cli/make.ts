@@ -7,55 +7,6 @@ import Handoff from '../index';
 import { Logger } from '../utils/logger';
 
 /**
- * Make a new exportable component
- * @param handoff
- */
-export const makeTemplate = async (handoff: Handoff, component: string, state: string) => {
-  if (!handoff?.runtimeConfig?.entries?.templates) {
-    Logger.error(`Runtime config does not specify entry for templates.`);
-    return;
-  }
-
-  if (!component) {
-    Logger.error(`Template component must be set`);
-    return;
-  }
-
-  if (!state) {
-    state = 'default';
-  }
-
-  if (!/^[a-z0-9]+$/i.test(component)) {
-    Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
-    return;
-  }
-
-  if (!/^[a-z0-9]+$/i.test(state)) {
-    Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
-    return;
-  }
-
-  const workingPath = path.resolve(handoff.runtimeConfig.entries.templates, component);
-
-  if (!fs.existsSync(workingPath)) {
-    fs.mkdirSync(workingPath, { recursive: true });
-  }
-
-  const target = path.resolve(workingPath, `${state}.html`);
-  if (fs.existsSync(target)) {
-    if (!handoff.force) {
-      Logger.warn(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`);
-      return;
-    }
-  }
-  const templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'template.html'));
-  const template = fs.readFileSync(templatePath, 'utf8');
-  fs.writeFileSync(target, template);
-  Logger.success(`New template ${state}.html was created in ${workingPath}`);
-  return handoff;
-};
-
-/**
  * Make a new docs page
  * @param handoff
  */

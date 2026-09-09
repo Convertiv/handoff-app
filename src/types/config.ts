@@ -418,7 +418,6 @@ export interface RuntimeConfig {
   entries?: {
     scss?: string;
     js?: string;
-    templates?: string;
     components: {
       [id: string]: ComponentListObject;
     };

@@ -1,5 +1,5 @@
 import { ComponentListObject, ComponentType, PatternListObject } from '@handoff/transformers/preview/types';
-import { ClientConfig, RuntimeConfig } from '@handoff/types/config';
+import { ClientConfig } from '@handoff/types/config';
 import { ComponentDocumentationOptions, PreviewObject } from '@handoff/types/preview';
 import * as fs from 'fs-extra';
 import { Types as CoreTypes } from 'handoff-core';
@@ -192,9 +192,9 @@ export const getNavProps = async (
  * @param slug
  * @returns
  */
-export const fetchDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
+export const fetchDocPageMarkdown = async (path: string, slug: string | undefined, id: string) => {
   const nav = await getNavProps(id);
-  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug, runtimeConfig);
+  const { metadata, content, options } = fetchDocPageMetadataAndContent(path, slug);
   // Return props
   return {
     props: {
@@ -216,10 +216,10 @@ export const fetchDocPageMarkdown = async (path: string, slug: string | undefine
  * @param id
  * @returns
  */
-export const fetchCompDocPageMarkdown = async (path: string, slug: string | undefined, id: string, runtimeConfig?: RuntimeConfig) => {
+export const fetchCompDocPageMarkdown = async (path: string, slug: string | undefined, id: string) => {
   return {
     props: {
-      ...(await fetchDocPageMarkdown(path, slug, id, runtimeConfig)).props,
+      ...(await fetchDocPageMarkdown(path, slug, id)).props,
       scss: slug ? fetchTokensString(slug, 'scss') : '',
       css: slug ? fetchTokensString(slug, 'css') : '',
       styleDictionary: slug ? fetchTokensString(slug, 'styleDictionary') : '',
@@ -523,13 +523,12 @@ export const reduceSlugToString = (slug: string | string[] | undefined): string 
  * @param slug
  * @returns
  */
-export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined, runtimeConfig?: RuntimeConfig) => {
+export const fetchDocPageMetadataAndContent = (localPath: string, slug: string | string[] | undefined) => {
   const pagePath = localPath.replace('docs/', 'pages/');
   const handoffModulePath = process.env.HANDOFF_MODULE_PATH ?? '';
   const handoffWorkingPath = process.env.HANDOFF_WORKING_PATH ?? '';
 
   let currentContents = '';
-  let options = {} as ComponentDocumentationOptions;
 
   const contentModuleFilePath = path.resolve(handoffModulePath, 'config', `${localPath}${slug}.md`);
   const contentWorkingFilePath = path.resolve(handoffWorkingPath, `${pagePath}${slug}.md`);
@@ -546,14 +545,7 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
 
   const { data: metadata, content } = parseMarkdown(currentContents);
 
-  if (typeof slug === 'string' && runtimeConfig?.entries?.templates) {
-    const viewConfigFilePath = path.resolve(runtimeConfig.entries.templates, slug, 'view.config.json');
-    if (fs.existsSync(viewConfigFilePath)) {
-      options = JSON.parse(fs.readFileSync(viewConfigFilePath, 'utf-8').toString()) as ComponentDocumentationOptions;
-    }
-  }
-
-  return { metadata, content, options };
+  return { metadata, content, options: {} };
 };
 
 /**

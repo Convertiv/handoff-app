@@ -11,7 +11,7 @@ commands/
 ├── eject/        # eject:config, eject:pages, eject:theme
 ├── fetch/        # fetch (Figma data pipeline)
 ├── init/         # init (project initialization)
-├── make/         # make:template, make:page, make:component
+├── make/         # make:page, make:component
 ├── scaffold/     # scaffold (interactive component scaffolding)
 ├── start/        # start (dev server with watchers)
 ├── validate/     # validate:components
