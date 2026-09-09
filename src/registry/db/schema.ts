@@ -108,6 +108,8 @@ export const components = pgTable(
     group: text('group'),
     type: text('type'),
     renderer: text('renderer'),
+    /** How the implementation file is written (`csf`), when the renderer alone does not say. */
+    sourceFormat: text('source_format'),
     tags: jsonb('tags').$type<string[]>(),
     categories: jsonb('categories').$type<string[]>(),
     /** Full normalized component record. */
