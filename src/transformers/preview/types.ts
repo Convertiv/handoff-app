@@ -1,6 +1,6 @@
 import type { GeneratedDocs } from 'handoff-docgen';
 import { Card } from '../../app/components/Component/Cards';
-import type { RendererKind } from '../../declarations/types';
+import type { RendererKind, SourceFormat } from '../../catalog/renderers';
 import { ValidationResult } from '../../types/preview';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -120,10 +120,19 @@ export type ComponentObject = {
   };
   /** Optional explicit renderer id */
   renderer?: RendererKind;
+  /**
+   * Implementation source format, such as CSF. The separate `format` field describes the preview code language.
+   * These names must differ because the build spreads this record over the preview.
+   */
+  sourceFormat?: SourceFormat;
+  /** Export of `entries.component` that holds the implementation. Defaults to the default export. */
+  componentExport?: string;
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
   previews: { [key: string]: OptionalPreviewRender };
+  /** Source export order retained when publishing previews through jsonb storage. */
+  previewOrder?: string[];
   /** Internal previews generated only for pattern composition, not public docs */
   internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   /** Optional array of high-level categories for search/filtering */
@@ -185,6 +194,9 @@ export type TransformComponentTokensResult = {
     templates?: string;
   };
   renderer?: RendererKind;
+  /** See `ComponentObject.sourceFormat`. Distinct from `format`, the preview's code language. */
+  sourceFormat?: SourceFormat;
+  componentExport?: string;
   options?: {
     preview?: {
       groupBy?: string;

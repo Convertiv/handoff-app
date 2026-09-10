@@ -4,7 +4,7 @@ import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff
 import path from 'path';
 import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
-import { makeComponent, makePage, makeTemplate } from './cli/make';
+import { makeComponent, makePage } from './cli/make';
 import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
@@ -280,6 +280,32 @@ class Handoff {
   }
 
   /**
+   * Publish the catalog items declared in this connected workspace to the configured remote registry:
+   * every one, or only the named ids. An item takes the component lane or the pattern lane depending
+   * on whether it declares an implementation or a composition, so the lane is resolved from the
+   * workspace rather than named by the caller. One build covers both lanes. The publish module is
+   * loaded lazily so the registry client and build code never enter the docs app bundle.
+   */
+  async publishCatalog(id?: string | string[]): Promise<Handoff> {
+    this.preRunner();
+    const { publishCatalog } = await import('./registry/publish');
+    await publishCatalog(this, toSelection(id));
+    return this;
+  }
+
+  /**
+   * Checkout published catalog items from the connected remote registry into this workspace: every
+   * one, or only the named ids. The lane an item was published into is looked up in the registry.
+   * Mirrors {@link publishCatalog}.
+   */
+  async checkoutCatalog(id?: string | string[]): Promise<Handoff> {
+    this.preRunner();
+    const { checkoutCatalog } = await import('./registry/checkout');
+    await checkoutCatalog(this, toSelection(id));
+    return this;
+  }
+
+  /**
    * Publish design token sets from this connected workspace to the configured remote registry. Runs a
    * fresh token build (Figma extract + style transformers), discovers the logical sets, and uploads
    * each changed set (its extracted record + generated artifacts). Publishes every set when `setId` is
@@ -385,12 +411,6 @@ class Handoff {
   async ejectTheme(): Promise<Handoff> {
     this.preRunner();
     await ejectTheme(this);
-    return this;
-  }
-
-  async makeTemplate(component: string, state: string): Promise<Handoff> {
-    this.preRunner();
-    await makeTemplate(this, component, state);
     return this;
   }
 
@@ -589,16 +609,20 @@ class Handoff {
   }
 }
 
-export type { ComponentObject as Component } from './transformers/preview/types';
 export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
-export {
-  defineComponent,
-  defineCsfComponent,
-  defineHandlebarsComponent,
-  definePattern,
-  defineReactComponent,
-} from './declarations';
+export type {
+  CatalogItem,
+  CatalogItemEntries,
+  CatalogItemInput,
+  CatalogItemMeta,
+  CatalogPreview,
+  CompositionRef,
+  Preview,
+  SourceDescriptor,
+  SourceFormat,
+  RendererKind,
+} from './catalog';
 export { defineAssetStorage } from './registry/asset-storage/define';
 export type {
   AssetStorage,
@@ -607,16 +631,6 @@ export type {
   AssetStorageInput,
   AssetStorageReadResult,
 } from './registry/asset-storage/types';
-export type {
-  CsfDeclarationConfig,
-  DeclarationPreview,
-  GenericDeclarationConfig,
-  GenericPatternDeclarationConfig,
-  HandlebarsDeclarationConfig,
-  PatternComponentRef,
-  ReactDeclarationConfig,
-  RendererKind,
-} from './declarations';
 
 // Export transformers and types from handoff-core
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

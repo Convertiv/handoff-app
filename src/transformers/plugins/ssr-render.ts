@@ -60,6 +60,13 @@ const CLIENT_ARTIFACT_SUFFIX = 'client.js';
 /** Logical artifact path of a component's client/hydration bundle. */
 const clientArtifactPath = (componentId: string): string => `component/${componentId}.${CLIENT_ARTIFACT_SUFFIX}`;
 
+function selectComponentExport(moduleExports: Record<string, any>, exportName?: string): ReactComponent | null {
+  if (exportName && exportName !== 'default' && moduleExports?.[exportName]) {
+    return moduleExports[exportName];
+  }
+  return moduleExports?.default ?? null;
+}
+
 /**
  * Loads and processes component schema using hierarchical approach
  * @param componentData - Component transformation data
@@ -85,7 +92,7 @@ async function loadComponentSchemaAndModule(
   if (!componentData.entries?.schema) {
     try {
       const moduleExports = await buildAndEvaluateModule(componentPath, handoff);
-      component = moduleExports.exports.default;
+      component = selectComponentExport(moduleExports.exports, componentData.componentExport);
 
       // Try to load schema from component exports
       properties = await loadSchemaFromComponent(moduleExports.exports, handoff);
@@ -103,7 +110,7 @@ async function loadComponentSchemaAndModule(
   if (!component) {
     try {
       const moduleExports = await buildAndEvaluateModule(componentPath, handoff);
-      component = moduleExports.exports.default;
+      component = selectComponentExport(moduleExports.exports, componentData.componentExport);
     } catch (error) {
       Logger.error(`Failed to load component for rendering "${componentPath}":`, error);
       return [null, null];
@@ -128,13 +135,16 @@ async function loadComponentSchemaAndModule(
  *
  * @param componentId - Component identifier used to match pattern mount points to this bundle
  * @param componentPath - Path to the component file
+ * @param componentExport - Export holding the implementation; the default export when absent
  * @returns Client-side hydration source code
  */
-function generateClientHydrationSource(componentId: string, componentPath: string): string {
+function generateClientHydrationSource(componentId: string, componentPath: string, componentExport?: string): string {
+  const importClause = componentExport && componentExport !== 'default' ? `{ ${componentExport} as Component }` : 'Component';
+
   return `
     import React from 'react';
     import { hydrateRoot } from 'react-dom/client';
-    import Component from '${normalizePath(componentPath)}';
+    import ${importClause} from '${normalizePath(componentPath)}';
 
     const parseProps = (propsId) => {
       const raw = propsId ? document.getElementById(propsId)?.textContent : '{}';
@@ -304,7 +314,7 @@ export function ssrRenderPlugin(
       // `component/<id>.client.js` artifact. The hydration source only imports the component and
       // reads props from the in-document `__APP_PROPS__` element, so it is identical across every
       // preview of this component.
-      const clientHydrationSource = generateClientHydrationSource(componentId, componentPath);
+      const clientHydrationSource = generateClientHydrationSource(componentId, componentPath, componentData.componentExport);
       const clientBuildConfig = {
         ...DEFAULT_CLIENT_BUILD_CONFIG,
         logLevel: 'silent' as const,

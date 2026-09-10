@@ -23,6 +23,39 @@
   "homepage": "https://www.handoff.com/",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./handlebars": {
+      "types": "./dist/handlebars.d.ts",
+      "default": "./dist/handlebars.js"
+    },
+    "./pattern": {
+      "types": "./dist/pattern.d.ts",
+      "default": "./dist/pattern.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/react.d.ts"
+      ],
+      "handlebars": [
+        "./dist/handlebars.d.ts"
+      ],
+      "pattern": [
+        "./dist/pattern.d.ts"
+      ]
+    }
+  },
   "bin": {
     "handoff-app": "./dist/cli.js"
   },

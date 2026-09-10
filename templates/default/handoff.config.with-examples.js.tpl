@@ -42,22 +42,15 @@ const config = {
     }
   },
 
-  entries: {
+  catalog: {
     /**
-     * Array of component paths to be included in the build.
-     * Each path should point to a directory containing a *.handoff.ts declaration.
-     */
-    components: ["components/button"],
-
-    /**
-     * Array of pattern paths to be included in the build.
-     * Patterns compose multiple component previews into single-page views.
-     * Each path should point to a directory containing a *.handoff.ts declaration
-     * that uses definePattern().
+     * Directories to search for catalog items. A path is either an item directory or a collection
+     * directory whose subdirectories are each treated as an item. An item declares an
+     * implementation (React, Handlebars) or a composition of other items.
      *
-     * @example patterns: ["patterns/hero-section", "patterns"]
+     * @example include: ["components", "patterns"]
      */
-    // patterns: [],
+    include: ["components/button"],
   },
 
   // Runtime settings, all optional. The default is workspace mode with the MCP endpoint served.

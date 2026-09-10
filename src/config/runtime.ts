@@ -2,8 +2,16 @@ import esbuild from 'esbuild';
 import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
+import {
+  isInsideDirectory,
+  normalizeCatalogItem,
+  orderPreviews,
+  readExportOrder,
+  resolvePropertySource,
+  type CatalogNormalizeResult,
+} from '../catalog';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
-import { ComponentListObject, PatternListObject } from '../transformers/preview/types';
+import { ComponentListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
 import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
@@ -11,9 +19,7 @@ import { Logger } from '../utils/logger';
 import { parseMarkdown } from '../utils/markdown';
 import { collectPageSlugSegments } from '../utils/pages';
 import { normalizePathForCompare } from '../utils/path';
-import { normalizeComponentDeclaration } from './normalizers/declaration';
 import { normalizePageDeclaration } from './normalizers/page';
-import { normalizePatternDeclaration } from './normalizers/pattern';
 
 /**
  * Handoff instance shape needed by initRuntimeConfig.
@@ -29,59 +35,35 @@ type DeclarationResolution = {
   fileName: string;
 };
 
-const MODERN_EXTENSIONS = ['ts', 'js', 'cjs', 'json'] as const;
+const DECLARATION_EXTENSIONS = ['ts', 'js', 'cjs'] as const;
 
-const getLegacyDeclarationFiles = (componentBaseName: string): string[] => [
-  `${componentBaseName}.json`,
-  `${componentBaseName}.js`,
-  `${componentBaseName}.cjs`,
-];
+const getDeclarationFiles = (componentBaseName: string): string[] =>
+  DECLARATION_EXTENSIONS.map((ext) => `${componentBaseName}.handoff.${ext}`);
 
-const getModernDeclarationFiles = (componentBaseName: string): string[] =>
-  MODERN_EXTENSIONS.map((ext) => `${componentBaseName}.handoff.${ext}`);
-
-const findPreferredModernDeclaration = (componentDir: string, componentBaseName: string): string | undefined => {
-  const exactCandidates = getModernDeclarationFiles(componentBaseName);
+const findPreferredDeclaration = (componentDir: string, componentBaseName: string): string | undefined => {
+  const exactCandidates = getDeclarationFiles(componentBaseName);
   const exactMatch = exactCandidates.find((candidate) => fs.existsSync(path.resolve(componentDir, candidate)));
   if (exactMatch) return exactMatch;
 
   const allFiles = fs.existsSync(componentDir) ? fs.readdirSync(componentDir) : [];
-  const modernFiles = allFiles
-    .filter((file) => /\.handoff\.(ts|js|cjs|json)$/.test(file))
-    .sort((a, b) => a.localeCompare(b));
+  const declarationFiles = allFiles.filter((file) => /\.handoff\.(ts|js|cjs)$/.test(file)).sort((a, b) => a.localeCompare(b));
 
-  if (!modernFiles.length) return undefined;
+  if (!declarationFiles.length) return undefined;
 
-  for (const ext of MODERN_EXTENSIONS) {
-    const extMatch = modernFiles.find((file) => file.endsWith(`.handoff.${ext}`));
+  for (const ext of DECLARATION_EXTENSIONS) {
+    const extMatch = declarationFiles.find((file) => file.endsWith(`.handoff.${ext}`));
     if (extMatch) return extMatch;
   }
 
-  return modernFiles[0];
+  return declarationFiles[0];
 };
 
 export const resolveComponentDeclaration = (componentDir: string, componentBaseName: string): DeclarationResolution | null => {
-  const modernMatch = findPreferredModernDeclaration(componentDir, componentBaseName);
-  const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
-  const legacyMatch = legacyFiles.find((candidate) => fs.existsSync(path.resolve(componentDir, candidate)));
-
-  if (modernMatch) {
-    if (legacyMatch) {
-      Logger.warn(
-        `Both modern and legacy declarations found in "${componentDir}". Using "${modernMatch}" and ignoring "${legacyMatch}".`
-      );
-    }
-    return { fileName: modernMatch };
-  }
-
-  if (legacyMatch) {
-    return { fileName: legacyMatch };
-  }
-
-  return null;
+  const declarationMatch = findPreferredDeclaration(componentDir, componentBaseName);
+  return declarationMatch ? { fileName: declarationMatch } : null;
 };
 
-const evaluateTypeScriptDeclaration = (filePath: string, handoffModulePath: string): any => {
+const evaluateDeclaration = (filePath: string, handoffModulePath: string): any => {
   const buildResult = esbuild.buildSync({
     entryPoints: [filePath],
     bundle: true,
@@ -114,37 +96,23 @@ const evaluateTypeScriptDeclaration = (filePath: string, handoffModulePath: stri
   return mod.exports;
 };
 
-const loadDeclarationFile = (filePath: string, handoffModulePath: string): any => {
-  if (filePath.endsWith('.json')) {
-    const componentJson = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(componentJson);
-  }
+const loadDeclarationFile = evaluateDeclaration;
 
-  if (filePath.endsWith('.ts')) {
-    return evaluateTypeScriptDeclaration(filePath, handoffModulePath);
-  }
-
-  // Invalidate require cache to ensure fresh read
-  delete require.cache[require.resolve(filePath)];
-  return require(filePath);
-};
-
-const discoverCsfPreviews = (
-  component: ComponentListObject,
-  handoff: HandoffContext
-): Record<string, any> | undefined => {
-  if (component.renderer !== 'csf' || !component.entries?.template) {
+const discoverCsfPreviews = (component: ComponentListObject, handoff: HandoffContext): Record<string, any> | undefined => {
+  if (component.sourceFormat !== 'csf' || !component.entries?.template) {
     return component.previews;
   }
 
   try {
     const loaded = buildAndEvaluateModuleSync(component.entries.template, handoff);
-    const discoveredPreviews = createCsfStoryPreviews(loaded.exports as Record<string, any>);
+    // esbuild emits its export map alphabetically, so story order comes from the source text.
+    const discoveredPreviews = orderPreviews(
+      createCsfStoryPreviews(loaded.exports as Record<string, any>),
+      readExportOrder(component.entries.template)
+    );
 
     if (Object.keys(discoveredPreviews).length === 0) {
-      Logger.warn(
-        `No named stories found in CSF file for "${component.id}": ${component.entries.template}`
-      );
+      Logger.warn(`No named stories found in CSF file for "${component.id}": ${component.entries.template}`);
       return component.previews;
     }
 
@@ -159,13 +127,62 @@ const discoverCsfPreviews = (
 };
 
 /**
+ * Expands catalog.include into item directories and removes duplicate paths.
+ */
+export const getCatalogItemDirectories = (config: Config, workingPath: string): string[] => {
+  const registered = [...(config.catalog?.include ?? [])];
+
+  const seen = new Set<string>();
+  const directories: string[] = [];
+
+  for (const included of registered) {
+    for (const directory of getComponentsForPath(path.resolve(workingPath, included))) {
+      const key = normalizePathForCompare(directory);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      directories.push(directory);
+    }
+  }
+
+  return directories;
+};
+
+/**
+ * Records the React component a CSF file documents, so it is watched, documented, and published.
+ * `csf-render` reads `meta.component` as a value; only the source text says which file it came
+ * from. A component outside the item directory is left unrecorded, because publish rejects a
+ * source path that escapes the entity directory.
+ */
+const resolveCsfComponentSource = (component: ComponentListObject): void => {
+  if (component.sourceFormat !== 'csf') return;
+
+  const storyPath = component.entries?.story;
+  if (!storyPath || component.entries?.component) return;
+
+  const resolved = resolvePropertySource(storyPath, 'component');
+  if (!resolved) return;
+
+  if (!isInsideDirectory(resolved.file, component.path)) {
+    Logger.warn(
+      `Catalog item "${component.id}" documents a component at "${resolved.file}", outside "${component.path}". ` +
+        `Previews still build, but that file is not published. Move it into the item directory to publish it.`
+    );
+    return;
+  }
+
+  component.entries.component = resolved.file;
+};
+
+/**
  * Initializes the runtime configuration by resolving component entries,
  * SCSS/JS paths, and transformer options from the handoff config.
  *
  * @param handoff - Object with config and workingPath.
  * @returns A tuple of [RuntimeConfig, configFilePaths, configFileIndex].
  */
-export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: RuntimeConfig, configs: string[], configFileIndex: Map<string, ConfigFileEntry>] => {
+export const initRuntimeConfig = (
+  handoff: HandoffContext
+): [runtimeConfig: RuntimeConfig, configs: string[], configFileIndex: Map<string, ConfigFileEntry>] => {
   const configFiles: string[] = [];
   const configFileIndex = new Map<string, ConfigFileEntry>();
   const result: RuntimeConfig = {
@@ -173,11 +190,18 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     entries: {
       scss: undefined,
       js: undefined,
+    },
+    entities: {
       components: {},
       patterns: {},
       pages: {},
     },
+    duplicateCatalogIds: [],
   };
+
+  // The id addresses artifacts, transfer routes and docs URLs, so it has to resolve to one item.
+  // Components and patterns share one namespace, so one map covers both lanes.
+  const declaredIds = new Map<string, string>();
 
   if (!!handoff.config.entries?.scss) {
     result.entries.scss = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
@@ -186,121 +210,104 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
     result.entries.js = path.resolve(handoff.workingPath, handoff.config.entries?.js);
   }
 
-  if (handoff.config.entries?.components?.length) {
-    const componentPaths = handoff.config.entries.components.flatMap(getComponentsForPath);
-    for (const componentPath of componentPaths) {
-      const resolvedComponentPath = path.resolve(handoff.workingPath, componentPath);
-      const componentBaseName = path.basename(resolvedComponentPath);
-      const declaration = resolveComponentDeclaration(resolvedComponentPath, componentBaseName);
+  // A directory's lane depends on what its declaration holds, not on which config key registered
+  // it, so the declaration is loaded before the lane is chosen.
+  for (const itemPath of getCatalogItemDirectories(handoff.config, handoff.workingPath)) {
+    const itemBaseName = path.basename(itemPath);
+    const declaration = resolveComponentDeclaration(itemPath, itemBaseName);
 
-      if (!declaration) {
-        const modernFiles = getModernDeclarationFiles(componentBaseName);
-        const legacyFiles = getLegacyDeclarationFiles(componentBaseName);
-        Logger.warn(
-          `Missing config: ${path.resolve(
-            resolvedComponentPath,
-            [...modernFiles, ...legacyFiles].join(' or ')
-          )}`
-        );
-        continue;
-      }
-
-      const resolvedComponentConfigPath = path.resolve(resolvedComponentPath, declaration.fileName);
-      configFiles.push(resolvedComponentConfigPath);
-
-      let component: ComponentListObject;
-
-      try {
-        const importedDeclaration = loadDeclarationFile(resolvedComponentConfigPath, handoff.modulePath);
-        const rawComponent = importedDeclaration.default || importedDeclaration;
-        component = normalizeComponentDeclaration(rawComponent, {
-          declarationPath: resolvedComponentConfigPath,
-          fallbackId: componentBaseName,
-          warn: (message) => Logger.warn(message),
-        });
-      } catch (err) {
-        Logger.error(`Failed to read or parse config: ${resolvedComponentConfigPath}`, err);
-        continue;
-      }
-
-      // Initialize options with safe defaults
-      component.options ||= {
-        transformer: { defaults: {}, replace: {} },
-      };
-      component.options.transformer ||= { defaults: {}, replace: {} };
-
-      const transformer = component.options.transformer;
-      transformer.cssRootClass ??= null;
-      transformer.tokenNameSegments ??= null;
-
-      // Normalize keys and values to lowercase
-      transformer.defaults = toLowerCaseKeysAndValues({
-        ...transformer.defaults,
-      });
-
-      transformer.replace = toLowerCaseKeysAndValues({
-        ...transformer.replace,
-      });
-
-      // Save transformer config
-      result.options[component.id] = transformer;
-
-      // Discover CSF stories early so patterns can resolve stories like normal previews.
-      component.previews = discoverCsfPreviews(component, handoff);
-
-      // Save full component entry
-      result.entries.components[component.id] = component;
-      configFileIndex.set(normalizePathForCompare(resolvedComponentConfigPath), { kind: 'component', entityId: component.id });
+    if (!declaration) {
+      const declarationFiles = getDeclarationFiles(itemBaseName);
+      Logger.warn(
+        `Missing catalog declaration (use .handoff.ts, .handoff.js, or .handoff.cjs; see UPGRADE.md#catalog-items): ${path.resolve(itemPath, declarationFiles.join(' or '))}`
+      );
+      continue;
     }
-  }
 
-  // -------------------------------------------------------------------------
-  // Load pattern declarations
-  // -------------------------------------------------------------------------
-  if (handoff.config.entries?.patterns?.length) {
-    const patternPaths = handoff.config.entries.patterns.flatMap(getItemsForPath);
-    for (const patternPath of patternPaths) {
-      const resolvedPatternPath = path.resolve(handoff.workingPath, patternPath);
-      const patternBaseName = path.basename(resolvedPatternPath);
-      const declaration = resolveComponentDeclaration(resolvedPatternPath, patternBaseName);
+    const declarationPath = path.resolve(itemPath, declaration.fileName);
+    const indexKey = normalizePathForCompare(declarationPath);
+    configFiles.push(declarationPath);
 
-      if (!declaration) {
-        const modernFiles = getModernDeclarationFiles(patternBaseName);
-        const legacyFiles = getLegacyDeclarationFiles(patternBaseName);
-        Logger.warn(
-          `Missing pattern config: ${path.resolve(
-            resolvedPatternPath,
-            [...modernFiles, ...legacyFiles].join(' or ')
-          )}`
-        );
-        continue;
-      }
+    // A declaration can be mid-edit under `start`, so every failure is a warning and the file is
+    // retried on the next save. The index records it with an unknown kind, so a watcher does not
+    // guess the wrong lane.
+    const skip = (message: string, error: unknown): void => {
+      // The message carries the authoring error, so it belongs in the warning rather than in a
+      // debug line the default log level hides.
+      const detail = error instanceof Error && error.message ? ` — ${error.message}` : '';
+      Logger.warn(`${message}: ${declarationPath}${detail}`);
+      Logger.debug('Declaration parse detail:', error);
+      configFileIndex.set(indexKey, { kind: 'unknown', entityId: itemBaseName });
+    };
 
-      const resolvedPatternConfigPath = path.resolve(resolvedPatternPath, declaration.fileName);
-      configFiles.push(resolvedPatternConfigPath);
+    let classified: CatalogNormalizeResult;
 
-      let pattern: PatternListObject;
-
-      try {
-        const importedDeclaration = loadDeclarationFile(resolvedPatternConfigPath, handoff.modulePath);
-        const rawPattern = importedDeclaration.default || importedDeclaration;
-        pattern = normalizePatternDeclaration(rawPattern, {
-          declarationPath: resolvedPatternConfigPath,
-          fallbackId: patternBaseName,
-        });
-      } catch (err) {
-        // Treat as a warning rather than an error: the file may be empty or
-        // mid-edit. It is already tracked in configFiles above, so
-        // watchRuntimeConfiguration will pick it up once the file is saved
-        // with valid content.
-        Logger.warn(`Pattern config skipped (incomplete or invalid) — will retry on next save: ${resolvedPatternConfigPath}`);
-        Logger.debug(`Pattern parse detail:`, err);
-        continue;
-      }
-
-      configFileIndex.set(normalizePathForCompare(resolvedPatternConfigPath), { kind: 'pattern', entityId: pattern.id });
-      result.entries.patterns[pattern.id] = pattern;
+    try {
+      const moduleExports = loadDeclarationFile(declarationPath, handoff.modulePath);
+      classified = normalizeCatalogItem(moduleExports, {
+        declarationPath,
+        fallbackId: itemBaseName,
+        warn: (message) => Logger.warn(message),
+      });
+    } catch (err) {
+      skip('Declaration skipped (incomplete or invalid) — will retry on next save', err);
+      continue;
     }
+
+    const takenBy = declaredIds.get(classified.item.id);
+
+    if (takenBy) {
+      Logger.warn(
+        `Catalog id "${classified.item.id}" is already declared by ${takenBy}. Skipping ${declarationPath}. ` +
+          `Give each catalog item a unique id.`
+      );
+      result.duplicateCatalogIds.push({ id: classified.item.id, kept: takenBy, skipped: declarationPath });
+      // An unknown kind makes the watcher skip a rebuild. Any other kind rebuilds the item that owns the id.
+      configFileIndex.set(indexKey, { kind: 'unknown', entityId: classified.item.id });
+      continue;
+    }
+
+    declaredIds.set(classified.item.id, declarationPath);
+
+    if (classified.kind === 'pattern') {
+      const pattern = classified.item;
+
+      configFileIndex.set(indexKey, { kind: 'pattern', entityId: pattern.id });
+      result.entities.patterns[pattern.id] = pattern;
+      continue;
+    }
+
+    const component = classified.item;
+
+    // Initialize options with safe defaults
+    component.options ||= {
+      transformer: { defaults: {}, replace: {} },
+    };
+    component.options.transformer ||= { defaults: {}, replace: {} };
+
+    const transformer = component.options.transformer;
+    transformer.cssRootClass ??= null;
+    transformer.tokenNameSegments ??= null;
+
+    // Normalize keys and values to lowercase
+    transformer.defaults = toLowerCaseKeysAndValues({
+      ...transformer.defaults,
+    });
+
+    transformer.replace = toLowerCaseKeysAndValues({
+      ...transformer.replace,
+    });
+
+    // Save transformer config
+    result.options[component.id] = transformer;
+
+    // Discover CSF stories early so compositions can resolve stories like normal previews.
+    component.previews = discoverCsfPreviews(component, handoff);
+    resolveCsfComponentSource(component);
+
+    // Save full component entry
+    result.entities.components[component.id] = component;
+    configFileIndex.set(indexKey, { kind: 'component', entityId: component.id });
   }
 
   // -------------------------------------------------------------------------
@@ -317,7 +324,7 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
       const { data: frontmatter } = parseMarkdown(fs.readFileSync(sourcePath, 'utf-8'));
       const routePath = slug === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${slug}`;
       const page = normalizePageDeclaration(frontmatter, { id: slug, routePath, sourcePath });
-      result.entries.pages[page.id] = page;
+      result.entities.pages[page.id] = page;
     } catch (err) {
       Logger.warn(`Page skipped (unreadable or invalid frontmatter): ${sourcePath}`);
       Logger.debug(`Page parse detail:`, err);
@@ -334,11 +341,10 @@ export const initRuntimeConfig = (handoff: HandoffContext): [runtimeConfig: Runt
 
 /**
  * True when `searchPath` is itself a single component directory: it holds a declaration file named
- * after the directory (`{dirname}.handoff.*`, or a legacy `{dirname}.{json,js,cjs}`). This is what
+ * with a .handoff.ts, .handoff.js, or .handoff.cjs suffix. This is what
  * separates a declared component from a collection directory.
  */
-export const isComponentDirectory = (searchPath: string): boolean =>
-  !!resolveComponentDeclaration(searchPath, path.basename(searchPath));
+export const isComponentDirectory = (searchPath: string): boolean => !!resolveComponentDeclaration(searchPath, path.basename(searchPath));
 
 /**
  * Returns the component directories for a given path. If `searchPath` is itself a component
@@ -373,14 +379,6 @@ export const getComponentsForPath = (searchPath: string): string[] => {
 };
 
 /**
- * Generic directory discovery for both components and patterns.
- * Reuses the same logic as getComponentsForPath.
- */
-export const getItemsForPath = (searchPath: string): string[] => {
-  return getComponentsForPath(searchPath);
-};
-
-/**
  * After both components and patterns are loaded, this function iterates all
  * pattern component refs and auto-registers synthetic preview entries on the
  * referenced components whenever custom args are specified.
@@ -389,8 +387,8 @@ export const getItemsForPath = (searchPath: string): string[] => {
  * so that pattern composition is purely file I/O (no rendering).
  */
 const injectPatternPreviews = (result: RuntimeConfig): void => {
-  const patterns = result.entries?.patterns ?? {};
-  const components = result.entries?.components ?? {};
+  const patterns = result.entities.patterns;
+  const components = result.entities.components;
 
   for (const [patternId, pattern] of Object.entries(patterns)) {
     for (let i = 0; i < pattern.components.length; i++) {
@@ -409,8 +407,7 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         if (component.previews?.[ref.preview]) {
           ref.resolved = true;
         } else {
-          const error =
-            `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. This fragment may be skipped.`;
+          const error = `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. This fragment may be skipped.`;
           Logger.warn(error);
           ref.resolved = false;
         }
@@ -442,8 +439,7 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         if (basePreview) {
           resolvedValues = { ...basePreview.values };
         } else {
-          const error =
-            `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
+          const error = `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
           Logger.warn(error);
           ref.resolved = false;
         }

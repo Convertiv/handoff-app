@@ -15,8 +15,22 @@
 
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
+import { transformSync } from 'esbuild';
+import { startCase } from 'lodash';
 import path from 'path';
-import { type EntryKind, isEntryCovered, writeEntries } from '../../config/entries';
+import { orderPreviews } from '../../catalog/previews';
+import { validateCatalogItem } from '../../catalog/define';
+import {
+  entryKeyFor,
+  moduleFor,
+  isRendererKind,
+  isSourceFormat,
+  SOURCE_FORMATS,
+  type ComponentSource,
+  type RendererKind,
+  type SourceFormat,
+} from '../../catalog/renderers';
+import { addToCatalog, isIncluded } from '../../config/catalog-include';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
@@ -24,7 +38,7 @@ import { Logger } from '../../utils/logger';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
 import { resolveAuthenticatedRegistryConnection } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
-import { selectIds } from '../selection';
+import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
@@ -103,9 +117,9 @@ const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKin
   const relative = (root: string) => path.relative(handoff.workingPath, root) || '.';
   if (handoff.force) {
     throw new CheckoutError(
-      `Cannot determine where to checkout the ${kind}: entries.${kind}s declares individual ${kind}s under different ` +
-        `directories (${roots.map(relative).join(', ')}). Declare a single collection directory in handoff.config, ` +
-        `or run checkout without --force to choose interactively.`
+      `Cannot determine where to checkout the ${kind}: catalog.include declares directories under different ` +
+        `parents (${roots.map(relative).join(', ')}), and none is named "${DEFAULT_ENTITY_DIR[kind]}". Declare a single ` +
+        `collection directory in handoff.config, or run checkout without --force to choose interactively.`
     );
   }
   const choice = await p.select({
@@ -121,13 +135,14 @@ const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKin
 
 /**
  * Resolve the collection directory a new entity is cloned into from the configured
- * `entries.{components|patterns}`. Each entry is either a collection directory (used as-is) or a
+ * `catalog.include`. Each entry is either a collection directory (used as-is) or a
  * single declared entity directory, in which case its parent is the collection root so the new
- * entity lands as a sibling rather than nested inside. Different parents mean the config is
- * ambiguous, so we ask the user; with nothing configured we fall back to the default subdir.
+ * entity lands as a sibling rather than nested inside. Different parents are settled by the
+ * conventional directory name for the kind, and only then by asking the user. With nothing
+ * configured we fall back to the default subdir.
  */
 const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind): Promise<string> => {
-  const configuredRoots = kind === 'component' ? handoff.config?.entries?.components : handoff.config?.entries?.patterns;
+  const configuredRoots = handoff.config?.catalog?.include;
   if (!configuredRoots?.length) {
     return path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
   }
@@ -141,7 +156,19 @@ const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind)
     ),
   ];
 
-  return roots.length === 1 ? roots[0] : promptForCollectionRoot(handoff, kind, roots);
+  if (roots.length === 1) {
+    return roots[0];
+  }
+
+  // `catalog.include` is one list for both lanes, so a project that registers `components` and
+  // `patterns` offers two roots for every checkout. Without this, every such project prompts, and a
+  // non-interactive `--force` run fails.
+  const conventional = roots.filter((root) => path.basename(root) === DEFAULT_ENTITY_DIR[kind]);
+  if (conventional.length === 1) {
+    return conventional[0];
+  }
+
+  return promptForCollectionRoot(handoff, kind, roots);
 };
 
 /**
@@ -175,7 +202,7 @@ const existingDeclarationFormat = (dir: string): DeclarationFormat | undefined =
     return undefined;
   }
   const ext = path.extname(declaration.fileName).slice(1).toLowerCase();
-  return (['ts', 'js', 'cjs', 'json'] as const).includes(ext as DeclarationFormat) ? (ext as DeclarationFormat) : undefined;
+  return (['ts', 'js', 'cjs'] as const).includes(ext as DeclarationFormat) ? (ext as DeclarationFormat) : undefined;
 };
 
 /**
@@ -201,21 +228,6 @@ const resolveDeclarationFileName = (dir: string, id: string, format: Declaration
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/**
- * The single authored "primary" entry key per renderer. The normalizer derives the others (e.g. it
- * mirrors a React `component` into `template`, and a CSF `story` into `template`), so the stored
- * record carries duplicates that must not be re-authored. React authors `component`; handlebars and
- * CSF author `template` (a `.stories.*` template is what marks a CSF component).
- */
-const PRIMARY_ENTRY_BY_RENDERER: Record<string, string> = {
-  react: 'component',
-  handlebars: 'template',
-  csf: 'template',
-};
-
-/** Primary entry keys, in preference order, for an unknown renderer. */
-const PRIMARY_ENTRY_KEYS = ['component', 'template', 'story'] as const;
-
 /** Supporting entry keys kept verbatim regardless of renderer. */
 const SUPPORTING_ENTRY_KEYS = ['js', 'scss', 'schema', 'templates'] as const;
 
@@ -224,23 +236,25 @@ const asStringArray = (value: unknown): string[] | undefined =>
   Array.isArray(value) && value.every((item) => typeof item === 'string') ? (value as string[]) : undefined;
 
 /**
- * Rebuild the authored `entries` for a renderer: keep only the renderer's primary entry key (so the
- * normalizer-duplicated keys are dropped) plus the supporting source entries (`js`/`scss`/`schema`/
- * `templates`). An unknown renderer keeps the first available primary key by preference order.
+ * Normalization mirrors React `component` and CSF `story` entries into `template`. Checkout omits these duplicates
+ * and preserves supporting entries (`js`/`scss`/`schema`/`templates`).
  */
-const buildEntries = (entries: unknown, renderer: string | undefined): Record<string, unknown> | undefined => {
+const buildEntries = (
+  entries: unknown,
+  source: Partial<ComponentSource>,
+  options: { includePrimary?: boolean } = {}
+): Record<string, unknown> | undefined => {
   if (!isPlainObject(entries)) {
     return undefined;
   }
   const result: Record<string, unknown> = {};
 
-  const primaryKey = renderer ? PRIMARY_ENTRY_BY_RENDERER[renderer] : undefined;
-  if (primaryKey && typeof entries[primaryKey] === 'string') {
-    result[primaryKey] = entries[primaryKey];
-  } else if (!primaryKey) {
-    const fallback = PRIMARY_ENTRY_KEYS.find((key) => typeof entries[key] === 'string');
-    if (fallback) {
-      result[fallback] = entries[fallback];
+  // A catalog item names its implementation through `implementation`, so re-emitting the primary
+  // entry key would state the same fact twice.
+  const primaryKey = entryKeyFor(source.renderer, source.sourceFormat);
+  if (options.includePrimary !== false) {
+    if (primaryKey && typeof entries[primaryKey] === 'string') {
+      result[primaryKey] = entries[primaryKey];
     }
   }
 
@@ -254,9 +268,9 @@ const buildEntries = (entries: unknown, renderer: string | undefined): Record<st
 };
 
 /**
- * Rebuild the authored `previews` map (`DeclarationPreview`) from the stored previews, keeping only
+ * Rebuild the authored preview map from the stored previews, keeping only
  * authored fields (`title`, `args`) and dropping build-derived ones (rendered `url`, `usage`,
- * `sourcePreview`). The component normalizer maps authored `args` to `values`, so the stored record
+ * `sourcePreview`). Catalog normalization maps authored `args` to `values`, so the stored record
  * carries `values`; checkout re-emits it as `args` to match the authoring convention (the form
  * `make`/`scaffold` generate). Both rebuild identically.
  */
@@ -271,7 +285,7 @@ const buildPreviews = (previews: unknown): Record<string, unknown> | undefined =
     }
     const preview: Record<string, unknown> = {};
     if (typeof raw.title === 'string') preview.title = raw.title;
-    const args = raw.args !== undefined ? raw.args : raw.values;
+    const args = raw.values;
     if (args !== undefined) preview.args = args;
     result[key] = preview;
   }
@@ -279,7 +293,7 @@ const buildPreviews = (previews: unknown): Record<string, unknown> | undefined =
 };
 
 /**
- * Synthesize an authored component declaration (`GenericDeclarationConfig`) from the normalized
+ * Synthesize an authored component declaration from the normalized
  * record. Only authored fields are kept; registry-/build-derived data (`path`, `image`,
  * `properties`/docgen, rendered preview URLs, `internalPatternPreviews`, `validations`, `variant`,
  * review `metadata`) is dropped so the local build regenerates it. `name` carries the record title
@@ -298,12 +312,20 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   if (group) declaration.group = group;
   const type = asString(item.type);
   if (type) declaration.type = type;
-  const renderer = asString(item.renderer);
-  if (renderer) declaration.renderer = renderer;
-  const entries = buildEntries(item.entries, renderer);
+  const source = {
+    renderer: item.renderer as ComponentSource['renderer'],
+    sourceFormat: item.sourceFormat as ComponentSource['sourceFormat'],
+  };
+  if (source.renderer) declaration.renderer = source.renderer;
+  if (source.sourceFormat) declaration.sourceFormat = source.sourceFormat;
+  const componentExport = asString(item.componentExport);
+  if (componentExport) declaration.componentExport = componentExport;
+  const entries = buildEntries(item.entries, source);
   if (entries) declaration.entries = entries;
 
-  const previews = buildPreviews(item.previews);
+  const previews = buildPreviews(
+    isPlainObject(item.previews) ? orderPreviews(item.previews, asStringArray(item.previewOrder) ?? []) : undefined
+  );
   if (previews) declaration.previews = previews;
 
   const categories = asStringArray(item.categories);
@@ -311,9 +333,9 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
   const tags = asStringArray(item.tags);
   if (tags) declaration.tags = tags;
 
-  const shouldDo = asStringArray(item.shouldDo) ?? asStringArray(item.should_do);
+  const shouldDo = asStringArray(item.should_do);
   if (shouldDo) declaration.shouldDo = shouldDo;
-  const shouldNotDo = asStringArray(item.shouldNotDo) ?? asStringArray(item.should_not_do);
+  const shouldNotDo = asStringArray(item.should_not_do);
   if (shouldNotDo) declaration.shouldNotDo = shouldNotDo;
 
   const figma = asString(item.figma);
@@ -327,7 +349,7 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
 };
 
 /**
- * Rebuild the authored pattern component refs (`PatternComponentRef`) from the stored entries,
+ * Rebuild the authored pattern component refs from the stored entries,
  * keeping only `id`/`preview`/`args` and dropping build-time resolution fields (`resolvedPreview`,
  * `resolved`).
  */
@@ -347,7 +369,7 @@ const buildPatternComponents = (components: unknown): Record<string, unknown>[] 
 };
 
 /**
- * Synthesize an authored pattern declaration (`GenericPatternDeclarationConfig`) from the normalized
+ * Synthesize an authored pattern declaration from the normalized
  * record. Only the authored fields (`id`, `name`, `description`, `group`, `tags`, `components`) are
  * kept; derived fields (`path`, rendered `url`, review `metadata`) are dropped.
  */
@@ -368,36 +390,27 @@ const buildPatternDeclaration = (item: Record<string, unknown>): Record<string, 
   return declaration;
 };
 
-/**
- * Pick the renderer-specific `handoff-app` component factory from the record's renderer so the
- * synthesized declaration matches the authored contract for that renderer. `react`/`handlebars`/`csf`
- * each have a dedicated factory that stamps the renderer itself (so the renderer is dropped from the
- * authored config); an unknown/absent renderer falls back to the generic `defineComponent`, which
- * keeps `renderer` in the config.
- */
-const resolveComponentFactory = (renderer: string | undefined): { name: string; stampsRenderer: boolean } => {
-  switch (renderer) {
-    case 'react':
-      return { name: 'defineReactComponent', stampsRenderer: true };
-    case 'handlebars':
-      return { name: 'defineHandlebarsComponent', stampsRenderer: true };
-    case 'csf':
-      return { name: 'defineCsfComponent', stampsRenderer: true };
-    default:
-      return { name: 'defineComponent', stampsRenderer: false };
-  }
-};
-
 /** Drop a key from an object without mutating it. */
 const omit = (object: Record<string, unknown>, key: string): Record<string, unknown> => {
   const { [key]: _removed, ...rest } = object;
   return rest;
 };
 
+const omitSource = (object: Record<string, unknown>): Record<string, unknown> => omit(omit(object, 'renderer'), 'sourceFormat');
+
 /** Turn a relative entry path into a module specifier (extension stripped, `./`-prefixed). */
 const toImportSpecifier = (entryPath: string): string => {
   const withoutExt = entryPath.replace(COMPONENT_EXTENSION, '').split(path.sep).join('/');
   return withoutExt.startsWith('.') ? withoutExt : `./${withoutExt}`;
+};
+
+/**
+ * Turn a relative entry path into a `./`-prefixed file path. Unlike a module specifier this keeps
+ * the extension, because `fromCSF('./Card.stories.tsx')` and a `.hbs` implementation name files.
+ */
+const toFilePath = (entryPath: string): string => {
+  const normalized = entryPath.split(path.sep).join('/');
+  return normalized.startsWith('.') ? normalized : `./${normalized}`;
 };
 
 /** Derive a safe PascalCase identifier for the imported React component. */
@@ -415,6 +428,11 @@ const toComponentIdentifier = (entryPath: string, fallback: string): string => {
 
 /** Keys matching this are emitted unquoted in JS/TS object literals; others are single-quoted. */
 const JS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+/** A value emitted verbatim into a literal, such as an imported identifier or a `fromCSF(...)` call. */
+class RawExpression {
+  constructor(public readonly code: string) {}
+}
 
 /** Serialize a string as a single-quoted JS literal (repo style), escaping safely. */
 const singleQuote = (value: string): string => {
@@ -442,6 +460,9 @@ const toJsLiteral = (value: unknown, indentLevel = 0): string => {
   const pad = '  '.repeat(indentLevel);
   const padInner = '  '.repeat(indentLevel + 1);
 
+  if (value instanceof RawExpression) {
+    return value.code;
+  }
   if (value === null) {
     return 'null';
   }
@@ -471,59 +492,225 @@ const toJsLiteral = (value: unknown, indentLevel = 0): string => {
   return `{\n${lines.join(',\n')}\n${pad}}`;
 };
 
-/** Wrap a config object in a factory call for the given code format (unquoted identifier keys). */
-const wrapFactory = (factory: string, config: Record<string, unknown>, format: DeclarationFormat): string => {
-  const literal = toJsLiteral(config);
-  return format === 'ts'
-    ? `import { ${factory} } from 'handoff-app';\n\nexport default ${factory}(${literal});\n`
-    : `const { ${factory} } = require('handoff-app');\n\nmodule.exports = ${factory}(${literal});\n`;
+/**
+ * Re-shape stored previews for the catalog API: the display title becomes `name`, and is omitted
+ * when it matches what `startCase` derives from the export name.
+ */
+const toCatalogPreviews = (previews: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
+  if (!previews) return undefined;
+  const result: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(previews)) {
+    if (!isPlainObject(raw)) continue;
+    const preview: Record<string, unknown> = {};
+    const title = asString(raw.title);
+    if (title && title !== startCase(key)) preview.name = title;
+    if (raw.args !== undefined) preview.args = raw.args;
+    result[key] = preview;
+  }
+  return result;
+};
+
+const previewKeysAreIdentifiers = (previews: Record<string, unknown> | undefined): boolean =>
+  !previews || Object.keys(previews).every((key) => JS_IDENTIFIER.test(key));
+
+const withImplementation = (item: Record<string, unknown>, implementation: unknown): Record<string, unknown> => {
+  const ordered: Record<string, unknown> = {};
+  const placed = new Set(['implementation']);
+
+  for (const key of ['id', 'name', 'description', 'group']) {
+    if (item[key] !== undefined) {
+      ordered[key] = item[key];
+      placed.add(key);
+    }
+  }
+  ordered.implementation = implementation;
+
+  for (const [key, value] of Object.entries(item)) {
+    if (!placed.has(key)) ordered[key] = value;
+  }
+  return ordered;
+};
+
+const buildImplementationImport = (
+  declaration: Record<string, unknown>,
+  componentEntry: string,
+  format: DeclarationFormat
+): { statement: string; identifier: string } => {
+  const specifier = toImportSpecifier(componentEntry);
+  const exportName = asString(declaration.componentExport);
+  const identifier = exportName ?? toComponentIdentifier(componentEntry, asString(declaration.id) ?? 'Component');
+
+  if (format === 'ts') {
+    const clause = exportName ? `{ ${exportName} }` : identifier;
+    return { statement: `import ${clause} from '${specifier}';`, identifier };
+  }
+
+  const accessor = exportName ? `.${exportName}` : '.default';
+  return { statement: `const ${identifier} = require('${specifier}')${accessor};`, identifier };
+};
+
+const buildPreviewExports = (previews: Record<string, unknown> | undefined, format: DeclarationFormat, previewType?: string): string => {
+  if (!previews || Object.keys(previews).length === 0) {
+    return '';
+  }
+
+  const statements = Object.entries(previews).map(([key, preview]) => {
+    const literal = toJsLiteral(preview);
+    return format === 'ts'
+      ? `export const ${key} = ${literal}${previewType ? ` satisfies ${previewType}` : ''};`
+      : `exports.${key} = ${literal};`;
+  });
+
+  return `\n${statements.join('\n\n')}\n`;
+};
+
+const renderCatalogDeclaration = (options: {
+  format: DeclarationFormat;
+  entryPoint: string;
+  imports: string[];
+  named: string[];
+  item: Record<string, unknown>;
+  previews?: Record<string, unknown>;
+}): string => {
+  const { format, entryPoint, imports, named, item, previews } = options;
+  const literal = toJsLiteral(item);
+  const hasPreviews = !!previews && Object.keys(previews).length > 0;
+
+  if (format === 'ts') {
+    const typeImport = hasPreviews ? [...named, 'type Preview'] : named;
+    const head = [`import { ${typeImport.join(', ')} } from '${entryPoint}';`, ...imports].join('\n');
+
+    if (!hasPreviews) {
+      return `${head}\n\nexport default defineCatalogItem(${literal});\n`;
+    }
+
+    return (
+      `${head}\n\nconst item = defineCatalogItem(${literal});\n\nexport default item;\n\n` +
+      `type ItemPreview = Preview<typeof item>;\n${buildPreviewExports(previews, format, 'ItemPreview')}`
+    );
+  }
+
+  const head = [`const { ${named.join(', ')} } = require('${entryPoint}');`, ...imports].join('\n');
+  return `${head}\n\nexports.default = defineCatalogItem(${literal});\n${buildPreviewExports(previews, format)}`;
+};
+
+type ImplementationContext = {
+  declaration: Record<string, unknown>;
+  /** The implementation file, from the entry key the renderer or format owns. */
+  entry: string;
+  format: DeclarationFormat;
+  previews: Record<string, unknown> | undefined;
+};
+
+type ImplementationDeclaration = {
+  entryPoint: string;
+  imports: string[];
+  named: string[];
+  implementation: unknown;
+  previews?: Record<string, unknown>;
 };
 
 /**
- * Synthesize the component declaration file. JSON declarations are the bare object (carrying
- * `renderer`/`entries`, which the loader reads directly). Code declarations use the renderer-specific
- * factory; React additionally imports the component from its `entries.component` source and passes it
- * as the factory's first argument (matching the authored `defineReactComponent` contract). When the
- * renderer is `react` but no component entry is available, it falls back to the generic factory.
+ * How each renderer authors its implementation. A source format claims an item before its renderer,
+ * because a CSF item is also a React item and the React row would claim it first. The maps are
+ * exhaustive, so a new renderer fails to compile until checkout can write its declaration.
  */
-const renderComponentDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
-  if (format === 'json') {
-    return `${JSON.stringify(declaration, null, 2)}\n`;
-  }
-
-  const renderer = asString(declaration.renderer);
-  const factory = resolveComponentFactory(renderer);
-  const componentEntry = isPlainObject(declaration.entries) ? asString(declaration.entries.component) : undefined;
-
-  if (factory.name === 'defineReactComponent' && componentEntry) {
-    const specifier = toImportSpecifier(componentEntry);
-    const identifier = toComponentIdentifier(componentEntry, asString(declaration.id) ?? 'Component');
-    const literal = toJsLiteral(omit(declaration, 'renderer'));
-    return format === 'ts'
-      ? `import { defineReactComponent } from 'handoff-app';\nimport ${identifier} from '${specifier}';\n\nexport default defineReactComponent(${identifier}, ${literal});\n`
-      : `const { defineReactComponent } = require('handoff-app');\nconst ${identifier} = require('${specifier}').default;\n\nmodule.exports = defineReactComponent(${identifier}, ${literal});\n`;
-  }
-
-  // React without a resolvable component entry can't use defineReactComponent; keep renderer and use
-  // the generic factory so the build still infers the renderer.
-  const effective = factory.name === 'defineReactComponent' ? { name: 'defineComponent', stampsRenderer: false } : factory;
-  const config = effective.stampsRenderer ? omit(declaration, 'renderer') : declaration;
-  return wrapFactory(effective.name, config, format);
+const FORMAT_DECLARATIONS: Record<SourceFormat, (context: ImplementationContext) => ImplementationDeclaration> = {
+  // The story file owns the previews, so the declaration carries none.
+  csf: ({ entry }) => ({
+    entryPoint: moduleFor('react'),
+    imports: [],
+    named: ['defineCatalogItem', 'fromCSF'],
+    implementation: new RawExpression(`fromCSF('${toFilePath(entry)}')`),
+  }),
 };
 
-/** Synthesize the pattern declaration file via `definePattern` (or a bare object for JSON). */
-const renderPatternDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
-  if (format === 'json') {
-    return `${JSON.stringify(declaration, null, 2)}\n`;
+const RENDERER_DECLARATIONS: Record<RendererKind, (context: ImplementationContext) => ImplementationDeclaration> = {
+  handlebars: ({ entry, previews }) => ({
+    entryPoint: moduleFor('handlebars'),
+    imports: [],
+    named: ['defineCatalogItem'],
+    implementation: toFilePath(entry),
+    previews: toCatalogPreviews(previews),
+  }),
+  react: ({ declaration, entry, format, previews }) => {
+    const { statement, identifier } = buildImplementationImport(declaration, entry, format);
+    return {
+      entryPoint: moduleFor('react'),
+      imports: [statement],
+      named: ['defineCatalogItem'],
+      implementation: new RawExpression(identifier),
+      previews: toCatalogPreviews(previews),
+    };
+  },
+};
+
+/** Emit only catalog declarations, with previews as named exports. */
+const renderComponentDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
+  const source = {
+    renderer: declaration.renderer as ComponentSource['renderer'],
+    sourceFormat: declaration.sourceFormat as ComponentSource['sourceFormat'],
+  };
+  const { renderer, sourceFormat } = source;
+  const previews = isPlainObject(declaration.previews) ? declaration.previews : undefined;
+  const entries = isPlainObject(declaration.entries) ? declaration.entries : undefined;
+
+  if (
+    !isRendererKind(renderer) ||
+    (sourceFormat !== undefined && (!isSourceFormat(sourceFormat) || !SOURCE_FORMATS[sourceFormat].renderers.includes(renderer)))
+  ) {
+    throw new CheckoutError(`Catalog item "${declaration.id}" has invalid renderer/source-format metadata. Rebuild and republish it.`);
   }
-  return wrapFactory('definePattern', declaration, format);
+  if (!previewKeysAreIdentifiers(previews) && sourceFormat !== 'csf') {
+    throw new CheckoutError(
+      `Catalog item "${declaration.id}" has preview names that cannot be exported. Rename them and update composition references before publishing.`
+    );
+  }
+  const item = omit(omit(omitSource(declaration), 'previews'), 'componentExport');
+  const supportingEntries = buildEntries(declaration.entries, source, { includePrimary: false });
+  if (supportingEntries) item.entries = supportingEntries;
+  else delete item.entries;
+
+  const entry = entries ? asString(entries[entryKeyFor(renderer, sourceFormat)]) : undefined;
+  if (!entry) {
+    throw new CheckoutError(`Catalog item "${declaration.id}" has no valid implementation source. Rebuild and republish it.`);
+  }
+
+  const build = sourceFormat ? FORMAT_DECLARATIONS[sourceFormat] : RENDERER_DECLARATIONS[renderer];
+  const { implementation, ...parts } = build({ declaration, entry, format, previews });
+  return renderCatalogDeclaration({ format, ...parts, item: withImplementation(item, implementation) });
+};
+
+/** Synthesize the composition declaration file via `defineCatalogItem`. */
+const renderPatternDeclaration = (declaration: Record<string, unknown>, format: DeclarationFormat): string => {
+  const { components, ...rest } = declaration;
+  const item: Record<string, unknown> = {
+    ...rest,
+    composition: (Array.isArray(components) ? components : []).map((ref) => {
+      const { id, ...refRest } = ref as Record<string, unknown>;
+      return { ref: id, ...refRest };
+    }),
+  };
+
+  validateCatalogItem(item);
+  return renderCatalogDeclaration({ format, entryPoint: 'handoff-app/pattern', imports: [], named: ['defineCatalogItem'], item });
 };
 
 /** Synthesize the declaration file contents for an entity, faithful to its renderer/kind contract. */
-const synthesizeDeclaration = (kind: TransferEntityKind, item: Record<string, unknown>, format: DeclarationFormat): string =>
-  kind === 'component'
-    ? renderComponentDeclaration(buildComponentDeclaration(item), format)
-    : renderPatternDeclaration(buildPatternDeclaration(item), format);
+const synthesizeDeclaration = (kind: TransferEntityKind, item: Record<string, unknown>, format: DeclarationFormat): string => {
+  const declaration =
+    kind === 'component'
+      ? renderComponentDeclaration(buildComponentDeclaration(item), format)
+      : renderPatternDeclaration(buildPatternDeclaration(item), format);
+  try {
+    transformSync(declaration, { loader: format === 'ts' ? 'ts' : 'js', logLevel: 'silent' });
+  } catch {
+    throw new CheckoutError(
+      `Catalog item "${item.id}" cannot be exported as ${format}. Use valid, distinct preview and component export names, then republish.`
+    );
+  }
+  return declaration;
+};
 
 /**
  * Confirm overwriting any local files the checkout would replace. Returns `true` to proceed. With
@@ -630,7 +817,7 @@ const checkoutSingle = async (
   }
 
   // Pages round-trip as a single verbatim `.md` with no declaration synthesis, and aren't
-  // declared in `entries`, so there's nothing to register.
+  // listed in `catalog.include`, so there's nothing to register.
   if (kind === 'page') {
     await checkoutPage(handoff, id, payload);
     return null;
@@ -649,6 +836,7 @@ const checkoutSingle = async (
     }
     return { file, absolutePath };
   });
+  const declaration = synthesizeDeclaration(kind, payload.item, format);
   const plannedWrites = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath];
   const conflicts = plannedWrites.filter((file) => fs.existsSync(file));
   if (handoff.dryRun) {
@@ -667,7 +855,6 @@ const checkoutSingle = async (
     written.push(await writeSourceFile(targetDir, file));
   }
 
-  const declaration = synthesizeDeclaration(kind, payload.item, format);
   await fs.writeFile(declarationPath, declaration, 'utf8');
   written.push(declarationPath);
 
@@ -679,30 +866,32 @@ const checkoutSingle = async (
 };
 
 /**
- * Declare freshly checked-out entities in `entries.{components|patterns}` so the workspace build
+ * Declare freshly checked-out entities in `catalog.include` so the workspace build
  * picks them up. Ones already covered by a collection directory load on their own and are left
  * alone; the rest are added to the config automatically. If the config can't be edited (a computed
- * or unusual `entries` array), we print the paths for the user to add so nothing is silently orphaned.
+ * or unusual `include` array), we print the paths for the user to add so nothing is silently orphaned.
  */
 const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, targetDirs: string[]): Promise<void> => {
   if (kind === 'page') {
     return;
   }
-  const entryKind: EntryKind = kind === 'component' ? 'components' : 'patterns';
-  const uncovered = targetDirs.filter((dir) => !isEntryCovered(handoff, entryKind, dir));
-  if (uncovered.length === 0) {
+  const kindLabel = kind === 'component' ? 'components' : 'patterns';
+  const unlisted = targetDirs.filter((dir) => !isIncluded(handoff, dir));
+  if (unlisted.length === 0) {
     return;
   }
 
-  const result = await writeEntries(handoff, entryKind, uncovered);
+  const result = await addToCatalog(handoff, unlisted);
   if (result.status === 'added') {
-    const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath) : 'handoff.config';
-    Logger.success(`Updated ${where} with ${result.added.length} ${entryKind} path(s).`);
+    const where = result.configPath
+      ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath)
+      : 'handoff.config';
+    Logger.success(`Updated ${where} with ${result.added.length} ${kindLabel} path(s).`);
     return;
   }
 
   const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
-  Logger.warn(`Could not update ${where} automatically. Add these to entries.${entryKind} manually:`);
+  Logger.warn(`Could not update ${where} automatically. Add these to catalog.include manually:`);
   result.pending.forEach((rel) => Logger.warn(`  - ${rel}`));
 };
 
@@ -719,46 +908,39 @@ export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind,
   }
 };
 
-/**
- * Checkout every published component, pattern, or page of the kind into this workspace. Enumerates
- * the registry's published ids, then checks each out through the shared client. A per-entity failure
- * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
- * prompting is per entity (skipped under `--force`).
- */
-export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
-  const connection = await resolveConnectionOrThrow(handoff);
-  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
-
-  let summaries;
+/** List the ids the registry publishes for one kind, naming the registry in a listing failure. */
+const listPublishedIds = async (kind: TransferEntityKind, client: RegistryClient, registryUrl: string): Promise<string[]> => {
   try {
-    summaries = await client.listEntities(kind);
+    const summaries = await client.listEntities(kind);
+    return summaries.map((summary) => summary.id);
   } catch (error) {
     if (error instanceof RegistryClientError) {
-      throw new CheckoutError(`Could not list ${kind}s from the registry at ${connection.url}: ${error.message}`);
+      throw new CheckoutError(`Could not list ${kind}s from the registry at ${registryUrl}: ${error.message}`);
     }
     throw error;
   }
+};
 
-  const published = summaries.map((summary) => summary.id);
-  const { selected: targets, unknown } = selectIds(published, ids);
-  if (unknown.length > 0) {
-    throw new CheckoutError(
-      `No ${kind} named ${unknown.map((id) => `"${id}"`).join(', ')} is published in the registry. ` +
-        `Published ${kind}s: ${published.join(', ') || '(none)'}.`
-    );
-  }
-
-  if (targets.length === 0) {
-    Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
-    return;
-  }
-
+/**
+ * Check out the given ids of one kind and register what landed. The caller selects the ids, because a
+ * catalog run resolves them across both entity lanes before any of them is written.
+ *
+ * A per-entity failure is collected and never aborts the rest. Failures are reported here, and the
+ * count is returned so the caller raises one error for the whole run.
+ */
+const checkoutSelected = async (
+  handoff: Handoff,
+  kind: TransferEntityKind,
+  targets: string[],
+  client: RegistryClient,
+  registryUrl: string
+): Promise<number> => {
   let checkedOut = 0;
   const failed: { id: string; message: string }[] = [];
   const targetDirs: string[] = [];
   for (const id of targets) {
     try {
-      const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
+      const targetDir = await checkoutSingle(handoff, kind, id, client, registryUrl);
       if (targetDir) {
         targetDirs.push(targetDir);
       }
@@ -775,10 +957,92 @@ export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKin
     `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} ${handoff.dryRun ? 'would be checked out' : 'checked out'}` +
       `${failed.length ? `, ${failed.length} failed` : ''}.`
   );
-  if (failed.length > 0) {
-    for (const failure of failed) {
-      Logger.error(`  - ${failure.id}: ${failure.message}`);
+  for (const failure of failed) {
+    Logger.error(`  - ${failure.id}: ${failure.message}`);
+  }
+  return failed.length;
+};
+
+/**
+ * Checkout every published component, pattern, or page of the kind into this workspace. Enumerates
+ * the registry's published ids, then checks each out through the shared client. A per-entity failure
+ * is collected and never aborts the rest; the run throws at the end if any entity failed. Overwrite
+ * prompting is per entity (skipped under `--force`).
+ */
+export const checkoutEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
+  const connection = await resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+
+  const published = await listPublishedIds(kind, client, connection.url);
+  const { selected: targets, unknown } = selectIds(published, ids);
+  if (unknown.length > 0) {
+    throw new CheckoutError(
+      `No ${kind} named ${quoteIds(unknown)} is published in the registry. ` + `Published ${kind}s: ${published.join(', ') || '(none)'}.`
+    );
+  }
+
+  if (targets.length === 0) {
+    Logger.success(`No ${kind}s are published in the registry; nothing to checkout.`);
+    return;
+  }
+
+  const failed = await checkoutSelected(handoff, kind, targets, client, connection.url);
+  if (failed > 0) {
+    throw new CheckoutError(`${failed} ${kind}(s) failed to checkout.`);
+  }
+};
+
+/** The entity lanes a catalog run visits, in dependency order: a pattern composes components. */
+const CATALOG_LANES = ['component', 'pattern'] as const;
+
+/**
+ * Checkout published catalog items into this workspace: every one, or only `ids` when given. An item
+ * was published as a component or as a pattern depending on its declaration, so the lane is looked up
+ * in the registry and the caller never names one.
+ *
+ * A failing lane is reported and never aborts the other. The run throws at the end if any item
+ * failed.
+ */
+export const checkoutCatalog = async (handoff: Handoff, ids?: string[]): Promise<void> => {
+  const connection = await resolveConnectionOrThrow(handoff);
+  const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
+
+  const available = {
+    component: await listPublishedIds('component', client, connection.url),
+    pattern: await listPublishedIds('pattern', client, connection.url),
+  };
+
+  let lanes: { kind: TransferEntityKind; targets: string[] }[];
+  if (ids) {
+    const split = splitCatalogIds(ids, available);
+    if (split.ambiguous.length > 0) {
+      throw new CheckoutError(
+        `${quoteIds(split.ambiguous)} is published both as a component and as a pattern. Ask the registry owner to fix the id.`
+      );
     }
-    throw new CheckoutError(`${failed.length} ${kind}(s) failed to checkout.`);
+    if (split.unknown.length > 0) {
+      const publishedIds = [...available.component, ...available.pattern];
+      throw new CheckoutError(
+        `No catalog item named ${quoteIds(split.unknown)} is published in the registry. ` +
+          `Published catalog items: ${publishedIds.join(', ') || '(none)'}.`
+      );
+    }
+    lanes = CATALOG_LANES.map((kind) => ({ kind, targets: split.lanes[kind] }));
+  } else {
+    lanes = CATALOG_LANES.map((kind) => ({ kind, targets: available[kind] }));
+  }
+
+  const selected = lanes.filter((lane) => lane.targets.length > 0);
+  if (selected.length === 0) {
+    Logger.success('No catalog items are published in the registry; nothing to checkout.');
+    return;
+  }
+
+  let failed = 0;
+  for (const lane of selected) {
+    failed += await checkoutSelected(handoff, lane.kind, lane.targets, client, connection.url);
+  }
+  if (failed > 0) {
+    throw new CheckoutError(`${failed} catalog item(s) failed to checkout.`);
   }
 };

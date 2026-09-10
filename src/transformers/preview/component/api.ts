@@ -5,6 +5,14 @@ import Handoff from '../../../index';
 import { ComponentListObject, TransformComponentTokensResult } from '../types';
 import { getDocumentedPreviews } from './previews';
 
+/**
+ * Strip the fields that must not reach the written artifact.
+ *
+ * The docs API serves this artifact publicly, and publish uploads it verbatim. An absolute path in
+ * the artifact exposes the filesystem layout of the build machine, so this drops the workspace
+ * locations `path` and `entries`. The build takes those locations from the runtime config, and
+ * publish remaps `entries` onto the registry record.
+ */
 export const sanitizeComponentApiData = (
   component: TransformComponentTokensResult
 ): TransformComponentTokensResult => {
@@ -13,9 +21,11 @@ export const sanitizeComponentApiData = (
   const sanitized = {
     ...component,
     previews: getDocumentedPreviews(component.previews),
-  };
+  } as NonNullable<TransformComponentTokensResult> & { path?: string };
 
   delete sanitized.internalPatternPreviews;
+  delete sanitized.entries;
+  delete sanitized.path;
 
   return sanitized;
 };
@@ -150,6 +160,8 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     properties: componentData.properties,
     previews: getDocumentedPreviews(componentData.previews),
     path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
+    ...(componentData.renderer ? { renderer: componentData.renderer } : {}),
+    ...(componentData.sourceFormat ? { sourceFormat: componentData.sourceFormat } : {}),
   };
 };
 export default writeComponentApi;

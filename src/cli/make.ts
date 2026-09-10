@@ -1,57 +1,10 @@
+import { addToCatalog, isIncluded } from '../config/catalog-include';
+import { isComponentDirectory } from '../config/runtime';
 import * as p from '@clack/prompts';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
 import { Logger } from '../utils/logger';
-
-/**
- * Make a new exportable component
- * @param handoff
- */
-export const makeTemplate = async (handoff: Handoff, component: string, state: string) => {
-  if (!handoff?.runtimeConfig?.entries?.templates) {
-    Logger.error(`Runtime config does not specify entry for templates.`);
-    return;
-  }
-
-  if (!component) {
-    Logger.error(`Template component must be set`);
-    return;
-  }
-
-  if (!state) {
-    state = 'default';
-  }
-
-  if (!/^[a-z0-9]+$/i.test(component)) {
-    Logger.error(`Template component must be alphanumeric and may contain dashes or underscores`);
-    return;
-  }
-
-  if (!/^[a-z0-9]+$/i.test(state)) {
-    Logger.error(`Template state must be alphanumeric and may contain dashes or underscores`);
-    return;
-  }
-
-  const workingPath = path.resolve(handoff.runtimeConfig.entries.templates, component);
-
-  if (!fs.existsSync(workingPath)) {
-    fs.mkdirSync(workingPath, { recursive: true });
-  }
-
-  const target = path.resolve(workingPath, `${state}.html`);
-  if (fs.existsSync(target)) {
-    if (!handoff.force) {
-      Logger.warn(`'${state}' already exists as custom template.  Use the --force flag revert it to default.`);
-      return;
-    }
-  }
-  const templatePath = path.resolve(path.join(handoff.modulePath, 'config/templates', 'template.html'));
-  const template = fs.readFileSync(templatePath, 'utf8');
-  fs.writeFileSync(target, template);
-  Logger.success(`New template ${state}.html was created in ${workingPath}`);
-  return handoff;
-};
 
 /**
  * Make a new docs page
@@ -117,17 +70,9 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
 
   name = name.replace('.html', '');
 
-  let componentsRoot: string;
-  if (handoff.config?.entries?.components?.length) {
-    componentsRoot = path.resolve(handoff.workingPath, handoff.config.entries.components[0]);
-  } else {
-    componentsRoot = path.resolve(handoff.workingPath, DEFAULT_COMPONENTS_DIR);
-    Logger.warn(
-      `No entries.components configured in handoff.config.*. ` +
-      `Scaffolding into "${DEFAULT_COMPONENTS_DIR}/". ` +
-      `Add this path to entries.components in your config so the build picks it up.`
-    );
-  }
+  const configuredRoot = handoff.config.catalog?.include?.[0];
+  const root = path.resolve(handoff.workingPath, configuredRoot ?? DEFAULT_COMPONENTS_DIR);
+  const componentsRoot = isComponentDirectory(root) ? path.dirname(root) : root;
 
   let workingPath = path.resolve(componentsRoot, name);
   if (!fs.existsSync(workingPath)) {
@@ -168,36 +113,39 @@ export const makeComponent = async (handoff: Handoff, name: string) => {
     fs.writeFileSync(path.resolve(workingPath, `${name}.scss`), scssTemplate);
   }
 
-  const declarationEntries = [`template: './${name}.hbs'`];
+  // `implementation` names the template, so `entries` carries only supporting files.
+  const declarationEntries: string[] = [];
   if (writeJSFile === true) {
     declarationEntries.push(`js: './${name}.js'`);
   }
   if (writeSassFile === true) {
     declarationEntries.push(`scss: './${name}.scss'`);
   }
+  const entriesBlock = declarationEntries.length ? `\n  entries: {\n    ${declarationEntries.join(',\n    ')}\n  },` : '';
 
-  const declarationContent = `const { defineHandlebarsComponent } = require('handoff-app');
+  const declarationContent = `const { defineCatalogItem } = require('handoff-app/handlebars');
 
-module.exports = defineHandlebarsComponent({
+exports.default = defineCatalogItem({
   id: '${name}',
   name: '',
   description: '',
   group: '',
   type: 'element',
-  entries: {
-    ${declarationEntries.join(',\n    ')}
-  },
-  previews: {
-    default: {
-      title: 'Default',
-      args: {}
-    }
-  }
+  implementation: './${name}.hbs',${entriesBlock}
 });
+
+exports.Default = {
+  args: {},
+};
 `;
 
   fs.writeFileSync(path.resolve(workingPath, `${name}.handoff.js`), declarationContent);
   Logger.success(`New component declaration ${name}.handoff.js was created in ${workingPath}`);
+
+  if (!isIncluded(handoff, workingPath)) {
+    const result = await addToCatalog(handoff, [workingPath]);
+    if (result.status === 'unsupported') Logger.warn(`Add ${result.pending.join(', ')} to catalog.include in handoff.config.`);
+  }
 
   return handoff;
 };

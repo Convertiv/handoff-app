@@ -156,7 +156,7 @@ export function haveGlobalDepsChanged(cached: GlobalDepsState | null | undefined
  * Gets all file paths that should be tracked for a component
  */
 export function getComponentFilePaths(handoff: Handoff, componentId: string): { files: string[]; templateDir?: string } {
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   if (!runtimeComponent) {
     return { files: [] };
   }
@@ -164,6 +164,13 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
   const files: string[] = [];
   let templateDir: string | undefined;
   const componentDirs = new Set<string>();
+
+  // A catalog item declares its previews in the declaration file, and its implementation can sit
+  // outside the item directory. The directories derived from `entries` below can therefore miss the
+  // declaration, which would leave a preview edit uncached.
+  if (runtimeComponent.path) {
+    componentDirs.add(normalizePathForCompare(runtimeComponent.path));
+  }
 
   // Add entry files and infer component directories from resolved entry paths
   const entries = runtimeComponent.entries as Record<string, string | undefined> | undefined;
@@ -198,19 +205,9 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
 
   // Find the config file path for this component using exact config filename + directory matching.
   const configPaths = handoff.getConfigFilePaths();
-  const expectedConfigFileNames = new Set([
-    `${componentId}.handoff.ts`,
-    `${componentId}.handoff.js`,
-    `${componentId}.handoff.cjs`,
-    `${componentId}.handoff.json`,
-    `${componentId}.json`,
-    `${componentId}.js`,
-    `${componentId}.cjs`,
-  ]);
   const matchingConfigPath = configPaths.find((configPath) => {
     const configFileName = path.basename(configPath);
-    const isModernDeclaration = /\.handoff\.(ts|js|cjs|json)$/.test(configFileName);
-    if (!expectedConfigFileNames.has(configFileName) && !isModernDeclaration) {
+    if (!/\.handoff\.(ts|js|cjs)$/.test(configFileName)) {
       return false;
     }
 
@@ -232,7 +229,7 @@ export function getComponentFilePaths(handoff: Handoff, componentId: string): { 
   // what processComponents must render. Without tracking these files here, the
   // cache would incorrectly consider the component unchanged and skip the preview
   // rebuild, leaving buildPatterns unable to find the required HTML fragments.
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  const runtimePatterns = handoff.runtimeConfig?.entities.patterns ?? {};
   for (const configPath of configPaths) {
     const entry = handoff.getConfigFileEntry(configPath);
     if (entry?.kind !== 'pattern') continue;
@@ -325,7 +322,7 @@ export async function checkOutputExists(handoff: Handoff, componentId: string): 
     return false;
   }
 
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   const previewIds = new Set([
     ...Object.keys(runtimeComponent?.previews ?? {}),
     ...Object.keys(runtimeComponent?.internalPatternPreviews ?? {}),

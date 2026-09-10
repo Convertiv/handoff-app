@@ -82,16 +82,16 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
       })
     );
 
+    // The filter holds values of this preview, so every branch must rewrite it. A filter kept from
+    // the previous component matches none of the new previews. The docs then show nothing selected
+    // until the reader reloads the page.
     if (Object.keys(calculatedVariants).length > 0) {
       setVariants(calculatedVariants);
-
-      // Initialize filter immediately
       const firstPreviewKey = Object.keys(filteredPreviews)[0];
-      if (firstPreviewKey) {
-        setVariantFilter(filteredPreviews[firstPreviewKey].values);
-      }
+      setVariantFilter(firstPreviewKey ? filteredPreviews[firstPreviewKey].values : undefined);
     } else {
       setVariants(null);
+      setVariantFilter(undefined);
     }
   }, [preview]);
 

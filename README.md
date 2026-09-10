@@ -66,11 +66,16 @@ my-handoff-project/
 └─ out/            # build output; gitignored
 ```
 
-## Components and patterns
+## Catalog items
 
-An implementation and a `*.handoff.ts` declaration are required for a
-TypeScript React component. Stable identity, documentation metadata, source
-entries, and previews are supplied by the declaration.
+Every documented UI entry is a catalog item. Each item declares either an implementation or a composition of other items.
+An implementation names its renderer. `defineCatalogItem` comes from the module for that renderer.
+The declaration supplies stable identity, documentation metadata, source entries, and previews.
+
+### React
+
+Handoff finds the implementation file from its import, so you do not need to repeat the path.
+Previews are named exports. `Preview<typeof item>` gives them the implementation's argument type.
 
 ```tsx
 // components/example/Component.tsx
@@ -83,61 +88,136 @@ export default function Component({ label }: ComponentProps) {
 }
 ```
 
-```ts
-// components/example/component.handoff.ts
-import { defineReactComponent } from 'handoff-app';
+```tsx
+// components/example/example.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/react';
 import Component from './Component';
 
-export default defineReactComponent(Component, {
+const item = defineCatalogItem({
   id: 'component-id',
   name: 'Component name',
   description: 'Usage guidance for the component.',
   group: 'Group name',
-  entries: {
-    component: './Component.tsx',
-  },
-  previews: {
-    default: {
-      title: 'Default',
-      args: { label: 'Example' },
-    },
-  },
+  implementation: Component,
+});
+
+export default item;
+
+type ComponentPreview = Preview<typeof item>;
+
+export const Default = {
+  args: { label: 'Example' },
+} satisfies ComponentPreview;
+```
+
+The export name is the preview name. Use `name` to set a different display title.
+
+### Handlebars
+
+The implementation is the path to the template. Arguments are `Record<string, unknown>` by default;
+an explicit argument type is supplied through `defineCatalogItem<BadgeArgs>`.
+
+```ts
+// components/badge/badge.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/handlebars';
+
+const item = defineCatalogItem({
+  id: 'badge',
+  name: 'Badge',
+  implementation: './Badge.hbs',
+});
+
+export default item;
+
+type BadgePreview = Preview<typeof item>;
+
+export const Primary = {
+  args: { variant: 'primary', children: 'New' },
+} satisfies BadgePreview;
+```
+
+### CSF
+
+CSF is a source format. A story file uses the renderer from the module that declares it. A React item references an existing CSF file with `fromCSF`.
+The CSF file stays unchanged and defines its previews through named exports. Each story's `args` merge with and override `meta.args`.
+Handoff preserves story names, `argTypes`, and `render` functions.
+It finds the React component through `meta.component`, then documents and publishes it with the story file.
+
+```ts
+// components/card/card.handoff.ts
+import { defineCatalogItem, fromCSF } from 'handoff-app/react';
+
+export default defineCatalogItem({
+  id: 'card',
+  name: 'Card',
+  implementation: fromCSF('./Card.stories.tsx'),
 });
 ```
 
-Components are referenced by stable ID in patterns. A named preview can be
-selected and its arguments can be overridden by each reference. Additional
-references can be added as required by the composition.
+`Meta` and `StoryObj` are exported from `handoff-app/react`, so a story file type-checks without a
+Storybook dependency. A project that already has Storybook keeps using its own types.
+
+```tsx
+// components/card/Card.stories.tsx
+import { type Meta, type StoryObj } from 'handoff-app/react';
+import Card from './Card';
+
+const meta = { component: Card } satisfies Meta<typeof Card>;
+export default meta;
+
+export const Primary: StoryObj<typeof meta> = {
+  args: { title: 'Example' },
+};
+```
+
+A CSF preview is rendered on the server and is not hydrated. A direct React implementation is
+hydrated in the browser.
+
+### Compositions
+
+A composition references other items by stable id. A named preview can be selected and its arguments
+can be overridden by each reference. A composition needs no renderer, so it is declared with
+`defineCatalogItem` from `handoff-app/pattern`.
 
 ```ts
-// patterns/example/pattern.handoff.ts
-import { definePattern } from 'handoff-app';
+// patterns/example/example.handoff.ts
+import { defineCatalogItem } from 'handoff-app/pattern';
 
-export default definePattern({
+export default defineCatalogItem({
   id: 'pattern-id',
   name: 'Pattern name',
   description: 'Purpose and usage of the composition.',
   group: 'Group name',
-  components: [
-    {
-      id: 'component-id',
-      preview: 'default',
-      args: { label: 'Pattern example' },
-    },
+  composition: [
+    { ref: 'component-id', preview: 'Default' },
+    { ref: 'badge', args: { children: 'Send' } },
   ],
 });
 ```
 
-Component and pattern directories are registered in the project config:
+An item declares `implementation` or `composition`, never both. Terms such as atom, element, and
+block stay optional classification metadata on `type` and `categories`.
+
+The `id` addresses the item everywhere: its artifacts, its documentation URL, and its publish and
+checkout commands. Components and patterns share one namespace, so each id must be unique across
+both.
+
+If two declarations claim one id, Handoff keeps the first and skips the second. The warning names
+both files. `publish` refuses to run until each id is unique.
+
+
+### Registration
+
+Catalog directories are registered in one place. A path is either an item directory or a collection
+directory whose subdirectories are each treated as an item.
 
 ```ts
 // handoff.config.ts
 import { defineConfig } from 'handoff-app';
 
 export default defineConfig({
-  entries: {
-    components: ['components/example'],
-    patterns: ['patterns'],
+  catalog: {
+    include: ['components', 'patterns'],
   },
   runtime: {
     workspace: {
@@ -146,6 +226,11 @@ export default defineConfig({
   },
 });
 ```
+
+### Upgrade from version 1.x.x to version 2.x.x
+
+See the [version 1.x.x to version 2.x.x migration guide](UPGRADE.md#version-1xx-to-version-2xx)
+for breaking changes, migration steps, and upgrade verification.
 
 Custom documentation pages are Markdown files under `pages/`. Their relative
 paths become their routes and registry IDs.
@@ -340,12 +425,15 @@ npm run publish -- all
 A single kind is published on its own:
 
 ```bash
-npm run publish -- components
-npm run publish -- patterns
+npm run publish -- catalog
 npm run publish -- pages
 npm run publish -- tokens
 npm run publish -- assets
 ```
+
+`catalog` covers every catalog item. An item is stored as a component or as a
+pattern, and its declaration decides which. The command names items and never a
+kind.
 
 Publishing tokens or assets runs the Figma data pipeline before upload, so the
 documented Figma credentials must be available.
@@ -353,7 +441,7 @@ documented Figma credentials must be available.
 One or more IDs can be appended to narrow a publish to those entities:
 
 ```bash
-npm run publish -- components component-id another-id
+npm run publish -- catalog item-id another-id
 ```
 
 `--dry-run` reports what would be uploaded and contacts no registry at all, so
@@ -363,16 +451,16 @@ the existing output, and the two combine to leave the workspace untouched:
 
 ```bash
 npm run publish -- all --dry-run
-npm run publish -- components --no-build
+npm run publish -- catalog --no-build
 ```
 
 `checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
 checkout reads from the registry, lists the files it would create or overwrite,
 and writes nothing.
 
-After the registry is reloaded, the published components, patterns, and
-foundations should be visible. Published database records are read by registry
-pages; the local workspace is never read directly.
+After the registry is reloaded, the published catalog items and foundations are
+visible. Published database records are read by registry pages; the local
+workspace is never read directly.
 
 For CI, a registry connection and user-issued token are configured:
 
@@ -473,7 +561,7 @@ both.
 | `npm run build -- [--target static\|registry]` | The static site or standalone registry bundle is built |
 | `npm run db:migrate` | Registry database migrations are applied |
 | `npm run validate` | Configured components are validated |
-| `npm run publish -- <kind\|all> [id...]` | Components, patterns, pages, tokens, or assets are published |
+| `npm run publish -- <kind\|all> [id...]` | Catalog items, pages, tokens, or assets are published |
 | `npm run checkout -- <kind\|all> [id...]` | Published content is pulled into a workspace |
 | `npm run login -- --url <url>` | The CLI is authorized through the registry device flow |
 | `npm run logout -- [--url <url>]` | A saved CLI credential is revoked and removed |
