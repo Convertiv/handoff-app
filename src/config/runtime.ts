@@ -196,7 +196,12 @@ export const initRuntimeConfig = (
       patterns: {},
       pages: {},
     },
+    duplicateCatalogIds: [],
   };
+
+  // The id addresses artifacts, transfer routes and docs URLs, so it has to resolve to one item.
+  // Components and patterns share one namespace, so one map covers both lanes.
+  const declaredIds = new Map<string, string>();
 
   if (!!handoff.config.entries?.scss) {
     result.entries.scss = path.resolve(handoff.workingPath, handoff.config.entries?.scss);
@@ -248,6 +253,21 @@ export const initRuntimeConfig = (
       skip('Declaration skipped (incomplete or invalid) — will retry on next save', err);
       continue;
     }
+
+    const takenBy = declaredIds.get(classified.item.id);
+
+    if (takenBy) {
+      Logger.warn(
+        `Catalog id "${classified.item.id}" is already declared by ${takenBy}. Skipping ${declarationPath}. ` +
+          `Give each catalog item a unique id.`
+      );
+      result.duplicateCatalogIds.push({ id: classified.item.id, kept: takenBy, skipped: declarationPath });
+      // An unknown kind makes the watcher skip a rebuild. Any other kind rebuilds the item that owns the id.
+      configFileIndex.set(indexKey, { kind: 'unknown', entityId: classified.item.id });
+      continue;
+    }
+
+    declaredIds.set(classified.item.id, declarationPath);
 
     if (classified.kind === 'pattern') {
       const pattern = classified.item;

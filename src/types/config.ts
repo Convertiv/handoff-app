@@ -414,6 +414,15 @@ export interface ConfigFileEntry {
   entityId: string;
 }
 
+/** A catalog declaration skipped because another declaration already took its id. */
+export interface DuplicateCatalogId {
+  id: string;
+  /** Absolute path of the declaration that owns the id. */
+  kept: string;
+  /** Absolute path of the declaration that was skipped. */
+  skipped: string;
+}
+
 export interface RuntimeConfig {
   /** Resolved absolute paths of the project-wide bundle entry points, from `config.entries`. */
   entries?: {
@@ -432,6 +441,11 @@ export interface RuntimeConfig {
       [id: string]: PageListObject;
     };
   };
+  /**
+   * Catalog declarations skipped because their id was already taken. Always present, possibly empty.
+   * Discovery is the only pass that sees both declarations, so publish reads the duplicates from here.
+   */
+  duplicateCatalogIds: DuplicateCatalogId[];
   options: {
     [key: string]: RuntimeConfigComponentOptions;
   };

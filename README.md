@@ -198,6 +198,13 @@ export default defineCatalogItem({
 An item declares `implementation` or `composition`, never both. Terms such as atom, element, and
 block stay optional classification metadata on `type` and `categories`.
 
+The `id` addresses the item everywhere: its artifacts, its documentation URL, and its publish and
+checkout commands. Components and patterns share one namespace, so each id must be unique across
+both.
+
+If two declarations claim one id, Handoff keeps the first and skips the second. The warning names
+both files. `publish` refuses to run until each id is unique.
+
 
 ### Registration
 

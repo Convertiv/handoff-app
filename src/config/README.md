@@ -8,7 +8,7 @@ Handles loading, validation, and resolution of handoff configuration.
 |------|---------|
 | `defaults.ts` | Default config values and `getClientConfig()` for the Next.js app |
 | `loader.ts` | `initConfig()` — reads `handoff.config.ts/.js/.cjs/.json` (in that order), warns on conflicts, and merges overrides |
-| `runtime.ts` | `initRuntimeConfig()` — one pass over every registered catalog directory: loads each declaration, normalizes it into a component or pattern record, resolves SCSS/JS paths and transformer options |
+| `runtime.ts` | `initRuntimeConfig()` — one pass over every registered catalog directory: loads each declaration, normalizes it into a component or pattern record, skips a declaration with a taken id, resolves SCSS/JS paths and transformer options |
 | `catalog-include.ts` | `isIncluded()` / `addToCatalog()` — registers a directory under `catalog.include` |
 | `validator.ts` | `validateConfig()` — ensures required Figma credentials are present |
 | `index.ts` | Barrel re-exports |

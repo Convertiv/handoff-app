@@ -46,6 +46,26 @@ export const assertPublishableWorkspace = (handoff: Handoff): void => {
   }
 };
 
+/** The entity lanes a catalog run visits, in dependency order: a pattern composes components. */
+const CATALOG_LANES = ['component', 'pattern'] as const;
+
+const isCatalogLane = (kind: TransferEntityKind): boolean => CATALOG_LANES.some((lane) => lane === kind);
+
+/**
+ * Refuse a catalog run while the workspace declares one id twice. Discovery keeps the first
+ * declaration and skips the rest, so a publish uploads a catalog that silently omits an item.
+ */
+const assertUniqueCatalogIds = (handoff: Handoff): void => {
+  const duplicates = handoff.runtimeConfig?.duplicateCatalogIds ?? [];
+  if (duplicates.length === 0) return;
+
+  throw new PublishError(
+    `Catalog id${duplicates.length > 1 ? 's' : ''} declared twice: ` +
+      duplicates.map(({ id, kept, skipped }) => `"${id}" (${kept} and ${skipped})`).join('; ') +
+      '. Give each catalog item a unique id.'
+  );
+};
+
 /**
  * Ensure the workspace is a connected workspace able to publish: workspace runtime mode (registry
  * hosts do not publish) and a resolved registry URL + access token. Throws an actionable
@@ -143,6 +163,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
  * receive a targeted build, while pages are packaged directly from their source.
  */
 export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
+  if (isCatalogLane(kind)) assertUniqueCatalogIds(handoff);
   const { client, url } = await resolveTransport(handoff);
 
   if (!handoff.skipBuild) {
@@ -290,6 +311,7 @@ const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kin
  * run throws at the end if any entity failed.
  */
 export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind, ids?: string[]): Promise<void> => {
+  if (isCatalogLane(kind)) assertUniqueCatalogIds(handoff);
   const transport = await resolveTransport(handoff);
 
   if (!handoff.skipBuild) {
@@ -302,9 +324,6 @@ export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind
     throw new PublishError(`${failed} ${kind}(s) failed to publish.`);
   }
 };
-
-/** The entity lanes a catalog run visits, in dependency order: a pattern composes components. */
-const CATALOG_LANES = ['component', 'pattern'] as const;
 
 /**
  * Resolve which lane each requested catalog id belongs to. Without ids every lane runs in full. An
@@ -348,6 +367,7 @@ const resolveCatalogLanes = async (handoff: Handoff, ids?: string[]): Promise<{ 
  * item failed.
  */
 export const publishCatalog = async (handoff: Handoff, ids?: string[]): Promise<void> => {
+  assertUniqueCatalogIds(handoff);
   const transport = await resolveTransport(handoff);
   const lanes = await resolveCatalogLanes(handoff, ids);
 
