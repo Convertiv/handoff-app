@@ -1,8 +1,8 @@
 import { buildArtifactUrl } from '@handoff/artifacts/url';
+import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
+import type { TokenArtifactResource } from '@handoff/store';
 import type { SlotMetadata } from '@handoff/transformers/preview/component';
 import type { ComponentListObject, OptionalPreviewRender, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
-import type { TokenArtifactResource } from '@handoff/store';
-import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
 import type { PageDetail } from '../docs-api/records';
 
 /**
@@ -334,8 +334,6 @@ export const toComponentResult = (
     description: record.description || undefined,
     group: record.group || undefined,
     type: record.type || undefined,
-    // The workspace summary omits `renderer` while the registry has a column for it. The artifact
-    // carries it either way, so prefer that and both modes agree.
     renderer: artifact?.renderer ?? record.renderer,
     sourceFormat: artifact?.sourceFormat ?? record.sourceFormat,
     categories: record.categories?.length ? record.categories : undefined,

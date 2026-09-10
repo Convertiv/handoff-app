@@ -87,9 +87,13 @@ const toTextFileResource = (row: RegistryFileRow): TextFileResource | null => {
   };
 };
 
-/** Restore source order after jsonb storage without exposing transfer-only metadata. */
+/**
+ * Restore source order after jsonb storage without exposing transfer-only metadata. `entries` and
+ * `componentExport` describe the publisher's source layout and exist for checkout. The workspace
+ * has no equivalent, so the docs API must not serve them.
+ */
 const readComponentRecord = (record: ComponentListObject): ComponentListObject => {
-  const { previewOrder, ...item } = record;
+  const { previewOrder, entries, componentExport, ...item } = record;
   return { ...item, previews: orderPreviews(item.previews ?? {}, previewOrder ?? []) };
 };
 

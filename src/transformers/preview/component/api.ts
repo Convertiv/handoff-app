@@ -160,6 +160,8 @@ export const readComponentMetadataApi = async (handoff: Handoff, id: string): Pr
     properties: componentData.properties,
     previews: getDocumentedPreviews(componentData.previews),
     path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
+    ...(componentData.renderer ? { renderer: componentData.renderer } : {}),
+    ...(componentData.sourceFormat ? { sourceFormat: componentData.sourceFormat } : {}),
   };
 };
 export default writeComponentApi;

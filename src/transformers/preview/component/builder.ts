@@ -1,6 +1,7 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
 import { buildComponentDetailUrl } from '../../../artifacts/url';
+import type { SourceFormat } from '../../../catalog/renderers';
 import {
   BuildCache,
   checkOutputExists,
@@ -67,8 +68,16 @@ type ComponentBuildPlan = {
   validationMode: boolean;
 };
 
+/**
+ * A source format reads its previews out of the source file. A placeholder there is a preview
+ * nothing can render: the docs would offer a "Default" entry with no artifact. Only a renderer
+ * that renders whatever previews it is given needs the placeholder.
+ */
+const ownsItsPreviews = (data: { sourceFormat?: SourceFormat } | undefined): boolean => !!data?.sourceFormat;
+
 const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
   if (!data) return;
+  if (ownsItsPreviews(data)) return;
   if (!data.previews || Object.keys(data.previews).length === 0) {
     data.previews = {
       default: {
@@ -302,7 +311,7 @@ export async function processComponents(
     // If this is NOT a figma component, add the default generic preview.
     // We add it here (before merge) so that if the user explicitly provided previews in 'restMetadata',
     // those will override this default (standard "config overrides defaults" behavior).
-    if (!restMetadata.figmaComponentId) {
+    if (!restMetadata.figmaComponentId && !ownsItsPreviews(restMetadata)) {
       componentDefaults.previews = {
         default: {
           title: 'Default',
@@ -468,6 +477,8 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     properties: data.properties,
     previews: getDocumentedPreviews(data.previews),
     path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
+    ...(data.renderer ? { renderer: data.renderer } : {}),
+    ...(data.sourceFormat ? { sourceFormat: data.sourceFormat } : {}),
   };
 };
 
