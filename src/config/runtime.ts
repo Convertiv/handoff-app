@@ -385,6 +385,10 @@ export const getComponentsForPath = (searchPath: string): string[] => {
  *
  * This ensures the component build renders every preview needed by patterns
  * so that pattern composition is purely file I/O (no rendering).
+ *
+ * A ref that does not resolve records its reason in `unresolvedReason`. Nothing is logged here.
+ * Discovery runs for every command, and only the pattern build knows whether a ref is skipped or
+ * composed from a fallback. `buildPattern` reports it.
  */
 const injectPatternPreviews = (result: RuntimeConfig): void => {
   const patterns = result.entities.patterns;
@@ -396,9 +400,8 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
       const component = components[ref.id];
 
       if (!component) {
-        const error = `Pattern "${patternId}" references component "${ref.id}" which is not declared. This fragment will be skipped.`;
-        Logger.warn(error);
         ref.resolved = false;
+        ref.unresolvedReason = `component "${ref.id}" is not declared`;
         continue;
       }
 
@@ -407,9 +410,8 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         if (component.previews?.[ref.preview]) {
           ref.resolved = true;
         } else {
-          const error = `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. This fragment may be skipped.`;
-          Logger.warn(error);
           ref.resolved = false;
+          ref.unresolvedReason = `preview "${ref.preview}" of component "${ref.id}" is not declared`;
         }
         ref.resolvedPreview = ref.preview;
         continue;
@@ -423,10 +425,8 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
           ref.resolvedPreview = firstPreview;
           ref.resolved = true;
         } else {
-          Logger.warn(
-            `Pattern "${patternId}" component ref "${ref.id}" has neither "preview" nor "args", and the component has no previews. This fragment will be skipped.`
-          );
           ref.resolved = false;
+          ref.unresolvedReason = `component "${ref.id}" has no previews, and the ref names no "preview" or "args"`;
         }
         continue;
       }
@@ -439,9 +439,8 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         if (basePreview) {
           resolvedValues = { ...basePreview.values };
         } else {
-          const error = `Pattern "${patternId}" references preview "${ref.preview}" on component "${ref.id}" which does not exist. Using args only.`;
-          Logger.warn(error);
           ref.resolved = false;
+          ref.unresolvedReason = `preview "${ref.preview}" of component "${ref.id}" is not declared, so only "args" were used`;
         }
       }
 

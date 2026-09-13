@@ -1,7 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import { initRuntimeConfig } from '../../../config';
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
@@ -184,13 +183,13 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
 export const buildMainCss = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
   const mainCssPath = path.resolve(outputPath, MAIN_COMPONENT_CSS_FILE);
-  const runtimeConfig = initRuntimeConfig(handoff)[0];
+  const scssEntry = handoff.runtimeConfig?.entries?.scss;
 
-  if (runtimeConfig?.entries?.scss && fs.existsSync(runtimeConfig.entries.scss)) {
-    const stat = await fs.stat(runtimeConfig.entries.scss);
-    const entryPath = stat.isDirectory() ? path.resolve(runtimeConfig.entries.scss, 'main.scss') : runtimeConfig.entries.scss;
+  if (scssEntry && fs.existsSync(scssEntry)) {
+    const stat = await fs.stat(scssEntry);
+    const entryPath = stat.isDirectory() ? path.resolve(scssEntry, 'main.scss') : scssEntry;
 
-    if (entryPath === runtimeConfig.entries.scss || fs.existsSync(entryPath)) {
+    if (entryPath === scssEntry || fs.existsSync(entryPath)) {
       Logger.info(`Building styles for global entry (${MAIN_COMPONENT_CSS_FILE})…`);
       const startedAt = Date.now();
       // Drop the previous artifact so a failed/empty rebuild cannot preserve stale global CSS that
@@ -198,14 +197,11 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
       await fs.remove(mainCssPath);
       try {
         const loadPaths = [
+          path.dirname(scssEntry),
           path.resolve(handoff.workingPath),
           path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
           path.resolve(handoff.workingPath, 'node_modules'),
         ];
-
-        if (handoff.runtimeConfig?.entries?.scss) {
-          loadPaths.unshift(path.dirname(handoff.runtimeConfig.entries.scss));
-        }
 
         await buildCssBundle({
           entry: entryPath,

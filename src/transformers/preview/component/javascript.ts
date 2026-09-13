@@ -1,7 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
-import { initRuntimeConfig } from '../../../config';
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
@@ -151,8 +150,7 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
 export const buildMainJS = async (handoff: Handoff): Promise<void> => {
   const outputPath = getComponentOutputPath(handoff);
   const mainJsPath = path.resolve(outputPath, MAIN_COMPONENT_JS_FILE);
-  const runtimeConfig = initRuntimeConfig(handoff)[0];
-  const entry = runtimeConfig?.entries?.js;
+  const entry = handoff.runtimeConfig?.entries?.js;
 
   // No usable global JS entry: drop any stale artifact and emit nothing to reference.
   if (!entry || !fs.existsSync(path.resolve(entry))) {

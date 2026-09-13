@@ -39,6 +39,15 @@ export const getPatternIdsReferencingComponents = (handoff: Handoff, componentId
   return result;
 };
 
+/** Collapses repeats into one item with a count, so one cause reads as one problem. */
+const summarizeReasons = (reasons: string[]): string => {
+  const counts = new Map<string, number>();
+  for (const reason of reasons) {
+    counts.set(reason, (counts.get(reason) ?? 0) + 1);
+  }
+  return Array.from(counts, ([reason, count]) => (count > 1 ? `${reason} (x${count})` : reason)).join('; ');
+};
+
 async function buildPattern(
   handoff: Handoff,
   patternId: string,
@@ -48,41 +57,49 @@ async function buildPattern(
   sharedArtifacts: SharedArtifactPresence
 ): Promise<PatternListObject | null> {
   const fragments: { componentId: string; html: string }[] = [];
-  let hasErrors = false;
+  // Composition is what drops a ref, so it is also what reports why. Discovery recorded its reason
+  // without logging it, and that reason is more precise than the one this loop can build.
+  const skipped: string[] = [];
+  const composedWithFallback: string[] = [];
 
-  for (let i = 0; i < pattern.components.length; i++) {
-    const ref = pattern.components[i];
-
+  for (const ref of pattern.components) {
     if (ref.resolved === false && !ref.resolvedPreview) {
-      hasErrors = true;
+      skipped.push(ref.unresolvedReason ?? `component "${ref.id}" did not resolve`);
       continue;
     }
 
     const previewKey = ref.resolvedPreview || ref.preview;
     if (!previewKey) {
-      const error =
-        `Pattern "${patternId}" component[${i}] ("${ref.id}") has no resolved preview key. Skipping.`;
-      Logger.warn(error);
+      skipped.push(ref.unresolvedReason ?? `component "${ref.id}" has no preview to render`);
       ref.resolved = false;
-      hasErrors = true;
       continue;
     }
     const htmlFileName = `${ref.id}-${previewKey}.html`;
     const htmlFilePath = path.resolve(componentOutputDir, htmlFileName);
 
     if (!fs.existsSync(htmlFilePath)) {
-      const error =
-        `Pattern "${patternId}" component[${i}] ("${ref.id}") preview file not found: ${htmlFileName}. ` +
-        `Ensure the component has a preview named "${previewKey}".`;
-      Logger.warn(error);
+      skipped.push(ref.unresolvedReason ?? `preview "${previewKey}" of component "${ref.id}" was not built (${htmlFileName})`);
       ref.resolved = false;
-      hasErrors = true;
       continue;
     }
 
     ref.resolved = true;
+    if (ref.unresolvedReason) {
+      composedWithFallback.push(ref.unresolvedReason);
+    }
     const html = await fs.readFile(htmlFilePath, 'utf8');
     fragments.push({ componentId: ref.id, html });
+  }
+
+  if (skipped.length > 0) {
+    Logger.warn(
+      `Pattern "${patternId}" skipped ${skipped.length} of ${pattern.components.length} fragment(s): ${summarizeReasons(skipped)}.`
+    );
+  }
+  if (composedWithFallback.length > 0) {
+    Logger.warn(
+      `Pattern "${patternId}" composed ${composedWithFallback.length} fragment(s) from a fallback: ${summarizeReasons(composedWithFallback)}.`
+    );
   }
 
   // Resolve component-owned artifact presence for each composed component so the pattern references
@@ -97,10 +114,6 @@ async function buildPattern(
   if (fragments.length === 0) {
     Logger.warn(`Pattern "${patternId}" produced no fragments. Skipping.`);
     return null;
-  }
-
-  if (hasErrors) {
-    Logger.warn(`Pattern "${patternId}" has missing components but will be composed from available fragments.`);
   }
 
   const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath, sharedArtifacts, componentArtifacts);

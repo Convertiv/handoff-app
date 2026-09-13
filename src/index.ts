@@ -158,7 +158,6 @@ class Handoff {
     this.skipBuild = options.skipBuild ?? false;
     Logger.init({ debug: this.debug });
     this.init(options.config);
-    global.handoff = this;
   }
 
   init(configOverride?: Partial<Config>): Handoff {

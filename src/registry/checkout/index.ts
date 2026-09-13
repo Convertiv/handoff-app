@@ -351,7 +351,7 @@ const buildComponentDeclaration = (item: Record<string, unknown>): Record<string
 /**
  * Rebuild the authored pattern component refs from the stored entries,
  * keeping only `id`/`preview`/`args` and dropping build-time resolution fields (`resolvedPreview`,
- * `resolved`).
+ * `resolved`, `unresolvedReason`).
  */
 const buildPatternComponents = (components: unknown): Record<string, unknown>[] => {
   if (!Array.isArray(components)) {

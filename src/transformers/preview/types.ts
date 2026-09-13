@@ -235,6 +235,8 @@ export type PatternComponentEntry = {
   resolvedPreview?: string;
   /** Whether the pattern entry resolved to a usable component preview */
   resolved?: boolean;
+  /** Why discovery could not resolve this entry as authored. The pattern build reports it. */
+  unresolvedReason?: string;
 };
 
 export type PatternObject = {
